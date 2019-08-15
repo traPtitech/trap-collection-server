@@ -20,9 +20,9 @@ func main() {
 	e.POST("/game", router.PostGameHandler)
 	e.PUT("/game", router.PutGameHandler)
 	e.DELETE("/game", router.DeleteGameHandler)
-	e.GET("/game", GetGameListHandler)
-	e.POST("/check", CheckHandler)
-	e.GET("/download/:name", DownloadHandler)
+	e.GET("/game", router.GetGameListHandler)
+	e.POST("/check", router.CheckHandler)
+	e.GET("/download/:name", router.DownloadHandler)
 
 	e.Start(":11400")
 }

@@ -56,3 +56,14 @@ func CheckHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, checkLists)
 }
+
+//DownloadHandler ダウンロードのメソッド
+func DownloadHandler(c echo.Context) error {
+	gameName := c.Param("name")
+	path, err = repository.GetPath(gameName)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in getting path from db")
+	}
+
+	return c.File(path)
+}

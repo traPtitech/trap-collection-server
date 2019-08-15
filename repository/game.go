@@ -81,6 +81,17 @@ func LastUpdatedAt() (time.Time, error) {
 	return updatedAt, nil
 }
 
+//GetPath gameのパスを取得するメソッド
+func GetPath(name string) (string, error) {
+	var path string
+	err := Db.Get(&path, "SELECT path FROM game WHERE name=?", name)
+	if err != nil {
+		return path, err
+	}
+
+	return path, nil
+}
+
 //IsThereGame 同名のgameが存在するか確認するメソッド
 func IsThereGame(name string) (bool, error) {
 	var gameID string

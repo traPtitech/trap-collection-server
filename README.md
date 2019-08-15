@@ -1,0 +1,2 @@
+# traP-collection-server
+traPのゲームランチャーのサーバーサイド
