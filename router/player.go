@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+
 	"github.com/traPtitech/trap-collection-server/repository"
 )
 
 //CheckHandler gameに破損・更新がないか確認するメソッド
 func CheckHandler(c echo.Context) error {
-	games, err := repository.GetGameList()
+	games, err := repository.GameCheckList()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting the list of game from db")
 	}
@@ -24,10 +25,13 @@ func CheckHandler(c echo.Context) error {
 	}
 
 	checks := []check{}
-	for i, v = range games {
+	for i, v := range games {
 		checks[i].GameID = v.GameID
 		checks[i].Name = v.Name
 		file, err := os.Open(v.Path)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "something wrong in opening file")
+		}
 
 		buf := make([]byte, 1024)
 		for {
@@ -38,7 +42,8 @@ func CheckHandler(c echo.Context) error {
 			if err != nil {
 				break
 			}
-			checks[i].Md5 = md5.Sum(buf)
+			md5:=md5.Sum(buf)
+			checks[i].Md5 = string(md5[:n])
 		}
 	}
 
@@ -52,7 +57,7 @@ func CheckHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting last updated time from db")
 	}
-	checkList.UpdatedAt = updatedAt
+	checkLists.UpdatedAt = updatedAt
 
 	return c.JSON(http.StatusOK, checkLists)
 }
@@ -60,7 +65,7 @@ func CheckHandler(c echo.Context) error {
 //DownloadHandler ダウンロードのメソッド
 func DownloadHandler(c echo.Context) error {
 	gameName := c.Param("name")
-	path, err = repository.GetPath(gameName)
+	path, err := repository.GetPath(gameName)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting path from db")
 	}

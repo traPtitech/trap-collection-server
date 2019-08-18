@@ -11,7 +11,7 @@ import (
 
 //AddGame gameテーブルにgameを追加するメソッド
 func AddGame(name string, path string) error {
-	_, err = Db.Exec("INSERT INTO game (game_id,name,path,created_at,updated_at) VALUES (?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, path, time.Now(), time.Now())
+	_, err := Db.Exec("INSERT INTO game (game_id,name,path,created_at,updated_at) VALUES (?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, path, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func AddGame(name string, path string) error {
 
 //UpdateGame gameテーブルのupdated_atを更新するメソッド
 func UpdateGame(name string) error {
-	_, err = Db.Exec("UPDATE game SET upgated_at=? WHERE name=?", time.Now(), name)
+	_, err := Db.Exec("UPDATE game SET upgated_at=? WHERE name=?", time.Now(), name)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func IsThereGame(name string) (bool, error) {
 	var gameID string
 	err := Db.Get(&gameID, "SELECT game_id from game WHERE name=?", name)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	return !(gameID == ""), nil

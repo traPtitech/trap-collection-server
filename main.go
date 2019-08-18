@@ -1,28 +1,30 @@
 package main
 
 import (
+	"os"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
+	"github.com/traPtitech/trap-collection-server/repository"
 	"github.com/traPtitech/trap-collection-server/router"
 )
 
 func main() {
-	store, err := model.Establish()
+	err := repository.Establish()
 	if err != nil {
 		panic(err)
 	}
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.Use(session.Middleware(store))
 
 	e.POST("/game", router.PostGameHandler)
 	e.PUT("/game", router.PutGameHandler)
 	e.DELETE("/game", router.DeleteGameHandler)
-	e.GET("/game", router.GetGameListHandler)
+	e.GET("/game", router.GetGameNameListHandler)
 	e.POST("/check", router.CheckHandler)
 	e.GET("/download/:name", router.DownloadHandler)
 
-	e.Start(":11400")
+	e.Start(os.Getenv("PORT"))
 }
