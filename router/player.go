@@ -19,7 +19,7 @@ func CheckHandler(c echo.Context) error {
 	}
 
 	type check struct {
-		GameID string `json:"gameId,omitempty" db:"game_id"`
+		GameID string `json:"id,omitempty" db:"id"`
 		Name   string `json:"name,omitempty" db:"name"`
 		Md5    string `json:"md5"`
 	}
@@ -42,7 +42,7 @@ func CheckHandler(c echo.Context) error {
 			if err != nil {
 				break
 			}
-			md5:=md5.Sum(buf)
+			md5 := md5.Sum(buf)
 			checks[i].Md5 = string(md5[:n])
 		}
 	}
@@ -59,7 +59,7 @@ func CheckHandler(c echo.Context) error {
 	}
 	checkLists.UpdatedAt = updatedAt
 
-	return c.JSON(http.StatusOK, checkLists)
+	return c.JSON(http.StatusOK, &checkLists)
 }
 
 //DownloadHandler ダウンロードのメソッド

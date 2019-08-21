@@ -1,0 +1,1 @@
+CREATE TABLE game (id varchar(36),name varchar(30),path text,created_at datetime,updated_at datetime);

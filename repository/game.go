@@ -11,7 +11,7 @@ import (
 
 //AddGame gameテーブルにgameを追加するメソッド
 func AddGame(name string, path string) error {
-	_, err := Db.Exec("INSERT INTO game (game_id,name,path,created_at,updated_at) VALUES (?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, path, time.Now(), time.Now())
+	_, err := Db.Exec("INSERT INTO game (id,name,path,created_at,updated_at) VALUES (?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, path, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func UpdateGame(name string) error {
 //DeleteGame gameテーブルからgameを削除するメソッド
 func DeleteGame(name string) error {
 	var gameID string
-	err := Db.Get(&gameID, "SELECT game_id from game WHERE name=?", name)
+	err := Db.Get(&gameID, "SELECT id from game WHERE name=?", name)
 	if err != nil {
 		return err
 	}
@@ -59,10 +59,10 @@ func GetGameNameList() ([]model.GameName, error) {
 	return games, nil
 }
 
-//GameCheckList game_id,name,pathの一覧を取得するメソッド
+//GameCheckList id,name,pathの一覧を取得するメソッド
 func GameCheckList() ([]model.GameCheck, error) {
 	games := []model.GameCheck{}
-	err := Db.Select(&games, "SELECT game_id,name,path FROM game")
+	err := Db.Select(&games, "SELECT id,name,path FROM game")
 	if err != nil {
 		return games, err
 	}
@@ -95,7 +95,7 @@ func GetPath(name string) (string, error) {
 //IsThereGame 同名のgameが存在するか確認するメソッド
 func IsThereGame(name string) (bool, error) {
 	var gameID string
-	err := Db.Get(&gameID, "SELECT game_id from game WHERE name=?", name)
+	err := Db.Get(&gameID, "SELECT id from game WHERE name=?", name)
 	if err != nil {
 		return false, err
 	}

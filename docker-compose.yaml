@@ -1,0 +1,25 @@
+version: "3"
+services:
+  server:
+    build: ./
+    environment:
+      DB_USERNAME: "root"
+      DB_PASSWORD: $MARIADB_PASSWORD
+      DB_HOSTNAME: mysql
+      DB_PORT: ":3306"
+      DB_DATABASE: "trap-collection"
+      PORT: ":3000"
+    links:
+      - mysql
+    ports:
+      - "3000:3000"
+  mysql:
+    build: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: $MARIADB_PASSWORD
+      MYSQL_DATABASE: "trap-collection"
+    volumes:
+       - "./mysql/data:/var/lib/mysql"
+       - "./mysql/init:/docker-entrypoint-initdb.d"
+    ports:
+      - "3306:3306"

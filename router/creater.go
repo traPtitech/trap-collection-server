@@ -193,5 +193,5 @@ func GetGameNameListHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in getting the list of game`s name from db")
 	}
 
-	return c.JSON(http.StatusOK, gameNames)
+	return c.JSON(http.StatusOK, &gameNames)
 }
