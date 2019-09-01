@@ -22,19 +22,31 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(name)")
 	}
 
+	filename, err := gameName.Open()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in opening file(name)")
+	}
+
 	buf := make([]byte, 1024)
+	var n int
+	var name string
 	for {
-		n, err := gameName.Read(buf)
+		n, err = filename.Read(buf)
 		if n == 0 {
 			break
 		}
 		if err != nil {
 			break
 		}
-		name := string(buf[:n])
+		name = string(buf[:n])
 	}
 
-	if repository.IsThereGame(name) {
+	b, err := repository.IsThereGame(name)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
+	}
+
+	if b {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
 
@@ -44,7 +56,7 @@ func PostGameHandler(c echo.Context) error {
 	}
 	path := "game/" + name + ".zip"
 
-	_, err := os.Stat(path)
+	_, err = os.Stat(path)
 	if err == nil {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
@@ -55,7 +67,7 @@ func PostGameHandler(c echo.Context) error {
 	}
 	defer dstFile.Close()
 
-	_, err := io.Copy(dstFile, src)
+	_, err = io.Copy(dstFile, src)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in copying file")
 	}
@@ -80,20 +92,32 @@ func PutGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(name)")
 	}
 
+	filename, err := gameName.Open()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in opening file(name)")
+	}
+
 	buf := make([]byte, 1024)
+	var n int
+	var name string
 	for {
-		n, err := f.Read(buf)
+		n, err = filename.Read(buf)
 		if n == 0 {
 			break
 		}
 		if err != nil {
 			break
 		}
-		name := string(buf[:n])
+		name = string(buf[:n])
 	}
 
-	if !(repository.IsThereGame(name)) {
-		return c.String(http.StatusInternalServerError, "A game with the same name does not exists")
+	b, err := repository.IsThereGame(name)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
+	}
+
+	if b {
+		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
 
 	src, err := gameFile.Open()
@@ -102,7 +126,7 @@ func PutGameHandler(c echo.Context) error {
 	}
 	path := "game/" + name + ".zip"
 
-	_, err := os.Stat(path)
+	_, err = os.Stat(path)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "A game with the same name does not exist")
 	}
@@ -113,7 +137,7 @@ func PutGameHandler(c echo.Context) error {
 	}
 	defer dstFile.Close()
 
-	_, err := io.Copy(dstFile, src)
+	_, err = io.Copy(dstFile, src)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in copying file")
 	}
@@ -134,13 +158,18 @@ func DeleteGameHandler(c echo.Context) error {
 	name := GameName{}
 	c.Bind(&name)
 
-	if !(repository.IsThereGame(name.Name)) {
+	b, err := repository.IsThereGame(name.Name)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
+	}
+
+	if b {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
 
-	path := "game/" + name + ".zip"
+	path := "game/" + name.Name + ".zip"
 
-	_, err := os.Stat(path)
+	_, err = os.Stat(path)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "A game with the same name does not exist")
 	}
@@ -149,7 +178,7 @@ func DeleteGameHandler(c echo.Context) error {
 		panic(err)
 	}
 
-	err = repository.DeleteGame(name)
+	err = repository.DeleteGame(name.Name)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in deleting game from db")
 	}
@@ -164,5 +193,5 @@ func GetGameNameListHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in getting the list of game`s name from db")
 	}
 
-	return c.JSON(http.StatusOK, gameNames)
+	return c.JSON(http.StatusOK, &gameNames)
 }
