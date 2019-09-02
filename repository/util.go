@@ -3,9 +3,12 @@ package repository
 import (
 	"fmt"
 	"os"
+	"database/sql"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/labstack/echo"
 )
 
 var (
@@ -22,4 +25,30 @@ func Establish() error {
 	Db = _db
 
 	return nil
+}
+
+//NullTimeToString 変換
+func NullTimeToString(t mysql.NullTime) string {
+	if t.Valid {
+		return t.Time.Format(time.RFC3339)
+	}
+	return "NULL"
+}
+
+//NullStringConvert 変換
+func NullStringConvert(str sql.NullString) string {
+	if str.Valid {
+		return str.String
+	}
+	return "NULL"
+}
+
+//GetUserID ユーザーIDの取得
+func GetUserID(c echo.Context) string {
+	res := c.Request().Header.Get("X-Showcase-User")
+	// test用
+	if res == "" {
+		return "mds_boy"
+	}
+	return res
 }

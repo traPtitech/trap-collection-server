@@ -26,5 +26,7 @@ func main() {
 	e.POST("/check", router.CheckHandler)
 	e.GET("/download/:name", router.DownloadHandler)
 
+	router.SetRouting(e)
+
 	e.Start(os.Getenv("PORT"))
 }
