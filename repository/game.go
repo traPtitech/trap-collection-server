@@ -10,8 +10,8 @@ import (
 )
 
 //AddGame gameテーブルにgameを追加するメソッド
-func AddGame(name string, path string) error {
-	_, err := Db.Exec("INSERT INTO game (id,name,path,created_at,updated_at) VALUES (?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, path, time.Now(), time.Now())
+func AddGame(name string, container string, fileName string) error {
+	_, err := Db.Exec("INSERT INTO game (id,name,container,file_name,created_at,updated_at) VALUES (?,?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, container, fileName, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -59,10 +59,10 @@ func GetGameNameList() ([]model.GameName, error) {
 	return games, nil
 }
 
-//GameCheckList id,name,pathの一覧を取得するメソッド
+//GameCheckList id,name,container,file_nameの一覧を取得するメソッド
 func GameCheckList() ([]model.GameCheck, error) {
 	games := []model.GameCheck{}
-	err := Db.Select(&games, "SELECT id,name,path FROM game")
+	err := Db.Select(&games, "SELECT id,name,conatiner,file_name FROM game")
 	if err != nil {
 		return games, err
 	}
@@ -81,15 +81,25 @@ func LastUpdatedAt() (time.Time, error) {
 	return updatedAt, nil
 }
 
-//GetPath gameのパスを取得するメソッド
-func GetPath(name string) (string, error) {
-	var path string
-	err := Db.Get(&path, "SELECT path FROM game WHERE name=?", name)
+//GetContainerAndFileName gameのパスを取得するメソッド
+func GetContainerAndFileName(name string) (string, string, error) {
+	var file model.GameContainerAndFileName
+	err := Db.Get(&file, "SELECT container,file_name FROM game WHERE name=?", name)
 	if err != nil {
-		return path, err
+		return "", "", err
 	}
 
-	return path, nil
+	return file.Contaiter, file.FileName, nil
+}
+
+func GetContainerByName(name string) (string, error) {
+	var container string
+	err := Db.Get(&container, "SELECT container FROM game WHERE name=?", name)
+	if err != nil {
+		return "", err
+	}
+
+	return container, nil
 }
 
 //IsThereGame 同名のgameが存在するか確認するメソッド

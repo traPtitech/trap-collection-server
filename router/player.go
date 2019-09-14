@@ -65,10 +65,10 @@ func CheckHandler(c echo.Context) error {
 //DownloadHandler ダウンロードのメソッド
 func DownloadHandler(c echo.Context) error {
 	gameName := c.Param("name")
-	path, err := repository.GetPath(gameName)
+	game, err := repository.DownloadGame(gameName)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting path from db")
 	}
 
-	return c.File(path)
+	return c.Blob(200, "application/zip", game)
 }

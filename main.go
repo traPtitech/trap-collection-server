@@ -11,20 +11,17 @@ import (
 )
 
 func main() {
-	err := repository.Establish()
+	err := repository.EstablishDB()
+	if err != nil {
+		panic(err)
+	}
+	err = repository.EstablishConoHa()
 	if err != nil {
 		panic(err)
 	}
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-
-	e.POST("/game", router.PostGameHandler)
-	e.PUT("/game", router.PutGameHandler)
-	e.DELETE("/game", router.DeleteGameHandler)
-	e.GET("/game", router.GetGameNameListHandler)
-	e.POST("/check", router.CheckHandler)
-	e.GET("/download/:name", router.DownloadHandler)
 
 	router.SetRouting(e)
 

@@ -1,9 +1,7 @@
 package router
 
 import (
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo"
 
@@ -12,6 +10,7 @@ import (
 
 //PostGameHandler gameをアップロードする時のメソッド
 func PostGameHandler(c echo.Context) error {
+	containerName := "game0"
 	gameFile, err := c.FormFile("file")
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(game)")
@@ -50,29 +49,22 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
 
-	src, err := gameFile.Open()
+	nameOfFile := name + ".zip"
+	b, err = repository.IsThereFile(nameOfFile)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in creating file")
-	}
-	path := "game/" + name + ".zip"
-
-	_, err = os.Stat(path)
-	if err == nil {
-		return c.String(http.StatusInternalServerError, "A game with the same name exists")
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name of file exists")
 	}
 
-	dstFile, err := os.Create(path)
+	if b {
+		return c.String(http.StatusInternalServerError, "A game with the same name of file exists")
+	}
+
+	err = repository.UploadGame(gameFile, nameOfFile, containerName)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in creating fileplace")
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, src)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in copying file")
+		return c.String(http.StatusInternalServerError, "something wrong in uploading file")
 	}
 
-	err = repository.AddGame(name, path)
+	err = repository.AddGame(name, containerName, nameOfFile)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in inserting in db")
 	}
@@ -120,26 +112,23 @@ func PutGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
 
-	src, err := gameFile.Open()
+	nameOfFile := name + ".zip"
+	b, err = repository.IsThereFile(nameOfFile)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in creating file")
-	}
-	path := "game/" + name + ".zip"
-
-	_, err = os.Stat(path)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "A game with the same name does not exist")
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name of file exists")
 	}
 
-	dstFile, err := os.Create(path)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in creating fileplace")
+	if b {
+		return c.String(http.StatusInternalServerError, "A game with the same name of file exists")
 	}
-	defer dstFile.Close()
 
-	_, err = io.Copy(dstFile, src)
+	containerName, err := repository.GetContainerByName(name)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in copying file")
+		return c.String(http.StatusInternalServerError, "something wrong in getting the name of container")
+	}
+	err = repository.UploadGame(gameFile, nameOfFile, containerName)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in uploading file")
 	}
 
 	err = repository.UpdateGame(name)
@@ -163,19 +152,23 @@ func DeleteGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
 	}
 
-	if b {
-		return c.String(http.StatusInternalServerError, "A game with the same name exists")
+	if !b {
+		return c.String(http.StatusInternalServerError, "A game with the name doesn`t exist")
 	}
 
-	path := "game/" + name.Name + ".zip"
-
-	_, err = os.Stat(path)
+	nameOfFile := name.Name + ".zip"
+	b, err = repository.IsThereFile(nameOfFile)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "A game with the same name does not exist")
+		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name of file exists")
 	}
 
-	if err := os.Remove(path); err != nil {
-		panic(err)
+	if !b {
+		return c.String(http.StatusInternalServerError, "A game with the name of file doesn`t exist")
+	}
+
+	err = repository.DeleteGameFromConoHa(name.Name)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in deleting file")
 	}
 
 	err = repository.DeleteGame(name.Name)
