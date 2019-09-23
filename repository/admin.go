@@ -4,12 +4,14 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	
+	"github.com/traPtitech/trap-collection-server/model"
 )
 
 //GetAdministrators 管理者の取得
-func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
-	administrators := []string{}
-	if err := Db.Select(&administrators, "SELECT user_traqid FROM administrators WHERE questionnaire_id = ?", questionnaireID); err != nil {
+func GetAdministrators(c echo.Context) ([]model.AdminList, error) {
+	administrators := []model.AdminList{}
+	if err := Db.Select(&administrators, "SELECT user_traqid FROM administrators"); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -17,11 +19,12 @@ func GetAdministrators(c echo.Context, questionnaireID int) ([]string, error) {
 }
 
 //InsertAdministrators 管理者の追加
-func InsertAdministrators(c echo.Context, questionnaireID int, administrators []string) error {
+func InsertAdministrators(c echo.Context, administrators []string) error {
+	//N+1 そのうち解消した方がいい
 	for _, v := range administrators {
 		if _, err := Db.Exec(
-			"INSERT INTO administrators (questionnaire_id, user_traqid) VALUES (?, ?)",
-			questionnaireID, v); err != nil {
+			"INSERT INTO administrators user_traqid VALUES ?",
+			v); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -30,10 +33,10 @@ func InsertAdministrators(c echo.Context, questionnaireID int, administrators []
 }
 
 //DeleteAdministrators 管理者の削除
-func DeleteAdministrators(c echo.Context, questionnaireID int) error {
+func DeleteAdministrators(c echo.Context, id string) error {
 	if _, err := Db.Exec(
-		"DELETE from administrators WHERE questionnaire_id = ?",
-		questionnaireID); err != nil {
+		"DELETE from administrators WHERE user_traqid = ?",
+		id); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -41,20 +44,14 @@ func DeleteAdministrators(c echo.Context, questionnaireID int) error {
 }
 
 //CheckAdmin 自分がadminなら(true, nil)
-func CheckAdmin(c echo.Context, questionnaireID int) (bool, error) {
+func CheckAdmin(c echo.Context) (bool, error) {
 	user := GetUserID(c)
-	administrators, err := GetAdministrators(c, questionnaireID)
-	if err != nil {
-		c.Logger().Error(err)
-		return false, err
-	}
-
 	found := false
-	for _, admin := range administrators {
-		if admin == user || admin == "traP" {
-			found = true
-			break
-		}
+	var id string
+	err := Db.Get(&id,"SELECT user_traqid FROM administrators WHERE user_traqid = ?",user)
+	if err!=nil{
+		return found,err
 	}
+	found = (id != "")
 	return found, nil
 }

@@ -1,19 +1,19 @@
 package router
 
 import (
-	"crypto/md5"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/labstack/echo"
 
 	"github.com/traPtitech/trap-collection-server/repository"
+	"github.com/traPtitech/trap-collection-server/model"
 )
 
 //CheckHandler gameに破損・更新がないか確認するメソッド
 func CheckHandler(c echo.Context) error {
-	games, err := repository.GameCheckList()
+	version := c.Param("version")
+	checks, err := repository.GameCheckListByVersion(version)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting the list of game from db")
 	}
@@ -21,34 +21,11 @@ func CheckHandler(c echo.Context) error {
 	type check struct {
 		GameID string `json:"id,omitempty" db:"id"`
 		Name   string `json:"name,omitempty" db:"name"`
-		Md5    string `json:"md5"`
-	}
-
-	checks := []check{}
-	for i, v := range games {
-		checks[i].GameID = v.GameID
-		checks[i].Name = v.Name
-		file, err := os.Open(v.Path)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "something wrong in opening file")
-		}
-
-		buf := make([]byte, 1024)
-		for {
-			n, err := file.Read(buf)
-			if n == 0 {
-				break
-			}
-			if err != nil {
-				break
-			}
-			md5 := md5.Sum(buf)
-			checks[i].Md5 = string(md5[:n])
-		}
+		Md5    string `json:"md5" db:"md5"`
 	}
 
 	type checkList struct {
-		List      []check   `json:"list,omitempty"`
+		List      []model.GameCheck   `json:"list,omitempty"`
 		UpdatedAt time.Time `json:"updatedAt,omitempty"`
 	}
 	checkLists := checkList{}

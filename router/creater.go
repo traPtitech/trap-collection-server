@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"crypto/md5"
 
 	"github.com/labstack/echo"
 
@@ -16,6 +17,25 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(game)")
 	}
 
+	file, err := gameFile.Open()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in opening file")
+	}
+
+	buf := make([]byte, 1024)
+	var strmd5 string
+	for {
+		n, err := file.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			break
+		}
+		md5 := md5.Sum(buf)
+		strmd5 = string(md5[:n])
+	}
+
 	gameName, err := c.FormFile("name")
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(name)")
@@ -26,7 +46,7 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in opening file(name)")
 	}
 
-	buf := make([]byte, 1024)
+	buf = make([]byte, 1024)
 	var n int
 	var name string
 	for {
@@ -64,7 +84,7 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in uploading file")
 	}
 
-	err = repository.AddGame(name, containerName, nameOfFile)
+	err = repository.AddGame(name, containerName, nameOfFile, strmd5)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in inserting in db")
 	}

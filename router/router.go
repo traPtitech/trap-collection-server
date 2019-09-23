@@ -21,6 +21,23 @@ func UserAuthenticate() echo.MiddlewareFunc {
 	}
 }
 
+//AdminAuthenticate AdminかをtraQ認証
+func AdminAuthenticate() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			b,err := repository.CheckAdmin(c)
+			if err != nil {
+				return err
+			}
+			// 管理者でないユーザはアクセスできない
+			if !b {
+				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
+			}
+			return next(c)
+		}
+	}
+}
+
 //SetRouting ルーティング
 func SetRouting(e *echo.Echo) {
 
@@ -31,9 +48,14 @@ func SetRouting(e *echo.Echo) {
 		Questions.DELETE("/:id", DeleteQuestion)
 	}
 
+	responses := e.Group("/responses")
+	{
+		responses.POST("", PostResponse)
+	}
+
 	check := e.Group("/check")
 	{
-		check.POST("", CheckHandler)
+		check.POST("/:version", CheckHandler)
 	}
 
 	download := e.Group("/download")
@@ -43,28 +65,29 @@ func SetRouting(e *echo.Echo) {
 
 	api := e.Group("/api", UserAuthenticate())
 	{
+		admin := e.Group("/admin", AdminAuthenticate())
+		{
+			adminQuestionnaires := admin.Group("/questionnaires")
+			{
+				adminQuestionnaires.POST("", PostQuestionnaire)
+				adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
+				adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
+			}
+		}
 		apiQuestionnnaires := api.Group("/questionnaires")
 		{
 			apiQuestionnnaires.GET("", GetQuestionnaires)
-			apiQuestionnnaires.POST("", PostQuestionnaire)
 			apiQuestionnnaires.GET("/:id", GetQuestionnaire)
-			apiQuestionnnaires.PATCH("/:id", EditQuestionnaire)
-			apiQuestionnnaires.DELETE("/:id", DeleteQuestionnaire)
 			apiQuestionnnaires.GET("/:id/questions", GetQuestions)
 		}
 
 		apiResponses := api.Group("/responses")
 		{
-			apiResponses.POST("", PostResponse)
 			apiResponses.GET("/:id", GetResponse)
 		}
 
 		apiUsers := api.Group("/users")
 		{
-			/*
-				TODO
-				apiUsers.GET("")
-			*/
 			apiUsersMe := apiUsers.Group("/me")
 			{
 				apiUsersMe.GET("", GetUsersMe)

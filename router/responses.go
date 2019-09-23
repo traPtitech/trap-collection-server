@@ -68,16 +68,6 @@ func GetResponsesByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	resSharedTo, err := repository.GetResShared(c, questionnaireID)
-	if err != nil {
-		return err
-	}
-
-	// アンケートの回答を確認する権限が無ければエラーを返す
-	if err := repository.CheckResponseConfirmable(c, resSharedTo, questionnaireID); err != nil {
-		return err
-	}
-
 	sortQuery := c.QueryParam("sort")
 	// sortされた回答者の情報
 	respondents, sortNum, err := repository.GetSortedRespondents(c, questionnaireID, sortQuery)

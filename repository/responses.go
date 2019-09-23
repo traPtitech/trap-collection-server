@@ -160,8 +160,8 @@ func GetRespondentByID(c echo.Context, responseID int) (model.ResponseID, error)
 	respondentInfo := model.ResponseID{}
 	if err := Db.Get(&respondentInfo,
 		`SELECT questionnaire_id, modified_at, submitted_at from respondents
-		WHERE response_id = ? AND user_traqid = ? AND deleted_at IS NULL`,
-		responseID, GetUserID(c)); err != nil {
+		WHERE response_id = ? AND deleted_at IS NULL`,
+		responseID); err != nil {
 		if err != sql.ErrNoRows {
 			c.Logger().Error(err)
 			return model.ResponseID{}, echo.NewHTTPError(http.StatusInternalServerError)
@@ -201,33 +201,6 @@ func DeleteResponse(c echo.Context, responseID int) error {
 		time.Now(), responseID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return nil
-}
-
-//CheckResponseConfirmable アンケートの回答を確認できるか
-func CheckResponseConfirmable(c echo.Context, resSharedTo string, questionnaireID int) error {
-	switch resSharedTo {
-	case "administrators":
-		AmAdmin, err := CheckAdmin(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		if !AmAdmin {
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-	case "respondents":
-		AmAdmin, err := CheckAdmin(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		RespondedAt, err := RespondedAt(c, questionnaireID)
-		if err != nil {
-			return err
-		}
-		if !AmAdmin && RespondedAt == "NULL" {
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
 	}
 	return nil
 }

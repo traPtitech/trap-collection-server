@@ -107,17 +107,12 @@ func GetQuestionnaire(c echo.Context, questionnaireID int) (model.Questionnaires
 }
 
 //GetQuestionnaireInfo アンケートの詳細取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (model.Questionnaires, []string, error) {
+func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (model.Questionnaires, error) {
 	questionnaire, err := GetQuestionnaire(c, questionnaireID)
 	if err != nil {
-		return model.Questionnaires{}, nil, err
+		return model.Questionnaires{}, err
 	}
-
-	administrators, err := GetAdministrators(c, questionnaireID)
-	if err != nil {
-		return model.Questionnaires{}, nil, err
-	}
-	return questionnaire, administrators, nil
+	return questionnaire, nil
 }
 
 //GetQuestionnaireLimit アンケートの回答期限取得
@@ -157,16 +152,16 @@ func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, erro
 }
 
 //InsertQuestionnaire アンケートの追加
-func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string) (int, error) {
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string) (int, error) {
 	var result sql.Result
 
 	if resTimeLimit == "" || resTimeLimit == "NULL" {
 		resTimeLimit = "NULL"
 		var err error
 		result, err = Db.Exec(
-			`INSERT INTO questionnaires (title, description, res_shared_to, created_at, modified_at)
+			`INSERT INTO questionnaires (title, description, created_at, modified_at)
 			VALUES (?, ?, ?, ?, ?)`,
-			title, description, resSharedTo, time.Now(), time.Now())
+			title, description, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
@@ -174,9 +169,9 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 	} else {
 		var err error
 		result, err = Db.Exec(
-			`INSERT INTO questionnaires (title, description, res_time_limit, res_shared_to, created_at, modified_at)
+			`INSERT INTO questionnaires (title, description, res_time_limit, created_at, modified_at)
 			VALUES (?, ?, ?, ?, ?, ?)`,
-			title, description, resTimeLimit, resSharedTo, time.Now(), time.Now())
+			title, description, resTimeLimit, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
@@ -192,7 +187,7 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 	return int(lastID), nil
 }
 
-//UpdateQuestionnaire アンケートの追加
+//UpdateQuestionnaire アンケートの変更
 func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID int) error {
 	if resTimeLimit == "" || resTimeLimit == "NULL" {
 		resTimeLimit = "NULL"

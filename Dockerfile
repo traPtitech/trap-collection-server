@@ -3,5 +3,6 @@ RUN apk add --update --no-cache ca-certificates git
 
 WORKDIR /work
 COPY . .
+RUN source ./env.sh
 RUN go build -o app
 ENTRYPOINT ./app

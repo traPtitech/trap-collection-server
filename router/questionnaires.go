@@ -32,7 +32,7 @@ func GetQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	questionnaire, administrators, err := repository.GetQuestionnaireInfo(c, questionnaireID)
+	questionnaire, err := repository.GetQuestionnaireInfo(c, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -44,8 +44,6 @@ func GetQuestionnaire(c echo.Context) error {
 		"res_time_limit":  repository.NullTimeToString(questionnaire.ResTimeLimit),
 		"created_at":      questionnaire.CreatedAt.Format(time.RFC3339),
 		"modified_at":     questionnaire.ModifiedAt.Format(time.RFC3339),
-		"res_shared_to":   questionnaire.ResSharedTo,
-		"administrators":  administrators,
 	})
 }
 
@@ -56,9 +54,6 @@ func PostQuestionnaire(c echo.Context) error {
 		Title          string   `json:"title"`
 		Description    string   `json:"description"`
 		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
 	}{}
 
 	// JSONを構造体につける
@@ -67,12 +62,8 @@ func PostQuestionnaire(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	lastID, err := repository.InsertQuestionnaire(c, req.Title, req.Description, req.ResTimeLimit, req.ResSharedTo)
+	lastID, err := repository.InsertQuestionnaire(c, req.Title, req.Description, req.ResTimeLimit)
 	if err != nil {
-		return err
-	}
-
-	if err := repository.InsertAdministrators(c, lastID, req.Administrators); err != nil {
 		return err
 	}
 
@@ -84,9 +75,6 @@ func PostQuestionnaire(c echo.Context) error {
 		"deleted_at":      "NULL",
 		"created_at":      time.Now().Format(time.RFC3339),
 		"modified_at":     time.Now().Format(time.RFC3339),
-		"res_shared_to":   req.ResSharedTo,
-		"targets":         req.Targets,
-		"administrators":  req.Administrators,
 	})
 }
 
@@ -104,7 +92,6 @@ func EditQuestionnaire(c echo.Context) error {
 		ResTimeLimit   string   `json:"res_time_limit"`
 		ResSharedTo    string   `json:"res_shared_to"`
 		Targets        []string `json:"targets"`
-		Administrators []string `json:"administrators"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -121,14 +108,6 @@ func EditQuestionnaire(c echo.Context) error {
 		return err
 	}
 
-	if err := repository.DeleteAdministrators(c, questionnaireID); err != nil {
-		return err
-	}
-
-	if err := repository.InsertAdministrators(c, questionnaireID, req.Administrators); err != nil {
-		return err
-	}
-
 	return c.NoContent(http.StatusOK)
 }
 
@@ -141,10 +120,6 @@ func DeleteQuestionnaire(c echo.Context) error {
 	}
 
 	if err := repository.DeleteQuestionnaire(c, questionnaireID); err != nil {
-		return err
-	}
-
-	if err := repository.DeleteAdministrators(c, questionnaireID); err != nil {
 		return err
 	}
 

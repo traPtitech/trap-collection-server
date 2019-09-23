@@ -25,9 +25,15 @@ type GameName struct {
 	Name string `json:"name,omitempty" db:"name"`
 }
 
-//GameCheck gameのID,名前,パスの構造体
+//GameInfo ゲームの情報の構造体
+type GameInfo struct {
+	Name string `json:"name,omitempty" db:"name"`
+	Time time.Time `json:"time,omitempty" db:"time"`
+}
+
+//GameCheck gameのID,名前,md5の構造体
 type GameCheck struct {
 	GameID string `json:"gameId,omitempty" db:"game_id"`
 	Name   string `json:"name,omitempty" db:"name"`
-	Path   string `json:"path,omitempty" db:"path"`
+	Md5   string `json:"md5,omitempty" db:"md5"`
 }
