@@ -25,7 +25,7 @@ func UserAuthenticate() echo.MiddlewareFunc {
 func AdminAuthenticate() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			b,err := repository.CheckAdmin(c)
+			b, err := repository.CheckAdmin(c)
 			if err != nil {
 				return err
 			}
@@ -40,12 +40,14 @@ func AdminAuthenticate() echo.MiddlewareFunc {
 
 //SetRouting ルーティング
 func SetRouting(e *echo.Echo) {
-
-	Questions := e.Group("/questions")
+	check := e.Group("/check")
 	{
-		Questions.POST("", PostQuestion)
-		Questions.PATCH("/:id", EditQuestion)
-		Questions.DELETE("/:id", DeleteQuestion)
+		check.POST("/:version/other", CheckHandler)
+	}
+
+	download := e.Group("/download")
+	{
+		download.GET("/game/:id", DownloadHandler)
 	}
 
 	responses := e.Group("/responses")
@@ -53,58 +55,76 @@ func SetRouting(e *echo.Echo) {
 		responses.POST("", PostResponse)
 	}
 
-	check := e.Group("/check")
+	questionnaires := e.Group("/questionnaires")
 	{
-		check.POST("/:version", CheckHandler)
+		questionnaires.GET("/:id/questions", GetQuestions)
 	}
 
-	download := e.Group("/download")
+	trap := e.Group("/trap", UserAuthenticate())
 	{
-		download.GET("/:name", DownloadHandler)
-	}
-
-	api := e.Group("/api", UserAuthenticate())
-	{
-		admin := e.Group("/admin", AdminAuthenticate())
+		trapGame := trap.Group("/game")
 		{
-			adminQuestionnaires := admin.Group("/questionnaires")
+			trapGame.POST("", PostGameHandler)
+			trapGame.PUT("", PutGameHandler)
+			trapGame.DELETE("", DeleteGameHandler)
+			trapGame.GET("", GetGameNameListHandler)
+		}
+
+		trapResponses := trap.Group("/responses")
+		{
+			trapResponses.GET("/:id", GetResponse)
+		}
+
+		trapQuestionnnaires := trap.Group("")
+		{
+			trapQuestionnnaires.GET("", GetQuestionnaires)
+			trapQuestionnnaires.GET("/:id", GetQuestionnaire)
+		}
+
+		trapUsers := trap.Group("/users")
+		{
+			trapUsersMe := trapUsers.Group("/me")
 			{
-				adminQuestionnaires.POST("", PostQuestionnaire)
-				adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
-				adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
-			}
-		}
-		apiQuestionnnaires := api.Group("/questionnaires")
-		{
-			apiQuestionnnaires.GET("", GetQuestionnaires)
-			apiQuestionnnaires.GET("/:id", GetQuestionnaire)
-			apiQuestionnnaires.GET("/:id/questions", GetQuestions)
-		}
-
-		apiResponses := api.Group("/responses")
-		{
-			apiResponses.GET("/:id", GetResponse)
-		}
-
-		apiUsers := api.Group("/users")
-		{
-			apiUsersMe := apiUsers.Group("/me")
-			{
-				apiUsersMe.GET("", GetUsersMe)
+				trapUsersMe.GET("", GetUsersMe)
 			}
 		}
 
-		apiResults := api.Group("/results")
+		trapResults := trap.Group("/results")
 		{
-			apiResults.GET("/:questionnaireID", GetResponsesByID)
+			trapResults.GET("/:questionnaireID", GetResponsesByID)
 		}
 
-		game := api.Group("/game")
+		trapVersion := trap.Group("/version")
 		{
-			game.POST("", PostGameHandler)
-			game.PUT("", PutGameHandler)
-			game.DELETE("", DeleteGameHandler)
-			game.GET("", GetGameNameListHandler)
+			trapVersion.GET("/sale", GetVersionForSaleListHandler)
+			trapVersion.GET("/fes", GetVersionNotForSaleListHandler)
+			trapVersion.GET("/:id/game", GetGameListHandler)
+			trapVersion.GET("/:id/nongame", GetNonGameListHandler)
+			trapVersion.GET("/:id/questionnaire", GetQuestionnaireHandler)
+		}
+	}
+
+	admin := e.Group("/admin", AdminAuthenticate())
+	{
+		adminQuestions := admin.Group("/questions")
+		{
+			adminQuestions.POST("", PostQuestion)
+			adminQuestions.PATCH("/:id", EditQuestion)
+			adminQuestions.DELETE("/:id", DeleteQuestion)
+		}
+
+		adminQuestionnaires := admin.Group("/questionnaires")
+		{
+			adminQuestionnaires.POST("", PostQuestionnaire)
+			adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
+			adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
+		}
+
+		adminVersion := admin.Group("/version")
+		{
+			adminVersion.POST("", PostVersionHandler)
+			adminVersion.PUT("/:id", PutVersionHandler)
+			adminVersion.DELETE("/:id", DeleteVersionHandler)
 		}
 	}
 }

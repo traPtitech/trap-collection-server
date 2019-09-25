@@ -1,8 +1,8 @@
 package router
 
 import (
-	"net/http"
 	"crypto/md5"
+	"net/http"
 
 	"github.com/labstack/echo"
 
@@ -159,15 +159,16 @@ func PutGameHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "game has updated")
 }
 
-//DeleteGameHandler gameを削除するメソッド
+//DeleteGameHandler gameを削除するメソッド(無駄がありまくりなので時間ができたら修正)
 func DeleteGameHandler(c echo.Context) error {
-	type GameName struct {
-		Name string `json:"name,omitempty" db:"name"`
-	}
-	name := GameName{}
-	c.Bind(&name)
+	id := c.Param("id")
 
-	b, err := repository.IsThereGame(name.Name)
+	name, err := repository.GameIDToName(id)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in getting game`s name")
+	}
+
+	b, err := repository.IsThereGame(name)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
 	}
@@ -176,7 +177,7 @@ func DeleteGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "A game with the name doesn`t exist")
 	}
 
-	nameOfFile := name.Name + ".zip"
+	nameOfFile := name + ".zip"
 	b, err = repository.IsThereFile(nameOfFile)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name of file exists")
@@ -186,12 +187,12 @@ func DeleteGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "A game with the name of file doesn`t exist")
 	}
 
-	err = repository.DeleteGameFromConoHa(name.Name)
+	err = repository.DeleteGameFromConoHa(name)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in deleting file")
 	}
 
-	err = repository.DeleteGame(name.Name)
+	err = repository.DeleteGame(name)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in deleting game from db")
 	}
@@ -206,5 +207,5 @@ func GetGameNameListHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in getting the list of game`s name from db")
 	}
 
-	return c.JSON(http.StatusOK, &gameNames)
+	return c.JSON(http.StatusOK, gameNames)
 }

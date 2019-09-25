@@ -10,7 +10,7 @@ import (
 )
 
 //AddGame gameテーブルにgameを追加するメソッド
-func AddGame(name string, container string, fileName string,md5 string) error {
+func AddGame(name string, container string, fileName string, md5 string) error {
 	_, err := Db.Exec("INSERT INTO game (id,name,container,file_name,md5,created_at,updated_at) VALUES (?,?,?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, container, fileName, md5, time.Now(), time.Now())
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func UpdateGame(name string) error {
 }
 
 //UpdateGameTime ゲームの起点時間を変更
-func UpdateGameTime(name string,t time.Time) error {
+func UpdateGameTime(name string, t time.Time) error {
 	_, err := Db.Exec("UPDATE game SET time=? upgated_at=? WHERE name=? AND deleted_at IS NULL", t, time.Now(), name)
 	if err != nil {
 		return err
@@ -78,6 +78,17 @@ func GameCheckList() ([]model.GameCheck, error) {
 	}
 
 	return games, nil
+}
+
+//GameIDToName ゲームのidから名前を取得
+func GameIDToName(id string) (string, error) {
+	var name string
+	err := Db.Get(&name, "SELECT name FROM game WHERE id=?", id)
+	if err != nil {
+		return "", err
+	}
+
+	return name, nil
 }
 
 //LastUpdatedAt 最後に更新された時刻を確認するメソッド

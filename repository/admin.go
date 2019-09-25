@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	
+
 	"github.com/traPtitech/trap-collection-server/model"
 )
 
@@ -48,9 +48,9 @@ func CheckAdmin(c echo.Context) (bool, error) {
 	user := GetUserID(c)
 	found := false
 	var id string
-	err := Db.Get(&id,"SELECT user_traqid FROM administrators WHERE user_traqid = ?",user)
-	if err!=nil{
-		return found,err
+	err := Db.Get(&id, "SELECT user_traqid FROM administrators WHERE user_traqid = ?", user)
+	if err != nil {
+		return found, err
 	}
 	found = (id != "")
 	return found, nil

@@ -1,0 +1,1103 @@
+openapi: 3.0.0
+info:
+  description: "traPCollectionのAPI"
+  version: "1.0.0"
+  title: "traPCollection API"
+paths:
+  /check/{versionID}/other:
+    get:
+      tags:
+        - check
+      summary: "ブラウザゲーム以外のチェック"
+      description: "ブラウザゲーム以外のゲームのID,名前,MD5を返します。"
+      parameters:
+      - name: "versionID"
+        in: "path"
+        description: "クライアントのバージョンのID"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  list:
+                    type: "array"
+                    items:
+                      type: "object"
+                      properties:
+                        id:
+                          type: "string"
+                          example: "fa867d29-d3e5-4060-b421-465f4fa4fde1"
+                        name:
+                          type: "string"
+                          example: "v1"
+                        md5:
+                          type: "string"
+                  updatedAt:
+                    type: "string"
+                    format: "date-time"
+                    example: "2019-10-04 15:25:07"
+        500:
+          description: "失敗時のレスポンス"
+  /game/{gameID}:
+    get:
+      tags:
+        - game
+      summary: "ブラウザゲーム以外のダウンロード"
+      description: "gameIDで指定されたゲームのZipファイルを返します。"
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            application/zip:
+              schema:
+                type: "string"
+                format: "binary"
+        500:
+          description: "失敗時のレスポンス"
+    delete:
+      tags:
+        - game
+      summary: "ゲームの削除"
+      description: "指定したIDのゲームの削除"
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: "成功した時のレスポンス"
+        500:
+          description: "失敗した時のレスポンス"
+  /game:
+    post:
+      tags:
+        - game
+      summary: "ブラウザゲーム以外のアップロード"
+      description: "指定された名前でファイルを保存します。"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Update'
+            encoding:
+              configuration:
+                contentType: "application/zip"
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            application/json:
+              schema:
+                type: "string"
+                example: "game has uploaded"
+        500:
+          description: "失敗時のレスポンス"
+    patch:
+      tags:
+        - game
+      summary: "ブラウザゲーム以外の更新"
+      description: "指定されたゲームを変更します。"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Update'
+            encoding:
+              configuration:
+                contentType: "application/zip"
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            application/json:
+              schema:
+                type: "string"
+                example: "game has updated"
+        500:
+          description: "失敗時のレスポンス"
+  /questions:
+    post:
+      tags:
+        - question
+      description: 新しい質問を作成します．
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestion'
+      responses:
+        '200':
+          description: 正常に質問を作成できました．作成された質問を返します．
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          description: 正常に作成できませんでした。リクエストが不正です。
+  /questions/{questionID}:
+    patch:
+      tags:
+        - question
+      description: 質問を変更します．
+      parameters:
+        - $ref: '#/components/parameters/questionID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestion'
+      responses:
+        '200':
+          description: 正常に質問を変更できました．
+        '400':
+          description: 正常に変更できませんでした。リクエストが不正です。
+
+    delete:
+      tags:
+        - question
+      description: 質問を削除します．
+      parameters:
+        - $ref: '#/components/parameters/questionID'
+      responses:
+        '200':
+          description: 正常に質問を削除できました。
+        '400':
+          description: 正常に削除できませんでした。存在しない質問です。
+  /responses:
+    post:
+      tags:
+        - response
+      description: 新しい回答を作成します．
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewResponse'
+      responses:
+        '200':
+          description: 正常に回答を作成できました．作成された回答を返します．
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDetails'
+  /responses/{responseID}:
+    get:
+      tags:
+        - response
+      #summary: 未定義
+      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します
+      parameters:
+        - $ref: '#/components/parameters/responseID'
+      responses:
+        '200':
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /users/me:
+    get:
+      tags:
+        - user
+      description: 自分のユーザー情報を取得します
+      responses:
+        '200':
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  traqID:
+                    type: string
+                    example: lolico
+  /results/{questionnaireID}:
+    get:
+      tags:
+        - result
+      parameters:
+        - $ref: '#/components/parameters/questionnaireID'
+      description: あるquestionnaireIDを持つアンケートの結果をすべて取得します。
+      responses:
+        '200':
+          description: 正常に取得できました。アンケートの各質問に対する結果の配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    responseID:
+                      type: integer
+                      example: 1
+                    traqID:
+                      type: string
+                      example: lolico
+                    submitted_at:
+                      type: string
+                      format: date-time
+                    modified_at:
+                      type: string
+                      format: date-time
+                    response_body:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ResponseBody'
+        '403':
+          description: 結果を閲覧する権限がありません。
+  /questionnaires:
+    get:
+      tags:
+        - questionnaire
+      description: 与えられた条件を満たす20件以下のアンケートのリストを取得します．
+      parameters:
+        - name: sort
+          in: query
+          description: |
+            並び順 (作成日時が新しい "created_at", 作成日時が古い "-created_at", タイトルの昇順 "title",
+            タイトルの降順 "-title", 更新日時が新しい "modified_at", 更新日時が古い
+            "-modified_at" )
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: 何ページ目か (未定義の場合は1ページ目)
+          schema:
+            type: integer
+        - name: nontargeted
+          in: query
+          description: |
+            自分がターゲットになっていないもののみ取得 (true), ターゲットになっているものも含めてすべて取得 (false)
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 正常に取得できました。アンケートの配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Questionnaire'
+
+    post:
+      tags:
+        - questionnaire
+      description: 新しいアンケートを作成します．
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestionnaire'
+      responses:
+        '200':
+          description: 正常にアンケートを作成できました．作成されたアンケートを返します．
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questionnaireID:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: '第1回集会らん☆ぷろ募集アンケート'
+                  description:
+                    type: string
+                    example: '第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！'
+                  res_time_limit:
+                    type: string
+                    format: date-time
+                  created_at:
+                    type: string
+                    format: date-time
+                  modified_at:
+                    type: string
+                    format: date-time
+                  res_shared_to:
+                    type: string
+                    example: 'public'
+                  targets:
+                    $ref: '#/components/schemas/Users'
+                  administrators:
+                    $ref: '#/components/schemas/Users'
+
+  '/questionnaires/{questionnaireID}':
+    get:
+      tags:
+        - questionnaire
+      description: アンケートの情報を取得します。
+      parameters:
+        - $ref: '#/components/parameters/questionnaireID'
+      responses:
+        '200':
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionnaireDetails'
+
+    patch:
+      tags:
+        - questionnaire
+      description: アンケートの情報を変更します．
+      parameters:
+        - $ref: '#/components/parameters/questionnaireID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewQuestionnaire'
+      responses:
+        '200':
+          description: 正常にアンケートを変更できました．
+
+    delete:
+      tags:
+        - questionnaire
+      description: アンケートを削除します．
+      parameters:
+        - $ref: '#/components/parameters/questionnaireID'
+      responses:
+        '200':
+          description: 正常にアンケートを削除できました．
+
+  /questionnaires/{questionnaireID}/questions:
+    get:
+      tags:
+        - questionnaire
+      # summary:
+      description: アンケートに含まれる質問のリストを取得します。
+      parameters:
+        - $ref: '#/components/parameters/questionnaireID'
+      responses:
+        '200':
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuestionDetails'
+  /version:
+    post:
+      tags: 
+        - version
+      description: 新しいバージョンを作成します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  description: for sale,not for sale のいずれか
+                  type: string
+                  example: "for sale"
+                name:
+                  type: string
+                  example: "v1.0.0"
+                questionnaire_id:
+                  type: integer
+                  example: 1
+                start_period:
+                  description: 配信するゲームの制作された時期の始まり
+                  type: string
+                  format: date-time
+                end_period:
+                  description: 配信するゲームの制作された時期の終わり
+                  type: string
+                  format: date-time
+                start_time:
+                  description: バージョンの配信を始める期間の始まり(現在機能していない)
+                  type: string
+                  format: date-time
+                special_list:
+                  description: 期間外だが入れる・期間内だが外すゲームのリスト
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      game_name:
+                        type: string
+                        example: "Flythm"
+                      in_out:
+                        description: in,outのいずれか。inだと
+                        type: string
+                        example: "in"
+      responses:
+        200:
+          description: 正常にバージョンの作成ができました。
+        500:
+          description: バージョンの作成に失敗しました。
+  /version/sale:
+    get:
+      tags:
+        - version
+      description: 販売用のバージョンの一覧を取得します。
+      responses:
+        200:
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      description: バージョンのID
+                      type: string
+                    name:
+                      type: string
+                    start_period:
+                      type: string
+                      format: date-time
+                    end_period:
+                      type: string
+                      format: date-time
+                    start_time:
+                      type: string
+                      format: date-time
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+        500:
+          description: 取得に失敗しました。
+  /version/fes:
+    get:
+      tags:
+        - version
+      description: 工大祭用のバージョンの一覧を取得します。
+      responses:
+        200:
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      description: バージョンのID
+                      type: string
+                    name:
+                      type: string
+                    questionnaire_id:
+                      type: integer
+                    start_period:
+                      type: string
+                      format: date-time
+                    end_period:
+                      type: string
+                      format: date-time
+                    start_time:
+                      type: string
+                      format: date-time
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+        500:
+          description: 取得に失敗しました。
+  /version/{versionID}:
+    patch:
+      tags:
+        - version
+      description: 指定したバージョンの情報を修正します。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: 修正に成功しました。
+        500:
+          description: 修正に失敗しました。
+    delete:
+      tags:
+        - version
+      description: 指定したバージョンを削除します。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: 削除に成功しました。
+        500:
+          description: 削除に失敗しました。
+  /version/{versionID}/game:
+    get:
+      tags:
+        - version
+      description: 指定したバージョンに含まれるゲームを取得します。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: 取得に成功しました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: ゲーム名
+                      type: string
+                    time:
+                      type: string
+                      format: date-time
+        500:
+          description: 取得に失敗しました。
+  /version/{versionID}/nongame:
+    get:
+      tags:
+        - version
+      description: 指定したバージョンに含まれるないゲームを取得します。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: 取得に成功しました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: ゲーム名
+                      type: string
+                    time:
+                      type: string
+                      format: date-time
+        500:
+          description: 取得に失敗しました。
+  /special/{versionID}:
+    post:
+      tags:
+        - special
+      description: 特例の作成
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  game_id:
+                    type: string
+                  in_out:
+                    type: string
+                    example: "in"
+      responses:
+        200:
+          description: 作成に成功しました。
+        500:
+          description: 作成に失敗しました。
+    delete:
+      tags:
+        - special
+      description: 特例の削除
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  game_id:
+                    type: string
+                  in_out:
+                    type: string
+                    example: "in"
+      responses:
+        200:
+          description: 削除に成功しました。
+        500:
+          description: 削除に失敗しました。
+  /time:
+    post:
+      tags:
+        - time
+      description: ゲームの起動時間を記録します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version_id:
+                  description: バージョンのID
+                  type: string
+                list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      game_id:
+                        description: ゲームのID
+                        type: string
+                      start_time:
+                        description: プレイ開始時間
+                        type: string
+                        format: date-time
+                      end_time:
+                        description: プレイ終了時間
+                        type: string
+                        format: date-time
+      responses:
+        200:
+          description: 記録に成功しました。
+        500:
+          description: 記録に失敗しました。
+  /seat:
+    post:
+      tags:
+        - seat
+      description: 席の状態を更新します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                x:
+                  description: 席のx座標
+                  type: integer
+                y:
+                  description: 席のy座標
+                  type: integer
+                state:
+                  description: in,outのいずれか。席に着いたらin、席から離れたらout。
+                  type: string
+                  example: "in"
+      responses:
+        200:
+          description: 更新に成功しました。
+        500:
+          description: 更新に失敗しました。
+    get:
+      tags:
+        - seat
+      description: 席の状態を取得します。
+      responses:
+        200:
+          description: 取得に成功しました。
+          content:
+            application/json:
+              schema:
+                description: 状態inの席の一覧を取得します。
+                type: array
+                items:
+                  type: object
+                  properties:
+                    x:
+                      type: integer
+                    y:
+                      type: integer
+        500:
+          description: 取得に失敗しました。
+components:
+  parameters:
+    versionID:
+      name: versionID
+      in: path # パラメータをパス内に含める
+      description: バージョンのID
+      required: true
+      schema:
+        type: string
+    questionnaireID:
+      name: questionnaireID
+      in: path
+      required: true
+      description: |
+        アンケートID
+      schema:
+        type: integer
+
+    questionID:
+      name: questionID
+      in: path
+      required: true
+      description: |
+        質問ID
+      schema:
+        type: integer
+
+    responseID:
+      name: responseID
+      in: path
+      required: true
+      description: |
+        回答ID
+      schema:
+        type: integer
+
+  schemas:
+    Update:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          format: "binary"
+        file:
+          type: "string"
+          format: "binary"
+    Questionnaire:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: '第1回集会らん☆ぷろ募集アンケート'
+        description:
+          type: string
+          example: '第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！'
+        res_time_limit:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        modified_at:
+          type: string
+          format: date-time
+        res_shared_to:
+          type: string
+          example: 'public'
+          description: |
+            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+        is_targeted:
+          type: boolean
+          example: true
+          description: |
+            自分がターゲットになっているかどうか
+    QuestionnaireDetails:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: '第1回集会らん☆ぷろ募集アンケート'
+        description:
+          type: string
+          example: '第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！'
+        res_time_limit:
+          type: string
+          example: '2019-05-10T23:28:10+09:00'
+        created_at:
+          type: string
+          example: '2019-05-01T23:28:10+09:00'
+        modified_at:
+          type: string
+          example: '2019-05-01T23:28:10+09:00'
+        res_shared_to:
+          type: string
+          example: 'public'
+          description: |
+            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+        targets:
+          $ref: '#/components/schemas/Users'
+        administrators:
+          $ref: '#/components/schemas/Users'
+        respondents:
+          $ref: '#/components/schemas/Users'
+
+    NewQuestionnaire:
+      type: object
+      properties:
+        title:
+          type: string
+          example: '第1回集会らん☆ぷろ募集アンケート'
+        description:
+          type: string
+          example: '第1回メンバー集会でのらん☆ぷろで発表したい人を募集します らん☆ぷろで発表したい人あつまれー！'
+        res_time_limit:
+          type: string
+          format: date-time
+        res_shared_to:
+          type: string
+          example: 'public'
+          description: |
+            アンケートの結果を, 運営は見られる ("administrators"), 回答済みの人は見られる ("respondents") 誰でも見られる ("public")
+        targets:
+          $ref: '#/components/schemas/Users'
+        administrators:
+          $ref: '#/components/schemas/Users'
+
+    Question:
+      type: object
+      properties:
+        questionID:
+          type: integer
+          example: 1
+        questionnaireID:
+          type: integer
+          example: 1
+        page_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの何ページ目の質問か
+        question_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの質問のうち、何問目か
+        question_type:
+          type: string
+          example: 'Text'
+          description: |
+            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+        body:
+          type: string
+          example: '質問文'
+        is_required:
+          type: boolean
+          example: true
+          description: |
+            回答必須かどうか
+        options:
+          type: array
+          items:
+            type: string
+            example: '選択肢1'
+        scale_label_right:
+          type: string
+          example: 'そう思わない'
+        scale_label_left:
+          type: string
+          example: 'そう思う'
+        scale_min:
+          type: integer
+          example: 1
+        scale_max:
+          type: integer
+          example: 5
+
+    QuestionDetails:
+      type: object
+      properties:
+        questionID:
+          type: integer
+          example: 1
+        page_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの何ページ目の質問か
+        question_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの質問のうち、何問目か
+        question_type:
+          type: string
+          example: 'Text'
+          description: |
+            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+        body:
+          type: string
+          example: '質問文'
+        is_required:
+          type: boolean
+          example: true
+          description: |
+            回答必須かどうか
+        created_at:
+          type: string
+          format: date-time
+        options:
+          type: array
+          items:
+            type: string
+            example: '選択肢1'
+        scale_label_right:
+          type: string
+          example: 'そう思わない'
+        scale_label_left:
+          type: string
+          example: 'そう思う'
+        scale_min:
+          type: integer
+          example: 1
+        scale_max:
+          type: integer
+          example: 5
+
+    NewQuestion:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        page_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの何ページ目の質問か
+        question_num:
+          type: integer
+          example: 1
+          description: |
+            アンケートの質問のうち、何問目か
+        question_type:
+          type: string
+          example: 'Text'
+          description: |
+            どのタイプの質問か ("Text", "Number", "MultipleChoice", "Checkbox", "Dropdown", "LinearScale", "Date", "Time")
+        body:
+          type: string
+          example: '質問文'
+        is_required:
+          type: boolean
+          example: true
+          description: |
+            回答必須かどうか
+        options:
+          type: array
+          items:
+            type: string
+            example: '選択肢1'
+        scale_label_right:
+          type: string
+          example: 'そう思わない'
+        scale_label_left:
+          type: string
+          example: 'そう思う'
+        scale_min:
+          type: integer
+          example: 1
+        scale_max:
+          type: integer
+          example: 5
+
+    Response:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        submitted_at:
+          type: string
+          format: date-time
+        modified_at:
+          type: string
+          format: date-time
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+
+    ResponseDetails:
+      type: object
+      properties:
+        responseID:
+          type: integer
+          example: 1
+        questionnaireID:
+          type: integer
+          example: 1
+        submitted_at:
+          type: string
+          format: date-time
+        modified_at:
+          type: string
+          format: date-time
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+
+    NewResponse:
+      type: object
+      properties:
+        questionnaireID:
+          type: integer
+          example: 1
+        submitted_at:
+          type: string
+          format: date-time
+        body:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseBody'
+
+    ResponseBody:
+      type: object
+      properties:
+        questionID:
+          type: integer
+          example: 1
+        question_type:
+          type: string
+          example: 'Text'
+        response:
+          type: string
+          example: 'リマインダーBOTを作った話'
+        option_response:
+          type: array
+          items:
+            type: string
+            example: '選択肢1'
+
+    Users:
+      type: array
+      items:
+        type: string
+        example: lolico
+
+  securitySchemes:
+    application:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'http://example.com/oauth/token'
+          scopes:
+            write: allows modifying resources
+            read: allows reading resources

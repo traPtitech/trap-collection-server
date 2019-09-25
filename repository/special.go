@@ -7,8 +7,8 @@ import (
 )
 
 //InsertSpecial 特例の追加
-func InsertSpecial(versionName string,gameName string,inout string) error {
-	_,err := Db.Exec("Insert INTO special (id,version_name,game_name,inout) VALUES (?,?,?,?)", uuid.Must(uuid.NewV4()).String(), versionName, gameName, inout)
+func InsertSpecial(versionID string, gameName string, inout string) error {
+	_, err := Db.Exec("Insert INTO special (id,version_id,game_name,inout) VALUES (?,?,?,?)", uuid.Must(uuid.NewV4()).String(), versionID, gameName, inout)
 	if err != nil {
 		return err
 	}
@@ -16,8 +16,8 @@ func InsertSpecial(versionName string,gameName string,inout string) error {
 }
 
 //DeleteSpecial 特例の削除
-func DeleteSpecial(versionName string,gameName string) error {
-	_,err := Db.Exec("UPDATE special deleted_at SET ? WHERE version_name=? AND game_name=? AND deleted_at IS NULL", time.Now(), versionName, gameName)
+func DeleteSpecial(versionID string, gameName string) error {
+	_, err := Db.Exec("UPDATE special deleted_at SET ? WHERE version_id=? AND game_name=? AND deleted_at IS NULL", time.Now(), versionID, gameName)
 	if err != nil {
 		return err
 	}
@@ -25,8 +25,8 @@ func DeleteSpecial(versionName string,gameName string) error {
 }
 
 //DeleteSpecialByPeriod 特例の削除
-func DeleteSpecialByPeriod(versionName string,startPeriod time.Time,endPeriod time.Time) error {
-	_,err := Db.Exec("UPDATE special INNER JOIN game ON special.game_name=game.name special.deleted_at SET ? WHERE special.version_name=? AND game.time>? AND game.time<? AND special.deleted_at IS NULL", time.Now(), versionName, startPeriod, endPeriod)
+func DeleteSpecialByPeriod(versionID string, startPeriod time.Time, endPeriod time.Time) error {
+	_, err := Db.Exec("UPDATE special INNER JOIN game ON special.game_name=game.name special.deleted_at SET ? WHERE special.version_id=? AND game.time>? AND game.time<? AND special.deleted_at IS NULL", time.Now(), versionID, startPeriod, endPeriod)
 	if err != nil {
 		return err
 	}
@@ -34,8 +34,8 @@ func DeleteSpecialByPeriod(versionName string,startPeriod time.Time,endPeriod ti
 }
 
 //DeleteSpecialByVersion 特例の削除
-func DeleteSpecialByVersion(versionName string) error {
-	_,err := Db.Exec("UPDATE special deleted_at SET ? WHERE version_name=? AND deleted_at IS NULL", time.Now(), versionName)
+func DeleteSpecialByVersion(versionID string) error {
+	_, err := Db.Exec("UPDATE special deleted_at SET ? WHERE version_id=? AND deleted_at IS NULL", time.Now(), versionID)
 	if err != nil {
 		return err
 	}
@@ -43,11 +43,11 @@ func DeleteSpecialByVersion(versionName string) error {
 }
 
 //IsThereSpecial 同一の特例が存在するか
-func IsThereSpecial(versionName string,gameName string) (bool,error) {
+func IsThereSpecial(versionID string, gameName string) (bool, error) {
 	var name string
-	err := Db.Get(&name,"SELECT game_name FROM special WHERE version_name=? AND game_name=? AND deleted_at IS NULL", versionName, gameName)
+	err := Db.Get(&name, "SELECT game_name FROM special WHERE version_id=? AND game_name=? AND deleted_at IS NULL", versionID, gameName)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return (name!=""),nil
+	return (name != ""), nil
 }

@@ -51,9 +51,9 @@ func GetQuestionnaire(c echo.Context) error {
 func PostQuestionnaire(c echo.Context) error {
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
+		Title        string `json:"title"`
+		Description  string `json:"description"`
+		ResTimeLimit string `json:"res_time_limit"`
 	}{}
 
 	// JSONを構造体につける
@@ -87,11 +87,11 @@ func EditQuestionnaire(c echo.Context) error {
 	}
 
 	req := struct {
-		Title          string   `json:"title"`
-		Description    string   `json:"description"`
-		ResTimeLimit   string   `json:"res_time_limit"`
-		ResSharedTo    string   `json:"res_shared_to"`
-		Targets        []string `json:"targets"`
+		Title        string   `json:"title"`
+		Description  string   `json:"description"`
+		ResTimeLimit string   `json:"res_time_limit"`
+		ResSharedTo  string   `json:"res_shared_to"`
+		Targets      []string `json:"targets"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {

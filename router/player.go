@@ -6,8 +6,8 @@ import (
 
 	"github.com/labstack/echo"
 
-	"github.com/traPtitech/trap-collection-server/repository"
 	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/repository"
 )
 
 //CheckHandler gameに破損・更新がないか確認するメソッド
@@ -25,18 +25,18 @@ func CheckHandler(c echo.Context) error {
 	}
 
 	type checkList struct {
-		List      []model.GameCheck   `json:"list,omitempty"`
-		UpdatedAt time.Time `json:"updatedAt,omitempty"`
+		List      []model.GameCheck `json:"list,omitempty"`
+		UpdatedAt time.Time         `json:"updatedAt,omitempty"`
 	}
 	checkLists := checkList{}
 	checkLists.List = checks
-	updatedAt, err := repository.LastUpdatedAt()
+	updatedAt, err := repository.GetLastUpdatedAtByVersion(version)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in getting last updated time from db")
 	}
 	checkLists.UpdatedAt = updatedAt
 
-	return c.JSON(http.StatusOK, &checkLists)
+	return c.JSON(http.StatusOK, checkLists)
 }
 
 //DownloadHandler ダウンロードのメソッド
