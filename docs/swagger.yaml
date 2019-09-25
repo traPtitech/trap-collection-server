@@ -67,6 +67,7 @@ paths:
                 format: "binary"
         500:
           description: "失敗時のレスポンス"
+  /trap/game/{gameID}:
     delete:
       tags:
         - game
@@ -84,7 +85,7 @@ paths:
           description: "成功した時のレスポンス"
         500:
           description: "失敗した時のレスポンス"
-  /game:
+  /trap/game:
     post:
       tags:
         - game
@@ -131,7 +132,7 @@ paths:
                 example: "game has updated"
         500:
           description: "失敗時のレスポンス"
-  /questions:
+  /admin/questions:
     post:
       tags:
         - question
@@ -151,7 +152,7 @@ paths:
                 $ref: '#/components/schemas/Question'
         '400':
           description: 正常に作成できませんでした。リクエストが不正です。
-  /questions/{questionID}:
+  /admin/questions/{questionID}:
     patch:
       tags:
         - question
@@ -199,22 +200,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDetails'
-  /responses/{responseID}:
-    get:
-      tags:
-        - response
-      #summary: 未定義
-      description: あるresponseIDを持つ回答に含まれる全ての質問に対する自分の回答を取得します
-      parameters:
-        - $ref: '#/components/parameters/responseID'
-      responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-  /users/me:
+  /trap/users/me:
     get:
       tags:
         - user
@@ -230,7 +216,7 @@ paths:
                   traqID:
                     type: string
                     example: lolico
-  /results/{questionnaireID}:
+  /trap/results/{questionnaireID}:
     get:
       tags:
         - result
@@ -265,7 +251,7 @@ paths:
                         $ref: '#/components/schemas/ResponseBody'
         '403':
           description: 結果を閲覧する権限がありません。
-  /questionnaires:
+  /admin/questionnaires:
     get:
       tags:
         - questionnaire
@@ -299,7 +285,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Questionnaire'
-
     post:
       tags:
         - questionnaire
@@ -344,7 +329,7 @@ paths:
                   administrators:
                     $ref: '#/components/schemas/Users'
 
-  '/questionnaires/{questionnaireID}':
+  /admin/questionnaires/{questionnaireID}:
     get:
       tags:
         - questionnaire
@@ -358,7 +343,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionnaireDetails'
-
     patch:
       tags:
         - questionnaire
@@ -402,7 +386,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QuestionDetails'
-  /version:
+  /admin/version:
     post:
       tags: 
         - version
@@ -530,7 +514,7 @@ paths:
                       format: date-time
         500:
           description: 取得に失敗しました。
-  /version/{versionID}:
+  /admin/version/{versionID}:
     patch:
       tags:
         - version
@@ -603,7 +587,7 @@ paths:
                       format: date-time
         500:
           description: 取得に失敗しました。
-  /special/{versionID}:
+  /admin/special/{versionID}:
     post:
       tags:
         - special
