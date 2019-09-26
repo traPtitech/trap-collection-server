@@ -45,9 +45,9 @@ func SetRouting(e *echo.Echo) {
 		check.POST("/:version/other", CheckHandler)
 	}
 
-	download := e.Group("/download")
+	game := e.Group("/game")
 	{
-		download.GET("/game/:id", DownloadHandler)
+		game.GET("/:id", DownloadHandler)
 	}
 
 	responses := e.Group("/responses")
@@ -60,25 +60,30 @@ func SetRouting(e *echo.Echo) {
 		questionnaires.GET("/:id/questions", GetQuestions)
 	}
 
+	time := e.Group("/time")
+	{
+		time.POST("", PostTimeHandler)
+	}
+
+	seat := e.Group("/seat")
+	{
+		seat.POST("", PostSeatHandler)
+		seat.GET("", GetSeatHandler)
+	}
+
 	trap := e.Group("/trap", UserAuthenticate())
 	{
 		trapGame := trap.Group("/game")
 		{
 			trapGame.POST("", PostGameHandler)
 			trapGame.PUT("", PutGameHandler)
-			trapGame.DELETE("", DeleteGameHandler)
+			trapGame.DELETE("/:id", DeleteGameHandler)
 			trapGame.GET("", GetGameNameListHandler)
 		}
 
 		trapResponses := trap.Group("/responses")
 		{
 			trapResponses.GET("/:id", GetResponse)
-		}
-
-		trapQuestionnnaires := trap.Group("")
-		{
-			trapQuestionnnaires.GET("", GetQuestionnaires)
-			trapQuestionnnaires.GET("/:id", GetQuestionnaire)
 		}
 
 		trapUsers := trap.Group("/users")
@@ -118,6 +123,8 @@ func SetRouting(e *echo.Echo) {
 			adminQuestionnaires.POST("", PostQuestionnaire)
 			adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
 			adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
+			adminQuestionnaires.GET("", GetQuestionnaires)
+			adminQuestionnaires.GET("/:id", GetQuestionnaire)
 		}
 
 		adminVersion := admin.Group("/version")
@@ -125,6 +132,12 @@ func SetRouting(e *echo.Echo) {
 			adminVersion.POST("", PostVersionHandler)
 			adminVersion.PUT("/:id", PutVersionHandler)
 			adminVersion.DELETE("/:id", DeleteVersionHandler)
+		}
+
+		adminSpecial := admin.Group("/special")
+		{
+			adminSpecial.POST("/:id", PostSpecialHandler)
+			adminSpecial.DELETE("/:id", DeleteSpecialHandler)
 		}
 	}
 }

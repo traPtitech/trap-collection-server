@@ -109,7 +109,7 @@ paths:
                 example: "game has uploaded"
         500:
           description: "失敗時のレスポンス"
-    patch:
+    put:
       tags:
         - game
       summary: "ブラウザゲーム以外の更新"
@@ -130,6 +130,25 @@ paths:
               schema:
                 type: "string"
                 example: "game has updated"
+        500:
+          description: "失敗時のレスポンス"
+    get:
+      tags:
+        - game
+      summary: "ゲーム名一覧の取得"
+      description: "ゲーム名の一覧を返します。"
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
         500:
           description: "失敗時のレスポンス"
   /admin/questions:
@@ -515,7 +534,7 @@ paths:
         500:
           description: 取得に失敗しました。
   /admin/version/{versionID}:
-    patch:
+    put:
       tags:
         - version
       description: 指定したバージョンの情報を修正します。
@@ -587,6 +606,26 @@ paths:
                       format: date-time
         500:
           description: 取得に失敗しました。
+  /version/{versionID}/questionnaire:
+    get:
+      tags:
+        - version
+      description: 指定したバージョンのアンケートを取得します。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: 取得に成功しました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: アンケートのID
+                    type: string
+        500:
+          description: 取得に失敗しました。
   /admin/special/{versionID}:
     post:
       tags:
@@ -630,9 +669,6 @@ paths:
                 properties:
                   game_id:
                     type: string
-                  in_out:
-                    type: string
-                    example: "in"
       responses:
         200:
           description: 削除に成功しました。

@@ -1,6 +1,8 @@
 CREATE TABLE game (id varchar(36),name varchar(30),cantainer text, file_name text,md5 text,time timestamp,created_at timestamp,updated_at timestamp,deleted_at timestamp);
 CREATE TABLE versions_for_sale (id varchar(36),name varchar(30),start_period timestamp,end_period timestamp,start_time timestamp,created_at timestamp,updated_at timestamp,deleted_at timestamp);
 CREATE TABLE versions_not_for_sale (id varchar(36),name varchar(30),questionnaire_id int(11),start_period timestamp,end_period timestamp,start_time timestamp,created_at timestamp,updated_at timestamp,deleted_at timestamp);
+CREATE TABLE seat (id varchar(36),x int,y int,created_at timestamp,deleted_at timestamp);
+CREATE TABLE play_time (id varchar(36),version_id varchar(36),game_id varchar(36),start_time timestamp,end_time timestamp);
 CREATE TABLE special (id varchar(36),version_id varchar(30),game_name varchar(30),inout text,deleted_at timestamp);
 CREATE TABLE administrators (user_traqid char(30));
 CREATE TABLE options (id int(11),question_id int(11),option_num int(11),body text);
