@@ -8,7 +8,9 @@ import (
 	"database/sql"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
+
 	"github.com/traPtitech/trap-collection-server/model"
 )
 
@@ -56,7 +58,6 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]model.Questionnaires
 				Title:        q.Title,
 				Description:  q.Description,
 				ResTimeLimit: NullTimeToString(q.ResTimeLimit),
-				ResSharedTo:  q.ResSharedTo,
 				CreatedAt:    q.CreatedAt.Format(time.RFC3339),
 				ModifiedAt:   q.ModifiedAt.Format(time.RFC3339)})
 	}
@@ -94,7 +95,7 @@ func GetQuestionnaires(c echo.Context, nontargeted bool) ([]model.Questionnaires
 }
 
 //GetQuestionnaire アンケートの取得
-func GetQuestionnaire(c echo.Context, questionnaireID int) (model.Questionnaires, error) {
+func GetQuestionnaire(c echo.Context, questionnaireID string) (model.Questionnaires, error) {
 	questionnaire := model.Questionnaires{}
 	if err := Db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
@@ -107,7 +108,7 @@ func GetQuestionnaire(c echo.Context, questionnaireID int) (model.Questionnaires
 }
 
 //GetQuestionnaireInfo アンケートの詳細取得
-func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (model.Questionnaires, error) {
+func GetQuestionnaireInfo(c echo.Context, questionnaireID string) (model.Questionnaires, error) {
 	questionnaire, err := GetQuestionnaire(c, questionnaireID)
 	if err != nil {
 		return model.Questionnaires{}, err
@@ -116,11 +117,8 @@ func GetQuestionnaireInfo(c echo.Context, questionnaireID int) (model.Questionna
 }
 
 //GetQuestionnaireLimit アンケートの回答期限取得
-func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) {
-	res := struct {
-		Title        string         `Db:"title"`
-		ResTimeLimit mysql.NullTime `Db:"res_time_limit"`
-	}{}
+func GetQuestionnaireLimit(c echo.Context, questionnaireID string) (string, error) {
+	var res mysql.NullTime
 	if err := Db.Get(&res,
 		"SELECT res_time_limit FROM questionnaires WHERE id = ? AND deleted_at IS NULL",
 		questionnaireID); err != nil {
@@ -130,11 +128,11 @@ func GetQuestionnaireLimit(c echo.Context, questionnaireID int) (string, error) 
 		c.Logger().Error(err)
 		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return NullTimeToString(res.ResTimeLimit), nil
+	return NullTimeToString(res), nil
 }
 
 //GetTitleAndLimit アンケートのタイトルと回答期限取得
-func GetTitleAndLimit(c echo.Context, questionnaireID int) (string, string, error) {
+func GetTitleAndLimit(c echo.Context, questionnaireID string) (string, string, error) {
 	res := struct {
 		Title        string         `Db:"title"`
 		ResTimeLimit mysql.NullTime `Db:"res_time_limit"`
@@ -159,19 +157,24 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 		resTimeLimit = "NULL"
 		var err error
 		result, err = Db.Exec(
-			`INSERT INTO questionnaires (title, description, created_at, modified_at)
-			VALUES (?, ?, ?, ?, ?)`,
-			title, description, time.Now(), time.Now())
+			`INSERT INTO questionnaires (id,title, description, created_at, modified_at)
+			VALUES (?,?, ?, ?, ?, ?)`,
+			uuid.Must(uuid.NewV4()).String(), title, description, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		var err error
+		t, err := time.Parse(time.RFC3339, resTimeLimit)
+		if err != nil {
+			c.Logger().Error(err)
+			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		}
 		result, err = Db.Exec(
-			`INSERT INTO questionnaires (title, description, res_time_limit, created_at, modified_at)
+			`INSERT INTO questionnaires (id,title, description, res_time_limit, created_at, modified_at)
 			VALUES (?, ?, ?, ?, ?, ?)`,
-			title, description, resTimeLimit, time.Now(), time.Now())
+			uuid.Must(uuid.NewV4()).String(), title, description, t, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
 			return 0, echo.NewHTTPError(http.StatusInternalServerError)
@@ -188,21 +191,24 @@ func InsertQuestionnaire(c echo.Context, title string, description string, resTi
 }
 
 //UpdateQuestionnaire アンケートの変更
-func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID int) error {
+func UpdateQuestionnaire(c echo.Context, title string, description string, resTimeLimit string, resSharedTo string, questionnaireID string) error {
 	if resTimeLimit == "" || resTimeLimit == "NULL" {
 		resTimeLimit = "NULL"
 		if _, err := Db.Exec(
-			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL,
-			res_shared_to = ?, modified_at = ? WHERE id = ?`,
-			title, description, resSharedTo, time.Now(), questionnaireID); err != nil {
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = NULL, modified_at = ? WHERE id = ?`,
+			title, description, time.Now(), questionnaireID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
+		t, err := time.Parse(time.RFC3339, resTimeLimit)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 		if _, err := Db.Exec(
-			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?,
-			res_shared_to = ?, modified_at = ? WHERE id = ?`,
-			title, description, resTimeLimit, resSharedTo, time.Now(), questionnaireID); err != nil {
+			`UPDATE questionnaires SET title = ?, description = ?, res_time_limit = ?, modified_at = ? WHERE id = ?`,
+			title, description, t, time.Now(), questionnaireID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -211,7 +217,7 @@ func UpdateQuestionnaire(c echo.Context, title string, description string, resTi
 }
 
 //DeleteQuestionnaire アンケートの削除
-func DeleteQuestionnaire(c echo.Context, questionnaireID int) error {
+func DeleteQuestionnaire(c echo.Context, questionnaireID string) error {
 	if _, err := Db.Exec(
 		"UPDATE questionnaires SET deleted_at = ? WHERE id = ?",
 		time.Now(), questionnaireID); err != nil {

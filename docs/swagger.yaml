@@ -722,12 +722,9 @@ paths:
             schema:
               type: object
               properties:
-                x:
-                  description: 席のx座標
-                  type: integer
-                y:
-                  description: 席のy座標
-                  type: integer
+                id:
+                  description: 席のID
+                  type: string
                 state:
                   description: in,outのいずれか。席に着いたらin、席から離れたらout。
                   type: string
@@ -750,12 +747,8 @@ paths:
                 description: 状態inの席の一覧を取得します。
                 type: array
                 items:
-                  type: object
-                  properties:
-                    x:
-                      type: integer
-                    y:
-                      type: integer
+                  type: string
+                  description: 埋まっている席のIDの一覧
         500:
           description: 取得に失敗しました。
 components:
@@ -774,7 +767,7 @@ components:
       description: |
         アンケートID
       schema:
-        type: integer
+        type: string
 
     questionID:
       name: questionID
@@ -783,7 +776,7 @@ components:
       description: |
         質問ID
       schema:
-        type: integer
+        type: string
 
     responseID:
       name: responseID
@@ -792,7 +785,7 @@ components:
       description: |
         回答ID
       schema:
-        type: integer
+        type: string
 
   schemas:
     Update:
@@ -808,7 +801,7 @@ components:
       type: object
       properties:
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         title:
           type: string
@@ -839,7 +832,7 @@ components:
       type: object
       properties:
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         title:
           type: string
@@ -894,10 +887,10 @@ components:
       type: object
       properties:
         questionID:
-          type: integer
+          type: string
           example: 1
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         page_num:
           type: integer
@@ -944,7 +937,7 @@ components:
       type: object
       properties:
         questionID:
-          type: integer
+          type: string
           example: 1
         page_num:
           type: integer
@@ -994,7 +987,7 @@ components:
       type: object
       properties:
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         page_num:
           type: integer
@@ -1041,7 +1034,7 @@ components:
       type: object
       properties:
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         submitted_at:
           type: string
@@ -1058,10 +1051,10 @@ components:
       type: object
       properties:
         responseID:
-          type: integer
+          type: string
           example: 1
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         submitted_at:
           type: string
@@ -1078,7 +1071,7 @@ components:
       type: object
       properties:
         questionnaireID:
-          type: integer
+          type: string
           example: 1
         submitted_at:
           type: string
@@ -1092,7 +1085,7 @@ components:
       type: object
       properties:
         questionID:
-          type: integer
+          type: string
           example: 1
         question_type:
           type: string

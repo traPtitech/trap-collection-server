@@ -17,14 +17,11 @@ func PostSeatHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in binding")
 	}
 
-	b, err := repository.IsThereSeat(seat.X, seat.Y)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if is there the seat")
-	}
-	if seat.Status == "in" && b {
-		err = repository.InsertSeat(seat.X, seat.Y)
-	} else if seat.Status == "out" && !b {
-		err = repository.DeleteSeat(seat.X, seat.Y)
+	b := repository.IsThereSeat(seat.ID)
+	if seat.Status == "in" && !b {
+		err = repository.InsertSeat(seat.ID)
+	} else if seat.Status == "out" && b {
+		err = repository.DeleteSeat(seat.ID)
 	} else {
 		return c.String(http.StatusInternalServerError, "status is invalid")
 	}

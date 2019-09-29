@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/labstack/echo"
@@ -26,11 +25,7 @@ func GetQuestionnaires(c echo.Context) error {
 
 // GetQuestionnaire GET /questionnaires/:id
 func GetQuestionnaire(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionnaireID := c.Param("id")
 
 	questionnaire, err := repository.GetQuestionnaireInfo(c, questionnaireID)
 	if err != nil {
@@ -81,10 +76,7 @@ func PostQuestionnaire(c echo.Context) error {
 // EditQuestionnaire PATCH /questonnaires/:id
 func EditQuestionnaire(c echo.Context) error {
 
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionnaireID := c.Param("id")
 
 	req := struct {
 		Title        string   `json:"title"`
@@ -113,11 +105,7 @@ func EditQuestionnaire(c echo.Context) error {
 
 // DeleteQuestionnaire DELETE /questonnaires/:id
 func DeleteQuestionnaire(c echo.Context) error {
-
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionnaireID := c.Param("id")
 
 	if err := repository.DeleteQuestionnaire(c, questionnaireID); err != nil {
 		return err

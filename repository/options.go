@@ -3,11 +3,12 @@ package repository
 import (
 	"net/http"
 
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 )
 
 //GetOptions 質問のオプション取得
-func GetOptions(c echo.Context, questionID int) ([]string, error) {
+func GetOptions(c echo.Context, questionID string) ([]string, error) {
 	options := []string{}
 	if err := Db.Select(
 		&options, "SELECT body FROM options WHERE question_id = ? ORDER BY option_num",
@@ -19,10 +20,10 @@ func GetOptions(c echo.Context, questionID int) ([]string, error) {
 }
 
 //InsertOption 質問のオプション追加
-func InsertOption(c echo.Context, lastID int, num int, body string) error {
+func InsertOption(c echo.Context, lastID string, num int, body string) error {
 	if _, err := Db.Exec(
-		"INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)",
-		lastID, num, body); err != nil {
+		"INSERT INTO options (id,question_id, option_num, body) VALUES (?,?, ?, ?)",
+		uuid.Must(uuid.NewV4()).String(), lastID, num, body); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -30,7 +31,7 @@ func InsertOption(c echo.Context, lastID int, num int, body string) error {
 }
 
 //UpdateOptions 質問のオプション変更
-func UpdateOptions(c echo.Context, options []string, questionID int) error {
+func UpdateOptions(c echo.Context, options []string, questionID string) error {
 	for i, v := range options {
 		if _, err := Db.Exec(
 			`INSERT INTO options (question_id, option_num, body) VALUES (?, ?, ?)
@@ -50,7 +51,7 @@ func UpdateOptions(c echo.Context, options []string, questionID int) error {
 }
 
 //DeleteOptions 質問のオプション削除
-func DeleteOptions(c echo.Context, questionID int) error {
+func DeleteOptions(c echo.Context, questionID string) error {
 	if _, err := Db.Exec(
 		"DELETE FROM options WHERE question_id= ?",
 		questionID); err != nil {

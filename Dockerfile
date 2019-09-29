@@ -6,6 +6,5 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY . .
-RUN source ./env.sh
 RUN go build -o app
 ENTRYPOINT ./app

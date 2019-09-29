@@ -7,8 +7,12 @@ services:
       DB_PASSWORD: "pass"
       DB_HOSTNAME: mysql
       DB_PORT: "3306"
-      DB_DATABASE: "trap-collection"
+      DB_DATABASE: "trap_collection"
       PORT: ":3000"
+      OS_AUTH_URL:
+      OS_USERNAME:
+      OS_PASSWORD:
+      OS_TENANT_ID:
     links:
       - mysql
     ports:
@@ -18,9 +22,8 @@ services:
     build: mysql
     environment:
       MYSQL_ROOT_PASSWORD: "pass"
-      MYSQL_DATABASE: "trap-collection"
     volumes:
-      - "./mysql/data:/var/lib/mysql"
-      - "./mysql/init:/docker-entrypoint-initdb.d"
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"

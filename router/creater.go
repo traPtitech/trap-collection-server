@@ -2,7 +2,10 @@ package router
 
 import (
 	"crypto/md5"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"unsafe"
 
 	"github.com/labstack/echo"
 
@@ -22,19 +25,11 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in opening file")
 	}
 
-	buf := make([]byte, 1024)
-	var strmd5 string
-	for {
-		n, err := file.Read(buf)
-		if n == 0 {
-			break
-		}
-		if err != nil {
-			break
-		}
-		md5 := md5.Sum(buf)
-		strmd5 = string(md5[:n])
+	buf, err := ioutil.ReadAll(file)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in reading file")
 	}
+	md5 := md5.Sum(buf)
 
 	gameName, err := c.FormFile("name")
 	if err != nil {
@@ -46,25 +41,13 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in opening file(name)")
 	}
 
-	buf = make([]byte, 1024)
-	var n int
-	var name string
-	for {
-		n, err = filename.Read(buf)
-		if n == 0 {
-			break
-		}
-		if err != nil {
-			break
-		}
-		name = string(buf[:n])
-	}
-
-	b, err := repository.IsThereGame(name)
+	buf, err = ioutil.ReadAll(filename)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
+		return c.String(http.StatusInternalServerError, "something wrong in reading file(name)")
 	}
+	name := *(*string)(unsafe.Pointer(&buf))
 
+	b := repository.IsThereGame(name)
 	if b {
 		return c.String(http.StatusInternalServerError, "A game with the same name exists")
 	}
@@ -84,7 +67,7 @@ func PostGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in uploading file")
 	}
 
-	err = repository.AddGame(name, containerName, nameOfFile, strmd5)
+	err = repository.AddGame(name, containerName, nameOfFile, md5)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in inserting in db")
 	}
@@ -94,10 +77,22 @@ func PostGameHandler(c echo.Context) error {
 
 //PutGameHandler gameを更新するときのメソッド
 func PutGameHandler(c echo.Context) error {
+	containerName := "game0"
 	gameFile, err := c.FormFile("file")
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in reading fileheader(game)")
 	}
+
+	file, err := gameFile.Open()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in opening file")
+	}
+
+	buf, err := ioutil.ReadAll(file)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in reading file")
+	}
+	md5 := md5.Sum(buf)
 
 	gameName, err := c.FormFile("name")
 	if err != nil {
@@ -109,27 +104,15 @@ func PutGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in opening file(name)")
 	}
 
-	buf := make([]byte, 1024)
-	var n int
-	var name string
-	for {
-		n, err = filename.Read(buf)
-		if n == 0 {
-			break
-		}
-		if err != nil {
-			break
-		}
-		name = string(buf[:n])
-	}
-
-	b, err := repository.IsThereGame(name)
+	buf, err = ioutil.ReadAll(filename)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
+		return c.String(http.StatusInternalServerError, "something wrong in reading file(name)")
 	}
+	name := *(*string)(unsafe.Pointer(&buf))
 
-	if b {
-		return c.String(http.StatusInternalServerError, "A game with the same name exists")
+	b := repository.IsThereGame(name)
+	if !b {
+		return c.String(http.StatusInternalServerError, "A game with the same name does not exist")
 	}
 
 	nameOfFile := name + ".zip"
@@ -137,22 +120,18 @@ func PutGameHandler(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name of file exists")
 	}
-
-	if b {
-		return c.String(http.StatusInternalServerError, "A game with the same name of file exists")
+	if !b {
+		return c.String(http.StatusInternalServerError, "A game with the same name of file does not exist")
 	}
 
-	containerName, err := repository.GetContainerByName(name)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in getting the name of container")
-	}
 	err = repository.UploadGame(gameFile, nameOfFile, containerName)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "something wrong in uploading file")
 	}
 
-	err = repository.UpdateGame(name)
+	err = repository.UpdateGame(name, md5)
 	if err != nil {
+		fmt.Println(err)
 		return c.String(http.StatusInternalServerError, "something wrong in updating db")
 	}
 
@@ -168,11 +147,7 @@ func DeleteGameHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in getting game`s name")
 	}
 
-	b, err := repository.IsThereGame(name)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if A game with the same name exists")
-	}
-
+	b := repository.IsThereGame(name)
 	if !b {
 		return c.String(http.StatusInternalServerError, "A game with the name doesn`t exist")
 	}

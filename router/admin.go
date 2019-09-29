@@ -17,8 +17,8 @@ func GetAdminsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, admins)
 }
 
-//PushAdminsHandler 管理者を追加する関数
-func PushAdminsHandler(c echo.Context) error {
+//PostAdminsHandler 管理者を追加する関数
+func PostAdminsHandler(c echo.Context) error {
 	type AddAdmins struct {
 		Admins []string `json:"admins,omitempty"`
 	}

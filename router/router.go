@@ -31,7 +31,7 @@ func AdminAuthenticate() echo.MiddlewareFunc {
 			}
 			// 管理者でないユーザはアクセスできない
 			if !b {
-				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
+				return echo.NewHTTPError(http.StatusUnauthorized, "You are not admin or logged in")
 			}
 			return next(c)
 		}
@@ -138,6 +138,13 @@ func SetRouting(e *echo.Echo) {
 		{
 			adminSpecial.POST("/:id", PostSpecialHandler)
 			adminSpecial.DELETE("/:id", DeleteSpecialHandler)
+		}
+
+		adminAdmin := admin.Group("/admin")
+		{
+			adminAdmin.GET("", GetAdminsHandler)
+			adminAdmin.POST("", PostAdminsHandler)
+			adminAdmin.DELETE("", DeleteAdminHandler)
 		}
 	}
 }

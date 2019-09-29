@@ -9,6 +9,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo"
 )
@@ -21,7 +22,7 @@ var (
 
 //EstablishDB データベースに接続
 func EstablishDB() error {
-	_db, err := sqlx.Connect("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE")))
+	_db, err := sqlx.Connect("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
 	if err != nil {
 		return err
 	}
@@ -39,18 +40,23 @@ func EstablishConoHa() error {
 
 	option, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	provider, err := openstack.AuthenticatedClient(option)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	client, err = openstack.NewObjectStorageV1(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		panic(err)
+		return err
 	}
+	result := containers.Create(client, "game0", nil)
+	if result.Err != nil {
+		return result.Err
+	}
+	fmt.Println(result)
 	return nil
 }
 

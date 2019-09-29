@@ -2,23 +2,19 @@ package router
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/labstack/echo"
 
-	"github.com/traPtitech/anke-to/model"
+	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/repository"
 )
 
 // GetQuestions GET /questions
 func GetQuestions(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.Logger().Error(err)
-		return err
-	}
+	questionnaireID := c.Param("id")
 
-	allquestions, err := model.GetQuestions(c, questionnaireID)
+	allquestions, err := repository.GetQuestions(c, questionnaireID)
 	if err != nil {
 		return err
 	}
@@ -28,7 +24,7 @@ func GetQuestions(c echo.Context) error {
 	}
 
 	type questionInfo struct {
-		QuestionID      int      `json:"questionID"`
+		QuestionID      string   `json:"questionID"`
 		PageNum         int      `json:"page_num"`
 		QuestionNum     int      `json:"question_num"`
 		QuestionType    string   `json:"question_type"`
@@ -49,9 +45,9 @@ func GetQuestions(c echo.Context) error {
 		var err error
 		switch v.Type {
 		case "MultipleChoice", "Checkbox", "Dropdown":
-			options, err = model.GetOptions(c, v.ID)
+			options, err = repository.GetOptions(c, v.ID)
 		case "LinearScale":
-			scalelabel, err = model.GetScaleLabels(c, v.ID)
+			scalelabel, err = repository.GetScaleLabels(c, v.ID)
 		}
 		if err != nil {
 			return err
@@ -80,7 +76,7 @@ func GetQuestions(c echo.Context) error {
 // PostQuestion POST /questions
 func PostQuestion(c echo.Context) error {
 	req := struct {
-		QuestionnaireID int      `json:"questionnaireID"`
+		QuestionnaireID string   `json:"questionnaireID"`
 		QuestionType    string   `json:"question_type"`
 		QuestionNum     int      `json:"question_num"`
 		PageNum         int      `json:"page_num"`
@@ -98,7 +94,7 @@ func PostQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	lastID, err := model.InsertQuestion(
+	lastID, err := repository.InsertQuestion(
 		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body, req.IsRequired)
 	if err != nil {
 		c.Logger().Error(err)
@@ -108,12 +104,12 @@ func PostQuestion(c echo.Context) error {
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
 		for i, v := range req.Options {
-			if err := model.InsertOption(c, lastID, i+1, v); err != nil {
+			if err := repository.InsertOption(c, lastID, i+1, v); err != nil {
 				return err
 			}
 		}
 	case "LinearScale":
-		if err := model.InsertScaleLabels(c, lastID,
+		if err := repository.InsertScaleLabels(c, lastID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -125,7 +121,7 @@ func PostQuestion(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"questionID":        int(lastID),
+		"questionID":        lastID,
 		"questionnaireID":   req.QuestionnaireID,
 		"question_type":     req.QuestionType,
 		"question_num":      req.QuestionNum,
@@ -142,13 +138,10 @@ func PostQuestion(c echo.Context) error {
 
 // EditQuestion PATCH /questions/:id
 func EditQuestion(c echo.Context) error {
-	questionID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionID := c.Param("id")
 
 	req := struct {
-		QuestionnaireID int      `json:"questionnaireID"`
+		QuestionnaireID string   `json:"questionnaireID"`
 		QuestionType    string   `json:"question_type"`
 		QuestionNum     int      `json:"question_num"`
 		PageNum         int      `json:"page_num"`
@@ -166,7 +159,7 @@ func EditQuestion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if err := model.UpdateQuestion(
+	if err := repository.UpdateQuestion(
 		c, req.QuestionnaireID, req.PageNum, req.QuestionNum, req.QuestionType, req.Body,
 		req.IsRequired, questionID); err != nil {
 		c.Logger().Error(err)
@@ -175,11 +168,11 @@ func EditQuestion(c echo.Context) error {
 
 	switch req.QuestionType {
 	case "MultipleChoice", "Checkbox", "Dropdown":
-		if err := model.UpdateOptions(c, req.Options, questionID); err != nil {
+		if err := repository.UpdateOptions(c, req.Options, questionID); err != nil {
 			return err
 		}
 	case "LinearScale":
-		if err := model.UpdateScaleLabels(c, questionID,
+		if err := repository.UpdateScaleLabels(c, questionID,
 			model.ScaleLabels{
 				ScaleLabelLeft:  req.ScaleLabelLeft,
 				ScaleLabelRight: req.ScaleLabelRight,
@@ -195,20 +188,17 @@ func EditQuestion(c echo.Context) error {
 
 // DeleteQuestion DELETE /questions/:id
 func DeleteQuestion(c echo.Context) error {
-	questionID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionID := c.Param("id")
 
-	if err := model.DeleteQuestion(c, questionID); err != nil {
+	if err := repository.DeleteQuestion(c, questionID); err != nil {
 		return err
 	}
 
-	if err := model.DeleteOptions(c, questionID); err != nil {
+	if err := repository.DeleteOptions(c, questionID); err != nil {
 		return err
 	}
 
-	if err := model.DeleteScaleLabels(c, questionID); err != nil {
+	if err := repository.DeleteScaleLabels(c, questionID); err != nil {
 		return err
 	}
 

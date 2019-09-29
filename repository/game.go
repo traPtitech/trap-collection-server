@@ -10,8 +10,8 @@ import (
 )
 
 //AddGame gameテーブルにgameを追加するメソッド
-func AddGame(name string, container string, fileName string, md5 string) error {
-	_, err := Db.Exec("INSERT INTO game (id,name,container,file_name,md5,created_at,updated_at) VALUES (?,?,?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, container, fileName, md5, time.Now(), time.Now())
+func AddGame(name string, container string, fileName string, md5 [16]byte) error {
+	_, err := Db.Exec("INSERT INTO game (id,name,container,file_name,md5,created_at,updated_at) VALUES (?,?,?,?,?,?,?)", uuid.Must(uuid.NewV4()).String(), name, container, fileName, md5[:16], time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -20,8 +20,8 @@ func AddGame(name string, container string, fileName string, md5 string) error {
 }
 
 //UpdateGame gameテーブルのupdated_atを更新するメソッド
-func UpdateGame(name string) error {
-	_, err := Db.Exec("UPDATE game SET upgated_at=? WHERE name=? AND deleted_at IS NULL", time.Now(), name)
+func UpdateGame(name string, md5 [16]byte) error {
+	_, err := Db.Exec("UPDATE game SET updated_at=?,md5=? WHERE name=? AND deleted_at IS NULL", time.Now(), md5[:16], name)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func UpdateGame(name string) error {
 
 //UpdateGameTime ゲームの起点時間を変更
 func UpdateGameTime(name string, t time.Time) error {
-	_, err := Db.Exec("UPDATE game SET time=? upgated_at=? WHERE name=? AND deleted_at IS NULL", t, time.Now(), name)
+	_, err := Db.Exec("UPDATE game SET time=?,updated_at=? WHERE name=? AND deleted_at IS NULL", t, time.Now(), name)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func DeleteGame(name string) error {
 		return errors.New("game not found")
 	}
 
-	_, err = Db.Exec("UPDATE game deleted_at = ? WHERE name=? AND deleted_at IS NULL", time.Now(), name)
+	_, err = Db.Exec("UPDATE game SET deleted_at = ? WHERE name=? AND deleted_at IS NULL", time.Now(), name)
 	if err != nil {
 		return err
 	}
@@ -125,12 +125,12 @@ func GetContainerByName(name string) (string, error) {
 }
 
 //IsThereGame 同名のgameが存在するか確認するメソッド
-func IsThereGame(name string) (bool, error) {
+func IsThereGame(name string) bool {
 	var gameID string
 	err := Db.Get(&gameID, "SELECT id from game WHERE name=? AND deleted_at IS NULL", name)
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	return !(gameID == ""), nil
+	return true
 }

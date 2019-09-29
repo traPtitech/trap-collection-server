@@ -21,10 +21,7 @@ func PostSpecialHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in binding")
 	}
 
-	b, err := repository.IsThereSpecial(id, game.GameName)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if is there the special case")
-	}
+	b := repository.IsThereSpecial(id, game.GameName)
 	if b {
 		return c.String(http.StatusInternalServerError, "there is the special case")
 	}
@@ -49,10 +46,7 @@ func DeleteSpecialHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in binding")
 	}
 
-	b, err := repository.IsThereSpecial(id, game.GameName)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if is there the special case")
-	}
+	b := repository.IsThereSpecial(id, game.GameName)
 	if !b {
 		return c.String(http.StatusInternalServerError, "there is not the special case")
 	}

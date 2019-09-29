@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/trap-collection-server/model"
 )
 
 //GetQuestionsType 質問のIDと種類の取得
-func GetQuestionsType(c echo.Context, questionnaireID int) ([]model.QuestionIDType, error) {
+func GetQuestionsType(c echo.Context, questionnaireID string) ([]model.QuestionIDType, error) {
 	ret := []model.QuestionIDType{}
 	if err := Db.Select(&ret,
 		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num`,
@@ -24,7 +24,7 @@ func GetQuestionsType(c echo.Context, questionnaireID int) ([]model.QuestionIDTy
 }
 
 //GetQuestions 質問の取得
-func GetQuestions(c echo.Context, questionnaireID int) ([]model.Questions, error) {
+func GetQuestions(c echo.Context, questionnaireID string) ([]model.Questions, error) {
 	allquestions := []model.Questions{}
 
 	// アンケートidの一致する質問を取る
@@ -39,29 +39,25 @@ func GetQuestions(c echo.Context, questionnaireID int) ([]model.Questions, error
 
 //InsertQuestion 質問の追加
 func InsertQuestion(
-	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
-	body string, isRequired bool) (int, error) {
-	result, err := Db.Exec(
-		`INSERT INTO question (questionnaire_id, page_num, question_num, type, body, is_required, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		questionnaireID, pageNum, questionNum, questionType, body, isRequired, time.Now())
+	c echo.Context, questionnaireID string, pageNum int, questionNum int, questionType string,
+	body string, isRequired bool) (string, error) {
+	lastID := uuid.Must(uuid.NewV4()).String()
+	_, err := Db.Exec(
+		`INSERT INTO question (id,questionnaire_id, page_num, question_num, type, body, is_required, created_at)
+		VALUES (?,?, ?, ?, ?, ?, ?, ?)`,
+		lastID, questionnaireID, pageNum, questionNum, questionType, body, isRequired, time.Now())
 	if err != nil {
 		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
+		return "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return int(lastID), nil
+	return lastID, nil
 }
 
 //UpdateQuestion 質問の変更
 func UpdateQuestion(
-	c echo.Context, questionnaireID int, pageNum int, questionNum int, questionType string,
-	body string, isRequired bool, questionID int) error {
+	c echo.Context, questionnaireID string, pageNum int, questionNum int, questionType string,
+	body string, isRequired bool, questionID string) error {
 	if _, err := Db.Exec(
 		"UPDATE question SET questionnaire_id = ?, page_num = ?, question_num = ?, type = ?, body = ?, is_required = ? WHERE id = ?",
 		questionnaireID, pageNum, questionNum, questionType, body, isRequired, questionID); err != nil {
@@ -72,7 +68,7 @@ func UpdateQuestion(
 }
 
 //DeleteQuestion 質問の削除
-func DeleteQuestion(c echo.Context, questionID int) error {
+func DeleteQuestion(c echo.Context, questionID string) error {
 	if _, err := Db.Exec(
 		"UPDATE question SET deleted_at = ? WHERE id = ?",
 		time.Now(), questionID); err != nil {
@@ -83,7 +79,7 @@ func DeleteQuestion(c echo.Context, questionID int) error {
 }
 
 //GetResShared アンケートの公開範囲の取得
-func GetResShared(c echo.Context, questionnaireID int) (string, error) {
+func GetResShared(c echo.Context, questionnaireID string) (string, error) {
 	resSharedTo := ""
 	if err := Db.Get(&resSharedTo,
 		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,

@@ -7,41 +7,43 @@ import (
 
 	"database/sql"
 
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
+
 	"github.com/traPtitech/trap-collection-server/model"
 )
 
 //InsertRespondents 回答セットの追加
-func InsertRespondents(c echo.Context, req model.Responses) (int, error) {
-	var result sql.Result
+func InsertRespondents(c echo.Context, req model.Responses) (string, error) {
 	var err error
+	lastID := uuid.Must(uuid.NewV4()).String()
 	if req.SubmittedAt == "" || req.SubmittedAt == "NULL" {
 		req.SubmittedAt = "NULL"
-		if result, err = Db.Exec(
-			`INSERT INTO respondents (questionnaire_id, user_traqid, modified_at) VALUES (?, ?, ?)`,
-			req.ID, GetUserID(c), time.Now()); err != nil {
+		if _, err = Db.Exec(
+			`INSERT INTO respondents (response_id,questionnaire_id, modified_at) VALUES (?, ?, ?)`,
+			lastID, req.ID, time.Now()); err != nil {
 			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
-		if result, err = Db.Exec(
-			`INSERT INTO respondents
-				(questionnaire_id, user_traqid, submitted_at, modified_at) VALUES (?, ?, ?, ?)`,
-			req.ID, GetUserID(c), req.SubmittedAt, time.Now()); err != nil {
+		t, err := time.Parse(time.RFC3339, req.SubmittedAt)
+		if err != nil {
 			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if _, err = Db.Exec(
+			`INSERT INTO respondents
+				(response_id,questionnaire_id, submitted_at, modified_at) VALUES (?, ?, ?, ?)`,
+			lastID, req.ID, t, time.Now()); err != nil {
+			c.Logger().Error(err)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return int(lastID), nil
+	return lastID, nil
 }
 
 //InsertResponse 回答の追加
-func InsertResponse(c echo.Context, responseID int, req model.Responses, body model.ResponseBody, data string) error {
+func InsertResponse(c echo.Context, responseID string, req model.Responses, body model.ResponseBody, data string) error {
 	if _, err := Db.Exec(
 		`INSERT INTO response (response_id, question_id, body, modified_at) VALUES (?, ?, ?, ?)`,
 		responseID, body.QuestionID, data, time.Now()); err != nil {
@@ -52,7 +54,7 @@ func InsertResponse(c echo.Context, responseID int, req model.Responses, body mo
 }
 
 //GetRespondents 回答の取得
-func GetRespondents(c echo.Context, questionnaireID int) ([]string, error) {
+func GetRespondents(c echo.Context, questionnaireID string) ([]string, error) {
 	respondents := []string{}
 	if err := Db.Select(&respondents,
 		"SELECT user_traqid FROM respondents WHERE questionnaire_id = ? AND deleted_at IS NULL AND submitted_at IS NOT NULL",
@@ -103,7 +105,7 @@ func GetResponsesInfo(c echo.Context, responsesinfo []model.ResponseInfo) ([]mod
 }
 
 //GetResponseBody 回答内容の取得
-func GetResponseBody(c echo.Context, responseID int, questionID int, questionType string) (model.ResponseBody, error) {
+func GetResponseBody(c echo.Context, responseID string, questionID string, questionType string) (model.ResponseBody, error) {
 	body := model.ResponseBody{
 		QuestionID:   questionID,
 		QuestionType: questionType,
@@ -143,7 +145,7 @@ func GetResponseBody(c echo.Context, responseID int, questionID int, questionTyp
 }
 
 //RespondedAt 回答時刻の取得
-func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
+func RespondedAt(c echo.Context, questionnaireID string) (string, error) {
 	respondedAt := sql.NullString{}
 	if err := Db.Get(&respondedAt,
 		`SELECT MAX(submitted_at) FROM respondents
@@ -156,7 +158,7 @@ func RespondedAt(c echo.Context, questionnaireID int) (string, error) {
 }
 
 //GetRespondentByID IDによる回答の取得
-func GetRespondentByID(c echo.Context, responseID int) (model.ResponseID, error) {
+func GetRespondentByID(c echo.Context, responseID string) (model.ResponseID, error) {
 	respondentInfo := model.ResponseID{}
 	if err := Db.Get(&respondentInfo,
 		`SELECT questionnaire_id, modified_at, submitted_at from respondents
@@ -171,7 +173,7 @@ func GetRespondentByID(c echo.Context, responseID int) (model.ResponseID, error)
 }
 
 //UpdateRespondents 回答の変更
-func UpdateRespondents(c echo.Context, questionnaireID int, responseID int, submittedAt string) error {
+func UpdateRespondents(c echo.Context, questionnaireID string, responseID string, submittedAt string) error {
 	if submittedAt == "" || submittedAt == "NULL" {
 		submittedAt = "NULL"
 		if _, err := Db.Exec(
@@ -195,7 +197,7 @@ func UpdateRespondents(c echo.Context, questionnaireID int, responseID int, subm
 }
 
 //DeleteResponse 回答の削除
-func DeleteResponse(c echo.Context, responseID int) error {
+func DeleteResponse(c echo.Context, responseID string) error {
 	if _, err := Db.Exec(
 		`UPDATE response SET deleted_at = ? WHERE response_id = ?`,
 		time.Now(), responseID); err != nil {
@@ -206,11 +208,10 @@ func DeleteResponse(c echo.Context, responseID int) error {
 }
 
 //GetResponsesByID IDによる回答の取得
-func GetResponsesByID(questionnaireID int) ([]model.ResponseAnDBody, error) {
+func GetResponsesByID(questionnaireID string) ([]model.ResponseAnDBody, error) {
 	responses := []model.ResponseAnDBody{}
 	if err := Db.Select(&responses,
-		`SELECT respondents.response_id AS response_id,
-		user_traqid, 
+		`SELECT respondents.response_id AS response_id, 
 		respondents.modified_at AS modified_at,
 		respondents.submitted_at AS submitted_at,
 		response.question_id,
@@ -262,8 +263,8 @@ func GetResponseBodyList(c echo.Context, questionTypeList []model.QuestionIDType
 }
 
 //GetSortedRespondents sortされた回答者の情報を返す
-func GetSortedRespondents(c echo.Context, questionnaireID int, sortQuery string) ([]model.UserResponse, int, error) {
-	sql := `SELECT response_id, user_traqid, modified_at, submitted_at from respondents
+func GetSortedRespondents(c echo.Context, questionnaireID string, sortQuery string) ([]model.UserResponse, int, error) {
+	sql := `SELECT response_id, modified_at, submitted_at from respondents
 			WHERE deleted_at IS NULL AND questionnaire_id = ? AND submitted_at IS NOT NULL`
 
 	sortNum := 0

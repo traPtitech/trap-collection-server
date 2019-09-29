@@ -41,10 +41,14 @@ func CheckHandler(c echo.Context) error {
 
 //DownloadHandler ダウンロードのメソッド
 func DownloadHandler(c echo.Context) error {
-	gameName := c.Param("name")
+	gameID := c.Param("id")
+	gameName, err := repository.GameIDToName(gameID)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "something wrong in getting the game name")
+	}
 	game, err := repository.DownloadGame(gameName)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in getting path from db")
+		return c.String(http.StatusInternalServerError, "something wrong in getting the game file")
 	}
 
 	return c.Blob(200, "application/zip", game)

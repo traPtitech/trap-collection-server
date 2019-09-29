@@ -46,12 +46,10 @@ func DeleteAdministrators(c echo.Context, id string) error {
 //CheckAdmin 自分がadminなら(true, nil)
 func CheckAdmin(c echo.Context) (bool, error) {
 	user := GetUserID(c)
-	found := false
 	var id string
 	err := Db.Get(&id, "SELECT user_traqid FROM administrators WHERE user_traqid = ?", user)
 	if err != nil {
-		return found, err
+		return false, nil
 	}
-	found = (id != "")
-	return found, nil
+	return true, nil
 }

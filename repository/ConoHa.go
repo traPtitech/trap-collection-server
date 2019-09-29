@@ -5,14 +5,13 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 
 	"mime/multipart"
-	"runtime"
 )
 
 //UploadGame ゲームをConoHaオブジェクトストレージにアップロードする関数
 func UploadGame(gameFile *multipart.FileHeader, fileName string, containerName string) error {
 	file, err := gameFile.Open()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
@@ -61,36 +60,19 @@ func DeleteGameFromConoHa(name string) error {
 func GetGameList() ([]string, error) {
 	var containerList []string
 	Db.Select(&containerList, "SELECT DISTINCT container FROM game")
-	l := len(containerList)
 	var gameList []string
-	chErr := make(chan error)
-	chGameList := make(chan []string)
 	for _, v := range containerList {
-		go syncGameList(v, chErr, chGameList)
-	}
-	for i := 0; i < l; i++ {
-		err := <-chErr
+		page, err := objects.List(client, v, objects.ListOpts{}).AllPages()
 		if err != nil {
 			return nil, err
 		}
-		result := <-chGameList
+		result, err := objects.ExtractNames(page)
+		if err != nil {
+			return nil, err
+		}
 		gameList = append(gameList, result...)
 	}
 	return gameList, nil
-}
-
-func syncGameList(container string, chErr chan error, chGameList chan []string) {
-	page, err := objects.List(client, container, objects.ListOpts{}).AllPages()
-	if err != nil {
-		chErr <- err
-		runtime.Goexit()
-	}
-	result, err := objects.ExtractNames(page)
-	if err != nil {
-		chErr <- err
-		runtime.Goexit()
-	}
-	chGameList <- result
 }
 
 //GetContainerList コンテナ一覧を取得する関数

@@ -29,10 +29,7 @@ func PostVersionHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "something wrong in binding")
 	}
 
-	b, err := repository.IsThereVersion(version.Name)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if is there the version")
-	}
+	b := repository.IsThereVersion(version.Name)
 	if b {
 		return c.String(http.StatusNotAcceptable, "same name of version exists")
 	}
@@ -49,18 +46,12 @@ func PostVersionHandler(c echo.Context) error {
 
 	//明らかなN+1、時間ができたら直す、たぶんtransactionとかを使った方がいい
 	for _, v := range version.SpecialList {
-		b, err := repository.IsThereGame(v.GameName)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "something wrong in checking if is there the game")
-		}
+		b := repository.IsThereGame(v.GameName)
 		if !b {
 			return c.String(http.StatusInternalServerError, "the game does not exist")
 		}
 
-		b, err = repository.IsThereSpecial(id, v.GameName)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "something wrong in checking if is there the special case")
-		}
+		b = repository.IsThereSpecial(id, v.GameName)
 		if !b {
 			continue
 		}
@@ -83,10 +74,7 @@ func PutVersionHandler(c echo.Context) error {
 	}
 	id := c.Param("id")
 
-	b, err := repository.IsThereVersion(version.Name)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "something wrong in checking if is there the version")
-	}
+	b := repository.IsThereVersion(version.Name)
 	if !b {
 		return c.String(http.StatusNotAcceptable, "same name of version does not exist")
 	}

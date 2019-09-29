@@ -8,7 +8,7 @@ import (
 
 //InsertSpecial 特例の追加
 func InsertSpecial(versionID string, gameName string, inout string) error {
-	_, err := Db.Exec("Insert INTO special (id,version_id,game_name,inout) VALUES (?,?,?,?)", uuid.Must(uuid.NewV4()).String(), versionID, gameName, inout)
+	_, err := Db.Exec("Insert INTO special (id,version_id,game_name,status) VALUES (?,?,?,?)", uuid.Must(uuid.NewV4()).String(), versionID, gameName, inout)
 	if err != nil {
 		return err
 	}
@@ -43,11 +43,11 @@ func DeleteSpecialByVersion(versionID string) error {
 }
 
 //IsThereSpecial 同一の特例が存在するか
-func IsThereSpecial(versionID string, gameName string) (bool, error) {
+func IsThereSpecial(versionID string, gameName string) bool {
 	var name string
 	err := Db.Get(&name, "SELECT game_name FROM special WHERE version_id=? AND game_name=? AND deleted_at IS NULL", versionID, gameName)
 	if err != nil {
-		return false, err
+		return false
 	}
-	return (name != ""), nil
+	return true
 }

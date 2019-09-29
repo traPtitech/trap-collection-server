@@ -8,7 +8,7 @@ import (
 )
 
 //GetScaleLabels 目盛りの取得
-func GetScaleLabels(c echo.Context, questionID int) (model.ScaleLabels, error) {
+func GetScaleLabels(c echo.Context, questionID string) (model.ScaleLabels, error) {
 	scalelabel := model.ScaleLabels{}
 	if err := Db.Get(&scalelabel, "SELECT * FROM scale_labels WHERE question_id = ?",
 		questionID); err != nil {
@@ -19,7 +19,7 @@ func GetScaleLabels(c echo.Context, questionID int) (model.ScaleLabels, error) {
 }
 
 //InsertScaleLabels 目盛りの追加
-func InsertScaleLabels(c echo.Context, lastID int, label model.ScaleLabels) error {
+func InsertScaleLabels(c echo.Context, lastID string, label model.ScaleLabels) error {
 	if _, err := Db.Exec(
 		"INSERT INTO scale_labels (question_id, scale_label_left, scale_label_right, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)",
 		lastID, label.ScaleLabelLeft, label.ScaleLabelRight, label.ScaleMin, label.ScaleMax); err != nil {
@@ -30,7 +30,7 @@ func InsertScaleLabels(c echo.Context, lastID int, label model.ScaleLabels) erro
 }
 
 //UpdateScaleLabels 目盛りの変更
-func UpdateScaleLabels(c echo.Context, questionID int, label model.ScaleLabels) error {
+func UpdateScaleLabels(c echo.Context, questionID string, label model.ScaleLabels) error {
 	if _, err := Db.Exec(
 		`INSERT INTO scale_labels (question_id, scale_label_right, scale_label_left, scale_min, scale_max) VALUES (?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE scale_label_right = ?, scale_label_left = ?, scale_min = ?, scale_max = ?`,
@@ -44,7 +44,7 @@ func UpdateScaleLabels(c echo.Context, questionID int, label model.ScaleLabels) 
 }
 
 //DeleteScaleLabels 目盛りの削除
-func DeleteScaleLabels(c echo.Context, questionID int) error {
+func DeleteScaleLabels(c echo.Context, questionID string) error {
 	if _, err := Db.Exec(
 		"DELETE FROM scale_labels WHERE question_id= ?",
 		questionID); err != nil {

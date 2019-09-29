@@ -14,7 +14,6 @@ import (
 
 // PostResponse POST /responses
 func PostResponse(c echo.Context) error {
-
 	req := model.Responses{}
 
 	if err := c.Bind(&req); err != nil {
@@ -62,11 +61,7 @@ func PostResponse(c echo.Context) error {
 
 // GetResponsesByID GET /results/:questionnaireID
 func GetResponsesByID(c echo.Context) error {
-	questionnaireID, err := strconv.Atoi(c.Param("questionnaireID"))
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	questionnaireID := c.Param("id")
 
 	sortQuery := c.QueryParam("sort")
 	// sortされた回答者の情報
@@ -82,7 +77,7 @@ func GetResponsesByID(c echo.Context) error {
 	}
 
 	// 各回答者のアンケートIDと回答
-	resMap := map[int][]model.QIDandResponse{}
+	resMap := map[string][]model.QIDandResponse{}
 	for _, resp := range responses {
 		resMap[resp.ResponseID] = append(resMap[resp.ResponseID],
 			model.QIDandResponse{
@@ -99,7 +94,7 @@ func GetResponsesByID(c echo.Context) error {
 
 	// 返す構造体
 	type ReturnInfo struct {
-		ResponseID  int                  `json:"responseID"`
+		ResponseID  string               `json:"responseID"`
 		UserID      string               `json:"traqID"`
 		SubmittedAt string               `json:"submitted_at"`
 		ModifiedAt  string               `json:"modified_at"`
@@ -163,10 +158,7 @@ func GetResponsesByID(c echo.Context) error {
 
 // GetResponse GET /responses
 func GetResponse(c echo.Context) error {
-	responseID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
+	responseID := c.Param("id")
 
 	respondentInfo, err := repository.GetRespondentByID(c, responseID)
 	if err != nil {
@@ -174,7 +166,7 @@ func GetResponse(c echo.Context) error {
 	}
 
 	responses := struct {
-		QuestionnaireID int                  `json:"questionnaireID"`
+		QuestionnaireID string               `json:"questionnaireID"`
 		SubmittedAt     string               `json:"submitted_at"`
 		ModifiedAt      string               `json:"modified_at"`
 		Body            []model.ResponseBody `json:"body"`

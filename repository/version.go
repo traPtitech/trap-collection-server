@@ -93,16 +93,13 @@ func VersionNotForSaleList() ([]model.VersionNotForSale, error) {
 }
 
 //IsThereVersion 販売・工大祭用バージョンに同名のものが存在するか
-func IsThereVersion(name string) (bool, error) {
+func IsThereVersion(name string) bool {
 	var versionForSaleName string
-	err := Db.Get(&versionForSaleName, "SELECT name FROM version_for_sale WHERE name = ?", name)
-	if err != nil {
-		return false, err
-	}
+	err1 := Db.Get(&versionForSaleName, "SELECT name FROM version_for_sale WHERE name = ?", name)
 	var versionNotForSaleName string
-	err = Db.Get(&versionNotForSaleName, "SELECT name FROM version_not_for_sale WHERE name = ?", name)
-	if err != nil {
-		return false, err
+	err2 := Db.Get(&versionNotForSaleName, "SELECT name FROM version_not_for_sale WHERE name = ?", name)
+	if err1 != nil && err2 != nil {
+		return false
 	}
-	return ((versionForSaleName != "") && (versionNotForSaleName != "")), nil
+	return true
 }
