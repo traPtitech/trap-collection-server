@@ -150,44 +150,38 @@ func GetTitleAndLimit(c echo.Context, questionnaireID string) (string, string, e
 }
 
 //InsertQuestionnaire アンケートの追加
-func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string) (int, error) {
-	var result sql.Result
+func InsertQuestionnaire(c echo.Context, title string, description string, resTimeLimit string) (string, error) {
+	lastID := uuid.Must(uuid.NewV4()).String()
 
 	if resTimeLimit == "" || resTimeLimit == "NULL" {
 		resTimeLimit = "NULL"
 		var err error
-		result, err = Db.Exec(
+		_, err = Db.Exec(
 			`INSERT INTO questionnaires (id,title, description, created_at, modified_at)
-			VALUES (?,?, ?, ?, ?, ?)`,
-			uuid.Must(uuid.NewV4()).String(), title, description, time.Now(), time.Now())
+			VALUES (?, ?, ?, ?, ?)`,
+			lastID, title, description, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	} else {
 		var err error
 		t, err := time.Parse(time.RFC3339, resTimeLimit)
 		if err != nil {
 			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		result, err = Db.Exec(
+		_, err = Db.Exec(
 			`INSERT INTO questionnaires (id,title, description, res_time_limit, created_at, modified_at)
 			VALUES (?, ?, ?, ?, ?, ?)`,
-			uuid.Must(uuid.NewV4()).String(), title, description, t, time.Now(), time.Now())
+			lastID, title, description, t, time.Now(), time.Now())
 		if err != nil {
 			c.Logger().Error(err)
-			return 0, echo.NewHTTPError(http.StatusInternalServerError)
+			return "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
-	lastID, err := result.LastInsertId()
-	if err != nil {
-		c.Logger().Error(err)
-		return 0, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return int(lastID), nil
+	return lastID, nil
 }
 
 //UpdateQuestionnaire アンケートの変更

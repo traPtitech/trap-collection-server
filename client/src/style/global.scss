@@ -1,0 +1,289 @@
+#app {
+  * {
+    font-family: 'Avenir', Helvetica, Arial, YuGothic, 游ゴシック体, Yu Gothic, 游ゴシック, Hiragino Sans, ヒラギノ角ゴシック, メイリオ, Meiryo, ＭＳ\Ｐゴシック, themify, sans-serif;
+  }
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: $var-indigo;
+}
+
+.columns {
+  padding-top: 0.75rem;
+}
+
+.column {
+  padding: 1rem;
+  max-width: 100%;
+}
+
+.is-fullheight {
+  min-height: -webkit-fill-available;
+}
+
+
+.is-small {
+  font-size: 0.9rem;
+}
+
+.button{
+  color: inherit;
+}
+
+.button.is-disabled,
+.button[disabled] {
+  background-color: white;
+  border-color: #dbdbdb;
+  color: darkgray;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  opacity: 0.5;
+  pointer-events: none; // ポインター操作を無効化
+}
+
+@media screen and (max-width: 480px) {
+  // mobile
+  .sidemenu {
+    height: fit-content;
+  }
+  .app-main {
+    height: 100%;
+  }
+}
+
+@media screen and (max-width: 1088px) {
+  // 固定サイドメニューは非表示
+  .fixed-sidemenu {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1088px) {
+  // widthが大きいときは固定サイドメニューのみ表示
+  .sidemenu {
+    display: none;
+  }
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+.app-main {
+  padding: 0;
+}
+
+.columns {
+  margin: 0;
+  padding-top: 0;
+}
+
+summary {
+  cursor: pointer;
+}
+
+a[disabled] {
+  cursor: default;
+  pointer-events: none;
+}
+
+.card {
+  /* width: fit-content; */
+  margin: 1rem 1.5rem;
+  overflow-x: auto;
+  width: auto;
+  max-width: fit-content;
+}
+.card-header-title {
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+}
+.card-content {
+  padding: 1rem;
+}
+
+.tabs {
+  margin-bottom: 0 !important;
+  margin-right: 0.5rem;
+  margin-left: 0.5rem;
+}
+.tabs:first-child {
+  margin-top: 1rem;
+}
+.tab{
+  &.is-active{
+    a{
+      border-bottom-width: 4px;
+    }
+  }
+  a{
+    margin-bottom: -0.15em;
+  }
+}
+
+.has-navbar-fixed-bottom {
+  padding-bottom: 100px;
+}
+
+.details {
+  .checkbox {
+    width: 4rem;
+    margin: 0.5rem;
+  }
+  .details-child {
+    article.column {
+      padding: 0;
+    }
+    .columns {
+      margin-bottom: 0;
+    }
+    .card {
+      max-width: 100%;
+      padding: 0.7rem;
+    }
+    .card-content {
+      .subtitle {
+        margin: 0;
+      }
+      details {
+        margin: 0.5rem;
+        p {
+          padding: 0 0.5rem;
+        }
+      }
+    }
+    @media screen and (min-width: 769px) {
+      // widthが大きいときは横並びのカードの間を狭くする
+      .column:not(:last-child) > .card {
+        margin-right: 0;
+      }
+    }
+  }
+}
+
+.icon.circled {
+  background-color: $base-lightbrown;
+  color: $base-darkbrown;
+  border-radius: 1rem;
+}
+
+// user name lists
+.highlight-name {
+  font-weight: bold;
+  background-color: $var-yellow;
+}
+
+// readonly buttons
+.readonly-checkbox,
+.readonly-radiobutton {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: $base-darkbrown solid 1px;
+  display: inline-block;
+  margin: auto;
+  &.checked {
+    background-color: $base-brown;
+  }
+}
+.readonly-checkbox {
+  border-radius: 0.1rem;
+}
+.readonly-radiobutton {
+  border-radius: 0.5rem;
+}
+
+// sort handles and trash buttons
+.sort-handle,
+.delete-button {
+  width: min-content;
+  margin: 0 auto;
+  .icon {
+    cursor: pointer;
+    margin: auto;
+  }
+  .icon.disabled {
+    color: lightgray;
+    pointer-events: none;
+  }
+  .icon.is-medium {
+    font-size: 1.2rem;
+  }
+}
+
+// questions
+.questions {
+  .question {
+    .columns {
+      width: 100%;
+    }
+    .column {
+      padding: 0.2rem;
+    }
+    .column.question {
+      padding: 0.5rem 1rem;
+    }
+    .column.left-bar {
+      width: fit-content;
+      max-width: fit-content;
+      padding: 0;
+    }
+    input,
+    textarea {
+      border: none;
+      outline: none;
+      -webkit-box-shadow: none;
+      box-shadow: none;
+      border-radius: 0;
+    }
+    .question-body {
+      margin-bottom: 0.5rem;
+    }
+    .response-body {
+      margin: 0.5rem 0.5rem;
+      p {
+        margin-top: 1rem;
+      }
+      p.has-underline {
+        padding-bottom: 0.25rem;
+      }
+    }
+    .has-underline {
+      padding: 0 0.5rem;
+      border-bottom: $base-darkbrown dotted 0.5px;
+    }
+    .is-editable.has-underline {
+      border-bottom: $base-brown solid 0.5px;
+    }
+    input:focus.has-underline {
+      border-bottom: $base-darkbrown solid 2px;
+    }
+  }
+}
+
+
+// list animation
+.list-move {
+  transition: transform 1s;
+}
+.list-leave-to,
+.list-enter {
+  transition: all 1s;
+  opacity: 0;
+  transform: translateX(30px);
+}
+.list-leave-active {
+  position: absolute;
+}
+
+// fade animation
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}

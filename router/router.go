@@ -40,111 +40,114 @@ func AdminAuthenticate() echo.MiddlewareFunc {
 
 //SetRouting ルーティング
 func SetRouting(e *echo.Echo) {
-	check := e.Group("/check")
+	api := e.Group("/api")
 	{
-		check.POST("/:version/other", CheckHandler)
-	}
+		//check := api.Group("/check")
+		//{
+		//	check.POST("/:version/other", CheckHandler)
+		//}
 
-	game := e.Group("/game")
-	{
-		game.GET("/:id", DownloadHandler)
-	}
-
-	responses := e.Group("/responses")
-	{
-		responses.POST("", PostResponse)
-	}
-
-	questionnaires := e.Group("/questionnaires")
-	{
-		questionnaires.GET("/:id/questions", GetQuestions)
-	}
-
-	time := e.Group("/time")
-	{
-		time.POST("", PostTimeHandler)
-	}
-
-	seat := e.Group("/seat")
-	{
-		seat.POST("", PostSeatHandler)
-		seat.GET("", GetSeatHandler)
-	}
-
-	trap := e.Group("/trap", UserAuthenticate())
-	{
-		trapGame := trap.Group("/game")
+		//game := api.Group("/game")
+		//{
+		//	game.GET("/:id", DownloadHandler)
+		//}
+	
+		responses := api.Group("/responses")
 		{
-			trapGame.POST("", PostGameHandler)
-			trapGame.PUT("", PutGameHandler)
-			trapGame.DELETE("/:id", DeleteGameHandler)
-			trapGame.GET("", GetGameNameListHandler)
+			responses.POST("", PostResponse)
 		}
 
-		trapResponses := trap.Group("/responses")
+		questionnaires := api.Group("/questionnaires")
 		{
-			trapResponses.GET("/:id", GetResponse)
+			questionnaires.GET("/:id/questions", GetQuestions)
 		}
 
-		trapUsers := trap.Group("/users")
+		time := api.Group("/time")
 		{
-			trapUsersMe := trapUsers.Group("/me")
+			time.POST("", PostTimeHandler)
+		}
+
+		seat := api.Group("/seat")
+		{
+			seat.POST("", PostSeatHandler)
+			seat.GET("", GetSeatHandler)
+		}
+
+		trap := api.Group("/trap", UserAuthenticate())
+		{
+			//trapGame := trap.Group("/game")
+			//{
+			//	trapGame.POST("", PostGameHandler)
+			//	trapGame.PUT("", PutGameHandler)
+			//	trapGame.DELETE("/:id", DeleteGameHandler)
+			//	trapGame.GET("", GetGameNameListHandler)
+			//}
+
+			trapResponses := trap.Group("/responses")
 			{
-				trapUsersMe.GET("", GetUsersMe)
+				trapResponses.GET("/:id", GetResponse)
 			}
+
+			trapUsers := trap.Group("/users")
+			{
+				trapUsersMe := trapUsers.Group("/me")
+				{
+					trapUsersMe.GET("", GetUsersMe)
+				}
+			}
+
+			trapResults := trap.Group("/results")
+			{
+				trapResults.GET("/:questionnaireID", GetResponsesByID)
+			}
+
+			//trapVersion := trap.Group("/version")
+			//{
+			//	trapVersion.GET("/sale", GetVersionForSaleListHandler)
+			//	trapVersion.GET("/fes", GetVersionNotForSaleListHandler)
+			//	trapVersion.GET("/:id/game", GetGameListHandler)
+			//	trapVersion.GET("/:id/nongame", GetNonGameListHandler)
+			//	trapVersion.GET("/:id/questionnaire", GetQuestionnaireHandler)
+			//}
 		}
 
-		trapResults := trap.Group("/results")
+		admin := api.Group("/admin", AdminAuthenticate())
 		{
-			trapResults.GET("/:questionnaireID", GetResponsesByID)
-		}
+			adminQuestions := admin.Group("/questions")
+			{
+				adminQuestions.POST("", PostQuestion)
+				adminQuestions.PATCH("/:id", EditQuestion)
+				adminQuestions.DELETE("/:id", DeleteQuestion)
+			}
 
-		trapVersion := trap.Group("/version")
-		{
-			trapVersion.GET("/sale", GetVersionForSaleListHandler)
-			trapVersion.GET("/fes", GetVersionNotForSaleListHandler)
-			trapVersion.GET("/:id/game", GetGameListHandler)
-			trapVersion.GET("/:id/nongame", GetNonGameListHandler)
-			trapVersion.GET("/:id/questionnaire", GetQuestionnaireHandler)
-		}
-	}
+			adminQuestionnaires := admin.Group("/questionnaires")
+			{
+				adminQuestionnaires.POST("", PostQuestionnaire)
+				adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
+				adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
+				adminQuestionnaires.GET("", GetQuestionnaires)
+				adminQuestionnaires.GET("/:id", GetQuestionnaire)
+			}
+	
+			adminVersion := admin.Group("/version")
+			{
+				adminVersion.POST("", PostVersionHandler)
+				adminVersion.PUT("/:id", PutVersionHandler)
+				adminVersion.DELETE("/:id", DeleteVersionHandler)
+			}
 
-	admin := e.Group("/admin", AdminAuthenticate())
-	{
-		adminQuestions := admin.Group("/questions")
-		{
-			adminQuestions.POST("", PostQuestion)
-			adminQuestions.PATCH("/:id", EditQuestion)
-			adminQuestions.DELETE("/:id", DeleteQuestion)
-		}
+			adminSpecial := admin.Group("/special")
+			{
+				adminSpecial.POST("/:id", PostSpecialHandler)
+				adminSpecial.DELETE("/:id", DeleteSpecialHandler)
+			}
 
-		adminQuestionnaires := admin.Group("/questionnaires")
-		{
-			adminQuestionnaires.POST("", PostQuestionnaire)
-			adminQuestionnaires.PATCH("/:id", EditQuestionnaire)
-			adminQuestionnaires.DELETE("/:id", DeleteQuestionnaire)
-			adminQuestionnaires.GET("", GetQuestionnaires)
-			adminQuestionnaires.GET("/:id", GetQuestionnaire)
-		}
-
-		adminVersion := admin.Group("/version")
-		{
-			adminVersion.POST("", PostVersionHandler)
-			adminVersion.PUT("/:id", PutVersionHandler)
-			adminVersion.DELETE("/:id", DeleteVersionHandler)
-		}
-
-		adminSpecial := admin.Group("/special")
-		{
-			adminSpecial.POST("/:id", PostSpecialHandler)
-			adminSpecial.DELETE("/:id", DeleteSpecialHandler)
-		}
-
-		adminAdmin := admin.Group("/admin")
-		{
-			adminAdmin.GET("", GetAdminsHandler)
-			adminAdmin.POST("", PostAdminsHandler)
-			adminAdmin.DELETE("", DeleteAdminHandler)
-		}
+			adminAdmin := admin.Group("/admin")
+			{
+				adminAdmin.GET("", GetAdminsHandler)
+				adminAdmin.POST("", PostAdminsHandler)
+				adminAdmin.DELETE("", DeleteAdminHandler)
+			}
+		}	
 	}
 }

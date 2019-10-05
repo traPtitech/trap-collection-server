@@ -15,7 +15,7 @@ import (
 func GetQuestionsType(c echo.Context, questionnaireID string) ([]model.QuestionIDType, error) {
 	ret := []model.QuestionIDType{}
 	if err := Db.Select(&ret,
-		`SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num`,
+		"SELECT id, type FROM question WHERE questionnaire_id = ? AND deleted_at IS NULL ORDER BY question_num",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -82,7 +82,7 @@ func DeleteQuestion(c echo.Context, questionID string) error {
 func GetResShared(c echo.Context, questionnaireID string) (string, error) {
 	resSharedTo := ""
 	if err := Db.Get(&resSharedTo,
-		`SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?`,
+		"SELECT res_shared_to FROM questionnaires WHERE deleted_at IS NULL AND id = ?",
 		questionnaireID); err != nil {
 		c.Logger().Error(err)
 		if err == sql.ErrNoRows {
