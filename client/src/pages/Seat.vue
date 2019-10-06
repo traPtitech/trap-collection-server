@@ -1,7 +1,7 @@
 <template>
   <div id="container">
     更新までに5秒のインターバルがあります
-    <div>
+    <div id="main">
       <div id="forword"><span>前</span></div>
       <div
         v-for="i in [0, 1, 2, 3, 4, 5]"
@@ -73,9 +73,6 @@ export default {
 </script>
 
 <style>
-div {
-  contain: content;
-}
 .seat {
   width: 15%;
   height: 100pt;
@@ -102,5 +99,8 @@ div {
 }
 #container {
   margin: 10pt;
+}
+#main {
+  contain: content;
 }
 </style>
