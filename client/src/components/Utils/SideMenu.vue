@@ -29,6 +29,10 @@ export default {
         {
           name: 'Explorer',
           url: '/explorer'
+        },
+        {
+          name: 'Seat',
+          url: '/seat'
         }
       ]
     }

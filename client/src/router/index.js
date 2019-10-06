@@ -4,6 +4,7 @@ import Router from 'vue-router'
 import Explorer from '@/pages/Explorer'
 import QuestionnaireDetails from '@/pages/QuestionnaireDetails'
 import Results from '@/pages/Results'
+import Seat from '@/pages/Seat'
 import NotFound from '@/pages/NotFound'
 
 Vue.use(Router)
@@ -29,6 +30,11 @@ const router = new Router({
       path: '/results/:id',
       name: 'Results',
       component: Results
+    },
+    {
+      path: '/seat',
+      name: 'Seat',
+      component: Seat
     },
     {
       path: '*',
