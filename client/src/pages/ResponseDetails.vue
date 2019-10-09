@@ -208,19 +208,21 @@ export default {
     alertNetworkError: common.alertNetworkError,
     getDateStr: common.getDateStr,
     getInformation() {
-      return axios.get('/questionnaires/' + this.questionnaireId).then(res => {
-        this.information = res.data
-        if (this.timeLimitExceeded && this.isEditing) {
-          this.message = {
-            body: '回答期限が過ぎています',
-            color: 'red',
-            showMessage: true
+      return axios
+        .get('/admin/questionnaires/' + this.questionnaireId)
+        .then(res => {
+          this.information = res.data
+          if (this.timeLimitExceeded && this.isEditing) {
+            this.message = {
+              body: '回答期限が過ぎています',
+              color: 'red',
+              showMessage: true
+            }
           }
-        }
-      })
+        })
     },
     getResponseData() {
-      return axios.get('/responses/' + this.responseId).then(res => {
+      return axios.get('/trap/responses/' + this.responseId).then(res => {
         this.responseData = res.data
 
         // questionIdをキーにしてresponseData.body の各要素をとれるようにする

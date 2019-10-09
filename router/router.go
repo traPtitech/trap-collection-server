@@ -148,6 +148,6 @@ func SetRouting(e *echo.Echo) {
 				adminAdmin.POST("", PostAdminsHandler)
 				adminAdmin.DELETE("", DeleteAdminHandler)
 			}
-		}	
+		}
 	}
 }

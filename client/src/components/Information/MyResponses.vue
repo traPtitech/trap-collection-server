@@ -64,11 +64,6 @@ export default {
       this.$emit('set-has-responded', hasResponded)
     }
   },
-  async created() {
-    await axios.get('/users/me/responses/' + this.questionnaireId).then(res => {
-      this.responses = res.data
-    })
-  },
   mounted() {},
   methods: {
     getDateStr: common.getDateStr,

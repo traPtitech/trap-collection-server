@@ -134,33 +134,30 @@ export default {
     }
   },
   async created() {
-    this.getInformation()
-      .then(this.getMyResponses)
-      .then(() => {
-        if (this.canViewResults) {
-          this.getResults('')
-            .then(this.getQuestions)
-            .then(() => {
-              if (this.$route.query.tab === 'individual') {
-                this.setResponseData()
-                this.setResponsesToQuestions()
-              }
-            })
-        }
-      })
+    this.getInformation().then(() => {
+      if (this.canViewResults) {
+        this.getResults()
+          .then(this.getQuestions)
+          .then(() => {
+            if (this.$route.query.tab === 'individual') {
+              this.setResponseData()
+              this.setResponsesToQuestions()
+            }
+          })
+      }
+    })
   },
   methods: {
     getDateStr: common.getDateStr,
-    async getResults(query) {
-      return axios.get('/results/' + this.questionnaireId + query).then(res => {
+    async getResults() {
+      return axios.get('/trap/results/' + this.questionnaireId).then(res => {
         this.results = []
         res.data.forEach(data => {
           this.results.push({
             modifiedAt: this.getDateStr(data.modified_at),
             responseId: data.responseID,
             responseBody: data.response_body,
-            submittedAt: this.getDateStr(data.submitted_at),
-            traqId: data.traqID
+            submittedAt: this.getDateStr(data.submitted_at)
           })
         })
       })
@@ -178,17 +175,10 @@ export default {
         })
     },
     getInformation() {
-      return axios.get('/questionnaires/' + this.questionnaireId).then(res => {
-        this.information = res.data
-      })
-    },
-    getMyResponses() {
       return axios
-        .get('/users/me/responses/' + this.questionnaireId)
+        .get('/admin/questionnaires/' + this.questionnaireId)
         .then(res => {
-          if (res.data.length > 0) {
-            this.hasResponded = true
-          }
+          this.information = res.data
         })
     },
     getTabLink(tab) {

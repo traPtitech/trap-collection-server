@@ -11,11 +11,11 @@ import (
 )
 
 func main() {
-	err := repository.EstablishConoHa()
-	if err != nil {
-		panic(err)
-	}
-	err = repository.EstablishDB()
+	//err := repository.EstablishConoHa()
+	//if err != nil {
+	//	panic(err)
+	//}
+	err := repository.EstablishDB()
 	if err != nil {
 		panic(err)
 	}
