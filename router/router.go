@@ -1,45 +1,12 @@
 package router
 
 import (
-	"net/http"
 
 	"github.com/labstack/echo"
-
-	"github.com/traPtitech/trap-collection-server/repository"
 )
 
-//UserAuthenticate traQ認証
-func UserAuthenticate() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			// トークンを持たないユーザはアクセスできない
-			if repository.GetUserID(c) == "-" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
-			}
-			return next(c)
-		}
-	}
-}
-
-//AdminAuthenticate AdminかをtraQ認証
-func AdminAuthenticate() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			b, err := repository.CheckAdmin(c)
-			if err != nil {
-				return err
-			}
-			// 管理者でないユーザはアクセスできない
-			if !b {
-				return echo.NewHTTPError(http.StatusUnauthorized, "You are not admin or logged in")
-			}
-			return next(c)
-		}
-	}
-}
-
 //SetRouting ルーティング
-func SetRouting(e *echo.Echo) {
+func SetRouting(e *echo.Echo, client Traq) {
 	api := e.Group("/api")
 	{
 		//check := api.Group("/check")
@@ -73,7 +40,7 @@ func SetRouting(e *echo.Echo) {
 			seat.GET("", GetSeatHandler)
 		}
 
-		trap := api.Group("/trap", UserAuthenticate())
+		trap := api.Group("/trap", client.MiddlewareAuthUser)
 		{
 			//trapGame := trap.Group("/game")
 			//{
@@ -90,10 +57,7 @@ func SetRouting(e *echo.Echo) {
 
 			trapUsers := trap.Group("/users")
 			{
-				trapUsersMe := trapUsers.Group("/me")
-				{
-					trapUsersMe.GET("", GetUsersMe)
-				}
+				trapUsers.GET("/me", GetUsersMe)
 			}
 
 			trapResults := trap.Group("/results")
@@ -111,7 +75,7 @@ func SetRouting(e *echo.Echo) {
 			//}
 		}
 
-		admin := api.Group("/admin", AdminAuthenticate())
+		admin := api.Group("/admin", client.MiddlewareAuthUser)
 		{
 			adminQuestions := admin.Group("/questions")
 			{

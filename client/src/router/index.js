@@ -6,6 +6,9 @@ import QuestionnaireDetails from '@/pages/QuestionnaireDetails'
 import Results from '@/pages/Results'
 import Seat from '@/pages/Seat'
 import NotFound from '@/pages/NotFound'
+import { fetchAuthToken, setAuthToken, getMe } from '../utils/api'
+
+setAuthToken(store.state.authToken)
 
 Vue.use(Router)
 
@@ -40,6 +43,32 @@ const router = new Router({
       path: '*',
       name: 'NotFound',
       component: NotFound
+    },
+    {
+      path: '/callback',
+      name: 'callback',
+      component: () => import('../components/Home.vue'),
+      beforeEnter: async (to, from, next) => {
+        const code = to.query.code
+        const state = to.query.state
+        const codeVerifier = sessionStorage.getItem(
+          `login-code-verifier-${state}`
+        )
+        if (!code || !codeVerifier) {
+          next('/')
+        }
+        try {
+          const res = await fetchAuthToken(code, codeVerifier)
+          await store.commit('setToken', res.data.access_token)
+          await setAuthToken(res.data.access_token)
+          const resp = await getMe()
+          await store.commit('setMe', resp.data)
+          next('/')
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e)
+        }
+      }
     }
   ],
   scrollBehavior(savedPosition) {
@@ -50,21 +79,6 @@ const router = new Router({
       return { x: 0, y: 0 }
     }
   }
-})
-
-router.beforeEach(async (to, _, next) => {
-  // traQにログイン済みかどうか調べる
-  if (!store.state.me) {
-    await store.dispatch('whoAmI')
-  }
-
-  if (!store.state.me) {
-    // 未ログインの場合、traQのログインページに飛ばす
-    const traQLoginURL = 'https://q.trap.jp/login?redirect=' + location.href
-    location.href = traQLoginURL
-  }
-
-  next()
 })
 
 export default router

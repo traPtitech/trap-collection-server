@@ -1,29 +1,46 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from '@/bin/axios'
+import { setAuthToken } from '../utils/api'
 
 Vue.use(Vuex)
 
 const store = new Vuex.Store({
   namespaced: true,
   state: {
-    me: null
-  },
-  getters: {
-    getMe(state) {
-      return state.me
-    },
-    getMyTraqId(state) {
-      return state.me !== null ? state.me.traqId : ''
-    }
+    me: null,
+    drawer: null,
+    color: 'success',
+    sidebarBackgroundColor: 'rgba(27, 27, 27, 0.74)',
+    loginDialog: false,
+    authToken: null,
+    cart: []
   },
   mutations: {
-    setMe(state, me) {
-      state.me = me
+    setMe(state, data) {
+      state.me = data
     },
-    setMyTraqId(state, traqId) {
-      if (!state.me) state.me = {}
-      state.me.traqId = traqId
+    setDrawer(state, data) {
+      state.drawer = data
+    },
+    setColor(state, data) {
+      state.color = data
+    },
+    setToken(state, data) {
+      state.authToken = data
+      setAuthToken(data)
+    },
+    toggleDrawer(state) {
+      state.drawer = !state.drawer
+    },
+    toggleLoginDialog(state) {
+      state.loginDialog = !state.loginDialog
+    },
+    item2Cart(state, data) {
+      state.cart.push(data)
+    },
+    removeItemFromCart(state, i) {
+      state.cart.splice(i, 1)
     }
   },
   actions: {

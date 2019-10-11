@@ -1,5 +1,6 @@
 <template>
   <div id="app" class="is-fullheight">
+    <logindialog />
     <top-navbar
       :is-side-menu-active="isSideMenuActive"
       @toggle-side-menu="toggleSideMenu"
@@ -22,12 +23,14 @@
 <script>
 import TopNavbar from './components/Utils/TopNavbar.vue'
 import SideMenu from './components/Utils/SideMenu.vue'
+import LoginDialog from './components/LoginDialog.vue'
 
 export default {
   name: 'App',
   components: {
     'top-navbar': TopNavbar,
-    'side-menu': SideMenu
+    'side-menu': SideMenu,
+    logindialog: LoginDialog
   },
   data() {
     return {

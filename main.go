@@ -23,7 +23,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 
-	router.SetRouting(e)
+	router.SetRouting(e, &router.TraqClient{})
 
 	e.Start(os.Getenv("PORT"))
 }
