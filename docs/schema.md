@@ -82,7 +82,7 @@
 ### question
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | varchar(36)    |  |  |  |  |
+| id | varchar(36) |  |  |  |  |
 | questionnaire_id | varchar(36) |  |  |  |  | どのアンケートの質問か |
 | page_num | int(11) |  |  |  |  | アンケートの何ページ目の質問か |
 | question_num | int(11)    |  |  |  |  | アンケートの質問のうち、何問目か |
@@ -93,11 +93,9 @@
 | created_at | timestamp |  |  | NULL |  | 質問が作成された日時 |
 
 ### questionnaires
-
-アンケートの情報
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | varchar(36)    |  |  |  |  |  |
+| id | varchar(36) |  |  |  |  |  |  |
 | title | char(50) |  |  |  |  | アンケートのタイトル |
 | description | text |  |  |  |  | アンケートの説明 |
 | res_time_limit | timestamp |  |  | NULL |  | 回答の締切日時 (締切がない場合は NULL) |
@@ -213,8 +211,6 @@
 | created_at | timestamp | NO |  | CURRENT_TIMESTAMP |  | 質問が作成された日時 |
 
 ### questionnaires
-
-アンケートの情報
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
