@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { randomString, pkce } from './hash'
 
-// axios.defaults.withCredentials = true
+axios.defaults.withCredentials = false
 export const traQBaseURL = 'https://q.trap.jp/api/1.0'
 export const traQClientID = process.env.VUE_APP_API_CLIENT_ID
 axios.defaults.baseURL =
@@ -55,5 +55,5 @@ export function revokeAuthToken(token) {
 }
 
 export function getMe() {
-  return axios.get(`/api/users/me`)
+  return axios.get(`/api/trap/users/me`)
 }
