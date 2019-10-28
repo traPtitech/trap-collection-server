@@ -19,8 +19,8 @@
         </div>
         <div class="subtitle pull-right user">
           <img
-            v-if="getMe !== null"
-            :src="'https://q.trap.jp/api/1.0/public/icon/' + getMyTraqId"
+            v-if="$store.state.me"
+            :src="'https://q.trap.jp/api/1.0/public/icon/' + $store.state.me"
             class="user-icon"
           />
         </div>
@@ -40,7 +40,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getMe', 'getMyTraqId'])
+    ...mapGetters(['getMe'])
   },
   created() {},
   methods: {}

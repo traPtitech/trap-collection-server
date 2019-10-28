@@ -46,12 +46,7 @@ func (client *TraqClient) GetUsersMe(c echo.Context) (echo.Context, error) {
 	body, _ := ioutil.ReadAll(res.Body)
 	traqUser := model.User{}
 	_ = json.Unmarshal(body, &traqUser)
-	user, _ := model.GetUserByName(traqUser.Name)
-	if user.Name == "" {
-		traqUser.Admin = true //ここは工大祭用です。頃合いを見てこの行は消してください。
-		user, _ = model.CreateUser(traqUser)
-	}
-	c.Set("user", user)
+	c.Set("user", traqUser.Name)
 	return c, nil
 }
 
