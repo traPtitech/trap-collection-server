@@ -1,7 +1,6 @@
 package router
 
 import (
-
 	"github.com/labstack/echo"
 )
 
@@ -18,7 +17,7 @@ func SetRouting(e *echo.Echo, client Traq) {
 		//{
 		//	game.GET("/:id", DownloadHandler)
 		//}
-	
+
 		responses := api.Group("/responses")
 		{
 			responses.POST("", PostResponse)
@@ -92,7 +91,7 @@ func SetRouting(e *echo.Echo, client Traq) {
 				adminQuestionnaires.GET("", GetQuestionnaires)
 				adminQuestionnaires.GET("/:id", GetQuestionnaire)
 			}
-	
+
 			adminVersion := admin.Group("/version")
 			{
 				adminVersion.POST("", PostVersionHandler)

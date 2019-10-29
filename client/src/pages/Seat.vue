@@ -48,7 +48,7 @@ export default {
       return a !== undefined
     },
     getSeat() {
-      axios.get('/seat').then(res => {
+      axios.get('/api/seat').then(res => {
         this.seat = []
         if (res.data !== null) {
           this.seat = res.data.map(v => Number(v))
@@ -63,7 +63,7 @@ export default {
       } else {
         status = 'in'
       }
-      axios.post('/seat', {
+      axios.post('/api/seat', {
         id: id,
         status: status
       })

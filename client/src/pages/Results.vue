@@ -150,23 +150,25 @@ export default {
   methods: {
     getDateStr: common.getDateStr,
     async getResults() {
-      return axios.get('/trap/results/' + this.questionnaireId).then(res => {
-        this.results = []
-        res.data.forEach(data => {
-          this.results.push({
-            modifiedAt: this.getDateStr(data.modified_at),
-            responseId: data.responseID,
-            responseBody: data.response_body,
-            submittedAt: this.getDateStr(data.submitted_at)
+      return axios
+        .get('/api/trap/results/' + this.questionnaireId)
+        .then(res => {
+          this.results = []
+          res.data.forEach(data => {
+            this.results.push({
+              modifiedAt: this.getDateStr(data.modified_at),
+              responseId: data.responseID,
+              responseBody: data.response_body,
+              submittedAt: this.getDateStr(data.submitted_at)
+            })
           })
         })
-      })
     },
     getQuestions() {
       this.questions = []
       this.questionData = []
       return axios
-        .get('/questionnaires/' + this.questionnaireId + '/questions')
+        .get('/api/questionnaires/' + this.questionnaireId + '/questions')
         .then(res => {
           for (const question of res.data) {
             this.questions.push(question.body)
@@ -176,7 +178,7 @@ export default {
     },
     getInformation() {
       return axios
-        .get('/admin/questionnaires/' + this.questionnaireId)
+        .get('/api/admin/questionnaires/' + this.questionnaireId)
         .then(res => {
           this.information = res.data
         })

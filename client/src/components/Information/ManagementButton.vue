@@ -113,7 +113,7 @@ export default {
         } else {
           this.processing = true
           axios
-            .delete('/questionnaires/' + this.questionnaireId)
+            .delete('/api/questionnaires/' + this.questionnaireId)
             .then(() => {
               this.processing = false
               this.$router.push('/administrates')
@@ -135,7 +135,7 @@ export default {
         this.processing = true
         const time_limit = moment().format('YYYY/MM/DD HH:mm')
         axios
-          .patch('/questionnaires/' + this.questionnaireId, {
+          .patch('/api/questionnaires/' + this.questionnaireId, {
             title: this.questionnaireInformation.title,
             description: this.questionnaireInformation.description,
             res_time_limit: time_limit,
