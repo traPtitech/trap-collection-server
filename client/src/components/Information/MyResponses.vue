@@ -72,7 +72,7 @@ export default {
       if (window.confirm('この回答を削除しますか？')) {
         this.processing[responseId] = true
         await axios
-          .delete('/responses/' + responseId, {
+          .delete('/api/responses/' + responseId, {
             method: 'delete',
             withCredentials: true
           })

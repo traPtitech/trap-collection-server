@@ -22,8 +22,6 @@ export async function redirectAuthorizationEndpoint() {
   const codeVerifier = randomString(43)
   const codeChallenge = await pkce(codeVerifier)
 
-  sessionStorage.setItem(`login-code-verifier-${state}`, codeVerifier)
-
   const authorizationEndpointUrl = new URL(`${traQBaseURL}/oauth2/authorize`)
   authorizationEndpointUrl.search = new URLSearchParams({
     client_id: traQClientID,

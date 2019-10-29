@@ -99,7 +99,7 @@ func GetQuestionnaire(c echo.Context, questionnaireID string) (model.Questionnai
 	questionnaire := model.Questionnaires{}
 	if err := Db.Get(&questionnaire, "SELECT * FROM questionnaires WHERE id = ? AND deleted_at IS NULL", questionnaireID); err != nil {
 		c.Logger().Error(err)
-		if err != sql.ErrNoRows && err!=nil {
+		if err != sql.ErrNoRows && err != nil {
 			return model.Questionnaires{}, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}

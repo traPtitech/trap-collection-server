@@ -6,7 +6,12 @@ import QuestionnaireDetails from '@/pages/QuestionnaireDetails'
 import Results from '@/pages/Results'
 import Seat from '@/pages/Seat'
 import NotFound from '@/pages/NotFound'
-import { fetchAuthToken, setAuthToken, getMe } from '../utils/api'
+import {
+  fetchAuthToken,
+  setAuthToken,
+  getMe,
+  redirectAuthorizationEndpoint
+} from '../utils/api'
 
 setAuthToken(store.state.authToken)
 
@@ -79,6 +84,16 @@ const router = new Router({
       return { x: 0, y: 0 }
     }
   }
+})
+
+router.beforeEach(async (to, from, next) => {
+  try {
+    const resp = await getMe()
+    await store.commit('setMe', resp.data)
+  } catch (_) {
+    redirectAuthorizationEndpoint()
+  }
+  next(true)
 })
 
 export default router

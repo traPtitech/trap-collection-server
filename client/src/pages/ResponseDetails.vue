@@ -209,7 +209,7 @@ export default {
     getDateStr: common.getDateStr,
     getInformation() {
       return axios
-        .get('/admin/questionnaires/' + this.questionnaireId)
+        .get('/api/admin/questionnaires/' + this.questionnaireId)
         .then(res => {
           this.information = res.data
           if (this.timeLimitExceeded && this.isEditing) {
@@ -222,7 +222,7 @@ export default {
         })
     },
     getResponseData() {
-      return axios.get('/trap/responses/' + this.responseId).then(res => {
+      return axios.get('/api/trap/responses/' + this.responseId).then(res => {
         this.responseData = res.data
 
         // questionIdをキーにしてresponseData.body の各要素をとれるようにする
@@ -236,7 +236,7 @@ export default {
     getQuestions() {
       this.questions = []
       return axios
-        .get('/questionnaires/' + this.questionnaireId + '/questions')
+        .get('/api/questionnaires/' + this.questionnaireId + '/questions')
         .then(res => {
           // convertDataToQuestion を通したものを this.questions に保存
           res.data.forEach(data => {
@@ -261,7 +261,7 @@ export default {
       // サーバーにPOST/PATCHリクエストを送る
       if (this.isNewResponse) {
         return axios
-          .post('/responses', data)
+          .post('/api/responses', data)
           .then(resp => {
             const responseId = resp.data.responseID
             this.showMessage()
@@ -276,7 +276,7 @@ export default {
           })
       } else {
         return axios
-          .patch('/responses/' + this.responseId, data)
+          .patch('/api/responses/' + this.responseId, data)
           .then(this.getResponseData)
           .then(this.setResponsesToQuestions)
           .then(() => {

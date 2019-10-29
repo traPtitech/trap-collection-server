@@ -262,7 +262,7 @@ export default {
         }
       } else {
         return axios
-          .get('/admin/questionnaires/' + this.questionnaireId)
+          .get('/api/admin/questionnaires/' + this.questionnaireId)
           .then(res => {
             this.information = res.data
             if (this.administrates) {
@@ -283,7 +283,7 @@ export default {
       this.questions = []
       if (!this.isNewQuestionnaire) {
         axios
-          .get('/questionnaires/' + this.questionnaireId + '/questions')
+          .get('/api/questionnaires/' + this.questionnaireId + '/questions')
           .then(res => {
             this.questions = []
             res.data.forEach(data => {
@@ -310,7 +310,7 @@ export default {
         // アンケートの新規作成
 
         axios
-          .post('/admin/questionnaires', informationData)
+          .post('/api/admin/questionnaires', informationData)
           .then(resp => {
             // 返ってきたquestionnaireIDを保存
             this.newQuestionnaireId = resp.data.questionnaireID
@@ -326,7 +326,7 @@ export default {
           })
           .catch(error => {
             // エラーが起きた場合は、送信済みのInformationを削除する
-            axios.delete('/admin/questionnaires/' + this.newQuestionnaireId)
+            axios.delete('/api/admin/questionnaires/' + this.newQuestionnaireId)
             console.log(error)
             this.alertNetworkError()
           })
@@ -338,7 +338,7 @@ export default {
 
         axios
           .patch(
-            '/admin/questionnaires/' + this.questionnaireId,
+            '/api/admin/questionnaires/' + this.questionnaireId,
             informationData
           )
           .then(() => {
@@ -374,7 +374,7 @@ export default {
 
       if (this.isNewQuestion(question)) {
         return axios
-          .post('/admin/questions', data)
+          .post('/api/admin/questions', data)
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
@@ -387,7 +387,7 @@ export default {
           })
       } else {
         return axios
-          .patch('/admin/questions/' + question.questionId, data)
+          .patch('/api/admin/questions/' + question.questionId, data)
           .then(() => {
             if (index < this.questions.length - 1) {
               // 残りの質問を送信
@@ -403,7 +403,7 @@ export default {
     deleteRemovedQuestions(index) {
       // removedQuestionIds配列の、index以降の質問について、DELETEリクエストを送る
       const id = this.removedQuestionIds[index]
-      return axios.delete('/admin/questions/' + id).then(() => {
+      return axios.delete('/api/admin/questions/' + id).then(() => {
         if (index < this.removedQuestionIds.length - 1) {
           return this.deleteRemovedQuestions(index + 1)
         }

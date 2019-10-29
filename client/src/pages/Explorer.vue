@@ -258,7 +258,7 @@ export default {
     getQuestionnaires() {
       this.questionnaires = []
       axios
-        .get('/admin/questionnaires')
+        .get('/api/admin/questionnaires')
         .then(response => {
           this.questionnaires = response.data.questionnaires
           this.$set(this.range, 'last', response.data.page_max)
