@@ -1,29 +1,30 @@
 <template>
-  <div row justify-center>
-    <div v-if="!loginDialog" persistent max-width="290">
-      <div>
-        <div class="headline">
-          ログインしてください
-        </div>
-        <div>
-          OKを押すとtraQに飛びます。<br />
-          「承認」を押すとログインできます。
-        </div>
-        <div>
-          <div></div>
-          <button color="green darken-1" @click="login">OK</button>
-        </div>
-      </div>
+  <el-dialog
+    :visible.sync="dialog"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="false"
+    title="ログインしてください"
+  >
+    <div>
+      OKを押すとtraQに飛びます。<br />
+      「承認」を押すとログインできます。
     </div>
-  </div>
+    <el-button type="primary" @click="login">OK</el-button>
+  </el-dialog>
 </template>
 
 <script>
 import { mapMutations, mapState } from 'vuex'
 import { redirectAuthorizationEndpoint } from '@/utils/api'
 export default {
+  data() {
+    return {
+      dialog: this.authtoken !== null
+    }
+  },
   computed: {
-    ...mapState(['loginDialog'])
+    ...mapState(['authToken'])
   },
   methods: {
     ...mapMutations(['toggleLoginDialog']),
