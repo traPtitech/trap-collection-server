@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from '@/bin/axios'
+import createPersistedState from 'vuex-persistedstate'
 import { setAuthToken } from '../utils/api'
 
 Vue.use(Vuex)
@@ -57,7 +58,12 @@ const store = new Vuex.Store({
           console.log(err)
         })
     }
-  }
+  },
+  plugins: [
+    createPersistedState({
+      paths: ['authToken', 'me']
+    })
+  ]
 })
 
 export default store
