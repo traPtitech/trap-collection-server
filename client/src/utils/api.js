@@ -1,4 +1,5 @@
 import axios from 'axios'
+import store from '@/store'
 import { randomString, pkce } from './hash'
 
 axios.defaults.withCredentials = false
@@ -13,6 +14,7 @@ export function setAuthToken(token) {
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
   } else {
+    store.commit('toggleLoginDialog')
     delete axios.defaults.headers.common['Authorization']
   }
 }

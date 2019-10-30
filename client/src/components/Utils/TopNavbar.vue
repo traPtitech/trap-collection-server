@@ -29,8 +29,6 @@
   </div>
 </template>
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
   name: 'TopNavbar',
   props: {
@@ -39,10 +37,6 @@ export default {
       required: true
     }
   },
-  computed: {
-    ...mapGetters(['getMe'])
-  },
-  created() {},
   methods: {}
 }
 </script>
