@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :visible.sync="dialog"
+    :visible.sync="loginDialog"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="false"
@@ -18,13 +18,8 @@
 import { mapMutations, mapState } from 'vuex'
 import { redirectAuthorizationEndpoint } from '@/utils/api'
 export default {
-  data() {
-    return {
-      dialog: this.authtoken !== null
-    }
-  },
   computed: {
-    ...mapState(['authToken'])
+    ...mapState(['loginDialog'])
   },
   methods: {
     ...mapMutations(['toggleLoginDialog']),

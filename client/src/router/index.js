@@ -61,6 +61,7 @@ const router = new Router({
           const res = await fetchAuthToken(code, codeVerifier)
           await store.commit('setToken', res.data.access_token)
           await setAuthToken(res.data.access_token)
+          store.commit('toggleLoginDialog')
           const resp = await getMe()
           await store.commit('setMe', resp.data)
           next('/')
