@@ -1,0 +1,22 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+  - name: server
+    path: .
+    commands:
+      install:
+        status: true
+        method: go build -o app
+      run:
+        status: true
+        method: ./app
+    watcher:
+      extensions:
+        - go
+      paths:
+        - .
+      ignored_paths:
+        - ./client
+        - vendor

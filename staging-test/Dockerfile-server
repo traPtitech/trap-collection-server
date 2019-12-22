@@ -1,14 +1,20 @@
-FROM golang:1.12.7-alpine
+FROM golang:1.13.5-alpine
 ENV GO111MODULE=on
+ENV DOCKERIZE_VERSION v0.6.1
 RUN apk add --update --no-cache ca-certificates git && \
   apk --update add tzdata && \
   cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
   apk del tzdata && \
-  rm -rf /var/cache/apk/*
+  rm -rf /var/cache/apk/* && \
+  wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
+  tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
+  rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
+RUN GO111MODULE=off go get -v github.com/oxequa/realize
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection
 COPY go.* ./
 RUN go mod download
 COPY . .
 RUN go build -o app
-ENTRYPOINT ./app
+ENTRYPOINT dockerize -wait tcp://mysql:3306 realize start --name='server' --install --run

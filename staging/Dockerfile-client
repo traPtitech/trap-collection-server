@@ -7,11 +7,11 @@ RUN apk add --no-cache git && \
   rm -rf /var/cache/apk/*
 
 COPY ./package*.json ./
-RUN npm ci
+RUN yarn install
 COPY . .
 RUN npm run build
 
 FROM abiosoft/caddy:0.11.5-no-stats
 EXPOSE 8080
 COPY Caddyfile /etc/Caddyfile
-COPY --from=build /app/dist /srv
+COPY --from=build /app/build /srv

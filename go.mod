@@ -1,22 +1,17 @@
 module github.com/traPtitech/trap-collection-server
 
-go 1.12
+go 1.13
 
 require (
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/go-siris/siris v7.4.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gofrs/uuid v3.2.0+incompatible
-	github.com/gophercloud/gophercloud v0.4.0
+	github.com/gophercloud/gophercloud v0.7.0
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/echo-contrib v0.6.0
-	github.com/labstack/echo/v4 v4.1.6
-	github.com/labstack/gommon v0.3.0 // indirect
-	github.com/lib/pq v1.2.0 // indirect
-	github.com/mattn/go-sqlite3 v1.11.0 // indirect
-	github.com/traPtitech/booQ v0.0.0-20191010050434-d5b6b54a4f46
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472 // indirect
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
-	golang.org/x/sys v0.0.0-20190830142957-1e83adbbebd0 // indirect
-	google.golang.org/appengine v1.6.2 // indirect
+	github.com/oxequa/interact v0.0.0-20171114182912-f8fb5795b5d7 // indirect
+	github.com/oxequa/realize v2.0.2+incompatible // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/traPtitech/booQ v1.2.0
 )
