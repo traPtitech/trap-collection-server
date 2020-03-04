@@ -27,7 +27,16 @@ paths:
                       type: string
                     md5:
                       type: string
-                    updated_at:
+                    body_updated_at:
+                      description: ゲーム本体の更新日時。
+                      type: string
+                      format: date-time
+                    img_updated_at:
+                      description: 画像の更新日時。
+                      type: string
+                      format: date-time
+                    movie_updated_at:
+                      description: 動画の更新日時。
                       type: string
                       format: date-time
         500:
@@ -54,6 +63,29 @@ paths:
                 format: "binary"
         500:
           description: "失敗時のレスポンス"
+    put:
+      tags:
+        - game
+      summary: "ブラウザゲーム以外の更新"
+      description: "gameIDで指定されたゲームのZipファイルを更新します。"
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: "成功時のレスポンス"
+        500:
+          description: "失敗時のレスポンス"
   /game/browser/{gameID}:
     get:
       tags:
@@ -74,6 +106,27 @@ paths:
               schema:
                 type: "string"
                 format: "byte"
+        500:
+          description: "失敗時のレスポンス"
+    put:
+      tags:
+        - game
+      description: ブラウザゲームの更新。
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: "成功時のレスポンス"
         500:
           description: "失敗時のレスポンス"
   /game/{gameID}:
@@ -153,6 +206,94 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Game'
+        500:
+          description: "失敗時のレスポンス"
+  /game/image/{versionID}:
+    get:
+      tags:
+        - game
+      description: ゲーム画像のダウンロード。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: "失敗時のレスポンス"
+  /game/image/{gameID}:
+    put:
+      tags:
+        - game
+      description: "ゲームの画像ファイルを更新します。"
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: "成功時のレスポンス"
+        500:
+          description: "失敗時のレスポンス"
+  /game/movie/{versionID}:
+    get:
+      tags:
+        - game
+      description: ゲーム映像のダウンロード。
+      parameters:
+        - $ref: '#/components/parameters/versionID'
+      responses:
+        200:
+          description: "成功時のレスポンス"
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: "失敗時のレスポンス"
+  /game/movie/{gameID}:
+    put:
+      tags:
+        - game
+      description: "ゲームの動画ファイルを更新します。"
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: "成功時のレスポンス"
         500:
           description: "失敗時のレスポンス"
   /version:
@@ -423,12 +564,17 @@ components:
         name:
           type: "string"
           format: "byte"
+        type:
+          type: string
         file:
           type: "string"
           format: "binary"
         image:
           type: "string"
           format: "binary"
+        movie:
+          type: string
+          format: binary
 
     Question:
       type: object
