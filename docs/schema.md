@@ -7,10 +7,15 @@
 | name | varchar(32) | NO |  |  |  |  |
 | type | varchar(7) | NO |  | "browser" |  | (browser,java,exe) |
 | md5 | binary(16) |  |  |  |  |  |
-| body_updated_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
-| img_updated_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
-| movie_updated_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
+
+### updates
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| game_id | varchar(36) | NO | MUL |  |  |  |
+| time | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
+| type | varchar(5) | NO |  | "body" |  | (body,img,movie) |
 
 ### versions
 | Name | Type | Null | Key | Default | Extra | 説明 |

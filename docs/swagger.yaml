@@ -296,6 +296,30 @@ paths:
           description: "成功時のレスポンス"
         500:
           description: "失敗時のレスポンス"
+  /game/version/{gameID}:
+    get:
+      tags:
+        - game
+      description: ゲームの更新履歴取得
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        200:
+          description: 成功時のレスポンス。更新日時の配列を返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: date-time
+        500:
+          description: 失敗時のレスポンス。
   /version:
     post:
       tags:
@@ -762,7 +786,9 @@ components:
         type:
           description: タイプ。
           type: string
-        created_at:
+        updated_at:
           description: 作成日時。
-          type: string
-          format: date-time
+          type: array
+          items:
+            type: string
+            format: date-time
