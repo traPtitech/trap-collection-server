@@ -27,6 +27,9 @@ paths:
                       type: string
                     md5:
                       type: string
+                    type:
+                      type: string
+                      example: url jar windows mac
                     body_updated_at:
                       description: ゲーム本体の更新日時。
                       type: string
@@ -507,7 +510,7 @@ paths:
     get:
       tags:
         - response
-      description: 回答を取ってきます
+      description: 回答を取ってきます。質問に対応する回答がない場合は空の文字列を返します。
       responses:
           '200':
             description: 正常に回答を作成できました．作成された回答を返します．
@@ -690,9 +693,13 @@ components:
           description: クライアントID。UUID。
           type: string
         answer:
-          $ref: '#/components/schemas/AnswerResponse'
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerResponse'
         game:
-          $ref: '#/components/schemas/GameResponse'
+          type: array
+          items:
+            $ref: '#/components/schemas/GameResponse'
         remark:
           description: 自由記述欄。
           type: string
