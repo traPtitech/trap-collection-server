@@ -320,6 +320,38 @@ paths:
                   format: date-time
         500:
           description: 失敗時のレスポンス。
+  /game/maintainer/{gameID}:
+    put:
+      tags:
+        - game
+      description: 編集権限を与える。
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: 編集権限を追加する人のtraPID。
+              type: array
+              items:
+                type: string
+      responses:
+        200:
+          description: 正常に編集権限を与えられました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        500:
+          description: 失敗しました。
   /version:
     post:
       tags:
@@ -588,6 +620,10 @@ components:
         name:
           type: "string"
           format: "byte"
+        maintainer:
+          type: array
+          items:
+            type: string
         type:
           type: string
         file:
@@ -783,6 +819,14 @@ components:
         name:
           description: 名前。
           type: string
+        admin:
+          description: 管理者のtraPID。
+          type: string
+        maintainer:
+          description: 更新できる人のtraPID。
+          type: array
+          items:
+            type: string
         type:
           description: タイプ。
           type: string

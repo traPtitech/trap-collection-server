@@ -5,7 +5,8 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | name | varchar(32) | NO |  |  |  |  |
-| type | varchar(7) | NO |  | "browser" |  | (browser,java,exe) |
+| admin | varchar(32) | NO |  |  |  |  |
+| type | tinyint | NO |  | "browser" |  | (0:browser,1:java,2:exe) |
 | md5 | binary(16) |  |  |  |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
@@ -15,7 +16,15 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | game_id | varchar(36) | NO | MUL |  |  |  |
 | time | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
-| type | varchar(5) | NO |  | "body" |  | (body,img,movie) |
+| type | tinyint | NO |  | "body" |  | (0:body,1:img,2:movie) |
+
+### maintainers
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| game_id | varchar(36) | NO | MUL |  |  |  |
+| user_id | varchar(32) | NO |  |  |  |  |
+| deleted_at | datetime |  |  |  |  |  |
 
 ### versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
