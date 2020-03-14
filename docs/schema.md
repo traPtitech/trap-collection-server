@@ -16,8 +16,6 @@
 | game_id | varchar(36) | NO | MUL |  |  | UUID |
 | name | varchar(32) | NO |  |  |  | ゲームのバージョン名 |
 | description | text |  |  |  |  |  |
-| md5 | binary(16) |  |  |  |  | typeが`browser`時はNULL |
-| url | text |  |  |  |  | typeが`browser`以外でNULL |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
 ### game_assets
@@ -26,6 +24,8 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | game_version_id | int(11) | NO | MUL |  |  |  |
 | type | tinyint | NO |  |  |  | 0:`url`,1:`jar`,2:`windows`,3:`mac` |
+| md5 | binary(16) |  |  |  |  | typeが`browser`時はNULL |
+| url | text |  |  |  |  | typeが`browser`以外でNULL |
 
 ### game_introductions
 | Name | Type | Null | Key | Default | Extra | 説明 |
