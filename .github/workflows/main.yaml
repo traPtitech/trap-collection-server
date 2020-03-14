@@ -1,0 +1,15 @@
+name: CI
+
+on: [push]
+
+jobs:
+  spectral:
+    name: Spectral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Spectral checks
+        uses: stoplightio/spectral-action@v0.5.5
+        with:
+          file_glob: docs/*.yaml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
