@@ -1,5 +1,2 @@
-test.env
 .env
-mysql/data/
-pprof
 app
