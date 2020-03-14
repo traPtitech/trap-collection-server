@@ -1,23 +1,51 @@
 ## DB schema
 
-### games
+### game_metas
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | name | varchar(32) | NO |  |  |  |  |
-| type | varchar(7) | NO |  | "browser" |  | (browser,java,exe) |
-| md5 | binary(16) |  |  |  |  |  |
+| type | tinyint | NO |  |  |  | 0:`browser`,1:`java`,2:`exe` |
+| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### updates
+### game_versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| game_id | varchar(36) | NO | MUL |  |  |  |
-| time | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
-| type | varchar(5) | NO |  | "body" |  | (body,img,movie) |
+| game_id | varchar(36) | NO | MUL |  |  | UUID |
+| name | varchar(32) | NO |  |  |  | ゲームのバージョン名 |
+| description | text |  |  |  |  |  |
+| md5 | binary(16) |  |  |  |  | typeが`browser`時はNULL |
+| url | text |  |  |  |  | typeが`browser`以外でNULL |
+| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
-### versions
+### game_assets
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| game_version_id | int(11) | NO | MUL |  |  |  |
+| type | tinyint | NO |  |  |  | 0:`url`,1:`jar`,2:`windows`,3:`mac` |
+
+### game_introductions
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| game_id | varchar(36) | NO | MUL |  |  | UUID |
+| role | tinyint | NO |  |  |  | 0:`image`,1:`movie` |
+| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
+
+### maintainers
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| game_id | varchar(36) | NO | MUL |  |  | UUID |
+| user_id | varchar(32) | NO |  |  |  | traPID(UUID) |
+| role | tinyint | NO |  | 0 |  | 0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ |
+| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
+| deleted_at | datetime |  |  | NULL |  |  |
+
+### launcher_versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
@@ -25,46 +53,44 @@
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### seats
+### sessions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | seat_id | int(11) | NO |  |  |  |  |
-| version_id | int(11) | NO | MUL |  |  |  |
-| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  | 着席時刻 |
-| deleted_at | datetime |  |  | NULL |  | 離席時刻 |
+| started_at | datetime | NO |  | CURRENT_TIMESTAMP |  | 着席時刻 |
+| ended_at | datetime |  |  | NULL |  | 離席時刻 |
 
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | version_id | int(11) | NO | MUL |  |  |  |
 | game_id | varchar(36) | NO | MUL |  |  |  |
-| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
-| deleted_at | datetime |  |  | NULL |  |  |
 
 ### questions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | version_id | int(11) | NO | MUL |  |  |  |
-| type | varchar(8) | NO |  |  | 'radio','checkbox','text' |  |
+| type | tinyint | NO |  |  |  | 0:`radio`,1:`checkbox`,2:`text` |
 | content | text | NO |  |  |  | 質問文 |
 | required | boolean | NO |  | true |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### choices
+### question_options
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | question_id | int(11) | NO | MUL |  |  |  |
-| text | text | NO |  |  |  |  |
+| label | text | NO |  |  |  |  |
 
 ### responses
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  |  |
+| session_id | int(11) | NO | MUL |  |  |  |
+| version_id | int(11) | NO | MUL |  |  |  |
 | remark | text |  |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
@@ -76,11 +102,11 @@
 | question_id | int(11) | NO | MUL |  |  |  |
 | content | text | NO |  |  |  |  |
 
-### game_responses
+### game_ratings
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | response_id | varchar(36) | NO | MUL |  |  |  |
-| game_id | varchar(36) | NO | MUL |  |  |  |
-| star | tinyint(3) | NO |  |  | unsigned |  |
-| time | int(11) | NO |  |  | unsigned |  |
+| game_version_id | int(11) | NO | MUL |  |  |  |
+| star | tinyint | NO |  |  | unsigned |  |
+| play_time | int(11) | NO |  |  | unsigned | プレイ時間(ms) |

@@ -27,6 +27,9 @@ paths:
                       type: string
                     md5:
                       type: string
+                    type:
+                      type: string
+                      example: url jar windows mac
                     body_updated_at:
                       description: ゲーム本体の更新日時。
                       type: string
@@ -320,6 +323,38 @@ paths:
                   format: date-time
         500:
           description: 失敗時のレスポンス。
+  /game/maintainer/{gameID}:
+    put:
+      tags:
+        - game
+      description: 編集権限を与える。
+      parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: 編集権限を追加する人のtraPID。
+              type: array
+              items:
+                type: string
+      responses:
+        200:
+          description: 正常に編集権限を与えられました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        500:
+          description: 失敗しました。
   /version:
     post:
       tags:
@@ -475,7 +510,7 @@ paths:
     get:
       tags:
         - response
-      description: 回答を取ってきます
+      description: 回答を取ってきます。質問に対応する回答がない場合は空の文字列を返します。
       responses:
           '200':
             description: 正常に回答を作成できました．作成された回答を返します．
@@ -588,6 +623,10 @@ components:
         name:
           type: "string"
           format: "byte"
+        maintainer:
+          type: array
+          items:
+            type: string
         type:
           type: string
         file:
@@ -654,9 +693,13 @@ components:
           description: クライアントID。UUID。
           type: string
         answer:
-          $ref: '#/components/schemas/AnswerResponse'
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerResponse'
         game:
-          $ref: '#/components/schemas/GameResponse'
+          type: array
+          items:
+            $ref: '#/components/schemas/GameResponse'
         remark:
           description: 自由記述欄。
           type: string
@@ -783,6 +826,14 @@ components:
         name:
           description: 名前。
           type: string
+        admin:
+          description: 管理者のtraPID。
+          type: string
+        maintainer:
+          description: 更新できる人のtraPID。
+          type: array
+          items:
+            type: string
         type:
           description: タイプ。
           type: string
