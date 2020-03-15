@@ -5,14 +5,18 @@ info:
   description: "traPCollectionのAPI"
   version: "1.0.0"
   title: "traPCollection API"
+  contact:
+    name: traP
+    url: 'https://github.com/traPtitech/trap-collection-server'
 paths:
   /check/{versionID}:
+    parameters:
+      - $ref: '#/components/parameters/versionID'
     get:
       tags:
         - check
       description: "ブラウザゲーム以外のゲームのID,MD5を返します。"
-      parameters:
-        - $ref: '#/components/parameters/versionID'
+      operationId: getCheckListByVersionID
       responses:
         200:
           description: "成功時のレスポンス"
@@ -45,17 +49,18 @@ paths:
         500:
           description: "失敗時のレスポンス"
   /game/file/{gameID}:
-    get:
-      tags:
-        - game
-      description: "gameIDで指定されたゲームのZipファイルを返します。"
-      parameters:
+    parameters:
       - name: "gameID"
         in: "path"
         description: "ゲームのID"
         required: true
         schema:
           type: "string"
+    get:
+      tags:
+        - game
+      description: "gameIDで指定されたゲームのZipファイルを返します。"
+      operationId: getFileByGameID
       responses:
         200:
           description: "成功時のレスポンス"
@@ -71,13 +76,7 @@ paths:
         - game
       summary: "ブラウザゲーム以外の更新"
       description: "gameIDで指定されたゲームのZipファイルを更新します。"
-      parameters:
-      - name: "gameID"
-        in: "path"
-        description: "ゲームのID"
-        required: true
-        schema:
-          type: "string"
+      operationId: putFileByGameID
       requestBody:
         content:
           multipart/form-data:
@@ -90,17 +89,18 @@ paths:
         500:
           description: "失敗時のレスポンス"
   /game/browser/{gameID}:
-    get:
-      tags:
-        - game
-      description: "gameIDで指定されたゲームのURLを返します。"
-      parameters:
+    parameters:
       - name: "gameID"
         in: "path"
         description: "ゲームのID"
         required: true
         schema:
           type: "string"
+    get:
+      tags:
+        - game
+      description: "gameIDで指定されたゲームのURLを返します。"
+      operationId: getURLByGameID
       responses:
         200:
           description: "成功時のレスポンス"
@@ -115,6 +115,7 @@ paths:
       tags:
         - game
       description: ブラウザゲームの更新。
+      operationId: putURLByGameID
       parameters:
       - name: "gameID"
         in: "path"
@@ -133,10 +134,18 @@ paths:
         500:
           description: "失敗時のレスポンス"
   /game/{gameID}:
+    parameters:
+      - name: "gameID"
+        in: "path"
+        description: "ゲームのID"
+        required: true
+        schema:
+          type: "string"
     get:
       tags:
         - game
       description: 指定したゲームの情報の取得。
+      operationId: getGameInfoByGameID
       responses:
         200:
           description: 成功しました。
@@ -150,6 +159,7 @@ paths:
       tags:
         - game
       description: "指定されたゲームの名前を変更します。"
+      operationId: putGameInfoByGameID
       requestBody:
         content:
           text/plain:
@@ -164,13 +174,7 @@ paths:
       tags:
         - game
       description: "指定したIDのゲームの削除"
-      parameters:
-      - name: "gameID"
-        in: "path"
-        description: "ゲームのID"
-        required: true
-        schema:
-          type: "string"
+      operationId: deleteGameByGameID
       responses:
         200:
           description: "成功した時のレスポンス"
@@ -181,6 +185,7 @@ paths:
       tags:
         - game
       description: "指定された名前でファイルを保存します。"
+      operationId: postGame
       requestBody:
         content:
           multipart/form-data:
@@ -200,6 +205,7 @@ paths:
       tags:
         - game
       description: "ゲームの一覧を返します。"
+      operationId: getGame
       responses:
         200:
           description: "成功時のレスポンス"
@@ -211,13 +217,25 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: "失敗時のレスポンス"
-  /game/image/{versionID}:
+  /game/image:
     get:
       tags:
         - game
       description: ゲーム画像のダウンロード。
+      operationId: getGameImage
       parameters:
-        - $ref: '#/components/parameters/versionID'
+        - name: versionID
+          in: query
+          description: バージョンのID
+          required: false
+          schema:
+            type: string
+        - name: "gameID"
+          in: query
+          description: "ゲームのID"
+          required: false
+          schema:
+            type: "string"
       responses:
         200:
           description: "成功時のレスポンス"
@@ -241,13 +259,14 @@ paths:
       tags:
         - game
       description: "ゲームの画像ファイルを更新します。"
+      operationId: putGameImage
       parameters:
-      - name: "gameID"
-        in: "path"
-        description: "ゲームのID"
-        required: true
-        schema:
-          type: "string"
+        - name: "gameID"
+          in: "path"
+          description: "ゲームのID"
+          required: true
+          schema:
+            type: "string"
       requestBody:
         content:
           multipart/form-data:
@@ -259,13 +278,25 @@ paths:
           description: "成功時のレスポンス"
         500:
           description: "失敗時のレスポンス"
-  /game/movie/{versionID}:
+  /game/movie:
+    parameters:
+      - name: versionID
+        in: query # パラメータをパス内に含める
+        description: バージョンのID
+        required: false
+        schema:
+          type: string
+      - name: "gameID"
+        in: "query"
+        description: "ゲームのID"
+        required: false
+        schema:
+          type: "string"
     get:
       tags:
         - game
       description: ゲーム映像のダウンロード。
-      parameters:
-        - $ref: '#/components/parameters/versionID'
+      operationId: getGameMovie
       responses:
         200:
           description: "成功時のレスポンス"
@@ -281,13 +312,14 @@ paths:
       tags:
         - game
       description: "ゲームの動画ファイルを更新します。"
+      operationId: putGameMovie
       parameters:
-      - name: "gameID"
-        in: "path"
-        description: "ゲームのID"
-        required: true
-        schema:
-          type: "string"
+        - name: "gameID"
+          in: "path"
+          description: "ゲームのID"
+          required: true
+          schema:
+            type: "string"
       requestBody:
         content:
           multipart/form-data:
@@ -300,17 +332,18 @@ paths:
         500:
           description: "失敗時のレスポンス"
   /game/version/{gameID}:
-    get:
-      tags:
-        - game
-      description: ゲームの更新履歴取得
-      parameters:
+    parameters:
       - name: "gameID"
         in: "path"
         description: "ゲームのID"
         required: true
         schema:
           type: "string"
+    get:
+      tags:
+        - game
+      description: ゲームの更新履歴取得
+      operationId: getGameVersion
       responses:
         200:
           description: 成功時のレスポンス。更新日時の配列を返します。
@@ -324,17 +357,18 @@ paths:
         500:
           description: 失敗時のレスポンス。
   /game/maintainer/{gameID}:
-    put:
-      tags:
-        - game
-      description: 編集権限を与える。
-      parameters:
+    parameters:
       - name: "gameID"
         in: "path"
         description: "ゲームのID"
         required: true
         schema:
           type: "string"
+    put:
+      tags:
+        - game
+      description: 編集権限を与える。
+      operationId: putGameMaintainer
       requestBody:
         required: true
         content:
@@ -360,6 +394,7 @@ paths:
       tags:
         - version
       description: 新しいバージョンを作成します。
+      operationId: postVersion
       requestBody:
         required: true
         content:
@@ -379,6 +414,7 @@ paths:
       tags:
         - version
       description: バージョン一覧の取得。
+      operationId: getVersions
       responses:
         '200':
           description: 正常にバージョンを取得できました．バージョンの一覧を返します．
@@ -392,6 +428,7 @@ paths:
       tags:
         - version
       description: バージョンの更新。
+      operationId: putVersion
       requestBody:
         required: true
         content:
@@ -407,13 +444,18 @@ paths:
                 $ref: '#/components/schemas/Version'
         '500':
           description: 正常に更新できませんでした。リクエストが不正です。
-  /question/{versionID}:
+  /question:
     post:
       tags:
         - question
       description: 新しいアンケートを作成します．
+      operationId: postQuestionByVersionID
       parameters:
-        - $ref: '#/components/parameters/versionID'
+        - name: versionID
+          in: query
+          description: バージョンのID
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -436,6 +478,19 @@ paths:
     get:
       tags:
         - question
+      description: 質問の取得
+      operationId: getQuestionByVersionID
+      parameters:
+        - name: versionID
+          in: query
+          description: バージョンのID
+          schema:
+            type: string
+        - name: questionID
+          in: query
+          description: 質問のID
+          schema:
+            type: string
       responses:
         '200':
           description: 正常に質問を取得できました．取得した質問を返します．
@@ -448,12 +503,13 @@ paths:
         '400':
           description: 正常に取得できませんでした。リクエストが不正です。
   /question/{questionID}:
-    patch:
+    parameters:
+      - $ref: '#/components/parameters/questionID'
+    put:
       tags:
         - question
       description: 質問を変更します．
-      parameters:
-        - $ref: '#/components/parameters/questionID'
+      operationId: putQuestionByQuestionID
       requestBody:
         required: true
         content:
@@ -470,6 +526,7 @@ paths:
       tags:
         - question
       description: 質問を削除します．
+      operationId: deleteQuestionByQuestionID
       parameters:
         - $ref: '#/components/parameters/questionID'
       responses:
@@ -482,6 +539,7 @@ paths:
       tags:
         - response
       description: 新しい回答を作成します．
+      operationId: postResponse
       requestBody:
         required: true
         content:
@@ -499,6 +557,7 @@ paths:
       tags:
         - response
       description: 回答を取得します
+      operationId: getResponse
       responses:
         200:
           description: 正常に回答を取得しました。
@@ -511,6 +570,7 @@ paths:
       tags:
         - response
       description: 回答を取ってきます。質問に対応する回答がない場合は空の文字列を返します。
+      operationId: getAnswer
       responses:
           '200':
             description: 正常に回答を作成できました．作成された回答を返します．
@@ -527,6 +587,7 @@ paths:
       tags:
         - response
       description: 回答を取ってきます
+      operationId: getGameRating
       responses:
           '200':
             description: 正常に回答を作成できました．作成された回答を返します．
@@ -543,6 +604,7 @@ paths:
       tags:
         - seat
       description: 席の状態を更新します。
+      operationId: postSeat
       parameters:
           - $ref: '#/components/parameters/seatID'
       responses:
@@ -554,6 +616,7 @@ paths:
       tags:
         - seat
       description: 席の状態を更新します。
+      operationId: deleteSeat
       parameters:
           - $ref: '#/components/parameters/seatID'
       responses:
@@ -566,6 +629,7 @@ paths:
       tags:
         - seat
       description: 席の状態を取得します。
+      operationId: getSeat
       responses:
         200:
           description: 取得に成功しました。
@@ -619,6 +683,7 @@ components:
   schemas:
     Update:
       type: "object"
+      description: 新しいゲーム。
       properties:
         name:
           type: "string"
@@ -641,6 +706,7 @@ components:
 
     Question:
       type: object
+      description: 質問
       properties:
         id:
           type: integer
@@ -660,6 +726,7 @@ components:
 
     NewQuestion:
       type: object
+      description: 新しい質問
       properties:
         type:
           type: string
@@ -674,6 +741,7 @@ components:
 
     Response:
       type: object
+      description: 回答
       properties:
         id:
           description: クライアントID。UUID。
@@ -688,6 +756,7 @@ components:
 
     NewResponse:
       type: object
+      description: 新しい回答
       properties:
         id:
           description: クライアントID。UUID。
@@ -706,11 +775,11 @@ components:
 
     AnswerResponse:
       type: object
+      description: 質問に対する回答
       properties:
         id:
           description: 質問のID
-          type: string
-          example: 1
+          type: integer
         contents:
           description: 回答の配列。チェックボックスの場合のみ複数。
           type: array
@@ -719,6 +788,7 @@ components:
 
     GameResponse:
       type: object
+      description: ゲームの評価
       properties:
         id:
           description: ゲームのID。
@@ -732,6 +802,7 @@ components:
 
     ResponseCalc:
       type: object
+      description: 回答
       properties:
         id:
           description: クライアントID。UUID。
@@ -752,10 +823,11 @@ components:
 
     AnswerCalc:
       type: object
+      description: 質問に対する回答
       properties:
         id:
           description: 質問のID
-          type: string
+          type: integer
           example: 1
         contents:
           description: 回答の配列。チェックボックスの場合のみ複数。
@@ -770,6 +842,7 @@ components:
 
     GameCalc:
       type: object
+      description: ゲームの評価
       properties:
         id:
           description: ゲームのID。
@@ -789,7 +862,7 @@ components:
           type: integer
     NewVersion:
       type: object
-      description: 新しいバージョン。
+      description: 新しいバージョン
       properties:
         name:
           description: バージョン名。
@@ -802,7 +875,7 @@ components:
             type: string
     Version:
       type: object
-      description: 新しいバージョン。
+      description: 新しいバージョン
       properties:
         id:
           description: ゲームのID。
@@ -818,7 +891,7 @@ components:
             type: string
     Game:
       type: object
-      description: ゲーム。
+      description: ゲーム
       properties:
         id:
           description: ID。

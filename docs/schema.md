@@ -88,19 +88,27 @@
 ### responses
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | varchar(36) | NO | PRI |  |  |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | session_id | int(11) | NO | MUL |  |  |  |
 | version_id | int(11) | NO | MUL |  |  |  |
 | remark | text |  |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
-### answer_responses
+### text_answers
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | response_id | varchar(36) | NO | MUL |  |  |  |
 | question_id | int(11) | NO | MUL |  |  |  |
 | content | text | NO |  |  |  |  |
+
+### option_answers
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| response_id | varchar(36) | NO | MUL |  |  |  |
+| question_id | int(11) | NO | MUL |  |  |  |
+| option_id | int(11) | NO | MUL |  |  |  |
 
 ### game_ratings
 | Name | Type | Null | Key | Default | Extra | 説明 |
