@@ -1,0 +1,995 @@
+openapi: 3.0.2
+servers:
+  - url: '/api'
+info:
+  description: "traPCollectionのAPI"
+  version: "1.0.0"
+  title: "traPCollection API"
+  contact:
+    name: traP
+    url: 'https://github.com/traPtitech/trap-collection-server'
+paths:
+  /callback:
+    parameters:
+      - name: code
+        in: query
+        required: true
+        description: OAuth2.0のcode
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: true
+        description: OAuth2.0のstate
+        schema:
+          type: string
+    get:
+      tags:
+        - user
+      description: OAuthのコールバック
+      operationId: callback
+      responses:
+        200:
+          description: 成功
+        301:
+          description: 失敗時。認証ページへリダイレクト
+  /user/me:
+    get:
+      tags:
+        - user
+      description: 自分の情報の取得
+      operationId: getMe
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        500:
+          description: 失敗
+  /users:
+    get:
+      tags:
+        - user
+      description: traQの全ユーザー取得
+      operationId: getUsers
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        500:
+          description: 失敗
+  /check/{lancherVersionID}:
+    parameters:
+      - $ref: '#/components/parameters/lancherVersionID'
+    get:
+      tags:
+        - check
+      description: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      operationId: getCheckList
+      responses:
+        200:
+          description: 成功時のレスポンス
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckItem'
+        500:
+          description: 失敗時のレスポンス
+  /game:
+    post:
+      tags:
+        - game
+      description: ゲームの追加
+      operationId: postGame
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              $ref: '#/components/schemas/NewGameMeta'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameMeta'
+        500:
+          description: 失敗
+    get:
+      tags:
+        - game
+      description: ゲーム一覧の取得
+      operationId: getGames
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+        500:
+          description: 失敗
+  /game/info/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    get:
+      tags:
+        - game
+      description: ゲーム情報の取得
+      operationId: getGame
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        500:
+          description: 失敗
+    put:
+      tags:
+        - game
+      description: ゲームの情報の修正
+      operationId: putGame
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              $ref: '#/components/schemas/NewGameMeta'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameMeta'
+        500:
+          description: 失敗
+    delete:
+      tags:
+        - game
+      description: ゲームの削除
+      operationId: deleteGames
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+  /game/file/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    get:
+      tags:
+        - game
+      description: ゲームの最新バージョンのファイルの取得
+      operationId: getGameFile
+      responses:
+        200:
+          description: 成功
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: 失敗
+  /game/url/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    get:
+      tags:
+        - game
+      description: ゲームの最新バージョンのURLの取得
+      operationId: getGameURL
+      responses:
+        200:
+          description: 成功
+          content:
+            text/plain:
+              schema:
+                type: string
+        500:
+          description: 失敗
+  /game/image/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    post:
+      tags:
+        - game
+      description: ゲームの画像の変更
+      operationId: postImage
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    get:
+      tags:
+        - game
+      description: ゲームの画像の取得
+      operationId: getImage
+      responses:
+        200:
+          description: 成功
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: 失敗
+  /game/video/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    post:
+      tags:
+        - game
+      description: ゲームの動画の変更
+      operationId: postVideo
+      requestBody:
+        content:
+          video/mp4:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    get:
+      tags:
+        - game
+      description: ゲームの動画の取得
+      operationId: getVideo
+      responses:
+        200:
+          description: 成功
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: 失敗
+  /game/maintainer/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    post:
+      tags:
+        - game
+      description: ゲームのバージョン更新権限保持者の追加
+      operationId: postMaintainer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                description: 権限を与える相手のtraQID（UUID）
+                type: string
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    get:
+      tags:
+        - game
+      description: ゲームの管理者の取得
+      operationId: getOwner
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      description: traQID（UUID）
+                      type: string
+                    name:
+                      description: traQID（UUIDでない方）
+                      type: string
+                    role:
+                      description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
+                      type: integer
+        500:
+          description: 失敗
+  /game/version/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    post:
+      tags:
+        - game
+      description: ゲームのバージョンの作成
+      operationId: postGameVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGameVersion'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVersion'
+        500:
+          description: 失敗
+    get:
+      tags:
+        - game
+      description: ゲームのバージョン一覧の取得
+      operationId: getGameVersion
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameVersion'
+        500:
+          description: 失敗
+  /game/asset/{gameVersionID}:
+    parameters:
+      - $ref: '#/components/parameters/gameVersionID'
+    post:
+      tags:
+        - game
+      description: ゲームの最新バージョンへのファイル・URLの追加
+      operationId: postAsset
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewGameAsset'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameAsset'
+        400:
+          description: 既に同じタイプのファイルがある
+        500:
+          description: 失敗
+  /version:
+    post:
+      tags:
+        - version
+      description: 新しいバージョンの作成
+      operationId: postVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewVersion'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        500:
+          description: 失敗
+    get:
+      tags:
+        - version
+      description: バージョン一覧の取得
+      operationId: getVersions
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Version'
+        500:
+          description: 失敗
+  /version/{lancherVersionID}:
+    parameters:
+      - $ref: '#/components/parameters/lancherVersionID'
+    get:
+      tags:
+        - version
+      description: バージョンの詳細情報の取得
+      operationId: getVersion
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetails'
+        500:
+          description: 失敗
+  /version/{lancherVersionID}/question:
+    parameters:
+      - $ref: '#/components/parameters/lancherVersionID'
+    get:
+      tags:
+        - version
+      description: 質問の取得
+      operationId: getQuestions
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        500:
+          description: 失敗
+  /question:
+    post:
+      tags:
+        - question
+      description: 質問を作成
+      operationId: postQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewQuestion'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+        500:
+          description: 失敗
+  /question/{questionID}:
+    parameters:
+      - $ref: '#/components/parameters/questionID'
+    delete:
+      tags:
+        - question
+      description: 質問の削除
+      operationId: deleteQuestion
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+  /response:
+    post:
+      tags:
+        - response
+      description: 新しい回答を作成します．
+      operationId: postResponse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewResponse'
+      responses:
+        200:
+          description: 正常に回答を作成できました．作成された回答を返します．
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewResponse'
+  /response/{lancherVersionID}:
+    parameters:
+      - $ref: '#/components/parameters/lancherVersionID'
+    get:
+      tags:
+        - response
+      description: 回答の統計情報を取得
+      operationId: getResponse
+      parameters:
+        - name: require
+          in: query
+          required: false
+          description: 指定の要素のみ返す。指定なしではすべての要素を返す。（answer,game,remark）
+          schema:
+            type: string
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseCalc'
+        500:
+          description: 失敗
+  /seat/{seatID}:
+    parameters:
+      - $ref: '#/components/parameters/seatID'
+    post:
+      tags:
+        - seat
+      description: 着席
+      operationId: postSeat
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    delete:
+      tags:
+        - seat
+      description: 離席
+      operationId: deleteSeat
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+  /seat:
+    get:
+      tags:
+        - seat
+      description: 席の状態の取得
+      operationId: getSeat
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                description: 状態inの席の一覧を取得します。
+                type: array
+                items:
+                  type: integer
+                  description: 埋まっている席のIDの一覧
+        500:
+          description: 失敗
+
+components:
+  parameters:
+    lancherVersionID:
+      name: lancherVersionID
+      in: path
+      description: ランチャーのバージョンのID
+      required: true
+      schema:
+        type: integer
+    gameID:
+      description: ゲームのUUID
+      name: gameID
+      in: path
+      required: true
+      schema:
+        type: string
+    gameVersionID:
+      description: ゲームのバージョンのID
+      name: gameVersionID
+      in: path
+      required: true
+      schema:
+        type: integer
+    questionID:
+      description: 質問のID
+      name: questionID
+      in: path
+      required: true
+      schema:
+        type: integer
+    responseID:
+      description: 回答のUUID
+      name: responseID
+      in: path
+      required: true
+      schema:
+        type: string
+    seatID:
+      description: 席のID
+      name: seatID
+      in: path
+      required: true
+      schema:
+        type: integer
+  schemas:
+    User:
+      description: ユーザー
+      type: object
+      properties:
+        id:
+          description: traQのID（UUID）
+          type: string
+        name:
+          description: traQID（UUIDでない方）
+          type: string
+    CheckItem:
+      type: object
+      description: ゲームの更新・破損のチェック用リスト
+      properties:
+        id:
+          type: string
+        md5:
+          type: string
+        type:
+          description: ゲームの種類（url,jar,windows,mac）
+          type: string
+        body_updated_at:
+          description: ゲーム本体の更新日時
+          type: string
+          format: date-time
+        img_updated_at:
+          description: 画像の更新日時
+          type: string
+          format: date-time
+        movie_updated_at:
+          description: 動画の更新日時
+          type: string
+          format: date-time
+    NewGameMeta:
+      description: 新しいゲームの名前
+      type: string
+    GameMeta:
+      description: ゲーム名とID
+      type: object
+      properties:
+        id:
+          description: 追加されたゲームのUUID
+          type: string
+        name:
+          description: 追加されたゲームの名前
+          type: string
+        created_at:
+          description: ゲームの追加された時刻
+          type: string
+          format: date-time
+    Game:
+      description: ゲーム
+      type: object
+      properties:
+        id:
+          description: ゲームのUUID
+          type: string
+        name:
+          description: ゲーム名
+          type: string
+        created_at:
+          description: ゲームの登録時刻
+          type: string
+          format: date-time
+        version:
+          description: ゲームの最新バージョン
+          $ref: '#/components/schemas/GameVersionWithAssets'
+        owner:
+          description: ゲームの管理者（追加した人）のtraQID（UUIDではない）
+          type: string
+    NewGameVersion:
+      description: 新しいゲームのバージョン
+      type: object
+      properties:
+        name:
+          description: 名前
+          type: string
+        description:
+          description: バージョンの説明
+          type: string
+    GameVersion:
+      description: ゲームのバージョン
+      type: object
+      properties:
+        id:
+          description: ID
+          type: integer
+        name:
+          description: 名前
+          type: string
+        description:
+          description: バージョンの説明
+          type: string
+        created_at:
+          description: 登録時刻
+          type: string
+          format: date-time
+    GameVersionWithAssets:
+      description: アセット入のゲームのバージョン
+      type: object
+      properties:
+        id:
+          description: ID
+          type: integer
+        name:
+          description: 名前
+          type: string
+        description:
+          description: バージョンの説明
+          type: string
+        created_at:
+          description: 登録時刻
+          type: string
+          format: date-time
+        assets:
+          description: バージョン内のゲームのファイルの情報
+          type: array
+          items:
+            $ref: '#/components/schemas/GameAsset'
+    NewGameAsset:
+      description: 新しいゲームのファイル
+      type: object
+      properties:
+        type:
+          description: ゲームの種類（url,jar,windows,mac）
+          type: string
+        url:
+          description: ゲームのURL（タイプがURL以外のときはなし）
+          type: string
+        file:
+          description: ゲームのファイル（タイプがURLのときはなし）
+          type: string
+          format: binary
+    GameAsset:
+      description: ゲームのファイルの情報
+      type: object
+      properties:
+        id:
+          description: アセットのID
+          type: integer
+        type:
+          description: ゲームの種類（url,jar,windows,mac）
+          type: string
+        url:
+          description: ゲームのURL（タイプがURL以外のときはなし）
+          type: string
+    NewVersion:
+      description: 新しいバージョン
+      type: object
+      properties:
+        name:
+          description: 名前
+          type: string
+        games:
+          type: array
+          items:
+            description: 入れるゲームのUUID
+            type: string
+    Version:
+      description: バージョン
+      type: object
+      properties:
+        id:
+          description: ID
+          type: string
+        name:
+          description: 名前
+          type: string
+        games:
+          type: array
+          items:
+            description: 入れるゲームのUUID
+            type: string
+        created_at:
+          description: 登録時刻
+          type: string
+          format: date-time
+    VersionDetails:
+      description: バージョン詳細
+      type: object
+      properties:
+        id:
+          description: ID
+          type: string
+        name:
+          description: 名前
+          type: string
+        games:
+          type: array
+          items:
+            description: 入れるゲームのUUID
+            type: string
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+        created_at:
+          description: 登録時刻
+          type: string
+          format: date-time
+    NewQuestion:
+      description: 新しい質問
+      type: object
+      properties:
+        version_id:
+          description: 質問を追加するランチャーのバージョンのID
+          type: integer
+        type:
+          description: 質問の種類（radio,checkbox,text）
+          type: string
+        content:
+          description: 質問文
+          type: string
+        options:
+          description: 選択肢（種類がtextのときはなし）
+          type: array
+          items:
+            type: string
+        required:
+          description: 回答が必須かどうか
+          type: boolean
+    Question:
+      type: object
+      description: 質問
+      properties:
+        id:
+          description: 質問のID
+          type: integer
+        type:
+          description: 質問の種類
+          type: string
+        content:
+          description: 質問文
+          type: string
+        options:
+          description: 選択肢
+          type: array
+          items:
+            type: string
+        required:
+          description: 回答が必須か
+          type: boolean
+        created_at:
+          description: 質問の作成時刻
+          type: string
+          format: date-time
+    NewResponse:
+      type: object
+      description: 新しい回答
+      properties:
+        id:
+          description: クライアントのUUID
+          type: string
+        answers:
+          description: バージョンごとの質問に対する回答
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
+        game_ratings:
+          description: ゲームに対する評価
+          type: array
+          items:
+            $ref: '#/components/schemas/GameRating'
+        remark:
+          description: 自由記述欄
+          type: string
+    Response:
+      description: 回答
+      type: object
+      properties:
+        id:
+          description: クライアントのUUID
+          type: string
+        answers:
+          description: バージョンごとの質問に対する回答
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
+        game_ratings:
+          description: ゲームに対する評価
+          type: array
+          items:
+            $ref: '#/components/schemas/GameRating'
+        remark:
+          description: 自由記述欄
+          type: string
+        created_at:
+          description: 回答時刻
+          type: string
+          format: date-time
+    ResponseCalc:
+      type: object
+      description: 回答
+      properties:
+        id:
+          description: クライアントのUUID
+          type: string
+        answer:
+          $ref: '#/components/schemas/AnswerCalc'
+        game:
+          $ref: '#/components/schemas/GameCalc'
+        remark:
+          description: 自由記述欄
+          type: array
+          items:
+            type: string
+    Answer:
+      type: object
+      description: バージョンごとの質問に対する回答
+      properties:
+        id:
+          description: 質問のID
+          type: integer
+        contents:
+          description: 回答の配列（チェックボックスの場合のみ複数）
+          type: array
+          items:
+            type: string
+    AnswerCalc:
+      type: object
+      description: 質問に対する回答の統計
+      properties:
+        id:
+          description: 質問のID
+          type: integer
+          example: 1
+        contents:
+          description: それぞれの回答とその回答数
+          type: array
+          items:
+            type: object
+            properties:
+                answer:
+                  type: string
+                num:
+                  type: integer
+    GameRating:
+      type: object
+      description: ゲームの評価
+      properties:
+        id:
+          description: ゲームのUUID
+          type: string
+        rate:
+          description: 星の数（1〜5）
+          type: integer
+        time:
+          description: プレイ時間(ms)
+          type: integer
+    GameCalc:
+      type: object
+      description: ゲームの評価の統計
+      properties:
+        id:
+          description: ゲームのUUID
+          type: string
+        rate:
+          description: 星の数
+          type: array
+          items:
+            type: object
+            properties:
+              star:
+                type: integer
+              num:
+                type: integer
+        rate_ave:
+          description: 星の数の平均
+          type: integer
+        time:
+          description: プレイ時間(ms)の平均
+          type: integer
+        
