@@ -33,7 +33,7 @@ paths:
           description: 成功
         301:
           description: 失敗時。認証ページへリダイレクト
-  /user/me:
+  /users/me:
     get:
       tags:
         - user
@@ -65,25 +65,6 @@ paths:
                   $ref: '#/components/schemas/User'
         500:
           description: 失敗
-  /check/{lancherVersionID}:
-    parameters:
-      - $ref: '#/components/parameters/lancherVersionID'
-    get:
-      tags:
-        - check
-      description: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
-      operationId: getCheckList
-      responses:
-        200:
-          description: 成功時のレスポンス
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CheckItem'
-        500:
-          description: 失敗時のレスポンス
   /game:
     post:
       tags:
@@ -120,7 +101,7 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
-  /game/info/{gameID}:
+  /games/info/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
     get:
@@ -144,7 +125,7 @@ paths:
       operationId: putGame
       requestBody:
         content:
-          text/plain:
+          application/json:
             schema:
               $ref: '#/components/schemas/NewGameMeta'
       responses:
@@ -166,51 +147,20 @@ paths:
           description: 成功
         500:
           description: 失敗
-  /game/file/{gameID}:
+  /games/{gameID}/image:
     parameters:
       - $ref: '#/components/parameters/gameID'
-    get:
-      tags:
-        - game
-      description: ゲームの最新バージョンのファイルの取得
-      operationId: getGameFile
-      responses:
-        200:
-          description: 成功
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        500:
-          description: 失敗
-  /game/url/{gameID}:
-    parameters:
-      - $ref: '#/components/parameters/gameID'
-    get:
-      tags:
-        - game
-      description: ゲームの最新バージョンのURLの取得
-      operationId: getGameURL
-      responses:
-        200:
-          description: 成功
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: 失敗
-  /game/image/{gameID}:
-    parameters:
-      - $ref: '#/components/parameters/gameID'
-    post:
+    put:
       tags:
         - game
       description: ゲームの画像の変更
-      operationId: postImage
+      operationId: putImage
       requestBody:
         content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
           image/png:
             schema:
               type: string
@@ -229,13 +179,17 @@ paths:
         200:
           description: 成功
           content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
             image/png:
               schema:
                 type: string
                 format: binary
         500:
           description: 失敗
-  /game/video/{gameID}:
+  /games/{gameID}/video:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -263,13 +217,13 @@ paths:
         200:
           description: 成功
           content:
-            image/png:
+            video/mp4:
               schema:
                 type: string
                 format: binary
         500:
           description: 失敗
-  /game/maintainer/{gameID}:
+  /games/maintainer/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -316,7 +270,7 @@ paths:
                       type: integer
         500:
           description: 失敗
-  /game/version/{gameID}:
+  /games/version/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -354,7 +308,7 @@ paths:
                   $ref: '#/components/schemas/GameVersion'
         500:
           description: 失敗
-  /game/asset/{gameVersionID}:
+  /games/asset/{gameVersionID}:
     parameters:
       - $ref: '#/components/parameters/gameVersionID'
     post:
@@ -378,7 +332,48 @@ paths:
           description: 既に同じタイプのファイルがある
         500:
           description: 失敗
-  /version:
+  /games/asset/{gameID}/file:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+      - name: os
+        description: osのパラメーター(mac,windows)
+        in: query
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - game
+      description: ゲームの最新バージョンのファイルの取得
+      operationId: getGameFile
+      responses:
+        200:
+          description: 成功
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        500:
+          description: 失敗
+  /games/asset/{gameID}/url:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    get:
+      tags:
+        - game
+      description: ゲームの最新バージョンのURLの取得
+      operationId: getGameURL
+      responses:
+        200:
+          description: 成功
+          content:
+            text/plain:
+              schema:
+                type: string
+        500:
+          description: 失敗
+  /versions:
     post:
       tags:
         - version
@@ -415,9 +410,9 @@ paths:
                   $ref: '#/components/schemas/Version'
         500:
           description: 失敗
-  /version/{lancherVersionID}:
+  /versions/{launcherVersionID}:
     parameters:
-      - $ref: '#/components/parameters/lancherVersionID'
+      - $ref: '#/components/parameters/launcherVersionID'
     get:
       tags:
         - version
@@ -432,9 +427,28 @@ paths:
                 $ref: '#/components/schemas/VersionDetails'
         500:
           description: 失敗
-  /version/{lancherVersionID}/question:
+  /versions/check/{launcherVersionID}:
     parameters:
-      - $ref: '#/components/parameters/lancherVersionID'
+      - $ref: '#/components/parameters/launcherVersionID'
+    get:
+      tags:
+        - version
+      description: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      operationId: getCheckList
+      responses:
+        200:
+          description: 成功時のレスポンス
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckItem'
+        500:
+          description: 失敗時のレスポンス
+  /versions/{launcherVersionID}/question:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionID'
     get:
       tags:
         - version
@@ -451,7 +465,7 @@ paths:
                   $ref: '#/components/schemas/Question'
         500:
           description: 失敗
-  /question:
+  /questions:
     post:
       tags:
         - question
@@ -476,7 +490,7 @@ paths:
                   $ref: '#/components/schemas/Question'
         500:
           description: 失敗
-  /question/{questionID}:
+  /questions/{questionID}:
     parameters:
       - $ref: '#/components/parameters/questionID'
     delete:
@@ -489,7 +503,7 @@ paths:
           description: 成功
         500:
           description: 失敗
-  /response:
+  /responses:
     post:
       tags:
         - response
@@ -508,9 +522,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewResponse'
-  /response/{lancherVersionID}:
+  /responses/{launcherVersionID}:
     parameters:
-      - $ref: '#/components/parameters/lancherVersionID'
+      - $ref: '#/components/parameters/launcherVersionID'
     get:
       tags:
         - response
@@ -532,7 +546,7 @@ paths:
                 $ref: '#/components/schemas/ResponseCalc'
         500:
           description: 失敗
-  /seat/{seatID}:
+  /seats/{seatID}:
     parameters:
       - $ref: '#/components/parameters/seatID'
     post:
@@ -555,7 +569,7 @@ paths:
           description: 成功
         500:
           description: 失敗
-  /seat:
+  /seats:
     get:
       tags:
         - seat
@@ -577,8 +591,8 @@ paths:
 
 components:
   parameters:
-    lancherVersionID:
-      name: lancherVersionID
+    launcherVersionID:
+      name: launcherVersionID
       in: path
       description: ランチャーのバージョンのID
       required: true
@@ -665,6 +679,9 @@ components:
           type: string
         name:
           description: 追加されたゲームの名前
+          type: string
+        description:
+          description: 追加されたゲームの説明
           type: string
         created_at:
           description: ゲームの追加された時刻
@@ -964,8 +981,11 @@ components:
           description: ゲームのUUID
           type: string
         rate:
-          description: 星の数（1〜5）
-          type: integer
+          description: 星の数
+          max: 5
+          min: 1
+          type: number
+          format: double
         time:
           description: プレイ時間(ms)
           type: integer

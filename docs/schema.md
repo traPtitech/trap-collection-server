@@ -1,10 +1,11 @@
 ## DB schema
 
-### game_metas
+### games
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | name | varchar(32) | NO |  |  |  |  |
+| description | text | NO |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
@@ -51,6 +52,12 @@
 | name | varchar(32) | NO | UNI |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
+
+### accesstoken
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| version_id | int(11) | NO | MUL |  |  |  |
+| access_token | varchar(36) | NO | UNI |  |  |  |
 
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
