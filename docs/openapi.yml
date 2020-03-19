@@ -316,7 +316,7 @@ paths:
       tags:
         - game
       description: ゲームの最新バージョンへのファイルの追加
-      operationId: postAsset
+      operationId: postFile
       requestBody:
         content:
           multipart/form-data:
@@ -363,7 +363,7 @@ paths:
       tags:
         - game
       description: ゲームの最新バージョンへのURLの追加
-      operationId: postAsset
+      operationId: postURL
       requestBody:
         content:
           application/json:
