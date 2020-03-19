@@ -311,41 +311,41 @@ paths:
   /games/asset/{gameVersionID}:
     parameters:
       - $ref: '#/components/parameters/gameVersionID'
+  /games/asset/{gameID}/file:
     post:
       tags:
         - game
-      description: ゲームの最新バージョンへのファイル・URLの追加
+      description: ゲームの最新バージョンへのファイルの追加
       operationId: postAsset
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/NewGameAsset'
+              $ref: '#/components/schemas/NewGameFile'
       responses:
         200:
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameAsset'
+                $ref: '#/components/schemas/GameFile'
         400:
           description: 既に同じタイプのファイルがある
         500:
           description: 失敗
-  /games/asset/{gameID}/file:
-    parameters:
-      - $ref: '#/components/parameters/gameID'
-      - name: os
-        description: osのパラメーター(mac,windows)
-        in: query
-        required: true
-        schema:
-          type: string
     get:
       tags:
         - game
       description: ゲームの最新バージョンのファイルの取得
       operationId: getGameFile
+      parameters:
+        - $ref: '#/components/parameters/gameID'
+        - name: os
+          description: osのパラメーター(mac,windows)
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         200:
           description: 成功
@@ -359,6 +359,27 @@ paths:
   /games/asset/{gameID}/url:
     parameters:
       - $ref: '#/components/parameters/gameID'
+    post:
+      tags:
+        - game
+      description: ゲームの最新バージョンへのURLの追加
+      operationId: postAsset
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGameURL'
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameURL'
+        400:
+          description: 既に同じタイプのファイルがある
+        500:
+          description: 失敗
     get:
       tags:
         - game
@@ -756,22 +777,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GameAsset'
-    NewGameAsset:
+    NewGameFile:
       description: 新しいゲームのファイル
       type: object
       properties:
         type:
-          description: ゲームの種類（url,jar,windows,mac）
-          type: string
-        url:
-          description: ゲームのURL（タイプがURL以外のときはなし）
+          description: ゲームの種類（jar,windows,mac）
           type: string
         file:
-          description: ゲームのファイル（タイプがURLのときはなし）
+          description: ゲームのファイル
           type: string
           format: binary
+    NewGameURL:
+      description: 新しいゲームのURL
+      type: string
     GameAsset:
-      description: ゲームのファイルの情報
+      description: ゲームのファイル・URLの情報
       type: object
       properties:
         id:
@@ -780,6 +801,26 @@ components:
         type:
           description: ゲームの種類（url,jar,windows,mac）
           type: string
+        url:
+          description: ゲームのURL（タイプがURL以外のときはなし）
+          type: string
+    GameFile:
+      description: ゲームのファイルの情報
+      type: object
+      properties:
+        id:
+          description: アセットのID
+          type: integer
+        type:
+          description: ゲームの種類（jar,windows,mac）
+          type: string
+    GameURL:
+      description: ゲームのURLの情報
+      type: object
+      properties:
+        id:
+          description: アセットのID
+          type: integer
         url:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
@@ -982,8 +1023,8 @@ components:
           type: string
         rate:
           description: 星の数
-          max: 5
-          min: 1
+          maximum: 5
+          minimum: 1
           type: number
           format: double
         time:
