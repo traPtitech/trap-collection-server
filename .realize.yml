@@ -1,0 +1,24 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+  - name: server
+    path: ./
+    commands:
+      install:
+        status: true
+        method: go build -o main
+      run:
+        status: true
+        method: ./main
+    watcher:
+      extensions:
+        - go
+      paths:
+        - ./
+      ignored_paths:
+        - ./docker
+        - ./.github
+        - ./.vscode
+        - vender

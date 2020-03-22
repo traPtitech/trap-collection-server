@@ -1,0 +1,31 @@
+version: "3"
+services:
+  collection-server:
+    build:
+      context: ../../
+      dockerfile: ./docker/dev/Dockerfile
+    restart: always
+    volumes:
+      - ./:/go/src/github.com/traPtitech/trap-collection
+    environment:
+      COLLECTION_ENV: dev
+      OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
+      OS_USERNAME:
+      OS_PASSWORD:
+      OS_TENANT_ID:
+      CLIENT_ID:
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_HOSTNAME: mysql
+      DB_PORT: 3306
+      DB_DATABASE: trap_collection
+      PORT: :3000
+    ports: 
+      - 3000:3000
+  mysql:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    volumes:
+      - ../../mysql/data:/var/lib/mysql
+      - ../../mysql/init:/docker-entrypoint-initdb.d
