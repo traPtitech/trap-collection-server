@@ -20,14 +20,14 @@ var (
 )
 
 //EstablishDB データベースに接続
-func EstablishDB() (*sql.DB,error) {
+func EstablishDB() (*sql.DB, error) {
 	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
 	if err != nil {
-		return &sql.DB{},err
+		return &sql.DB{}, err
 	}
 	db = _db
 
-	return db.DB(),nil
+	return db.DB(), nil
 }
 
 //EstablishConoHa ConoHaの認証

@@ -11,13 +11,13 @@ import (
 
 // User ユーザーの構造体
 type User struct {
-	ID string `json:"userId,omitempty"`
+	ID   string `json:"userId,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
 // Traq traQのOAuthのClient
 type Traq interface {
-	GetMe(c echo.Context) (User,error)
+	GetMe(c echo.Context) (User, error)
 	MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc
 }
 
@@ -33,22 +33,22 @@ type MockTraqClient struct {
 }
 
 // GetMe 本番用のGetMe
-func (client *TraqClient) GetMe(c echo.Context) (User,error) {
+func (client *TraqClient) GetMe(c echo.Context) (User, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return User{}, fmt.Errorf("Failed In Getting Session:%w",err)
+		return User{}, fmt.Errorf("Failed In Getting Session:%w", err)
 	}
 	id := sess.Values["id"].(string)
 	name := sess.Values["name"].(string)
-	if len(id)==0||len(name)==0 {
+	if len(id) == 0 || len(name) == 0 {
 		return User{}, errors.New("ID Or Name Or Both Of Them Is Null")
 	}
-	return User{ID: id, Name: name},nil
+	return User{ID: id, Name: name}, nil
 }
 
 // GetMe テスト用のGetMe
-func (client *MockTraqClient) GetMe(c echo.Context) (User,error) {
-	return client.User,nil
+func (client *MockTraqClient) GetMe(c echo.Context) (User, error) {
+	return client.User, nil
 }
 
 // MiddlewareAuthUser 本番用のAPIにアクセスしたユーザーを認証するミドルウェア
@@ -56,10 +56,10 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w",err).Error())
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 		}
 		accessToken := sess.Values["accessToken"]
-		if accessToken==nil {
+		if accessToken == nil {
 			return c.String(http.StatusUnauthorized, "No AccessToken")
 		}
 		return next(c)

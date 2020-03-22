@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db,err := model.EstablishDB()
+	db, err := model.EstablishDB()
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func main() {
 	if os.Getenv("COLLECTION_ENV") == "test" {
 		mockClient := &router.MockTraqClient{
 			User: router.User{
-				ID: os.Getenv("USER_ID"),
+				ID:   os.Getenv("USER_ID"),
 				Name: os.Getenv("USER_Name"),
 			},
 		}

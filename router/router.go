@@ -5,9 +5,9 @@ import (
 )
 
 //SetupRouting ルーティング
-func SetupRouting(e *echo.Echo,client Traq) {
+func SetupRouting(e *echo.Echo, client Traq) {
 	api := e.Group("/api")
 	{
-		api.GET("/callback",CallbackHandler)
+		api.GET("/callback", CallbackHandler)
 	}
 }

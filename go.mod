@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gophercloud/gophercloud v0.9.0
-	github.com/gorilla/sessions v1.1.3
+	github.com/gorilla/sessions v1.2.0
 	github.com/jinzhu/gorm v1.9.12
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/labstack/echo-contrib v0.9.0
