@@ -10,4 +10,5 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/labstack/echo-contrib v0.9.0
 	github.com/labstack/echo/v4 v4.1.15
+	github.com/srinathgs/mysqlstore v0.0.0-20200107035359-eeb51ce63005
 )
