@@ -3,6 +3,7 @@ module github.com/traPtitech/trap-collection-server
 go 1.14
 
 require (
+	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gophercloud/gophercloud v0.9.0
 	github.com/gorilla/sessions v1.2.0

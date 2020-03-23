@@ -3,7 +3,6 @@ package model
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -14,14 +13,13 @@ import (
 )
 
 var (
-	//Db db
 	db     *gorm.DB
 	client *gophercloud.ServiceClient
 )
 
 //EstablishDB データベースに接続
 func EstablishDB() (*sql.DB, error) {
-	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+"?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4")
+	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+"?loc=Asia%2FTokyo&charset=utf8mb4")
 	if err != nil {
 		return &sql.DB{}, err
 	}
@@ -50,6 +48,5 @@ func EstablishConoHa() error {
 	if result.Err != nil {
 		return fmt.Errorf("Failed In Making New Storage:%w", err)
 	}
-	log.Println(result)
 	return nil
 }

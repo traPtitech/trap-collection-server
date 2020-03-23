@@ -41,7 +41,15 @@ func (client *TraqClient) GetMe(c echo.Context) (User, error) {
 	id := sess.Values["id"].(string)
 	name := sess.Values["name"].(string)
 	if len(id) == 0 || len(name) == 0 {
-		return User{}, errors.New("ID Or Name Or Both Of Them Is Null")
+		accessToken := sess.Values["accessToken"].(string)
+		if len(accessToken) == 0 {
+			return User{}, errors.New("AccessToken Is Null")
+		}
+		user, err := getMe(accessToken)
+		if err != nil {
+			return User{}, fmt.Errorf("Failed In Getting Me:%w", err)
+		}
+		return user, nil
 	}
 	return User{ID: id, Name: name}, nil
 }
@@ -60,7 +68,7 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 		}
 		accessToken := sess.Values["accessToken"]
 		if accessToken == nil {
-			return c.String(http.StatusUnauthorized, "No AccessToken")
+			return redirectAuth(c)
 		}
 		return next(c)
 	}

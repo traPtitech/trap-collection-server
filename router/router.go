@@ -10,4 +10,8 @@ func SetupRouting(e *echo.Echo, client Traq) {
 	{
 		api.GET("/callback", CallbackHandler)
 	}
+	api = e.Group("/api", client.MiddlewareAuthUser)
+	{
+		api.GET("/users/me", GetMeHandler(client))
+	}
 }
