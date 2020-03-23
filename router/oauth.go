@@ -18,7 +18,7 @@ import (
 	echo "github.com/labstack/echo/v4"
 )
 
-var baseURL = "https://q.trap.jp/api/1.0"
+var baseURL, _ = url.Parse("https://q.trap.jp/api/1.0")
 
 // AuthResponse 認証の返答
 type AuthResponse struct {
@@ -61,7 +61,7 @@ func CallbackHandler(c echo.Context) error {
 	sess.Values["id"] = user.ID
 	sess.Values["name"] = user.Name
 	sess.Save(c.Request(), c.Response())
-	return c.NoContent(http.StatusOK)
+	return c.Redirect(http.StatusFound, "/api/users/me") //今はエンドポイントが/api/users/meしかないためこうしているが、最終的には変更する
 }
 
 func redirectAuth(c echo.Context) error {
@@ -70,7 +70,8 @@ func redirectAuth(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 	}
 
-	u, err := url.Parse(baseURL + "/oauth2/authorize")
+	u := *baseURL
+	u.Path = baseURL.Path + "/oauth2/authorize"
 	if err != nil {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Parsing URL:%w", err).Error())
 	}
@@ -145,7 +146,9 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 	form.Set("code", code)
 	form.Set("code_verifier", codeVerifier)
 	reqBody := strings.NewReader(form.Encode())
-	req, err := http.NewRequest("POST", baseURL+"/oauth2/token", reqBody)
+	path := *baseURL
+	path.Path = path.Path + "/oauth2/token"
+	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
 		return AuthResponse{}, err
 	}
@@ -169,7 +172,9 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 }
 
 func getMe(accessToken string) (User, error) {
-	req, err := http.NewRequest("GET", baseURL+"/users/me", nil)
+	path := *baseURL
+	path.Path = path.Path + "/users/me"
+	req, err := http.NewRequest("GET", path.String(), nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
