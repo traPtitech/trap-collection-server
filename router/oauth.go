@@ -61,7 +61,12 @@ func CallbackHandler(c echo.Context) error {
 	sess.Values["id"] = user.ID
 	sess.Values["name"] = user.Name
 	sess.Save(c.Request(), c.Response())
-	return c.Redirect(http.StatusFound, "/api/users/me") //今はエンドポイントが/api/users/meしかないためこうしているが、最終的には変更する
+	redirect := sess.Values["redirect"]
+	strRedirect := "/api/users/me" //今はエンドポイントが/api/users/meしかないためこうしているが、最終的には変更する
+	if redirect!=nil && len(redirect.(string))!=0 {
+		strRedirect = redirect.(string)
+	}
+	return c.Redirect(http.StatusFound, strRedirect)
 }
 
 // PostLogoutHandler POST /logoutのハンドラー
@@ -71,34 +76,35 @@ func PostLogoutHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 	}
 
-	refreshToken := sess.Values["refresh_token"]
-	if refreshToken!=nil {
-		strRefreshToken := refreshToken.(string)
-		path := *baseURL
-		path.Path += "/oauth2/revoke"
-		form := url.Values{}
-		form.Set("token",strRefreshToken)
-		reqBody := strings.NewReader(form.Encode())
-		req, err := http.NewRequest("POST", path.String(), reqBody)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making HTTP Request:%w",err).Error())
-		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-		httpClient := http.DefaultClient
-		res, err := httpClient.Do(req)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In HTTP Request:%w",err).Error())
-		}
-		if res.StatusCode != 200 {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status).Error())
-		}
+	accessToken := sess.Values["accessToken"].(string)
+	path := *baseURL
+	path.Path += "/oauth2/revoke"
+	form := url.Values{}
+	form.Set("token",accessToken)
+	reqBody := strings.NewReader(form.Encode())
+	req, err := http.NewRequest("POST", path.String(), reqBody)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making HTTP Request:%w",err).Error())
 	}
-	
-	sess.Values["accessToken"] = ""
-	sess.Values["refreshToken"] = ""
-	sess.Values["id"] = ""
-	sess.Values["name"] = ""
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	httpClient := http.DefaultClient
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In HTTP Request:%w",err).Error())
+	}
+	if res.StatusCode != 200 {
+		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status).Error())
+	}
+
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+	}
+	sess.Values["accessToken"] = nil
+	sess.Values["refreshToken"] = nil
+	sess.Values["id"] = nil
+	sess.Values["name"] = nil
 	sess.Save(c.Request(), c.Response())
 	return c.NoContent(http.StatusOK)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
 )
@@ -66,8 +67,24 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 		}
+		redirect := c.QueryParam("redirect")
+		if len(redirect)!=0 {
+			sess.Values["redirect"] = redirect
+			sess.Options = &sessions.Options{
+				Path:     "/",
+				HttpOnly: true,
+			}
+			sess.Save(c.Request(), c.Response())
+		} else {
+			sess.Values["redirect"] = nil
+			sess.Options = &sessions.Options{
+				Path:     "/",
+				HttpOnly: true,
+			}
+			sess.Save(c.Request(), c.Response())
+		}
 		accessToken := sess.Values["accessToken"]
-		if accessToken == nil || len(accessToken.(string))==0 {
+		if accessToken == nil {
 			return redirectAuth(c)
 		}
 		return next(c)
@@ -76,6 +93,13 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 
 // MiddlewareAuthUser テスト用のミドルウェア
 func (client *MockTraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
+}
+
+// MiddlewareAuthLancher ランチャーの認証用のミドルウェア
+func MiddlewareAuthLancher(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return next(c)
 	}
