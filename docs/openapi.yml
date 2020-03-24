@@ -31,8 +31,19 @@ paths:
       responses:
         200:
           description: 成功
-        301:
+        302:
           description: 失敗時。認証ページへリダイレクト
+  /logout:
+    post:
+      tags:
+        - user
+      description: traP Collectionのログアウト
+      operationId: postLogout
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
   /users/me:
     get:
       tags:
@@ -659,7 +670,7 @@ components:
       description: ユーザー
       type: object
       properties:
-        id:
+        userId:
           description: traQのID（UUID）
           type: string
         name:

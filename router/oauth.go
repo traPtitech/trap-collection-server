@@ -64,6 +64,45 @@ func CallbackHandler(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/api/users/me") //今はエンドポイントが/api/users/meしかないためこうしているが、最終的には変更する
 }
 
+// PostLogoutHandler POST /logoutのハンドラー
+func PostLogoutHandler(c echo.Context) error {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+	}
+
+	refreshToken := sess.Values["refresh_token"]
+	if refreshToken!=nil {
+		strRefreshToken := refreshToken.(string)
+		path := *baseURL
+		path.Path += "/oauth2/revoke"
+		form := url.Values{}
+		form.Set("token",strRefreshToken)
+		reqBody := strings.NewReader(form.Encode())
+		req, err := http.NewRequest("POST", path.String(), reqBody)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making HTTP Request:%w",err).Error())
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		httpClient := http.DefaultClient
+		res, err := httpClient.Do(req)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In HTTP Request:%w",err).Error())
+		}
+		if res.StatusCode != 200 {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status).Error())
+		}
+	}
+	
+	sess.Values["accessToken"] = ""
+	sess.Values["refreshToken"] = ""
+	sess.Values["id"] = ""
+	sess.Values["name"] = ""
+	sess.Save(c.Request(), c.Response())
+	return c.NoContent(http.StatusOK)
+}
+
 func redirectAuth(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -93,7 +132,6 @@ func redirectAuth(c echo.Context) error {
 	codeVerifier := string(bytesCodeVerifier)
 	bytesCodeChallenge := sha256.Sum256([]byte(codeVerifier))
 	codeChallenge := base64url.Encode(bytesCodeChallenge[:])
-	log.Println(codeChallenge)
 	q.Add("code_challenge", codeChallenge)
 	sess.Values["codeVerifier"] = codeVerifier
 
@@ -147,7 +185,7 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 	form.Set("code_verifier", codeVerifier)
 	reqBody := strings.NewReader(form.Encode())
 	path := *baseURL
-	path.Path = path.Path + "/oauth2/token"
+	path.Path += "/oauth2/token"
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
 		return AuthResponse{}, err
@@ -162,6 +200,7 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 	if res.StatusCode != 200 {
 		return AuthResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
+	log.Println(res.Body)
 	body, _ := ioutil.ReadAll(res.Body)
 	authRes := AuthResponse{}
 	err = json.Unmarshal(body, &authRes)
@@ -173,7 +212,7 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 
 func getMe(accessToken string) (User, error) {
 	path := *baseURL
-	path.Path = path.Path + "/users/me"
+	path.Path += "/users/me"
 	req, err := http.NewRequest("GET", path.String(), nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
@@ -182,7 +221,7 @@ func getMe(accessToken string) (User, error) {
 		return User{}, err
 	}
 	if res.StatusCode != 200 {
-		return User{}, fmt.Errorf("Failed In HTTP Request::(Status:%d %s)", res.StatusCode, res.Status)
+		return User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	user := User{}

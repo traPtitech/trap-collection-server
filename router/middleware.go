@@ -67,7 +67,7 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 		}
 		accessToken := sess.Values["accessToken"]
-		if accessToken == nil {
+		if accessToken == nil || len(accessToken.(string))==0 {
 			return redirectAuth(c)
 		}
 		return next(c)

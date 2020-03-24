@@ -6,12 +6,13 @@ import (
 
 //SetupRouting ルーティング
 func SetupRouting(e *echo.Echo, client Traq) {
-	api := e.Group("/api")
+	apiNoAuth := e.Group("/api")
 	{
-		api.GET("/callback", CallbackHandler)
+		apiNoAuth.GET("/callback", CallbackHandler)
 	}
-	api = e.Group("/api", client.MiddlewareAuthUser)
+	api := e.Group("/api", client.MiddlewareAuthUser)
 	{
 		api.GET("/users/me", GetMeHandler(client))
+		api.POST("/logout", PostLogoutHandler)
 	}
 }
