@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
@@ -18,14 +17,20 @@ var (
 )
 
 //EstablishDB データベースに接続
-func EstablishDB() (*sql.DB, error) {
-	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+"?loc=Asia%2FTokyo&charset=utf8mb4")
+func EstablishDB(parseTime bool) (*gorm.DB, error) {
+	var str string
+	if parseTime {
+		str = "?parseTime=true&loc=Asia%2FTokyo&charset=utf8mb4"
+	} else {
+		str = "?loc=Asia%2FTokyo&charset=utf8mb4"
+	}
+	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE")) + str)
 	if err != nil {
-		return &sql.DB{}, err
+		return &gorm.DB{}, fmt.Errorf("Failed In Connecting To Databases:%w",err)
 	}
 	db = _db
 
-	return db.DB(), nil
+	return db, nil
 }
 
 //EstablishConoHa ConoHaの認証

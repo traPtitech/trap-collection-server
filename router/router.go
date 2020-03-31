@@ -8,11 +8,21 @@ import (
 func SetupRouting(e *echo.Echo, client Traq) {
 	apiNoAuth := e.Group("/api")
 	{
-		apiNoAuth.GET("/callback", CallbackHandler)
+		apiOAuth := apiNoAuth.Group("/oauth2")
+		{
+			apiOAuth.GET("/callback", CallbackHandler)
+			apiOAuth.POST("/generate/code", GetGenerateCodeHandler)
+		}
 	}
 	api := e.Group("/api", client.MiddlewareAuthUser)
 	{
-		api.GET("/users/me", GetMeHandler(client))
-		api.POST("/logout", PostLogoutHandler)
+		apiUsers := api.Group("/users")
+		{
+			apiUsers.GET("/me", GetMeHandler(client))
+		}
+		apiOAuth := api.Group("/oauth2")
+		{
+			apiOAuth.POST("/logout", PostLogoutHandler)
+		}
 	}
 }

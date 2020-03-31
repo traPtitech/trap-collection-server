@@ -7,7 +7,6 @@ import (
 
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/model"
 )
 
 // User ユーザーの構造体

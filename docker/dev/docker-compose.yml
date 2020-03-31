@@ -14,6 +14,7 @@ services:
       OS_PASSWORD:
       OS_TENANT_ID:
       CLIENT_ID:
+      CLIENT_SECRET:
       DB_USERNAME: root
       DB_PASSWORD: pass
       DB_HOSTNAME: mysql

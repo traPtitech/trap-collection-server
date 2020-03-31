@@ -13,15 +13,29 @@ import (
 )
 
 func main() {
+	env := os.Getenv("COLLECTION_ENV")
 	err := model.EstablishConoHa()
 	if err != nil {
 		panic(err)
 	}
-	db, err := model.EstablishDB()
+
+	db, err := model.EstablishDB(false)
 	if err != nil {
 		panic(err)
 	}
-	store, err := mysqlstore.NewMySQLStoreFromConnection(db, "sessions", "/", 60*60*24*14, []byte("secret-token"))
+	defer db.Close()
+
+	db2,err := model.EstablishDB(true)
+	if err != nil {
+		panic(err)
+	}
+	defer db2.Close()
+
+	if env == "development" {
+		db.LogMode(true)
+	}
+
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
 	if err != nil {
 		panic(err)
 	}
@@ -30,9 +44,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(store))
 
-	router.InitRouter()
-
-	if os.Getenv("COLLECTION_ENV") == "test" {
+	if env == "test" {
 		mockClient := &router.MockTraqClient{
 			User: router.User{
 				ID:   os.Getenv("USER_ID"),
@@ -42,6 +54,11 @@ func main() {
 		router.SetupRouting(e, mockClient)
 	} else {
 		router.SetupRouting(e, &router.TraqClient{})
+	}
+
+	err = router.InitRouter()
+	if err != nil {
+		panic(err)
 	}
 
 	e.Start(os.Getenv("PORT"))

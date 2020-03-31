@@ -106,8 +106,8 @@ func PostLogoutHandler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// GetPkceHandler GET /oauth/pkceのハンドラー
-func GetPkceHandler(c echo.Context) error {
+// GetPkceHandler POST /oauth/generate/codeのハンドラー
+func GetGenerateCodeHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
