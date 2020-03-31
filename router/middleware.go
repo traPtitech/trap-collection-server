@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/model"
 )
 
 // User ユーザーの構造体
@@ -67,25 +67,9 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 		}
-		redirect := c.QueryParam("redirect")
-		if len(redirect)!=0 {
-			sess.Values["redirect"] = redirect
-			sess.Options = &sessions.Options{
-				Path:     "/",
-				HttpOnly: true,
-			}
-			sess.Save(c.Request(), c.Response())
-		} else {
-			sess.Values["redirect"] = nil
-			sess.Options = &sessions.Options{
-				Path:     "/",
-				HttpOnly: true,
-			}
-			sess.Save(c.Request(), c.Response())
-		}
 		accessToken := sess.Values["accessToken"]
 		if accessToken == nil {
-			return redirectAuth(c)
+			return c.NoContent(http.StatusUnauthorized)
 		}
 		return next(c)
 	}

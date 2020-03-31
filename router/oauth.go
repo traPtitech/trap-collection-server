@@ -4,8 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -27,10 +25,17 @@ type AuthResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-// CallbackHandler OAuthのコールバック
+// PkceParams PKCE用のcode_challengeなど
+type PkceParams struct {
+	CodeChallenge string
+	CodeChallengeMethod string
+	ClientID string
+	ResponseType string
+}
+
+// CallbackHandler GET /oauth/callbackのハンドラー
 func CallbackHandler(c echo.Context) error {
 	code := c.QueryParam("code")
-	state := c.QueryParam("state")
 	if len(code) == 0 {
 		return c.String(http.StatusBadRequest, "Code Is Null")
 	}
@@ -38,9 +43,6 @@ func CallbackHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-	}
-	if state != sess.Values["state"] {
-		return c.String(http.StatusUnauthorized, "Failed In Getting State")
 	}
 	codeVerifier := sess.Values["codeVerifier"].(string)
 	res, err := getAccessToken(code, codeVerifier)
@@ -61,15 +63,10 @@ func CallbackHandler(c echo.Context) error {
 	sess.Values["id"] = user.ID
 	sess.Values["name"] = user.Name
 	sess.Save(c.Request(), c.Response())
-	redirect := sess.Values["redirect"]
-	strRedirect := "/api/users/me" //今はエンドポイントが/api/users/meしかないためこうしているが、最終的には変更する
-	if redirect!=nil && len(redirect.(string))!=0 {
-		strRedirect = redirect.(string)
-	}
-	return c.Redirect(http.StatusFound, strRedirect)
+	return c.NoContent(http.StatusOK)
 }
 
-// PostLogoutHandler POST /logoutのハンドラー
+// PostLogoutHandler POST /oauth/logoutのハンドラー
 func PostLogoutHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -109,39 +106,27 @@ func PostLogoutHandler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func redirectAuth(c echo.Context) error {
+// GetPkceHandler GET /oauth/pkceのハンドラー
+func GetPkceHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 	}
 
-	u := *baseURL
-	u.Path = baseURL.Path + "/oauth2/authorize"
-	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Parsing URL:%w", err).Error())
-	}
+	pkceParams := PkceParams{}
 
-	q, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Parsing Query:%w", err).Error())
-	}
+	pkceParams.ResponseType = "code"
 
-	q.Add("response_type", "code")
-
-	q.Add("client_id", clientID)
-
-	state := string(randBytes(10))
-	q.Add("state", state)
-	sess.Values["state"] = state
+	pkceParams.ClientID = clientID
 
 	bytesCodeVerifier := randBytes(43)
 	codeVerifier := string(bytesCodeVerifier)
 	bytesCodeChallenge := sha256.Sum256([]byte(codeVerifier))
 	codeChallenge := base64url.Encode(bytesCodeChallenge[:])
-	q.Add("code_challenge", codeChallenge)
+	pkceParams.CodeChallenge = codeChallenge
 	sess.Values["codeVerifier"] = codeVerifier
 
-	q.Add("code_challenge_method", "S256")
+	pkceParams.CodeChallengeMethod = "S256"
 
 	sess.Options = &sessions.Options{
 		Path:     "/",
@@ -151,9 +136,7 @@ func redirectAuth(c echo.Context) error {
 
 	sess.Save(c.Request(), c.Response())
 
-	u.RawQuery = q.Encode()
-	url := u.String()
-	return c.Redirect(http.StatusFound, url)
+	return c.JSON(http.StatusOK, pkceParams)
 }
 
 var randSrc = rand.NewSource(time.Now().UnixNano())
@@ -206,10 +189,8 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 	if res.StatusCode != 200 {
 		return AuthResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	log.Println(res.Body)
-	body, _ := ioutil.ReadAll(res.Body)
-	authRes := AuthResponse{}
-	err = json.Unmarshal(body, &authRes)
+	var authRes AuthResponse
+	err = json.NewDecoder(res.Body).Decode(&authRes)
 	if err != nil {
 		return AuthResponse{}, err
 	}
@@ -229,9 +210,8 @@ func getMe(accessToken string) (User, error) {
 	if res.StatusCode != 200 {
 		return User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	body, err := ioutil.ReadAll(res.Body)
-	user := User{}
-	err = json.Unmarshal(body, &user)
+	var user User
+	err = json.NewDecoder(res.Body).Decode(&user)
 	if err != nil {
 		return User{}, err
 	}
