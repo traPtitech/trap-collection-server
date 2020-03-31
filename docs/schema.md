@@ -5,7 +5,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | name | varchar(32) | NO |  |  |  |  |
-| description | text | NO |  |  |  |  |
+| description | text |  |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
@@ -53,16 +53,16 @@
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### accesstoken
+### product_key
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| version_id | int(11) | NO | MUL |  |  |  |
-| access_token | varchar(36) | NO | UNI |  |  |  |
+| key | varchar(29) | NO | PRI |  |  | `XXXXX-XXXXX-XXXXX-XXXXX-XXXXX`のような形式 |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
 
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| version_id | int(11) | NO | MUL |  |  |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | game_id | varchar(36) | NO | MUL |  |  |  |
 
 ### players
@@ -77,7 +77,7 @@
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| version_id | int(11) | NO | MUL |  |  |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | question_num | int(11) | NO |  |  | unsigned | 何番目の質問か |
 | type | tinyint | NO |  |  |  | 0:`radio`,1:`checkbox`,2:`text` |
 | content | text | NO |  |  |  | 質問文 |
@@ -97,7 +97,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | player_id | int(11) | NO | MUL |  |  |  |
-| version_id | int(11) | NO | MUL |  |  |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | remark | text |  |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
