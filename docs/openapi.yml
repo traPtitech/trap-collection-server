@@ -9,7 +9,7 @@ info:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
 paths:
-  /oauth/callback:
+  /oauth2/callback:
     parameters:
       - name: code
         in: query
@@ -33,7 +33,7 @@ paths:
           description: 成功
         302:
           description: 失敗時。認証ページへリダイレクト
-  /oauth/pkce:
+  /oauth2/generate/code:
     get:
       tags:
         - oauth
@@ -57,7 +57,7 @@ paths:
                     type: string
         500:
           description: 失敗
-  /oauth/logout:
+  /oauth2/logout:
     post:
       tags:
         - oauth
@@ -723,15 +723,15 @@ components:
         type:
           description: ゲームの種類（url,jar,windows,mac）
           type: string
-        body_updated_at:
+        bodyUpdatedAt:
           description: ゲーム本体の更新日時
           type: string
           format: date-time
-        img_updated_at:
+        imgUpdatedAt:
           description: 画像の更新日時
           type: string
           format: date-time
-        movie_updated_at:
+        movieUpdatedAt:
           description: 動画の更新日時
           type: string
           format: date-time
@@ -751,7 +751,7 @@ components:
         description:
           description: 追加されたゲームの説明
           type: string
-        created_at:
+        createdAt:
           description: ゲームの追加された時刻
           type: string
           format: date-time
@@ -765,7 +765,7 @@ components:
         name:
           description: ゲーム名
           type: string
-        created_at:
+        createdAt:
           description: ゲームの登録時刻
           type: string
           format: date-time
@@ -786,13 +786,33 @@ components:
       description: ゲームのバージョン
       type: object
       properties:
+        id:
+          description: ID
+          type: integer
         name:
           description: 名前
           type: string
         description:
           description: バージョンの説明
           type: string
-        created_at:
+        createdAt:
+          description: 登録時刻
+          type: string
+          format: date-time
+    GameVersionWithAssets:
+      description: アセット入のゲームのバージョン
+      type: object
+      properties:
+        id:
+          description: ID
+          type: integer
+        name:
+          description: 名前
+          type: string
+        description:
+          description: バージョンの説明
+          type: string
+        createdAt:
           description: 登録時刻
           type: string
           format: date-time
@@ -870,7 +890,7 @@ components:
           items:
             description: 入れるゲームのUUID
             type: string
-        created_at:
+        createdAt:
           description: 登録時刻
           type: string
           format: date-time
@@ -893,7 +913,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Question'
-        created_at:
+        createdAt:
           description: 登録時刻
           type: string
           format: date-time
@@ -901,7 +921,7 @@ components:
       description: 新しい質問
       type: object
       properties:
-        version_id:
+        versionId:
           description: 質問を追加するランチャーのバージョンのID
           type: integer
         type:
@@ -939,7 +959,7 @@ components:
         required:
           description: 回答が必須か
           type: boolean
-        created_at:
+        createdAt:
           description: 質問の作成時刻
           type: string
           format: date-time
@@ -955,7 +975,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Answer'
-        game_ratings:
+        gameRatings:
           description: ゲームに対する評価
           type: array
           items:
@@ -975,7 +995,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Answer'
-        game_ratings:
+        gameRatings:
           description: ゲームに対する評価
           type: array
           items:
@@ -983,7 +1003,7 @@ components:
         remark:
           description: 自由記述欄
           type: string
-        created_at:
+        createdAt:
           description: 回答時刻
           type: string
           format: date-time
@@ -1066,7 +1086,7 @@ components:
                 type: integer
               num:
                 type: integer
-        rate_ave:
+        rateAve:
           description: 星の数の平均
           type: integer
         time:
