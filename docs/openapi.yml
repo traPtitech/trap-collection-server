@@ -9,7 +9,7 @@ info:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
 paths:
-  /callback:
+  /oauth/callback:
     parameters:
       - name: code
         in: query
@@ -31,8 +31,43 @@ paths:
       responses:
         200:
           description: 成功
-        301:
+        302:
           description: 失敗時。認証ページへリダイレクト
+  /oauth/pkce:
+    get:
+      tags:
+        - oauth
+      description: OAuthのcode_challengeとかの取得
+      operationId: getPkce
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code_challenge:
+                    type: string
+                  code_challenge_method:
+                    type: string
+                  client_id:
+                    type: string
+                  response_type:
+                    type: string
+        500:
+          description: 失敗
+  /oauth/logout:
+    post:
+      tags:
+        - oauth
+      description: traP Collectionのログアウト
+      operationId: postLogout
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
   /users/me:
     get:
       tags:
@@ -65,7 +100,7 @@ paths:
                   $ref: '#/components/schemas/User'
         500:
           description: 失敗
-  /game:
+  /games:
     post:
       tags:
         - game
@@ -223,6 +258,23 @@ paths:
                 format: binary
         500:
           description: 失敗
+  /games/maintainer:
+    get:
+      tags:
+        - game
+      description: 自分がバージョン更新権限保持者のゲームの取得
+      operationId: getMyGames
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+        500:
+          description: 失敗
   /games/maintainer/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
@@ -308,9 +360,6 @@ paths:
                   $ref: '#/components/schemas/GameVersion'
         500:
           description: 失敗
-  /games/asset/{gameVersionID}:
-    parameters:
-      - $ref: '#/components/parameters/gameVersionID'
   /games/asset/{gameID}/file:
     post:
       tags:
@@ -448,9 +497,7 @@ paths:
                 $ref: '#/components/schemas/VersionDetails'
         500:
           description: 失敗
-  /versions/check/{launcherVersionID}:
-    parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
+  /versions/check:
     get:
       tags:
         - version
@@ -467,9 +514,7 @@ paths:
                   $ref: '#/components/schemas/CheckItem'
         500:
           description: 失敗時のレスポンス
-  /versions/{launcherVersionID}/question:
-    parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
+  /versions/question:
     get:
       tags:
         - version
@@ -538,11 +583,13 @@ paths:
               $ref: '#/components/schemas/NewResponse'
       responses:
         200:
-          description: 正常に回答を作成できました．作成された回答を返します．
+          description: 成功
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewResponse'
+        500:
+          description: 失敗
   /responses/{launcherVersionID}:
     parameters:
       - $ref: '#/components/parameters/launcherVersionID'
@@ -659,7 +706,7 @@ components:
       description: ユーザー
       type: object
       properties:
-        id:
+        userId:
           description: traQのID（UUID）
           type: string
         name:
@@ -724,10 +771,7 @@ components:
           format: date-time
         version:
           description: ゲームの最新バージョン
-          $ref: '#/components/schemas/GameVersionWithAssets'
-        owner:
-          description: ゲームの管理者（追加した人）のtraQID（UUIDではない）
-          type: string
+          $ref: '#/components/schemas/GameVersion'
     NewGameVersion:
       description: 新しいゲームのバージョン
       type: object
@@ -742,9 +786,6 @@ components:
       description: ゲームのバージョン
       type: object
       properties:
-        id:
-          description: ID
-          type: integer
         name:
           description: 名前
           type: string
@@ -755,28 +796,6 @@ components:
           description: 登録時刻
           type: string
           format: date-time
-    GameVersionWithAssets:
-      description: アセット入のゲームのバージョン
-      type: object
-      properties:
-        id:
-          description: ID
-          type: integer
-        name:
-          description: 名前
-          type: string
-        description:
-          description: バージョンの説明
-          type: string
-        created_at:
-          description: 登録時刻
-          type: string
-          format: date-time
-        assets:
-          description: バージョン内のゲームのファイルの情報
-          type: array
-          items:
-            $ref: '#/components/schemas/GameAsset'
     NewGameFile:
       description: 新しいゲームのファイル
       type: object
