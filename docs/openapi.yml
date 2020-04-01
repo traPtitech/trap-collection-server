@@ -890,11 +890,8 @@ components:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
     NewVersion:
-      description: 新しいバージョン
-      type: array
-      items:
-        description: 入れるゲームのUUID
-        type: string
+      description: 新しいバージョンの名前
+      type: string
     Version:
       description: バージョン
       type: object
