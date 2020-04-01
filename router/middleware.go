@@ -1,22 +1,23 @@
 package router
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
-	"github.com/labstack/echo"
-
-	"github.com/traPtitech/booQ/model"
+	"github.com/labstack/echo-contrib/session"
+	echo "github.com/labstack/echo/v4"
 )
 
-var baseURL = "https://q.trap.jp/api/1.0"
+// User ユーザーの構造体
+type User struct {
+	ID   string `json:"userId,omitempty"`
+	Name string `json:"name,omitempty"`
+}
 
-// Traq traQに接続する用のclient
+// Traq traQのOAuthのClient
 type Traq interface {
-	GetUsersMe(c echo.Context) (echo.Context, error)
+	GetMe(c echo.Context) (User, error)
 	MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc
 }
 
@@ -28,55 +29,61 @@ type TraqClient struct {
 // MockTraqClient テスト用のモックclient
 type MockTraqClient struct {
 	Traq
-	MockGetUsersMe func(c echo.Context) (echo.Context, error)
+	User User
 }
 
-// GetUsersMe 本番用のGetUsersMe
-func (client *TraqClient) GetUsersMe(c echo.Context) (echo.Context, error) {
-	token := c.Request().Header.Get("Authorization")
-
-	if token == "" {
-		return c, errors.New("認証に失敗しました(Headerに必要な情報が存在しません)")
+// GetMe 本番用のGetMe
+func (client *TraqClient) GetMe(c echo.Context) (User, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return User{}, fmt.Errorf("Failed In Getting Session:%w", err)
 	}
-	req, _ := http.NewRequest("GET", baseURL+"/users/me", nil)
-	req.Header.Set("Authorization", token)
-	httpClient := new(http.Client)
-	res, _ := httpClient.Do(req)
-	if res.StatusCode != 200 {
-		fmt.Println(token)
-		return c, errors.New("認証に失敗しました")
+	id := sess.Values["id"].(string)
+	name := sess.Values["name"].(string)
+	if len(id) == 0 || len(name) == 0 {
+		accessToken := sess.Values["accessToken"].(string)
+		if len(accessToken) == 0 {
+			return User{}, errors.New("AccessToken Is Null")
+		}
+		user, err := getMe(accessToken)
+		if err != nil {
+			return User{}, fmt.Errorf("Failed In Getting Me:%w", err)
+		}
+		return user, nil
 	}
-	body, _ := ioutil.ReadAll(res.Body)
-	traqUser := model.User{}
-	_ = json.Unmarshal(body, &traqUser)
-	c.Set("user", traqUser.Name)
-
-	return c, nil
+	return User{ID: id, Name: name}, nil
 }
 
-// GetUsersMe テスト用のGetUsersMe
-func (client *MockTraqClient) GetUsersMe(c echo.Context) (echo.Context, error) {
-	return client.MockGetUsersMe(c)
+// GetMe テスト用のGetMe
+func (client *MockTraqClient) GetMe(c echo.Context) (User, error) {
+	return client.User, nil
 }
 
-// MiddlewareAuthUser APIにアクセスしたユーザーの情報をセットする
+// MiddlewareAuthUser 本番用のAPIにアクセスしたユーザーを認証するミドルウェア
 func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c, err := client.GetUsersMe(c)
+		sess, err := session.Get("sessions", c)
 		if err != nil {
-			return c.String(http.StatusUnauthorized, err.Error())
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+		}
+		accessToken := sess.Values["accessToken"]
+		if accessToken == nil {
+			return c.NoContent(http.StatusUnauthorized)
 		}
 		return next(c)
 	}
 }
 
-// MiddlewareAuthUser APIにアクセスしたユーザーの情報をセットする
+// MiddlewareAuthUser テスト用のミドルウェア
 func (client *MockTraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c, err := client.GetUsersMe(c)
-		if err != nil {
-			return c.JSON(http.StatusUnauthorized, err)
-		}
+		return next(c)
+	}
+}
+
+// MiddlewareAuthLancher ランチャーの認証用のミドルウェア
+func MiddlewareAuthLancher(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		return next(c)
 	}
 }

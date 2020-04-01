@@ -4,19 +4,21 @@ settings:
     interval: 0s
 schema:
   - name: server
-    path: .
+    path: ./
     commands:
       install:
         status: true
-        method: go build -o app
+        method: go build -o main
       run:
         status: true
-        method: ./app
+        method: ./main
     watcher:
       extensions:
         - go
       paths:
-        - .
+        - ./
       ignored_paths:
-        - ./client
-        - vendor
+        - ./docker
+        - ./.github
+        - ./.vscode
+        - vender

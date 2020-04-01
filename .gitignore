@@ -1,5 +1,4 @@
-test.env
 .env
-mysql/data/
-pprof
 app
+.vscode
+mysql/data

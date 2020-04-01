@@ -1,14 +1,19 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo"
+	echo "github.com/labstack/echo/v4"
 )
 
-// GetUsersMe GET /users/me
-func GetUsersMe(c echo.Context) error {
-	user := c.Get("user").(string)
-
-	return c.JSON(http.StatusOK, user)
+// GetMeHandler GET /users/meのハンドラー
+func GetMeHandler(client Traq) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user, err := client.GetMe(c)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Me:%w", err).Error())
+		}
+		return c.JSON(http.StatusOK, user)
+	}
 }
