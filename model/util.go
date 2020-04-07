@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -84,7 +85,11 @@ func Migrate(env string) error {
 		if err != nil {
 			return fmt.Errorf("Failed In Select Or Creating A Dev Version:%w",err)
 		}
-		productKey := ProductKey{Key: os.Getenv("PRODUCT_KEY"), LauncherVersionID: launcherVersion.ID}
+		key := os.Getenv("PRODUCT_KEY")
+		if len(key) == 0 {
+			return errors.New("NO PRODUCT_KEY")
+		}
+		productKey := ProductKey{Key: key, LauncherVersionID: launcherVersion.ID}
 		err = db.Where(productKey).FirstOrCreate(&productKey).Error
 		if err != nil {
 			return fmt.Errorf("Failed In Select Or Creating A Product Key:%w",err)

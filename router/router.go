@@ -11,6 +11,7 @@ func SetupRouting(e *echo.Echo, client Traq) {
 		apiVersion := apiLancherAuth.Group("/versions")
 		{
 			apiVersion.GET("/check", GetCheckListHandler)
+			apiVersion.GET("/:launcherVersionID",GetVersionHandler)
 		}
 	}
 }
