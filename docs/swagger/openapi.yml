@@ -361,6 +361,8 @@ paths:
         500:
           description: 失敗
   /games/asset/{gameID}/file:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
     post:
       tags:
         - game

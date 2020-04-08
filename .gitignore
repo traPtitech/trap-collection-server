@@ -2,3 +2,5 @@
 app
 .vscode
 mysql/data
+mock/*
+!mock/.openapi-generator-ignore
