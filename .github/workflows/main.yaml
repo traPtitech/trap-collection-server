@@ -51,5 +51,5 @@ jobs:
       - name: Spectral checks
         uses: stoplightio/spectral-action@v0.5.5
         with:
-          file_glob: docs/*.yaml
+          file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}

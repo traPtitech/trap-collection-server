@@ -461,7 +461,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Version'
+                $ref: '#/components/schemas/VersionMeta'
         500:
           description: 失敗
     get:
@@ -495,6 +495,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetails'
+        500:
+          description: 失敗
+  /versions/{launcherVersionID}/game:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionID'
+    post:
+      tags:
+        - version
+      description: バージョンへのゲームの追加
+      operationId: postGameToVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                description: ゲームのUUID
+                type: string
+      responses:
+        200:
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
         500:
           description: 失敗
   /versions/check:
@@ -864,17 +890,8 @@ components:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
     NewVersion:
-      description: 新しいバージョン
-      type: object
-      properties:
-        name:
-          description: 名前
-          type: string
-        games:
-          type: array
-          items:
-            description: 入れるゲームのUUID
-            type: string
+      description: 新しいバージョンの名前
+      type: string
     Version:
       description: バージョン
       type: object
@@ -890,6 +907,20 @@ components:
           items:
             description: 入れるゲームのUUID
             type: string
+        createdAt:
+          description: 登録時刻
+          type: string
+          format: date-time
+    VersionMeta:
+      description: バージョンの簡易的な情報
+      type: object
+      properties:
+        id:
+          description: ID
+          type: string
+        name:
+          description: 名前
+          type: string
         createdAt:
           description: 登録時刻
           type: string
