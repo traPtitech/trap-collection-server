@@ -1,0 +1,19 @@
+{{>partial_header}}
+package main
+
+import (
+	"log"
+
+	echo "github.com/labstack/echo/v4"
+	sw "github.com/traPtitech/trap-collection-server-mock/{{packageName}}"
+)
+
+func main() {
+	log.Printf("Server started")
+
+	e := echo.New()
+
+	sw.SetupRouting(e)
+
+	e.Start(":{{serverPort}}")
+}
