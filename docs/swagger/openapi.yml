@@ -8,6 +8,10 @@ info:
   contact:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
+security:
+  - oAuth:
+    - read
+  - basicAuth: []
 paths:
   /oauth2/callback:
     parameters:
@@ -17,16 +21,10 @@ paths:
         description: OAuth2.0のcode
         schema:
           type: string
-      - name: state
-        in: query
-        required: true
-        description: OAuth2.0のstate
-        schema:
-          type: string
     get:
       tags:
-        - user
-      description: OAuthのコールバック
+        - oauth2
+      summary: OAuthのコールバック
       operationId: callback
       responses:
         200:
@@ -36,9 +34,9 @@ paths:
   /oauth2/generate/code:
     get:
       tags:
-        - oauth
-      description: OAuthのcode_challengeとかの取得
-      operationId: getPkce
+        - oauth2
+      summary: OAuthのcode_challengeとかの取得
+      operationId: getGenerateCode
       responses:
         200:
           description: 成功
@@ -60,8 +58,11 @@ paths:
   /oauth2/logout:
     post:
       tags:
-        - oauth
-      description: traP Collectionのログアウト
+        - oauth2
+      summary: traP Collectionのログアウト
+      security: 
+        - oAuth:
+          - read
       operationId: postLogout
       responses:
         200:
@@ -72,7 +73,10 @@ paths:
     get:
       tags:
         - user
-      description: 自分の情報の取得
+      summary: 自分の情報の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getMe
       responses:
         200:
@@ -87,7 +91,10 @@ paths:
     get:
       tags:
         - user
-      description: traQの全ユーザー取得
+      summary: traQの全ユーザー取得
+      security: 
+        - oAuth:
+          - read
       operationId: getUsers
       responses:
         200:
@@ -104,11 +111,14 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの追加
+      summary: ゲームの追加
+      security: 
+        - oAuth:
+          - read
       operationId: postGame
       requestBody:
         content:
-          text/plain:
+          application/json:
             schema:
               $ref: '#/components/schemas/NewGameMeta'
       responses:
@@ -123,7 +133,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲーム一覧の取得
+      summary: ゲーム一覧の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getGames
       responses:
         200:
@@ -142,7 +155,11 @@ paths:
     get:
       tags:
         - game
-      description: ゲーム情報の取得
+      summary: ゲーム情報の取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getGame
       responses:
         200:
@@ -156,7 +173,10 @@ paths:
     put:
       tags:
         - game
-      description: ゲームの情報の修正
+      summary: ゲームの情報の修正
+      security: 
+        - oAuth:
+          - read
       operationId: putGame
       requestBody:
         content:
@@ -175,7 +195,10 @@ paths:
     delete:
       tags:
         - game
-      description: ゲームの削除
+      summary: ゲームの削除
+      security: 
+        - oAuth:
+          - read
       operationId: deleteGames
       responses:
         200:
@@ -185,10 +208,13 @@ paths:
   /games/{gameID}/image:
     parameters:
       - $ref: '#/components/parameters/gameID'
-    put:
+    post:
       tags:
         - game
-      description: ゲームの画像の変更
+      summary: ゲームの画像の変更
+      security: 
+        - oAuth:
+          - read
       operationId: putImage
       requestBody:
         content:
@@ -208,7 +234,11 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの画像の取得
+      summary: ゲームの画像の取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getImage
       responses:
         200:
@@ -230,7 +260,10 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの動画の変更
+      summary: ゲームの動画の変更
+      security: 
+        - oAuth:
+          - read
       operationId: postVideo
       requestBody:
         content:
@@ -246,7 +279,11 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの動画の取得
+      summary: ゲームの動画の取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getVideo
       responses:
         200:
@@ -262,7 +299,10 @@ paths:
     get:
       tags:
         - game
-      description: 自分がバージョン更新権限保持者のゲームの取得
+      summary: 自分がバージョン更新権限保持者のゲームの取得
+      security: 
+        - oAuth:
+          - read
       operationId: getMyGames
       responses:
         200:
@@ -281,7 +321,10 @@ paths:
     post:
       tags:
         - game
-      description: ゲームのバージョン更新権限保持者の追加
+      summary: ゲームのバージョン更新権限保持者の追加
+      security: 
+        - oAuth:
+          - read
       operationId: postMaintainer
       requestBody:
         content:
@@ -299,7 +342,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの管理者の取得
+      summary: ゲームの管理者の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getOwner
       responses:
         200:
@@ -328,7 +374,10 @@ paths:
     post:
       tags:
         - game
-      description: ゲームのバージョンの作成
+      summary: ゲームのバージョンの作成
+      security: 
+        - oAuth:
+          - read
       operationId: postGameVersion
       requestBody:
         content:
@@ -347,7 +396,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲームのバージョン一覧の取得
+      summary: ゲームのバージョン一覧の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getGameVersion
       responses:
         200:
@@ -366,7 +418,10 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの最新バージョンへのファイルの追加
+      summary: ゲームの最新バージョンへのファイルの追加
+      security: 
+        - oAuth:
+          - read
       operationId: postFile
       requestBody:
         content:
@@ -387,11 +442,15 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの最新バージョンのファイルの取得
+      summary: ゲームの最新バージョンのファイルの取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getGameFile
       parameters:
         - $ref: '#/components/parameters/gameID'
-        - name: os
+        - name: opearating_system
           description: osのパラメーター(mac,windows)
           in: query
           required: true
@@ -413,7 +472,10 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの最新バージョンへのURLの追加
+      summary: ゲームの最新バージョンへのURLの追加
+      security: 
+        - oAuth:
+          - read
       operationId: postURL
       requestBody:
         content:
@@ -434,13 +496,17 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの最新バージョンのURLの取得
+      summary: ゲームの最新バージョンのURLの取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getGameURL
       responses:
         200:
           description: 成功
           content:
-            text/plain:
+            application/json:
               schema:
                 type: string
         500:
@@ -449,7 +515,10 @@ paths:
     post:
       tags:
         - version
-      description: 新しいバージョンの作成
+      summary: 新しいバージョンの作成
+      security: 
+        - oAuth:
+          - read
       operationId: postVersion
       requestBody:
         required: true
@@ -469,7 +538,10 @@ paths:
     get:
       tags:
         - version
-      description: バージョン一覧の取得
+      summary: バージョン一覧の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getVersions
       responses:
         200:
@@ -488,7 +560,11 @@ paths:
     get:
       tags:
         - version
-      description: バージョンの詳細情報の取得
+      summary: バージョンの詳細情報の取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getVersion
       responses:
         200:
@@ -505,7 +581,10 @@ paths:
     post:
       tags:
         - version
-      description: バージョンへのゲームの追加
+      summary: バージョンへのゲームの追加
+      security: 
+        - oAuth:
+          - read
       operationId: postGameToVersion
       requestBody:
         required: true
@@ -529,7 +608,9 @@ paths:
     get:
       tags:
         - version
-      description: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      summary: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      security: 
+        - basicAuth: []
       operationId: getCheckList
       responses:
         200:
@@ -546,7 +627,11 @@ paths:
     get:
       tags:
         - version
-      description: 質問の取得
+      summary: 質問の取得
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: getQuestions
       responses:
         200:
@@ -563,7 +648,10 @@ paths:
     post:
       tags:
         - question
-      description: 質問を作成
+      summary: 質問を作成
+      security: 
+        - oAuth:
+          - read
       operationId: postQuestion
       requestBody:
         required: true
@@ -590,7 +678,10 @@ paths:
     delete:
       tags:
         - question
-      description: 質問の削除
+      summary: 質問の削除
+      security: 
+        - oAuth:
+          - read
       operationId: deleteQuestion
       responses:
         200:
@@ -601,7 +692,9 @@ paths:
     post:
       tags:
         - response
-      description: 新しい回答を作成します．
+      summary: 新しい回答を作成します．
+      security: 
+        - basicAuth: []
       operationId: postResponse
       requestBody:
         required: true
@@ -624,7 +717,10 @@ paths:
     get:
       tags:
         - response
-      description: 回答の統計情報を取得
+      summary: 回答の統計情報を取得
+      security: 
+        - oAuth:
+          - read
       operationId: getResponse
       parameters:
         - name: require
@@ -648,7 +744,11 @@ paths:
     post:
       tags:
         - seat
-      description: 着席
+      summary: 着席
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: postSeat
       responses:
         200:
@@ -658,7 +758,11 @@ paths:
     delete:
       tags:
         - seat
-      description: 離席
+      summary: 離席
+      security: 
+        - oAuth:
+          - read
+        - basicAuth: []
       operationId: deleteSeat
       responses:
         200:
@@ -669,7 +773,10 @@ paths:
     get:
       tags:
         - seat
-      description: 席の状態の取得
+      summary: 席の状態の取得
+      security: 
+        - oAuth:
+          - read
       operationId: getSeat
       responses:
         200:
@@ -686,6 +793,19 @@ paths:
           description: 失敗
 
 components:
+  securitySchemes:
+    oAuth:
+      type: oauth2
+      description: traQのOAuth
+      flows:
+        authorizationCode:
+          authorizationUrl: https://q.trap.jp/api/1.0/oauth2/authorize
+          tokenUrl: https://q.trap.jp/api/1.0/oauth2/token
+          scopes:
+            read: traQの読み取り権限
+    basicAuth:
+      type: http
+      scheme: basic
   parameters:
     launcherVersionID:
       name: launcherVersionID
@@ -1125,4 +1245,3 @@ components:
         time:
           description: プレイ時間(ms)の平均
           type: integer
-        

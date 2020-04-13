@@ -1,0 +1,45 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"net/http"
+  "fmt"
+
+	echo "github.com/labstack/echo/v4"
+){{#operation}}
+
+// {{nickname}}Handler - {{summary}}
+func {{nickname}}Handler({{classname}} Api) echo.HandlerFunc {
+  return func(c echo.Context) error {
+    var err error{{#hasQueryParams}}{{#queryParams}}
+    {{paramName}} := c.QueryParam("{{paramName}}"){{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}
+    {{paramName}} := c.Param("{{paramName}}"){{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{#isFile}}
+    _{{paramName}},err := c.FormFile("{{paramName}}")
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Forming File:%w",err).Error())
+    }
+    {{paramName}},err := _{{paramName}}.Open()
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Opening File:%w",err).Error())
+    }
+    defer {{paramName}}.Close(){{/isFile}}{{^isFile}}
+    {{paramName}} := c.FormValue("{{paramName}}"){{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasBodyParam}}{{#bodyParam}}
+    var {{paramName}} {{dataType}}
+    err = c.Bind(&{{paramName}})
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Request Body:%w",err).Error())
+    }{{/bodyParam}}{{/hasBodyParam}}
+    {{#returnType}}var res {{returnType}}{{/returnType}}
+    {
+      {{#returnType}}res, {{/returnType}}c, err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}}, {{/allParams}}{{/useSingleRequestParameter}}c)
+      if err != nil {
+        return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making Response:%w",err).Error())
+      }
+    }{{^isResponseFile}}{{#returnType}}
+    return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
+    return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}
+    sc := scanner(res).Bytes()
+    return c.Blob(http.StatusOK, {{#produces.0}}"{{mediaType}}"{{/produces.0}}, sc){{/isResponseFile}}
+  }
+}{{/operation}}{{/operations}}

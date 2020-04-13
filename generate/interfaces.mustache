@@ -1,0 +1,33 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+  "os"
+  "mime/multipart"
+  "bufio"
+
+  echo "github.com/labstack/echo/v4"
+)
+
+type osFile = os.File
+type multipartFile = multipart.File
+var scanner = bufio.NewScanner
+
+// Api Apiのインターフェイス
+type Api interface {
+  Middleware{{#apiInfo}}{{#apis}}
+  {{classname}}{{/apis}}{{/apiInfo}}
+}
+
+type Middleware interface {
+  BasicMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  OAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  BothMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+}
+{{#apiInfo}}{{#apis}}{{#operations}}
+type {{classname}} interface{
+  {{#operation}}
+  {{nickname}}({{#hasQueryParams}}{{#queryParams}}{{paramName}} string, {{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}{{paramName}} string, {{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{paramName}} {{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}, {{/formParams}}{{/hasFormParams}}{{#hasBodyParam}}{{#bodyParam}}{{paramName}} {{dataType}}, {{/bodyParam}}{{/hasBodyParam}}c echo.Context) ({{#returnType}}{{{returnType}}},{{/returnType}}echo.Context,error)
+  {{/operation}}
+}{{/operations}}
+{{/apis}}{{/apiInfo}}

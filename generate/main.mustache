@@ -1,0 +1,66 @@
+{{>partial_header}}
+package main
+
+import (
+	"log"
+  "os"
+
+	echo "github.com/labstack/echo/v4"
+  "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo-contrib/session"
+  "github.com/srinathgs/mysqlstore"
+
+	"github.com/traPtitech/trap-collection-server/{{packageName}}"
+  "github.com/traPtitech/trap-collection-server/router"
+  "github.com/traPtitech/trap-collection-server/model"
+  "github.com/traPtitech/trap-collection-server/mock"
+)
+
+func main() {
+	log.Printf("Server started")
+  env := ("COLLECTION_ENV")
+
+  err := model.EstablishConoHa()
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := model.EstablishDB(false)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	db2,err := model.EstablishDB(true)
+	if err != nil {
+		panic(err)
+	}
+	defer db2.Close()
+
+	if env == "development" {
+		db.LogMode(true)
+	}
+
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
+	if err != nil {
+		panic(err)
+	}
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(session.Middleware(store))
+
+  var api openapi.Api = router.API{}
+	if env == "mock" {
+		api = &mock.API{
+			User: openapi.User{
+				UserId:   os.Getenv("USER_ID"),
+				Name: os.Getenv("USER_Name"),
+			},
+		}
+	}
+
+	{{packageName}}.SetupRouting(e, api)
+
+	e.Start(":{{serverPort}}")
+}
