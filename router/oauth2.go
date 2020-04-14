@@ -14,7 +14,13 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
+
+// OAuth2 oauthの構造体
+type OAuth2 struct {
+	openapi.Oauth2Api
+}
 
 var baseURL, _ = url.Parse("https://q.trap.jp/api/1.0")
 
@@ -25,99 +31,52 @@ type AuthResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-// PkceParams PKCE用のcode_challengeなど
-type PkceParams struct {
-	CodeChallenge string
-	CodeChallengeMethod string
-	ClientID string
-	ResponseType string
-}
-
-// CallbackHandler GET /oauth/callbackのハンドラー
-func CallbackHandler(c echo.Context) error {
-	code := c.QueryParam("code")
-	if len(code) == 0 {
-		return c.String(http.StatusBadRequest, "Code Is Null")
-	}
-
+// CallbackHandler GET /oauth/callbackの処理部分
+func (o OAuth2) CallbackHandler(code string, c echo.Context) (echo.Context, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+		return c, fmt.Errorf("Failed In Getting Session:%w", err)
 	}
+
 	codeVerifier := sess.Values["codeVerifier"].(string)
 	res, err := getAccessToken(code, codeVerifier)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting AccessToken:%w", err).Error())
+		return c, fmt.Errorf("Failed In Getting AccessToken:%w", err)
 	}
+
 	sess.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   res.ExpiresIn * 1000,
 		HttpOnly: true,
 	}
+
 	sess.Values["accessToken"] = res.AccessToken
 	sess.Values["refreshToken"] = res.RefreshToken
+
 	user, err := getMe(res.AccessToken)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Me: %w", err).Error())
+		return c, fmt.Errorf("Failed In Getting Me: %w", err)
 	}
-	sess.Values["id"] = user.ID
+
+	sess.Values["id"] = user.UserId
 	sess.Values["name"] = user.Name
 	sess.Save(c.Request(), c.Response())
-	return c.NoContent(http.StatusOK)
+
+	return c, nil
 }
 
-// PostLogoutHandler POST /oauth/logoutのハンドラー
-func PostLogoutHandler(c echo.Context) error {
+// GetGenerateCodeHandler POST /oauth/generate/codeの処理部分
+func (o OAuth2) GetGenerateCodeHandler(c echo.Context) (openapi.InlineResponse200, echo.Context, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+		return openapi.InlineResponse200{}, c, fmt.Errorf("Failed In Getting Session:%w", err)
 	}
 
-	accessToken := sess.Values["accessToken"].(string)
-	path := *baseURL
-	path.Path += "/oauth2/revoke"
-	form := url.Values{}
-	form.Set("token",accessToken)
-	reqBody := strings.NewReader(form.Encode())
-	req, err := http.NewRequest("POST", path.String(), reqBody)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making HTTP Request:%w",err).Error())
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	httpClient := http.DefaultClient
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In HTTP Request:%w",err).Error())
-	}
-	if res.StatusCode != 200 {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status).Error())
-	}
-
-	sess.Options = &sessions.Options{
-		Path:     "/",
-		HttpOnly: true,
-	}
-	sess.Values["accessToken"] = nil
-	sess.Values["refreshToken"] = nil
-	sess.Values["id"] = nil
-	sess.Values["name"] = nil
-	sess.Save(c.Request(), c.Response())
-	return c.NoContent(http.StatusOK)
-}
-
-// GetPkceHandler POST /oauth/generate/codeのハンドラー
-func GetGenerateCodeHandler(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-	}
-
-	pkceParams := PkceParams{}
+	pkceParams := openapi.InlineResponse200{}
 
 	pkceParams.ResponseType = "code"
 
-	pkceParams.ClientID = clientID
+	pkceParams.ClientId = clientID
 
 	bytesCodeVerifier := randBytes(43)
 	codeVerifier := string(bytesCodeVerifier)
@@ -136,7 +95,50 @@ func GetGenerateCodeHandler(c echo.Context) error {
 
 	sess.Save(c.Request(), c.Response())
 
-	return c.JSON(http.StatusOK, pkceParams)
+	return pkceParams, c, nil
+}
+
+// PostLogoutHandler POST /oauth/logoutの処理部分
+func (o OAuth2) PostLogoutHandler(c echo.Context) (echo.Context, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return c, fmt.Errorf("Failed In Getting Session:%w", err)
+	}
+
+	accessToken := sess.Values["accessToken"].(string)
+	path := *baseURL
+	path.Path += "/oauth2/revoke"
+	form := url.Values{}
+	form.Set("token",accessToken)
+	reqBody := strings.NewReader(form.Encode())
+	req, err := http.NewRequest("POST", path.String(), reqBody)
+	if err != nil {
+		return c, fmt.Errorf("Failed In Making HTTP Request:%w",err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	httpClient := http.DefaultClient
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return c, fmt.Errorf("Failed In HTTP Request:%w",err)
+	}
+	if res.StatusCode != 200 {
+		return c, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+	}
+
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+	}
+
+	sess.Values["accessToken"] = nil
+	sess.Values["refreshToken"] = nil
+	sess.Values["id"] = nil
+	sess.Values["name"] = nil
+
+	sess.Save(c.Request(), c.Response())
+
+	return c, nil
 }
 
 var randSrc = rand.NewSource(time.Now().UnixNano())
@@ -197,7 +199,7 @@ func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
 	return authRes, nil
 }
 
-func getMe(accessToken string) (User, error) {
+func getMe(accessToken string) (openapi.User, error) {
 	path := *baseURL
 	path.Path += "/users/me"
 	req, err := http.NewRequest("GET", path.String(), nil)
@@ -205,15 +207,15 @@ func getMe(accessToken string) (User, error) {
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return User{}, err
+		return openapi.User{}, err
 	}
 	if res.StatusCode != 200 {
-		return User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
+		return openapi.User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var user User
+	var user openapi.User
 	err = json.NewDecoder(res.Body).Decode(&user)
 	if err != nil {
-		return User{}, err
+		return openapi.User{}, err
 	}
 	return user, nil
 }

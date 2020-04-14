@@ -1,66 +1,28 @@
 package router
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
-// User ユーザーの構造体
-type User struct {
-	ID   string `json:"userId,omitempty"`
-	Name string `json:"name,omitempty"`
+// Middleware middlewareの構造体
+type Middleware struct {
+	openapi.Middleware
 }
 
-// Traq traQのOAuthのClient
-type Traq interface {
-	GetMe(c echo.Context) (User, error)
-	MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc
-}
-
-// TraqClient 本番用のclient
-type TraqClient struct {
-	Traq
-}
-
-// MockTraqClient テスト用のモックclient
-type MockTraqClient struct {
-	Traq
-	User User
-}
-
-// GetMe 本番用のGetMe
-func (client *TraqClient) GetMe(c echo.Context) (User, error) {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return User{}, fmt.Errorf("Failed In Getting Session:%w", err)
+// BasicMiddleware ランチャーの認証用のミドルウェア
+func (m Middleware) BasicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
 	}
-	id := sess.Values["id"].(string)
-	name := sess.Values["name"].(string)
-	if len(id) == 0 || len(name) == 0 {
-		accessToken := sess.Values["accessToken"].(string)
-		if len(accessToken) == 0 {
-			return User{}, errors.New("AccessToken Is Null")
-		}
-		user, err := getMe(accessToken)
-		if err != nil {
-			return User{}, fmt.Errorf("Failed In Getting Me:%w", err)
-		}
-		return user, nil
-	}
-	return User{ID: id, Name: name}, nil
 }
 
-// GetMe テスト用のGetMe
-func (client *MockTraqClient) GetMe(c echo.Context) (User, error) {
-	return client.User, nil
-}
-
-// MiddlewareAuthUser 本番用のAPIにアクセスしたユーザーを認証するミドルウェア
-func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc {
+// OAuthMiddleware traQのOAuthのmiddleware
+func (m Middleware) OAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -74,15 +36,8 @@ func (client *TraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.Handler
 	}
 }
 
-// MiddlewareAuthUser テスト用のミドルウェア
-func (client *MockTraqClient) MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return next(c)
-	}
-}
-
-// MiddlewareAuthLancher ランチャーの認証用のミドルウェア
-func MiddlewareAuthLancher(next echo.HandlerFunc) echo.HandlerFunc {
+// BothMiddleware ランチャーの認証用のミドルウェア
+func (m Middleware) BothMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return next(c)
 	}
