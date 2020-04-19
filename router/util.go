@@ -2,11 +2,10 @@ package router
 
 import (
 	"errors"
-	"fmt"
+	"mime/multipart"
 	"os"
 
-	"github.com/labstack/echo-contrib/session"
-	echo "github.com/labstack/echo/v4"
+	"github.com/gorilla/sessions"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -40,24 +39,24 @@ func InitRouter() error {
 	return nil
 }
 
-// GetMe sessionからuserのID、名前を取得
-func GetMe(c echo.Context) (openapi.User, error) {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return openapi.User{}, fmt.Errorf("Failed In Getting Session:%w", err)
-	}
-	id := sess.Values["id"].(string)
-	name := sess.Values["name"].(string)
-	if len(id) == 0 || len(name) == 0 {
-		accessToken := sess.Values["accessToken"].(string)
-		if len(accessToken) == 0 {
-			return openapi.User{}, errors.New("AccessToken Is Null")
-		}
-		user, err := getMe(accessToken)
-		if err != nil {
-			return openapi.User{}, fmt.Errorf("Failed In Getting Me:%w", err)
-		}
-		return user, nil
-	}
-	return openapi.User{UserId: id, Name: name}, nil
+// MockAPI apiの構造体（mock）
+type MockAPI struct {
+	User openapi.User
+	Middleware
+	*MockGameApi
+	*MockOauth2Api
+	*MockQuestionApi
+	*MockResponseApi
+	*MockSeatApi
+	*MockUserApi
+	*MockVersionApi
+}
+
+type osFile = os.File
+type multipartFile = multipart.File
+type sessionsSession = sessions.Session
+
+// InitMock mockの初期化
+func InitMock() error {
+	return nil
 }

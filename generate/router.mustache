@@ -6,18 +6,7 @@ import (
 )
 
 func SetupRouting(e *echo.Echo, api Api) {
-  methodMap := map[string]func(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route{
-    "Get":e.GET,
-    "Post":e.POST,
-    "Put":e.PUT,
-    "Delete":e.DELETE,
-  }
-  middlewareMap := map[string]func(next echo.HandlerFunc) echo.HandlerFunc {
-    "basicAuth+oAuth":api.BothMiddleware,
-    "basicAuth":api.BasicMiddleware,
-    "oAuth":api.OAuthMiddleware,
-  }
   {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
-  methodMap["{{httpMethod}}"]("{{{basePathWithoutHost}}}{{{path}}}", {{nickname}}Handler(api){{#authMethods.0}}, middlewareMap["{{/authMethods.0}}{{#authMethods}}{{name}}{{#hasMore}}+{{/hasMore}}{{/authMethods}}{{#authMethods.0}}"]{{/authMethods.0}}){{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+  e.{{httpMethod}}("{{{basePathWithoutHost}}}{{{path}}}", {{baseName}}Handler(api){{#authMethods}}, api.{{name}}Middleware{{/authMethods}}){{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 }
 

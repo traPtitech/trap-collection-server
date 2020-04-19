@@ -9,9 +9,9 @@ info:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
 security:
-  - oAuth:
+  - TrapMemberAuth:
     - read
-  - basicAuth: []
+  - LauncherAuth: []
 paths:
   /oauth2/callback:
     parameters:
@@ -21,6 +21,7 @@ paths:
         description: OAuth2.0のcode
         schema:
           type: string
+      - $ref: '#/components/parameters/sessions'
     get:
       tags:
         - oauth2
@@ -61,9 +62,11 @@ paths:
         - oauth2
       summary: traP Collectionのログアウト
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: postLogout
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -75,9 +78,11 @@ paths:
         - user
       summary: 自分の情報の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getMe
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -93,9 +98,11 @@ paths:
         - user
       summary: traQの全ユーザー取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getUsers
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -113,9 +120,11 @@ paths:
         - game
       summary: ゲームの追加
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: postGame
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       requestBody:
         content:
           application/json:
@@ -135,7 +144,7 @@ paths:
         - game
       summary: ゲーム一覧の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getGames
       responses:
@@ -149,7 +158,7 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
-  /games/info/{gameID}:
+  /games/{gameID}/info:
     parameters:
       - $ref: '#/components/parameters/gameID'
     get:
@@ -157,9 +166,9 @@ paths:
         - game
       summary: ゲーム情報の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getGame
       responses:
         200:
@@ -175,8 +184,9 @@ paths:
         - game
       summary: ゲームの情報の修正
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: putGame
       requestBody:
         content:
@@ -197,8 +207,9 @@ paths:
         - game
       summary: ゲームの削除
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: deleteGames
       responses:
         200:
@@ -213,8 +224,9 @@ paths:
         - game
       summary: ゲームの画像の変更
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: putImage
       requestBody:
         content:
@@ -236,9 +248,9 @@ paths:
         - game
       summary: ゲームの画像の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getImage
       responses:
         200:
@@ -262,8 +274,9 @@ paths:
         - game
       summary: ゲームの動画の変更
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: postVideo
       requestBody:
         content:
@@ -281,9 +294,9 @@ paths:
         - game
       summary: ゲームの動画の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getVideo
       responses:
         200:
@@ -295,13 +308,13 @@ paths:
                 format: binary
         500:
           description: 失敗
-  /games/maintainer:
+  /games/maintainers:
     get:
       tags:
         - game
       summary: 自分がバージョン更新権限保持者のゲームの取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getMyGames
       responses:
@@ -315,7 +328,7 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
-  /games/maintainer/{gameID}:
+  /games/maintainers/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -323,8 +336,9 @@ paths:
         - game
       summary: ゲームのバージョン更新権限保持者の追加
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: postMaintainer
       requestBody:
         content:
@@ -344,7 +358,7 @@ paths:
         - game
       summary: ゲームの管理者の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getOwner
       responses:
@@ -376,8 +390,9 @@ paths:
         - game
       summary: ゲームのバージョンの作成
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: postGameVersion
       requestBody:
         content:
@@ -398,7 +413,7 @@ paths:
         - game
       summary: ゲームのバージョン一覧の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getGameVersion
       responses:
@@ -420,8 +435,9 @@ paths:
         - game
       summary: ゲームの最新バージョンへのファイルの追加
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: postFile
       requestBody:
         content:
@@ -444,9 +460,9 @@ paths:
         - game
       summary: ゲームの最新バージョンのファイルの取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getGameFile
       parameters:
         - $ref: '#/components/parameters/gameID'
@@ -474,8 +490,9 @@ paths:
         - game
       summary: ゲームの最新バージョンへのURLの追加
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - GameMaintainerAuth: []
       operationId: postURL
       requestBody:
         content:
@@ -498,9 +515,9 @@ paths:
         - game
       summary: ゲームの最新バージョンのURLの取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getGameURL
       responses:
         200:
@@ -517,8 +534,9 @@ paths:
         - version
       summary: 新しいバージョンの作成
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - AdminAuth: []
       operationId: postVersion
       requestBody:
         required: true
@@ -540,7 +558,7 @@ paths:
         - version
       summary: バージョン一覧の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getVersions
       responses:
@@ -562,9 +580,9 @@ paths:
         - version
       summary: バージョンの詳細情報の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getVersion
       responses:
         200:
@@ -583,8 +601,9 @@ paths:
         - version
       summary: バージョンへのゲームの追加
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - AdminAuth: []
       operationId: postGameToVersion
       requestBody:
         required: true
@@ -610,8 +629,10 @@ paths:
         - version
       summary: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
       security: 
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getCheckList
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功時のレスポンス
@@ -629,10 +650,12 @@ paths:
         - version
       summary: 質問の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: getQuestions
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -650,8 +673,9 @@ paths:
         - question
       summary: 質問を作成
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - AdminAuth: []
       operationId: postQuestion
       requestBody:
         required: true
@@ -680,8 +704,9 @@ paths:
         - question
       summary: 質問の削除
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
+        - AdminAuth: []
       operationId: deleteQuestion
       responses:
         200:
@@ -694,8 +719,10 @@ paths:
         - response
       summary: 新しい回答を作成します．
       security: 
-        - basicAuth: []
+        - LauncherAuth: []
       operationId: postResponse
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       requestBody:
         required: true
         content:
@@ -719,7 +746,7 @@ paths:
         - response
       summary: 回答の統計情報を取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getResponse
       parameters:
@@ -746,10 +773,9 @@ paths:
         - seat
       summary: 着席
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
-      operationId: postSeat
+      operationId: postFixSeat
       responses:
         200:
           description: 成功
@@ -760,10 +786,9 @@ paths:
         - seat
       summary: 離席
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
-        - basicAuth: []
-      operationId: deleteSeat
+      operationId: deleteFixSeat
       responses:
         200:
           description: 成功
@@ -775,7 +800,7 @@ paths:
         - seat
       summary: 席の状態の取得
       security: 
-        - oAuth:
+        - TrapMemberAuth:
           - read
       operationId: getSeat
       responses:
@@ -791,10 +816,38 @@ paths:
                   description: 埋まっている席のIDの一覧
         500:
           description: 失敗
+    post:
+      tags:
+        - seat
+      summary: 着席
+      security: 
+        - LauncherAuth: []
+      operationId: postSeat
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    delete:
+      tags:
+        - seat
+      summary: 離席
+      security: 
+        - LauncherAuth: []
+      operationId: deleteSeat
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
 
 components:
   securitySchemes:
-    oAuth:
+    TrapMemberAuth:
       type: oauth2
       description: traQのOAuth
       flows:
@@ -803,10 +856,51 @@ components:
           tokenUrl: https://q.trap.jp/api/1.0/oauth2/token
           scopes:
             read: traQの読み取り権限
-    basicAuth:
+    GameMaintainerAuth:
+      type: apiKey
+      description: ゲーム管理者の認証
+      in: cookie
+      name: userId
+    AdminAuth:
+      type: apiKey
+      description: ゲーム管理者の認証
+      in: cookie
+      name: userID
+    LauncherAuth:
       type: http
+      description: ランチャーの認証
       scheme: basic
   parameters:
+    sessions:
+      name: sessions
+      in: cookie
+      required: true
+      schema:
+        type: string
+    userID:
+      name: userID
+      in: cookie
+      required: true
+      schema:
+        type: string
+    userName:
+      name: userName
+      in: cookie
+      required: true
+      schema:
+        type: string
+    versionID:
+      name: versionID
+      in: cookie
+      required: false
+      schema:
+        type: integer
+    accessToken:
+      name: accessToken
+      in: cookie
+      required: true
+      schema:
+        type: string
     launcherVersionID:
       name: launcherVersionID
       in: path

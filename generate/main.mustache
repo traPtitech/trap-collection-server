@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/{{packageName}}"
   "github.com/traPtitech/trap-collection-server/router"
   "github.com/traPtitech/trap-collection-server/model"
-  "github.com/traPtitech/trap-collection-server/mock"
 )
 
 func main() {
@@ -47,20 +46,36 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(middleware.Logger())
 	e.Use(session.Middleware(store))
+  e.Use(middleware.Recover())
+  if env == "development" {
+    e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header:my-header}` + "\n",
+    }))
+    e.Use(middleware.Logger())
+  }
 
-  var api openapi.Api = router.API{}
+  var api openapi.Api
 	if env == "mock" {
-		api = &mock.API{
+    err = router.InitMock()
+    if err != nil {
+      panic(err)
+    }
+		api = router.MockAPI{
 			User: openapi.User{
 				UserId:   os.Getenv("USER_ID"),
 				Name: os.Getenv("USER_Name"),
 			},
 		}
-	}
+	} else {
+    err = router.InitRouter()
+    if err != nil {
+      panic(err)
+    }
+    api = router.API{}
+  }
 
 	{{packageName}}.SetupRouting(e, api)
 
-	e.Start(":{{serverPort}}")
+	e.Start(os.Getenv("PORT"))
 }

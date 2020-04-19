@@ -40,6 +40,49 @@ class CollectionCodegen extends GoGinServerCodegen {
     supportingFiles.add(new SupportingFile("router.mustache", apiPath, "router.go"))
     supportingFiles.add(new SupportingFile("interfaces.mustache", apiPath, "interfaces.go"))
     supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"))
+    supportingFiles.add(new SupportingFile("mockgen.mustache", "", "mockgen.sh"))
+  }
+
+  @Override
+  public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> operations, List<Object> allModels) {
+    super.postProcessOperationsWithModels(operations, allModels)
+
+    Map<String, Object> objs = (Map<String, Object>) operations.get("operations");
+    List<CodegenOperation> ops = (List<CodegenOperation>) objs.get("operation");
+    for (CodegenOperation op : ops) {
+      op.httpMethod = op.httpMethod.toUpperCase(Locale.ENGLISH)
+
+      op.baseName = op.nickname
+
+      List<String> authMethodNames = new ArrayList<String>()
+      List<CodegenSecurity> authMethods = new ArrayList<CodegenSecurity>()
+      List<CodegenSecurity> otherAuthMethods = new ArrayList<CodegenSecurity>()
+      for (CodegenSecurity authMethod : op.authMethods) {
+        if (authMethod.name!="LauncherAuth" && authMethod.name!="TrapMemberAuth"){
+          authMethods.add(authMethod)
+        } else {
+          authMethodNames.add(authMethod.name)
+          otherAuthMethods.add(authMethod)
+        }
+      }
+      if (authMethodNames == new ArrayList<String>(Arrays.asList("LauncherAuth", "TrapMemberAuth"))) {
+        CodegenSecurity authMethod = new CodegenSecurity()
+        authMethod.name = "BothAuth"
+        otherAuthMethods = new ArrayList<CodegenSecurity>(Arrays.asList(authMethod))
+      }
+      otherAuthMethods.addAll(authMethods)
+      op.authMethods = otherAuthMethods
+
+      List<CodegenParameter> cookieParams = new ArrayList<CodegenParameter>()
+      for (CodegenParameter cookieParam : op.cookieParams) {
+        if (cookieParam.paramName == "sessions") {
+          cookieParam.isCookieParam = false
+        }
+        cookieParams.add(cookieParam)
+      }
+      op.cookieParams = cookieParams
+    }
+    return operations;
   }
 }
 

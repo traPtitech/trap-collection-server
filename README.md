@@ -8,7 +8,7 @@ For more information, please visit [https://github.com/traPtitech/trap-collectio
 ### Mockの再生成
 swaggerを書き換えたら必ず再生成してください。
 プロジェクトルートで
-```bash
+```
 # docker run -it --rm\
     -v ${PWD}:/local\
     -w /home/groovy/scripts groovy groovy /local/generate/generator.groovy generate \
