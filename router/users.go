@@ -1,9 +1,8 @@
 package router
 
 import (
-	"fmt"
+	"errors"
 
-	echo "github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -13,10 +12,21 @@ type User struct {
 }
 
 // GetMe GET /users/meの処理部分
-func (u User)GetMe(c echo.Context) (openapi.User, echo.Context, error) {
-	user, err := GetMe(c)
-	if err != nil {
-		return openapi.User{}, c, fmt.Errorf("Failed In Getting Me:%w", err)
+func (u User)GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[interface{}]interface{}, error) {
+	userID,ok := sessMap["userID"]
+	if !ok || userID == nil {
+		return openapi.User{}, map[interface{}]interface{}{}, errors.New("userID IS NULL")
 	}
-	return user, c, nil
+
+	userName, ok := sessMap["userName"]
+	if !ok || userName == nil {
+		return openapi.User{}, map[interface{}]interface{}{}, errors.New("userName IS NULL")
+	}
+
+	user := openapi.User{
+		UserId: userID.(string),
+		Name: userName.(string),
+	}
+
+	return user, map[interface{}]interface{}{}, nil
 }

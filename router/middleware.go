@@ -14,15 +14,8 @@ type Middleware struct {
 	openapi.Middleware
 }
 
-// BasicMiddleware ランチャーの認証用のミドルウェア
-func (m Middleware) BasicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return next(c)
-	}
-}
-
-// OAuthMiddleware traQのOAuthのmiddleware
-func (m Middleware) OAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// TrapMemberAuthMiddleware traQのOAuthのmiddleware
+func (m Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -36,8 +29,29 @@ func (m Middleware) OAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// BothMiddleware ランチャーの認証用のミドルウェア
-func (m Middleware) BothMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// GameMaintainerAuthMiddleware ゲーム管理者の認証用のミドルウェア
+func (m Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
+}
+
+// AdminAuthMiddleware ランチャーの管理者の認証用のミドルウェア
+func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
+}
+
+// LauncherAuthMiddleware ランチャーの認証用のミドルウェア
+func (m Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
+}
+
+// BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
+func (m Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return next(c)
 	}
