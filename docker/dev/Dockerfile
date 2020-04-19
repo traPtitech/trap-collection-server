@@ -1,4 +1,13 @@
-FROM golang:1.14.0-alpine AS build
+FROM groovy:3.0.2 AS generate
+WORKDIR /home/groovy/scripts
+COPY . .
+RUN groovy ./generate/generator.groovy generate \
+      -i ./docs/swagger/openapi.yml \
+      -g CollectionCodegen \
+      -t ./generate \
+      -o .
+
+FROM golang:1.14.2-alpine AS build
 ENV DOCKERIZE_VERSION v0.6.1
 RUN apk add --update --no-cache git && \
   apk --update add tzdata && \
@@ -19,4 +28,4 @@ COPY . .
 RUN go mod download
 RUN go build -o main
 
-ENTRYPOINT dockerize -wait tcp://mysql:3306 realize start --name='server' --install --run
+ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run

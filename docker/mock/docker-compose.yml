@@ -3,10 +3,8 @@ services:
   collection-server:
     build:
       context: ../../
-      dockerfile: ./docker/dev/Dockerfile
+      dockerfile: ./docker/mock/Dockerfile
     restart: always
-    volumes:
-      - ../../:/go/src/github.com/traPtitech/trap-collection-server
     environment:
       COLLECTION_ENV: development
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0

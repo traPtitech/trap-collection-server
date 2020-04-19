@@ -4,7 +4,7 @@ settings:
     interval: 0s
 schema:
   - name: server
-    path: ./
+    path: .
     commands:
       install:
         status: true
@@ -16,9 +16,7 @@ schema:
       extensions:
         - go
       paths:
-        - ./
+        - ./router
+        - ./model
       ignored_paths:
-        - ./docker
-        - ./.github
-        - ./.vscode
         - vender
