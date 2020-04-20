@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+for i in {{#apiInfo}}{{#apis}}{{classVarName}} {{/apis}}{{/apiInfo}}
+do
+  mockgen -source ./openapi/api_${i}.go -destination ./router/${i}_mock.go -package router
+done

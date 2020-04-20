@@ -1,4 +1,9 @@
 .env
-app
+main
 .vscode
 mysql/data
+.openapi-generator
+openapi
+main.go
+router/*_mock.go
+mockgen.sh

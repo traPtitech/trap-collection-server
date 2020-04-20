@@ -1,43 +1,63 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
-// User ユーザーの構造体
-type User struct {
-	ID   string `json:"userId,omitempty"`
-	Name string `json:"name,omitempty"`
+// Middleware middlewareの構造体
+type Middleware struct {
+	openapi.Middleware
 }
 
-// Traq traQのOAuthのClient
-type Traq interface {
-	GetMe(c echo.Context) (User, error)
-	MiddlewareAuthUser(next echo.HandlerFunc) echo.HandlerFunc
+// TrapMemberAuthMiddleware traQのOAuthのmiddleware
+func (m Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, err := session.Get("sessions", c)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+		}
+		accessToken := sess.Values["accessToken"]
+		if accessToken == nil {
+			return c.NoContent(http.StatusUnauthorized)
+		}
+		return next(c)
+	}
 }
 
-// TraqClient 本番用のclient
-type TraqClient struct {
-	Traq
+// GameMaintainerAuthMiddleware ゲーム管理者の認証用のミドルウェア
+func (m Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
 }
 
-// MockTraqClient テスト用のモックclient
-type MockTraqClient struct {
-	Traq
-	User User
+// AdminAuthMiddleware ランチャーの管理者の認証用のミドルウェア
+func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return next(c)
+	}
 }
 
-// MiddlewareAuthLancher ランチャーの認証用のミドルウェア
-func MiddlewareAuthLancher(next echo.HandlerFunc) echo.HandlerFunc {
+// LauncherAuthMiddleware ランチャーの認証用のミドルウェア
+func (m Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		key := c.Request().Header.Get("X-Key")
 		isThere := model.CheckProductKey(key)
 		if !isThere {
 			return c.NoContent(http.StatusUnauthorized)
 		}
+		return next(c)
+	}
+}
+
+// BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
+func (m Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		return next(c)
 	}
 }

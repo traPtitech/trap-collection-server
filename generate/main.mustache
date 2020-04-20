@@ -1,0 +1,81 @@
+{{>partial_header}}
+package main
+
+import (
+	"log"
+  "os"
+
+	echo "github.com/labstack/echo/v4"
+  "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo-contrib/session"
+  "github.com/srinathgs/mysqlstore"
+
+	"github.com/traPtitech/trap-collection-server/{{packageName}}"
+  "github.com/traPtitech/trap-collection-server/router"
+  "github.com/traPtitech/trap-collection-server/model"
+)
+
+func main() {
+	log.Printf("Server started")
+  env := ("COLLECTION_ENV")
+
+  err := model.EstablishConoHa()
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := model.EstablishDB(false)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	db2,err := model.EstablishDB(true)
+	if err != nil {
+		panic(err)
+	}
+	defer db2.Close()
+
+	if env == "development" {
+		db.LogMode(true)
+	}
+
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
+	if err != nil {
+		panic(err)
+	}
+
+	e := echo.New()
+	e.Use(session.Middleware(store))
+  e.Use(middleware.Recover())
+  if env == "development" {
+    e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header:my-header}` + "\n",
+    }))
+    e.Use(middleware.Logger())
+  }
+
+  var api openapi.Api
+	if env == "mock" {
+    err = router.InitMock()
+    if err != nil {
+      panic(err)
+    }
+		api = router.MockAPI{
+			User: openapi.User{
+				UserId:   os.Getenv("USER_ID"),
+				Name: os.Getenv("USER_Name"),
+			},
+		}
+	} else {
+    err = router.InitRouter()
+    if err != nil {
+      panic(err)
+    }
+    api = router.API{}
+  }
+
+	{{packageName}}.SetupRouting(e, api)
+
+	e.Start(os.Getenv("PORT"))
+}

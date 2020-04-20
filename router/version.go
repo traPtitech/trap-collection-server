@@ -7,7 +7,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
+
+// Version versionの構造体
+type Version struct {
+	openapi.VersionApi
+}
 
 // GetCheckListHandler GET /version/check/{launcherVersionID}のハンドラー
 func GetCheckListHandler(c echo.Context) error {

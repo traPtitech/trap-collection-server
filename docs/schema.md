@@ -53,11 +53,12 @@
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### product_key
+### access_token
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| key | varchar(29) | NO | PRI |  |  | `XXXXX-XXXXX-XXXXX-XXXXX-XXXXX`のような形式 |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| access_token | varchar(36) | NO | PRI |  |  |  |
+| version_id | int(11) | NO | MUL |  |  |  |
+| used | boolean | NO |  | false |  | access_tokenが使用済みかどうか |
 
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
