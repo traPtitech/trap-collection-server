@@ -1,0 +1,30 @@
+version: "3"
+services:
+  collection-server:
+    build:
+      context: ../../
+      dockerfile: ./docker/mock/Dockerfile
+    restart: always
+    environment:
+      COLLECTION_ENV: development
+      OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
+      OS_USERNAME:
+      OS_PASSWORD:
+      OS_TENANT_ID:
+      CLIENT_ID:
+      CLIENT_SECRET:
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_HOSTNAME: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: trap_collection
+      PORT: :3000
+    ports: 
+      - 3000:3000
+  mariadb:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    volumes:
+      - ../../mysql/data:/var/lib/mysql
+      - ../../mysql/init:/docker-entrypoint-initdb.d

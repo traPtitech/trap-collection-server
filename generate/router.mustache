@@ -1,0 +1,12 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+	echo "github.com/labstack/echo/v4"
+)
+
+func SetupRouting(e *echo.Echo, api Api) {
+  {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+  e.{{httpMethod}}("{{{basePathWithoutHost}}}{{{path}}}", {{baseName}}Handler(api){{#authMethods}}, api.{{name}}Middleware{{/authMethods}}){{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+}
+

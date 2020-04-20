@@ -1,0 +1,76 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"net/http"
+  "fmt"
+
+	echo "github.com/labstack/echo/v4"
+)
+
+type {{classname}} interface{
+  {{#operation}}
+  {{nickname}}({{#hasQueryParams}}{{#queryParams}}{{paramName}} string, {{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}{{paramName}} string, {{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{paramName}} {{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}, {{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{paramName}} {{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}map[interface{}]interface{}{{/isCookieParam}},{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}{{paramName}} {{dataType}}, {{/bodyParam}}{{/hasBodyParam}}) ({{#returnType}}{{{returnType}}},{{/returnType}} map[interface{}]interface{},error)
+  {{/operation}}
+}{{#operation}}
+
+// {{baseName}}Handler - {{summary}}
+func {{baseName}}Handler({{classname}} Api) echo.HandlerFunc {
+  return func(c echo.Context) error {
+    var err error
+    var sess *sessionsSession{{#hasQueryParams}}{{#queryParams}}
+    {{paramName}} := c.QueryParam("{{paramName}}"){{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}
+    {{paramName}} := c.Param("{{paramName}}"){{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{#isFile}}
+    _{{paramName}},err := c.FormFile("{{paramName}}")
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Forming File:%w",err).Error())
+    }
+    {{paramName}},err := _{{paramName}}.Open()
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Opening File:%w",err).Error())
+    }
+    defer {{paramName}}.Close(){{/isFile}}{{^isFile}}
+    {{paramName}} := c.FormValue("{{paramName}}"){{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{^isCookieParam}}
+    sess, err = getSession("sessions", c)
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+    }
+    sessions := sess.Values{{/isCookieParam}}{{#isCookieParam}}
+    cookie{{paramName}}, err := c.Cookie("{{paramName}}")
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Cookie:%w",err).Error())
+    }
+    {{paramName}} := cookie{{paramName}}.Value{{/isCookieParam}}{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}
+    var {{paramName}} {{dataType}}
+    err = c.Bind(&{{paramName}})
+    if err != nil {
+      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Request Body:%w",err).Error())
+    }{{/bodyParam}}{{/hasBodyParam}}
+    {{#returnType}}var res {{returnType}}{{/returnType}}
+    var sessionMap map[interface{}]interface{}
+    {
+      {{#returnType}}res, {{/returnType}}sessionMap, err = {{classname}}.{{nickname}}({{#hasQueryParams}}{{#queryParams}}{{paramName}}, {{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}{{paramName}}, {{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{paramName}}, {{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{paramName}},{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}{{paramName}}{{/bodyParam}}{{/hasBodyParam}})
+      if err != nil {
+        return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making Response:%w",err).Error())
+      }
+    }
+    if len(sessionMap) != 0 {
+      if sess == nil {
+        sess, err = getSession("sessions", c)
+        if err != nil {
+          return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+        }
+      }
+      for key,value := range sessionMap {
+        sess.Values[key] = value
+      }
+
+      sess.Save(c.Request(), c.Response())
+    }{{^isResponseFile}}{{#returnType}}
+    return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
+    return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}
+    sc := scanner(res).Bytes()
+    return c.Blob(http.StatusOK, {{#produces.0}}"{{mediaType}}"{{/produces.0}}, sc){{/isResponseFile}}
+  }
+}{{/operation}}{{/operations}}
