@@ -26,6 +26,7 @@ type Api interface {
 type Middleware interface {
   TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
   GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
   AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
   LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
   BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc

@@ -81,6 +81,15 @@ class CollectionCodegen extends GoGinServerCodegen {
         cookieParams.add(cookieParam)
       }
       op.cookieParams = cookieParams
+
+      List<CodegenParameter> allParams = new ArrayList<CodegenParameter>()
+      for (CodegenParameter allParam : op.allParams) {
+        if (allParam.paramName == "sessions") {
+          allParam.isCookieParam = false
+        }
+        allParams.add(allParam)
+      }
+      op.allParams = allParams
     }
     return operations;
   }

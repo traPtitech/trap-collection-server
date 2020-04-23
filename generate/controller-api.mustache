@@ -11,7 +11,7 @@ import (
 
 type {{classname}} interface{
   {{#operation}}
-  {{nickname}}({{#hasQueryParams}}{{#queryParams}}{{paramName}} string, {{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}{{paramName}} string, {{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{paramName}} {{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}, {{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{paramName}} {{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}map[interface{}]interface{}{{/isCookieParam}},{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}{{paramName}} {{dataType}}, {{/bodyParam}}{{/hasBodyParam}}) ({{#returnType}}{{{returnType}}},{{/returnType}} map[interface{}]interface{},error)
+  {{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}} {{#isQueryParam}}string{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}string{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{dataType}}{{/isBodyParam}}{{^isBodyParam}}map[interface{}]interface{}{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}}) ({{#returnType}}{{{returnType}}},{{/returnType}} map[interface{}]interface{},error)
   {{/operation}}
 }{{#operation}}
 
@@ -50,7 +50,7 @@ func {{baseName}}Handler({{classname}} Api) echo.HandlerFunc {
     {{#returnType}}var res {{returnType}}{{/returnType}}
     var sessionMap map[interface{}]interface{}
     {
-      {{#returnType}}res, {{/returnType}}sessionMap, err = {{classname}}.{{nickname}}({{#hasQueryParams}}{{#queryParams}}{{paramName}}, {{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}{{paramName}}, {{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{paramName}}, {{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{paramName}},{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}{{paramName}}{{/bodyParam}}{{/hasBodyParam}})
+      {{#returnType}}res, {{/returnType}}sessionMap, err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
       if err != nil {
         return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making Response:%w",err).Error())
       }

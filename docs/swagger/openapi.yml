@@ -861,9 +861,14 @@ components:
       description: ゲーム管理者の認証
       in: cookie
       name: userId
-    AdminAuth:
+    GameOwnerAuth:
       type: apiKey
       description: ゲーム管理者の認証
+      in: cookie
+      name: userID
+    AdminAuth:
+      type: apiKey
+      description: ランチャー管理者の認証
       in: cookie
       name: userID
     LauncherAuth:
@@ -1106,15 +1111,15 @@ components:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
     NewVersion:
-      description: 新しいバージョンの名前
+      description: 新しいランチャーのバージョンの名前
       type: string
     Version:
-      description: バージョン
+      description: ランチャーのバージョン
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string
@@ -1128,12 +1133,12 @@ components:
           type: string
           format: date-time
     VersionMeta:
-      description: バージョンの簡易的な情報
+      description: ランチャーのバージョンの簡易的な情報
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string
@@ -1142,12 +1147,12 @@ components:
           type: string
           format: date-time
     VersionDetails:
-      description: バージョン詳細
+      description: ランチャーのバージョン詳細
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string

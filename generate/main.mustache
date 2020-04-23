@@ -3,57 +3,71 @@ package main
 
 import (
 	"log"
-  "os"
+	"os"
 
-	echo "github.com/labstack/echo/v4"
-  "github.com/labstack/echo/v4/middleware"
+	"github.com/comail/colog"
 	"github.com/labstack/echo-contrib/session"
-  "github.com/srinathgs/mysqlstore"
+	echo "github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/srinathgs/mysqlstore"
 
-	"github.com/traPtitech/trap-collection-server/{{packageName}}"
-  "github.com/traPtitech/trap-collection-server/router"
-  "github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router"
 )
 
 func main() {
 	log.Printf("Server started")
-  env := ("COLLECTION_ENV")
+	env := os.Getenv("COLLECTION_ENV")
+  log.Println(env)
 
   err := model.EstablishConoHa()
 	if err != nil {
 		panic(err)
 	}
 
-	db, err := model.EstablishDB(false)
+	db, err := model.EstablishDB(true)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-
-	db2,err := model.EstablishDB(true)
-	if err != nil {
-		panic(err)
-	}
-	defer db2.Close()
-
-	if env == "development" {
-		db.LogMode(true)
-	}
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
 	if err != nil {
 		panic(err)
 	}
 
+  err = model.Migrate(env)
+  if err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 	e.Use(session.Middleware(store))
-  e.Use(middleware.Recover())
+	e.Use(middleware.Recover())
+
   if env == "development" {
+		colog.SetMinLevel(colog.LDebug)
+		colog.SetFormatter(&colog.StdFormatter{
+				Colors: true,
+				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+		})
+
+		db.LogMode(true)
+
     e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header:my-header}` + "\n",
+      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
     }))
     e.Use(middleware.Logger())
-  }
+	} else {
+		colog.SetMinLevel(colog.LError)
+		colog.SetFormatter(&colog.StdFormatter{
+				Colors: false,
+				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+		})
+	}
+
+  colog.Register()
 
   var api openapi.Api
 	if env == "mock" {
