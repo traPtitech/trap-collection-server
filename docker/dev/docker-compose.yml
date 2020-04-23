@@ -15,6 +15,7 @@ services:
       OS_TENANT_ID:
       CLIENT_ID:
       CLIENT_SECRET:
+      PRODUCT_KEY:
       DB_USERNAME: root
       DB_PASSWORD: pass
       DB_HOSTNAME: mariadb

@@ -6,7 +6,7 @@ services:
       dockerfile: ./docker/mock/Dockerfile
     restart: always
     environment:
-      COLLECTION_ENV: development
+      COLLECTION_ENV: mock
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
       OS_USERNAME:
       OS_PASSWORD:

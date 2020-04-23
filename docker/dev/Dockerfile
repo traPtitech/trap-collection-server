@@ -24,7 +24,7 @@ RUN apk add --update --no-cache git && \
   go get github.com/oxequa/realize
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
-COPY . .
+COPY --from=generate /home/groovy/scripts/ ./
 RUN go mod download
 RUN go build -o main
 
