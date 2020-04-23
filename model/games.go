@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/jinzhu/gorm"
+)
 
 // Game gameの構造体
 type Game struct {
@@ -50,4 +54,16 @@ type Maintainer struct {
 	Role uint8 `gorm:"type:tinyint;NOT NULL;DEFAULT:0;"`
 	CreatedAt time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 	DeletedAt time.Time `gorm:"type:datetime;DEFAULT:NULL;"`
+}
+
+// CheckMaintainerID ゲームの管理者のチェック
+func CheckMaintainerID(userID string, gameID string) (bool, error) {
+	var maintainer Maintainer
+	err := db.Select("user_id").Where("game_id = ? AND user_id = ?", gameID, userID).First(&maintainer).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
 }

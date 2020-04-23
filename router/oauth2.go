@@ -105,8 +105,8 @@ func (o OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}
 
 	sessMap["accessToken"] = nil
 	sessMap["refreshToken"] = nil
-	sessMap["id"] = nil
-	sessMap["name"] = nil
+	sessMap["userID"] = nil
+	sessMap["userName"] = nil
 
 	return sessMap, nil
 }

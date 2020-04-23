@@ -25,6 +25,8 @@ var (
 		ProductKey{},
 		GameVersionRelation{},
 		Player{},
+		Question{},
+		QuestionOption{},
 		Response{},
 		TextAnswer{},
 		OptionAnswer{},
