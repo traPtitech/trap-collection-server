@@ -16,7 +16,7 @@ import (
 )
 
 // OAuth2 oauthの構造体
-type OAuth2 struct {}
+type OAuth2 struct{}
 
 var baseURL, _ = url.Parse("https://q.trap.jp/api/1.0")
 
@@ -29,7 +29,7 @@ type AuthResponse struct {
 
 // Callback GET /oauth/callbackの処理部分
 func (o OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
-	interfaceCodeVerifier,ok := sessMap["codeVerifier"]
+	interfaceCodeVerifier, ok := sessMap["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
 		return map[interface{}]interface{}{}, errors.New("CodeVerifier IS NULL")
 	}
@@ -77,7 +77,7 @@ func (o OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]in
 
 // PostLogout POST /oauth/logoutの処理部分
 func (o OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
-	interfaceAccessToken,ok := sessMap["accessToken"]
+	interfaceAccessToken, ok := sessMap["accessToken"]
 	if !ok || interfaceAccessToken == nil {
 		return map[interface{}]interface{}{}, errors.New("AccessToken IS NULL")
 	}
@@ -86,18 +86,18 @@ func (o OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}
 	path := *baseURL
 	path.Path += "/oauth2/revoke"
 	form := url.Values{}
-	form.Set("token",accessToken)
+	form.Set("token", accessToken)
 	reqBody := strings.NewReader(form.Encode())
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Making HTTP Request:%w",err)
+		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Making HTTP Request:%w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In HTTP Request:%w",err)
+		return map[interface{}]interface{}{}, fmt.Errorf("Failed In HTTP Request:%w", err)
 	}
 	if res.StatusCode != 200 {
 		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)

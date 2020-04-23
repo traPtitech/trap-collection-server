@@ -12,9 +12,11 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+const containerName = "trap_collection"
+
 var (
-	client *gophercloud.ServiceClient
-	db     *gorm.DB
+	client    *gophercloud.ServiceClient
+	db        *gorm.DB
 	allTables = []interface{}{
 		Game{},
 		GameVersion{},
@@ -50,7 +52,7 @@ func EstablishConoHa() error {
 	if err != nil {
 		return fmt.Errorf("Failed In Reading Connecting To Storage:%w", err)
 	}
-	result := containers.Create(client, "trap_collection", nil)
+	result := containers.Create(client, containerName, nil)
 	if result.Err != nil {
 		return fmt.Errorf("Failed In Making New Storage:%w", err)
 	}
@@ -65,9 +67,9 @@ func EstablishDB(parseTime bool) (*gorm.DB, error) {
 	} else {
 		str = "?loc=Asia%2FTokyo&charset=utf8mb4"
 	}
-	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE")) + str)
+	_db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOSTNAME"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))+str)
 	if err != nil {
-		return &gorm.DB{}, fmt.Errorf("Failed In Connecting To Databases:%w",err)
+		return &gorm.DB{}, fmt.Errorf("Failed In Connecting To Databases:%w", err)
 	}
 	db = _db
 
@@ -85,7 +87,7 @@ func Migrate(env string) error {
 		launcherVersion := LauncherVersion{Name: "dev"}
 		err = db.Where("name=\"dev\"").FirstOrCreate(&launcherVersion).Error
 		if err != nil {
-			return fmt.Errorf("Failed In Select Or Creating A Dev Version:%w",err)
+			return fmt.Errorf("Failed In Select Or Creating A Dev Version:%w", err)
 		}
 		key := os.Getenv("PRODUCT_KEY")
 		if len(key) == 0 {
@@ -94,7 +96,7 @@ func Migrate(env string) error {
 		productKey := ProductKey{Key: key, LauncherVersionID: launcherVersion.ID}
 		err = db.Where(productKey).FirstOrCreate(&productKey).Error
 		if err != nil {
-			return fmt.Errorf("Failed In Select Or Creating A Product Key:%w",err)
+			return fmt.Errorf("Failed In Select Or Creating A Product Key:%w", err)
 		}
 	}
 

@@ -106,8 +106,8 @@ func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc 
 			userName = user.Name
 		}
 
-		for _,v := range admins {
-			if v== userName {
+		for _, v := range admins {
+			if v == userName {
 				return next(c)
 			}
 		}
@@ -134,4 +134,3 @@ func (m Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
-

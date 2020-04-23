@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	clientID string
+	clientID     string
 	clientSecret string
 )
 

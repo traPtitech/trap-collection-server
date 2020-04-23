@@ -14,14 +14,14 @@ type Version struct {
 }
 
 // GetVersion GET /version/{launcherVersionID}のハンドラー
-func (v Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, map[interface{}]interface{},error) {
-	launcherVersionID,err := strconv.Atoi(strLauncherVersion)
+func (v Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, map[interface{}]interface{}, error) {
+	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
 	if err != nil {
-		return openapi.VersionDetails{}, map[interface{}]interface{}{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w",err)
+		return openapi.VersionDetails{}, map[interface{}]interface{}{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
 	}
-	launcherVersion,err := model.GetLauncherVersionDetailsByID(uint(launcherVersionID))
+	launcherVersion, err := model.GetLauncherVersionDetailsByID(uint(launcherVersionID))
 	if err != nil {
-		return openapi.VersionDetails{}, map[interface{}]interface{}{},fmt.Errorf("Failed In Getting Launcher Version ID:%w",err)
+		return openapi.VersionDetails{}, map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
 	}
 
 	return launcherVersion, map[interface{}]interface{}{}, nil

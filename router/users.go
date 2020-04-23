@@ -12,8 +12,8 @@ type User struct {
 }
 
 // GetMe GET /users/meの処理部分
-func (u User)GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[interface{}]interface{}, error) {
-	userID,ok := sessMap["userID"]
+func (u User) GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[interface{}]interface{}, error) {
+	userID, ok := sessMap["userID"]
 	if !ok || userID == nil {
 		return openapi.User{}, map[interface{}]interface{}{}, errors.New("userID IS NULL")
 	}
@@ -25,7 +25,7 @@ func (u User)GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[inter
 
 	user := openapi.User{
 		UserId: userID.(string),
-		Name: userName.(string),
+		Name:   userName.(string),
 	}
 
 	return user, map[interface{}]interface{}{}, nil

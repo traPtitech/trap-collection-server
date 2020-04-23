@@ -11,47 +11,47 @@ import (
 
 // LauncherVersion ランチャーのバージョンの構造体
 type LauncherVersion struct {
-	ID uint `json:"id" gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;default:0;"`
-	Name string `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
+	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;default:0;"`
+	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
-	Questions []Question `json:"questions" gorm:"foreignkey:LauncherVersionID;"`
-	CreatedAt time.Time `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
-	DeletedAt time.Time `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
+	Questions            []Question            `json:"questions" gorm:"foreignkey:LauncherVersionID;"`
+	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
+	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
 }
 
 // ProductKey アクセストークンの構造体
 type ProductKey struct {
-	Key string `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
-	LauncherVersionID uint `gorm:"type:int(11) unsigned;"`
-	LauncherVersion LauncherVersion
+	Key               string `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
+	LauncherVersionID uint   `gorm:"type:int(11) unsigned;"`
+	LauncherVersion   LauncherVersion
 }
 
 // CheckProductKey プロダクトキーが正しいか確認
 func CheckProductKey(key string) bool {
 	productKey := ProductKey{}
 	log.Println(key)
-	isNotThere := db.Where("`key` = ?",key).First(&productKey).RecordNotFound()
+	isNotThere := db.Where("`key` = ?", key).First(&productKey).RecordNotFound()
 	return !isNotThere
 }
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
 func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetails, err error) {
-	rows,err := db.Table("launcher_versions").
+	rows, err := db.Table("launcher_versions").
 		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,game_version_relations.game_id").
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
 		Where("launcher_versions.id = ?", id).
 		Rows()
 	if err != nil {
-		return openapi.VersionDetails{},fmt.Errorf("Failed In Getting Launcher Versions:%w",err)
+		return openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
 	}
 	for rows.Next() {
 		var gameID interface{}
-		err = rows.Scan(&versionDetails.Id,&versionDetails.Name,&versionDetails.CreatedAt,&gameID)
+		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.CreatedAt, &gameID)
 		if err != nil {
-			return openapi.VersionDetails{},fmt.Errorf("Failed In Scaning Launcher Version:%w",err)
+			return openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
 		}
 		if gameID != nil {
-			versionDetails.Games = append(versionDetails.Games, gameID.(string)) 
+			versionDetails.Games = append(versionDetails.Games, gameID.(string))
 		}
 	}
 
@@ -61,25 +61,25 @@ func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetai
 		Where("questions.launcher_version_id = ?", id).
 		Rows()
 	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return openapi.VersionDetails{},fmt.Errorf("Failed In Getting Questions:%w",err)
+		return openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Questions:%w", err)
 	}
 	questionMap := make(map[int32]openapi.Question)
 	for rows.Next() {
 		var question openapi.Question
 		var optionID interface{}
-		err = rows.Scan(&question.Id,&question.Type,&question.Content,&question.Required,&question.CreatedAt,&optionID)
+		err = rows.Scan(&question.Id, &question.Type, &question.Content, &question.Required, &question.CreatedAt, &optionID)
 		if err != nil {
-			return openapi.VersionDetails{},fmt.Errorf("Failed In Scaning Question:%w",err)
+			return openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Question:%w", err)
 		}
-		if _,ok := questionMap[question.Id]; ok {
+		if _, ok := questionMap[question.Id]; ok {
 			question = questionMap[question.Id]
 		}
 		if optionID != nil {
-			question.Options = append(question.Options,optionID.(string))
+			question.Options = append(question.Options, optionID.(string))
 		}
 		questionMap[question.Id] = question
 	}
-	for _,v := range questionMap {
+	for _, v := range questionMap {
 		versionDetails.Questions = append(versionDetails.Questions, v)
 	}
 
