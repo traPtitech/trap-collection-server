@@ -23,17 +23,13 @@ type OAuth2 struct {
 }
 
 // NewOAuth2 OAuth2のコンストラクタ
-func NewOAuth2(strURL string, clientID string, clientSecret string) (OAuth2, error) {
-	authBase,err := NewAuthBase(strURL)
-	if err != nil {
-		return OAuth2{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
-	}
+func NewOAuth2(authBase AuthBase, clientID string, clientSecret string) OAuth2 {
 	oAuth2 := OAuth2{
 		AuthBase: &authBase,
 		clientID: clientID,
 		clientSecret: clientSecret,
 	}
-	return oAuth2, nil
+	return oAuth2
 }
 
 type authResponse struct {

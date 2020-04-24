@@ -19,15 +19,11 @@ type Middleware struct {
 }
 
 // NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(strURL string) (Middleware, error) {
-	authBase,err := NewAuthBase(strURL)
-	if err != nil {
-		return Middleware{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
-	}
+func NewMiddleware(authBase AuthBase) Middleware {
 	middleware := Middleware{
 		AuthBase: &authBase,
 	}
-	return middleware, nil
+	return middleware
 }
 
 // TrapMemberAuthMiddleware traQのOAuthのmiddleware

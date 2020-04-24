@@ -22,11 +22,6 @@ func main() {
 	env := os.Getenv("COLLECTION_ENV")
   log.Println(env)
 
-  err := model.EstablishConoHa()
-	if err != nil {
-		panic(err)
-	}
-
 	db, err := model.EstablishDB(true)
 	if err != nil {
 		panic(err)
@@ -85,12 +80,17 @@ func main() {
 			UserId:   os.Getenv("USER_ID"),
 			Name: os.Getenv("USER_Name"),
 		}
-    api = router.NewMockService(user)
-	} else {
-    api,err = router.NewService(clientID, clientSecret)
+    service, err := router.NewMockService(user)
     if err != nil {
       panic(err)
     }
+    api = service
+	} else {
+    service, err := router.NewService(clientID, clientSecret)
+    if err != nil {
+      panic(err)
+    }
+    api = service
   }
 
 	{{packageName}}.SetupRouting(e, api)

@@ -6,16 +6,12 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/jinzhu/gorm"
 )
 
 const containerName = "trap_collection"
 
 var (
-	client    *gophercloud.ServiceClient
 	db        *gorm.DB
 	allTables = []interface{}{
 		Game{},
@@ -35,29 +31,6 @@ var (
 		GameRating{},
 	}
 )
-
-//EstablishConoHa ConoHaの認証
-func EstablishConoHa() error {
-	option, err := openstack.AuthOptionsFromEnv()
-	if err != nil {
-		return fmt.Errorf("Failed In Reading Auth Env:%w", err)
-	}
-
-	provider, err := openstack.AuthenticatedClient(option)
-	if err != nil {
-		return fmt.Errorf("Failed In Authorization:%w", err)
-	}
-
-	client, err = openstack.NewObjectStorageV1(provider, gophercloud.EndpointOpts{})
-	if err != nil {
-		return fmt.Errorf("Failed In Reading Connecting To Storage:%w", err)
-	}
-	result := containers.Create(client, containerName, nil)
-	if result.Err != nil {
-		return fmt.Errorf("Failed In Making New Storage:%w", err)
-	}
-	return nil
-}
 
 //EstablishDB データベースに接続
 func EstablishDB(parseTime bool) (*gorm.DB, error) {
