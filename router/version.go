@@ -14,7 +14,7 @@ type Version struct {
 }
 
 // GetVersion GET /version/{launcherVersionID}のハンドラー
-func (v Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, map[interface{}]interface{}, error) {
+func (*Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, map[interface{}]interface{}, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
 	if err != nil {
 		return openapi.VersionDetails{}, map[interface{}]interface{}{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)

@@ -4,6 +4,7 @@ package main
 import (
 	"log"
 	"os"
+  "errors"
 
 	"github.com/comail/colog"
 	"github.com/labstack/echo-contrib/session"
@@ -69,24 +70,27 @@ func main() {
 
   colog.Register()
 
+  clientID := os.Getenv("CLIENT_ID")
+  if len(clientID) == 0 {
+    panic(errors.New("ENV CLIENT_ID IS NULL"))
+  }
+  clientSecret := os.Getenv("CLIENT_SECRET")
+	if len(clientSecret) == 0 {
+    panic(errors.New("ENV CLIENT_SECRET IS NULL"))
+	}
+
   var api openapi.Api
 	if env == "mock" {
-    err = router.InitMock()
-    if err != nil {
-      panic(err)
-    }
-		api = router.MockAPI{
-			User: openapi.User{
-				UserId:   os.Getenv("USER_ID"),
-				Name: os.Getenv("USER_Name"),
-			},
+    user := openapi.User{
+			UserId:   os.Getenv("USER_ID"),
+			Name: os.Getenv("USER_Name"),
 		}
+    api = router.NewMockService(user)
 	} else {
-    err = router.InitRouter()
+    api,err = router.NewService(clientID, clientSecret)
     if err != nil {
       panic(err)
     }
-    api = router.API{}
   }
 
 	{{packageName}}.SetupRouting(e, api)

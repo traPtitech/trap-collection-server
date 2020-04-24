@@ -14,11 +14,24 @@ import (
 
 // Middleware middlewareの構造体
 type Middleware struct {
+	*AuthBase
 	openapi.Middleware
 }
 
+// NewMiddleware middlewareのコンストラクタ
+func NewMiddleware(strURL string) (Middleware, error) {
+	authBase,err := NewAuthBase(strURL)
+	if err != nil {
+		return Middleware{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
+	}
+	middleware := Middleware{
+		AuthBase: &authBase,
+	}
+	return middleware, nil
+}
+
 // TrapMemberAuthMiddleware traQのOAuthのmiddleware
-func (m Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -33,7 +46,7 @@ func (m Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.Handler
 }
 
 // GameMaintainerAuthMiddleware ゲーム管理者の認証用のミドルウェア
-func (m Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -48,7 +61,7 @@ func (m Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Han
 			if !ok || accessToken == nil {
 				return c.String(http.StatusUnauthorized, "No Access Token")
 			}
-			user, err := getMe(accessToken.(string))
+			user, err := m.getMe(accessToken.(string))
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -76,14 +89,14 @@ func (m Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Han
 }
 
 // GameOwnerAuthMiddleware ゲーム管理者の認証用のミドルウェア
-func (m Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (*Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return next(c)
 	}
 }
 
 // AdminAuthMiddleware ランチャーの管理者の認証用のミドルウェア
-func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -99,7 +112,7 @@ func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc 
 			if !ok || accessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
-			user, err := getMe(accessToken.(string))
+			user, err := m.getMe(accessToken.(string))
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -117,7 +130,7 @@ func (m Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc 
 }
 
 // LauncherAuthMiddleware ランチャーの認証用のミドルウェア
-func (m Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (*Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		key := c.Request().Header.Get("X-Key")
 		isThere := model.CheckProductKey(key)
@@ -129,7 +142,7 @@ func (m Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFu
 }
 
 // BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
-func (m Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (*Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return next(c)
 	}

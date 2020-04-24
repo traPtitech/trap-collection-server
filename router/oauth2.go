@@ -16,25 +16,40 @@ import (
 )
 
 // OAuth2 oauthの構造体
-type OAuth2 struct{}
+type OAuth2 struct {
+	*AuthBase
+	clientID     string
+	clientSecret string
+}
 
-var baseURL, _ = url.Parse("https://q.trap.jp/api/1.0")
+// NewOAuth2 OAuth2のコンストラクタ
+func NewOAuth2(strURL string, clientID string, clientSecret string) (OAuth2, error) {
+	authBase,err := NewAuthBase(strURL)
+	if err != nil {
+		return OAuth2{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
+	}
+	oAuth2 := OAuth2{
+		AuthBase: &authBase,
+		clientID: clientID,
+		clientSecret: clientSecret,
+	}
+	return oAuth2, nil
+}
 
-// AuthResponse 認証の返答
-type AuthResponse struct {
+type authResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-// Callback GET /oauth/callbackの処理部分
-func (o OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
-	interfaceCodeVerifier, ok := sessMap["codeVerifier"]
+// Callback GET /oauth2/callbackの処理部分
+func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+	interfaceCodeVerifier,ok := sessMap["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
 		return map[interface{}]interface{}{}, errors.New("CodeVerifier IS NULL")
 	}
 	codeVerifier := interfaceCodeVerifier.(string)
-	res, err := getAccessToken(code, codeVerifier)
+	res, err := o.getAccessToken(code, codeVerifier)
 	if err != nil {
 		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting AccessToken:%w", err)
 	}
@@ -42,7 +57,7 @@ func (o OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[
 	sessMap["accessToken"] = res.AccessToken
 	sessMap["refreshToken"] = res.RefreshToken
 
-	user, err := getMe(res.AccessToken)
+	user, err := o.getMe(res.AccessToken)
 	if err != nil {
 		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Me: %w", err)
 	}
@@ -53,13 +68,13 @@ func (o OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[
 	return sessMap, nil
 }
 
-// GetGenerateCode POST /oauth/generate/codeの処理部分
-func (o OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]interface{}, error) {
+// GetGenerateCode POST /oauth2/generate/codeの処理部分
+func (o *OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]interface{}, error) {
 	pkceParams := openapi.InlineResponse200{}
 
 	pkceParams.ResponseType = "code"
 
-	pkceParams.ClientId = clientID
+	pkceParams.ClientId = o.clientID
 
 	bytesCodeVerifier := randBytes(43)
 	codeVerifier := string(bytesCodeVerifier)
@@ -75,29 +90,29 @@ func (o OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]in
 	return pkceParams, sessMap, nil
 }
 
-// PostLogout POST /oauth/logoutの処理部分
-func (o OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
-	interfaceAccessToken, ok := sessMap["accessToken"]
+// PostLogout POST /oauth2/logoutの処理部分
+func (o *OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+	interfaceAccessToken,ok := sessMap["accessToken"]
 	if !ok || interfaceAccessToken == nil {
 		return map[interface{}]interface{}{}, errors.New("AccessToken IS NULL")
 	}
 	accessToken := interfaceAccessToken.(string)
 
-	path := *baseURL
+	path := *o.baseURL
 	path.Path += "/oauth2/revoke"
 	form := url.Values{}
-	form.Set("token", accessToken)
+	form.Set("token",accessToken)
 	reqBody := strings.NewReader(form.Encode())
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Making HTTP Request:%w", err)
+		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Making HTTP Request:%w",err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In HTTP Request:%w", err)
+		return map[interface{}]interface{}{}, fmt.Errorf("Failed In HTTP Request:%w",err)
 	}
 	if res.StatusCode != 200 {
 		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
@@ -138,54 +153,33 @@ func randBytes(n int) []byte {
 	return b
 }
 
-func getAccessToken(code string, codeVerifier string) (AuthResponse, error) {
+func (o *OAuth2) getAccessToken(code string, codeVerifier string) (authResponse, error) {
 	form := url.Values{}
 	form.Set("grant_type", "authorization_code")
-	form.Set("client_id", clientID)
+	form.Set("client_id", o.clientID)
 	form.Set("code", code)
 	form.Set("code_verifier", codeVerifier)
 	reqBody := strings.NewReader(form.Encode())
-	path := *baseURL
+	path := *o.baseURL
 	path.Path += "/oauth2/token"
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return AuthResponse{}, err
+		return authResponse{}, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return AuthResponse{}, err
+		return authResponse{}, err
 	}
 	if res.StatusCode != 200 {
-		return AuthResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+		return authResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var authRes AuthResponse
+	var authRes authResponse
 	err = json.NewDecoder(res.Body).Decode(&authRes)
 	if err != nil {
-		return AuthResponse{}, err
+		return authResponse{}, err
 	}
 	return authRes, nil
-}
-
-func getMe(accessToken string) (openapi.User, error) {
-	path := *baseURL
-	path.Path += "/users/me"
-	req, err := http.NewRequest("GET", path.String(), nil)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	httpClient := http.DefaultClient
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return openapi.User{}, err
-	}
-	if res.StatusCode != 200 {
-		return openapi.User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
-	}
-	var user openapi.User
-	err = json.NewDecoder(res.Body).Decode(&user)
-	if err != nil {
-		return openapi.User{}, err
-	}
-	return user, nil
 }
