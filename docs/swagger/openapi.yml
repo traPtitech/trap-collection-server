@@ -158,6 +158,23 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
+  /games/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    delete:
+      tags:
+        - game
+      summary: ゲームの削除
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
+      operationId: deleteGames
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
   /games/{gameID}/info:
     parameters:
       - $ref: '#/components/parameters/gameID'
@@ -200,20 +217,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameMeta'
-        500:
-          description: 失敗
-    delete:
-      tags:
-        - game
-      summary: ゲームの削除
-      security: 
-        - TrapMemberAuth:
-          - read
-        - GameMaintainerAuth: []
-      operationId: deleteGames
-      responses:
-        200:
-          description: 成功
         500:
           description: 失敗
   /games/{gameID}/image:
@@ -979,7 +982,14 @@ components:
           format: date-time
     NewGameMeta:
       description: 新しいゲームの名前
-      type: string
+      type: object
+      properties:
+        name:
+          description: 修正後のゲームの名前
+          type: string
+        description:
+          description: 修正後のゲームの説明文
+          type: string
     GameMeta:
       description: ゲーム名とID
       type: object
