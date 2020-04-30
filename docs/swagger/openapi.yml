@@ -1222,10 +1222,10 @@ components:
           description: 質問文
           type: string
         options:
-          description: 選択肢
+          description: 選択肢（typeがtextの場合は空）
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/QuestionOption'
         required:
           description: 回答が必須か
           type: boolean
@@ -1233,6 +1233,17 @@ components:
           description: 質問の作成時刻
           type: string
           format: date-time
+    QuestionOption:
+      type: object
+      description: 質問の選択肢
+      properties:
+        id:
+          description: 選択肢のid
+          type: integer
+        label:
+          description: 選択肢のラベル
+          type: string
+          example: はい
     NewResponse:
       type: object
       description: 新しい回答
@@ -1302,9 +1313,18 @@ components:
           type: integer
         contents:
           description: 回答の配列（チェックボックスの場合のみ複数）
-          type: array
-          items:
-            type: string
+          type: object
+          properties:
+            text:
+              description: 質問のtypeがtextのとき
+              type: string
+            options:
+              description: 質問のtypeがtext以外のとき
+              type: array
+              items:
+                description: 選択肢のid
+                type: integer
+                example: 0
     AnswerCalc:
       type: object
       description: 質問に対する回答の統計
