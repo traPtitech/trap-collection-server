@@ -12,15 +12,15 @@ type User struct {
 }
 
 // GetMe GET /users/meの処理部分
-func (*User) GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[interface{}]interface{}, error) {
+func (*User) GetMe(sessMap sessionMap) (openapi.User, sessionMap, error) {
 	userID, ok := sessMap["userID"]
 	if !ok || userID == nil {
-		return openapi.User{}, map[interface{}]interface{}{}, errors.New("userID IS NULL")
+		return openapi.User{}, sessionMap{}, errors.New("userID IS NULL")
 	}
 
 	userName, ok := sessMap["userName"]
 	if !ok || userName == nil {
-		return openapi.User{}, map[interface{}]interface{}{}, errors.New("userName IS NULL")
+		return openapi.User{}, sessionMap{}, errors.New("userName IS NULL")
 	}
 
 	user := openapi.User{
@@ -28,5 +28,5 @@ func (*User) GetMe(sessMap map[interface{}]interface{}) (openapi.User, map[inter
 		Name:   userName.(string),
 	}
 
-	return user, map[interface{}]interface{}{}, nil
+	return user, sessionMap{}, nil
 }

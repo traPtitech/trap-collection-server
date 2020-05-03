@@ -14,14 +14,14 @@ import (
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	*AuthBase
+	*OAuthBase
 	openapi.Middleware
 }
 
 // NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(authBase AuthBase) Middleware {
+func NewMiddleware(authBase OAuthBase) Middleware {
 	middleware := Middleware{
-		AuthBase: &authBase,
+		OAuthBase: &authBase,
 	}
 	return middleware
 }

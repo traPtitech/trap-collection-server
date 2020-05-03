@@ -2,8 +2,17 @@ package router
 
 import (
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/url"
+
+	"github.com/gorilla/sessions"
 )
+
+type ioReader = io.Reader
+type multipartFile = multipart.File
+type sessionsSession = sessions.Session
+type sessionMap = map[interface{}]interface{}
 
 // Service serviceの構造体
 type Service struct {

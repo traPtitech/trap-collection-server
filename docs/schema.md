@@ -33,6 +33,7 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | game_id | varchar(36) | NO | MUL |  |  | UUID |
 | role | tinyint | NO |  |  |  | 0:`image`,1:`video` |
+| extension | tinyint | NO |  |  |  | 0:`jpeg`,1:`png`,2:`gif`,3:`mp4` |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 
 ### maintainers
@@ -53,11 +54,12 @@
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### access_token
+### product_key
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| access_token | varchar(36) | NO | PRI |  |  |  |
-| version_id | int(11) | NO | MUL |  |  |  |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| key | varchar(36) | NO | UNI |  |  |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | used | boolean | NO |  | false |  | access_tokenが使用済みかどうか |
 
 ### game_version_relations
@@ -70,7 +72,7 @@
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| seat_id | int(11) | NO |  |  |  |  |
+| product_key_id | int(11) | NO | MUL |  |  |  |
 | started_at | datetime | NO |  | CURRENT_TIMESTAMP |  | 着席時刻 |
 | ended_at | datetime |  |  | NULL |  | 離席時刻 |
 
@@ -98,7 +100,6 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | varchar(36) | NO | PRI |  |  | UUID |
 | player_id | int(11) | NO | MUL |  |  |  |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | remark | text |  |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 

@@ -74,23 +74,9 @@ func main() {
     panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-  var api openapi.Api
-	if env == "mock" {
-    user := openapi.User{
-			UserId:   os.Getenv("USER_ID"),
-			Name: os.Getenv("USER_Name"),
-		}
-    service, err := router.NewMockService(user)
-    if err != nil {
-      panic(err)
-    }
-    api = service
-	} else {
-    service, err := router.NewService(clientID, clientSecret)
-    if err != nil {
-      panic(err)
-    }
-    api = service
+	api, err := router.NewService(clientID, clientSecret)
+  if err != nil {
+    panic(err)
   }
 
 	{{packageName}}.SetupRouting(e, api)

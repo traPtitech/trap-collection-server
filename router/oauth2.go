@@ -17,15 +17,15 @@ import (
 
 // OAuth2 oauthの構造体
 type OAuth2 struct {
-	*AuthBase
+	*OAuthBase
 	clientID     string
 	clientSecret string
 }
 
 // NewOAuth2 OAuth2のコンストラクタ
-func NewOAuth2(authBase AuthBase, clientID string, clientSecret string) OAuth2 {
+func NewOAuth2(authBase OAuthBase, clientID string, clientSecret string) OAuth2 {
 	oAuth2 := OAuth2{
-		AuthBase: &authBase,
+		OAuthBase: &authBase,
 		clientID: clientID,
 		clientSecret: clientSecret,
 	}
@@ -42,12 +42,12 @@ type authResponse struct {
 func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
 	interfaceCodeVerifier,ok := sessMap["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
-		return map[interface{}]interface{}{}, errors.New("CodeVerifier IS NULL")
+		return sessionMap{}, errors.New("CodeVerifier IS NULL")
 	}
 	codeVerifier := interfaceCodeVerifier.(string)
 	res, err := o.getAccessToken(code, codeVerifier)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting AccessToken:%w", err)
+		return sessionMap{}, fmt.Errorf("Failed In Getting AccessToken:%w", err)
 	}
 
 	sessMap["accessToken"] = res.AccessToken
@@ -55,7 +55,7 @@ func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map
 
 	user, err := o.getMe(res.AccessToken)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Me: %w", err)
+		return sessionMap{}, fmt.Errorf("Failed In Getting Me: %w", err)
 	}
 
 	sessMap["userID"] = user.UserId
@@ -90,7 +90,7 @@ func (o *OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]i
 func (o *OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
 	interfaceAccessToken,ok := sessMap["accessToken"]
 	if !ok || interfaceAccessToken == nil {
-		return map[interface{}]interface{}{}, errors.New("AccessToken IS NULL")
+		return sessionMap{}, errors.New("AccessToken IS NULL")
 	}
 	accessToken := interfaceAccessToken.(string)
 
@@ -101,17 +101,17 @@ func (o *OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{
 	reqBody := strings.NewReader(form.Encode())
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Making HTTP Request:%w",err)
+		return sessionMap{}, fmt.Errorf("Failed In Making HTTP Request:%w",err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In HTTP Request:%w",err)
+		return sessionMap{}, fmt.Errorf("Failed In HTTP Request:%w",err)
 	}
 	if res.StatusCode != 200 {
-		return map[interface{}]interface{}{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+		return sessionMap{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
 
 	sessMap["accessToken"] = nil

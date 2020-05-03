@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -21,15 +20,24 @@ type LauncherVersion struct {
 
 // ProductKey アクセストークンの構造体
 type ProductKey struct {
+	ID                uint   `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;default:0;"`
 	Key               string `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
 	LauncherVersionID uint   `gorm:"type:int(11) unsigned;"`
 	LauncherVersion   LauncherVersion
 }
 
+func getKeyIDByKey(key string) (uint, error) {
+	productKey := ProductKey{}
+	err := db.Where("`key` = ?", key).First(&productKey).Error
+	if err != nil {
+		return 0, fmt.Errorf("Failed In Getting Key ID: %w", err)
+	}
+	return productKey.ID, nil
+}
+
 // CheckProductKey プロダクトキーが正しいか確認
 func CheckProductKey(key string) bool {
 	productKey := ProductKey{}
-	log.Println(key)
 	isNotThere := db.Where("`key` = ?", key).First(&productKey).RecordNotFound()
 	return !isNotThere
 }
@@ -56,7 +64,7 @@ func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetai
 	}
 
 	rows, err = db.Table("questions").
-		Select("questions.id,questions.type,questions.content,questions.required,questions.created_at,question_options.label").
+		Select("questions.id,questions.type,questions.content,questions.required,questions.created_at,question_options.id,question_options.label").
 		Joins("LEFT OUTER JOIN question_options ON questions.id = question_options.question_id").
 		Where("questions.launcher_version_id = ?", id).
 		Rows()
@@ -66,16 +74,16 @@ func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetai
 	questionMap := make(map[int32]openapi.Question)
 	for rows.Next() {
 		var question openapi.Question
-		var optionID interface{}
-		err = rows.Scan(&question.Id, &question.Type, &question.Content, &question.Required, &question.CreatedAt, &optionID)
+		var option openapi.QuestionOption
+		err = rows.Scan(&question.Id, &question.Type, &question.Content, &question.Required, &question.CreatedAt, &option.Id, &option.Label)
 		if err != nil {
 			return openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Question:%w", err)
 		}
 		if _, ok := questionMap[question.Id]; ok {
 			question = questionMap[question.Id]
 		}
-		if optionID != nil {
-			question.Options = append(question.Options, optionID.(string))
+		if len(option.Label) != 0 {
+			question.Options = append(question.Options, option)
 		}
 		questionMap[question.Id] = question
 	}
