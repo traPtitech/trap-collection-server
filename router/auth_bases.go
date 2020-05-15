@@ -16,8 +16,8 @@ type OAuthBase struct {
 	baseURL *url.URL
 }
 
-// NewAuthBase AuthBaseのコンストラクタ
-func NewAuthBase(strURL string) (OAuthBase,error) {
+// NewOAuthBase AuthBaseのコンストラクタ
+func NewOAuthBase(strURL string) (OAuthBase,error) {
 	baseURL, err := url.Parse(strURL)
 	if err != nil {
 		return OAuthBase{}, fmt.Errorf("Faile In Parsing URL: %w", err)

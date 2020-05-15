@@ -20,7 +20,6 @@ import (
 func main() {
 	log.Printf("Server started")
 	env := os.Getenv("COLLECTION_ENV")
-  log.Println(env)
 
 	db, err := model.EstablishDB(true)
 	if err != nil {

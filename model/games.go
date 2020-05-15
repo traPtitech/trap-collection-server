@@ -8,57 +8,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
-// Game gameの構造体
-type Game struct {
-	ID          string    `gorm:"type:varchar(36);PRIMARY_KEY;"`
-	Name        string    `gorm:"type:varchar(32);NOT NULL;"`
-	Description string    `gorm:"type:text;"`
-	CreatedAt   time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt   time.Time `gorm:"type:varchar(32);DEFAULT:NULL;"`
-}
-
-// GameVersion gameのversionの構造体
-type GameVersion struct {
-	ID          uint      `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;"`
-	GameID      string    `gorm:"type:varchar(36);NOT NULL;"`
-	Game        Game      `gorm:"FOREIGNKEY:GameID"`
-	Name        string    `gorm:"type:varchar(36);NOT NULL;"`
-	Description string    `gorm:"type:text;"`
-	CreatedAt   time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt   time.Time `gorm:"type:varchar(32);DEFAULT:NULL;"`
-}
-
-// GameAsset gameのassetの構造体
-type GameAsset struct {
-	ID            uint `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;"`
-	GameVersionID uint `gorm:"type:int(11);NOT NULL;"`
-	GameVersion   GameVersion
-	Type          uint8  `gorm:"type:tinyint;NOT NULL;"`
-	Md5           string `gorm:"type:binary(16);"`
-	URL           string `gorm:"type:text"`
-}
-
-// GameIntroduction gameのintroductionの構造体
-type GameIntroduction struct {
-	ID        uint   `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;"`
-	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
-	Game      Game
-	Role      uint8     `gorm:"type:tinyint;NOT NULL;"`
-	CreatedAt time.Time `gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
-}
-
-// Maintainer gameのmaintainerの構造体
-type Maintainer struct {
-	ID        uint   `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;"`
-	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
-	Game      Game
-	UserID    string    `gorm:"type:varchar(32);NOT NULL;"`
-	Role      uint8     `gorm:"type:tinyint;NOT NULL;DEFAULT:0;"`
-	MimeType  string    `gorm:"type:text;NOT NULL;"`
-	CreatedAt time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt time.Time `gorm:"type:datetime;DEFAULT:NULL;"`
-}
-
 // CheckMaintainerID ゲームの管理者のチェック
 func CheckMaintainerID(userID string, gameID string) (bool, error) {
 	var maintainer Maintainer
@@ -79,17 +28,18 @@ func GetGameInfo(gameID string) (openapi.Game, error) {
 		id string `db:"games.id"`
 		name string `db:"games.name"`
 		createdAt time.Time `db:"games.created_at"`
-		versionID int32 `db:"launcher_versions.id"`
-		versionName string `db:"launcher_versions.name"`
-		versionDescription string `db:"launcher_versions.description"`
-		versionCreatedAt time.Time `db:"launcher_versions.created_at"`
+		versionID int32 `db:"game_versions.id"`
+		versionName string `db:"game_versions.name"`
+		versionDescription string `db:"game_versions.description"`
+		versionCreatedAt time.Time `db:"game_versions.created_at"`
 	}
 	var game gameInfo
 	err := db.Table("games").
-		Select("games.id, games.name, games.created_at, launcher_versions.id, launcher_versions.name, launcher_versions.description, launcher_versions.created_at").
-		Joins("INNER JOIN game_versions ON games.id = launcher_versions.game_id").
-		Where("game.id = ?", gameID).
-		Order("version.created_at").
+		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
+		Joins("INNER JOIN game_versions ON games.id = game_versions.game_id").
+		Where("games.id = ?", gameID).
+		Order("game_versions.created_at").
+		Limit(1).
 		Scan(&game).Error
 	if err != nil {
 		return openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)

@@ -61,7 +61,7 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
-			userID = user.UserId
+			userID = user.Id
 		} else {
 			userID = interfaceUserID.(string)
 		}

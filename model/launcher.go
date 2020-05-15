@@ -2,29 +2,10 @@ package model
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
-
-// LauncherVersion ランチャーのバージョンの構造体
-type LauncherVersion struct {
-	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;default:0;"`
-	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
-	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
-	Questions            []Question            `json:"questions" gorm:"foreignkey:LauncherVersionID;"`
-	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
-	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
-}
-
-// ProductKey アクセストークンの構造体
-type ProductKey struct {
-	ID                uint   `gorm:"type:int(11) unsigned;PRIMARY_KEY;AUTO_INCREMENT;default:0;"`
-	Key               string `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
-	LauncherVersionID uint   `gorm:"type:int(11) unsigned;"`
-	LauncherVersion   LauncherVersion
-}
 
 func getKeyIDByKey(key string) (uint, error) {
 	productKey := ProductKey{}

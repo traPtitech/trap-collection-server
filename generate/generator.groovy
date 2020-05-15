@@ -40,7 +40,6 @@ class CollectionCodegen extends GoGinServerCodegen {
     supportingFiles.add(new SupportingFile("router.mustache", apiPath, "router.go"))
     supportingFiles.add(new SupportingFile("interfaces.mustache", apiPath, "interfaces.go"))
     supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"))
-    supportingFiles.add(new SupportingFile("mockgen.mustache", "", "mockgen.sh"))
   }
 
   @Override

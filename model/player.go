@@ -6,14 +6,6 @@ import (
 	"time"
 )
 
-// Player プレイヤーの履歴の構造体
-type Player struct {
-	ID        uint      `gorm:"type:int(11) unsigned;NOT NULL;PRIMARY_KEY;AUTO_INCREMENT;"`
-	ProductKeyID    uint      `gorm:"type:int(11) unsigned;not null;"`
-	StartedAt time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
-	EndedAt   time.Time `gorm:"type:datetime;default:null;"`
-}
-
 func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
 	err = db.Where("product_key = ?", productKey).Select("id").Find(&playerID).Error
 	if err != nil {

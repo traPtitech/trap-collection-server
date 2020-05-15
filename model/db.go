@@ -56,7 +56,7 @@ func Migrate(env string) error {
 		return fmt.Errorf("Failed In Migration:%w", err)
 	}
 
-	if env == "development" {
+	if env == "test" {
 		launcherVersion := LauncherVersion{Name: "dev"}
 		err = db.Where("name=\"dev\"").FirstOrCreate(&launcherVersion).Error
 		if err != nil {

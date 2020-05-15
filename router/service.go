@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/sessions"
+	"github.com/traPtitech/trap-collection-server/storage"
 )
 
 type ioReader = io.Reader
@@ -29,15 +30,25 @@ type Service struct {
 
 // NewService Serviceのコンストラクタ
 func NewService(clientID string,clientSecret string) (Service, error) {
-	strBaseURL := "https://q.trap.jp/api/1.0"
-	authBase, err := NewAuthBase(strBaseURL)
+	str, err := storage.NewLocalStorage("../upload")
+	if err != nil {
+		return Service{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
+	}
+	game := NewGame(&str)
+
+	strBaseURL := "https://q.trap.jp/api/v3"
+	authBase, err := NewOAuthBase(strBaseURL)
 	if err != nil {
 		return Service{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
 	}
+
 	oAuth2:= NewOAuth2(authBase, clientID, clientSecret)
 	middleware := NewMiddleware(authBase)
+
+
 	api := Service{
 		Middleware: &middleware,
+		Game: &game,
 		OAuth2: &oAuth2,
 	}
 	return api, nil

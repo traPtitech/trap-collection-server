@@ -5,13 +5,23 @@ traPCollectionのAPI
 - API version: 1.0.0
 For more information, please visit [https://github.com/traPtitech/trap-collection-server](https://github.com/traPtitech/trap-collection-server)
 
-### Mockの再生成
-swaggerを書き換えたら必ず再生成してください。
+### Mockの起動
 プロジェクトルートで
 ```
-# docker run -it --rm\
-    -v ${PWD}:/local\
-    -w /home/groovy/scripts groovy groovy /local/generate/generator.groovy generate \
+$ sh mockgen.sh
+# docker-compose -f docker/mock/docker-compose.yml up --build
+```
+
+### コードの生成
+最初にする必要があります。
+swaggerの変更をしたときにも行ってください。
+groovyで本家OpenAPI Generatorを使っている関係で実行にそれなりに時間がかかります。
+```
+# docker run -it --rm \
+    -v $PWD:/local \
+    -w /home/groovy/scripts \
+    groovy:3.0.2 \
+    groovy /local/generate/generator.groovy generate \
     -i /local/docs/swagger/openapi.yml \
     -g CollectionCodegen \
     -t /local/generate \

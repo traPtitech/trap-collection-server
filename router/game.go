@@ -34,7 +34,7 @@ func (*Game) GetGame(gameID string) (openapi.Game, sessionMap, error) {
 
 // GetGameFile GET /games/:gameID/file の処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, sessionMap, error) {
-	fileName := gameID + "_game.zip"
+	fileName := g.getGameFileName(gameID, operatingSystem)
 	file, err := g.Open(fileName)
 	if err != nil {
 		return nil, sessionMap{}, fmt.Errorf("Failed In Opening Game File: %w", err)
@@ -60,6 +60,9 @@ func (g *Game) GetVideo(gameID string) (ioReader, sessionMap, error) {
 	return videoFile, sessionMap{}, nil
 }
 
+func (g *Game) getGameFileName(gameID string, operatingSystem string) string {
+	return gameID + "_" + operatingSystem + "_game.zip"
+}
 
 func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {
 	var roleMap = map[string]int8 {

@@ -24,7 +24,7 @@ func (*User) GetMe(sessMap sessionMap) (openapi.User, sessionMap, error) {
 	}
 
 	user := openapi.User{
-		UserId: userID.(string),
+		Id: userID.(string),
 		Name:   userName.(string),
 	}
 

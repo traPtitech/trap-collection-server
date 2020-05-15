@@ -58,7 +58,7 @@ func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map
 		return sessionMap{}, fmt.Errorf("Failed In Getting Me: %w", err)
 	}
 
-	sessMap["userID"] = user.UserId
+	sessMap["userID"] = user.Id
 	sessMap["userName"] = user.Name
 
 	return sessMap, nil
