@@ -1,21 +1,18 @@
 version: "3"
 services:
-  collection-server:
+  server:
     build:
       context: ../../
-      dockerfile: ./docker/dev/Dockerfile
+      dockerfile: ./docker/staging/Dockerfile
     restart: always
-    volumes:
-      - ../../:/go/src/github.com/traPtitech/trap-collection-server
     environment:
-      COLLECTION_ENV: development
+      COLLECTION_ENV: staging
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
       OS_USERNAME:
       OS_PASSWORD:
       OS_TENANT_ID:
       CLIENT_ID:
       CLIENT_SECRET:
-      PRODUCT_KEY:
       DB_USERNAME: root
       DB_PASSWORD: pass
       DB_HOSTNAME: mariadb

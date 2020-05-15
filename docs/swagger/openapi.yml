@@ -959,7 +959,7 @@ components:
       description: ユーザー
       type: object
       properties:
-        userId:
+        id:
           description: traQのID（UUID）
           type: string
         name:

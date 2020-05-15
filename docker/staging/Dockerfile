@@ -7,6 +7,7 @@ RUN groovy ./generate/generator.groovy generate \
       -t ./generate \
       -o .
 
+
 FROM golang:1.14.2-alpine AS build
 
 RUN apk add --update --no-cache git upx
@@ -27,8 +28,7 @@ RUN apk --update add tzdata && \
   apk del tzdata && \
   rm -rf /var/cache/apk/* && \
   mkdir -p /usr/share/zoneinfo/Asia && \
-  mv /Tokyo /usr/share/zoneinfo/Asia && \
-  mkdir upload
+  mv /Tokyo /usr/share/zoneinfo/Asia
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/main ./
 
