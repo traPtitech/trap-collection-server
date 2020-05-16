@@ -1089,7 +1089,11 @@ components:
           format: binary
     NewGameURL:
       description: 新しいゲームのURL
-      type: string
+      type: object
+      properties:
+        url:
+          description: URL
+          type: string
     GameAsset:
       description: ゲームのファイル・URLの情報
       type: object
