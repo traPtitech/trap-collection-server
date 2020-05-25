@@ -18,7 +18,7 @@ services:
       dockerfile: ./docker/mock/Dockerfile
     restart: always
     environment:
-      COLLECTION_ENV: staging
+      COLLECTION_ENV: mock
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
       OS_USERNAME:
       OS_PASSWORD:
@@ -33,8 +33,8 @@ services:
       PORT: :3000
   collection-mariadb:
     image: mariadb:10.5.2
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: pass
     volumes:
-      - ../../mysql/data:/var/lib/mysql
       - ../../mysql/init:/docker-entrypoint-initdb.d

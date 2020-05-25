@@ -7,6 +7,7 @@ require (
 	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/mock v1.4.3
+	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.10.0
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/sessions v1.2.0

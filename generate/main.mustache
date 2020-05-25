@@ -21,7 +21,7 @@ func main() {
 	log.Printf("Server started")
 	env := os.Getenv("COLLECTION_ENV")
 
-	db, err := model.EstablishDB(true)
+	db, err := model.EstablishDB()
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func main() {
 	e.Use(session.Middleware(store))
 	e.Use(middleware.Recover())
 
-  if env == "development" {
+  if env == "development" || env == "mock" {
 		colog.SetMinLevel(colog.LDebug)
 		colog.SetFormatter(&colog.StdFormatter{
 				Colors: true,
@@ -73,7 +73,7 @@ func main() {
     panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	api, err := router.NewService(clientID, clientSecret)
+	api, err := router.NewService(env, clientID, clientSecret)
   if err != nil {
     panic(err)
   }

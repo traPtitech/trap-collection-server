@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/url"
+	"os"
 
 	"github.com/gorilla/sessions"
 	"github.com/traPtitech/trap-collection-server/storage"
@@ -29,12 +30,22 @@ type Service struct {
 }
 
 // NewService Serviceのコンストラクタ
-func NewService(clientID string,clientSecret string) (Service, error) {
-	str, err := storage.NewLocalStorage("../upload")
-	if err != nil {
-		return Service{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
+func NewService(env string, clientID string,clientSecret string) (Service, error) {
+	var str storage.Storage
+	if env == "development" || env == "mock" {
+		localStr, err := storage.NewLocalStorage("./upload")
+		if err != nil {
+			return Service{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
+		}
+		str = &localStr
+	} else {
+		swiftStr, err := storage.NewSwiftStorage(os.Getenv("container"))
+		if err != nil {
+			return Service{}, fmt.Errorf("Failed In Swift Storage Constructor: %w", err)
+		}
+		str = &swiftStr
 	}
-	game := NewGame(&str)
+	game := NewGame(str)
 
 	strBaseURL := "https://q.trap.jp/api/v3"
 	authBase, err := NewOAuthBase(strBaseURL)

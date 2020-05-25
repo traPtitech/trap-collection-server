@@ -27,9 +27,9 @@ RUN apk --update add tzdata && \
   apk del tzdata && \
   rm -rf /var/cache/apk/* && \
   mkdir -p /usr/share/zoneinfo/Asia && \
-  mv /Tokyo /usr/share/zoneinfo/Asia && \
-  mkdir upload
+  mv /Tokyo /usr/share/zoneinfo/Asia
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/main ./
+COPY ./upload ./upload
 
 ENTRYPOINT ./main

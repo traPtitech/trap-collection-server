@@ -32,9 +32,9 @@ func (*Game) GetGame(gameID string) (openapi.Game, sessionMap, error) {
 	return game, sessionMap{}, nil
 }
 
-// GetGameFile GET /games/:gameID/file の処理部分
+// GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, sessionMap, error) {
-	fileName := g.getGameFileName(gameID, operatingSystem)
+	fileName, err := g.getGameFileName(gameID, operatingSystem)
 	file, err := g.Open(fileName)
 	if err != nil {
 		return nil, sessionMap{}, fmt.Errorf("Failed In Opening Game File: %w", err)
@@ -60,8 +60,24 @@ func (g *Game) GetVideo(gameID string) (ioReader, sessionMap, error) {
 	return videoFile, sessionMap{}, nil
 }
 
-func (g *Game) getGameFileName(gameID string, operatingSystem string) string {
-	return gameID + "_" + operatingSystem + "_game.zip"
+var typeExtMap map[string]string = map[string]string{
+	"jar": "jar",
+	"windows": "zip",
+	"mac": "zip",
+}
+
+func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
+	fileType, err := model.GetGameType(gameID, operatingSystem)
+	if err != nil {
+		return "", fmt.Errorf("Failed In Getting Game Type: %w", err)
+	}
+
+	ext, ok := typeExtMap[fileType]
+	if !ok {
+		return "", errors.New("Invalid File Type")
+	}
+
+	return gameID + "_game." + ext, nil
 }
 
 func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {

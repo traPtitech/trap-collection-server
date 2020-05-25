@@ -6,6 +6,5 @@ sudo docker run -it --rm \
   -i /local/docs/swagger/openapi.yml \
   -g go-server \
   -o /local
-cd mock
-sudo docker build ./ -t trap_collection_mock
-sudo docker run --rm trap_collection_mock
+sudo docker-compose -f docker/mock/docker-compose.yml up
+sudo docker-compose -f docker/mock/docker-compose.yml down

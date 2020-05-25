@@ -24,7 +24,7 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | game_version_id | int(11) | NO | MUL |  |  |  |
 | type | tinyint | NO |  |  |  | 0:`url`,1:`jar`,2:`windows`,3:`mac` |
-| md5 | binary(16) |  |  |  |  | typeが`url`時はNULL |
+| md5 | char(32) |  |  |  |  | typeが`url`時はNULL |
 | url | text |  |  |  |  | typeが`url`以外でNULL |
 
 ### game_introductions

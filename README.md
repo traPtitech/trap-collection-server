@@ -6,11 +6,11 @@ traPCollectionのAPI
 For more information, please visit [https://github.com/traPtitech/trap-collection-server](https://github.com/traPtitech/trap-collection-server)
 
 ### Mockの起動
-プロジェクトルートで
+ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
 ```
 $ sh mockgen.sh
-# docker-compose -f docker/mock/docker-compose.yml up --build
 ```
+で動きます。
 
 ### コードの生成
 最初にする必要があります。
