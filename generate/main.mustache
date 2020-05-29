@@ -1,0 +1,84 @@
+{{>partial_header}}
+package main
+
+import (
+	"log"
+	"os"
+  "errors"
+
+	"github.com/comail/colog"
+	"github.com/labstack/echo-contrib/session"
+	echo "github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/srinathgs/mysqlstore"
+
+	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router"
+)
+
+func main() {
+	log.Printf("Server started")
+	env := os.Getenv("COLLECTION_ENV")
+
+	db, err := model.EstablishDB()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
+	if err != nil {
+		panic(err)
+	}
+
+  err = model.Migrate(env)
+  if err != nil {
+		panic(err)
+	}
+
+	e := echo.New()
+	e.Use(session.Middleware(store))
+	e.Use(middleware.Recover())
+
+  if env == "development" || env == "mock" {
+		colog.SetMinLevel(colog.LDebug)
+		colog.SetFormatter(&colog.StdFormatter{
+				Colors: true,
+				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+		})
+
+		db.LogMode(true)
+
+    e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
+    }))
+    e.Use(middleware.Logger())
+	} else {
+		colog.SetMinLevel(colog.LError)
+		colog.SetFormatter(&colog.StdFormatter{
+				Colors: false,
+				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+		})
+	}
+
+  colog.Register()
+
+  clientID := os.Getenv("CLIENT_ID")
+  if len(clientID) == 0 {
+    panic(errors.New("ENV CLIENT_ID IS NULL"))
+  }
+  clientSecret := os.Getenv("CLIENT_SECRET")
+	if len(clientSecret) == 0 {
+    panic(errors.New("ENV CLIENT_SECRET IS NULL"))
+	}
+
+	api, err := router.NewService(env, clientID, clientSecret)
+  if err != nil {
+    panic(err)
+  }
+
+	{{packageName}}.SetupRouting(e, api)
+
+	e.Start(os.Getenv("PORT"))
+}

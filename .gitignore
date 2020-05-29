@@ -1,6 +1,14 @@
 .env
-app
+main
 .vscode
 mysql/data
-mock/*
-!mock/.openapi-generator-ignore
+.openapi-generator
+openapi
+main.go
+router/*_mock.go
+!router/service_mock.go
+mock
+!mysql/init/mock
+!docker/mock
+upload/*
+!upload/.gitkeep

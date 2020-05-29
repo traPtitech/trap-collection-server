@@ -1,0 +1,33 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+  "io"
+  "mime/multipart"
+  "bufio"
+
+  echo "github.com/labstack/echo/v4"
+  "github.com/labstack/echo-contrib/session"
+  "github.com/gorilla/sessions"
+)
+
+type ioReader = io.Reader
+type multipartFile = multipart.File
+type sessionsSession = sessions.Session
+var scanner = bufio.NewScanner
+var getSession = session.Get
+
+// Api Apiのインターフェイス
+type Api interface {
+  Middleware{{#apiInfo}}{{#apis}}
+  {{classname}}{{/apis}}{{/apiInfo}}
+}
+
+type Middleware interface {
+  TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+  BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+}

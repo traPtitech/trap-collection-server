@@ -1,0 +1,4 @@
+.env
+.vscode
+router/*_mock.go
+.git

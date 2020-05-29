@@ -1,19 +1,32 @@
 package router
 
 import (
-	"fmt"
-	"net/http"
+	"errors"
 
-	echo "github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
-// GetMeHandler GET /users/meのハンドラー
-func GetMeHandler(client Traq) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		user, err := client.GetMe(c)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Me:%w", err).Error())
-		}
-		return c.JSON(http.StatusOK, user)
+// User userの構造体
+type User struct {
+	openapi.UserApi
+}
+
+// GetMe GET /users/meの処理部分
+func (*User) GetMe(sessMap sessionMap) (openapi.User, sessionMap, error) {
+	userID, ok := sessMap["userID"]
+	if !ok || userID == nil {
+		return openapi.User{}, sessionMap{}, errors.New("userID IS NULL")
 	}
+
+	userName, ok := sessMap["userName"]
+	if !ok || userName == nil {
+		return openapi.User{}, sessionMap{}, errors.New("userName IS NULL")
+	}
+
+	user := openapi.User{
+		Id: userID.(string),
+		Name:   userName.(string),
+	}
+
+	return user, sessionMap{}, nil
 }

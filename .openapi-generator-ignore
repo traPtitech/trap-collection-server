@@ -20,7 +20,4 @@
 # For example, you can ignore all files in a docs folder with the file extension .md:
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
-!go/README.md
-
-api/*
-go/api-*.go
+#!docs/README.md

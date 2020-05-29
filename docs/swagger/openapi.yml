@@ -8,6 +8,10 @@ info:
   contact:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
+security:
+  - TrapMemberAuth:
+    - read
+  - LauncherAuth: []
 paths:
   /oauth2/callback:
     parameters:
@@ -17,16 +21,11 @@ paths:
         description: OAuth2.0のcode
         schema:
           type: string
-      - name: state
-        in: query
-        required: true
-        description: OAuth2.0のstate
-        schema:
-          type: string
+      - $ref: '#/components/parameters/sessions'
     get:
       tags:
-        - user
-      description: OAuthのコールバック
+        - oauth2
+      summary: OAuthのコールバック
       operationId: callback
       responses:
         200:
@@ -36,9 +35,9 @@ paths:
   /oauth2/generate/code:
     get:
       tags:
-        - oauth
-      description: OAuthのcode_challengeとかの取得
-      operationId: getPkce
+        - oauth2
+      summary: OAuthのcode_challengeとかの取得
+      operationId: getGenerateCode
       responses:
         200:
           description: 成功
@@ -60,9 +59,14 @@ paths:
   /oauth2/logout:
     post:
       tags:
-        - oauth
-      description: traP Collectionのログアウト
+        - oauth2
+      summary: traP Collectionのログアウト
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: postLogout
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -72,8 +76,13 @@ paths:
     get:
       tags:
         - user
-      description: 自分の情報の取得
+      summary: 自分の情報の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getMe
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -87,8 +96,13 @@ paths:
     get:
       tags:
         - user
-      description: traQの全ユーザー取得
+      summary: traQの全ユーザー取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getUsers
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -104,11 +118,16 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの追加
+      summary: ゲームの追加
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: postGame
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       requestBody:
         content:
-          text/plain:
+          application/json:
             schema:
               $ref: '#/components/schemas/NewGameMeta'
       responses:
@@ -123,7 +142,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲーム一覧の取得
+      summary: ゲーム一覧の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getGames
       responses:
         200:
@@ -136,13 +158,34 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
-  /games/info/{gameID}:
+  /games/{gameID}:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
+    delete:
+      tags:
+        - game
+      summary: ゲームの削除
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
+      operationId: deleteGames
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+  /games/{gameID}/info:
     parameters:
       - $ref: '#/components/parameters/gameID'
     get:
       tags:
         - game
-      description: ゲーム情報の取得
+      summary: ゲーム情報の取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getGame
       responses:
         200:
@@ -156,7 +199,11 @@ paths:
     put:
       tags:
         - game
-      description: ゲームの情報の修正
+      summary: ゲームの情報の修正
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: putGame
       requestBody:
         content:
@@ -172,23 +219,17 @@ paths:
                 $ref: '#/components/schemas/GameMeta'
         500:
           description: 失敗
-    delete:
-      tags:
-        - game
-      description: ゲームの削除
-      operationId: deleteGames
-      responses:
-        200:
-          description: 成功
-        500:
-          description: 失敗
   /games/{gameID}/image:
     parameters:
       - $ref: '#/components/parameters/gameID'
-    put:
+    post:
       tags:
         - game
-      description: ゲームの画像の変更
+      summary: ゲームの画像の変更
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: putImage
       requestBody:
         content:
@@ -208,7 +249,11 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの画像の取得
+      summary: ゲームの画像の取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getImage
       responses:
         200:
@@ -230,7 +275,11 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの動画の変更
+      summary: ゲームの動画の変更
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: postVideo
       requestBody:
         content:
@@ -246,7 +295,11 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの動画の取得
+      summary: ゲームの動画の取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getVideo
       responses:
         200:
@@ -258,11 +311,14 @@ paths:
                 format: binary
         500:
           description: 失敗
-  /games/maintainer:
+  /games/maintainers:
     get:
       tags:
         - game
-      description: 自分がバージョン更新権限保持者のゲームの取得
+      summary: 自分がバージョン更新権限保持者のゲームの取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getMyGames
       responses:
         200:
@@ -275,13 +331,17 @@ paths:
                   $ref: '#/components/schemas/Game'
         500:
           description: 失敗
-  /games/maintainer/{gameID}:
+  /games/maintainers/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
       tags:
         - game
-      description: ゲームのバージョン更新権限保持者の追加
+      summary: ゲームのバージョン更新権限保持者の追加
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: postMaintainer
       requestBody:
         content:
@@ -299,7 +359,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの管理者の取得
+      summary: ゲームの管理者の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getOwner
       responses:
         200:
@@ -328,7 +391,11 @@ paths:
     post:
       tags:
         - game
-      description: ゲームのバージョンの作成
+      summary: ゲームのバージョンの作成
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: postGameVersion
       requestBody:
         content:
@@ -347,7 +414,10 @@ paths:
     get:
       tags:
         - game
-      description: ゲームのバージョン一覧の取得
+      summary: ゲームのバージョン一覧の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getGameVersion
       responses:
         200:
@@ -366,7 +436,11 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの最新バージョンへのファイルの追加
+      summary: ゲームの最新バージョンへのファイルの追加
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: postFile
       requestBody:
         content:
@@ -387,16 +461,15 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの最新バージョンのファイルの取得
+      summary: ゲームの最新バージョンのファイルの取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getGameFile
       parameters:
         - $ref: '#/components/parameters/gameID'
-        - name: os
-          description: osのパラメーター(mac,windows)
-          in: query
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/operatingSystem'
       responses:
         200:
           description: 成功
@@ -413,7 +486,11 @@ paths:
     post:
       tags:
         - game
-      description: ゲームの最新バージョンへのURLの追加
+      summary: ゲームの最新バージョンへのURLの追加
+      security: 
+        - TrapMemberAuth:
+          - read
+        - GameMaintainerAuth: []
       operationId: postURL
       requestBody:
         content:
@@ -434,13 +511,17 @@ paths:
     get:
       tags:
         - game
-      description: ゲームの最新バージョンのURLの取得
+      summary: ゲームの最新バージョンのURLの取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getGameURL
       responses:
         200:
           description: 成功
           content:
-            text/plain:
+            application/json:
               schema:
                 type: string
         500:
@@ -449,7 +530,11 @@ paths:
     post:
       tags:
         - version
-      description: 新しいバージョンの作成
+      summary: 新しいバージョンの作成
+      security: 
+        - TrapMemberAuth:
+          - read
+        - AdminAuth: []
       operationId: postVersion
       requestBody:
         required: true
@@ -469,7 +554,10 @@ paths:
     get:
       tags:
         - version
-      description: バージョン一覧の取得
+      summary: バージョン一覧の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getVersions
       responses:
         200:
@@ -488,7 +576,11 @@ paths:
     get:
       tags:
         - version
-      description: バージョンの詳細情報の取得
+      summary: バージョンの詳細情報の取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getVersion
       responses:
         200:
@@ -505,7 +597,11 @@ paths:
     post:
       tags:
         - version
-      description: バージョンへのゲームの追加
+      summary: バージョンへのゲームの追加
+      security: 
+        - TrapMemberAuth:
+          - read
+        - AdminAuth: []
       operationId: postGameToVersion
       requestBody:
         required: true
@@ -529,8 +625,13 @@ paths:
     get:
       tags:
         - version
-      description: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      summary: ブラウザゲーム以外のゲームのID、MD5、ゲームの種類、更新日の一覧
+      security: 
+        - LauncherAuth: []
       operationId: getCheckList
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+        - $ref: '#/components/parameters/operatingSystem'
       responses:
         200:
           description: 成功時のレスポンス
@@ -546,8 +647,14 @@ paths:
     get:
       tags:
         - version
-      description: 質問の取得
+      summary: 質問の取得
+      security: 
+        - TrapMemberAuth:
+          - read
+        - LauncherAuth: []
       operationId: getQuestions
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       responses:
         200:
           description: 成功
@@ -563,7 +670,11 @@ paths:
     post:
       tags:
         - question
-      description: 質問を作成
+      summary: 質問を作成
+      security: 
+        - TrapMemberAuth:
+          - read
+        - AdminAuth: []
       operationId: postQuestion
       requestBody:
         required: true
@@ -590,7 +701,11 @@ paths:
     delete:
       tags:
         - question
-      description: 質問の削除
+      summary: 質問の削除
+      security: 
+        - TrapMemberAuth:
+          - read
+        - AdminAuth: []
       operationId: deleteQuestion
       responses:
         200:
@@ -601,8 +716,12 @@ paths:
     post:
       tags:
         - response
-      description: 新しい回答を作成します．
+      summary: 新しい回答を作成します．
+      security: 
+        - LauncherAuth: []
       operationId: postResponse
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       requestBody:
         required: true
         content:
@@ -624,7 +743,10 @@ paths:
     get:
       tags:
         - response
-      description: 回答の統計情報を取得
+      summary: 回答の統計情報を取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getResponse
       parameters:
         - name: require
@@ -648,8 +770,11 @@ paths:
     post:
       tags:
         - seat
-      description: 着席
-      operationId: postSeat
+      summary: 着席
+      security: 
+        - TrapMemberAuth:
+          - read
+      operationId: postFixSeat
       responses:
         200:
           description: 成功
@@ -658,8 +783,11 @@ paths:
     delete:
       tags:
         - seat
-      description: 離席
-      operationId: deleteSeat
+      summary: 離席
+      security: 
+        - TrapMemberAuth:
+          - read
+      operationId: deleteFixSeat
       responses:
         200:
           description: 成功
@@ -669,7 +797,10 @@ paths:
     get:
       tags:
         - seat
-      description: 席の状態の取得
+      summary: 席の状態の取得
+      security: 
+        - TrapMemberAuth:
+          - read
       operationId: getSeat
       responses:
         200:
@@ -684,9 +815,103 @@ paths:
                   description: 埋まっている席のIDの一覧
         500:
           description: 失敗
+    post:
+      tags:
+        - seat
+      summary: 着席
+      security: 
+        - LauncherAuth: []
+      operationId: postSeat
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
+    delete:
+      tags:
+        - seat
+      summary: 離席
+      security: 
+        - LauncherAuth: []
+      operationId: deleteSeat
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+      responses:
+        200:
+          description: 成功
+        500:
+          description: 失敗
 
 components:
+  securitySchemes:
+    TrapMemberAuth:
+      type: oauth2
+      description: traQのOAuth
+      flows:
+        authorizationCode:
+          authorizationUrl: https://q.trap.jp/api/1.0/oauth2/authorize
+          tokenUrl: https://q.trap.jp/api/1.0/oauth2/token
+          scopes:
+            read: traQの読み取り権限
+    GameMaintainerAuth:
+      type: apiKey
+      description: ゲーム管理者の認証
+      in: cookie
+      name: userId
+    GameOwnerAuth:
+      type: apiKey
+      description: ゲーム管理者の認証
+      in: cookie
+      name: userID
+    AdminAuth:
+      type: apiKey
+      description: ランチャー管理者の認証
+      in: cookie
+      name: userID
+    LauncherAuth:
+      type: http
+      description: ランチャーの認証
+      scheme: basic
   parameters:
+    sessions:
+      name: sessions
+      in: cookie
+      required: true
+      schema:
+        type: string
+    userID:
+      name: userID
+      in: cookie
+      required: true
+      schema:
+        type: string
+    userName:
+      name: userName
+      in: cookie
+      required: true
+      schema:
+        type: string
+    versionID:
+      name: versionID
+      in: cookie
+      required: false
+      schema:
+        type: integer
+    operatingSystem:
+      name: operatingSystem
+      description: osのパラメーター(mac,windows)
+      in: query
+      required: true
+      schema:
+        type: string
+    accessToken:
+      name: accessToken
+      in: cookie
+      required: true
+      schema:
+        type: string
     launcherVersionID:
       name: launcherVersionID
       in: path
@@ -734,7 +959,7 @@ components:
       description: ユーザー
       type: object
       properties:
-        userId:
+        id:
           description: traQのID（UUID）
           type: string
         name:
@@ -765,7 +990,14 @@ components:
           format: date-time
     NewGameMeta:
       description: 新しいゲームの名前
-      type: string
+      type: object
+      properties:
+        name:
+          description: 修正後のゲームの名前
+          type: string
+        description:
+          description: 修正後のゲームの説明文
+          type: string
     GameMeta:
       description: ゲーム名とID
       type: object
@@ -779,6 +1011,8 @@ components:
         description:
           description: 追加されたゲームの説明
           type: string
+          example:
+            - 弾幕ゲーです。みんなやってね！
         createdAt:
           description: ゲームの追加された時刻
           type: string
@@ -810,6 +1044,8 @@ components:
         description:
           description: バージョンの説明
           type: string
+          example:
+            - ダッシュ機能追加した
     GameVersion:
       description: ゲームのバージョン
       type: object
@@ -823,6 +1059,8 @@ components:
         description:
           description: バージョンの説明
           type: string
+          example:
+            - ダッシュ機能追加した
         createdAt:
           description: 登録時刻
           type: string
@@ -840,6 +1078,8 @@ components:
         description:
           description: バージョンの説明
           type: string
+          example:
+            - ダッシュ機能追加した
         createdAt:
           description: 登録時刻
           type: string
@@ -892,15 +1132,15 @@ components:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
     NewVersion:
-      description: 新しいバージョンの名前
+      description: 新しいランチャーのバージョンの名前
       type: string
     Version:
-      description: バージョン
+      description: ランチャーのバージョン
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string
@@ -914,12 +1154,12 @@ components:
           type: string
           format: date-time
     VersionMeta:
-      description: バージョンの簡易的な情報
+      description: ランチャーのバージョンの簡易的な情報
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string
@@ -928,12 +1168,12 @@ components:
           type: string
           format: date-time
     VersionDetails:
-      description: バージョン詳細
+      description: ランチャーのバージョン詳細
       type: object
       properties:
         id:
           description: ID
-          type: string
+          type: integer
         name:
           description: 名前
           type: string
@@ -985,10 +1225,10 @@ components:
           description: 質問文
           type: string
         options:
-          description: 選択肢
+          description: 選択肢（typeがtextの場合は空）
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/QuestionOption'
         required:
           description: 回答が必須か
           type: boolean
@@ -996,6 +1236,17 @@ components:
           description: 質問の作成時刻
           type: string
           format: date-time
+    QuestionOption:
+      type: object
+      description: 質問の選択肢
+      properties:
+        id:
+          description: 選択肢のid
+          type: integer
+        label:
+          description: 選択肢のラベル
+          type: string
+          example: はい
     NewResponse:
       type: object
       description: 新しい回答
@@ -1065,9 +1316,18 @@ components:
           type: integer
         contents:
           description: 回答の配列（チェックボックスの場合のみ複数）
-          type: array
-          items:
-            type: string
+          type: object
+          properties:
+            text:
+              description: 質問のtypeがtextのとき
+              type: string
+            options:
+              description: 質問のtypeがtext以外のとき
+              type: array
+              items:
+                description: 選択肢のid
+                type: integer
+                example: 0
     AnswerCalc:
       type: object
       description: 質問に対する回答の統計
@@ -1125,4 +1385,3 @@ components:
         time:
           description: プレイ時間(ms)の平均
           type: integer
-        
