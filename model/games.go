@@ -31,8 +31,8 @@ func CheckMaintainerID(userID string, gameID string) (bool, error) {
 }
 
 // GetGameInfo ゲーム情報の取得
-func GetGameInfo(gameID string) (openapi.Game, error) {
-	game := openapi.Game{
+func GetGameInfo(gameID string) (*openapi.Game, error) {
+	game := &openapi.Game{
 		Version: &openapi.GameVersion{},
 	}
 	rows, err := db.Table("games").
@@ -43,12 +43,12 @@ func GetGameInfo(gameID string) (openapi.Game, error) {
 		Limit(1).
 		Rows()
 	if err != nil {
-		return openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
+		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
 	if rows.Next() {
 		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &game.Version.Id, &game.Version.Name, &game.Version.Description, &game.Version.CreatedAt)
 		if err != nil {
-			return openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
+			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
 		}
 	}
 	log.Printf("debug: %#v\n", game)

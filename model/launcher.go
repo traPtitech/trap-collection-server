@@ -24,20 +24,20 @@ func CheckProductKey(key string) bool {
 }
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
-func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetails, err error) {
+func GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error) {
 	rows, err := db.Table("launcher_versions").
 		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,game_version_relations.game_id").
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
 		Where("launcher_versions.id = ?", id).
 		Rows()
 	if err != nil {
-		return openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
+		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
 	}
 	for rows.Next() {
 		var gameID interface{}
 		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.CreatedAt, &gameID)
 		if err != nil {
-			return openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
+			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
 		}
 		if gameID != nil {
 			versionDetails.Games = append(versionDetails.Games, gameID.(string))
@@ -50,7 +50,7 @@ func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetai
 		Where("questions.launcher_version_id = ?", id).
 		Rows()
 	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Questions:%w", err)
+		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Questions:%w", err)
 	}
 	questionMap := make(map[int32]openapi.Question)
 	for rows.Next() {
@@ -58,7 +58,7 @@ func GetLauncherVersionDetailsByID(id uint) (versionDetails openapi.VersionDetai
 		var option openapi.QuestionOption
 		err = rows.Scan(&question.Id, &question.Type, &question.Content, &question.Required, &question.CreatedAt, &option.Id, &option.Label)
 		if err != nil {
-			return openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Question:%w", err)
+			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Question:%w", err)
 		}
 		if _, ok := questionMap[question.Id]; ok {
 			question = questionMap[question.Id]

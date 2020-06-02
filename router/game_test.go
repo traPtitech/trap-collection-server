@@ -11,7 +11,7 @@ func TestGame(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed In Storage Constructor: %#v", err)
 	}
-	game := NewGame(&str)
+	game := NewGame(str)
 
 	_,_,err = game.GetGameFile("test","win")
 	if err != nil {

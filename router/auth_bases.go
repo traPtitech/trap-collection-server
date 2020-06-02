@@ -17,18 +17,18 @@ type OAuthBase struct {
 }
 
 // NewOAuthBase AuthBaseのコンストラクタ
-func NewOAuthBase(strURL string) (OAuthBase,error) {
+func NewOAuthBase(strURL string) (*OAuthBase,error) {
 	baseURL, err := url.Parse(strURL)
 	if err != nil {
-		return OAuthBase{}, fmt.Errorf("Faile In Parsing URL: %w", err)
+		return &OAuthBase{}, fmt.Errorf("Faile In Parsing URL: %w", err)
 	}
-	authBase := OAuthBase{
+	authBase := &OAuthBase{
 		baseURL: baseURL,
 	}
 	return authBase, nil
 }
 
-func (a *OAuthBase) getMe(accessToken string) (openapi.User, error) {
+func (a *OAuthBase) getMe(accessToken string) (*openapi.User, error) {
 	path := *a.baseURL
 	path.Path += "/users/me"
 	req, err := http.NewRequest("GET", path.String(), nil)
@@ -36,15 +36,15 @@ func (a *OAuthBase) getMe(accessToken string) (openapi.User, error) {
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return openapi.User{}, err
+		return &openapi.User{}, err
 	}
 	if res.StatusCode != 200 {
-		return openapi.User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
+		return &openapi.User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var user openapi.User
-	err = json.NewDecoder(res.Body).Decode(&user)
+	var user *openapi.User
+	err = json.NewDecoder(res.Body).Decode(user)
 	if err != nil {
-		return openapi.User{}, err
+		return &openapi.User{}, err
 	}
 	return user, nil
 }

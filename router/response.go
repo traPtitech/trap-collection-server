@@ -14,14 +14,14 @@ type Response struct {
 }
 
 // PostResponse POST /responses の処理部分
-func (r *Response) PostResponse(sess sessionMap, response openapi.NewResponse) (openapi.NewResponse, sessionMap, error) {
+func (r *Response) PostResponse(sess sessionMap, response *openapi.NewResponse) (*openapi.NewResponse, sessionMap, error) {
 	productKey, err := r.getProductKey(sess)
 	if err != nil {
-		return openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Getting ProductKey: %w", err)
+		return &openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Getting ProductKey: %w", err)
 	}
 	response, err = model.InsertResponses(productKey, response)
 	if err != nil {
-		return openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Inserting Response: %w", err)
+		return &openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Inserting Response: %w", err)
 	}
 	return response, sessionMap{}, nil
 }

@@ -11,7 +11,7 @@ import (
 
 type {{classname}} interface{
   {{#operation}}
-  {{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}} {{#isQueryParam}}string{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}string{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{dataType}}{{/isBodyParam}}{{^isBodyParam}}map[interface{}]interface{}{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}}) ({{#returnType}}{{{returnType}}},{{/returnType}} map[interface{}]interface{},error)
+  {{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}} {{#isQueryParam}}string{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}string{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}*{{dataType}}{{/isBodyParam}}{{^isBodyParam}}map[interface{}]interface{}{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}}) ({{#isListContainer}}[]*{{returnBaseType}},{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}{{^isResponseFile}}*{{/isResponseFile}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}} map[interface{}]interface{},error)
   {{/operation}}
 }{{#operation}}
 
@@ -42,12 +42,12 @@ func {{baseName}}Handler({{classname}} Api) echo.HandlerFunc {
       return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Cookie:%w",err).Error())
     }
     {{paramName}} := cookie{{paramName}}.Value{{/isCookieParam}}{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}
-    var {{paramName}} {{dataType}}
-    err = c.Bind(&{{paramName}})
+    var {{paramName}} *{{dataType}}
+    err = c.Bind({{paramName}})
     if err != nil {
       return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Request Body:%w",err).Error())
     }{{/bodyParam}}{{/hasBodyParam}}
-    {{#returnType}}var res {{returnType}}{{/returnType}}
+    {{#isListContainer}}var res []*{{returnBaseType}}{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}var res {{^isResponseFile}}*{{/isResponseFile}}{{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}var res {{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}}
     var sessionMap map[interface{}]interface{}
     {
       {{#returnType}}res, {{/returnType}}sessionMap, err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})

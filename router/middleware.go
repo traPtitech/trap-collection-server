@@ -19,9 +19,9 @@ type Middleware struct {
 }
 
 // NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(authBase OAuthBase) Middleware {
-	middleware := Middleware{
-		OAuthBase: &authBase,
+func NewMiddleware(authBase *OAuthBase) *Middleware {
+	middleware := &Middleware{
+		OAuthBase: authBase,
 	}
 	return middleware
 }

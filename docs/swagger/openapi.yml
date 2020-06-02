@@ -372,17 +372,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      description: traQID（UUID）
-                      type: string
-                    name:
-                      description: traQID（UUIDでない方）
-                      type: string
-                    role:
-                      description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
-                      type: integer
+                  $ref: '#/components/schemas/Owner'
         500:
           description: 失敗
   /games/version/{gameID}:
@@ -1384,4 +1374,16 @@ components:
           type: integer
         time:
           description: プレイ時間(ms)の平均
+          type: integer
+    Owner:
+      type: object
+      properties:
+        id:
+          description: traQID（UUID）
+          type: string
+        name:
+          description: traQID（UUIDでない方）
+          type: string
+        role:
+          description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
           type: integer

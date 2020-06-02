@@ -17,28 +17,28 @@ type Swift struct {
 }
 
 // NewSwiftStorage Swiftのコンストラクタ
-func NewSwiftStorage(container string) (Swift, error) {
+func NewSwiftStorage(container string) (*Swift, error) {
 	option, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
-		return Swift{}, fmt.Errorf("Failed In Reading Auth Env:%w", err)
+		return &Swift{}, fmt.Errorf("Failed In Reading Auth Env:%w", err)
 	}
 
 	provider, err := openstack.AuthenticatedClient(option)
 	if err != nil {
-		return Swift{}, fmt.Errorf("Failed In Authorization:%w", err)
+		return &Swift{}, fmt.Errorf("Failed In Authorization:%w", err)
 	}
 
 	client, err := openstack.NewObjectStorageV1(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		return Swift{}, fmt.Errorf("Failed In Reading Connecting To Storage:%w", err)
+		return &Swift{}, fmt.Errorf("Failed In Reading Connecting To Storage:%w", err)
 	}
 
 	result := containers.Create(client, container, nil)
 	if result.Err != nil {
-		return Swift{}, fmt.Errorf("Failed In Making New Storage:%w", err)
+		return &Swift{}, fmt.Errorf("Failed In Making New Storage:%w", err)
 	}
 
-	swift := Swift{
+	swift := &Swift{
 		client: client,
 		container: container,
 	}

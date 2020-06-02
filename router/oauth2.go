@@ -23,9 +23,9 @@ type OAuth2 struct {
 }
 
 // NewOAuth2 OAuth2のコンストラクタ
-func NewOAuth2(authBase OAuthBase, clientID string, clientSecret string) OAuth2 {
-	oAuth2 := OAuth2{
-		OAuthBase: &authBase,
+func NewOAuth2(authBase *OAuthBase, clientID string, clientSecret string) *OAuth2 {
+	oAuth2 := &OAuth2{
+		OAuthBase: authBase,
 		clientID: clientID,
 		clientSecret: clientSecret,
 	}
@@ -65,8 +65,8 @@ func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map
 }
 
 // GetGenerateCode POST /oauth2/generate/codeの処理部分
-func (o *OAuth2) GetGenerateCode() (openapi.InlineResponse200, map[interface{}]interface{}, error) {
-	pkceParams := openapi.InlineResponse200{}
+func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, map[interface{}]interface{}, error) {
+	pkceParams := &openapi.InlineResponse200{}
 
 	pkceParams.ResponseType = "code"
 
@@ -149,7 +149,7 @@ func randBytes(n int) []byte {
 	return b
 }
 
-func (o *OAuth2) getAccessToken(code string, codeVerifier string) (authResponse, error) {
+func (o *OAuth2) getAccessToken(code string, codeVerifier string) (*authResponse, error) {
 	form := url.Values{}
 	form.Set("grant_type", "authorization_code")
 	form.Set("client_id", o.clientID)
@@ -160,22 +160,22 @@ func (o *OAuth2) getAccessToken(code string, codeVerifier string) (authResponse,
 	path.Path += "/oauth2/token"
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return authResponse{}, err
+		return &authResponse{}, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return authResponse{}, err
+		return &authResponse{}, err
 	}
 	if res.StatusCode != 200 {
-		return authResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+		return &authResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var authRes authResponse
-	err = json.NewDecoder(res.Body).Decode(&authRes)
+	var authRes *authResponse
+	err = json.NewDecoder(res.Body).Decode(authRes)
 	if err != nil {
-		return authResponse{}, err
+		return &authResponse{}, err
 	}
 	return authRes, nil
 }

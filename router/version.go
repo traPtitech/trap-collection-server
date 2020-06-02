@@ -15,41 +15,41 @@ type Version struct {
 }
 
 // GetVersion GET /version/:launcherVersionIDの処理部分
-func (*Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, sessionMap, error) {
+func (*Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, sessionMap, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
 	if err != nil {
-		return openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
+		return &openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
 	}
 	launcherVersion, err := model.GetLauncherVersionDetailsByID(uint(launcherVersionID))
 	if err != nil {
-		return openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
+		return &openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
 	}
 
 	return launcherVersion, sessionMap{}, nil
 }
 
 // GetCheckList GET /versions/checkの処理部分
-func (v *Version) GetCheckList(sess sessionMap, operationgSystem string) ([]openapi.CheckItem, sessionMap, error) {
+func (v *Version) GetCheckList(sess sessionMap, operationgSystem string) ([]*openapi.CheckItem, sessionMap, error) {
 	versionID, err := v.getVersionID(sess)
 	if err != nil {
-		return []openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
+		return []*openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
 	checkList, err := model.GetCheckList(versionID, operationgSystem)
 	if err != nil {
-		return []openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
+		return []*openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
 	}
 	return checkList, sessionMap{}, nil
 }
 
 // GetQuestions GET /versions/questionの処理部分
-func (v *Version) GetQuestions(sess sessionMap) ([]openapi.Question, sessionMap, error) {
+func (v *Version) GetQuestions(sess sessionMap) ([]*openapi.Question, sessionMap, error) {
 	versionID, err := v.getVersionID(sess)
 	if err != nil {
-		return []openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
+		return []*openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
 	questions, err := model.GetQuestions(versionID)
 	if err != nil {
-		return []openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting Questions: %w", err)
+		return []*openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting Questions: %w", err)
 	}
 	return questions, sessionMap{}, nil
 }

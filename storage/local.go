@@ -14,16 +14,19 @@ type Local struct {
 }
 
 // NewLocalStorage LocalStorageのコンストラクタ
-func NewLocalStorage(dir string) (Local, error) {
+func NewLocalStorage(dir string) (*Local, error) {
 	fi, err := os.Stat(dir)
 	if err != nil {
-		return Local{}, errors.New("dir doesn't exist")
+		return &Local{}, errors.New("dir doesn't exist")
 	}
 	if !fi.IsDir() {
-		return Local{}, errors.New("dir is not a directory")
+		return &Local{}, errors.New("dir is not a directory")
 	}
 
-	return Local{localDir: dir}, nil
+	local := &Local{
+		localDir: dir,
+	}
+	return local, nil
 }
 
 // Save ファイルの保存

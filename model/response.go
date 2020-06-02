@@ -11,10 +11,10 @@ import (
 )
 
 // InsertResponses 回答の追加
-func InsertResponses(productKey string, res openapi.NewResponse) (openapi.NewResponse, error) {
+func InsertResponses(productKey string, res *openapi.NewResponse) (*openapi.NewResponse, error) {
 	playerID, err := getPlayerIDByProductKey(productKey)
 	if err != nil {
-		return openapi.NewResponse{}, fmt.Errorf("Failed In Getting PlayerID:%w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Getting PlayerID:%w", err)
 	}
 	err = db.Transaction(func(tx *gorm.DB) error {
 		response := Response{
@@ -92,7 +92,7 @@ func InsertResponses(productKey string, res openapi.NewResponse) (openapi.NewRes
 		return nil
 	})
 	if err != nil {
-		return openapi.NewResponse{}, fmt.Errorf("Failed In Transaction: %w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Transaction: %w", err)
 	}
 	return res, nil
 }

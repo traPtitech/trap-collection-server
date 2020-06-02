@@ -16,18 +16,18 @@ type Game struct {
 }
 
 // NewGame Gemeのコンストラクタ
-func NewGame(storage storage.Storage) Game {
-	game := Game{
+func NewGame(storage storage.Storage) *Game {
+	game := &Game{
 		Storage: storage,
 	}
 	return game
 }
 
 // GetGame GET /games/:gameID/infoの処理部分
-func (*Game) GetGame(gameID string) (openapi.Game, sessionMap, error) {
+func (*Game) GetGame(gameID string) (*openapi.Game, sessionMap, error) {
 	game, err := model.GetGameInfo(gameID)
 	if err != nil {
-		return openapi.Game{}, sessionMap{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
+		return &openapi.Game{}, sessionMap{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
 	return game, sessionMap{}, nil
 }

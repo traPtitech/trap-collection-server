@@ -37,13 +37,13 @@ func NewService(env string, clientID string,clientSecret string) (Service, error
 		if err != nil {
 			return Service{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
 		}
-		str = &localStr
+		str = localStr
 	} else {
 		swiftStr, err := storage.NewSwiftStorage(os.Getenv("container"))
 		if err != nil {
 			return Service{}, fmt.Errorf("Failed In Swift Storage Constructor: %w", err)
 		}
-		str = &swiftStr
+		str = swiftStr
 	}
 	game := NewGame(str)
 
@@ -56,11 +56,10 @@ func NewService(env string, clientID string,clientSecret string) (Service, error
 	oAuth2:= NewOAuth2(authBase, clientID, clientSecret)
 	middleware := NewMiddleware(authBase)
 
-
 	api := Service{
-		Middleware: &middleware,
-		Game: &game,
-		OAuth2: &oAuth2,
+		Middleware: middleware,
+		Game: game,
+		OAuth2: oAuth2,
 	}
 	return api, nil
 }
