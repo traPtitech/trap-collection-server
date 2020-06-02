@@ -18,7 +18,7 @@ var scanner = bufio.NewScanner
 var getSession = session.Get
 
 // Api Apiのインターフェイス
-type Api interface {
+type Api struct {
   Middleware{{#apiInfo}}{{#apis}}
   {{classname}}{{/apis}}{{/apiInfo}}
 }

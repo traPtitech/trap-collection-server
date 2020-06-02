@@ -73,7 +73,7 @@ func main() {
     panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	api, err := router.NewService(env, clientID, clientSecret)
+	api, err := router.NewAPI(env, clientID, clientSecret)
   if err != nil {
     panic(err)
   }

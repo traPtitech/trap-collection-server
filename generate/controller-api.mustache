@@ -16,7 +16,7 @@ type {{classname}} interface{
 }{{#operation}}
 
 // {{baseName}}Handler - {{summary}}
-func {{baseName}}Handler({{classname}} Api) echo.HandlerFunc {
+func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
   return func(c echo.Context) error {
     var err error
     var sess *sessionsSession{{#hasQueryParams}}{{#queryParams}}
