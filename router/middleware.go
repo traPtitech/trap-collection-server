@@ -10,18 +10,19 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 )
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	*OAuthBase
+	base.OAuth
 	openapi.Middleware
 }
 
 // NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(authBase *OAuthBase) *Middleware {
+func NewMiddleware(oauth base.OAuth) *Middleware {
 	middleware := &Middleware{
-		OAuthBase: authBase,
+		OAuth: oauth,
 	}
 	return middleware
 }
@@ -57,7 +58,7 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			if !ok || accessToken == nil {
 				return c.String(http.StatusUnauthorized, "No Access Token")
 			}
-			user, err := m.getMe(accessToken.(string))
+			user, err := m.GetMe(accessToken.(string))
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -108,7 +109,7 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 			if !ok || accessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
-			user, err := m.getMe(accessToken.(string))
+			user, err := m.GetMe(accessToken.(string))
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}

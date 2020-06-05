@@ -24,40 +24,40 @@ func NewGame(storage storage.Storage) *Game {
 }
 
 // GetGame GET /games/:gameID/infoの処理部分
-func (*Game) GetGame(gameID string) (*openapi.Game, sessionMap, error) {
+func (*Game) GetGame(gameID string) (*openapi.Game, error) {
 	game, err := model.GetGameInfo(gameID)
 	if err != nil {
-		return &openapi.Game{}, sessionMap{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
+		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
-	return game, sessionMap{}, nil
+	return game, nil
 }
 
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
-func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, sessionMap, error) {
+func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
 	file, err := g.Open(fileName)
 	if err != nil {
-		return nil, sessionMap{}, fmt.Errorf("Failed In Opening Game File: %w", err)
+		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
 	}
-	return file, sessionMap{}, nil
+	return file, nil
 }
 
 // GetImage GET /games/:gameID/imageの処理部分
-func (g *Game) GetImage(gameID string) (ioReader, sessionMap, error) {
+func (g *Game) GetImage(gameID string) (ioReader, error) {
 	imageFile, err := g.getIntroduction(gameID, "image")
 	if err != nil {
-		return nil, sessionMap{}, fmt.Errorf("Failed In Getting Introduction File: %w", err)
+		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
 	}
-	return imageFile, sessionMap{}, nil
+	return imageFile, nil
 }
 
 // GetVideo GET /games/:gameID/videoの処理部分
-func (g *Game) GetVideo(gameID string) (ioReader, sessionMap, error) {
+func (g *Game) GetVideo(gameID string) (ioReader, error) {
 	videoFile, err := g.getIntroduction(gameID, "video")
 	if err != nil {
-		return nil, sessionMap{}, fmt.Errorf("Failed In Getting Introduction File: %w", err)
+		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
 	}
-	return videoFile, sessionMap{}, nil
+	return videoFile, nil
 }
 
 var typeExtMap map[string]string = map[string]string{
@@ -106,11 +106,11 @@ func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {
 }
 
 // GetGameURL GET /games/:gameID/urlの処理部分
-func (*Game) GetGameURL(gameID string) (string, sessionMap, error) {
+func (*Game) GetGameURL(gameID string) (string, error) {
 	url, err := model.GetURL(gameID)
 	if err != nil {
-		return "", sessionMap{}, fmt.Errorf("Failed In Getting URL: %w", err)
+		return "", fmt.Errorf("Failed In Getting URL: %w", err)
 	}
 
-	return url, sessionMap{}, nil
+	return url, nil
 }

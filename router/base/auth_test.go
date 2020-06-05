@@ -1,4 +1,4 @@
-package router
+package base
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func TestOAuthBase(t *testing.T) {
 		t.Fatalf("Failed In NewAuthBase: %#v", err)
 	}
 
-	res, err := authBase.getMe("")
+	res, err := authBase.GetMe("")
 	if err != nil {
 		t.Fatalf("Failed In getMe: %#v", err)
 	}
@@ -72,26 +72,26 @@ func TestLauncherAuth(t *testing.T) {
 		"versionID": versionID,
 		"productKey": productKey,
 	}
-	resVersionID, err := launcherAuthBase.getVersionID(sessMap)
+	resVersionID, err := launcherAuthBase.GetVersionID(sessMap)
 	if err != nil {
 		t.Fatalf("Failed In getVersionID: %#v", err)
 	}
 	if resVersionID != versionID {
 		t.Fatalf("Invalid versionID: %d", resVersionID)
 	}
-	resVersionID, err = launcherAuthBase.getVersionID(map[interface{}]interface{}{})
+	resVersionID, err = launcherAuthBase.GetVersionID(map[interface{}]interface{}{})
 	if err == nil {
 		t.Fatal("VersionID Expected To Be Null,But Error Is Null")
 	}
 
-	resProductKey, err := launcherAuthBase.getProductKey(sessMap)
+	resProductKey, err := launcherAuthBase.GetProductKey(sessMap)
 	if err != nil {
 		t.Fatalf("Failed In getProductKey: %#v", err)
 	}
 	if resProductKey != productKey {
 		t.Fatalf("Invalid productKey: %s", resProductKey)
 	}
-	resProductKey, err = launcherAuthBase.getProductKey(map[interface{}]interface{}{})
+	resProductKey, err = launcherAuthBase.GetProductKey(map[interface{}]interface{}{})
 	if err == nil {
 		t.Fatal("ProductKey Expected To Be Null, But Error Is Null")
 	}

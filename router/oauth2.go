@@ -12,20 +12,25 @@ import (
 	"time"
 
 	"github.com/dvsekhvalnov/jose2go/base64url"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 )
 
 // OAuth2 oauthの構造体
 type OAuth2 struct {
-	*OAuthBase
+	session base.Session
+	oauth base.OAuth
 	clientID     string
 	clientSecret string
 }
 
 // NewOAuth2 OAuth2のコンストラクタ
-func NewOAuth2(authBase *OAuthBase, clientID string, clientSecret string) *OAuth2 {
+func NewOAuth2(sess base.Session, oauth base.OAuth, clientID string, clientSecret string) *OAuth2 {
 	oAuth2 := &OAuth2{
-		OAuthBase: authBase,
+		session: sess,
+		oauth: oauth,
 		clientID: clientID,
 		clientSecret: clientSecret,
 	}
@@ -39,33 +44,39 @@ type authResponse struct {
 }
 
 // Callback GET /oauth2/callbackの処理部分
-func (o *OAuth2) Callback(code string, sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+func (o *OAuth2) Callback(code string, c echo.Context) error {
+	sess,err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("Failed In Getting Session: %w", err)
+	}
+	sessMap := sess.Values
+
 	interfaceCodeVerifier,ok := sessMap["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
-		return sessionMap{}, errors.New("CodeVerifier IS NULL")
+		return errors.New("CodeVerifier IS NULL")
 	}
 	codeVerifier := interfaceCodeVerifier.(string)
 	res, err := o.getAccessToken(code, codeVerifier)
 	if err != nil {
-		return sessionMap{}, fmt.Errorf("Failed In Getting AccessToken:%w", err)
+		return fmt.Errorf("Failed In Getting AccessToken:%w", err)
 	}
 
 	sessMap["accessToken"] = res.AccessToken
 	sessMap["refreshToken"] = res.RefreshToken
 
-	user, err := o.getMe(res.AccessToken)
+	user, err := o.oauth.GetMe(res.AccessToken)
 	if err != nil {
-		return sessionMap{}, fmt.Errorf("Failed In Getting Me: %w", err)
+		return fmt.Errorf("Failed In Getting Me: %w", err)
 	}
 
 	sessMap["userID"] = user.Id
 	sessMap["userName"] = user.Name
 
-	return sessMap, nil
+	return nil
 }
 
 // GetGenerateCode POST /oauth2/generate/codeの処理部分
-func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, map[interface{}]interface{}, error) {
+func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, error) {
 	pkceParams := &openapi.InlineResponse200{}
 
 	pkceParams.ResponseType = "code"
@@ -83,43 +94,49 @@ func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, map[interface{}]
 
 	pkceParams.CodeChallengeMethod = "S256"
 
-	return pkceParams, sessMap, nil
+	return pkceParams, nil
 }
 
 // PostLogout POST /oauth2/logoutの処理部分
-func (o *OAuth2) PostLogout(sessMap map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+func (o *OAuth2) PostLogout(c echo.Context) error {
+	sess,err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("Failed In Getting Session: %w", err)
+	}
+	sessMap := sess.Values
+
 	interfaceAccessToken,ok := sessMap["accessToken"]
 	if !ok || interfaceAccessToken == nil {
-		return sessionMap{}, errors.New("AccessToken IS NULL")
+		return errors.New("AccessToken IS NULL")
 	}
 	accessToken := interfaceAccessToken.(string)
 
-	path := *o.baseURL
+	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/revoke"
 	form := url.Values{}
 	form.Set("token",accessToken)
 	reqBody := strings.NewReader(form.Encode())
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return sessionMap{}, fmt.Errorf("Failed In Making HTTP Request:%w",err)
+		return fmt.Errorf("Failed In Making HTTP Request:%w",err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return sessionMap{}, fmt.Errorf("Failed In HTTP Request:%w",err)
+		return fmt.Errorf("Failed In HTTP Request:%w",err)
 	}
 	if res.StatusCode != 200 {
-		return sessionMap{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
+		return fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
 
-	sessMap["accessToken"] = nil
-	sessMap["refreshToken"] = nil
-	sessMap["userID"] = nil
-	sessMap["userName"] = nil
+	err = o.session.RevokeSession(c)
+	if err != nil {
+		return fmt.Errorf("Failed In Revoke Session: %w", err)
+	}
 
-	return sessMap, nil
+	return nil
 }
 
 var randSrc = rand.NewSource(time.Now().UnixNano())
@@ -156,7 +173,7 @@ func (o *OAuth2) getAccessToken(code string, codeVerifier string) (*authResponse
 	form.Set("code", code)
 	form.Set("code_verifier", codeVerifier)
 	reqBody := strings.NewReader(form.Encode())
-	path := *o.baseURL
+	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/token"
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {

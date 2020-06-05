@@ -10,19 +10,20 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
-  "errors"
 
 	"github.com/comail/colog"
 	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/srinathgs/mysqlstore"
 
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router"
+	sess "github.com/traPtitech/trap-collection-server/session"
 )
 
 func main() {
@@ -35,18 +36,18 @@ func main() {
 	}
 	defer db.Close()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret-token"))
-	if err != nil {
-		panic(err)
-	}
-
   err = model.Migrate(env)
   if err != nil {
 		panic(err)
 	}
 
+	sess, err := sess.NewSession(db.DB())
+	if err != nil {
+		panic(fmt.Errorf("Failed In Session Constructor: %w", err))
+	}
+
 	e := echo.New()
-	e.Use(session.Middleware(store))
+	e.Use(session.Middleware(sess.Store()))
 	e.Use(middleware.Recover())
 
   if env == "development" || env == "mock" {
@@ -81,7 +82,7 @@ func main() {
     panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	api, err := router.NewAPI(env, clientID, clientSecret)
+	api, err := router.NewAPI(sess, env, clientID, clientSecret)
   if err != nil {
     panic(err)
   }

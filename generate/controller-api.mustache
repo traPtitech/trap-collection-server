@@ -11,15 +11,14 @@ import (
 
 type {{classname}} interface{
   {{#operation}}
-  {{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}} {{#isQueryParam}}string{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}string{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{#isFile}}multipartFile{{/isFile}}{{^isFile}}string{{/isFile}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}string{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}*{{dataType}}{{/isBodyParam}}{{^isBodyParam}}map[interface{}]interface{}{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}}) ({{#isListContainer}}[]*{{returnBaseType}},{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}{{^isResponseFile}}*{{/isResponseFile}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}} map[interface{}]interface{},error)
+  {{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}} string{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}} string{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{#isFile}}{{paramName}} multipartFile{{/isFile}}{{^isFile}}{{paramName}} string{{/isFile}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}} string{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{paramName}} *{{dataType}}{{/isBodyParam}}{{^isBodyParam}}c echo.Context{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}}) ({{#isListContainer}}[]*{{returnBaseType}},{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}{{^isResponseFile}}*{{/isResponseFile}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}{{returnType}},{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}} error)
   {{/operation}}
 }{{#operation}}
 
 // {{baseName}}Handler - {{summary}}
 func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
   return func(c echo.Context) error {
-    var err error
-    var sess *sessionsSession{{#hasQueryParams}}{{#queryParams}}
+    var err error{{#hasQueryParams}}{{#queryParams}}
     {{paramName}} := c.QueryParam("{{paramName}}"){{/queryParams}}{{/hasQueryParams}}{{#hasPathParams}}{{#pathParams}}
     {{paramName}} := c.Param("{{paramName}}"){{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{#isFile}}
     _{{paramName}},err := c.FormFile("{{paramName}}")
@@ -31,12 +30,7 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
       return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Opening File:%w",err).Error())
     }
     defer {{paramName}}.Close(){{/isFile}}{{^isFile}}
-    {{paramName}} := c.FormValue("{{paramName}}"){{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{^isCookieParam}}
-    sess, err = getSession("sessions", c)
-    if err != nil {
-      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-    }
-    sessions := sess.Values{{/isCookieParam}}{{#isCookieParam}}
+    {{paramName}} := c.FormValue("{{paramName}}"){{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{#isCookieParam}}
     cookie{{paramName}}, err := c.Cookie("{{paramName}}")
     if err != nil {
       return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Cookie:%w",err).Error())
@@ -48,25 +42,11 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
       return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Request Body:%w",err).Error())
     }{{/bodyParam}}{{/hasBodyParam}}
     {{#isListContainer}}var res []*{{returnBaseType}}{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}var res {{^isResponseFile}}*{{/isResponseFile}}{{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}var res {{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}}
-    var sessionMap map[interface{}]interface{}
     {
-      {{#returnType}}res, {{/returnType}}sessionMap, err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
+      {{#returnType}}res, {{/returnType}}err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}}{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}}{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{paramName}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}}{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{paramName}}{{/isBodyParam}}{{^isBodyParam}}c{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
       if err != nil {
         return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making Response:%w",err).Error())
       }
-    }
-    if len(sessionMap) != 0 {
-      if sess == nil {
-        sess, err = getSession("sessions", c)
-        if err != nil {
-          return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-        }
-      }
-      for key,value := range sessionMap {
-        sess.Values[key] = value
-      }
-
-      sess.Save(c.Request(), c.Response())
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
     return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}

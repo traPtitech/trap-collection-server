@@ -3,25 +3,27 @@ package router
 import (
 	"fmt"
 
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 )
 
 // Response responseの構造体
 type Response struct {
-	LauncherAuthBase
+	*base.LauncherAuthBase
 	openapi.ResponseApi
 }
 
 // PostResponse POST /responses の処理部分
-func (r *Response) PostResponse(sess sessionMap, response *openapi.NewResponse) (*openapi.NewResponse, sessionMap, error) {
-	productKey, err := r.getProductKey(sess)
+func (r *Response) PostResponse(c echo.Context, response *openapi.NewResponse) (*openapi.NewResponse, error) {
+	productKey, err := r.GetProductKey(c)
 	if err != nil {
-		return &openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Getting ProductKey: %w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Getting ProductKey: %w", err)
 	}
 	response, err = model.InsertResponses(productKey, response)
 	if err != nil {
-		return &openapi.NewResponse{}, sessionMap{}, fmt.Errorf("Failed In Inserting Response: %w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Inserting Response: %w", err)
 	}
-	return response, sessionMap{}, nil
+	return response, nil
 }

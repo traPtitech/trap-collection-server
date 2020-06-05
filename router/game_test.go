@@ -13,7 +13,7 @@ func TestGame(t *testing.T) {
 	}
 	game := NewGame(str)
 
-	_,_,err = game.GetGameFile("test","win")
+	_,err = game.GetGameFile("test","win")
 	if err != nil {
 		t.Fatalf("Failed In Getting Game File: %#v", err)
 	}
