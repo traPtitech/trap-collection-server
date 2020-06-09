@@ -1,11 +1,11 @@
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
-COPY . .
-RUN groovy ./generate/generator.groovy generate \
-      -i ./docs/swagger/openapi.yml \
+COPY --chown=groovy:groovy . /local
+RUN groovy /local/generate/generator.groovy generate \
+      -i /local/docs/swagger/openapi.yml \
       -g CollectionCodegen \
-      -t ./generate \
-      -o .
+      -t /local/generate \
+      -o /local
 
 FROM golang:1.14.2-alpine AS build
 
@@ -15,7 +15,7 @@ WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.* ./
 RUN go mod download
 
-COPY --from=generate /home/groovy/scripts/ ./
+COPY --from=generate /local/ ./
 RUN go build -o main -ldflags "-s -w"
 RUN upx ./main
 

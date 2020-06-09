@@ -6,7 +6,8 @@ traPCollectionのAPI
 For more information, please visit [https://github.com/traPtitech/trap-collection-server](https://github.com/traPtitech/trap-collection-server)
 
 ### Mockの起動
-ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
+ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移し、
+`.env`ファイルに`OS_USERNAME,OS_PASSWORD,OS_TENANT_ID,CLIENT_ID,CLIENT_SECRET`の値を書いた後、
 ```
 $ sh mockgen.sh
 ```
