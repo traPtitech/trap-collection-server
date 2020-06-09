@@ -1,11 +1,12 @@
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
-COPY . .
-RUN groovy ./generate/generator.groovy generate \
-      -i ./docs/swagger/openapi.yml \
-      -g CollectionCodegen \
-      -t ./generate \
-      -o .
+COPY --chown=groovy:groovy . /local
+VOLUME /home/groovy/.groovy/grapes
+RUN groovy /local/generate/generator.groovy generate \
+  -i /local/docs/swagger/openapi.yml \
+  -g CollectionCodegen \
+  -t /local/generate \
+  -o /local
 
 
 FROM golang:1.14.2-alpine AS build
