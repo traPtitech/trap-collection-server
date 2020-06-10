@@ -38,3 +38,4 @@ services:
       MYSQL_ROOT_PASSWORD: pass
     volumes:
       - ../../mysql/init:/docker-entrypoint-initdb.d
+      - ../../mysql/data/mock:/var/lib/mysql
