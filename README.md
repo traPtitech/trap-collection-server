@@ -7,7 +7,12 @@ For more information, please visit [https://github.com/traPtitech/trap-collectio
 
 ### Mockの起動
 ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移し、
-`.env`ファイルに`OS_USERNAME,OS_PASSWORD,OS_TENANT_ID,CLIENT_ID,CLIENT_SECRET`の値を書いた後、
+`.env`ファイルに適当なtraQのClientの`CLIENT_ID,CLIENT_SECRET`の値を
+```
+CLIENT_ID={{traQのClientのClient ID}}
+CLIENT_SECRET={{traQのClientのClient Secret}}
+```
+のように書いた後、
 ```
 $ sh mockgen.sh
 ```
