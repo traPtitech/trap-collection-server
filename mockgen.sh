@@ -6,5 +6,5 @@ sudo docker run -it --rm \
   -i /local/docs/swagger/openapi.yml \
   -g go-server \
   -o /local
-sudo docker-compose -f docker/mock/docker-compose.yml up
+sudo COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f docker/mock/docker-compose.yml up
 sudo docker-compose -f docker/mock/docker-compose.yml down

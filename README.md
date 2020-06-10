@@ -25,6 +25,7 @@ groovyで本家OpenAPI Generatorを使っている関係で実行にそれなり
 ```
 # docker run -it --rm \
     -v $PWD:/local \
+    -v grapes-cache:/home/groovy/.groovy/grapes \
     -w /home/groovy/scripts \
     groovy:3.0.2 \
     groovy /local/generate/generator.groovy generate \

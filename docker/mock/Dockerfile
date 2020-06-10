@@ -1,30 +1,35 @@
+# syntax = docker/dockerfile:1.0-experimental
+
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
-COPY --chown=groovy:groovy . /local
+COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
 VOLUME /home/groovy/.groovy/grapes
-RUN groovy /local/generate/generator.groovy generate \
-  -i /local/docs/swagger/openapi.yml \
+RUN groovy /local/generator.groovy generate \
+  -i /local/openapi.yml \
   -g CollectionCodegen \
-  -t /local/generate \
+  -t /local \
   -o /local
+COPY . /local
+
 
 FROM golang:1.14.2-alpine AS build
 
-RUN apk add --update --no-cache git upx
+RUN --mount=type=cache,target=/var/cache/apk apk add --update git upx
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.* ./
 RUN go mod download
 
 COPY --from=generate /local/ ./
-RUN go build -o main -ldflags "-s -w"
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  go build -o main -ldflags "-s -w"
 RUN upx ./main
 
 
 FROM alpine:3.11.6 AS runtime
 
 ENV DOCKERIZE_VERSION v0.6.1
-RUN apk --update add tzdata && \
+RUN apk add --update tzdata && \
   cp /usr/share/zoneinfo/Asia/Tokyo /Tokyo && \
   apk del tzdata && \
   rm -rf /var/cache/apk/* && \
