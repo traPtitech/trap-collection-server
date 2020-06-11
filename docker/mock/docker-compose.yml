@@ -10,7 +10,7 @@ services:
   collection-mock:
     image: stoplight/prism:3
     volumes: 
-      - ../../docs/swagger/openapi.yml:/tmp
+      - ../../docs/swagger/openapi.yml:/tmp/openapi.yml
     command: mock -h 0.0.0.0 -d /tmp/openapi.yml
     restart: always
   collection-staging:
@@ -21,9 +21,6 @@ services:
     environment:
       COLLECTION_ENV: mock
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
-      OS_USERNAME:
-      OS_PASSWORD:
-      OS_TENANT_ID:
       CLIENT_ID:
       CLIENT_SECRET:
       DB_USERNAME: root

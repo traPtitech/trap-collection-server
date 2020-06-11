@@ -1,6 +1,9 @@
 openapi: 3.0.2
 servers:
-  - url: '/api'
+  - url: https://collection.trap.jp
+    variables:
+      basePath: 
+        default: /api
 info:
   description: "traPCollectionのAPI"
   version: "1.0.0"
@@ -878,7 +881,7 @@ components:
     sessions:
       name: sessions
       in: cookie
-      required: true
+      required: false
       schema:
         type: string
     userID:
@@ -962,32 +965,40 @@ components:
         id:
           description: traQのID（UUID）
           type: string
+          example: mazrean
         name:
           description: traQID（UUIDでない方）
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
     CheckItem:
       type: object
       description: ゲームの更新・破損のチェック用リスト
       properties:
         id:
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         md5:
           type: string
+          example: 58ad520a63a9cc3e088155d79e8f2eec
         type:
           description: ゲームの種類（url,jar,windows,mac）
           type: string
+          example: url
         bodyUpdatedAt:
           description: ゲーム本体の更新日時
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
         imgUpdatedAt:
           description: 画像の更新日時
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
         movieUpdatedAt:
           description: 動画の更新日時
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     NewGameMeta:
       description: 新しいゲームの名前
       type: object
@@ -995,9 +1006,11 @@ components:
         name:
           description: 修正後のゲームの名前
           type: string
+          example: "after_game_name"
         description:
           description: 修正後のゲームの説明文
           type: string
+          example: "before_game_name"
     GameMeta:
       description: ゲーム名とID
       type: object
@@ -1005,18 +1018,20 @@ components:
         id:
           description: 追加されたゲームのUUID
           type: string
+          example: "eb4a287d-15d9-4f12-8fff-bd088b12ba80"
         name:
           description: 追加されたゲームの名前
           type: string
+          example: "Flythm"
         description:
           description: 追加されたゲームの説明
           type: string
-          example:
-            - 弾幕ゲーです。みんなやってね！
+          example: 弾幕ゲーです。みんなやってね！
         createdAt:
           description: ゲームの追加された時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     Game:
       description: ゲーム
       type: object
@@ -1024,13 +1039,16 @@ components:
         id:
           description: ゲームのUUID
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         name:
           description: ゲーム名
           type: string
+          example: "Flythm"
         createdAt:
           description: ゲームの登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
         version:
           description: ゲームの最新バージョン
           $ref: '#/components/schemas/GameVersion'
@@ -1041,11 +1059,11 @@ components:
         name:
           description: 名前
           type: string
+          example: "Flythm"
         description:
           description: バージョンの説明
           type: string
-          example:
-            - ダッシュ機能追加した
+          example: ダッシュ機能追加した
     GameVersion:
       description: ゲームのバージョン
       type: object
@@ -1053,18 +1071,20 @@ components:
         id:
           description: ID
           type: integer
+          example: 0
         name:
           description: 名前
           type: string
+          example: v1.0.0
         description:
           description: バージョンの説明
           type: string
-          example:
-            - ダッシュ機能追加した
+          example: ダッシュ機能追加した
         createdAt:
           description: 登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     GameVersionWithAssets:
       description: アセット入のゲームのバージョン
       type: object
@@ -1072,18 +1092,20 @@ components:
         id:
           description: ID
           type: integer
+          example: 0
         name:
           description: 名前
           type: string
+          example: "Flythm"
         description:
           description: バージョンの説明
           type: string
-          example:
-            - ダッシュ機能追加した
+          example: ダッシュ機能追加した
         createdAt:
           description: 登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     NewGameFile:
       description: 新しいゲームのファイル
       type: object
@@ -1091,6 +1113,7 @@ components:
         type:
           description: ゲームの種類（jar,windows,mac）
           type: string
+          example: jar
         file:
           description: ゲームのファイル
           type: string
@@ -1098,6 +1121,7 @@ components:
     NewGameURL:
       description: 新しいゲームのURL
       type: string
+      example: https://flythm.trap.games/
     GameAsset:
       description: ゲームのファイル・URLの情報
       type: object
@@ -1105,12 +1129,15 @@ components:
         id:
           description: アセットのID
           type: integer
+          example: 0
         type:
           description: ゲームの種類（url,jar,windows,mac）
           type: string
+          example: url
         url:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
+          example: "https://flythm.trap.games/"
     GameFile:
       description: ゲームのファイルの情報
       type: object
@@ -1118,9 +1145,11 @@ components:
         id:
           description: アセットのID
           type: integer
+          example: 1
         type:
           description: ゲームの種類（jar,windows,mac）
           type: string
+          example: jar
     GameURL:
       description: ゲームのURLの情報
       type: object
@@ -1128,12 +1157,15 @@ components:
         id:
           description: アセットのID
           type: integer
+          example: 1
         url:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
+          example: https://flythm.trap.games/
     NewVersion:
       description: 新しいランチャーのバージョンの名前
       type: string
+      example: ko-daisai
     Version:
       description: ランチャーのバージョン
       type: object
@@ -1141,18 +1173,22 @@ components:
         id:
           description: ID
           type: integer
+          example: 1
         name:
           description: 名前
           type: string
+          example: ko-daisai
         games:
           type: array
           items:
             description: 入れるゲームのUUID
             type: string
+            example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         createdAt:
           description: 登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     VersionMeta:
       description: ランチャーのバージョンの簡易的な情報
       type: object
@@ -1160,13 +1196,16 @@ components:
         id:
           description: ID
           type: integer
+          example: 1
         name:
           description: 名前
           type: string
+          example: ko-daisai
         createdAt:
           description: 登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     VersionDetails:
       description: ランチャーのバージョン詳細
       type: object
@@ -1174,14 +1213,17 @@ components:
         id:
           description: ID
           type: integer
+          example: 1
         name:
           description: 名前
           type: string
+          example: Flythm
         games:
           type: array
           items:
             description: 入れるゲームのUUID
             type: string
+            example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         questions:
           type: array
           items:
@@ -1190,6 +1232,7 @@ components:
           description: 登録時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     NewQuestion:
       description: 新しい質問
       type: object
@@ -1197,20 +1240,25 @@ components:
         versionId:
           description: 質問を追加するランチャーのバージョンのID
           type: integer
+          example: 1
         type:
           description: 質問の種類（radio,checkbox,text）
           type: string
+          example: radio
         content:
           description: 質問文
           type: string
+          example: 使っていて不快だった点はありますか？
         options:
           description: 選択肢（種類がtextのときはなし）
           type: array
           items:
             type: string
+            example: "ある"
         required:
           description: 回答が必須かどうか
           type: boolean
+          example: true
     Question:
       type: object
       description: 質問
@@ -1218,12 +1266,15 @@ components:
         id:
           description: 質問のID
           type: integer
+          example: 1
         type:
           description: 質問の種類
           type: string
+          example: radio
         content:
           description: 質問文
           type: string
+          example: 使っていて不快だった点はありますか？
         options:
           description: 選択肢（typeがtextの場合は空）
           type: array
@@ -1232,10 +1283,12 @@ components:
         required:
           description: 回答が必須か
           type: boolean
+          example: true
         createdAt:
           description: 質問の作成時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     QuestionOption:
       type: object
       description: 質問の選択肢
@@ -1243,6 +1296,7 @@ components:
         id:
           description: 選択肢のid
           type: integer
+          example: 1
         label:
           description: 選択肢のラベル
           type: string
@@ -1254,6 +1308,7 @@ components:
         id:
           description: クライアントのUUID
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         answers:
           description: バージョンごとの質問に対する回答
           type: array
@@ -1267,6 +1322,7 @@ components:
         remark:
           description: 自由記述欄
           type: string
+          example: 特に何もありません
     Response:
       description: 回答
       type: object
@@ -1274,6 +1330,7 @@ components:
         id:
           description: クライアントのUUID
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         answers:
           description: バージョンごとの質問に対する回答
           type: array
@@ -1287,10 +1344,12 @@ components:
         remark:
           description: 自由記述欄
           type: string
+          example: 特に何もありません
         createdAt:
           description: 回答時刻
           type: string
           format: date-time
+          example: "2019-09-25T09:51:31Z"
     ResponseCalc:
       type: object
       description: 回答
@@ -1298,6 +1357,7 @@ components:
         id:
           description: クライアントのUUID
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         answer:
           $ref: '#/components/schemas/AnswerCalc'
         game:
@@ -1307,6 +1367,7 @@ components:
           type: array
           items:
             type: string
+            example: 特に何もありません
     Answer:
       type: object
       description: バージョンごとの質問に対する回答
@@ -1314,6 +1375,7 @@ components:
         id:
           description: 質問のID
           type: integer
+          example: 1
         contents:
           description: 回答の配列（チェックボックスの場合のみ複数）
           type: object
@@ -1321,6 +1383,7 @@ components:
             text:
               description: 質問のtypeがtextのとき
               type: string
+              example: 面白かった
             options:
               description: 質問のtypeがtext以外のとき
               type: array
@@ -1344,8 +1407,10 @@ components:
             properties:
                 answer:
                   type: string
+                  example: 面白かった
                 num:
                   type: integer
+                  example: 5
     GameRating:
       type: object
       description: ゲームの評価
@@ -1359,9 +1424,11 @@ components:
           minimum: 1
           type: number
           format: double
+          example: 2.5
         time:
           description: プレイ時間(ms)
           type: integer
+          example: 500000
     GameCalc:
       type: object
       description: ゲームの評価の統計
@@ -1369,6 +1436,7 @@ components:
         id:
           description: ゲームのUUID
           type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
         rate:
           description: 星の数
           type: array
@@ -1377,11 +1445,15 @@ components:
             properties:
               star:
                 type: integer
+                example: 5
               num:
                 type: integer
+                example: 5
         rateAve:
           description: 星の数の平均
           type: integer
+          example: 3
         time:
           description: プレイ時間(ms)の平均
           type: integer
+          example: 500000
