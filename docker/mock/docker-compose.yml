@@ -8,9 +8,10 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
   collection-mock:
-    build:
-      context: ../../mock
-      dockerfile: ./Dockerfile
+    image: stoplight/prism:3
+    volumes: 
+      - ../../docs/swagger/openapi.yml:/tmp
+    command: mock -h 0.0.0.0 -d /tmp/openapi.yml
     restart: always
   collection-staging:
     build:
