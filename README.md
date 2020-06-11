@@ -6,7 +6,13 @@ traPCollectionのAPI
 For more information, please visit [https://github.com/traPtitech/trap-collection-server](https://github.com/traPtitech/trap-collection-server)
 
 ### Mockの起動
-ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
+ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移し、
+`.env`ファイルに適当なtraQのClientの`CLIENT_ID,CLIENT_SECRET`の値を
+```
+CLIENT_ID={{traQのClientのClient ID}}
+CLIENT_SECRET={{traQのClientのClient Secret}}
+```
+のように書いた後、
 ```
 $ sh mockgen.sh
 ```
@@ -19,6 +25,7 @@ groovyで本家OpenAPI Generatorを使っている関係で実行にそれなり
 ```
 # docker run -it --rm \
     -v $PWD:/local \
+    -v grapes-cache:/home/groovy/.groovy/grapes \
     -w /home/groovy/scripts \
     groovy:3.0.2 \
     groovy /local/generate/generator.groovy generate \
