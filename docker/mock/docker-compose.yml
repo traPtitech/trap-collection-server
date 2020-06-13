@@ -8,15 +8,15 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
   collection-mock:
-    image: stoplight/prism:3
-    volumes: 
-      - ../../docs/swagger/openapi.yml:/tmp/openapi.yml
-    command: mock -h 0.0.0.0 -d /tmp/openapi.yml
-    restart: always
-  collection-staging:
     build:
       context: ../../
-      dockerfile: ./docker/mock/Dockerfile
+      dockerfile: ./docker/mock/mock.Dockerfile
+    command: mock -h 0.0.0.0 -d /tmp/openapi.yml
+    restart: always
+  collection-server:
+    build:
+      context: ../../
+      dockerfile: ./docker/mock/server.Dockerfile
     restart: always
     environment:
       COLLECTION_ENV: mock

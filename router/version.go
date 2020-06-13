@@ -29,7 +29,7 @@ func (*Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, s
 }
 
 // GetCheckList GET /versions/checkの処理部分
-func (v *Version) GetCheckList(sess sessionMap, operationgSystem string) ([]openapi.CheckItem, sessionMap, error) {
+func (v *Version) GetCheckList(operationgSystem string, sess sessionMap) ([]openapi.CheckItem, sessionMap, error) {
 	versionID, err := v.getVersionID(sess)
 	if err != nil {
 		return []openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
