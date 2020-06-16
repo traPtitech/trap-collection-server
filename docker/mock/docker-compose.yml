@@ -9,20 +9,18 @@ services:
     restart: always
   collection-mock:
     build:
-      context: ../../mock
-      dockerfile: ./Dockerfile
+      context: ../../
+      dockerfile: ./docker/mock/mock.Dockerfile
+    command: mock -h 0.0.0.0 -d /tmp/openapi.yml
     restart: always
-  collection-staging:
+  collection-server:
     build:
       context: ../../
-      dockerfile: ./docker/mock/Dockerfile
+      dockerfile: ./docker/mock/server.Dockerfile
     restart: always
     environment:
       COLLECTION_ENV: mock
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
-      OS_USERNAME:
-      OS_PASSWORD:
-      OS_TENANT_ID:
       CLIENT_ID:
       CLIENT_SECRET:
       DB_USERNAME: root
