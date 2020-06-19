@@ -1,11 +1,15 @@
+# syntax = docker/dockerfile:1.0-experimental
+
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
-COPY . .
-RUN groovy ./generate/generator.groovy generate \
-      -i ./docs/swagger/openapi.yml \
-      -g CollectionCodegen \
-      -t ./generate \
-      -o .
+COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
+VOLUME /home/groovy/.groovy/grapes
+RUN groovy /local/generator.groovy generate \
+  -i /local/openapi.yml \
+  -g CollectionCodegen \
+  -t /local \
+  -o /local
+COPY . /local
 
 
 FROM golang:1.14.2-alpine AS build
@@ -28,7 +32,8 @@ RUN GO111MODULE=off go get github.com/oxequa/realize && \
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.* ./
 RUN go mod download
-COPY --from=generate /home/groovy/scripts/ ./
-RUN go build -o main
+COPY --from=generate /local/ ./
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  go build -o main -ldflags "-s -w"
 
 ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run

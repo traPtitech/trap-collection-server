@@ -133,7 +133,7 @@ func Migrate(env string) error {
 			},
 		}
 		for _,v := range games {
-			err := db.Create(&v).Error
+			err := db.FirstOrCreate(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %s: %w", v.Name, err)
 			}
@@ -148,7 +148,7 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range versions {
-			err := db.Create(&v).Error
+			err := db.FirstOrCreate(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %s: %w", v.GameID, err)
 			}
@@ -196,7 +196,7 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range assets {
-			err := db.Create(&v).Error
+			err := db.FirstOrCreate(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %d: %w", v.GameVersionID, err)
 			}
@@ -216,7 +216,7 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range introductions {
-			err := db.Create(&v).Error
+			err := db.FirstOrCreate(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %s: %w", v.GameID, err)
 			}

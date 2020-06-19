@@ -20,7 +20,7 @@ WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.* ./
 RUN go mod download
 
-COPY --from=generate /local ./
+COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o main -ldflags "-s -w"
 RUN upx ./main
@@ -28,13 +28,18 @@ RUN upx ./main
 
 FROM alpine:3.11.6 AS runtime
 
-RUN apk --update add tzdata && \
+ENV DOCKERIZE_VERSION v0.6.1
+RUN apk add --update tzdata && \
   cp /usr/share/zoneinfo/Asia/Tokyo /Tokyo && \
   apk del tzdata && \
   rm -rf /var/cache/apk/* && \
   mkdir -p /usr/share/zoneinfo/Asia && \
   mv /Tokyo /usr/share/zoneinfo/Asia
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
+  tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
+  rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/main ./
+COPY ./upload ./upload
 
-ENTRYPOINT ./main
+ENTRYPOINT dockerize -wait tcp://collection-mariadb:3306 ./main
