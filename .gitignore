@@ -4,10 +4,9 @@ main
 mysql/data
 .openapi-generator
 openapi
-router/*_mock.go
-!router/service_mock.go
 mock
 !mysql/init/mock
 !docker/mock
 upload/*
 !upload/.gitkeep
+mock_*.go

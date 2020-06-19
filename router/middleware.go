@@ -15,15 +15,17 @@ import (
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	base.OAuth
+	db model.DBMeta
+	oauth base.OAuth
 	openapi.Middleware
 }
 
-// NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(oauth base.OAuth) *Middleware {
-	middleware := &Middleware{
-		OAuth: oauth,
-	}
+func newMiddleware(db model.DBMeta, oauth base.OAuth) openapi.Middleware {
+	middleware := new(Middleware)
+
+	middleware.db = db
+	middleware.oauth = oauth
+
 	return middleware
 }
 
@@ -64,7 +66,7 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 				return c.String(http.StatusUnauthorized, "No Access Token")
 			}
 			accessToken = interfaceAccessToken.(string)
-			user, err := m.GetMe(accessToken)
+			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -79,7 +81,7 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			return c.String(http.StatusInternalServerError, "No GameID")
 		}
 
-		isMaintainer, err := model.CheckMaintainerID(userID, gameID)
+		isMaintainer, err := m.db.CheckMaintainerID(userID, gameID)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Checking MaintainerID: %w", err).Error())
 		}
@@ -121,7 +123,7 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
 			accessToken = interfaceAccessToken.(string)
-			user, err := m.GetMe(accessToken)
+			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -142,10 +144,10 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 }
 
 // LauncherAuthMiddleware ランチャーの認証用のミドルウェア
-func (*Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		key := c.Request().Header.Get("X-Key")
-		isThere := model.CheckProductKey(key)
+		isThere := m.db.CheckProductKey(key)
 		if !isThere {
 			return c.NoContent(http.StatusUnauthorized)
 		}

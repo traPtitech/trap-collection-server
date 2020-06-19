@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
 )
 
 func TestOAuthBase(t *testing.T) {
@@ -44,12 +47,12 @@ func TestOAuthBase(t *testing.T) {
 	defer apiServer.Close()
 
 	strBaseURL := apiServer.URL
-	authBase, err := NewOAuthBase(strBaseURL)
+	oauth, err := NewOAuth(strBaseURL)
 	if err != nil {
 		t.Fatalf("Failed In NewAuthBase: %#v", err)
 	}
 
-	res, err := authBase.GetMe("")
+	res, err := oauth.GetMe("")
 	if err != nil {
 		t.Fatalf("Failed In getMe: %#v", err)
 	}
@@ -64,35 +67,39 @@ func TestOAuthBase(t *testing.T) {
 }
 
 func TestLauncherAuth(t *testing.T) {
-	launcherAuthBase := new(LauncherAuthBase)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{}"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	launcherAuthBase := NewLauncherAuth()
+
+	resVersionID, err := launcherAuthBase.GetVersionID(c)
+	if err == nil {
+		t.Fatal("VersionID Expected To Be Null,But Error Is Null")
+	}
 
 	var versionID uint = 0
-	var productKey string = "xxxxx-xxxxx-xxxxx-xxxxx-xxxxx"
-	sessMap := map[interface{}]interface{} {
-		"versionID": versionID,
-		"productKey": productKey,
-	}
-	resVersionID, err := launcherAuthBase.GetVersionID(sessMap)
+	resVersionID, err = launcherAuthBase.GetVersionID(c)
 	if err != nil {
 		t.Fatalf("Failed In getVersionID: %#v", err)
 	}
 	if resVersionID != versionID {
 		t.Fatalf("Invalid versionID: %d", resVersionID)
 	}
-	resVersionID, err = launcherAuthBase.GetVersionID(map[interface{}]interface{}{})
+
+	resProductKey, err := launcherAuthBase.GetProductKey(c)
 	if err == nil {
-		t.Fatal("VersionID Expected To Be Null,But Error Is Null")
+		t.Fatal("ProductKey Expected To Be Null, But Error Is Null")
 	}
 
-	resProductKey, err := launcherAuthBase.GetProductKey(sessMap)
+	var productKey string = "xxxxx-xxxxx-xxxxx-xxxxx-xxxxx"
+	resProductKey, err = launcherAuthBase.GetProductKey(c)
 	if err != nil {
 		t.Fatalf("Failed In getProductKey: %#v", err)
 	}
 	if resProductKey != productKey {
 		t.Fatalf("Invalid productKey: %s", resProductKey)
-	}
-	resProductKey, err = launcherAuthBase.GetProductKey(map[interface{}]interface{}{})
-	if err == nil {
-		t.Fatal("ProductKey Expected To Be Null, But Error Is Null")
 	}
 }

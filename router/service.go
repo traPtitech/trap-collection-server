@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
 	"github.com/traPtitech/trap-collection-server/session"
@@ -29,6 +30,8 @@ type Service struct {
 
 // NewAPI Apiのコンストラクタ
 func NewAPI(sess session.Session, env string, clientID string,clientSecret string) (*openapi.Api, error) {
+	db := new(model.DB)
+
 	var str storage.Storage
 	if env == "development" || env == "mock" {
 		localStr, err := storage.NewLocalStorage("./upload")
@@ -43,7 +46,6 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 		}
 		str = swiftStr
 	}
-	game := NewGame(str)
 
 	strBaseURL := "https://q.trap.jp/api/v3"
 	oauth, err := base.NewOAuth(strBaseURL)
@@ -51,13 +53,23 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 		return &openapi.Api{}, fmt.Errorf("Failed In OAuth Constructor: %w", err)
 	}
 
-	oAuth2:= NewOAuth2(sess, oauth, clientID, clientSecret)
-	middleware := NewMiddleware(oauth)
+	launcherAuth := base.NewLauncherAuth()
+
+	middleware := newMiddleware(db, oauth)
+	game := newGame(db, str)
+	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
+	response := newResponse(db, launcherAuth)
+	seat := newSeat(db, launcherAuth)
+	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
 		Middleware: middleware,
 		GameApi: game,
 		Oauth2Api: oAuth2,
+		ResponseApi: response,
+		SeatApi: seat,
+		VersionApi: version,
 	}
+
 	return api, nil
 }

@@ -12,17 +12,27 @@ import (
 
 // Version versionの構造体
 type Version struct {
-	base.LauncherAuth
+	db model.DBMeta
+	launcherAuth base.LauncherAuth
 	openapi.VersionApi
 }
 
+func newVersion(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.VersionApi {
+	version := new(Version)
+
+	version.db = db
+	version.launcherAuth = launcherAuth
+
+	return version
+}
+
 // GetVersion GET /version/:launcherVersionIDの処理部分
-func (*Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
+func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
 	}
-	launcherVersion, err := model.GetLauncherVersionDetailsByID(uint(launcherVersionID))
+	launcherVersion, err := v.db.GetLauncherVersionDetailsByID(uint(launcherVersionID))
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
 	}
@@ -32,11 +42,11 @@ func (*Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, 
 
 // GetCheckList GET /versions/checkの処理部分
 func (v *Version) GetCheckList(c echo.Context, operationgSystem string) ([]*openapi.CheckItem, error) {
-	versionID, err := v.GetVersionID(c)
+	versionID, err := v.launcherAuth.GetVersionID(c)
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
-	checkList, err := model.GetCheckList(versionID, operationgSystem)
+	checkList, err := v.db.GetCheckList(versionID, operationgSystem)
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
 	}
@@ -45,11 +55,11 @@ func (v *Version) GetCheckList(c echo.Context, operationgSystem string) ([]*open
 
 // GetQuestions GET /versions/questionの処理部分
 func (v *Version) GetQuestions(c echo.Context) ([]*openapi.Question, error) {
-	versionID, err := v.GetVersionID(c)
+	versionID, err := v.launcherAuth.GetVersionID(c)
 	if err != nil {
 		return []*openapi.Question{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
-	questions, err := model.GetQuestions(versionID)
+	questions, err := v.db.GetQuestions(versionID)
 	if err != nil {
 		return []*openapi.Question{}, fmt.Errorf("Failed In Getting Questions: %w", err)
 	}

@@ -16,24 +16,25 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
+	sess "github.com/traPtitech/trap-collection-server/session"
 )
 
 // OAuth2 oauthの構造体
 type OAuth2 struct {
-	session base.Session
+	session sess.Session
 	oauth base.OAuth
 	clientID     string
 	clientSecret string
 }
 
-// NewOAuth2 OAuth2のコンストラクタ
-func NewOAuth2(sess base.Session, oauth base.OAuth, clientID string, clientSecret string) *OAuth2 {
+func newOAuth2(sess sess.Session, oauth base.OAuth, clientID string, clientSecret string) *OAuth2 {
 	oAuth2 := &OAuth2{
 		session: sess,
 		oauth: oauth,
 		clientID: clientID,
 		clientSecret: clientSecret,
 	}
+
 	return oAuth2
 }
 
@@ -99,17 +100,7 @@ func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, error) {
 
 // PostLogout POST /oauth2/logoutの処理部分
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	sess,err := session.Get("sessions", c)
-	if err != nil {
-		return fmt.Errorf("Failed In Getting Session: %w", err)
-	}
-	sessMap := sess.Values
-
-	interfaceAccessToken,ok := sessMap["accessToken"]
-	if !ok || interfaceAccessToken == nil {
-		return errors.New("AccessToken IS NULL")
-	}
-	accessToken := interfaceAccessToken.(string)
+	accessToken := c.Get("access_token").(string)
 
 	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/revoke"

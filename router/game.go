@@ -3,6 +3,7 @@ package router
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
@@ -11,21 +12,23 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	storage.Storage
+	db model.DBMeta
+	storage storage.Storage
 	openapi.GameApi
 }
 
-// NewGame Gemeのコンストラクタ
-func NewGame(storage storage.Storage) *Game {
-	game := &Game{
-		Storage: storage,
-	}
+func newGame(db model.DBMeta, storage storage.Storage) openapi.GameApi {
+	game := new(Game)
+
+	game.db = db
+	game.storage = storage
+
 	return game
 }
 
 // GetGame GET /games/:gameID/infoの処理部分
-func (*Game) GetGame(gameID string) (*openapi.Game, error) {
-	game, err := model.GetGameInfo(gameID)
+func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
+	game, err := g.db.GetGameInfo(gameID)
 	if err != nil {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
@@ -33,9 +36,9 @@ func (*Game) GetGame(gameID string) (*openapi.Game, error) {
 }
 
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
-func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, error) {
+func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
-	file, err := g.Open(fileName)
+	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
 	}
@@ -43,7 +46,7 @@ func (g *Game) GetGameFile(gameID string, operatingSystem string) (ioReader, err
 }
 
 // GetImage GET /games/:gameID/imageの処理部分
-func (g *Game) GetImage(gameID string) (ioReader, error) {
+func (g *Game) GetImage(gameID string) (io.Reader, error) {
 	imageFile, err := g.getIntroduction(gameID, "image")
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
@@ -52,7 +55,7 @@ func (g *Game) GetImage(gameID string) (ioReader, error) {
 }
 
 // GetVideo GET /games/:gameID/videoの処理部分
-func (g *Game) GetVideo(gameID string) (ioReader, error) {
+func (g *Game) GetVideo(gameID string) (io.Reader, error) {
 	videoFile, err := g.getIntroduction(gameID, "video")
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
@@ -67,7 +70,7 @@ var typeExtMap map[string]string = map[string]string{
 }
 
 func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
-	fileType, err := model.GetGameType(gameID, operatingSystem)
+	fileType, err := g.db.GetGameType(gameID, operatingSystem)
 	if err != nil {
 		return "", fmt.Errorf("Failed In Getting Game Type: %w", err)
 	}
@@ -80,7 +83,7 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 	return gameID + "_game." + ext, nil
 }
 
-func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {
+func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	var roleMap = map[string]int8 {
 		"image":0,
 		"video":1,
@@ -91,13 +94,13 @@ func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {
 		return nil, errors.New("Invalid Role")
 	}
 
-	ext, err := model.GetExtension(gameID, intRole)
+	ext, err := g.db.GetExtension(gameID, intRole)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Extensions: %w", err)
 	}
 
 	fileName := gameID + "_" + role + "." + ext
-	file, err := g.Open(fileName)
+	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting File: %w", err)
 	}
@@ -106,8 +109,8 @@ func (g *Game) getIntroduction(gameID string, role string) (ioReader, error) {
 }
 
 // GetGameURL GET /games/:gameID/urlの処理部分
-func (*Game) GetGameURL(gameID string) (string, error) {
-	url, err := model.GetURL(gameID)
+func (g *Game) GetGameURL(gameID string) (string, error) {
+	url, err := g.db.GetURL(gameID)
 	if err != nil {
 		return "", fmt.Errorf("Failed In Getting URL: %w", err)
 	}
