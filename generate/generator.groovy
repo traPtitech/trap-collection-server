@@ -35,11 +35,8 @@ class CollectionCodegen extends GoGinServerCodegen {
     apiPackage = packageName;
 
     this.supportingFiles = new ArrayList<SupportingFile>();
-    supportingFiles.add(new SupportingFile("main.mustache", "", "main.go"))
-    writeOptional(outputFolder, new SupportingFile("go.mod", "", "go.mod"))
     supportingFiles.add(new SupportingFile("router.mustache", apiPath, "router.go"))
     supportingFiles.add(new SupportingFile("interfaces.mustache", apiPath, "interfaces.go"))
-    supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"))
   }
 
   @Override

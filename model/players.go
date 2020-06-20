@@ -1,10 +1,25 @@
 package model
+//go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
 	"errors"
 	"fmt"
 	"time"
 )
+
+// Player プレイヤーの履歴の構造体
+type Player struct {
+	ID        uint      `gorm:"type:int(11) unsigned auto_increment;NOT NULL;PRIMARY_KEY;"`
+	ProductKeyID    uint      `gorm:"type:int(11) unsigned;not null;"`
+	StartedAt time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
+	EndedAt   time.Time `gorm:"type:datetime;default:null;"`
+}
+
+// PlayerMeta playerテーブルのリポジトリ
+type PlayerMeta interface {
+	PostPlayer(productKey string) error
+	DeletePlayer(productKey string) error
+}
 
 func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
 	err = db.Where("product_key = ?", productKey).Select("id").Find(&playerID).Error
@@ -15,7 +30,7 @@ func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
 }
 
 // PostPlayer プレイヤーの追加
-func PostPlayer(productKey string) error {
+func (*DB) PostPlayer(productKey string) error {
 	var player Player
 	isNotTherePlayer := db.Where("productKey = ? AND ended_at IS NULL", productKey).First(&player).RecordNotFound()
 	if !isNotTherePlayer {
@@ -36,7 +51,7 @@ func PostPlayer(productKey string) error {
 }
 
 // DeletePlayer プレイヤーを削除
-func DeletePlayer(productKey string) error {
+func (*DB) DeletePlayer(productKey string) error {
 	err := db.Where("productKey = ? AND ended_at IS NULL", productKey).Update("ended_at", time.Now).Error
 	if err != nil {
 		return fmt.Errorf("Failed In Updating EndedAt: %w", err)

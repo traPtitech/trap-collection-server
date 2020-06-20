@@ -10,19 +10,22 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 )
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	*OAuthBase
+	db model.DBMeta
+	oauth base.OAuth
 	openapi.Middleware
 }
 
-// NewMiddleware middlewareのコンストラクタ
-func NewMiddleware(authBase OAuthBase) Middleware {
-	middleware := Middleware{
-		OAuthBase: &authBase,
-	}
+func newMiddleware(db model.DBMeta, oauth base.OAuth) openapi.Middleware {
+	middleware := new(Middleware)
+
+	middleware.db = db
+	middleware.oauth = oauth
+
 	return middleware
 }
 
@@ -33,10 +36,14 @@ func (m *Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.Handle
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
 		}
+
 		accessToken, ok := sess.Values["accessToken"]
 		if !ok || accessToken == nil {
 			return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 		}
+
+		c.Set("accessToken", accessToken)
+
 		return next(c)
 	}
 }
@@ -50,14 +57,16 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 		}
 
 		var userID string
+		var accessToken string
 		interfaceUserID, ok := sess.Values["userID"]
 		if !ok || interfaceUserID == nil {
 			log.Println("error: unexcepted no userID")
-			accessToken, ok := sess.Values["accessToken"]
-			if !ok || accessToken == nil {
+			interfaceAccessToken, ok := sess.Values["accessToken"]
+			if !ok || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, "No Access Token")
 			}
-			user, err := m.getMe(accessToken.(string))
+			accessToken = interfaceAccessToken.(string)
+			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -72,13 +81,16 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			return c.String(http.StatusInternalServerError, "No GameID")
 		}
 
-		isMaintainer, err := model.CheckMaintainerID(userID, gameID)
+		isMaintainer, err := m.db.CheckMaintainerID(userID, gameID)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Checking MaintainerID: %w", err).Error())
 		}
 		if !isMaintainer {
 			return c.String(http.StatusUnauthorized, "You Are Not Maintainer")
 		}
+
+		c.Set("userID", userID)
+		c.Set("accessToken", accessToken)
 
 		return next(c)
 	}
@@ -101,14 +113,17 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		// 暫定的な実装。最終的にはDBにあるAdminと比べ、userIDを使い認証するようにする。
 		admins := []string{"mazrean"}
-		userName, ok := sess.Values["userName"]
-		if !ok || userName == nil {
+		var userName string
+		var accessToken string
+		interfaceUserName, ok := sess.Values["userName"]
+		if !ok || interfaceUserName == nil {
 			log.Printf("error: unexcepted no userName")
-			accessToken, ok := sess.Values["accessToken"]
-			if !ok || accessToken == nil {
+			interfaceAccessToken, ok := sess.Values["accessToken"]
+			if !ok || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
-			user, err := m.getMe(accessToken.(string))
+			accessToken = interfaceAccessToken.(string)
+			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
@@ -121,15 +136,18 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 			}
 		}
 
+		c.Set("userName", userName)
+		c.Set("accessToken", accessToken)
+
 		return c.String(http.StatusUnauthorized, errors.New("You Are Not Admin").Error())
 	}
 }
 
 // LauncherAuthMiddleware ランチャーの認証用のミドルウェア
-func (*Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		key := c.Request().Header.Get("X-Key")
-		isThere := model.CheckProductKey(key)
+		isThere := m.db.CheckProductKey(key)
 		if !isThere {
 			return c.NoContent(http.StatusUnauthorized)
 		}

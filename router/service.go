@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/url"
 	"os"
 
-	"github.com/gorilla/sessions"
+	"github.com/traPtitech/trap-collection-server/model"
+	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
+	"github.com/traPtitech/trap-collection-server/session"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
 
 type ioReader = io.Reader
 type multipartFile = multipart.File
-type sessionsSession = sessions.Session
-type sessionMap = map[interface{}]interface{}
 
 // Service serviceの構造体
 type Service struct {
-	baseURL *url.URL
 	*Middleware
 	*Game
 	*OAuth2
@@ -29,38 +28,48 @@ type Service struct {
 	*Version
 }
 
-// NewService Serviceのコンストラクタ
-func NewService(env string, clientID string,clientSecret string) (Service, error) {
+// NewAPI Apiのコンストラクタ
+func NewAPI(sess session.Session, env string, clientID string,clientSecret string) (*openapi.Api, error) {
+	db := new(model.DB)
+
 	var str storage.Storage
 	if env == "development" || env == "mock" {
 		localStr, err := storage.NewLocalStorage("./upload")
 		if err != nil {
-			return Service{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
+			return &openapi.Api{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
 		}
-		str = &localStr
+		str = localStr
 	} else {
 		swiftStr, err := storage.NewSwiftStorage(os.Getenv("container"))
 		if err != nil {
-			return Service{}, fmt.Errorf("Failed In Swift Storage Constructor: %w", err)
+			return &openapi.Api{}, fmt.Errorf("Failed In Swift Storage Constructor: %w", err)
 		}
-		str = &swiftStr
+		str = swiftStr
 	}
-	game := NewGame(str)
 
 	strBaseURL := "https://q.trap.jp/api/v3"
-	authBase, err := NewOAuthBase(strBaseURL)
+	oauth, err := base.NewOAuth(strBaseURL)
 	if err != nil {
-		return Service{}, fmt.Errorf("Failed In AuthBase Constructor: %w", err)
+		return &openapi.Api{}, fmt.Errorf("Failed In OAuth Constructor: %w", err)
 	}
 
-	oAuth2:= NewOAuth2(authBase, clientID, clientSecret)
-	middleware := NewMiddleware(authBase)
+	launcherAuth := base.NewLauncherAuth()
 
+	middleware := newMiddleware(db, oauth)
+	game := newGame(db, str)
+	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
+	response := newResponse(db, launcherAuth)
+	seat := newSeat(db, launcherAuth)
+	version := newVersion(db, launcherAuth)
 
-	api := Service{
-		Middleware: &middleware,
-		Game: &game,
-		OAuth2: &oAuth2,
+	api := &openapi.Api{
+		Middleware: middleware,
+		GameApi: game,
+		Oauth2Api: oAuth2,
+		ResponseApi: response,
+		SeatApi: seat,
+		VersionApi: version,
 	}
+
 	return api, nil
 }

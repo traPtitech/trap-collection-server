@@ -1,9 +1,9 @@
-## Go API Server for openapi
+## trap-collection-server
 
-traPCollectionのAPI
+traPのゲームランチャーtraP Collectionのサーバーサイドです。
 
-- API version: 1.0.0
-For more information, please visit [https://github.com/traPtitech/trap-collection-server](https://github.com/traPtitech/trap-collection-server)
+### ディレクトリの構成
+OpenAPI Generatorにより、openapiディレクトリ内にルーティング関連の関数（Bodyからパラメーターの取り出しなどを行う）、main.go、が生成されます。
 
 ### Mockの起動
 ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、

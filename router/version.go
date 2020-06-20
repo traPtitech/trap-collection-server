@@ -4,52 +4,64 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 )
 
 // Version versionの構造体
 type Version struct {
-	LauncherAuthBase
+	db model.DBMeta
+	launcherAuth base.LauncherAuth
 	openapi.VersionApi
 }
 
+func newVersion(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.VersionApi {
+	version := new(Version)
+
+	version.db = db
+	version.launcherAuth = launcherAuth
+
+	return version
+}
+
 // GetVersion GET /version/:launcherVersionIDの処理部分
-func (*Version) GetVersion(strLauncherVersion string) (openapi.VersionDetails, sessionMap, error) {
+func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
 	if err != nil {
-		return openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
+		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
 	}
-	launcherVersion, err := model.GetLauncherVersionDetailsByID(uint(launcherVersionID))
+	launcherVersion, err := v.db.GetLauncherVersionDetailsByID(uint(launcherVersionID))
 	if err != nil {
-		return openapi.VersionDetails{}, sessionMap{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
+		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
 	}
 
-	return launcherVersion, sessionMap{}, nil
+	return launcherVersion, nil
 }
 
 // GetCheckList GET /versions/checkの処理部分
-func (v *Version) GetCheckList(operationgSystem string, sess sessionMap) ([]openapi.CheckItem, sessionMap, error) {
-	versionID, err := v.getVersionID(sess)
+func (v *Version) GetCheckList(c echo.Context, operationgSystem string) ([]*openapi.CheckItem, error) {
+	versionID, err := v.launcherAuth.GetVersionID(c)
 	if err != nil {
-		return []openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
+		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
-	checkList, err := model.GetCheckList(versionID, operationgSystem)
+	checkList, err := v.db.GetCheckList(versionID, operationgSystem)
 	if err != nil {
-		return []openapi.CheckItem{}, sessionMap{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
+		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
 	}
-	return checkList, sessionMap{}, nil
+	return checkList, nil
 }
 
 // GetQuestions GET /versions/questionの処理部分
-func (v *Version) GetQuestions(sess sessionMap) ([]openapi.Question, sessionMap, error) {
-	versionID, err := v.getVersionID(sess)
+func (v *Version) GetQuestions(c echo.Context) ([]*openapi.Question, error) {
+	versionID, err := v.launcherAuth.GetVersionID(c)
 	if err != nil {
-		return []openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
+		return []*openapi.Question{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
-	questions, err := model.GetQuestions(versionID)
+	questions, err := v.db.GetQuestions(versionID)
 	if err != nil {
-		return []openapi.Question{}, sessionMap{}, fmt.Errorf("Failed In Getting Questions: %w", err)
+		return []*openapi.Question{}, fmt.Errorf("Failed In Getting Questions: %w", err)
 	}
-	return questions, sessionMap{}, nil
+	return questions, nil
 }

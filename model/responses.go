@@ -1,20 +1,36 @@
 package model
+//go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
+// Response 回答の構造体
+type Response struct {
+	ID                string `gorm:"type:varchar(36);not null;primary_key;"`
+	PlayerID          uint   `gorm:"type:int(11);not null;"`
+	Player            Player
+	Remark            string    `gorm:"type:text;"`
+	CreatedAt         time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
+}
+
+// ResponseMeta responseテーブルのリポジトリ
+type ResponseMeta interface {
+	InsertResponses(productKey string, res *openapi.NewResponse) (*openapi.NewResponse, error)
+}
+
 // InsertResponses 回答の追加
-func InsertResponses(productKey string, res openapi.NewResponse) (openapi.NewResponse, error) {
+func (*DB) InsertResponses(productKey string, res *openapi.NewResponse) (*openapi.NewResponse, error) {
 	playerID, err := getPlayerIDByProductKey(productKey)
 	if err != nil {
-		return openapi.NewResponse{}, fmt.Errorf("Failed In Getting PlayerID:%w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Getting PlayerID:%w", err)
 	}
 	err = db.Transaction(func(tx *gorm.DB) error {
 		response := Response{
@@ -49,7 +65,7 @@ func InsertResponses(productKey string, res openapi.NewResponse) (openapi.NewRes
 				return fmt.Errorf("Failed In Scaning Question Type:%w", err)
 			}
 			answer := answerMap[id]
-			qType, ok := typeMap[questionType]
+			qType, ok := questionTypeIntStrMap[questionType]
 			if !ok {
 				log.Println("error: unexpected invalid question type")
 				return errors.New("Invalid Question Type")
@@ -92,7 +108,7 @@ func InsertResponses(productKey string, res openapi.NewResponse) (openapi.NewRes
 		return nil
 	})
 	if err != nil {
-		return openapi.NewResponse{}, fmt.Errorf("Failed In Transaction: %w", err)
+		return &openapi.NewResponse{}, fmt.Errorf("Failed In Transaction: %w", err)
 	}
 	return res, nil
 }
