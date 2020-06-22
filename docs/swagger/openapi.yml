@@ -1,9 +1,6 @@
 openapi: 3.0.2
 servers:
-  - url: https://collection.trap.jp
-    variables:
-      basePath: 
-        default: /api
+  - url: https://collection.trap.jp/api
 info:
   description: "traPCollectionのAPI"
   version: "1.0.0"
