@@ -81,8 +81,8 @@ func (o *OAuth2) Callback(code string, c echo.Context) error {
 	return nil
 }
 
-// GetGenerateCode POST /oauth2/generate/codeの処理部分
-func (o *OAuth2) GetGenerateCode(c echo.Context) (*openapi.InlineResponse200, error) {sess,err := session.Get("sessions", c)
+// GetGeneratedCode POST /oauth2/generate/codeの処理部分
+func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, error) {sess,err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
 	}

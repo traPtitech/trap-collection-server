@@ -42,7 +42,7 @@ paths:
       tags:
         - oauth2
       summary: OAuthのcode_challengeとかの取得
-      operationId: getGenerateCode
+      operationId: getGeneratedCode
       responses:
         200:
           description: 成功
