@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -113,7 +114,20 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, e
 
 // PostLogout POST /oauth2/logoutの処理部分
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	accessToken := c.Get("access_token").(string)
+	sess,err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("Failed In Getting Session: %w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok || interfaceAccessToken == nil {
+		log.Printf("error: Unexpected No Access Token")
+		return errors.New("No Access Token")
+	}
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		return errors.New("Invalid Access Token")
+	}
 
 	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/revoke"
