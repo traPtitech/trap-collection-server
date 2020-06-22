@@ -30,16 +30,19 @@ type oAuth struct {
 }
 
 func (o *oAuth) BaseURL() *url.URL {
-	return o.baseURL
+	baseURL := *o.baseURL
+	return &baseURL
 }
 
 // GetMe エンドポイントを叩いた人の取得
 func (o *oAuth) GetMe(accessToken string) (*openapi.User, error) {
-	path := *o.baseURL
+	path := o.BaseURL()
 	path.Path += "/users/me"
+
 	req, err := http.NewRequest("GET", path.String(), nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
+
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return &openapi.User{}, err
@@ -47,7 +50,8 @@ func (o *oAuth) GetMe(accessToken string) (*openapi.User, error) {
 	if res.StatusCode != 200 {
 		return &openapi.User{}, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var user *openapi.User
+
+	user := &openapi.User{}
 	err = json.NewDecoder(res.Body).Decode(user)
 	if err != nil {
 		return &openapi.User{}, err

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -50,34 +51,43 @@ func (o *OAuth2) Callback(code string, c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("Failed In Getting Session: %w", err)
 	}
-	sessMap := sess.Values
 
-	interfaceCodeVerifier,ok := sessMap["codeVerifier"]
+	interfaceCodeVerifier,ok := sess.Values["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
 		return errors.New("CodeVerifier IS NULL")
 	}
 	codeVerifier := interfaceCodeVerifier.(string)
+
 	res, err := o.getAccessToken(code, codeVerifier)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting AccessToken:%w", err)
 	}
 
-	sessMap["accessToken"] = res.AccessToken
-	sessMap["refreshToken"] = res.RefreshToken
+	sess.Values["accessToken"] = res.AccessToken
+	sess.Values["refreshToken"] = res.RefreshToken
 
 	user, err := o.oauth.GetMe(res.AccessToken)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting Me: %w", err)
 	}
 
-	sessMap["userID"] = user.Id
-	sessMap["userName"] = user.Name
+	sess.Values["userID"] = user.Id
+	sess.Values["userName"] = user.Name
+
+	err = sess.Save(c.Request(), c.Response())
+	if err != nil {
+		return fmt.Errorf("Failed In Save Session: %w", err)
+	}
 
 	return nil
 }
 
-// GetGenerateCode POST /oauth2/generate/codeの処理部分
-func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, error) {
+// GetGeneratedCode POST /oauth2/generate/codeの処理部分
+func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, error) {sess,err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
+	}
+
 	pkceParams := &openapi.InlineResponse200{}
 
 	pkceParams.ResponseType = "code"
@@ -90,17 +100,34 @@ func (o *OAuth2) GetGenerateCode() (*openapi.InlineResponse200, error) {
 	codeChallenge := base64url.Encode(bytesCodeChallenge[:])
 	pkceParams.CodeChallenge = codeChallenge
 
-	sessMap := make(map[interface{}]interface{})
-	sessMap["codeVerifier"] = codeVerifier
+	sess.Values["codeVerifier"] = codeVerifier
 
 	pkceParams.CodeChallengeMethod = "S256"
+
+	err = sess.Save(c.Request(), c.Response())
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Save Session: %w", err)
+	}
 
 	return pkceParams, nil
 }
 
 // PostLogout POST /oauth2/logoutの処理部分
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	accessToken := c.Get("access_token").(string)
+	sess,err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("Failed In Getting Session: %w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok || interfaceAccessToken == nil {
+		log.Printf("error: Unexpected No Access Token")
+		return errors.New("No Access Token")
+	}
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		return errors.New("Invalid Access Token")
+	}
 
 	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/revoke"
@@ -180,10 +207,11 @@ func (o *OAuth2) getAccessToken(code string, codeVerifier string) (*authResponse
 	if res.StatusCode != 200 {
 		return &authResponse{}, fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
 	}
-	var authRes *authResponse
+
+	authRes := &authResponse{}
 	err = json.NewDecoder(res.Body).Decode(authRes)
 	if err != nil {
-		return &authResponse{}, err
+		return &authResponse{}, fmt.Errorf("Failed In Parsing Json: %w", err)
 	}
 	return authRes, nil
 }

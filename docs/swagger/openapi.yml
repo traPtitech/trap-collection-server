@@ -33,11 +33,13 @@ paths:
         302:
           description: 失敗時。認証ページへリダイレクト
   /oauth2/generate/code:
+    parameters:
+      - $ref: '#/components/parameters/sessions'
     get:
       tags:
         - oauth2
       summary: OAuthのcode_challengeとかの取得
-      operationId: getGenerateCode
+      operationId: getGeneratedCode
       responses:
         200:
           description: 成功

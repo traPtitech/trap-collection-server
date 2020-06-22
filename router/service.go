@@ -66,8 +66,10 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 		Middleware: middleware,
 		GameApi: game,
 		Oauth2Api: oAuth2,
+		QuestionApi: new(Question),
 		ResponseApi: response,
 		SeatApi: seat,
+		UserApi: new(User),
 		VersionApi: version,
 	}
 

@@ -26,7 +26,7 @@ func newResponse(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.Respon
 }
 
 // PostResponse POST /responses の処理部分
-func (r *Response) PostResponse(c echo.Context, response *openapi.NewResponse) (*openapi.NewResponse, error) {
+func (r *Response) PostResponse(response *openapi.NewResponse, c echo.Context) (*openapi.NewResponse, error) {
 	productKey, err := r.launcherAuth.GetProductKey(c)
 	if err != nil {
 		return &openapi.NewResponse{}, fmt.Errorf("Failed In Getting ProductKey: %w", err)
