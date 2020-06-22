@@ -36,6 +36,8 @@ paths:
         302:
           description: 失敗時。認証ページへリダイレクト
   /oauth2/generate/code:
+    parameters:
+      - $ref: '#/components/parameters/sessions'
     get:
       tags:
         - oauth2

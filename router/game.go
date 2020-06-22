@@ -17,7 +17,7 @@ type Game struct {
 	openapi.GameApi
 }
 
-func newGame(db model.DBMeta, storage storage.Storage) openapi.GameApi {
+func newGame(db model.DBMeta, storage storage.Storage) *Game {
 	game := new(Game)
 
 	game.db = db

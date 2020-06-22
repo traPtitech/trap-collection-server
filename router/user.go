@@ -20,22 +20,20 @@ func (*User) GetMe(c echo.Context) (*openapi.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
 	}
-	sessMap := sess.Values
 
-	userID, ok := sessMap["userID"]
+	userID, ok := sess.Values["userID"]
 	if !ok || userID == nil {
-		return &openapi.User{}, errors.New("userID IS NULL")
+		return nil, errors.New("userID IS NULL")
 	}
 
-	userName, ok := sessMap["userName"]
+	userName, ok := sess.Values["userName"]
 	if !ok || userName == nil {
-		return &openapi.User{}, errors.New("userName IS NULL")
+		return nil, errors.New("userName IS NULL")
 	}
 
-	user := &openapi.User{
-		Id: userID.(string),
-		Name:   userName.(string),
-	}
+	user := new(openapi.User)
+	user.Id = userID.(string)
+	user.Name = userName.(string)
 
 	return user, nil
 }

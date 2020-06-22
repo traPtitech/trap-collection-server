@@ -30,7 +30,7 @@ RUN GO111MODULE=off go get github.com/oxequa/realize && \
   go get github.com/oxequa/realize
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
-COPY go.* ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
