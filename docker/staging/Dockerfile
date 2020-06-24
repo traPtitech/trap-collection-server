@@ -22,7 +22,7 @@ RUN go mod download
 
 COPY --from=generate /local ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  go build -o main -ldflags "-s -w"
+  go build -o main -ldflags "-s -w" -tags main
 RUN upx ./main
 
 

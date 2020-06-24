@@ -34,6 +34,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  go build -o main -ldflags "-s -w"
+  go build -o main -ldflags "-s -w" -tags main
 
 ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run
