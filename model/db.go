@@ -64,7 +64,7 @@ type DBMock struct {
 }
 
 // NewDBMock DBのMockのコンストラクタ
-func NewDBMock(ctrl *gomock.Controller) DBMeta {
+func NewDBMock(ctrl *gomock.Controller) *DBMock {
 	dbMock := new(DBMock)
 
 	dbMock.MockGameIntroductionMeta = NewMockGameIntroductionMeta(ctrl)
