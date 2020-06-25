@@ -7,10 +7,16 @@ OpenAPI Generatorにより、openapiディレクトリ内にルーティング�
 
 ### Mockの起動
 ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
+`.env`ファイルに
 ```
-$ sh mockgen.sh
+CLIENT_ID={{traQのClientのClientID}}
+CLIENT_SECRET={{traQのClientのClientSecret}}
 ```
-で動きます。
+のように書き、
+```
+$ sudo COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f docker/mock/docker-compose.yml up
+```
+をすると動きます。
 
 ### コードの生成
 最初にする必要があります。
