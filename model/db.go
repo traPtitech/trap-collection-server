@@ -5,7 +5,6 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	gomock "github.com/golang/mock/gomock"
 	"github.com/jinzhu/gorm"
 )
 
@@ -48,38 +47,6 @@ type DBMeta interface {
 
 // DB DB関連の構造体
 type DB struct {}
-
-// DBMock DB関連の構造体のMock
-type DBMock struct {
-	*MockGameIntroductionMeta
-	*MockGameVersionRelationMeta
-	*MockGameVersionMeta
-	*MockGameMeta
-	*MockLauncherVersionMeta
-	*MockMaintainerMeta
-	*MockPlayerMeta
-	*MockProductKeyMeta
-	*MockQuestionMeta
-	*MockResponseMeta
-}
-
-// NewDBMock DBのMockのコンストラクタ
-func NewDBMock(ctrl *gomock.Controller) DBMeta {
-	dbMock := new(DBMock)
-
-	dbMock.MockGameIntroductionMeta = NewMockGameIntroductionMeta(ctrl)
-	dbMock.MockGameVersionRelationMeta = NewMockGameVersionRelationMeta(ctrl)
-	dbMock.MockGameVersionMeta = NewMockGameVersionMeta(ctrl)
-	dbMock.MockGameMeta = NewMockGameMeta(ctrl)
-	dbMock.MockLauncherVersionMeta = NewMockLauncherVersionMeta(ctrl)
-	dbMock.MockMaintainerMeta = NewMockMaintainerMeta(ctrl)
-	dbMock.MockPlayerMeta = NewMockPlayerMeta(ctrl)
-	dbMock.MockProductKeyMeta = NewMockProductKeyMeta(ctrl)
-	dbMock.MockQuestionMeta = NewMockQuestionMeta(ctrl)
-	dbMock.MockResponseMeta = NewMockResponseMeta(ctrl)
-
-	return dbMock
-}
 
 //EstablishDB データベースに接続
 func EstablishDB() (*gorm.DB, error) {

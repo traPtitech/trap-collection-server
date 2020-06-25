@@ -17,12 +17,12 @@ FROM golang:1.14.2-alpine AS build
 RUN --mount=type=cache,target=/var/cache/apk apk add --update git upx
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
-COPY go.* ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY --from=generate /local ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  go build -o main -ldflags "-s -w"
+  go build -o main -ldflags "-s -w" -tags main
 RUN upx ./main
 
 
