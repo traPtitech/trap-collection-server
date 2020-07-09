@@ -5,6 +5,19 @@ traPのゲームランチャーtraP Collectionのサーバーサイドです。
 ### ディレクトリの構成
 OpenAPI Generatorにより、openapiディレクトリ内にルーティング関連の関数（Bodyからパラメーターの取り出しなどを行う）、main.go、が生成されます。
 
+### 開発環境の起動
+ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
+`.env`ファイルに
+```
+CLIENT_ID={{traQのClientのClientID}}
+CLIENT_SECRET={{traQのClientのClientSecret}}
+```
+のように書き、
+```
+$ sudo COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f docker/dev/docker-compose.yml up
+```
+をすると動きます。
+
 ### Mockの起動
 ドライブの[traP Collectionのフォルダ](https://drive.trap.jp/f/399071)にある`collection-mock`内のデータを`upload`ディレクトリへ移したあと、
 `.env`ファイルに
