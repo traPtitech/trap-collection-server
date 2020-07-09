@@ -318,26 +318,6 @@ paths:
                 format: binary
         500:
           description: 失敗
-  /games/maintainers:
-    get:
-      tags:
-        - game
-      summary: 自分がバージョン更新権限保持者のゲームの取得
-      security: 
-        - TrapMemberAuth:
-          - read
-      operationId: getMyGames
-      responses:
-        200:
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Game'
-        500:
-          description: 失敗
   /games/maintainers/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameID'
