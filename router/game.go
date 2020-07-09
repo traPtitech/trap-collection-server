@@ -4,9 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
 
@@ -14,16 +18,50 @@ import (
 type Game struct {
 	db model.DBMeta
 	storage storage.Storage
+	oauth base.OAuth
 	openapi.GameApi
 }
 
-func newGame(db model.DBMeta, storage storage.Storage) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 	game := new(Game)
 
 	game.db = db
 	game.storage = storage
+	game.oauth = oauth
 
 	return game
+}
+
+//PostGame POST /gamesの処理部分
+func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("unexpected getting access token error")
+		return nil, errors.New("Failed In Getting Access Token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("unexpected parsing access token error")
+		return nil, errors.New("Failed In Parsing Access Token")
+	}
+
+	user, err := g.oauth.GetMe(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("GetMe Error: %w", err)
+	}
+
+	gameMeta, err := g.db.PostGame(user.Id, game.Name, game.Description)
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Adding Game: %w", err)
+	}
+
+	return gameMeta, nil
 }
 
 // GetGame GET /games/:gameID/infoの処理部分

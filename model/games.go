@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -6,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -21,7 +24,58 @@ type Game struct {
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
+	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
 	GetGameInfo(gameID string) (*openapi.Game, error)
+}
+
+// PostGame ゲームの追加
+func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameMeta, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, fmt.Errorf("Generate UUID Error: %w", err)
+	}
+
+	game := &Game{
+		ID: id.String(),
+		Name: gameName,
+		Description: gameDescription,
+	}
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&game).Error
+		if err != nil {
+			return fmt.Errorf("Failed In Creating Game: %w", err)
+		}
+
+		err = tx.Last(&game).Error
+		if err != nil {
+			return fmt.Errorf("Failed In Getting Added Game: %w", err)
+		}
+
+		maintainer := Maintainer{
+			GameID: game.ID,
+			UserID: userID,
+			Role: 1,
+		}
+		err = tx.Create(&maintainer).Error
+		if err != nil {
+			return fmt.Errorf("Failed In Creating Maintainer: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Trasaction Error: %w", err)
+	}
+
+	gameMeta := &openapi.GameMeta{
+		Id: game.ID,
+		Name: game.Name,
+		Description: game.Description,
+		CreatedAt: game.CreatedAt,
+	}
+
+	return gameMeta, nil
 }
 
 // GetGameInfo ゲーム情報の取得

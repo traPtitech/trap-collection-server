@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -12,9 +13,8 @@ type Maintainer struct {
 	ID        uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
 	Game      Game
-	UserID    string    `gorm:"type:varchar(32);NOT NULL;"`
+	UserID    string    `gorm:"type:varchar(36);NOT NULL;"`
 	Role      uint8     `gorm:"type:tinyint;NOT NULL;DEFAULT:0;"`
-	MimeType  string    `gorm:"type:text;NOT NULL;"`
 	CreatedAt time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
 	DeletedAt time.Time `gorm:"type:datetime;DEFAULT:NULL;"`
 }

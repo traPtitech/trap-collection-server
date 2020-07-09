@@ -56,7 +56,7 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 	launcherAuth := base.NewLauncherAuth()
 
 	middleware := newMiddleware(db, oauth)
-	game := newGame(db, str)
+	game := newGame(db, oauth, str)
 	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
 	response := newResponse(db, launcherAuth)
 	seat := newSeat(db, launcherAuth)
