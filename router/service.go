@@ -60,6 +60,7 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
 	response := newResponse(db, launcherAuth)
 	seat := newSeat(db, launcherAuth)
+	user := newUser(oauth)
 	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
@@ -69,7 +70,7 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 		QuestionApi: new(Question),
 		ResponseApi: response,
 		SeatApi: seat,
-		UserApi: new(User),
+		UserApi: user,
 		VersionApi: version,
 	}
 
