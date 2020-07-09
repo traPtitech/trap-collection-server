@@ -1153,8 +1153,12 @@ components:
           example: https://flythm.trap.games/
     NewVersion:
       description: 新しいランチャーのバージョンの名前
-      type: string
-      example: ko-daisai
+      type: object
+      properties:
+        name:
+          description: バージョンの名前
+          type: string
+          example: ko-daisai
     Version:
       description: ランチャーのバージョン
       type: object
