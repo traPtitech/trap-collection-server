@@ -29,7 +29,7 @@ func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
 func (s *Seat)PostSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)
 	if err != nil {
-		return fmt.Errorf("Failed In Getting ProductKey")
+		return fmt.Errorf("Failed In Getting ProductKey: %w", err)
 	}
 
 	err = s.db.PostPlayer(productKey)
@@ -49,7 +49,7 @@ func (s *Seat)DeleteSeat(c echo.Context) error {
 
 	err = s.db.DeletePlayer(productKey)
 	if err != nil {
-		return fmt.Errorf("Failed In Inserting Player: %w", err)
+		return fmt.Errorf("Failed In Deleting Player: %w", err)
 	}
 
 	return nil
