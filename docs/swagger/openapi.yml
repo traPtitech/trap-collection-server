@@ -318,7 +318,7 @@ paths:
                 format: binary
         500:
           description: 失敗
-  /games/maintainers/{gameID}:
+  /games/{gameID}/maintainers:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -372,7 +372,7 @@ paths:
                       type: integer
         500:
           description: 失敗
-  /games/version/{gameID}:
+  /games/{gameID}/version:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
