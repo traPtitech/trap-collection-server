@@ -50,7 +50,6 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
     return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}
-    sc := scanner(res).Bytes()
-    return c.Blob(http.StatusOK, {{#produces.0}}"{{mediaType}}"{{/produces.0}}, sc){{/isResponseFile}}
+    return c.Stream(http.StatusOK, {{#produces.0}}"{{mediaType}}"{{/produces.0}}, res){{/isResponseFile}}
   }
 }{{/operation}}{{/operations}}

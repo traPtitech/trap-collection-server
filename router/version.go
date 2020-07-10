@@ -32,6 +32,7 @@ func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
 	}
+
 	launcherVersion, err := v.db.GetLauncherVersionDetailsByID(uint(launcherVersionID))
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
@@ -46,10 +47,12 @@ func (v *Version) GetCheckList(operationgSystem string, c echo.Context) ([]*open
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
+
 	checkList, err := v.db.GetCheckList(versionID, operationgSystem)
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
 	}
+
 	return checkList, nil
 }
 
@@ -59,9 +62,11 @@ func (v *Version) GetQuestions(c echo.Context) ([]*openapi.Question, error) {
 	if err != nil {
 		return []*openapi.Question{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
+
 	questions, err := v.db.GetQuestions(versionID)
 	if err != nil {
 		return []*openapi.Question{}, fmt.Errorf("Failed In Getting Questions: %w", err)
 	}
+
 	return questions, nil
 }

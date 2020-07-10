@@ -32,29 +32,44 @@ func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
 // PostPlayer プレイヤーの追加
 func (*DB) PostPlayer(productKey string) error {
 	var player Player
-	isNotTherePlayer := db.Where("productKey = ? AND ended_at IS NULL", productKey).First(&player).RecordNotFound()
+	isNotTherePlayer := db.Where("product_key_id = ? AND ended_at IS NULL", productKey).
+		First(&player).
+		RecordNotFound()
 	if !isNotTherePlayer {
 		return errors.New("Last Player Is Not End")
 	}
+
 	productKeyID,err := getKeyIDByKey(productKey)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting KeyID: %w", err)
 	}
+
 	player = Player{
 		ProductKeyID: productKeyID,
 	}
-	err = db.Create(player).Error
+
+	err = db.Create(&player).Error
 	if err != nil {
 		return fmt.Errorf("Failed In Creating Player: %w", err)
 	}
+
 	return nil
 }
 
 // DeletePlayer プレイヤーを削除
 func (*DB) DeletePlayer(productKey string) error {
-	err := db.Where("productKey = ? AND ended_at IS NULL", productKey).Update("ended_at", time.Now).Error
+	productKeyID,err := getKeyIDByKey(productKey)
+	if err != nil {
+		return fmt.Errorf("Failed In Getting KeyID: %w", err)
+	}
+
+	err = db.Table("players").
+		Where("product_key_id = ? AND ended_at IS NULL", productKeyID).
+		Update("ended_at", time.Now()).
+		Error
 	if err != nil {
 		return fmt.Errorf("Failed In Updating EndedAt: %w", err)
 	}
+
 	return nil
 }

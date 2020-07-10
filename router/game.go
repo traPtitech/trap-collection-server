@@ -42,6 +42,7 @@ func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, er
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
 	}
+
 	return file, nil
 }
 

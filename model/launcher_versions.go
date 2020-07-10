@@ -26,6 +26,8 @@ type LauncherVersionMeta interface {
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
 func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error) {
+	versionDetails = &openapi.VersionDetails{}
+
 	rows, err := db.Table("launcher_versions").
 		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,game_version_relations.game_id").
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
