@@ -20,7 +20,6 @@ func TestGame(t *testing.T) {
 
 	db := model.NewDBMock(ctrl)
 	str:= storage.NewMockStorage(ctrl)
-
 	oauth := base.NewMockOAuth(ctrl)
 
 	gameID := "72c0c88c-27fd-4b58-b08e-e3307d2c17df"

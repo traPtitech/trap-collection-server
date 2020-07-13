@@ -145,6 +145,14 @@ paths:
       tags:
         - game
       summary: ゲーム一覧の取得
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+        - name: all
+          description: trueですべてのゲーム、そうでないとき自分がadminまたはmaintainerのゲーム
+          in: query
+          required: false
+          schema:
+            type: boolean
       security: 
         - TrapMemberAuth:
           - read
