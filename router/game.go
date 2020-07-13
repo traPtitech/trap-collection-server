@@ -42,7 +42,7 @@ func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.Gam
 	interfaceAccessToken, ok := sess.Values["accessToken"]
 	if !ok {
 		log.Println("error: unexpected getting access token error")
-		return nil, errors.New("Failed In Getting Access Token")
+		return nil, errors.New("unexpected error occcured while getting access token")
 	}
 
 	accessToken, ok := interfaceAccessToken.(string)
