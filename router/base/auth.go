@@ -1,4 +1,5 @@
 package base
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -12,6 +13,7 @@ import (
 type OAuth interface {
 	BaseURL() *url.URL
 	GetMe(accessToken string) (user *openapi.User, err error)
+	GetUsers(accessToken string) (user []*openapi.User, err error)
 }
 
 // LauncherAuth ランチャーの認証の基本部分の構造体

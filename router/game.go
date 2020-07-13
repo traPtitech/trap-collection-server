@@ -33,6 +33,38 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 	return game
 }
 
+//PostGame POST /gamesの処理部分
+func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("error: unexpected getting access token error")
+		return nil, errors.New("unexpected error occcured while getting access token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("error: unexpected parsing access token error")
+		return nil, errors.New("failed to parse access token")
+	}
+
+	user, err := g.oauth.GetMe(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetMe: %w", err)
+	}
+
+	gameMeta, err := g.db.PostGame(user.Id, game.Name, game.Description)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add game: %w", err)
+	}
+
+	return gameMeta, nil
+}
+
 // GetGame GET /games/:gameID/infoの処理部分
 func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	game, err := g.db.GetGameInfo(gameID)

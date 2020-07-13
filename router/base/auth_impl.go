@@ -59,6 +59,31 @@ func (o *oAuth) GetMe(accessToken string) (*openapi.User, error) {
 	return user, nil
 }
 
+// GetUsers traQのユーザー一覧の取得
+func (o *oAuth) GetUsers(accessToken string) ([]*openapi.User, error) {
+	path := o.BaseURL()
+	path.Path += "/users"
+
+	req, err := http.NewRequest("GET", path.String(), nil)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	httpClient := http.DefaultClient
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("HTTP request failed:(Status:%d %s)", res.StatusCode, res.Status)
+	}
+
+	var users []*openapi.User
+	err = json.NewDecoder(res.Body).Decode(&users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 // NewLauncherAuth LauncherAuthのコンストラクタ
 func NewLauncherAuth() LauncherAuth {
 	newLauncherAuth := new(launcherAuth)
