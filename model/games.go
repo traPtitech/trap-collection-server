@@ -59,7 +59,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 		}
 		err = tx.Create(&maintainer).Error
 		if err != nil {
-			return fmt.Errorf("Failed In Creating Maintainer: %w", err)
+			return fmt.Errorf("failed to INSERT maintainer record: %w", err)
 		}
 
 		return nil
