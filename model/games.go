@@ -44,7 +44,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 	err = db.Transaction(func(tx *gorm.DB) error {
 		err := tx.Create(&game).Error
 		if err != nil {
-			return fmt.Errorf("Failed In Creating Game: %w", err)
+			return fmt.Errorf("failed to INSERT game record: %w", err)
 		}
 
 		err = tx.Last(&game).Error
