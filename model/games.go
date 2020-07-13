@@ -1,7 +1,9 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -21,7 +23,59 @@ type Game struct {
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
+	GetGames(userID ...string) ([]*openapi.Game, error)
 	GetGameInfo(gameID string) (*openapi.Game, error)
+}
+
+// GetGames ゲーム一覧の取得
+func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
+	sub := db.Table("games AS gs").
+		Select("gvs.id").
+		Joins("LEFT OUTER JOIN game_versions AS gvs ON gs.id = gvs.game_id").
+		Where("gs.id = g.id").
+		Order("gvs.created_at DESC").
+		Limit(1).
+		SubQuery()
+	db := db.Table("games AS g").
+		Select("g.id, g.name, g.created_at, gv.id, gv.name, gv.description, gv.created_at").
+		Joins("LEFT OUTER JOIN game_versions AS gv ON g.id = gv.game_id")
+
+	var rows *sql.Rows
+	var err error
+	if len(userID) != 0 {
+		rows, err = db.Joins("INNER JOIN maintainers ON g.id = maintainers.game_id").
+			Where("(gv.id = ? OR gv.id IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
+			Rows()
+	} else {
+		rows, err = db.Where("gv.id = ?", sub).Rows()
+	}
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Games: %w", err)
+	}
+
+	var games []*openapi.Game
+	for rows.Next() {
+		game := &openapi.Game{}
+		var id sql.NullInt32
+		var name sql.NullString
+		var description sql.NullString
+		var createdAt sql.NullTime
+		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &id, &name, &description, &createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("Failed In Scanning Game: %w", err)
+		}
+		if id.Valid && name.Valid && description.Valid && createdAt.Valid {
+			game.Version = &openapi.GameVersion{
+				Id: id.Int32,
+				Name: name.String,
+				Description: description.String,
+				CreatedAt: createdAt.Time,
+			}
+		}
+		games = append(games, game)
+	}
+
+	return games, nil
 }
 
 // GetGameInfo ゲーム情報の取得
