@@ -86,16 +86,10 @@ func (*launcherAuth) GetVersionID(c echo.Context) (uint, error) {
 
 // GetProductKey プロダクトキーの取得
 func (*launcherAuth) GetProductKey(c echo.Context) (string, error) {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return "", fmt.Errorf("Failed In Getting Session: %w", err)
+	productKey := c.Request().Header.Get("X-Key")
+	if len(productKey) == 0 {
+		return "", errors.New("No Product Key")
 	}
 
-	interfaceProductKey, ok := sess.Values["productKey"]
-	if !ok || interfaceProductKey == nil {
-		log.Println("error: unexpected no productKey")
-		return "", errors.New("No ProductKey")
-	}
-	productKey := interfaceProductKey.(string)
 	return productKey, nil
 }

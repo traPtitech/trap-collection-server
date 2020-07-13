@@ -31,17 +31,17 @@ func (*DB) GetGameType(gameID string, operatingSystem string) (string, error) {
 		return "", errors.New("Invalid OS Error")
 	}
 
-	var intType uint8
+	var intTypes []uint8
 	err := db.Table("game_versions").
 		Select("type").
 		Joins("INNER JOIN game_assets ON game_versions.id = game_assets.game_version_id").
 		Where("game_versions.game_id = ? AND game_assets.type IN (1,?)", gameID, intOs).
 		Order("game_versions.created_at").
-		First(&intType).Error
+		Pluck("type", &intTypes).Error
 	if err != nil {
 		return "",fmt.Errorf("Failed In Getting Type: %w", err)
 	}
-	strType, ok := gameTypeIntStrMap[intType]
+	strType, ok := gameTypeIntStrMap[intTypes[0]]
 	if !ok {
 		log.Println("error: Unexpected Invalid Game Type")
 		return "", errors.New("Invalid Game Type")

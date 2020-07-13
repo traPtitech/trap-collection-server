@@ -4,7 +4,6 @@ package {{packageName}}
 import (
   "io"
   "mime/multipart"
-  "bufio"
 
   echo "github.com/labstack/echo/v4"
   "github.com/labstack/echo-contrib/session"
@@ -14,7 +13,6 @@ import (
 type ioReader = io.Reader
 type multipartFile = multipart.File
 type sessionsSession = sessions.Session
-var scanner = bufio.NewScanner
 var getSession = session.Get
 
 // Api Apiのインターフェイス

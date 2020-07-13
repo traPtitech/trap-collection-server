@@ -13,7 +13,7 @@ type ProductKey struct {
 
 // ProductKeyMeta product_keyテーブルのリポジトリ
 type ProductKeyMeta interface {
-	CheckProductKey(key string) bool
+	CheckProductKey(key string) (bool, uint)
 }
 
 func getKeyIDByKey(key string) (uint, error) {
@@ -26,8 +26,8 @@ func getKeyIDByKey(key string) (uint, error) {
 }
 
 // CheckProductKey プロダクトキーが正しいか確認
-func (*DB) CheckProductKey(key string) bool {
+func (*DB) CheckProductKey(key string) (bool, uint) {
 	productKey := ProductKey{}
 	isNotThere := db.Where("`key` = ?", key).First(&productKey).RecordNotFound()
-	return !isNotThere
+	return !isNotThere, productKey.LauncherVersionID
 }

@@ -146,11 +146,37 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 // LauncherAuthMiddleware ランチャーの認証用のミドルウェア
 func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		sess, err := session.Get("sessions", c)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+		}
+
+		interfaceProductKey := sess.Values["productKey"]
+		if interfaceProductKey != nil {
+			productKey, ok := interfaceProductKey.(string)
+			if ok {
+				isThere, versionID := m.db.CheckProductKey(productKey)
+				if isThere {
+					log.Printf("debug: %d", versionID)
+					sess.Values["versionID"] = versionID
+					sess.Save(c.Request(), c.Response())
+
+					return next(c)
+				}
+			}
+		}
+
 		key := c.Request().Header.Get("X-Key")
-		isThere := m.db.CheckProductKey(key)
+		isThere, versionID := m.db.CheckProductKey(key)
 		if !isThere {
 			return c.NoContent(http.StatusUnauthorized)
 		}
+		log.Printf("debug: %d", versionID)
+
+		sess.Values["productKey"] = key
+		sess.Values["version_id"] = versionID
+		sess.Save(c.Request(), c.Response())
+
 		return next(c)
 	}
 }

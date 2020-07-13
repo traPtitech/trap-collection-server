@@ -66,7 +66,7 @@ func Migrate(env string) error {
 		return fmt.Errorf("Failed In Migration:%w", err)
 	}
 
-	if env == "mock" {
+	if env == "mock" || env == "development" {
 		games := []Game{
 			{
 				ID: "72c0c88c-27fd-4b58-b08e-e3307d2c17df",
@@ -115,7 +115,7 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range versions {
-			err := db.FirstOrCreate(&v).Error
+			err := db.Create(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %s: %w", v.GameID, err)
 			}
@@ -163,7 +163,7 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range assets {
-			err := db.FirstOrCreate(&v).Error
+			err := db.Create(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %d: %w", v.GameVersionID, err)
 			}
@@ -183,11 +183,16 @@ func Migrate(env string) error {
 			})
 		}
 		for _,v := range introductions {
-			err := db.FirstOrCreate(&v).Error
+			err := db.Create(&v).Error
 			if err != nil {
 				return fmt.Errorf("Failed In Creating %s: %w", v.GameID, err)
 			}
 		}
+
+		db.Create(&ProductKey{
+			Key: os.Getenv("PRODUCT_KEY"),
+			LauncherVersionID: 1,
+		})
 	}
 
 	return nil
