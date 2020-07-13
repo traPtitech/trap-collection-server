@@ -53,7 +53,7 @@ func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.Gam
 
 	user, err := g.oauth.GetMe(accessToken)
 	if err != nil {
-		return nil, fmt.Errorf("GetMe Error: %w", err)
+		return nil, fmt.Errorf("failed to GetMe: %w", err)
 	}
 
 	gameMeta, err := g.db.PostGame(user.Id, game.Name, game.Description)
