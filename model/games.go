@@ -32,7 +32,7 @@ type GameMeta interface {
 func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameMeta, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return nil, fmt.Errorf("Generate UUID Error: %w", err)
+		return nil, fmt.Errorf("failed to generate UUID: %w", err)
 	}
 
 	game := &Game{
