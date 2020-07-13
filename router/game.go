@@ -48,7 +48,7 @@ func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.Gam
 	accessToken, ok := interfaceAccessToken.(string)
 	if !ok {
 		log.Println("error: unexpected parsing access token error")
-		return nil, errors.New("Failed In Parsing Access Token")
+		return nil, errors.New("failed to parse access token")
 	}
 
 	user, err := g.oauth.GetMe(accessToken)
