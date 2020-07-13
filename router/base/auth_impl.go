@@ -73,7 +73,7 @@ func (o *oAuth) GetUsers(accessToken string) ([]*openapi.User, error) {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Failed In HTTP Request:(Status:%d %s)", res.StatusCode, res.Status)
+		return nil, fmt.Errorf("HTTP request failed:(Status:%d %s)", res.StatusCode, res.Status)
 	}
 
 	var users []*openapi.User
