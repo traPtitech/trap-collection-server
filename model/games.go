@@ -49,7 +49,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 
 		err = tx.Last(&game).Error
 		if err != nil {
-			return fmt.Errorf("Failed In Getting Added Game: %w", err)
+			return fmt.Errorf("failed to GET added game record: %w", err)
 		}
 
 		maintainer := Maintainer{
