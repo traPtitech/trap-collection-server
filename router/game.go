@@ -36,7 +36,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.GameMeta, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return nil, fmt.Errorf("Failed In Getting Session:%w", err)
+		return nil, fmt.Errorf("failed to get session:%w", err)
 	}
 
 	interfaceAccessToken, ok := sess.Values["accessToken"]
