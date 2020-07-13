@@ -10,6 +10,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/router/base"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
 
@@ -20,7 +21,7 @@ func TestGame(t *testing.T) {
 	db := model.NewDBMock(ctrl)
 	str:= storage.NewMockStorage(ctrl)
 
-	game := newGame(db, str)
+	oauth := base.NewMockOAuth(ctrl)
 
 	gameID := "72c0c88c-27fd-4b58-b08e-e3307d2c17df"
 	createdAt, err := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Feb 3, 2013 at 7:54pm (PST)")
@@ -39,6 +40,7 @@ func TestGame(t *testing.T) {
 		},
 	}
 
+	game := newGame(db, oauth, str)
 	db.MockGameMeta.
 		EXPECT().
 		GetGameInfo(gameID).
