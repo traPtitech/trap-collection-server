@@ -58,7 +58,7 @@ func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.Gam
 
 	gameMeta, err := g.db.PostGame(user.Id, game.Name, game.Description)
 	if err != nil {
-		return nil, fmt.Errorf("Failed In Adding Game: %w", err)
+		return nil, fmt.Errorf("failed to add game: %w", err)
 	}
 
 	return gameMeta, nil
