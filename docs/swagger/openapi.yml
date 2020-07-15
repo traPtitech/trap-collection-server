@@ -240,7 +240,7 @@ paths:
         - TrapMemberAuth:
           - read
         - GameMaintainerAuth: []
-      operationId: putImage
+      operationId: postImage
       requestBody:
         content:
           image/jpeg:
