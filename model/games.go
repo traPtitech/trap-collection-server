@@ -4,6 +4,7 @@ package model
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -134,6 +135,11 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 
 // DeleteGame ゲームの削除
 func (*DB) DeleteGame(gameID string) error {
+	isNotFound := db.Where("id = ? AND deleted_at IS NULL", gameID).Find(&Game{}).RecordNotFound()
+	if isNotFound {
+		return errors.New("record not found")
+	}
+
 	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update("deleted_at", time.Now()).Error
 	if err != nil {
 		return fmt.Errorf("failed to DELETE Game: %w", err)
