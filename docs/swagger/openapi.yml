@@ -321,27 +321,7 @@ paths:
                 format: binary
         500:
           description: 失敗
-  /games/maintainers:
-    get:
-      tags:
-        - game
-      summary: 自分がバージョン更新権限保持者のゲームの取得
-      security: 
-        - TrapMemberAuth:
-          - read
-      operationId: getMyGames
-      responses:
-        200:
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Game'
-        500:
-          description: 失敗
-  /games/maintainers/{gameID}:
+  /games/{gameID}/maintainers:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -385,7 +365,7 @@ paths:
                   $ref: '#/components/schemas/Owner'
         500:
           description: 失敗
-  /games/version/{gameID}:
+  /games/{gameID}/version:
     parameters:
       - $ref: '#/components/parameters/gameID'
     post:
@@ -1117,8 +1097,11 @@ components:
           format: binary
     NewGameURL:
       description: 新しいゲームのURL
-      type: string
-      example: https://flythm.trap.games/
+      type: object
+      properties:
+        url:
+          description: URL
+          type: string
     GameAsset:
       description: ゲームのファイル・URLの情報
       type: object
