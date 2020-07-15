@@ -17,9 +17,9 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	db model.DBMeta
+	db      model.DBMeta
 	storage storage.Storage
-	oauth base.OAuth
+	oauth   base.OAuth
 	openapi.GameApi
 }
 
@@ -71,6 +71,16 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	if err != nil {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
+	return game, nil
+}
+
+// PutGame PUT /games/:gameID
+func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	game, err := g.db.UpdateGame(gameID, gameMeta)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update game: %w", err)
+	}
+
 	return game, nil
 }
 
@@ -149,9 +159,9 @@ func (g *Game) GetVideo(gameID string) (io.Reader, error) {
 }
 
 var typeExtMap map[string]string = map[string]string{
-	"jar": "jar",
+	"jar":     "jar",
 	"windows": "zip",
-	"mac": "zip",
+	"mac":     "zip",
 }
 
 func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
@@ -169,9 +179,9 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 }
 
 func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
-	var roleMap = map[string]int8 {
-		"image":0,
-		"video":1,
+	var roleMap = map[string]int8{
+		"image": 0,
+		"video": 1,
 	}
 
 	intRole, ok := roleMap[role]
