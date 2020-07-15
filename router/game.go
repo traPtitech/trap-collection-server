@@ -119,6 +119,16 @@ func (g *Game) GetGames(c echo.Context, all string) ([]*openapi.Game, error) {
 	return games, nil
 }
 
+// DeleteGames DELETE /games/:gameIDの処理部分
+func (g *Game) DeleteGames(gameID string) error {
+	err := g.db.DeleteGame(gameID)
+	if err != nil {
+		return fmt.Errorf("failed to delete game: %w", err)
+	}
+
+	return nil
+}
+
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)

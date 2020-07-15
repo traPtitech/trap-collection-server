@@ -27,6 +27,7 @@ type Game struct {
 type GameMeta interface {
 	GetGames(userID ...string) ([]*openapi.Game, error)
 	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
+	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
 }
 
@@ -47,10 +48,10 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 	var err error
 	if len(userID) != 0 {
 		rows, err = db.Joins("INNER JOIN maintainers ON g.id = maintainers.game_id").
-			Where("(gv.id = ? OR gv.id IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
+			Where("(gv.id = ? OR gv.id IS NULL AND g.deleted_at IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
 			Rows()
 	} else {
-		rows, err = db.Where("gv.id = ?", sub).Rows()
+		rows, err = db.Where("gv.id = ? AND g.deleted_at IS NULL", sub).Rows()
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Games: %w", err)
@@ -129,6 +130,16 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 	}
 
 	return gameMeta, nil
+}
+
+// DeleteGame ゲームの削除
+func (*DB) DeleteGame(gameID string) error {
+	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update("deleted_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to DELETE Game: %w", err)
+	}
+
+	return nil
 }
 
 // GetGameInfo ゲーム情報の取得
