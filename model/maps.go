@@ -1,12 +1,12 @@
 package model
 
 var osGameTypeIntsMap = map[string][]uint8{
-	"windows":{0,1,2},
-	"mac":{0,1,3},
+	"windows": {0, 1, 2},
+	"mac":     {0, 1, 3},
 }
 var osGameTypeIntMap = map[string]uint{
 	"windows": 2,
-	"mac": 3,
+	"mac":     3,
 }
 
 var gameTypeIntStrMap = map[uint8]string{

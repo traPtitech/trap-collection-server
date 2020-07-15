@@ -22,17 +22,17 @@ import (
 
 // OAuth2 oauthの構造体
 type OAuth2 struct {
-	session sess.Session
-	oauth base.OAuth
+	session      sess.Session
+	oauth        base.OAuth
 	clientID     string
 	clientSecret string
 }
 
 func newOAuth2(sess sess.Session, oauth base.OAuth, clientID string, clientSecret string) *OAuth2 {
 	oAuth2 := &OAuth2{
-		session: sess,
-		oauth: oauth,
-		clientID: clientID,
+		session:      sess,
+		oauth:        oauth,
+		clientID:     clientID,
 		clientSecret: clientSecret,
 	}
 
@@ -47,12 +47,12 @@ type authResponse struct {
 
 // Callback GET /oauth2/callbackの処理部分
 func (o *OAuth2) Callback(code string, c echo.Context) error {
-	sess,err := session.Get("sessions", c)
+	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting Session: %w", err)
 	}
 
-	interfaceCodeVerifier,ok := sess.Values["codeVerifier"]
+	interfaceCodeVerifier, ok := sess.Values["codeVerifier"]
 	if !ok || interfaceCodeVerifier == nil {
 		return errors.New("CodeVerifier IS NULL")
 	}
@@ -83,7 +83,8 @@ func (o *OAuth2) Callback(code string, c echo.Context) error {
 }
 
 // GetGeneratedCode POST /oauth2/generate/codeの処理部分
-func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, error) {sess,err := session.Get("sessions", c)
+func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, error) {
+	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
 	}
@@ -114,7 +115,7 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, e
 
 // PostLogout POST /oauth2/logoutの処理部分
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	sess,err := session.Get("sessions", c)
+	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting Session: %w", err)
 	}
@@ -132,18 +133,18 @@ func (o *OAuth2) PostLogout(c echo.Context) error {
 	path := o.oauth.BaseURL()
 	path.Path += "/oauth2/revoke"
 	form := url.Values{}
-	form.Set("token",accessToken)
+	form.Set("token", accessToken)
 	reqBody := strings.NewReader(form.Encode())
 	req, err := http.NewRequest("POST", path.String(), reqBody)
 	if err != nil {
-		return fmt.Errorf("Failed In Making HTTP Request:%w",err)
+		return fmt.Errorf("Failed In Making HTTP Request:%w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := http.DefaultClient
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("Failed In HTTP Request:%w",err)
+		return fmt.Errorf("Failed In HTTP Request:%w", err)
 	}
 	if res.StatusCode != 200 {
 		return fmt.Errorf("Failed In Getting Access Token:(Status:%d %s)", res.StatusCode, res.Status)
