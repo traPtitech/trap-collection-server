@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/h2non/filetype"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
@@ -136,7 +137,18 @@ func (g *Game) GetImage(gameID string) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
 	}
+
 	return imageFile, nil
+}
+
+// PostImage POST /game/:gameID/image
+func (g *Game) PostImage(gameID string, image multipartFile) error {
+	err :=g.postIntroduction(gameID, image, "image")
+	if err != nil {
+		return fmt.Errorf("failed to post introduction: %w", err)
+	}
+
+	return nil
 }
 
 // GetVideo GET /games/:gameID/videoの処理部分
@@ -168,12 +180,12 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 	return gameID + "_game." + ext, nil
 }
 
-func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
-	var roleMap = map[string]int8 {
-		"image":0,
-		"video":1,
-	}
+var roleMap = map[string]int8 {
+	"image":0,
+	"video":1,
+}
 
+func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	intRole, ok := roleMap[role]
 	if !ok {
 		return nil, errors.New("Invalid Role")
@@ -191,6 +203,28 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	}
 
 	return file, nil
+}
+
+func (g *Game) postIntroduction(gameID string, introduction io.Reader, role string) error {
+	fileType, err := filetype.MatchReader(introduction)
+	if err != nil {
+		return fmt.Errorf("failed to get filetype")
+	}
+
+	ext := fileType.Extension
+
+	err = g.db.InsertIntroduction(gameID, role, ext)
+	if err != nil {
+		return fmt.Errorf("failed to insert introduction: %w", err)
+	}
+
+	fileName := gameID + "_" + role + "." + ext
+	err = g.storage.Save(fileName, introduction)
+	if err != nil {
+		return fmt.Errorf("failed to save introduction: %w", err)
+	}
+
+	return nil
 }
 
 // GetGameURL GET /games/:gameID/urlの処理部分

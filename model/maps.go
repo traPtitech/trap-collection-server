@@ -23,6 +23,18 @@ var extIntStrMap = map[uint8]string{
 	3: "mp4",
 }
 
+var extStrIntMap = map[string]uint8{
+	"jpg": 0,
+	"png": 1,
+	"gif": 2,
+	"mp4": 3,
+}
+
+var roleStrIntMap = map[string]uint8{
+	"image": 0,
+	"video": 1,
+}
+
 var questionTypeIntStrMap = map[uint8]string{
 	0: "radio",
 	1: "checkbox",
