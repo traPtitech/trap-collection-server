@@ -322,12 +322,13 @@ paths:
         500:
           description: 失敗
   /games/{gameID}/maintainers:
-    parameters:
-      - $ref: '#/components/parameters/gameID'
     post:
       tags:
         - game
       summary: ゲームのバージョン更新権限保持者の追加
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
             - read
@@ -350,6 +351,8 @@ paths:
       tags:
         - game
       summary: ゲームの管理者の取得
+      parameters:
+        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
             - read
