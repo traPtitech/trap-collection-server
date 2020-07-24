@@ -353,7 +353,7 @@ paths:
       security:
         - TrapMemberAuth:
             - read
-      operationId: getOwner
+      operationId: getMaintainer
       responses:
         200:
           description: 成功
@@ -362,7 +362,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Owner'
+                  $ref: '#/components/schemas/Maintainer'
         500:
           description: 失敗
   /games/{gameID}/version:
@@ -1441,7 +1441,7 @@ components:
           description: プレイ時間(ms)の平均
           type: integer
           example: 500000
-    Owner:
+    Maintainer:
       type: object
       properties:
         id:
