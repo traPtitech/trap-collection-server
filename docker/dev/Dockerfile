@@ -3,8 +3,9 @@
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
 COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
-VOLUME /home/groovy/.groovy/grapes
-RUN groovy /local/generator.groovy generate \
+USER root
+RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
+  groovy /local/generator.groovy generate \
   -i /local/openapi.yml \
   -g CollectionCodegen \
   -t /local \
