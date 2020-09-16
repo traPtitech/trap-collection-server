@@ -133,12 +133,10 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 
 // GetGameInfo ゲーム情報の取得
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
-	game := &openapi.Game{
-		Version: &openapi.GameVersion{},
-	}
+	game := &openapi.Game{}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
-		Joins("INNER JOIN game_versions ON games.id = game_versions.game_id").
+		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
 		Where("games.id = ?", gameID).
 		Order("game_versions.created_at").
 		Limit(1).
@@ -147,9 +145,19 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
 	if rows.Next() {
-		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &game.Version.Id, &game.Version.Name, &game.Version.Description, &game.Version.CreatedAt)
+		var versionID sql.NullInt32
+		var versionName sql.NullString
+		var versionDescription sql.NullString
+		var versionCreatedAt sql.NullTime
+		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &versionID, &versionName, &versionDescription, &versionCreatedAt)
 		if err != nil {
 			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
+		}
+		if versionID.Valid && versionName.Valid && versionDescription.Valid && versionCreatedAt.Valid {
+			game.Version.Id = versionID.Int32
+			game.Version.Name = versionName.String
+			game.Version.Description = versionDescription.String
+			game.Version.CreatedAt = versionCreatedAt.Time
 		}
 	}
 	log.Printf("debug: %#v\n", game)
