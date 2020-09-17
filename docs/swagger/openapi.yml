@@ -981,6 +981,9 @@ components:
         name:
           description: traQID（UUIDでない方）
           type: string
+      required:
+        - userId
+        - name
     CheckItem:
       type: object
       description: ゲームの更新・破損のチェック用リスト
@@ -1004,6 +1007,13 @@ components:
           description: 動画の更新日時
           type: string
           format: date-time
+      required:
+        - id
+        - md5
+        - type
+        - bodyUpdatedAt
+        - imgUpdatedAt
+        - movieUpdatedAt
     NewGameMeta:
       description: 新しいゲームの名前
       type: object
@@ -1014,6 +1024,9 @@ components:
         description:
           description: 修正後のゲームの説明文
           type: string
+      required:
+        - name
+        - description
     GameMeta:
       description: ゲーム名とID
       type: object
@@ -1032,6 +1045,11 @@ components:
           description: ゲームの追加された時刻
           type: string
           format: date-time
+      required:
+        - id
+        - name
+        - description
+        - createdAt
     Game:
       description: ゲーム
       type: object
@@ -1048,6 +1066,11 @@ components:
           format: date-time
         version:
           $ref: '#/components/schemas/GameVersion'
+      required:
+        - id
+        - name
+        - createdAt
+        - version
     NewGameVersion:
       description: 新しいゲームのバージョン
       type: object
@@ -1059,6 +1082,9 @@ components:
           description: バージョンの説明
           type: string
           example: ダッシュ機能追加した
+      required:
+        - name
+        - description
     GameVersion:
       description: ゲームのバージョン
       type: object
@@ -1078,6 +1104,11 @@ components:
           type: string
           format: date-time
           example: '2019-09-25T09:51:31Z'
+      required:
+        - id
+        - name
+        - description
+        - createdAt
     NewGameFile:
       description: 新しいゲームのファイル
       type: object
@@ -1089,6 +1120,9 @@ components:
           description: ゲームのファイル
           type: string
           format: binary
+      required:
+        - type
+        - file
     NewGameURL:
       description: 新しいゲームのURL
       type: object
@@ -1096,6 +1130,8 @@ components:
         url:
           description: URL
           type: string
+      required:
+        - url
     GameFile:
       description: ゲームのファイルの情報
       type: object
@@ -1106,6 +1142,9 @@ components:
         type:
           description: ゲームの種類（jar,windows,mac）
           type: string
+      required:
+        - id
+        - type
     GameURL:
       description: ゲームのURLの情報
       type: object
@@ -1117,6 +1156,9 @@ components:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
           example: https://flythm.trap.games/
+      required:
+        - id
+        - url
     Maintainers:
       description: 管理者の一覧
       type: object
@@ -1126,6 +1168,8 @@ components:
           items:
             description: 権限を与える相手のtraQID（UUID）
             type: string
+      required:
+        - maintainers
     NewVersion:
       description: 新しいバージョンの名前
       type: string
@@ -1148,6 +1192,11 @@ components:
           description: 登録時刻
           type: string
           format: date-time
+      required:
+        - id
+        - name
+        - games
+        - createdAt
     VersionMeta:
       description: バージョンの簡易的な情報
       type: object
@@ -1162,6 +1211,10 @@ components:
           description: 登録時刻
           type: string
           format: date-time
+      required:
+        - id
+        - name
+        - createdAt
     VersionDetails:
       description: バージョン詳細
       type: object
@@ -1185,6 +1238,12 @@ components:
           description: 登録時刻
           type: string
           format: date-time
+      required:
+        - id
+        - name
+        - games
+        - questions
+        - createdAt
     NewQuestion:
       description: 新しい質問
       type: object
@@ -1206,6 +1265,12 @@ components:
         required:
           description: 回答が必須かどうか
           type: boolean
+      required:
+        - versionId
+        - type
+        - content
+        - options
+        - required
     Question:
       type: object
       description: 質問
@@ -1231,6 +1296,13 @@ components:
           description: 質問の作成時刻
           type: string
           format: date-time
+      required:
+        - id
+        - type
+        - content
+        - options
+        - required
+        - createdAt
     QuestionOption:
       type: object
       description: 質問の選択肢
@@ -1242,6 +1314,9 @@ components:
           description: 選択肢のラベル
           type: string
           example: はい
+      required:
+        - id
+        - label
     NewResponse:
       type: object
       description: 新しい回答
@@ -1263,6 +1338,11 @@ components:
           description: 自由記述欄
           type: string
           example: 特に何もありません
+      required:
+        - id
+        - answers
+        - gameRatings
+        - remark
     ResponseCalc:
       type: object
       description: 回答
@@ -1279,6 +1359,11 @@ components:
           type: array
           items:
             type: string
+      required:
+        - id
+        - answer
+        - game
+        - remark
     Answer:
       type: object
       description: バージョンごとの質問に対する回答
@@ -1300,6 +1385,9 @@ components:
                 description: 選択肢のid
                 type: integer
                 example: 0
+      required:
+        - id
+        - content
     AnswerCalc:
       type: object
       description: 質問に対する回答の統計
@@ -1318,6 +1406,12 @@ components:
                   type: string
                 num:
                   type: integer
+            required:
+              - answer
+              - num
+      required:
+        - id
+        - contents
     GameRating:
       type: object
       description: ゲームの評価
@@ -1334,6 +1428,10 @@ components:
         time:
           description: プレイ時間(ms)
           type: integer
+      required:
+        - id
+        - rate
+        - time
     GameCalc:
       type: object
       description: ゲームの評価の統計
@@ -1351,6 +1449,9 @@ components:
                 type: integer
               num:
                 type: integer
+            required:
+              - star
+              - num
         rateAve:
           description: 星の数の平均
           type: integer
@@ -1358,6 +1459,11 @@ components:
           description: プレイ時間(ms)の平均
           type: integer
           example: 500000
+      required:
+        - id
+        - rate
+        - rateAve
+        - time
     Maintainer:
       type: object
       properties:
@@ -1370,3 +1476,7 @@ components:
         role:
           description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
           type: integer
+      required:
+        - id
+        - name
+        - role
