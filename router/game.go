@@ -74,6 +74,16 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	return game, nil
 }
 
+// PutGame PUT /games/:gameID
+func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	game, err := g.db.UpdateGame(gameID, gameMeta)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update game: %w", err)
+	}
+
+	return game, nil
+}
+
 // GetGames GET /gamesの処理部分
 func (g *Game) GetGames(c echo.Context, all string) ([]*openapi.Game, error) {
 	var games []*openapi.Game
