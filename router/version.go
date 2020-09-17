@@ -12,7 +12,7 @@ import (
 
 // Version versionの構造体
 type Version struct {
-	db model.DBMeta
+	db           model.DBMeta
 	launcherAuth base.LauncherAuth
 	openapi.VersionApi
 }

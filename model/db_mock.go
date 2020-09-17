@@ -4,7 +4,6 @@ package model
 
 import gomock "github.com/golang/mock/gomock"
 
-
 // DBMock DB関連の構造体のMock
 type DBMock struct {
 	*MockGameIntroductionMeta
