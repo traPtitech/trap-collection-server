@@ -23,29 +23,29 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
     {{paramName}} := c.Param("{{paramName}}"){{/pathParams}}{{/hasPathParams}}{{#hasFormParams}}{{#formParams}}{{#isFile}}
     _{{paramName}},err := c.FormFile("{{paramName}}")
     if err != nil {
-      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Forming File:%w",err).Error())
+      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to form file:%w",err))
     }
     {{paramName}},err := _{{paramName}}.Open()
     if err != nil {
-      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Opening File:%w",err).Error())
+      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to open file:%w",err))
     }
     defer {{paramName}}.Close(){{/isFile}}{{^isFile}}
     {{paramName}} := c.FormValue("{{paramName}}"){{/isFile}}{{/formParams}}{{/hasFormParams}}{{#hasCookieParams}}{{#cookieParams}}{{#isCookieParam}}
     cookie{{paramName}}, err := c.Cookie("{{paramName}}")
     if err != nil {
-      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Cookie:%w",err).Error())
+      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind cookie:%w",err))
     }
     {{paramName}} := cookie{{paramName}}.Value{{/isCookieParam}}{{/cookieParams}}{{/hasCookieParams}}{{#hasBodyParam}}{{#bodyParam}}{{#isPrimitiveType}}{{/isPrimitiveType}}
     var {{paramName}} {{dataType}}
     err = c.Bind(&{{paramName}})
     if err != nil {
-      return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Binding Request Body:%w",err).Error())
+      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
     }{{/bodyParam}}{{/hasBodyParam}}
     {{#isListContainer}}var res []*{{returnBaseType}}{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}var res {{^isResponseFile}}*{{/isResponseFile}}{{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}var res {{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}}
     {
       {{#returnType}}res, {{/returnType}}err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}}{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}}{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{paramName}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}}{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{#isPrimitiveType}}{{paramName}}{{/isPrimitiveType}}{{^isPrimitiveType}}&{{paramName}}{{/isPrimitiveType}}{{/isBodyParam}}{{^isBodyParam}}c{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
       if err != nil {
-        return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Making Response:%w",err).Error())
+        return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
       }
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
