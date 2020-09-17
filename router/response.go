@@ -11,7 +11,7 @@ import (
 
 // Response responseの構造体
 type Response struct {
-	db model.DBMeta
+	db           model.DBMeta
 	launcherAuth base.LauncherAuth
 	openapi.ResponseApi
 }

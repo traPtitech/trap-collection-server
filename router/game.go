@@ -17,9 +17,9 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	db model.DBMeta
+	db      model.DBMeta
 	storage storage.Storage
-	oauth base.OAuth
+	oauth   base.OAuth
 	openapi.GameApi
 }
 
@@ -70,6 +70,16 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	game, err := g.db.GetGameInfo(gameID)
 	if err != nil {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
+	}
+
+	return game, nil
+}
+
+// PutGame PUT /games/:gameID
+func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	game, err := g.db.UpdateGame(gameID, gameMeta)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update game: %w", err)
 	}
 
 	return game, nil
@@ -126,6 +136,16 @@ func (g *Game) GetGames(all string, c echo.Context) ([]*openapi.Game, error) {
 	return games, nil
 }
 
+// DeleteGames DELETE /games/:gameIDの処理部分
+func (g *Game) DeleteGames(gameID string) error {
+	err := g.db.DeleteGame(gameID)
+	if err != nil {
+		return fmt.Errorf("failed to delete game: %w", err)
+	}
+
+	return nil
+}
+
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
@@ -156,9 +176,9 @@ func (g *Game) GetVideo(gameID string) (io.Reader, error) {
 }
 
 var typeExtMap map[string]string = map[string]string{
-	"jar": "jar",
+	"jar":     "jar",
 	"windows": "zip",
-	"mac": "zip",
+	"mac":     "zip",
 }
 
 func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
@@ -176,9 +196,9 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 }
 
 func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
-	var roleMap = map[string]int8 {
-		"image":0,
-		"video":1,
+	var roleMap = map[string]int8{
+		"image": 0,
+		"video": 1,
 	}
 
 	intRole, ok := roleMap[role]

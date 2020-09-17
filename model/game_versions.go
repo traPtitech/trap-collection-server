@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -39,7 +40,7 @@ func (*DB) GetGameType(gameID string, operatingSystem string) (string, error) {
 		Order("game_versions.created_at").
 		Pluck("type", &intTypes).Error
 	if err != nil {
-		return "",fmt.Errorf("Failed In Getting Type: %w", err)
+		return "", fmt.Errorf("Failed In Getting Type: %w", err)
 	}
 	strType, ok := gameTypeIntStrMap[intTypes[0]]
 	if !ok {

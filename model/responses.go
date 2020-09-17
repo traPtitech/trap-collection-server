@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -14,11 +15,11 @@ import (
 
 // Response 回答の構造体
 type Response struct {
-	ID                string `gorm:"type:varchar(36);not null;primary_key;"`
-	PlayerID          uint   `gorm:"type:int(11);not null;"`
-	Player            Player
-	Remark            string    `gorm:"type:text;"`
-	CreatedAt         time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
+	ID        string `gorm:"type:varchar(36);not null;primary_key;"`
+	PlayerID  uint   `gorm:"type:int(11);not null;"`
+	Player    Player
+	Remark    string    `gorm:"type:text;"`
+	CreatedAt time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
 }
 
 // ResponseMeta responseテーブルのリポジトリ
@@ -34,9 +35,9 @@ func (*DB) InsertResponses(productKey string, res *openapi.NewResponse) (*openap
 	}
 	err = db.Transaction(func(tx *gorm.DB) error {
 		response := Response{
-			ID: res.Id,
+			ID:       res.Id,
 			PlayerID: playerID,
-			Remark: res.Remark,
+			Remark:   res.Remark,
 		}
 		err = tx.Create(&response).Error
 		if err != nil {
@@ -44,12 +45,12 @@ func (*DB) InsertResponses(productKey string, res *openapi.NewResponse) (*openap
 		}
 		questionIDs := make([]int32, 0, len(res.Answers))
 		answerMap := make(map[uint]*openapi.Answer)
-		for i,v := range res.Answers {
+		for i, v := range res.Answers {
 			questionIDs[i] = v.Id
 			answerMap[uint(v.Id)] = &v
 		}
-		rows,err := tx.Table("questions").
-			Select("id","type").
+		rows, err := tx.Table("questions").
+			Select("id", "type").
 			Where("id IN ?", questionIDs).
 			Rows()
 		if err != nil {
@@ -71,30 +72,30 @@ func (*DB) InsertResponses(productKey string, res *openapi.NewResponse) (*openap
 				return errors.New("Invalid Question Type")
 			}
 			switch qType {
-				case "text":
-					textAnswer := TextAnswer{
-						ResponseID: res.Id,
-						QuestionID: id,
-						Content: answer.Contents.Text,
-					}
-					textAnswers = append(textAnswers, textAnswer)
-				case "radio":
-					if len(answer.Contents.Options) != 1 {
-						return errors.New("Invalid Contents Length")
-					}
-					optionAnswer := OptionAnswer{
-						ResponseID: res.Id,
-						QuestionID: id,
-						OptionID: uint(answer.Contents.Options[0]),
-					}
-					optionAnswers = append(optionAnswers, optionAnswer)
-				case "checkbox":
-					optionAnswer := OptionAnswer{
-						ResponseID: res.Id,
-						QuestionID: id,
-						OptionID: uint(answer.Contents.Options[0]),
-					}
-					optionAnswers = append(optionAnswers, optionAnswer)
+			case "text":
+				textAnswer := TextAnswer{
+					ResponseID: res.Id,
+					QuestionID: id,
+					Content:    answer.Contents.Text,
+				}
+				textAnswers = append(textAnswers, textAnswer)
+			case "radio":
+				if len(answer.Contents.Options) != 1 {
+					return errors.New("Invalid Contents Length")
+				}
+				optionAnswer := OptionAnswer{
+					ResponseID: res.Id,
+					QuestionID: id,
+					OptionID:   uint(answer.Contents.Options[0]),
+				}
+				optionAnswers = append(optionAnswers, optionAnswer)
+			case "checkbox":
+				optionAnswer := OptionAnswer{
+					ResponseID: res.Id,
+					QuestionID: id,
+					OptionID:   uint(answer.Contents.Options[0]),
+				}
+				optionAnswers = append(optionAnswers, optionAnswer)
 			}
 		}
 		err = gormbulk.BulkInsert(tx, textAnswers, 3000)

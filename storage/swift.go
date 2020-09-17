@@ -12,7 +12,7 @@ import (
 
 // Swift オブジェクトストレージへのアップロード用の構造体
 type Swift struct {
-	client *gophercloud.ServiceClient
+	client    *gophercloud.ServiceClient
 	container string
 }
 
@@ -39,7 +39,7 @@ func NewSwiftStorage(container string) (*Swift, error) {
 	}
 
 	swift := &Swift{
-		client: client,
+		client:    client,
 		container: container,
 	}
 

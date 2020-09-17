@@ -15,7 +15,7 @@ import (
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	db model.DBMeta
+	db    model.DBMeta
 	oauth base.OAuth
 	openapi.Middleware
 }

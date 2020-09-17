@@ -19,7 +19,7 @@ func TestGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	db := model.NewDBMock(ctrl)
-	str:= storage.NewMockStorage(ctrl)
+	str := storage.NewMockStorage(ctrl)
 	oauth := base.NewMockOAuth(ctrl)
 
 	gameID := "72c0c88c-27fd-4b58-b08e-e3307d2c17df"
@@ -28,14 +28,14 @@ func TestGame(t *testing.T) {
 		t.Fatalf("Failed In Parse Time: %#v", err)
 	}
 	openapiGame := &openapi.Game{
-		Id: "72c0c88c-27fd-4b58-b08e-e3307d2c17df",
-		Name: "ClayPlatesStory",
+		Id:        "72c0c88c-27fd-4b58-b08e-e3307d2c17df",
+		Name:      "ClayPlatesStory",
 		CreatedAt: createdAt,
 		Version: &openapi.GameVersion{
-			Id: 1,
-			Name: "v1.0",
+			Id:          1,
+			Name:        "v1.0",
 			Description: "ClayPlatesStory",
-			CreatedAt: createdAt,
+			CreatedAt:   createdAt,
 		},
 	}
 
@@ -84,13 +84,13 @@ func TestGame(t *testing.T) {
 		EXPECT().
 		Open(gameFileNames[0]).
 		Return(ioutil.NopCloser(strings.NewReader(expectStr)), nil)
-	
+
 	res, err := game.GetGameFile(gameID, oss[0])
 	if err != nil {
 		t.Fatalf("Unexpected GetGameFile Error: %#v", err)
 	}
 	buf := new(bytes.Buffer)
-	_,err = buf.ReadFrom(res)
+	_, err = buf.ReadFrom(res)
 	if err != nil {
 		t.Fatalf("Unexpected File Reed Error: %#v", err)
 	}

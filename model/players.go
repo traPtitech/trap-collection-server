@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -9,10 +10,10 @@ import (
 
 // Player プレイヤーの履歴の構造体
 type Player struct {
-	ID        uint      `gorm:"type:int(11) unsigned auto_increment;NOT NULL;PRIMARY_KEY;"`
-	ProductKeyID    uint      `gorm:"type:int(11) unsigned;not null;"`
-	StartedAt time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
-	EndedAt   time.Time `gorm:"type:datetime;default:null;"`
+	ID           uint      `gorm:"type:int(11) unsigned auto_increment;NOT NULL;PRIMARY_KEY;"`
+	ProductKeyID uint      `gorm:"type:int(11) unsigned;not null;"`
+	StartedAt    time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
+	EndedAt      time.Time `gorm:"type:datetime;default:null;"`
 }
 
 // PlayerMeta playerテーブルのリポジトリ
@@ -39,7 +40,7 @@ func (*DB) PostPlayer(productKey string) error {
 		return errors.New("Last Player Is Not End")
 	}
 
-	productKeyID,err := getKeyIDByKey(productKey)
+	productKeyID, err := getKeyIDByKey(productKey)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting KeyID: %w", err)
 	}
@@ -58,7 +59,7 @@ func (*DB) PostPlayer(productKey string) error {
 
 // DeletePlayer プレイヤーを削除
 func (*DB) DeletePlayer(productKey string) error {
-	productKeyID,err := getKeyIDByKey(productKey)
+	productKeyID, err := getKeyIDByKey(productKey)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting KeyID: %w", err)
 	}
