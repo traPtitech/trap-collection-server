@@ -34,7 +34,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 }
 
 //PostGame POST /gamesの処理部分
-func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+func (g *Game) PostGame(game *openapi.NewGameMeta, c echo.Context) (*openapi.GameMeta, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session:%w", err)
@@ -71,16 +71,23 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	if err != nil {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
+
 	return game, nil
 }
 
 // GetGames GET /gamesの処理部分
-func (g *Game) GetGames(c echo.Context, all string) ([]*openapi.Game, error) {
+func (g *Game) GetGames(all string, c echo.Context) ([]*openapi.Game, error) {
 	var games []*openapi.Game
-	ball, err := strconv.ParseBool(all)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse bool: %w", err)
+	var ball bool
+	var err error
+
+	if len(all) != 0 {
+		ball, err = strconv.ParseBool(all)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bool: %w", err)
+		}
 	}
+	
 	if !ball {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -201,4 +208,50 @@ func (g *Game) GetGameURL(gameID string) (string, error) {
 	}
 
 	return url, nil
+}
+
+// PostMaintainer POST /games/:gameID/maintainerの処理部分
+func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c echo.Context) error {
+	userIDs := maintainers.Maintainers
+
+	//usersテーブルを後々作ったらこの部分は消す(たかが管理者の追加で約250*(追加する数)処理しているのはまずい)
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("failed to get session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("error: unexpected getting access token error")
+		return errors.New("unexpected error occcured while getting access token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("error: unexpected parsing access token error")
+		return errors.New("failed to parse access token")
+	}
+
+	users, err := g.oauth.GetUsers(accessToken)
+	if err != nil {
+		return fmt.Errorf("failed to GetUsers: %w", err)
+	}
+
+	for _,userID := range userIDs {
+		for i,user := range users {
+			if user.Id == userID {
+				break
+			}
+			if i == len(users) {
+				return fmt.Errorf("invalid userID(%s)", userID)
+			}
+		}
+	}
+
+	err = g.db.InsertMaintainer(gameID, userIDs)
+	if err != nil {
+		return fmt.Errorf("failed to insert maintainers: %w", err)
+	}
+
+	return nil
 }
