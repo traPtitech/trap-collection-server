@@ -214,7 +214,6 @@ func (g *Game) GetGameURL(gameID string) (string, error) {
 func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c echo.Context) error {
 	userIDs := maintainers.Maintainers
 
-	//usersテーブルを後々作ったらこの部分は消す(たかが管理者の追加で約250*(追加する数)処理しているのはまずい)
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return fmt.Errorf("failed to get session:%w", err)
@@ -237,14 +236,15 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 		return fmt.Errorf("failed to GetUsers: %w", err)
 	}
 
+	userMap := make(map[string]*openapi.User, len(users))
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
 	for _,userID := range userIDs {
-		for i,user := range users {
-			if user.Id == userID {
-				break
-			}
-			if i == len(users) {
-				return fmt.Errorf("invalid userID(%s)", userID)
-			}
+		_, ok := userMap[userID]
+		if !ok {
+			return fmt.Errorf("invalid userID(%s)", userID)
 		}
 	}
 
@@ -254,4 +254,40 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 	}
 
 	return nil
+}
+
+func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintainer, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("error: unexpected getting access token error")
+		return nil, errors.New("unexpected error occcured while getting access token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("error: unexpected parsing access token error")
+		return nil, errors.New("failed to parse access token")
+	}
+
+	users, err := g.oauth.GetUsers(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetUsers: %w", err)
+	}
+
+	userMap := make(map[string]*openapi.User, len(users))
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
+	maintainers, err := g.db.GetMaintainers(gameID, userMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get maintainers: %w", err)
+	}
+
+	return maintainers, nil
 }

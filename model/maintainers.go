@@ -3,11 +3,13 @@ package model
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert"
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // Maintainer gameのmaintainerの構造体
@@ -25,6 +27,7 @@ type Maintainer struct {
 type MaintainerMeta interface {
 	CheckMaintainerID(userID string, gameID string) (bool, error)
 	InsertMaintainer(gameID string, userIDs []string) error
+	GetMaintainers(gameID string, userMap map[string]*openapi.User) ([]*openapi.Maintainer, error)
 }
 
 // CheckMaintainerID ゲームの管理者のチェック
@@ -50,7 +53,6 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
 			GameID: gameID,
 			UserID: user,
-			Role: 0,
 		})
 	}
 
@@ -60,4 +62,30 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	}
 
 	return nil
+}
+
+func (*DB) GetMaintainers(gameID string, userMap map[string]*openapi.User) ([]*openapi.Maintainer, error) {
+	maintainers := []Maintainer{}
+	err := db.Where("game_id = ?", gameID).Find(&maintainers).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get maintainers: %w", err)
+	}
+
+	apiMaintainers := make([]*openapi.Maintainer, 0, len(maintainers))
+	for _,maintainer := range maintainers {
+		user, ok := userMap[maintainer.UserID]
+		if !ok {
+			return nil, errors.New("invalid User error")
+		}
+
+		apiMaintainer := &openapi.Maintainer{
+			Id: maintainer.UserID,
+			Name: user.Name,
+			Role: int32(maintainer.Role),
+		}
+
+		apiMaintainers = append(apiMaintainers, apiMaintainer)
+	}
+
+	return apiMaintainers, nil
 }

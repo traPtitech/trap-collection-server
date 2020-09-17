@@ -6,7 +6,7 @@ require (
 	github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c
 	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/golang/mock v1.4.3
+	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.12.0
 	github.com/gorilla/mux v1.7.4
@@ -21,4 +21,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
+	rsc.io/quote/v3 v3.1.0 // indirect
 )
