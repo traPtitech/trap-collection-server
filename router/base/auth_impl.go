@@ -14,7 +14,7 @@ import (
 )
 
 // NewOAuth OAuthのコンストラクタ
-func NewOAuth(strURL string) (OAuth,error) {
+func NewOAuth(strURL string) (OAuth, error) {
 	baseURL, err := url.Parse(strURL)
 	if err != nil {
 		return &oAuth{}, fmt.Errorf("Faile In Parsing URL: %w", err)
@@ -90,7 +90,7 @@ func NewLauncherAuth() LauncherAuth {
 	return newLauncherAuth
 }
 
-type launcherAuth struct {}
+type launcherAuth struct{}
 
 // GetVersionID バージョンのIDの取得
 func (*launcherAuth) GetVersionID(c echo.Context) (uint, error) {

@@ -35,7 +35,7 @@ func (l *Local) Save(filename string, src io.Reader) error {
 
 	file, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("Failed In Creating File: %w",err)
+		return fmt.Errorf("Failed In Creating File: %w", err)
 	}
 	defer file.Close()
 
