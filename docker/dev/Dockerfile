@@ -10,31 +10,33 @@ RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
   -g CollectionCodegen \
   -t /local \
   -o /local
-COPY . /local
 
+FROM golang:1.15.2-alpine AS build
 
-FROM golang:1.14.2-alpine AS build
+RUN apk --update --no-cache add tzdata && \
+  cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
+  apk del tzdata
 
 ENV DOCKERIZE_VERSION v0.6.1
-RUN apk add --update --no-cache git && \
-  apk --update add tzdata && \
-  cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
-  apk del tzdata && \
-  rm -rf /var/cache/apk/*
+
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
   tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
   rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-RUN GO111MODULE=off go get github.com/oxequa/realize && \
-  cd /go/src/github.com/oxequa/realize && \
-  git fetch && \
-  git checkout v2.0.2 && \
-  go get github.com/oxequa/realize
+
+RUN apk add --update --no-cache git
+
+ENV GO111MODULE=on
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  GO111MODULE=off go get github.com/oxequa/realize && \
+  rm -rf /go/src/*
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
+
 COPY go.mod go.sum ./
-RUN go mod download
-COPY --from=generate /local/ ./
-RUN --mount=type=cache,target=/root/.cache/go-build \
-  go build -o main -ldflags "-s -w" -tags main
+RUN --mount=type=cache,target=/go/pkg/mod/cache \
+  go mod download
+
+COPY --from=generate /local/openapi ./openapi
 
 ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run
