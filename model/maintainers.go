@@ -53,6 +53,7 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
 			GameID: gameID,
 			UserID: user,
+			Role: 0,
 		})
 	}
 
