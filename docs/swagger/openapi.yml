@@ -370,6 +370,8 @@ paths:
         - game
       summary: ゲームの管理者の取得
       description: ゲームの管理者の取得
+      parameters:
+        - $ref: '#/components/parameters/sessions'
       security:
         - TrapMemberAuth:
           - read
