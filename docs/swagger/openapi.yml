@@ -168,7 +168,7 @@ paths:
           schema:
             type: boolean
         - $ref: '#/components/parameters/sessions'
-      security: 
+      security:
         - TrapMemberAuth:
             - read
       operationId: getGames
@@ -344,6 +344,8 @@ paths:
         "500":
           description: 失敗
   /games/{gameID}/maintainers:
+    parameters:
+      - $ref: '#/components/parameters/gameID'
     post:
       tags:
         - game
@@ -351,7 +353,6 @@ paths:
       description: ゲームのバージョン更新権限保持者の追加
       parameters:
         - $ref: '#/components/parameters/sessions'
-        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
             - read
@@ -374,7 +375,6 @@ paths:
       description: ゲームの管理者の取得
       parameters:
         - $ref: '#/components/parameters/sessions'
-        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
             - read
@@ -1023,7 +1023,7 @@ components:
           description: 動画の更新日時
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - md5
@@ -1042,7 +1042,7 @@ components:
         description:
           description: 修正後のゲームの説明文
           type: string
-          example: "before_game_name"
+          example: 'before_game_name'
       required:
         - name
         - description
@@ -1066,7 +1066,7 @@ components:
           description: ゲームの追加された時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - name
@@ -1233,7 +1233,7 @@ components:
           description: 登録時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - name
@@ -1255,7 +1255,7 @@ components:
           description: 登録時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - name
@@ -1286,7 +1286,7 @@ components:
           description: 登録時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - name
@@ -1354,7 +1354,7 @@ components:
           description: 質問の作成時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
       required:
         - id
         - type
@@ -1467,12 +1467,12 @@ components:
           items:
             type: object
             properties:
-                answer:
-                  type: string
-                  example: 面白かった
-                num:
-                  type: integer
-                  example: 5
+              answer:
+                type: string
+                example: 面白かった
+              num:
+                type: integer
+                example: 5
             required:
               - answer
               - num
