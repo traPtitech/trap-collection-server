@@ -49,11 +49,11 @@ func (*DB) CheckMaintainerID(userID string, gameID string) (bool, error) {
 // InsertMaintainer 管理者の追加
 func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	interfaceUserIDs := make([]interface{}, 0, len(userIDs))
-	for _,user := range userIDs {
+	for _, user := range userIDs {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
 			GameID: gameID,
 			UserID: user,
-			Role: 0,
+			Role:   0,
 		})
 	}
 
@@ -73,14 +73,14 @@ func (*DB) GetMaintainers(gameID string, userMap map[string]*openapi.User) ([]*o
 	}
 
 	apiMaintainers := make([]*openapi.Maintainer, 0, len(maintainers))
-	for _,maintainer := range maintainers {
+	for _, maintainer := range maintainers {
 		user, ok := userMap[maintainer.UserID]
 		if !ok {
 			return nil, errors.New("invalid User error")
 		}
 
 		apiMaintainer := &openapi.Maintainer{
-			Id: maintainer.UserID,
+			Id:   maintainer.UserID,
 			Name: user.Name,
 			Role: int32(maintainer.Role),
 		}

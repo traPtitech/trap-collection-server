@@ -97,7 +97,7 @@ func (g *Game) GetGames(all string, c echo.Context) ([]*openapi.Game, error) {
 			return nil, fmt.Errorf("failed to parse bool: %w", err)
 		}
 	}
-	
+
 	if !isAll {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
@@ -261,7 +261,7 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 		userMap[user.Id] = user
 	}
 
-	for _,userID := range userIDs {
+	for _, userID := range userIDs {
 		_, ok := userMap[userID]
 		if !ok {
 			return fmt.Errorf("invalid userID(%s)", userID)
