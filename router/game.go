@@ -88,17 +88,17 @@ func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.G
 // GetGames GET /gamesの処理部分
 func (g *Game) GetGames(all string, c echo.Context) ([]*openapi.Game, error) {
 	var games []*openapi.Game
-	var ball bool
+	var isAll bool
 	var err error
 
 	if len(all) != 0 {
-		ball, err = strconv.ParseBool(all)
+		isAll, err = strconv.ParseBool(all)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse bool: %w", err)
 		}
 	}
 	
-	if !ball {
+	if !isAll {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
 			return nil, fmt.Errorf("Failed In Getting Session:%w", err)
