@@ -2,9 +2,9 @@ openapi: 3.0.2
 servers:
   - url: https://collection.trap.jp/api
 info:
-  description: "traPCollectionのAPI"
-  version: "1.0.0"
-  title: "traPCollection API"
+  description: 'traPCollectionのAPI'
+  version: '1.0.0'
+  title: 'traPCollection API'
   contact:
     name: traP
     url: 'https://github.com/traPtitech/trap-collection-server'
@@ -18,7 +18,7 @@ tags:
   - name: seat
 security:
   - TrapMemberAuth:
-    - read
+      - read
   - LauncherAuth: []
 paths:
   /oauth2/callback:
@@ -76,7 +76,7 @@ paths:
       description: traP Collectionのログアウト
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: postLogout
       parameters:
         - $ref: '#/components/parameters/sessions'
@@ -93,7 +93,7 @@ paths:
       description: 自分の情報の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getMe
       parameters:
         - $ref: '#/components/parameters/sessions'
@@ -114,7 +114,7 @@ paths:
       description: traQの全ユーザー取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getUsers
       parameters:
         - $ref: '#/components/parameters/sessions'
@@ -137,7 +137,7 @@ paths:
       description: ゲームの追加
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: postGame
       parameters:
         - $ref: '#/components/parameters/sessions'
@@ -170,7 +170,7 @@ paths:
         - $ref: '#/components/parameters/sessions'
       security: 
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getGames
       responses:
         "200":
@@ -193,7 +193,7 @@ paths:
       description: ゲームの削除
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: deleteGames
       responses:
@@ -211,7 +211,7 @@ paths:
       description: ゲーム情報の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getGame
       responses:
@@ -230,7 +230,7 @@ paths:
       description: ゲームの情報の修正
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: putGame
       requestBody:
@@ -257,7 +257,7 @@ paths:
       description: ゲームの画像の変更
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: putImage
       requestBody:
@@ -282,7 +282,7 @@ paths:
       description: ゲームの画像の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getImage
       responses:
@@ -309,7 +309,7 @@ paths:
       description: ゲームの動画の変更
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: postVideo
       requestBody:
@@ -330,7 +330,7 @@ paths:
       description: ゲームの動画の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getVideo
       responses:
@@ -344,8 +344,6 @@ paths:
         "500":
           description: 失敗
   /games/{gameID}/maintainers:
-    parameters:
-      - $ref: '#/components/parameters/gameID'
     post:
       tags:
         - game
@@ -353,9 +351,10 @@ paths:
       description: ゲームのバージョン更新権限保持者の追加
       parameters:
         - $ref: '#/components/parameters/sessions'
+        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: postMaintainer
       requestBody:
@@ -375,10 +374,11 @@ paths:
       description: ゲームの管理者の取得
       parameters:
         - $ref: '#/components/parameters/sessions'
+        - $ref: '#/components/parameters/gameID'
       security:
         - TrapMemberAuth:
-          - read
-      operationId: getOwner
+            - read
+      operationId: getMaintainer
       responses:
         "200":
           description: 成功
@@ -400,7 +400,7 @@ paths:
       description: ゲームのバージョンの作成
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: postGameVersion
       requestBody:
@@ -424,7 +424,7 @@ paths:
       description: ゲームのバージョン一覧の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getGameVersion
       responses:
         "200":
@@ -447,7 +447,7 @@ paths:
       description: ゲームの最新バージョンへのファイルの追加
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: postFile
       requestBody:
@@ -473,7 +473,7 @@ paths:
       description: ゲームの最新バージョンのファイルの取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getGameFile
       parameters:
@@ -498,7 +498,7 @@ paths:
       description: ゲームの最新バージョンへのURLの追加
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - GameMaintainerAuth: []
       operationId: postURL
       requestBody:
@@ -524,7 +524,7 @@ paths:
       description: ゲームの最新バージョンのURLの取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getGameURL
       responses:
@@ -544,7 +544,7 @@ paths:
       description: 新しいバージョンの作成
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - AdminAuth: []
       operationId: postVersion
       requestBody:
@@ -569,7 +569,7 @@ paths:
       description: バージョン一覧の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getVersions
       responses:
         "200":
@@ -592,7 +592,7 @@ paths:
       description: バージョンの詳細情報の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getVersion
       responses:
@@ -614,7 +614,7 @@ paths:
       description: バージョンへのゲームの追加
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - AdminAuth: []
       operationId: postGameToVersion
       requestBody:
@@ -666,7 +666,7 @@ paths:
       description: 質問の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - LauncherAuth: []
       operationId: getQuestions
       parameters:
@@ -690,7 +690,7 @@ paths:
       description: 質問を作成
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - AdminAuth: []
       operationId: postQuestion
       requestBody:
@@ -722,7 +722,7 @@ paths:
       description: 質問の削除
       security:
         - TrapMemberAuth:
-          - read
+            - read
         - AdminAuth: []
       operationId: deleteQuestion
       responses:
@@ -766,7 +766,7 @@ paths:
       description: 回答の統計情報を取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getResponse
       parameters:
         - name: require
@@ -794,7 +794,7 @@ paths:
       description: 着席
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: postFixSeat
       responses:
         "200":
@@ -808,7 +808,7 @@ paths:
       description: 離席
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: deleteFixSeat
       responses:
         "200":
@@ -823,7 +823,7 @@ paths:
       description: 席の状態の取得
       security:
         - TrapMemberAuth:
-          - read
+            - read
       operationId: getSeat
       responses:
         "200":
@@ -1013,12 +1013,12 @@ components:
           description: ゲーム本体の更新日時
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
         imgUpdatedAt:
           description: 画像の更新日時
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
         movieUpdatedAt:
           description: 動画の更新日時
           type: string
@@ -1038,7 +1038,7 @@ components:
         name:
           description: 修正後のゲームの名前
           type: string
-          example: "after_game_name"
+          example: 'after_game_name'
         description:
           description: 修正後のゲームの説明文
           type: string
@@ -1053,11 +1053,11 @@ components:
         id:
           description: 追加されたゲームのUUID
           type: string
-          example: "eb4a287d-15d9-4f12-8fff-bd088b12ba80"
+          example: 'eb4a287d-15d9-4f12-8fff-bd088b12ba80'
         name:
           description: 追加されたゲームの名前
           type: string
-          example: "Flythm"
+          example: 'Flythm'
         description:
           description: 追加されたゲームの説明
           type: string
@@ -1083,12 +1083,12 @@ components:
         name:
           description: ゲーム名
           type: string
-          example: "Flythm"
+          example: 'Flythm'
         createdAt:
           description: ゲームの登録時刻
           type: string
           format: date-time
-          example: "2019-09-25T09:51:31Z"
+          example: '2019-09-25T09:51:31Z'
         version:
           $ref: '#/components/schemas/GameVersion'
       required:
@@ -1103,7 +1103,7 @@ components:
         name:
           description: 名前
           type: string
-          example: "Flythm"
+          example: 'Flythm'
         description:
           description: バージョンの説明
           type: string
@@ -1314,7 +1314,7 @@ components:
           type: array
           items:
             type: string
-            example: "ある"
+            example: 'ある'
         required:
           description: 回答が必須かどうか
           type: boolean
