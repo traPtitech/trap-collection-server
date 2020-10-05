@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // GameVersion gameのversionの構造体
@@ -23,6 +25,7 @@ type GameVersion struct {
 type GameVersionMeta interface {
 	GetGameType(gameID string, operatingSystem string) (string, error)
 	GetURL(gameID string) (string, error)
+	InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error)
 }
 
 // GetGameType ゲームの種類の取得
@@ -71,4 +74,33 @@ func (*DB) GetURL(gameID string) (string, error) {
 	}
 
 	return url, err
+}
+
+// InsertGameVersion GameVersionの追加
+func (*DB) InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error) {
+	newGameVersion := GameVersion{
+		GameID:      gameID,
+		Name:        name,
+		Description: description,
+	}
+
+	err := db.Create(&newGameVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a game version record: %w", err)
+	}
+
+	gameVersion := GameVersion{}
+	err = db.Last(&gameVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a last game version record: %w", err)
+	}
+
+	apiGameVersion := openapi.GameVersion{
+		Id:          int32(gameVersion.ID),
+		Name:        gameVersion.Name,
+		Description: gameVersion.Description,
+		CreatedAt:   gameVersion.CreatedAt,
+	}
+
+	return &apiGameVersion, nil
 }

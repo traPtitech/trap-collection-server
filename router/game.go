@@ -311,3 +311,12 @@ func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintain
 
 	return maintainers, nil
 }
+
+func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
+	gameVersion, err := g.db.InsertGameVersion(gameID, newGameVersion.Name, newGameVersion.Description)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert game version: %w", err)
+	}
+
+	return gameVersion, nil
+}
