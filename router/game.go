@@ -311,3 +311,12 @@ func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintain
 
 	return maintainers, nil
 }
+
+func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
+	gameVersions, err := g.db.GetGameVersions(gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game version: %w", err)
+	}
+
+	return gameVersions, nil
+}
