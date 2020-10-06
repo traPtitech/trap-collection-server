@@ -26,7 +26,7 @@ type Game struct {
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
-	IsThereGame(gameID string) (bool, error)
+	IsExistGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
 	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
 	DeleteGame(gameID string) error
@@ -34,7 +34,7 @@ type GameMeta interface {
 	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
 }
 
-func (*DB) IsThereGame(gameID string) (bool, error) {
+func (*DB) IsExistGame(gameID string) (bool, error) {
 	err := db.Where("id = ?", gameID).
 		Find(&Game{}).Error
 	if gorm.IsRecordNotFoundError(err) {
