@@ -151,7 +151,9 @@ func (*DB) DeleteGame(gameID string) error {
 
 // GetGameInfo ゲーム情報の取得
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
-	game := &openapi.Game{}
+	game := &openapi.Game{
+		Version: &openapi.GameVersion{},
+	}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
 		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
