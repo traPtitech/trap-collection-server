@@ -81,6 +81,14 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			return c.String(http.StatusInternalServerError, "No GameID")
 		}
 
+		isThereGame, err := m.db.IsThereGame(gameID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if there is the game: %w", err))
+		}
+		if !isThereGame {
+			return echo.NewHTTPError(http.StatusNotFound, errors.New("gameID doesn't exist"))
+		}
+
 		isMaintainer, err := m.db.CheckMaintainerID(userID, gameID)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Checking MaintainerID: %w", err).Error())

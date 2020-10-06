@@ -26,11 +26,25 @@ type Game struct {
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
+	IsThereGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
 	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
 	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+}
+
+func (*DB) IsThereGame(gameID string) (bool, error) {
+	err := db.Where("id = ?", gameID).
+		Find(&Game{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get a game by id: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetGames ゲーム一覧の取得
