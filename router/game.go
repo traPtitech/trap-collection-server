@@ -320,3 +320,12 @@ func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVer
 
 	return gameVersion, nil
 }
+
+func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
+	gameVersions, err := g.db.GetGameVersions(gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game version: %w", err)
+	}
+
+	return gameVersions, nil
+}
