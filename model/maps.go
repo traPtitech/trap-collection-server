@@ -16,6 +16,13 @@ var gameTypeIntStrMap = map[uint8]string{
 	3: "mac",
 }
 
+var gameTypeStrIntMap = map[string]uint8{
+	"url": 0,
+	"jar": 1,
+	"windows": 2,
+	"mac": 3,
+}
+
 var extIntStrMap = map[uint8]string{
 	0: "jpeg",
 	1: "png",

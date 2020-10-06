@@ -33,6 +33,7 @@ var (
 
 // DBMeta DB関連のインターフェイス
 type DBMeta interface {
+	GameAssetMeta
 	GameIntroductionMeta
 	GameVersionRelationMeta
 	GameVersionMeta
