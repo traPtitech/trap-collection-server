@@ -9,6 +9,13 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
+var (
+	AssetTypeURL uint8 = 0
+	AssetTypeJar uint8 = 1
+	AssetTypeWindowsExe uint8 = 2
+	AssetTypeMacApp uint8 = 3
+)
+
 // GameAsset gameのassetの構造体
 type GameAsset struct {
 	ID            uint `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
@@ -36,7 +43,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 
 		gameAsset := GameAsset{
 			GameVersionID: gameVersion.ID,
-			Type: gameTypeStrIntMap["url"],
+			Type: AssetTypeURL,
 			URL: url,
 		}
 		err = tx.Create(&gameAsset).Error
