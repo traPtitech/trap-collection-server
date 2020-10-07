@@ -624,10 +624,7 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                description: ゲームのUUID
-                type: string
+              $ref: '#/components/schemas/GameIDs'
       responses:
         "200":
           description: 成功
@@ -1115,6 +1112,20 @@ components:
       required:
         - id
         - name
+        - createdAt
+        - version
+    GameIDs:
+      description: ゲームのUUIDの一覧
+      type: object
+      properties:
+        gameIDs:
+          description: ゲームのUUIDの配列
+          type: array
+          items:
+            description: ゲームのUUID
+            type: string
+            format: uuid
+            example: d321d985-6ceb-40ae-bf59-189810193020
     NewGameVersion:
       description: 新しいゲームのバージョン
       type: object
