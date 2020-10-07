@@ -123,11 +123,11 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 		admins := []string{"mazrean"}
 		var userName string
 		var accessToken string
-		interfaceUserName, ok := sess.Values["userName"]
-		if !ok || interfaceUserName == nil {
+		interfaceUserName, ok1 := sess.Values["userName"]
+		interfaceAccessToken, ok2 := sess.Values["accessToken"]
+		if !ok1 || interfaceUserName == nil {
 			log.Printf("error: unexcepted no userName")
-			interfaceAccessToken, ok := sess.Values["accessToken"]
-			if !ok || interfaceAccessToken == nil {
+			if !ok2 || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
 			accessToken = interfaceAccessToken.(string)
@@ -137,15 +137,16 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 			}
 			userName = user.Name
 		}
+		userName = interfaceUserName.(string)
 
 		for _, v := range admins {
 			if v == userName {
+				c.Set("userName", interfaceUserName)
+				c.Set("accessToken", interfaceAccessToken)
+
 				return next(c)
 			}
 		}
-
-		c.Set("userName", userName)
-		c.Set("accessToken", accessToken)
 
 		return c.String(http.StatusUnauthorized, errors.New("You Are Not Admin").Error())
 	}
