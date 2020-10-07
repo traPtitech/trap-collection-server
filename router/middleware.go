@@ -122,22 +122,35 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 		// 暫定的な実装。最終的にはDBにあるAdminと比べ、userIDを使い認証するようにする。
 		admins := []string{"mazrean"}
 		var userName string
-		var accessToken string
 		interfaceUserName, ok1 := sess.Values["userName"]
 		interfaceAccessToken, ok2 := sess.Values["accessToken"]
 		if !ok1 || interfaceUserName == nil {
 			log.Printf("error: unexcepted no userName")
+
 			if !ok2 || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
-			accessToken = interfaceAccessToken.(string)
+
+			accessToken, ok := interfaceAccessToken.(string)
+			if !ok {
+				log.Printf("error: unexcepted invalid accessToken")
+				return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid accessToken"))
+			}
+
 			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
+
 			userName = user.Name
 		}
-		userName = interfaceUserName.(string)
+
+		var ok bool
+		userName, ok = interfaceUserName.(string)
+		if !ok {
+			log.Printf("error: unexcepted invalid userName")
+			return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
+		}
 
 		for _, v := range admins {
 			if v == userName {
