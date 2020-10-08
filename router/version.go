@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -39,6 +40,20 @@ func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails
 	}
 
 	return launcherVersion, nil
+}
+
+func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.GameIDs) (*openapi.Version, error) {
+	intLauncherVersionID, err := strconv.Atoi(launcherVersionID)
+	if err != nil {
+		return nil, errors.New("invalid launcherVersionID")
+	}
+
+	version, err := v.db.InsertGamesToLauncherVersion(intLauncherVersionID, gameIDs.GameIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert games to version: %w", err)
+	}
+
+	return version, nil
 }
 
 // GetCheckList GET /versions/checkの処理部分
