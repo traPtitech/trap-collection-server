@@ -102,7 +102,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed in transaction")
+		return nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 
 	return &version, nil
@@ -112,7 +112,7 @@ func getGameVersion(db *gorm.DB, launcherVersionID int) ([]string, error) {
 	//IDだけなのがなにか気持ち悪いので他のカラムも入れられるようPluckではなくSelectにしている
 	rows, err :=db.Table("game_version_relations").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id = games.id").
-		Where("launcher_versions.id = ?", launcherVersionID).
+		Where("game_version_relations.launcher_version_id = ?", launcherVersionID).
 		Select("games.*").
 		Rows()
 	if err != nil {
