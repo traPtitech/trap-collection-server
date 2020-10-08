@@ -22,7 +22,25 @@ type LauncherVersion struct {
 
 // LauncherVersionMeta launcher_versionテーブルのリポジトリ
 type LauncherVersionMeta interface {
+	GetLauncherVersions() ([]*openapi.Version, error)
 	GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error)
+}
+
+func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
+	var launcherVersions []LauncherVersion
+	err := db.Table("launcher_versions")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher versions: %w", err)
+	}
+
+	apiLauncherVersions := make([]*openapi.Version, 0, len(launcherVersions))
+	for _,launcherVersion := range launcherVersions {
+		apiLauncherVersion := openapi.Version{
+			Id: int32(launcherVersion.ID),
+			Name: launcherVersion.Name,
+			CreatedAt: launcherVersion.CreatedAt,
+		}
+	}
 }
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得

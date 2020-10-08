@@ -26,6 +26,15 @@ func newVersion(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.Version
 	return version
 }
 
+func (v *Version) GetVersions() ([]*openapi.Version, error) {
+	versions, err := v.db.GetLauncherVersions()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher versions: %w", err)
+	}
+
+	return versions, nil
+}
+
 // GetVersion GET /version/:launcherVersionIDの処理部分
 func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
