@@ -62,7 +62,7 @@ func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.Chec
 func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.Version, error) {
 	var version openapi.Version
 	var err error
-	err = db.Transaction(func(tx *gorm.DB) error{
+	err = db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{}
 		err := tx.Where("id = ?", launcherVersionID).Find(&launcherVersion).Error
 		if gorm.IsRecordNotFoundError(err) {
@@ -73,10 +73,10 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 		}
 
 		gameVersionRelations := make([]interface{}, 0, len(gameIDs))
-		for _,gameID := range gameIDs {
+		for _, gameID := range gameIDs {
 			gameVersionRelation := GameVersionRelation{
 				LauncherVersionID: uint(launcherVersionID),
-				GameID: gameID,
+				GameID:            gameID,
 			}
 
 			gameVersionRelations = append(gameVersionRelations, gameVersionRelation)
@@ -93,9 +93,9 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 		}
 
 		version = openapi.Version{
-			Id: int32(launcherVersion.ID),
-			Name: launcherVersion.Name,
-			Games: gameIDs,
+			Id:        int32(launcherVersion.ID),
+			Name:      launcherVersion.Name,
+			Games:     gameIDs,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 
@@ -110,7 +110,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 
 func getGameVersion(db *gorm.DB, launcherVersionID int) ([]string, error) {
 	//IDだけなのがなにか気持ち悪いので他のカラムも入れられるようPluckではなくSelectにしている
-	rows, err :=db.Table("game_version_relations").
+	rows, err := db.Table("game_version_relations").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id = games.id").
 		Where("game_version_relations.launcher_version_id = ?", launcherVersionID).
 		Select("games.*").
