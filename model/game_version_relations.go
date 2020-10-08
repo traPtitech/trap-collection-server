@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jinzhu/gorm"
+	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -20,6 +22,7 @@ type GameVersionRelation struct {
 // GameVersionRelationMeta game_version_relationテーブルのリポジトリ
 type GameVersionRelationMeta interface {
 	GetCheckList(versionID uint, operatingSystem string) ([]*openapi.CheckItem, error)
+	InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.Version, error)
 }
 
 // GetCheckList チェックリストの取得
@@ -54,4 +57,78 @@ func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.Chec
 		checkList = append(checkList, checkItem)
 	}
 	return checkList, nil
+}
+
+func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.Version, error) {
+	var version openapi.Version
+	var err error
+	err = db.Transaction(func(tx *gorm.DB) error{
+		launcherVersion := LauncherVersion{}
+		err := tx.Where("id = ?", launcherVersionID).Find(&launcherVersion).Error
+		if gorm.IsRecordNotFoundError(err) {
+			return errors.New("No Launcher Version")
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get a launcher version by id: %w", err)
+		}
+
+		gameVersionRelations := make([]interface{}, 0, len(gameIDs))
+		for _,gameID := range gameIDs {
+			gameVersionRelation := GameVersionRelation{
+				LauncherVersionID: uint(launcherVersionID),
+				GameID: gameID,
+			}
+
+			gameVersionRelations = append(gameVersionRelations, gameVersionRelation)
+		}
+
+		err = gormbulk.BulkInsert(tx, gameVersionRelations, 3000)
+		if err != nil {
+			return fmt.Errorf("failed to insert games into version: %w", err)
+		}
+
+		gameIDs, err = getGameVersion(tx, launcherVersionID)
+		if err != nil {
+			return fmt.Errorf("failed to get game by launcher version id: %w", err)
+		}
+
+		version = openapi.Version{
+			Id: int32(launcherVersion.ID),
+			Name: launcherVersion.Name,
+			Games: gameIDs,
+			CreatedAt: launcherVersion.CreatedAt,
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction")
+	}
+
+	return &version, nil
+}
+
+func getGameVersion(db *gorm.DB, launcherVersionID int) ([]string, error) {
+	//IDだけなのがなにか気持ち悪いので他のカラムも入れられるようPluckではなくSelectにしている
+	rows, err :=db.Table("game_version_relations").
+		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id = games.id").
+		Where("launcher_versions.id = ?", launcherVersionID).
+		Select("games.*").
+		Rows()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games by launcher id: %w", err)
+	}
+
+	gameIDs := []string{}
+	for rows.Next() {
+		game := Game{}
+		err := db.ScanRows(rows, &game)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan game: %w", err)
+		}
+
+		gameIDs = append(gameIDs, game.ID)
+	}
+
+	return gameIDs, nil
 }
