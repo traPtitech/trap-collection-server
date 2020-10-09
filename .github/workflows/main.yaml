@@ -53,3 +53,12 @@ jobs:
         with:
           file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+  api_audit_job:
+    runs-on: ubuntu-latest
+    name: Audit OpenAPI files
+    steps:
+    - uses: actions/checkout@v2
+    - uses: 42Crunch/api-security-audit-action@v1
+      with:
+        api-token: ${{ secrets.API_TOKEN }}
+        min-score: 85
