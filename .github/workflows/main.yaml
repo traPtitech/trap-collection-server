@@ -68,6 +68,8 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: openapi
+      - name: Add PATH
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - run: go install github.com/golang/mock/mockgen
       - run: go generate ./...
       - uses: actions/cache@v1
@@ -96,6 +98,10 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: openapi
+      - name: Add PATH
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - run: go install github.com/golang/mock/mockgen
+      - run: go generate ./...
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v1
         with:
