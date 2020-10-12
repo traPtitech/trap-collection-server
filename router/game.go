@@ -17,7 +17,7 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	db      model.DBMeta
+	db     model.DBMeta
 	storage storage.Storage
 	oauth   base.OAuth
 	openapi.GameApi
