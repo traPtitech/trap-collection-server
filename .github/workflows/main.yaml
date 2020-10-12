@@ -68,6 +68,7 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: openapi
+      - run: go install github.com/golang/mock/mockgen
       - run: go generate ./...
       - uses: actions/cache@v1
         with:
