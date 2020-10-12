@@ -27,6 +27,7 @@ jobs:
         run: |
           docker run --rm \
             -v $PWD:/local \
+            -u root \
             -w /home/groovy/scripts \
             groovy:3.0.2 \
             groovy /local/generate/generator.groovy generate \
