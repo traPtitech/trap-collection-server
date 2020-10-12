@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Generate Code From OpenAPI
         run: |
-          docker run -it --rm \
+          docker run --rm \
             -v $PWD:/local \
             -w /home/groovy/scripts \
             groovy:3.0.2 \
