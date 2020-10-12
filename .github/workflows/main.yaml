@@ -23,10 +23,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - run: mkdir ~/grapes-cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/grapes-cache
+          key: ${{ runner.os }}-grapes-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-grapes-${{ github.ref }}-
+            ${{ runner.os }}-grapes-
       - name: Generate Code From OpenAPI
         run: |
           docker run --rm \
             -v $PWD:/local \
+            -v ~/grapes-cache:/home/groovy/.groovy/grapes \
             -u root \
             -w /home/groovy/scripts \
             groovy:3.0.2 \
@@ -53,6 +68,7 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: openapi
+      - run: go generate ./...
       - uses: actions/cache@v1
         with:
           path: ~/go/pkg/mod
