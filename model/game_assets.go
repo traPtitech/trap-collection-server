@@ -11,13 +11,13 @@ import (
 
 var (
 	// AssetTypeURL ゲームの本体の種類(URL)
-	AssetTypeURL        uint8 = 0
+	AssetTypeURL uint8 = 0
 	// AssetTypeJar ゲームの本体の種類(.jar)
-	AssetTypeJar        uint8 = 1
+	AssetTypeJar uint8 = 1
 	// AssetTypeWindowsExe ゲームの本体の種類(Windowsの.exe)
 	AssetTypeWindowsExe uint8 = 2
 	// AssetTypeMacApp ゲームの本体の種類(Macの.app)
-	AssetTypeMacApp     uint8 = 3
+	AssetTypeMacApp uint8 = 3
 )
 
 // GameAsset gameのassetの構造体

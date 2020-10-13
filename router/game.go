@@ -149,6 +149,10 @@ func (g *Game) DeleteGames(gameID string) error {
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file name: %w", err)
+	}
+
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
