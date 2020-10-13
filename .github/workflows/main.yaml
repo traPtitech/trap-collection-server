@@ -92,6 +92,7 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: mockGenerated
+      - run: mockGenerated
       - uses: actions/cache@v1
         with:
           path: ~/go/pkg/mod
@@ -117,6 +118,7 @@ jobs:
       - uses: actions/download-artifact@v1
         with:
           name: mockGenerated
+      - run: cd mockGenerated
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v1
         with:
