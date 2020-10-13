@@ -17,7 +17,7 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	db     model.DBMeta
+	db      model.DBMeta
 	storage storage.Storage
 	oauth   base.OAuth
 	openapi.GameApi
@@ -220,8 +220,9 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	return file, nil
 }
 
-func (g *Game) PostURL(gameID string, newGameUrl *openapi.NewGameUrl) (*openapi.GameUrl, error) {
-	gameURL,err := g.db.InsertGameURL(gameID, newGameUrl.Url)
+// PostURL POST /games/:gameID/asset/urlの処理部分
+func (g *Game) PostURL(gameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
+	gameURL, err := g.db.InsertGameURL(gameID, newGameURL.Url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert url: %w", err)
 	}
@@ -285,6 +286,7 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 	return nil
 }
 
+// GetMaintainer GET /games/:gameID/maintainer
 func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintainer, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -321,6 +323,7 @@ func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintain
 	return maintainers, nil
 }
 
+// PostGameVersion POST /games/:gameID/version
 func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
 	gameVersion, err := g.db.InsertGameVersion(gameID, newGameVersion.Name, newGameVersion.Description)
 	if err != nil {
@@ -330,6 +333,7 @@ func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVer
 	return gameVersion, nil
 }
 
+// GetGameVersion /games/:gameID/version
 func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
 	gameVersions, err := g.db.GetGameVersions(gameID)
 	if err != nil {

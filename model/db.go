@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	// sql init
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
-
-const containerName = "trap_collection"
 
 var (
 	db        *gorm.DB
