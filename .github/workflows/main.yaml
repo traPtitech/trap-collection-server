@@ -1,6 +1,11 @@
 name: CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - 'master'
+      - 'develop'
+  pull_request:
 
 jobs:
   mod:
@@ -9,7 +14,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v1
         with:
-          go-version: 1.14
+          go-version: 1.15
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
         with:
@@ -18,20 +23,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gomod-
       - run: go mod download
-  lint:
-    name: Lint
+  generate:
+    name: Generate
     runs-on: ubuntu-latest
-    needs: [mod]
     steps:
-      - uses: actions/setup-go@v1
-        with:
-          go-version: 1.14
-      - name: Install reviewdog
-        run: curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-      - name: Install golangci-lint
-        run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s --  -b $(go env GOPATH)/bin
-      - name: Add PATH
-        run: echo "::add-path::$(go env GOPATH)/bin"
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
         with:
@@ -39,10 +34,102 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
+      - run: mkdir ~/grapes-cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/grapes-cache
+          key: ${{ runner.os }}-grapes-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-grapes-${{ github.ref }}-
+            ${{ runner.os }}-grapes-
+      - name: Generate Code From OpenAPI
+        run: |
+          docker run --rm \
+            -v $PWD:/local \
+            -v ~/grapes-cache:/home/groovy/.groovy/grapes \
+            -u root \
+            -w /home/groovy/scripts \
+            groovy:3.0.2 \
+            groovy /local/generate/generator.groovy generate \
+            -i /local/docs/swagger/openapi.yml \
+            -g CollectionCodegen \
+            -t /local/generate \
+            -o /local
+      - uses: actions/upload-artifact@v1
+        with:
+          name: openapi
+          path: openapi
+  mockgen:
+    name: MockGen
+    runs-on: ubuntu-latest
+    needs: [mod,generate]
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+      - uses: actions/checkout@v1
+      - uses: actions/download-artifact@v1
+        with:
+          name: openapi
+      - name: Add PATH
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - run: go install github.com/golang/mock/mockgen
+      - run: go generate ./...
+      - uses: actions/upload-artifact@v1
+        with:
+          name: mockGenerated
+          path: ./
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [mockgen]
+    env:
+      GOCACHE: "/tmp/go/cache"
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+      - uses: actions/download-artifact@v1
+        with:
+          name: mockGenerated
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - uses: actions/cache@v1
+        with:
+          path: /tmp/go/cache
+          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ github.ref }}-
+            ${{ runner.os }}-go-build-
+      - run: cd mockGenerated && go build -o collection
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: [mockgen]
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+      - uses: actions/download-artifact@v1
+        with:
+          name: mockGenerated
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
       - name: golangci-lint
-        run: golangci-lint run --out-format=line-number | reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: reviewdog/action-golangci-lint@v1
+        with:
+          reporter: github-pr-check
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workdir: mockGenerated
+          fail_on_error: true
   spectral:
     name: Spectral
     runs-on: ubuntu-latest

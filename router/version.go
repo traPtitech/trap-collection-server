@@ -26,6 +26,7 @@ func newVersion(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.Version
 	return version
 }
 
+// PostVersion POST /versions
 func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
 	version, err := v.db.InsertLauncherVersion(newVersion.Name)
 	if err != nil {

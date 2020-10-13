@@ -34,6 +34,7 @@ type GameMeta interface {
 	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
 }
 
+// IsExistGame ゲームが存在するかの確認
 func (*DB) IsExistGame(gameID string) (bool, error) {
 	err := db.Where("id = ?", gameID).
 		Find(&Game{}).Error
