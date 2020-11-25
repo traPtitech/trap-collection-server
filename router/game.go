@@ -241,7 +241,11 @@ func (g *Game) postIntroduction(gameID string, introduction io.Reader, role stri
 	fileTypeBuf := bytes.NewBuffer(nil)
 	fileBuf := bytes.NewBuffer(nil)
 	mw := io.MultiWriter(fileTypeBuf, fileBuf)
-	io.Copy(mw, introduction)
+	_, err := io.Copy(mw, introduction)
+	if err != nil {
+		return fmt.Errorf("failed to make MultiWriter: %w", err)
+	}
+
 	fileType, err := filetype.MatchReader(fileTypeBuf)
 	if err != nil {
 		return fmt.Errorf("failed to get filetype")
