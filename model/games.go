@@ -4,6 +4,7 @@ package model
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -15,19 +16,36 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	ID          string    `gorm:"type:varchar(36);PRIMARY_KEY;"`
+	ID          string      `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameVersion GameVersion `gorm:"association_foreignkey:GameID;"`
-	Name        string    `gorm:"type:varchar(32);NOT NULL;"`
-	Description string    `gorm:"type:text;"`
-	CreatedAt   time.Time `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
-	DeletedAt   time.Time `gorm:"type:varchar(32);DEFAULT:NULL;"`
+	Name        string      `gorm:"type:varchar(32);NOT NULL;"`
+	Description string      `gorm:"type:text;"`
+	CreatedAt   time.Time   `gorm:"type:datetime;NOT NULL;DEFAULT:CURRENT_TIMESTAMP;"`
+	DeletedAt   time.Time   `gorm:"type:varchar(32);DEFAULT:NULL;"`
 }
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
+	IsExistGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
 	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
+	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
+	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+}
+
+// IsExistGame ゲームが存在するかの確認
+func (*DB) IsExistGame(gameID string) (bool, error) {
+	err := db.Where("id = ?", gameID).
+		Find(&Game{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get a game by id: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetGames ゲーム一覧の取得
@@ -47,10 +65,10 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 	var err error
 	if len(userID) != 0 {
 		rows, err = db.Joins("INNER JOIN maintainers ON g.id = maintainers.game_id").
-			Where("(gv.id = ? OR gv.id IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
+			Where("(gv.id = ? OR gv.id IS NULL AND g.deleted_at IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
 			Rows()
 	} else {
-		rows, err = db.Where("gv.id = ?", sub).Rows()
+		rows, err = db.Where("gv.id = ? AND g.deleted_at IS NULL", sub).Rows()
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Games: %w", err)
@@ -69,10 +87,10 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		}
 		if id.Valid && name.Valid && description.Valid && createdAt.Valid {
 			game.Version = &openapi.GameVersion{
-				Id: id.Int32,
-				Name: name.String,
+				Id:          id.Int32,
+				Name:        name.String,
 				Description: description.String,
-				CreatedAt: createdAt.Time,
+				CreatedAt:   createdAt.Time,
 			}
 		}
 		games = append(games, game)
@@ -89,8 +107,8 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 	}
 
 	game := &Game{
-		ID: id.String(),
-		Name: gameName,
+		ID:          id.String(),
+		Name:        gameName,
 		Description: gameDescription,
 	}
 
@@ -108,7 +126,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 		maintainer := Maintainer{
 			GameID: game.ID,
 			UserID: userID,
-			Role: 1,
+			Role:   1,
 		}
 		err = tx.Create(&maintainer).Error
 		if err != nil {
@@ -122,13 +140,28 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 	}
 
 	gameMeta := &openapi.GameMeta{
-		Id: game.ID,
-		Name: game.Name,
+		Id:          game.ID,
+		Name:        game.Name,
 		Description: game.Description,
-		CreatedAt: game.CreatedAt,
+		CreatedAt:   game.CreatedAt,
 	}
 
 	return gameMeta, nil
+}
+
+// DeleteGame ゲームの削除
+func (*DB) DeleteGame(gameID string) error {
+	isNotFound := db.Where("id = ? AND deleted_at IS NULL", gameID).Find(&Game{}).RecordNotFound()
+	if isNotFound {
+		return errors.New("record not found")
+	}
+
+	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update("deleted_at", time.Now()).Error
+	if err != nil {
+		return fmt.Errorf("failed to DELETE Game: %w", err)
+	}
+
+	return nil
 }
 
 // GetGameInfo ゲーム情報の取得
@@ -138,7 +171,7 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 	}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
-		Joins("INNER JOIN game_versions ON games.id = game_versions.game_id").
+		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
 		Where("games.id = ?", gameID).
 		Order("game_versions.created_at").
 		Limit(1).
@@ -147,12 +180,48 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
 	if rows.Next() {
-		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &game.Version.Id, &game.Version.Name, &game.Version.Description, &game.Version.CreatedAt)
+		var versionID sql.NullInt32
+		var versionName sql.NullString
+		var versionDescription sql.NullString
+		var versionCreatedAt sql.NullTime
+		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &versionID, &versionName, &versionDescription, &versionCreatedAt)
 		if err != nil {
 			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
+		}
+		if versionID.Valid && versionName.Valid && versionDescription.Valid && versionCreatedAt.Valid {
+			game.Version.Id = versionID.Int32
+			game.Version.Name = versionName.String
+			game.Version.Description = versionDescription.String
+			game.Version.CreatedAt = versionCreatedAt.Time
 		}
 	}
 	log.Printf("debug: %#v\n", game)
 
 	return game, nil
+}
+
+// UpdateGame ゲームの更新
+func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update(Game{
+		Name:        newGameMeta.Name,
+		Description: newGameMeta.Description,
+	}).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to update game: %w", err)
+	}
+
+	var game Game
+	err = db.Where("id = ?", gameID).Find(&game).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to find game: %w", err)
+	}
+
+	gameMeta := &openapi.GameMeta{
+		Id:          game.ID,
+		Name:        game.Name,
+		Description: game.Description,
+		CreatedAt:   game.CreatedAt,
+	}
+
+	return gameMeta, nil
 }

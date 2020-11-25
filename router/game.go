@@ -18,9 +18,9 @@ import (
 
 // Game gameの構造体
 type Game struct {
-	db model.DBMeta
+	db      model.DBMeta
 	storage storage.Storage
-	oauth base.OAuth
+	oauth   base.OAuth
 	openapi.GameApi
 }
 
@@ -35,7 +35,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 }
 
 //PostGame POST /gamesの処理部分
-func (g *Game) PostGame(c echo.Context, game *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+func (g *Game) PostGame(game *openapi.NewGameMeta, c echo.Context) (*openapi.GameMeta, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session:%w", err)
@@ -72,17 +72,34 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 	if err != nil {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
+
+	return game, nil
+}
+
+// PutGame PUT /games/:gameID
+func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+	game, err := g.db.UpdateGame(gameID, gameMeta)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update game: %w", err)
+	}
+
 	return game, nil
 }
 
 // GetGames GET /gamesの処理部分
-func (g *Game) GetGames(c echo.Context, all string) ([]*openapi.Game, error) {
+func (g *Game) GetGames(all string, c echo.Context) ([]*openapi.Game, error) {
 	var games []*openapi.Game
-	ball, err := strconv.ParseBool(all)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse bool: %w", err)
+	var isAll bool
+	var err error
+
+	if len(all) != 0 {
+		isAll, err = strconv.ParseBool(all)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bool: %w", err)
+		}
 	}
-	if !ball {
+
+	if !isAll {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
 			return nil, fmt.Errorf("Failed In Getting Session:%w", err)
@@ -120,9 +137,23 @@ func (g *Game) GetGames(c echo.Context, all string) ([]*openapi.Game, error) {
 	return games, nil
 }
 
+// DeleteGames DELETE /games/:gameIDの処理部分
+func (g *Game) DeleteGames(gameID string) error {
+	err := g.db.DeleteGame(gameID)
+	if err != nil {
+		return fmt.Errorf("failed to delete game: %w", err)
+	}
+
+	return nil
+}
+
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file name: %w", err)
+	}
+
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
@@ -143,7 +174,7 @@ func (g *Game) GetImage(gameID string) (io.Reader, error) {
 
 // PostImage POST /game/:gameID/image
 func (g *Game) PostImage(gameID string, image multipartFile) error {
-	err :=g.postIntroduction(gameID, image, "image")
+	err := g.postIntroduction(gameID, image, "image")
 	if err != nil {
 		return fmt.Errorf("failed to post introduction: %w", err)
 	}
@@ -161,9 +192,9 @@ func (g *Game) GetVideo(gameID string) (io.Reader, error) {
 }
 
 var typeExtMap map[string]string = map[string]string{
-	"jar": "jar",
+	"jar":     "jar",
 	"windows": "zip",
-	"mac": "zip",
+	"mac":     "zip",
 }
 
 func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
@@ -180,9 +211,9 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 	return gameID + "_game." + ext, nil
 }
 
-var roleMap = map[string]int8 {
-	"image":0,
-	"video":1,
+var roleMap = map[string]int8{
+	"image": 0,
+	"video": 1,
 }
 
 func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
@@ -227,6 +258,16 @@ func (g *Game) postIntroduction(gameID string, introduction io.Reader, role stri
 	return nil
 }
 
+// PostURL POST /games/:gameID/asset/urlの処理部分
+func (g *Game) PostURL(gameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
+	gameURL, err := g.db.InsertGameURL(gameID, newGameURL.Url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert url: %w", err)
+	}
+
+	return gameURL, nil
+}
+
 // GetGameURL GET /games/:gameID/urlの処理部分
 func (g *Game) GetGameURL(gameID string) (string, error) {
 	url, err := g.db.GetURL(gameID)
@@ -235,4 +276,107 @@ func (g *Game) GetGameURL(gameID string) (string, error) {
 	}
 
 	return url, nil
+}
+
+// PostMaintainer POST /games/:gameID/maintainerの処理部分
+func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c echo.Context) error {
+	userIDs := maintainers.Maintainers
+
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("failed to get session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("error: unexpected getting access token error")
+		return errors.New("unexpected error occcured while getting access token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("error: unexpected parsing access token error")
+		return errors.New("failed to parse access token")
+	}
+
+	users, err := g.oauth.GetUsers(accessToken)
+	if err != nil {
+		return fmt.Errorf("failed to GetUsers: %w", err)
+	}
+
+	userMap := make(map[string]*openapi.User, len(users))
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
+	for _, userID := range userIDs {
+		_, ok := userMap[userID]
+		if !ok {
+			return fmt.Errorf("invalid userID(%s)", userID)
+		}
+	}
+
+	err = g.db.InsertMaintainer(gameID, userIDs)
+	if err != nil {
+		return fmt.Errorf("failed to insert maintainers: %w", err)
+	}
+
+	return nil
+}
+
+// GetMaintainer GET /games/:gameID/maintainer
+func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintainer, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session:%w", err)
+	}
+
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("error: unexpected getting access token error")
+		return nil, errors.New("unexpected error occcured while getting access token")
+	}
+
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("error: unexpected parsing access token error")
+		return nil, errors.New("failed to parse access token")
+	}
+
+	users, err := g.oauth.GetUsers(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GetUsers: %w", err)
+	}
+
+	userMap := make(map[string]*openapi.User, len(users))
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+
+	maintainers, err := g.db.GetMaintainers(gameID, userMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get maintainers: %w", err)
+	}
+
+	return maintainers, nil
+}
+
+// PostGameVersion POST /games/:gameID/version
+func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
+	gameVersion, err := g.db.InsertGameVersion(gameID, newGameVersion.Name, newGameVersion.Description)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert game version: %w", err)
+	}
+
+	return gameVersion, nil
+}
+
+// GetGameVersion /games/:gameID/version
+func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
+	gameVersions, err := g.db.GetGameVersions(gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game version: %w", err)
+	}
+
+	return gameVersions, nil
 }

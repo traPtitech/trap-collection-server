@@ -12,7 +12,7 @@ import (
 
 // Version versionの構造体
 type Version struct {
-	db model.DBMeta
+	db           model.DBMeta
 	launcherAuth base.LauncherAuth
 	openapi.VersionApi
 }
@@ -24,6 +24,16 @@ func newVersion(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.Version
 	version.launcherAuth = launcherAuth
 
 	return version
+}
+
+// PostVersion POST /versions
+func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
+	version, err := v.db.InsertLauncherVersion(newVersion.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert a lancher version: %w", err)
+	}
+
+	return version, nil
 }
 
 // GetVersion GET /version/:launcherVersionIDの処理部分

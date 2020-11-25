@@ -3,8 +3,9 @@
 FROM groovy:3.0.2 AS generate
 WORKDIR /home/groovy/scripts
 COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
-VOLUME /home/groovy/.groovy/grapes
-RUN groovy /local/generator.groovy generate \
+USER root
+RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
+  groovy /local/generator.groovy generate \
   -i /local/openapi.yml \
   -g CollectionCodegen \
   -t /local \
@@ -12,9 +13,9 @@ RUN groovy /local/generator.groovy generate \
 COPY . /local
 
 
-FROM golang:1.14.2-alpine AS build
+FROM golang:1.15.2-alpine AS build
 
-RUN --mount=type=cache,target=/var/cache/apk apk add --update git upx
+RUN apk add --update --no-cache git
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.mod go.sum ./
@@ -23,18 +24,15 @@ RUN go mod download
 COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o main -ldflags "-s -w" -tags main
-RUN upx ./main
-
 
 FROM alpine:3.11.6 AS runtime
 
-ENV DOCKERIZE_VERSION v0.6.1
-RUN apk add --update tzdata && \
-  cp /usr/share/zoneinfo/Asia/Tokyo /Tokyo && \
-  apk del tzdata && \
-  rm -rf /var/cache/apk/* && \
-  mkdir -p /usr/share/zoneinfo/Asia && \
-  mv /Tokyo /usr/share/zoneinfo/Asia
+ENV TZ=Asia/Tokyo
+RUN apk --update --no-cache add tzdata && \
+  cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
+  apk del tzdata
+
+ENV DOCKERIZE_VERSION=v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
   tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
   rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz

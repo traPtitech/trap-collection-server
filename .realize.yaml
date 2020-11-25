@@ -18,5 +18,8 @@ schema:
       paths:
         - ./router
         - ./model
+        - ./storage
+        - ./session
+        - ./main.go
       ignored_paths:
         - vender

@@ -15,7 +15,7 @@ import (
 
 // Middleware middlewareの構造体
 type Middleware struct {
-	db model.DBMeta
+	db    model.DBMeta
 	oauth base.OAuth
 	openapi.Middleware
 }
@@ -81,6 +81,14 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 			return c.String(http.StatusInternalServerError, "No GameID")
 		}
 
+		isThereGame, err := m.db.IsExistGame(gameID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if there is the game: %w", err))
+		}
+		if !isThereGame {
+			return echo.NewHTTPError(http.StatusNotFound, errors.New("gameID doesn't exist"))
+		}
+
 		isMaintainer, err := m.db.CheckMaintainerID(userID, gameID)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Checking MaintainerID: %w", err).Error())
@@ -113,31 +121,42 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		// 暫定的な実装。最終的にはDBにあるAdminと比べ、userIDを使い認証するようにする。
 		admins := []string{"mazrean"}
-		var userName string
-		var accessToken string
-		interfaceUserName, ok := sess.Values["userName"]
-		if !ok || interfaceUserName == nil {
+		interfaceUserName, ok1 := sess.Values["userName"]
+		userName, ok2 := interfaceUserName.(string)
+		if !ok2 {
+			log.Printf("error: unexcepted invalid userName")
+			return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
+		}
+		interfaceAccessToken, ok3 := sess.Values["accessToken"]
+		if !ok1 || !ok2 {
 			log.Printf("error: unexcepted no userName")
-			interfaceAccessToken, ok := sess.Values["accessToken"]
-			if !ok || interfaceAccessToken == nil {
+
+			if !ok3 || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
-			accessToken = interfaceAccessToken.(string)
+
+			accessToken, ok := interfaceAccessToken.(string)
+			if !ok {
+				log.Printf("error: unexcepted invalid accessToken")
+				return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid accessToken"))
+			}
+
 			user, err := m.oauth.GetMe(accessToken)
 			if err != nil {
 				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
 			}
+
 			userName = user.Name
 		}
 
 		for _, v := range admins {
 			if v == userName {
+				c.Set("userName", interfaceUserName)
+				c.Set("accessToken", interfaceAccessToken)
+
 				return next(c)
 			}
 		}
-
-		c.Set("userName", userName)
-		c.Set("accessToken", accessToken)
 
 		return c.String(http.StatusUnauthorized, errors.New("You Are Not Admin").Error())
 	}
@@ -159,7 +178,10 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 				if isThere {
 					log.Printf("debug: %d", versionID)
 					sess.Values["versionID"] = versionID
-					sess.Save(c.Request(), c.Response())
+					err = sess.Save(c.Request(), c.Response())
+					if err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+					}
 
 					return next(c)
 				}
@@ -175,7 +197,10 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 
 		sess.Values["productKey"] = key
 		sess.Values["version_id"] = versionID
-		sess.Save(c.Request(), c.Response())
+		err = sess.Save(c.Request(), c.Response())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+		}
 
 		return next(c)
 	}

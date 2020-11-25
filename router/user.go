@@ -27,7 +27,7 @@ func newUser(oauth base.OAuth) *User {
 
 // GetMe GET /users/meの処理部分
 func (*User) GetMe(c echo.Context) (*openapi.User, error) {
-	sess,err := session.Get("sessions", c)
+	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Session: %w", err)
 	}
@@ -50,28 +50,28 @@ func (*User) GetMe(c echo.Context) (*openapi.User, error) {
 }
 
 // GetUsers GET /usersの処理部分
-func (u *User) GetUsers(c echo.Context) ([]*openapi.User,error) {
-		sess, err := session.Get("sessions", c)
-		if err != nil {
-			return nil, fmt.Errorf("Failed In Getting Session:%w", err)
-		}
+func (u *User) GetUsers(c echo.Context) ([]*openapi.User, error) {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Session:%w", err)
+	}
 
-		interfaceAccessToken, ok := sess.Values["accessToken"]
-		if !ok {
-			log.Println("unexpected getting access token error")
-			return nil, errors.New("Failed In Getting Access Token")
-		}
+	interfaceAccessToken, ok := sess.Values["accessToken"]
+	if !ok {
+		log.Println("unexpected getting access token error")
+		return nil, errors.New("Failed In Getting Access Token")
+	}
 
-		accessToken, ok := interfaceAccessToken.(string)
-		if !ok {
-			log.Println("unexpected parsing access token error")
-			return nil, errors.New("Failed In Parsing Access Token")
-		}
+	accessToken, ok := interfaceAccessToken.(string)
+	if !ok {
+		log.Println("unexpected parsing access token error")
+		return nil, errors.New("Failed In Parsing Access Token")
+	}
 
-		users, err := u.OAuth.GetUsers(accessToken)
-		if err != nil {
-			return nil, fmt.Errorf("Failed In Getting traQ Users: %w", err)
-		}
+	users, err := u.OAuth.GetUsers(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting traQ Users: %w", err)
+	}
 
-		return users, nil
+	return users, nil
 }

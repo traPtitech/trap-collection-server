@@ -2,8 +2,6 @@ package router
 
 import (
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
 
 	"github.com/traPtitech/trap-collection-server/model"
@@ -12,9 +10,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/session"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
-
-type ioReader = io.Reader
-type multipartFile = multipart.File
 
 // Service serviceの構造体
 type Service struct {
@@ -29,7 +24,7 @@ type Service struct {
 }
 
 // NewAPI Apiのコンストラクタ
-func NewAPI(sess session.Session, env string, clientID string,clientSecret string) (*openapi.Api, error) {
+func NewAPI(sess session.Session, env string, clientID string, clientSecret string) (*openapi.Api, error) {
 	db := new(model.DB)
 
 	var str storage.Storage
@@ -64,14 +59,14 @@ func NewAPI(sess session.Session, env string, clientID string,clientSecret strin
 	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
-		Middleware: middleware,
-		GameApi: game,
-		Oauth2Api: oAuth2,
+		Middleware:  middleware,
+		GameApi:     game,
+		Oauth2Api:   oAuth2,
 		QuestionApi: new(Question),
 		ResponseApi: response,
-		SeatApi: seat,
-		UserApi: user,
-		VersionApi: version,
+		SeatApi:     seat,
+		UserApi:     user,
+		VersionApi:  version,
 	}
 
 	return api, nil

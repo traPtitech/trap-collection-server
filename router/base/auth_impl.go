@@ -14,7 +14,7 @@ import (
 )
 
 // NewOAuth OAuthのコンストラクタ
-func NewOAuth(strURL string) (OAuth,error) {
+func NewOAuth(strURL string) (OAuth, error) {
 	baseURL, err := url.Parse(strURL)
 	if err != nil {
 		return &oAuth{}, fmt.Errorf("Faile In Parsing URL: %w", err)
@@ -40,6 +40,10 @@ func (o *oAuth) GetMe(accessToken string) (*openapi.User, error) {
 	path.Path += "/users/me"
 
 	req, err := http.NewRequest("GET", path.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %w", err)
+	}
+
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
 
@@ -65,6 +69,10 @@ func (o *oAuth) GetUsers(accessToken string) ([]*openapi.User, error) {
 	path.Path += "/users"
 
 	req, err := http.NewRequest("GET", path.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %w", err)
+	}
+
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
 
@@ -90,7 +98,7 @@ func NewLauncherAuth() LauncherAuth {
 	return newLauncherAuth
 }
 
-type launcherAuth struct {}
+type launcherAuth struct{}
 
 // GetVersionID バージョンのIDの取得
 func (*launcherAuth) GetVersionID(c echo.Context) (uint, error) {

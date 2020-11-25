@@ -1,5 +1,10 @@
-.env
-.vscode
-router/*_mock.go
-.git
+**/mock_*.go
+.*
+main
+mysql/data
+docs
+docker
+!docs/swagger/openapi.yml
+!.realize.yaml
 openapi
+mock

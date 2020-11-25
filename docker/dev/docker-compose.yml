@@ -6,7 +6,11 @@ services:
       dockerfile: ./docker/dev/Dockerfile
     restart: always
     volumes:
-      - ../../:/go/src/github.com/traPtitech/trap-collection-server
+      - ../../model/:/go/src/github.com/traPtitech/trap-collection-server/model
+      - ../../router/:/go/src/github.com/traPtitech/trap-collection-server/router
+      - ../../storage/:/go/src/github.com/traPtitech/trap-collection-server/storage
+      - ../../session/:/go/src/github.com/traPtitech/trap-collection-server/session
+      - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
     environment:
       COLLECTION_ENV: development
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
@@ -28,6 +32,7 @@ services:
     image: mariadb:10.5.2
     environment:
       MYSQL_ROOT_PASSWORD: pass
+      TZ: Asia/Tokyo
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     volumes:
       - ../../mysql/data:/var/lib/mysql

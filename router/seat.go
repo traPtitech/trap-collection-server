@@ -11,7 +11,7 @@ import (
 
 // Seat seatの構造体
 type Seat struct {
-	db model.DBMeta
+	db           model.DBMeta
 	launcherAuth base.LauncherAuth
 	openapi.SeatApi
 }
@@ -26,7 +26,7 @@ func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
 }
 
 // PostSeat POST /seats の処理部分
-func (s *Seat)PostSeat(c echo.Context) error {
+func (s *Seat) PostSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting ProductKey: %w", err)
@@ -41,7 +41,7 @@ func (s *Seat)PostSeat(c echo.Context) error {
 }
 
 // DeleteSeat DELETE /seats の処理部分
-func (s *Seat)DeleteSeat(c echo.Context) error {
+func (s *Seat) DeleteSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting ProductKey")

@@ -36,8 +36,8 @@ func main() {
 	}
 	defer db.Close()
 
-  err = model.Migrate(env)
-  if err != nil {
+	err = model.Migrate(env)
+	if err != nil {
 		panic(err)
 	}
 
@@ -50,44 +50,47 @@ func main() {
 	e.Use(session.Middleware(sess.Store()))
 	e.Use(middleware.Recover())
 
-  if env == "development" || env == "mock" {
+	if env == "development" || env == "mock" {
 		colog.SetMinLevel(colog.LDebug)
 		colog.SetFormatter(&colog.StdFormatter{
-				Colors: true,
-				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+			Colors: true,
+			Flag:   log.Ldate | log.Ltime | log.Lshortfile,
 		})
 
 		db.LogMode(true)
 
-    e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-      Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
-    }))
-    e.Use(middleware.Logger())
+		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
+		}))
+		e.Use(middleware.Logger())
 	} else {
 		colog.SetMinLevel(colog.LError)
 		colog.SetFormatter(&colog.StdFormatter{
-				Colors: false,
-				Flag:   log.Ldate | log.Ltime | log.Lshortfile,
+			Colors: false,
+			Flag:   log.Ldate | log.Ltime | log.Lshortfile,
 		})
 	}
 
-  colog.Register()
+	colog.Register()
 
-  clientID := os.Getenv("CLIENT_ID")
-  if len(clientID) == 0 {
-    panic(errors.New("ENV CLIENT_ID IS NULL"))
-  }
-  clientSecret := os.Getenv("CLIENT_SECRET")
+	clientID := os.Getenv("CLIENT_ID")
+	if len(clientID) == 0 {
+		panic(errors.New("ENV CLIENT_ID IS NULL"))
+	}
+	clientSecret := os.Getenv("CLIENT_SECRET")
 	if len(clientSecret) == 0 {
-    panic(errors.New("ENV CLIENT_SECRET IS NULL"))
+		panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
 	api, err := router.NewAPI(sess, env, clientID, clientSecret)
-  if err != nil {
-    panic(err)
-  }
+	if err != nil {
+		panic(err)
+	}
 
 	openapi.SetupRouting(e, api)
 
-	e.Start(os.Getenv("PORT"))
+	err = e.Start(os.Getenv("PORT"))
+	if err != nil {
+		panic(err)
+	}
 }

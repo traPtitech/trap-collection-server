@@ -57,8 +57,8 @@ func (*DB) InsertIntroduction(gameID string, role string, ext string) error {
 	}
 
 	introduction := &GameIntroduction{
-		GameID: gameID,
-		Role: intRole,
+		GameID:    gameID,
+		Role:      intRole,
 		Extension: intExt,
 	}
 

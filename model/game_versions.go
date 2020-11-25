@@ -1,4 +1,5 @@
 package model
+
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
@@ -6,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // GameVersion gameのversionの構造体
@@ -21,7 +24,9 @@ type GameVersion struct {
 // GameVersionMeta game_versionテーブルのリポジトリ
 type GameVersionMeta interface {
 	GetGameType(gameID string, operatingSystem string) (string, error)
+	GetGameVersions(gameID string) ([]*openapi.GameVersion, error)
 	GetURL(gameID string) (string, error)
+	InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error)
 }
 
 // GetGameType ゲームの種類の取得
@@ -39,7 +44,7 @@ func (*DB) GetGameType(gameID string, operatingSystem string) (string, error) {
 		Order("game_versions.created_at").
 		Pluck("type", &intTypes).Error
 	if err != nil {
-		return "",fmt.Errorf("Failed In Getting Type: %w", err)
+		return "", fmt.Errorf("Failed In Getting Type: %w", err)
 	}
 	strType, ok := gameTypeIntStrMap[intTypes[0]]
 	if !ok {
@@ -70,4 +75,56 @@ func (*DB) GetURL(gameID string) (string, error) {
 	}
 
 	return url, err
+}
+
+// InsertGameVersion GameVersionの追加
+func (*DB) InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error) {
+	newGameVersion := GameVersion{
+		GameID:      gameID,
+		Name:        name,
+		Description: description,
+	}
+
+	err := db.Create(&newGameVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a game version record: %w", err)
+	}
+
+	gameVersion := GameVersion{}
+	err = db.Last(&gameVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get a last game version record: %w", err)
+	}
+
+	apiGameVersion := openapi.GameVersion{
+		Id:          int32(gameVersion.ID),
+		Name:        gameVersion.Name,
+		Description: gameVersion.Description,
+		CreatedAt:   gameVersion.CreatedAt,
+	}
+
+	return &apiGameVersion, nil
+}
+
+// GetGameVersions ゲームのバージョンの取得
+func (*DB) GetGameVersions(gameID string) ([]*openapi.GameVersion, error) {
+	var gameVersions []*GameVersion
+	err := db.Where("game_id = ?", gameID).Find(&gameVersions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game versions: %w", err)
+	}
+
+	apiGameVersions := make([]*openapi.GameVersion, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		apiGameVersion := openapi.GameVersion{
+			Id:          int32(gameVersion.ID),
+			Name:        gameVersion.Name,
+			Description: gameVersion.Description,
+			CreatedAt:   gameVersion.CreatedAt,
+		}
+
+		apiGameVersions = append(apiGameVersions, &apiGameVersion)
+	}
+
+	return apiGameVersions, nil
 }
