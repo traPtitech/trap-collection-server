@@ -43,7 +43,10 @@ func (s *sess) RevokeSession(c echo.Context) error {
 		return fmt.Errorf("Failed In Getting Session: %w", err)
 	}
 
-	s.store.Delete(c.Request(), c.Response(), sess)
+	err = s.store.Delete(c.Request(), c.Response(), sess)
+	if err != nil {
+		return fmt.Errorf("failed to delete session: %w", err)
+	}
 
 	return nil
 }

@@ -80,6 +80,7 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 	return
 }
 
+// InsertLauncherVersion ランチャーのバージョンの追加
 func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
@@ -97,8 +98,8 @@ func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
 			return fmt.Errorf("failed to get the last launcher version record: %w", err)
 		}
 		apiVersion = openapi.VersionMeta{
-			Id: int32(launcherVersion.ID),
-			Name: launcherVersion.Name,
+			Id:        int32(launcherVersion.ID),
+			Name:      launcherVersion.Name,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 

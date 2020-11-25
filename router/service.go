@@ -2,8 +2,6 @@ package router
 
 import (
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
 
 	"github.com/traPtitech/trap-collection-server/model"
@@ -12,9 +10,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/session"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
-
-type ioReader = io.Reader
-type multipartFile = multipart.File
 
 // Service serviceの構造体
 type Service struct {

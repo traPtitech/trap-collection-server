@@ -75,13 +75,13 @@ func TestLauncherAuth(t *testing.T) {
 
 	launcherAuthBase := NewLauncherAuth()
 
-	resVersionID, err := launcherAuthBase.GetVersionID(c)
+	_, err := launcherAuthBase.GetVersionID(c)
 	if err == nil {
 		t.Fatal("VersionID Expected To Be Null,But Error Is Null")
 	}
 
 	var versionID uint = 0
-	resVersionID, err = launcherAuthBase.GetVersionID(c)
+	resVersionID, err := launcherAuthBase.GetVersionID(c)
 	if err != nil {
 		t.Fatalf("Failed In getVersionID: %#v", err)
 	}
@@ -89,13 +89,13 @@ func TestLauncherAuth(t *testing.T) {
 		t.Fatalf("Invalid versionID: %d", resVersionID)
 	}
 
-	resProductKey, err := launcherAuthBase.GetProductKey(c)
+	_, err = launcherAuthBase.GetProductKey(c)
 	if err == nil {
 		t.Fatal("ProductKey Expected To Be Null, But Error Is Null")
 	}
 
 	var productKey string = "xxxxx-xxxxx-xxxxx-xxxxx-xxxxx"
-	resProductKey, err = launcherAuthBase.GetProductKey(c)
+	resProductKey, err := launcherAuthBase.GetProductKey(c)
 	if err != nil {
 		t.Fatalf("Failed In getProductKey: %#v", err)
 	}

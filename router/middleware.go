@@ -121,13 +121,17 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		// 暫定的な実装。最終的にはDBにあるAdminと比べ、userIDを使い認証するようにする。
 		admins := []string{"mazrean"}
-		var userName string
 		interfaceUserName, ok1 := sess.Values["userName"]
-		interfaceAccessToken, ok2 := sess.Values["accessToken"]
-		if !ok1 || interfaceUserName == nil {
+		userName, ok2 := interfaceUserName.(string)
+		if !ok2 {
+			log.Printf("error: unexcepted invalid userName")
+			return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
+		}
+		interfaceAccessToken, ok3 := sess.Values["accessToken"]
+		if !ok1 || !ok2 {
 			log.Printf("error: unexcepted no userName")
 
-			if !ok2 || interfaceAccessToken == nil {
+			if !ok3 || interfaceAccessToken == nil {
 				return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
 			}
 
@@ -143,13 +147,6 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 			}
 
 			userName = user.Name
-		}
-
-		var ok bool
-		userName, ok = interfaceUserName.(string)
-		if !ok {
-			log.Printf("error: unexcepted invalid userName")
-			return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
 		}
 
 		for _, v := range admins {
@@ -181,7 +178,10 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 				if isThere {
 					log.Printf("debug: %d", versionID)
 					sess.Values["versionID"] = versionID
-					sess.Save(c.Request(), c.Response())
+					err = sess.Save(c.Request(), c.Response())
+					if err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+					}
 
 					return next(c)
 				}
@@ -197,7 +197,10 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 
 		sess.Values["productKey"] = key
 		sess.Values["version_id"] = versionID
-		sess.Save(c.Request(), c.Response())
+		err = sess.Save(c.Request(), c.Response())
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
+		}
 
 		return next(c)
 	}
