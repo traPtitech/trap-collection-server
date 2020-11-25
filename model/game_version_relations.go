@@ -61,8 +61,7 @@ func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.Chec
 
 func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.Version, error) {
 	var version openapi.Version
-	var err error
-	err = db.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{}
 		err := tx.Where("id = ?", launcherVersionID).Find(&launcherVersion).Error
 		if gorm.IsRecordNotFoundError(err) {
