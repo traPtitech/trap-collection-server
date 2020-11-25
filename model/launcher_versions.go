@@ -80,6 +80,7 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 	return
 }
 
+// InsertLauncherVersion ランチャーのバージョンの追加
 func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {

@@ -36,6 +36,7 @@ type GameMeta interface {
 	CheckGameIDs(gameIDs []string) error
 }
 
+// IsExistGame ゲームが存在するかの確認
 func (*DB) IsExistGame(gameID string) (bool, error) {
 	err := db.Where("id = ?", gameID).
 		Find(&Game{}).Error

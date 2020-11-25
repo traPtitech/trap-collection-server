@@ -10,10 +10,14 @@ import (
 )
 
 var (
-	AssetTypeURL        uint8 = 0
-	AssetTypeJar        uint8 = 1
+	// AssetTypeURL ゲームの本体の種類(URL)
+	AssetTypeURL uint8 = 0
+	// AssetTypeJar ゲームの本体の種類(.jar)
+	AssetTypeJar uint8 = 1
+	// AssetTypeWindowsExe ゲームの本体の種類(Windowsの.exe)
 	AssetTypeWindowsExe uint8 = 2
-	AssetTypeMacApp     uint8 = 3
+	// AssetTypeMacApp ゲームの本体の種類(Macの.app)
+	AssetTypeMacApp uint8 = 3
 )
 
 // GameAsset gameのassetの構造体
@@ -26,10 +30,12 @@ type GameAsset struct {
 	URL           string `gorm:"type:text"`
 }
 
+// GameAssetMeta game_assetsテーブルのリポジトリ
 type GameAssetMeta interface {
 	InsertGameURL(gameID string, url string) (*openapi.GameUrl, error)
 }
 
+// InsertGameURL ゲームのURLの追加
 func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 	var gameURL openapi.GameUrl
 	err := db.Transaction(func(tx *gorm.DB) error {

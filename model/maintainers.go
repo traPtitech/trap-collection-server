@@ -65,6 +65,7 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	return nil
 }
 
+// GetMaintainers ゲームの管理者の追加
 func (*DB) GetMaintainers(gameID string, userMap map[string]*openapi.User) ([]*openapi.Maintainer, error) {
 	maintainers := []Maintainer{}
 	err := db.Where("game_id = ?", gameID).Find(&maintainers).Error

@@ -106,6 +106,7 @@ func (*DB) InsertGameVersion(gameID string, name string, description string) (*o
 	return &apiGameVersion, nil
 }
 
+// GetGameVersions ゲームのバージョンの取得
 func (*DB) GetGameVersions(gameID string) ([]*openapi.GameVersion, error) {
 	var gameVersions []*GameVersion
 	err := db.Where("game_id = ?", gameID).Find(&gameVersions).Error
