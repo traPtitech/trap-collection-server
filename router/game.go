@@ -192,6 +192,16 @@ func (g *Game) GetVideo(gameID string) (io.Reader, error) {
 	return videoFile, nil
 }
 
+// PostVideo POST /game/:gameID/video
+func (g *Game) PostVideo(gameID string, video multipartFile) error {
+	err := g.postIntroduction(gameID, video, "video")
+	if err != nil {
+		return fmt.Errorf("failed to post introduction: %w", err)
+	}
+
+	return nil
+}
+
 var typeExtMap map[string]string = map[string]string{
 	"jar":     "jar",
 	"windows": "zip",
@@ -229,6 +239,7 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	}
 
 	fileName := gameID + "_" + role + "." + ext
+	log.Printf("debug: %s\n", fileName)
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting File: %w", err)
@@ -252,6 +263,9 @@ func (g *Game) postIntroduction(gameID string, introduction io.Reader, role stri
 	}
 
 	ext := fileType.Extension
+	if ext == "m4v" {
+		ext = "mp4"
+	}
 
 	err = g.db.InsertIntroduction(gameID, role, ext)
 	if err != nil {
