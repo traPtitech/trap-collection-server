@@ -9,6 +9,7 @@ services:
       - ../../model/:/go/src/github.com/traPtitech/trap-collection-server/model
       - ../../router/:/go/src/github.com/traPtitech/trap-collection-server/router
       - ../../storage/:/go/src/github.com/traPtitech/trap-collection-server/storage
+      - ../../upload/:/go/src/github.com/traPtitech/trap-collection-server/upload
       - ../../session/:/go/src/github.com/traPtitech/trap-collection-server/session
       - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
     environment:

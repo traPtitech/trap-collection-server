@@ -42,11 +42,9 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
       return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
     }{{/bodyParam}}{{/hasBodyParam}}
     {{#isListContainer}}var res []*{{returnBaseType}}{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}var res {{^isResponseFile}}*{{/isResponseFile}}{{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}var res {{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}}
-    {
-      {{#returnType}}res, {{/returnType}}err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}}{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}}{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{paramName}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}}{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{#isPrimitiveType}}{{paramName}}{{/isPrimitiveType}}{{^isPrimitiveType}}&{{paramName}}{{/isPrimitiveType}}{{/isBodyParam}}{{^isBodyParam}}c{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
-      if err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-      }
+    {{#returnType}}res, {{/returnType}}err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}}{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}}{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{paramName}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}}{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{#isPrimitiveType}}{{paramName}}{{/isPrimitiveType}}{{^isPrimitiveType}}&{{paramName}}{{/isPrimitiveType}}{{/isBodyParam}}{{^isBodyParam}}c{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
+    if err != nil {
+      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
     return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}

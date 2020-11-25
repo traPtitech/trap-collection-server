@@ -17,7 +17,7 @@ var gameTypeIntStrMap = map[uint8]string{
 }
 
 var extIntStrMap = map[uint8]string{
-	0: "jpeg",
+	0: "jpg",
 	1: "png",
 	2: "gif",
 	3: "mp4",

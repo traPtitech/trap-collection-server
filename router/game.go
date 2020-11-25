@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -237,7 +238,11 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 }
 
 func (g *Game) postIntroduction(gameID string, introduction io.Reader, role string) error {
-	fileType, err := filetype.MatchReader(introduction)
+	fileTypeBuf := bytes.NewBuffer(nil)
+	fileBuf := bytes.NewBuffer(nil)
+	mw := io.MultiWriter(fileTypeBuf, fileBuf)
+	io.Copy(mw, introduction)
+	fileType, err := filetype.MatchReader(fileTypeBuf)
 	if err != nil {
 		return fmt.Errorf("failed to get filetype")
 	}
@@ -250,7 +255,7 @@ func (g *Game) postIntroduction(gameID string, introduction io.Reader, role stri
 	}
 
 	fileName := gameID + "_" + role + "." + ext
-	err = g.storage.Save(fileName, introduction)
+	err = g.storage.Save(fileName, fileBuf)
 	if err != nil {
 		return fmt.Errorf("failed to save introduction: %w", err)
 	}
