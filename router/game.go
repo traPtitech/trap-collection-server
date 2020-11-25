@@ -163,45 +163,6 @@ func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, er
 	return file, nil
 }
 
-// GetImage GET /games/:gameID/imageの処理部分
-func (g *Game) GetImage(gameID string) (io.Reader, error) {
-	imageFile, err := g.getIntroduction(gameID, "image")
-	if err != nil {
-		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
-	}
-
-	return imageFile, nil
-}
-
-// PostImage POST /game/:gameID/image
-func (g *Game) PostImage(gameID string, image multipartFile) error {
-	err := g.postIntroduction(gameID, image, "image")
-	if err != nil {
-		return fmt.Errorf("failed to post introduction: %w", err)
-	}
-
-	return nil
-}
-
-// GetVideo GET /games/:gameID/videoの処理部分
-func (g *Game) GetVideo(gameID string) (io.Reader, error) {
-	videoFile, err := g.getIntroduction(gameID, "video")
-	if err != nil {
-		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
-	}
-	return videoFile, nil
-}
-
-// PostVideo POST /game/:gameID/video
-func (g *Game) PostVideo(gameID string, video multipartFile) error {
-	err := g.postIntroduction(gameID, video, "video")
-	if err != nil {
-		return fmt.Errorf("failed to post introduction: %w", err)
-	}
-
-	return nil
-}
-
 var typeExtMap map[string]string = map[string]string{
 	"jar":     "jar",
 	"windows": "zip",
@@ -222,6 +183,112 @@ func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, e
 	return gameID + "_game." + ext, nil
 }
 
+// GetImage GET /games/:gameID/imageの処理部分
+func (g *Game) GetImage(gameID string) (io.Reader, error) {
+	imageFile, err := g.getIntroduction(gameID, "image")
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
+	}
+
+	return imageFile, nil
+}
+
+var imageExts []string = []string{"jpg", "png"}
+
+// PostImage POST /game/:gameID/image
+func (g *Game) PostImage(gameID string, image multipartFile) error {
+	fileTypeBuf := bytes.NewBuffer(nil)
+	fileBuf := bytes.NewBuffer(nil)
+	mw := io.MultiWriter(fileTypeBuf, fileBuf)
+	_, err := io.Copy(mw, image)
+	if err != nil {
+		return fmt.Errorf("failed to make MultiWriter: %w", err)
+	}
+
+	fileType, err := filetype.MatchReader(fileTypeBuf)
+	if err != nil {
+		return fmt.Errorf("failed to get filetype")
+	}
+
+	ext := fileType.Extension
+	isValidExt := false
+	for _, validExt := range imageExts {
+		if ext == validExt {
+			isValidExt = true
+		}
+	}
+	if !isValidExt {
+		return errors.New("invalid extension")
+	}
+
+	err = g.db.InsertIntroduction(gameID, "image", ext)
+	if err != nil {
+		return fmt.Errorf("failed to insert introduction: %w", err)
+	}
+
+	fileName := gameID + "_image." + ext
+	err = g.storage.Save(fileName, fileBuf)
+	if err != nil {
+		return fmt.Errorf("failed to save introduction: %w", err)
+	}
+
+	return nil
+}
+
+// GetVideo GET /games/:gameID/videoの処理部分
+func (g *Game) GetVideo(gameID string) (io.Reader, error) {
+	videoFile, err := g.getIntroduction(gameID, "video")
+	if err != nil {
+		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
+	}
+	return videoFile, nil
+}
+
+var videoExts []string = []string{"mp4"}
+
+// PostVideo POST /game/:gameID/video
+func (g *Game) PostVideo(gameID string, video multipartFile) error {
+	fileTypeBuf := bytes.NewBuffer(nil)
+	fileBuf := bytes.NewBuffer(nil)
+	mw := io.MultiWriter(fileTypeBuf, fileBuf)
+	_, err := io.Copy(mw, video)
+	if err != nil {
+		return fmt.Errorf("failed to make MultiWriter: %w", err)
+	}
+
+	fileType, err := filetype.MatchReader(fileTypeBuf)
+	if err != nil {
+		return fmt.Errorf("failed to get filetype")
+	}
+
+	ext := fileType.Extension
+	if ext == "m4v" {
+		ext = "mp4"
+	}
+	isValidExt := false
+	for _, validExt := range videoExts {
+		if ext == validExt {
+			isValidExt = true
+		}
+	}
+	if !isValidExt {
+		return errors.New("invalid extension")
+	}
+
+	err = g.db.InsertIntroduction(gameID, "video", ext)
+	if err != nil {
+		return fmt.Errorf("failed to insert introduction: %w", err)
+	}
+
+	fileName := gameID + "_video." + ext
+	err = g.storage.Save(fileName, fileBuf)
+	if err != nil {
+		return fmt.Errorf("failed to save introduction: %w", err)
+	}
+
+	return nil
+}
+
 var roleMap = map[string]int8{
 	"image": 0,
 	"video": 1,
@@ -239,46 +306,12 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	}
 
 	fileName := gameID + "_" + role + "." + ext
-	log.Printf("debug: %s\n", fileName)
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting File: %w", err)
 	}
 
 	return file, nil
-}
-
-func (g *Game) postIntroduction(gameID string, introduction io.Reader, role string) error {
-	fileTypeBuf := bytes.NewBuffer(nil)
-	fileBuf := bytes.NewBuffer(nil)
-	mw := io.MultiWriter(fileTypeBuf, fileBuf)
-	_, err := io.Copy(mw, introduction)
-	if err != nil {
-		return fmt.Errorf("failed to make MultiWriter: %w", err)
-	}
-
-	fileType, err := filetype.MatchReader(fileTypeBuf)
-	if err != nil {
-		return fmt.Errorf("failed to get filetype")
-	}
-
-	ext := fileType.Extension
-	if ext == "m4v" {
-		ext = "mp4"
-	}
-
-	err = g.db.InsertIntroduction(gameID, role, ext)
-	if err != nil {
-		return fmt.Errorf("failed to insert introduction: %w", err)
-	}
-
-	fileName := gameID + "_" + role + "." + ext
-	err = g.storage.Save(fileName, fileBuf)
-	if err != nil {
-		return fmt.Errorf("failed to save introduction: %w", err)
-	}
-
-	return nil
 }
 
 // PostURL POST /games/:gameID/asset/urlの処理部分

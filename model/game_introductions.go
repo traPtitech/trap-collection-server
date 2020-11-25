@@ -3,7 +3,6 @@ package model
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -45,16 +44,9 @@ func (*DB) GetExtension(gameID string, role int8) (string, error) {
 }
 
 // InsertIntroduction 画像・動画の追加
-func (*DB) InsertIntroduction(gameID string, role string, ext string) error {
-	intRole, ok := roleStrIntMap[role]
-	if !ok {
-		return errors.New("invalid role")
-	}
-
-	intExt, ok := extStrIntMap[ext]
-	if !ok {
-		return fmt.Errorf("invalid extension(%s)", ext)
-	}
+func (*DB) InsertIntroduction(gameID string, resourceType string, ext string) error {
+	intRole := roleStrIntMap[resourceType]
+	intExt := extStrIntMap[ext]
 
 	introduction := &GameIntroduction{
 		GameID:    gameID,
