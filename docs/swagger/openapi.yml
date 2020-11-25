@@ -1160,7 +1160,7 @@ components:
       description: 新しいゲームのファイル
       type: object
       properties:
-        type:
+        fileType:
           description: ゲームの種類（jar,windows,mac）
           type: string
           example: jar
