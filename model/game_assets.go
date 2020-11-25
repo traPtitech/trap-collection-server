@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	AssetTypeURL uint8 = 0
-	AssetTypeJar uint8 = 1
+	AssetTypeURL        uint8 = 0
+	AssetTypeJar        uint8 = 1
 	AssetTypeWindowsExe uint8 = 2
-	AssetTypeMacApp uint8 = 3
+	AssetTypeMacApp     uint8 = 3
 )
 
 // GameAsset gameのassetの構造体
@@ -32,7 +32,7 @@ type GameAssetMeta interface {
 
 func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 	var gameURL openapi.GameUrl
-	err := db.Transaction(func(tx *gorm.DB)error{
+	err := db.Transaction(func(tx *gorm.DB) error {
 		gameVersion := GameVersion{}
 		err := tx.Where("game_id = ?", gameID).
 			Select("id").
@@ -43,8 +43,8 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 
 		gameAsset := GameAsset{
 			GameVersionID: gameVersion.ID,
-			Type: AssetTypeURL,
-			URL: url,
+			Type:          AssetTypeURL,
+			URL:           url,
 		}
 		err = tx.Create(&gameAsset).Error
 		if err != nil {
@@ -56,7 +56,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 			return fmt.Errorf("failed to get the last game asset record: %w", err)
 		}
 		gameURL = openapi.GameUrl{
-			Id: int32(gameAsset.ID),
+			Id:  int32(gameAsset.ID),
 			Url: gameAsset.URL,
 		}
 

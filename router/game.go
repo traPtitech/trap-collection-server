@@ -221,7 +221,7 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 }
 
 func (g *Game) PostURL(gameID string, newGameUrl *openapi.NewGameUrl) (*openapi.GameUrl, error) {
-	gameURL,err := g.db.InsertGameURL(gameID, newGameUrl.Url)
+	gameURL, err := g.db.InsertGameURL(gameID, newGameUrl.Url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert url: %w", err)
 	}

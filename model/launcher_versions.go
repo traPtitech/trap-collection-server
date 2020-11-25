@@ -97,8 +97,8 @@ func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
 			return fmt.Errorf("failed to get the last launcher version record: %w", err)
 		}
 		apiVersion = openapi.VersionMeta{
-			Id: int32(launcherVersion.ID),
-			Name: launcherVersion.Name,
+			Id:        int32(launcherVersion.ID),
+			Name:      launcherVersion.Name,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 

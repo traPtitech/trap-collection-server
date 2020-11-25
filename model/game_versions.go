@@ -114,12 +114,12 @@ func (*DB) GetGameVersions(gameID string) ([]*openapi.GameVersion, error) {
 	}
 
 	apiGameVersions := make([]*openapi.GameVersion, 0, len(gameVersions))
-	for _,gameVersion := range gameVersions {
+	for _, gameVersion := range gameVersions {
 		apiGameVersion := openapi.GameVersion{
-			Id: int32(gameVersion.ID),
-			Name: gameVersion.Name,
+			Id:          int32(gameVersion.ID),
+			Name:        gameVersion.Name,
 			Description: gameVersion.Description,
-			CreatedAt: gameVersion.CreatedAt,
+			CreatedAt:   gameVersion.CreatedAt,
 		}
 
 		apiGameVersions = append(apiGameVersions, &apiGameVersion)
