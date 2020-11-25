@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,6 +33,7 @@ type GameMeta interface {
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
 	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+	CheckGameIDs(gameIDs []string) error
 }
 
 func (*DB) IsExistGame(gameID string) (bool, error) {
@@ -223,4 +225,83 @@ func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi
 	}
 
 	return gameMeta, nil
+}
+
+// GameIDsError CheckGameIDs用のエラー
+type GameIDsError struct {
+	NotFoundGameIDs        []string
+	DontHaveVersionGameIDs []string
+	DontHaveAssetGameIDs   []string
+}
+
+func (ge *GameIDsError) Error() string {
+	return fmt.Sprintf("invalid gameIDs(not found:%s, don't have version: %s, don't have asset: %s)", strings.Join(ge.NotFoundGameIDs, "/"), strings.Join(ge.DontHaveVersionGameIDs, "/"), strings.Join(ge.DontHaveAssetGameIDs, "/"))
+}
+
+type gameIDState int
+
+const (
+	notFound gameIDState = iota
+	dontHaveVersion
+	dontHaveAsset
+	found
+)
+
+// CheckGameIDs gameIDが全てあるか確認
+func (*DB) CheckGameIDs(gameIDs []string) error {
+	rows, err := db.
+		Where("games.id IN (?)", gameIDs).
+		Table("games").
+		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
+		Joins("LEFT OUTER JOIN game_assets ON game_versions.id = game_assets.game_version_id").
+		Group("games.id").
+		Select("games.id, COUNT(game_versions.id), COUNT(game_assets.id)").
+		Rows()
+	if err != nil {
+		return fmt.Errorf("failed to find gameIDs: %w", err)
+	}
+
+	gameIDMap := make(map[string]gameIDState, len(gameIDs))
+	for _, gameID := range gameIDs {
+		gameIDMap[gameID] = notFound
+	}
+
+	for rows.Next() {
+		var gameID string
+		var versionNum int
+		var assetNum int
+		err := rows.Scan(&gameID, &versionNum, &assetNum)
+		if err != nil {
+			return fmt.Errorf("failed to scan gameIDs: %w", err)
+		}
+
+		if versionNum == 0 {
+			gameIDMap[gameID] = dontHaveVersion
+			continue
+		}
+		if assetNum == 0 {
+			gameIDMap[gameID] = dontHaveAsset
+			continue
+		}
+
+		gameIDMap[gameID] = found
+	}
+
+	gameIDerr := &GameIDsError{}
+	for gameID, state := range gameIDMap {
+		switch state {
+		case notFound:
+			gameIDerr.NotFoundGameIDs = append(gameIDerr.NotFoundGameIDs, gameID)
+		case dontHaveVersion:
+			gameIDerr.DontHaveVersionGameIDs = append(gameIDerr.DontHaveVersionGameIDs, gameID)
+		case dontHaveAsset:
+			gameIDerr.DontHaveAssetGameIDs = append(gameIDerr.DontHaveAssetGameIDs, gameID)
+		}
+	}
+
+	if len(gameIDerr.NotFoundGameIDs) == 0 && len(gameIDerr.DontHaveVersionGameIDs) == 0 && len(gameIDerr.DontHaveAssetGameIDs) == 0 {
+		return nil
+	}
+
+	return gameIDerr
 }
