@@ -632,7 +632,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Version'
+                $ref: '#/components/schemas/VersionWithGame'
         "500":
           description: 失敗
   /versions/check:
@@ -1213,6 +1213,27 @@ components:
           example: ko-daisai
     Version:
       description: ランチャーのバージョン
+      type: object
+      properties:
+        id:
+          description: ID
+          type: integer
+          example: 1
+        name:
+          description: 名前
+          type: string
+          example: ko-daisai
+        createdAt:
+          description: 登録時刻
+          type: string
+          format: date-time
+          example: '2019-09-25T09:51:31Z'
+      required:
+        - id
+        - name
+        - createdAt
+    VersionWithGame:
+      description: ゲーム一覧付きのランチャーのバージョン
       type: object
       properties:
         id:
