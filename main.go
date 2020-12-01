@@ -89,5 +89,8 @@ func main() {
 
 	openapi.SetupRouting(e, api)
 
-	e.Start(os.Getenv("PORT"))
+	err = e.Start(os.Getenv("PORT"))
+	if err != nil {
+		panic(err)
+	}
 }

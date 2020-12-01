@@ -149,6 +149,10 @@ func (g *Game) DeleteGames(gameID string) error {
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file name: %w", err)
+	}
+
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
@@ -220,6 +224,16 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	return file, nil
 }
 
+// PostURL POST /games/:gameID/asset/urlの処理部分
+func (g *Game) PostURL(gameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
+	gameURL, err := g.db.InsertGameURL(gameID, newGameURL.Url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert url: %w", err)
+	}
+
+	return gameURL, nil
+}
+
 // GetGameURL GET /games/:gameID/urlの処理部分
 func (g *Game) GetGameURL(gameID string) (string, error) {
 	url, err := g.db.GetURL(gameID)
@@ -276,6 +290,7 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 	return nil
 }
 
+// GetMaintainer GET /games/:gameID/maintainer
 func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintainer, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -310,4 +325,24 @@ func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintain
 	}
 
 	return maintainers, nil
+}
+
+// PostGameVersion POST /games/:gameID/version
+func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
+	gameVersion, err := g.db.InsertGameVersion(gameID, newGameVersion.Name, newGameVersion.Description)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert game version: %w", err)
+	}
+
+	return gameVersion, nil
+}
+
+// GetGameVersion /games/:gameID/version
+func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
+	gameVersions, err := g.db.GetGameVersions(gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game version: %w", err)
+	}
+
+	return gameVersions, nil
 }

@@ -26,11 +26,26 @@ type Game struct {
 
 // GameMeta gameテーブルのリポジトリ
 type GameMeta interface {
+	IsExistGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
 	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
 	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+}
+
+// IsExistGame ゲームが存在するかの確認
+func (*DB) IsExistGame(gameID string) (bool, error) {
+	err := db.Where("id = ?", gameID).
+		Find(&Game{}).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get a game by id: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetGames ゲーム一覧の取得
@@ -151,7 +166,9 @@ func (*DB) DeleteGame(gameID string) error {
 
 // GetGameInfo ゲーム情報の取得
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
-	game := &openapi.Game{}
+	game := &openapi.Game{
+		Version: &openapi.GameVersion{},
+	}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
 		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").

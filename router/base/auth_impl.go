@@ -40,6 +40,10 @@ func (o *oAuth) GetMe(accessToken string) (*openapi.User, error) {
 	path.Path += "/users/me"
 
 	req, err := http.NewRequest("GET", path.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %w", err)
+	}
+
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
 
@@ -65,6 +69,10 @@ func (o *oAuth) GetUsers(accessToken string) ([]*openapi.User, error) {
 	path.Path += "/users"
 
 	req, err := http.NewRequest("GET", path.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new request: %w", err)
+	}
+
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	httpClient := http.DefaultClient
 

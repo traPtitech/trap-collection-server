@@ -24,6 +24,7 @@ type LauncherVersion struct {
 type LauncherVersionMeta interface {
 	GetLauncherVersions() ([]*openapi.Version, error)
 	GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error)
+	InsertLauncherVersion(name string) (*openapi.VersionMeta, error)
 }
 
 // GetLauncherVersions ランチャーのバージョン一覧取得
@@ -99,4 +100,36 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 	}
 
 	return
+}
+
+// InsertLauncherVersion ランチャーのバージョンの追加
+func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
+	var apiVersion openapi.VersionMeta
+	err := db.Transaction(func(tx *gorm.DB) error {
+		launcherVersion := LauncherVersion{
+			Name: name,
+		}
+
+		err := tx.Create(&launcherVersion).Error
+		if err != nil {
+			return fmt.Errorf("failed to insert a lancher version record: %w", err)
+		}
+
+		err = tx.Last(&launcherVersion).Error
+		if err != nil {
+			return fmt.Errorf("failed to get the last launcher version record: %w", err)
+		}
+		apiVersion = openapi.VersionMeta{
+			Id:        int32(launcherVersion.ID),
+			Name:      launcherVersion.Name,
+			CreatedAt: launcherVersion.CreatedAt,
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return &apiVersion, nil
 }

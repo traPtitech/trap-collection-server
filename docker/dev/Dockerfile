@@ -33,10 +33,13 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
+RUN mkdir upload
+
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
 
 COPY --from=generate /local/openapi ./openapi
+COPY .realize.yaml ./
 
 ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run

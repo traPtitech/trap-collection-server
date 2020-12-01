@@ -36,6 +36,16 @@ func (v *Version) GetVersions() ([]*openapi.Version, error) {
 	return versions, nil
 }
 
+// PostVersion POST /versions
+func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
+	version, err := v.db.InsertLauncherVersion(newVersion.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert a lancher version: %w", err)
+	}
+
+	return version, nil
+}
+
 // GetVersion GET /versions/:launcherVersionIDの処理部分
 func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
 	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
