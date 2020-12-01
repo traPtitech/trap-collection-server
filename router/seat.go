@@ -25,6 +25,16 @@ func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
 	return seat
 }
 
+// GetSeat GET /seats の処理部分
+func (s *Seat) GetSeat() ([]int32, error) {
+	seats, err := s.db.GetPlayers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get seats: %w", err)
+	}
+
+	return seats, nil
+}
+
 // PostSeat POST /seats の処理部分
 func (s *Seat) PostSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)

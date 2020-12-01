@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 // Player プレイヤーの履歴の構造体
@@ -20,6 +22,7 @@ type Player struct {
 type PlayerMeta interface {
 	PostPlayer(productKey string) error
 	DeletePlayer(productKey string) error
+	GetPlayers() ([]int32, error)
 }
 
 func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
@@ -32,17 +35,20 @@ func getPlayerIDByProductKey(productKey string) (playerID uint, err error) {
 
 // PostPlayer プレイヤーの追加
 func (*DB) PostPlayer(productKey string) error {
-	var player Player
-	isNotTherePlayer := db.Where("product_key_id = ? AND ended_at IS NULL", productKey).
-		First(&player).
-		RecordNotFound()
-	if !isNotTherePlayer {
-		return errors.New("Last Player Is Not End")
-	}
-
 	productKeyID, err := getKeyIDByKey(productKey)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting KeyID: %w", err)
+	}
+
+	var player Player
+	err = db.
+		Where("product_key_id = ? AND ended_at IS NULL", productKeyID).
+		First(&player).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return fmt.Errorf("failed to get a player: %w", err)
+	}
+	if !gorm.IsRecordNotFoundError(err) {
+		return errors.New("Last Player Is Not End")
 	}
 
 	player = Player{
@@ -73,4 +79,23 @@ func (*DB) DeletePlayer(productKey string) error {
 	}
 
 	return nil
+}
+
+// GetPlayers プレイヤーを取得
+func (*DB) GetPlayers() ([]int32, error) {
+	players := []uint{}
+	err := db.
+		Model(&Player{}).
+		Where("ended_at IS NULL").
+		Pluck("product_key_id", &players).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, fmt.Errorf("failed to get players: %w", err)
+	}
+
+	resPlayers := make([]int32, 0, len(players))
+	for _, player := range players {
+		resPlayers = append(resPlayers, int32(player))
+	}
+
+	return resPlayers, nil
 }
