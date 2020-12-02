@@ -226,13 +226,17 @@ func (g *Game) PostImage(gameID string, image multipartFile) error {
 		return fmt.Errorf("failed to insert introduction: %w", err)
 	}
 
-	fileName := gameID + "_image." + ext
+	fileName := g.getImageFileName(gameID, ext)
 	err = g.storage.Save(fileName, fileBuf)
 	if err != nil {
 		return fmt.Errorf("failed to save introduction: %w", err)
 	}
 
 	return nil
+}
+
+func (g *Game) getImageFileName(gameID string, ext string) string {
+	return gameID + "_image." + ext
 }
 
 // GetVideo GET /games/:gameID/videoの処理部分
@@ -281,13 +285,17 @@ func (g *Game) PostVideo(gameID string, video multipartFile) error {
 		return fmt.Errorf("failed to insert introduction: %w", err)
 	}
 
-	fileName := gameID + "_video." + ext
+	fileName := g.getVideoFileName(gameID, ext)
 	err = g.storage.Save(fileName, fileBuf)
 	if err != nil {
 		return fmt.Errorf("failed to save introduction: %w", err)
 	}
 
 	return nil
+}
+
+func (g *Game) getVideoFileName(gameID string, ext string) string {
+	return gameID + "_video." + ext
 }
 
 var roleMap = map[string]int8{
@@ -306,7 +314,14 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 		return nil, fmt.Errorf("Failed In Getting Extensions: %w", err)
 	}
 
-	fileName := gameID + "_" + role + "." + ext
+	var fileName string
+	switch role {
+	case "image":
+		fileName = g.getImageFileName(gameID, ext)
+	case "video":
+		fileName = g.getVideoFileName(gameID, ext)
+	}
+
 	file, err := g.storage.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting File: %w", err)
