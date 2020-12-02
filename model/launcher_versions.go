@@ -16,7 +16,6 @@ type LauncherVersion struct {
 	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
-	Questions            []Question            `json:"questions" gorm:"foreignkey:LauncherVersionID;"`
 	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
 }

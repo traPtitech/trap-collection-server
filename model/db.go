@@ -21,12 +21,6 @@ var (
 		ProductKey{},
 		GameVersionRelation{},
 		Player{},
-		Question{},
-		QuestionOption{},
-		Response{},
-		TextAnswer{},
-		OptionAnswer{},
-		GameRating{},
 	}
 )
 
@@ -41,8 +35,6 @@ type DBMeta interface {
 	MaintainerMeta
 	PlayerMeta
 	ProductKeyMeta
-	QuestionMeta
-	ResponseMeta
 }
 
 // DB DB関連の構造体
