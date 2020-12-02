@@ -1114,6 +1114,13 @@ components:
           description: バージョンの名前
           type: string
           example: ko-daisai
+        anke-to:
+          description: アンケートのURL
+          type: string
+          format: uri
+          example: https://anke-to.trap.jp/questionnaires/517
+      required:
+        - name
     Version:
       description: ランチャーのバージョン
       type: object
@@ -1126,6 +1133,11 @@ components:
           description: 名前
           type: string
           example: ko-daisai
+        anke-to:
+          description: アンケートのURL
+          type: string
+          format: uri
+          example: https://anke-to.trap.jp/questionnaires/517
         createdAt:
           description: 登録時刻
           type: string
@@ -1147,6 +1159,11 @@ components:
           description: 名前
           type: string
           example: ko-daisai
+        anke-to:
+          description: アンケートのURL
+          type: string
+          format: uri
+          example: https://anke-to.trap.jp/questionnaires/517
         createdAt:
           description: 登録時刻
           type: string
@@ -1168,6 +1185,11 @@ components:
           description: 名前
           type: string
           example: ko-daisai
+        anke-to:
+          description: アンケートのURL
+          type: string
+          format: uri
+          example: https://anke-to.trap.jp/questionnaires/517
         games:
           type: array
           items:
