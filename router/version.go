@@ -38,7 +38,7 @@ func (v *Version) GetVersions() ([]*openapi.Version, error) {
 
 // PostVersion POST /versions
 func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
-	version, err := v.db.InsertLauncherVersion(newVersion.Name)
+	version, err := v.db.InsertLauncherVersion(newVersion.Name, newVersion.AnkeTo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert a lancher version: %w", err)
 	}

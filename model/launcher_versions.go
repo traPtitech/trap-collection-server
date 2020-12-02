@@ -15,6 +15,7 @@ import (
 type LauncherVersion struct {
 	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
+	AnkeTo               string                `json:"anke-to,omitempty" gorm:"type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
 	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
@@ -24,7 +25,7 @@ type LauncherVersion struct {
 type LauncherVersionMeta interface {
 	GetLauncherVersions() ([]*openapi.Version, error)
 	GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error)
-	InsertLauncherVersion(name string) (*openapi.VersionMeta, error)
+	InsertLauncherVersion(name string, ankeToURL string) (*openapi.VersionMeta, error)
 }
 
 // GetLauncherVersions ランチャーのバージョン一覧取得
@@ -40,6 +41,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 		apiLauncherVersion := openapi.Version{
 			Id:        int32(launcherVersion.ID),
 			Name:      launcherVersion.Name,
+			AnkeTo:    launcherVersion.AnkeTo,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 		apiLauncherVersions = append(apiLauncherVersions, &apiLauncherVersion)
@@ -56,7 +58,7 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id <=> games.id").
 		Where("launcher_versions.id = ?", id).
-		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,games.id, games.name").
+		Select("launcher_versions.id,launcher_versions.name,launcher_versions.anke-to,launcher_versions.created_at,games.id, games.name").
 		Rows()
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
@@ -64,7 +66,7 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 	for rows.Next() {
 		var gameID sql.NullString
 		var gameName sql.NullString
-		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.CreatedAt, &gameID, &gameName)
+		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.AnkeTo, &versionDetails.CreatedAt, &gameID, &gameName)
 		if err != nil {
 			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
 		}
@@ -80,11 +82,12 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 }
 
 // InsertLauncherVersion ランチャーのバージョンの追加
-func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
+func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.VersionMeta, error) {
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
-			Name: name,
+			Name:   name,
+			AnkeTo: ankeToURL,
 		}
 
 		err := tx.Create(&launcherVersion).Error
@@ -99,6 +102,7 @@ func (*DB) InsertLauncherVersion(name string) (*openapi.VersionMeta, error) {
 		apiVersion = openapi.VersionMeta{
 			Id:        int32(launcherVersion.ID),
 			Name:      launcherVersion.Name,
+			AnkeTo:    launcherVersion.AnkeTo,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 
