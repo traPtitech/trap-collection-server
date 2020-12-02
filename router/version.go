@@ -38,7 +38,7 @@ func (v *Version) GetVersions() ([]*openapi.Version, error) {
 
 // PostVersion POST /versions
 func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
-	version, err := v.db.InsertLauncherVersion(newVersion.Name)
+	version, err := v.db.InsertLauncherVersion(newVersion.Name, newVersion.AnkeTo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert a lancher version: %w", err)
 	}
@@ -74,19 +74,4 @@ func (v *Version) GetCheckList(operationgSystem string, c echo.Context) ([]*open
 	}
 
 	return checkList, nil
-}
-
-// GetQuestions GET /versions/questionの処理部分
-func (v *Version) GetQuestions(c echo.Context) ([]*openapi.Question, error) {
-	versionID, err := v.launcherAuth.GetVersionID(c)
-	if err != nil {
-		return []*openapi.Question{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
-	}
-
-	questions, err := v.db.GetQuestions(versionID)
-	if err != nil {
-		return []*openapi.Question{}, fmt.Errorf("Failed In Getting Questions: %w", err)
-	}
-
-	return questions, nil
 }

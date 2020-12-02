@@ -28,10 +28,10 @@ type Game struct {
 type GameMeta interface {
 	IsExistGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
-	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
+	PostGame(userID string, gameName string, description string) (*openapi.GameInfo, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
-	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+	UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInfo, error)
 }
 
 // IsExistGame ゲームが存在するかの確認
@@ -68,7 +68,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 			Where("(gv.id = ? OR gv.id IS NULL AND g.deleted_at IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
 			Rows()
 	} else {
-		rows, err = db.Where("gv.id = ? AND g.deleted_at IS NULL", sub).Rows()
+		rows, err = db.Where("(gv.id = ? OR gv.id IS NULL) AND g.deleted_at IS NULL", sub).Rows()
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Games: %w", err)
@@ -100,7 +100,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 }
 
 // PostGame ゲームの追加
-func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameMeta, error) {
+func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameInfo, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %w", err)
@@ -139,7 +139,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 		return nil, fmt.Errorf("Trasaction Error: %w", err)
 	}
 
-	gameMeta := &openapi.GameMeta{
+	gameMeta := &openapi.GameInfo{
 		Id:          game.ID,
 		Name:        game.Name,
 		Description: game.Description,
@@ -166,9 +166,7 @@ func (*DB) DeleteGame(gameID string) error {
 
 // GetGameInfo ゲーム情報の取得
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
-	game := &openapi.Game{
-		Version: &openapi.GameVersion{},
-	}
+	game := &openapi.Game{}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
 		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
@@ -188,11 +186,15 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		if err != nil {
 			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
 		}
-		if versionID.Valid && versionName.Valid && versionDescription.Valid && versionCreatedAt.Valid {
-			game.Version.Id = versionID.Int32
-			game.Version.Name = versionName.String
-			game.Version.Description = versionDescription.String
-			game.Version.CreatedAt = versionCreatedAt.Time
+		if versionID.Valid && versionName.Valid && versionCreatedAt.Valid {
+			game.Version = &openapi.GameVersion{
+				Id:        versionID.Int32,
+				Name:      versionName.String,
+				CreatedAt: versionCreatedAt.Time,
+			}
+			if versionDescription.Valid {
+				game.Version.Description = versionDescription.String
+			}
 		}
 	}
 	log.Printf("debug: %#v\n", game)
@@ -201,10 +203,10 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 }
 
 // UpdateGame ゲームの更新
-func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+func (*DB) UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInfo, error) {
 	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update(Game{
-		Name:        newGameMeta.Name,
-		Description: newGameMeta.Description,
+		Name:        newGame.Name,
+		Description: newGame.Description,
 	}).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to update game: %w", err)
@@ -216,7 +218,7 @@ func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi
 		return nil, fmt.Errorf("failed to find game: %w", err)
 	}
 
-	gameMeta := &openapi.GameMeta{
+	gameMeta := &openapi.GameInfo{
 		Id:          game.ID,
 		Name:        game.Name,
 		Description: game.Description,
