@@ -15,8 +15,6 @@ type DBMock struct {
 	*MockMaintainerMeta
 	*MockPlayerMeta
 	*MockProductKeyMeta
-	*MockQuestionMeta
-	*MockResponseMeta
 }
 
 // NewDBMock DBのMockのコンストラクタ
@@ -31,8 +29,6 @@ func NewDBMock(ctrl *gomock.Controller) *DBMock {
 	dbMock.MockMaintainerMeta = NewMockMaintainerMeta(ctrl)
 	dbMock.MockPlayerMeta = NewMockPlayerMeta(ctrl)
 	dbMock.MockProductKeyMeta = NewMockProductKeyMeta(ctrl)
-	dbMock.MockQuestionMeta = NewMockQuestionMeta(ctrl)
-	dbMock.MockResponseMeta = NewMockResponseMeta(ctrl)
 
 	return dbMock
 }

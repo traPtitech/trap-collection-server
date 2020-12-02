@@ -13,8 +13,6 @@ tags:
   - name: user
   - name: game
   - name: version
-  - name: response
-  - name: question
   - name: seat
 security:
   - TrapMemberAuth:
@@ -145,14 +143,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewGameMeta'
+              $ref: '#/components/schemas/NewGame'
       responses:
         "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameMeta'
+                $ref: '#/components/schemas/GameInfo'
         "500":
           description: 失敗
     get:
@@ -237,14 +235,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewGameMeta'
+              $ref: '#/components/schemas/NewGame'
       responses:
         "200":
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameMeta'
+                $ref: '#/components/schemas/GameInfo'
         "500":
           description: 失敗
   /games/{gameID}/image:
@@ -632,7 +630,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionWithGame'
+                $ref: '#/components/schemas/VersionDetails'
         "500":
           description: 失敗
   /versions/check:
@@ -658,132 +656,6 @@ paths:
                   $ref: '#/components/schemas/CheckItem'
         "500":
           description: 失敗時のレスポンス
-  /versions/question:
-    get:
-      tags:
-        - version
-      summary: 質問の取得
-      description: 質問の取得
-      security:
-        - TrapMemberAuth:
-            - read
-        - LauncherAuth: []
-      operationId: getQuestions
-      parameters:
-        - $ref: '#/components/parameters/sessions'
-      responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Question'
-        "500":
-          description: 失敗
-  /questions:
-    post:
-      tags:
-        - question
-      summary: 質問を作成
-      description: 質問を作成
-      security:
-        - TrapMemberAuth:
-            - read
-        - AdminAuth: []
-      operationId: postQuestion
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/NewQuestion'
-      responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Question'
-        "500":
-          description: 失敗
-  /questions/{questionID}:
-    parameters:
-      - $ref: '#/components/parameters/questionID'
-    delete:
-      tags:
-        - question
-      summary: 質問の削除
-      description: 質問の削除
-      security:
-        - TrapMemberAuth:
-            - read
-        - AdminAuth: []
-      operationId: deleteQuestion
-      responses:
-        "200":
-          description: 成功
-        "500":
-          description: 失敗
-  /responses:
-    post:
-      tags:
-        - response
-      summary: 新しい回答を作成します．
-      description: 新しい回答を作成します．
-      security:
-        - LauncherAuth: []
-      operationId: postResponse
-      parameters:
-        - $ref: '#/components/parameters/sessions'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewResponse'
-      responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NewResponse'
-        "500":
-          description: 失敗
-  /responses/{launcherVersionID}:
-    parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
-    get:
-      tags:
-        - response
-      summary: 回答の統計情報を取得
-      description: 回答の統計情報を取得
-      security:
-        - TrapMemberAuth:
-            - read
-      operationId: getResponse
-      parameters:
-        - name: require
-          in: query
-          required: false
-          description: 指定の要素のみ返す。指定なしではすべての要素を返す。（answer,game,remark）
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseCalc'
-        "500":
-          description: 失敗
   /seats/{seatID}:
     parameters:
       - $ref: '#/components/parameters/seatID'
@@ -1031,7 +903,7 @@ components:
         - bodyUpdatedAt
         - imgUpdatedAt
         - movieUpdatedAt
-    NewGameMeta:
+    NewGame:
       description: 新しいゲームの名前
       type: object
       properties:
@@ -1046,7 +918,31 @@ components:
       required:
         - name
         - description
-    GameMeta:
+    Game:
+      description: ゲーム
+      type: object
+      properties:
+        id:
+          description: ゲームのUUID
+          type: string
+          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
+        name:
+          description: ゲーム名
+          type: string
+          example: 'Flythm'
+        createdAt:
+          description: ゲームの登録時刻
+          type: string
+          format: date-time
+          example: '2019-09-25T09:51:31Z'
+        version:
+          $ref: '#/components/schemas/GameVersion'
+      required:
+        - id
+        - name
+        - createdAt
+        - version
+    GameInfo:
       description: ゲーム名とID
       type: object
       properties:
@@ -1072,30 +968,21 @@ components:
         - name
         - description
         - createdAt
-    Game:
-      description: ゲーム
+    GameMeta:
+      description: ゲーム名とID
       type: object
       properties:
         id:
-          description: ゲームのUUID
+          description: 追加されたゲームのUUID
           type: string
-          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
+          example: 'eb4a287d-15d9-4f12-8fff-bd088b12ba80'
         name:
-          description: ゲーム名
+          description: 追加されたゲームの名前
           type: string
           example: 'Flythm'
-        createdAt:
-          description: ゲームの登録時刻
-          type: string
-          format: date-time
-          example: '2019-09-25T09:51:31Z'
-        version:
-          $ref: '#/components/schemas/GameVersion'
       required:
         - id
         - name
-        - createdAt
-        - version
     NewGameVersion:
       description: 新しいゲームのバージョン
       type: object
@@ -1203,6 +1090,22 @@ components:
             type: string
       required:
         - maintainers
+    Maintainer:
+      type: object
+      properties:
+        id:
+          description: traQID（UUID）
+          type: string
+        name:
+          description: traQID（UUIDでない方）
+          type: string
+        role:
+          description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
+          type: integer
+      required:
+        - id
+        - name
+        - role
     NewVersion:
       description: 新しいランチャーのバージョンの名前
       type: object
@@ -1231,34 +1134,6 @@ components:
       required:
         - id
         - name
-        - createdAt
-    VersionWithGame:
-      description: ゲーム一覧付きのランチャーのバージョン
-      type: object
-      properties:
-        id:
-          description: ID
-          type: integer
-          example: 1
-        name:
-          description: 名前
-          type: string
-          example: ko-daisai
-        games:
-          type: array
-          items:
-            description: 入れるゲームのUUID
-            type: string
-            example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
-        createdAt:
-          description: 登録時刻
-          type: string
-          format: date-time
-          example: '2019-09-25T09:51:31Z'
-      required:
-        - id
-        - name
-        - games
         - createdAt
     VersionMeta:
       description: ランチャーのバージョンの簡易的な情報
@@ -1292,17 +1167,11 @@ components:
         name:
           description: 名前
           type: string
-          example: Flythm
+          example: ko-daisai
         games:
           type: array
           items:
-            description: 入れるゲームのUUID
-            type: string
-            example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
-        questions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Question'
+            $ref: '#/components/schemas/GameMeta'
         createdAt:
           description: 登録時刻
           type: string
@@ -1312,265 +1181,4 @@ components:
         - id
         - name
         - games
-        - questions
         - createdAt
-    NewQuestion:
-      description: 新しい質問
-      type: object
-      properties:
-        versionId:
-          description: 質問を追加するランチャーのバージョンのID
-          type: integer
-          example: 1
-        type:
-          description: 質問の種類（radio,checkbox,text）
-          type: string
-          example: radio
-        content:
-          description: 質問文
-          type: string
-          example: 使っていて不快だった点はありますか？
-        options:
-          description: 選択肢（種類がtextのときはなし）
-          type: array
-          items:
-            type: string
-            example: 'ある'
-        required:
-          description: 回答が必須かどうか
-          type: boolean
-          example: true
-      required:
-        - versionId
-        - type
-        - content
-        - options
-        - required
-    Question:
-      type: object
-      description: 質問
-      properties:
-        id:
-          description: 質問のID
-          type: integer
-          example: 1
-        type:
-          description: 質問の種類
-          type: string
-          example: radio
-        content:
-          description: 質問文
-          type: string
-          example: 使っていて不快だった点はありますか？
-        options:
-          description: 選択肢（typeがtextの場合は空）
-          type: array
-          items:
-            $ref: '#/components/schemas/QuestionOption'
-        required:
-          description: 回答が必須か
-          type: boolean
-          example: true
-        createdAt:
-          description: 質問の作成時刻
-          type: string
-          format: date-time
-          example: '2019-09-25T09:51:31Z'
-      required:
-        - id
-        - type
-        - content
-        - options
-        - required
-        - createdAt
-    QuestionOption:
-      type: object
-      description: 質問の選択肢
-      properties:
-        id:
-          description: 選択肢のid
-          type: integer
-          example: 1
-        label:
-          description: 選択肢のラベル
-          type: string
-          example: はい
-      required:
-        - id
-        - label
-    NewResponse:
-      type: object
-      description: 新しい回答
-      properties:
-        id:
-          description: クライアントのUUID
-          type: string
-          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
-        answers:
-          description: バージョンごとの質問に対する回答
-          type: array
-          items:
-            $ref: '#/components/schemas/Answer'
-        gameRatings:
-          description: ゲームに対する評価
-          type: array
-          items:
-            $ref: '#/components/schemas/GameRating'
-        remark:
-          description: 自由記述欄
-          type: string
-          example: 特に何もありません
-      required:
-        - id
-        - answers
-        - gameRatings
-        - remark
-    ResponseCalc:
-      type: object
-      description: 回答
-      properties:
-        id:
-          description: クライアントのUUID
-          type: string
-          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
-        answer:
-          $ref: '#/components/schemas/AnswerCalc'
-        game:
-          $ref: '#/components/schemas/GameCalc'
-        remark:
-          description: 自由記述欄
-          type: array
-          items:
-            type: string
-            example: 特に何もありません
-      required:
-        - id
-        - answer
-        - game
-        - remark
-    Answer:
-      type: object
-      description: バージョンごとの質問に対する回答
-      properties:
-        id:
-          description: 質問のID
-          type: integer
-          example: 1
-        contents:
-          description: 回答の配列（チェックボックスの場合のみ複数）
-          type: object
-          properties:
-            text:
-              description: 質問のtypeがtextのとき
-              type: string
-              example: 面白かった
-            options:
-              description: 質問のtypeがtext以外のとき
-              type: array
-              items:
-                description: 選択肢のid
-                type: integer
-                example: 0
-      required:
-        - id
-        - content
-    AnswerCalc:
-      type: object
-      description: 質問に対する回答の統計
-      properties:
-        id:
-          description: 質問のID
-          type: integer
-          example: 1
-        contents:
-          description: それぞれの回答とその回答数
-          type: array
-          items:
-            type: object
-            properties:
-              answer:
-                type: string
-                example: 面白かった
-              num:
-                type: integer
-                example: 5
-            required:
-              - answer
-              - num
-      required:
-        - id
-        - contents
-    GameRating:
-      type: object
-      description: ゲームの評価
-      properties:
-        id:
-          description: ゲームのUUID
-          type: string
-        rate:
-          description: 星の数
-          maximum: 5
-          minimum: 1
-          type: number
-          format: double
-          example: 2.5
-        time:
-          description: プレイ時間(ms)
-          type: integer
-          example: 500000
-      required:
-        - id
-        - rate
-        - time
-    GameCalc:
-      type: object
-      description: ゲームの評価の統計
-      properties:
-        id:
-          description: ゲームのUUID
-          type: string
-          example: eb4a287d-15d9-4f12-8fff-bd088b12ba80
-        rate:
-          description: 星の数
-          type: array
-          items:
-            type: object
-            properties:
-              star:
-                type: integer
-                example: 5
-              num:
-                type: integer
-                example: 5
-            required:
-              - star
-              - num
-        rateAve:
-          description: 星の数の平均
-          type: integer
-          example: 3
-        time:
-          description: プレイ時間(ms)の平均
-          type: integer
-          example: 500000
-      required:
-        - id
-        - rate
-        - rateAve
-        - time
-    Maintainer:
-      type: object
-      properties:
-        id:
-          description: traQID（UUID）
-          type: string
-        name:
-          description: traQID（UUIDでない方）
-          type: string
-        role:
-          description: 権限（0:ゲームの更新の権限のみ,1:ゲームの更新と更新権限を持つ使途の追加の権限を持つ）
-          type: integer
-      required:
-        - id
-        - name
-        - role
