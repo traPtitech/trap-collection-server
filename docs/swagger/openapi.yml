@@ -259,17 +259,16 @@ paths:
         - TrapMemberAuth:
             - read
         - GameMaintainerAuth: []
-      operationId: putImage
+      operationId: postImage
       requestBody:
         content:
-          image/jpeg:
+          multipart/form-data:
             schema:
-              type: string
-              format: binary
-          image/png:
-            schema:
-              type: string
-              format: binary
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         "200":
           description: 成功
@@ -314,10 +313,13 @@ paths:
       operationId: postVideo
       requestBody:
         content:
-          video/mp4:
+          multipart/form-data:
             schema:
-              type: string
-              format: binary
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         "200":
           description: 成功

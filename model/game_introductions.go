@@ -21,6 +21,7 @@ type GameIntroduction struct {
 // GameIntroductionMeta game_introductionテーブルのリポジトリ
 type GameIntroductionMeta interface {
 	GetExtension(gameID string, role int8) (string, error)
+	InsertIntroduction(gameID string, role string, ext string) error
 }
 
 // GetExtension 拡張子の取得
@@ -40,4 +41,23 @@ func (*DB) GetExtension(gameID string, role int8) (string, error) {
 		return "", fmt.Errorf("Failed In ExtMap: %w", err)
 	}
 	return ext, nil
+}
+
+// InsertIntroduction 画像・動画の追加
+func (*DB) InsertIntroduction(gameID string, resourceType string, ext string) error {
+	intRole := roleStrIntMap[resourceType]
+	intExt := extStrIntMap[ext]
+
+	introduction := &GameIntroduction{
+		GameID:    gameID,
+		Role:      intRole,
+		Extension: intExt,
+	}
+
+	err := db.Create(introduction).Error
+	if err != nil {
+		return fmt.Errorf("failed to insert introduction: %w", err)
+	}
+
+	return nil
 }
