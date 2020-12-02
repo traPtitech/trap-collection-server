@@ -28,10 +28,10 @@ type Game struct {
 type GameMeta interface {
 	IsExistGame(gameID string) (bool, error)
 	GetGames(userID ...string) ([]*openapi.Game, error)
-	PostGame(userID string, gameName string, description string) (*openapi.GameMeta, error)
+	PostGame(userID string, gameName string, description string) (*openapi.GameInfo, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
-	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+	UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInfo, error)
 }
 
 // IsExistGame ゲームが存在するかの確認
@@ -100,7 +100,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 }
 
 // PostGame ゲームの追加
-func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameMeta, error) {
+func (*DB) PostGame(userID string, gameName string, gameDescription string) (*openapi.GameInfo, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate UUID: %w", err)
@@ -139,7 +139,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 		return nil, fmt.Errorf("Trasaction Error: %w", err)
 	}
 
-	gameMeta := &openapi.GameMeta{
+	gameMeta := &openapi.GameInfo{
 		Id:          game.ID,
 		Name:        game.Name,
 		Description: game.Description,
@@ -201,10 +201,10 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 }
 
 // UpdateGame ゲームの更新
-func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+func (*DB) UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInfo, error) {
 	err := db.Model(&Game{}).Where("id = ? AND deleted_at IS NULL", gameID).Update(Game{
-		Name:        newGameMeta.Name,
-		Description: newGameMeta.Description,
+		Name:        newGame.Name,
+		Description: newGame.Description,
 	}).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to update game: %w", err)
@@ -216,7 +216,7 @@ func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi
 		return nil, fmt.Errorf("failed to find game: %w", err)
 	}
 
-	gameMeta := &openapi.GameMeta{
+	gameMeta := &openapi.GameInfo{
 		Id:          game.ID,
 		Name:        game.Name,
 		Description: game.Description,

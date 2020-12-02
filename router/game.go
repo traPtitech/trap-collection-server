@@ -34,7 +34,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
 }
 
 //PostGame POST /gamesの処理部分
-func (g *Game) PostGame(game *openapi.NewGameMeta, c echo.Context) (*openapi.GameMeta, error) {
+func (g *Game) PostGame(game *openapi.NewGame, c echo.Context) (*openapi.GameInfo, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session:%w", err)
@@ -57,12 +57,12 @@ func (g *Game) PostGame(game *openapi.NewGameMeta, c echo.Context) (*openapi.Gam
 		return nil, fmt.Errorf("failed to GetMe: %w", err)
 	}
 
-	gameMeta, err := g.db.PostGame(user.Id, game.Name, game.Description)
+	gameInfo, err := g.db.PostGame(user.Id, game.Name, game.Description)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add game: %w", err)
 	}
 
-	return gameMeta, nil
+	return gameInfo, nil
 }
 
 // GetGame GET /games/:gameID/infoの処理部分

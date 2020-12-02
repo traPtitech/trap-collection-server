@@ -16,8 +16,6 @@ type Service struct {
 	*Middleware
 	*Game
 	*OAuth2
-	*Question
-	*Response
 	*Seat
 	*User
 	*Version
@@ -53,20 +51,17 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 	middleware := newMiddleware(db, oauth)
 	game := newGame(db, oauth, str)
 	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
-	response := newResponse(db, launcherAuth)
 	seat := newSeat(db, launcherAuth)
 	user := newUser(oauth)
 	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
-		Middleware:  middleware,
-		GameApi:     game,
-		Oauth2Api:   oAuth2,
-		QuestionApi: new(Question),
-		ResponseApi: response,
-		SeatApi:     seat,
-		UserApi:     user,
-		VersionApi:  version,
+		Middleware: middleware,
+		GameApi:    game,
+		Oauth2Api:  oAuth2,
+		SeatApi:    seat,
+		UserApi:    user,
+		VersionApi: version,
 	}
 
 	return api, nil

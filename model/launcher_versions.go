@@ -3,6 +3,7 @@ package model
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -53,50 +54,27 @@ func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.Versi
 	versionDetails = &openapi.VersionDetails{}
 
 	rows, err := db.Table("launcher_versions").
-		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,game_version_relations.game_id").
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
+		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id <=> games.id").
 		Where("launcher_versions.id = ?", id).
+		Select("launcher_versions.id,launcher_versions.name,launcher_versions.created_at,games.id, games.name").
 		Rows()
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
 	}
 	for rows.Next() {
-		var gameID interface{}
-		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.CreatedAt, &gameID)
+		var gameID sql.NullString
+		var gameName sql.NullString
+		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.CreatedAt, &gameID, &gameName)
 		if err != nil {
 			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
 		}
-		if gameID != nil {
-			versionDetails.Games = append(versionDetails.Games, gameID.(string))
+		if gameID.Valid {
+			versionDetails.Games = append(versionDetails.Games, openapi.GameMeta{
+				Id:   gameID.String,
+				Name: gameName.String,
+			})
 		}
-	}
-
-	rows, err = db.Table("questions").
-		Select("questions.id,questions.type,questions.content,questions.required,questions.created_at,question_options.id,question_options.label").
-		Joins("LEFT OUTER JOIN question_options ON questions.id = question_options.question_id").
-		Where("questions.launcher_version_id = ?", id).
-		Rows()
-	if err != nil && !gorm.IsRecordNotFoundError(err) {
-		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Questions:%w", err)
-	}
-	questionMap := make(map[int32]openapi.Question)
-	for rows.Next() {
-		var question openapi.Question
-		var option openapi.QuestionOption
-		err = rows.Scan(&question.Id, &question.Type, &question.Content, &question.Required, &question.CreatedAt, &option.Id, &option.Label)
-		if err != nil {
-			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Question:%w", err)
-		}
-		if _, ok := questionMap[question.Id]; ok {
-			question = questionMap[question.Id]
-		}
-		if len(option.Label) != 0 {
-			question.Options = append(question.Options, option)
-		}
-		questionMap[question.Id] = question
-	}
-	for _, v := range questionMap {
-		versionDetails.Questions = append(versionDetails.Questions, v)
 	}
 
 	return
