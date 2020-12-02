@@ -68,7 +68,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 			Where("(gv.id = ? OR gv.id IS NULL AND g.deleted_at IS NULL) AND maintainers.user_id = ?", sub, userID[0]).
 			Rows()
 	} else {
-		rows, err = db.Where("gv.id = ? AND g.deleted_at IS NULL", sub).Rows()
+		rows, err = db.Where("(gv.id = ? OR gv.id IS NULL) AND g.deleted_at IS NULL", sub).Rows()
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed In Getting Games: %w", err)
@@ -166,9 +166,7 @@ func (*DB) DeleteGame(gameID string) error {
 
 // GetGameInfo ゲーム情報の取得
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
-	game := &openapi.Game{
-		Version: &openapi.GameVersion{},
-	}
+	game := &openapi.Game{}
 	rows, err := db.Table("games").
 		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
 		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
@@ -188,11 +186,15 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		if err != nil {
 			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
 		}
-		if versionID.Valid && versionName.Valid && versionDescription.Valid && versionCreatedAt.Valid {
-			game.Version.Id = versionID.Int32
-			game.Version.Name = versionName.String
-			game.Version.Description = versionDescription.String
-			game.Version.CreatedAt = versionCreatedAt.Time
+		if versionID.Valid && versionName.Valid && versionCreatedAt.Valid {
+			game.Version = &openapi.GameVersion{
+				Id:        versionID.Int32,
+				Name:      versionName.String,
+				CreatedAt: versionCreatedAt.Time,
+			}
+			if versionDescription.Valid {
+				game.Version.Description = versionDescription.String
+			}
 		}
 	}
 	log.Printf("debug: %#v\n", game)

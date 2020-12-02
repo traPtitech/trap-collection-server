@@ -14,8 +14,8 @@ import (
 // LauncherVersion ランチャーのバージョンの構造体
 type LauncherVersion struct {
 	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
-	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;UNIQUE;"`
-	AnkeTo               string                `json:"anke-to,omitempty" gorm:"type:text;default:NULL;"`
+	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
+	AnkeTo               string                `json:"anke_to,omitempty" gorm:"type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
 	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
@@ -52,13 +52,15 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
 func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error) {
-	versionDetails = &openapi.VersionDetails{}
+	versionDetails = &openapi.VersionDetails{
+		Games: []openapi.GameMeta{},
+	}
 
 	rows, err := db.Table("launcher_versions").
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id <=> games.id").
 		Where("launcher_versions.id = ?", id).
-		Select("launcher_versions.id,launcher_versions.name,launcher_versions.anke-to,launcher_versions.created_at,games.id, games.name").
+		Select("launcher_versions.id,launcher_versions.name,launcher_versions.anke_to,launcher_versions.created_at,games.id, games.name").
 		Rows()
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
