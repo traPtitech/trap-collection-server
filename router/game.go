@@ -269,6 +269,7 @@ func (g *Game) PostVideo(gameID string, video multipartFile) error {
 	for _, validExt := range videoExts {
 		if ext == validExt {
 			isValidExt = true
+			break
 		}
 	}
 	if !isValidExt {
