@@ -51,6 +51,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | name | varchar(32) | NO | UNI |  |  |  |
+| anke-to | text |  |  | NULL |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
