@@ -76,7 +76,7 @@ func (g *Game) GetGame(gameID string) (*openapi.Game, error) {
 }
 
 // PutGame PUT /games/:gameID
-func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error) {
+func (g *Game) PutGame(gameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error) {
 	game, err := g.db.UpdateGame(gameID, gameMeta)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update game: %w", err)
