@@ -277,15 +277,15 @@ func (*DB) CheckGameIDs(gameIDs []string) error {
 		}
 
 		if versionNum == 0 {
-			gameIDMap[gameID] = dontHaveVersion
+			gameIDStateMap[gameID] = noVersion
 			continue
 		}
 		if assetNum == 0 {
-			gameIDMap[gameID] = dontHaveAsset
+			gameIDStateMap[gameID] = noAssets
 			continue
 		}
 
-		gameIDMap[gameID] = found
+		gameIDStateMap[gameID] = ok
 	}
 
 	gameIDerr := &GameIDsError{}
