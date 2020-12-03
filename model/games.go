@@ -264,7 +264,7 @@ func (*DB) CheckGameIDs(gameIDs []string) error {
 
 	gameIDStateMap := make(map[string]gameIDState, len(gameIDs))
 	for _, gameID := range gameIDs {
-		gameIDMap[gameID] = notFound
+		gameIDStateMap[gameID] = notFound
 	}
 
 	for rows.Next() {
