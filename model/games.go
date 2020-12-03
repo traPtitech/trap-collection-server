@@ -248,7 +248,7 @@ const (
 	found
 )
 
-// CheckGameIDs gameIDが全てあるか確認
+// CheckGameIDs gameIDが登録済みのものに該当するか確認
 func (*DB) CheckGameIDs(gameIDs []string) error {
 	rows, err := db.
 		Where("games.id IN (?)", gameIDs).
