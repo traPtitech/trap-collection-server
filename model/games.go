@@ -228,11 +228,11 @@ func (*DB) UpdateGame(gameID string, newGameMeta *openapi.NewGameMeta) (*openapi
 	return gameMeta, nil
 }
 
-// GameIDsError CheckGameIDs用のエラー
-type GameIDsError struct {
-	NotFoundGameIDs        []string
-	DontHaveVersionGameIDs []string
-	DontHaveAssetGameIDs   []string
+// InvalidGameIDs Checkをfailした理由ごとの不正なIDの配列
+type InvalidGameIDs struct {
+	NotFound  []string
+	NoVersion []string
+	NoAssets  []string
 }
 
 func (ge *GameIDsError) Error() string {
