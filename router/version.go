@@ -61,9 +61,9 @@ func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.G
 
 	err = v.db.CheckGameIDs(gameIDs.GameIDs)
 	if err != nil {
-		gameIDErr := &model.GameIDsError{}
-		if errors.As(err, &gameIDErr) {
-			return nil, gameIDErr
+		invalidIDs := &model.InvalidGameIDs{}
+		if errors.As(err, invalidIDs) {
+			return nil, invalidIDs
 		}
 
 		return nil, fmt.Errorf("failed to check gameIDs: %w", err)
