@@ -235,8 +235,8 @@ type InvalidGameIDs struct {
 	NoAssets  []string
 }
 
-func (ge *GameIDsError) Error() string {
-	return fmt.Sprintf("invalid gameIDs(not found:%s, don't have version: %s, don't have asset: %s)", strings.Join(ge.NotFoundGameIDs, "/"), strings.Join(ge.DontHaveVersionGameIDs, "/"), strings.Join(ge.DontHaveAssetGameIDs, "/"))
+func (ids *InvalidGameIDs) Error() string {
+	return fmt.Sprintf("invalid gameIds(not found:%s, no version: %s, no assets: %s)", strings.Join(ids.NotFound, "/"), strings.Join(ids.NoVersion, "/"), strings.Join(ids.NoAssets, "/"))
 }
 
 type gameIDState int
