@@ -288,21 +288,21 @@ func (*DB) CheckGameIDs(gameIDs []string) error {
 		gameIDStateMap[gameID] = ok
 	}
 
-	gameIDerr := &GameIDsError{}
-	for gameID, state := range gameIDMap {
+	invalidGameIDs := &invalidGameIDs{}
+	for gameID, state := range gameIDStateMap {
 		switch state {
 		case notFound:
-			gameIDerr.NotFoundGameIDs = append(gameIDerr.NotFoundGameIDs, gameID)
-		case dontHaveVersion:
-			gameIDerr.DontHaveVersionGameIDs = append(gameIDerr.DontHaveVersionGameIDs, gameID)
-		case dontHaveAsset:
-			gameIDerr.DontHaveAssetGameIDs = append(gameIDerr.DontHaveAssetGameIDs, gameID)
+			invalidGameIDs.NotFound = append(invalidGameIDs.NotFound, gameID)
+		case noVersion:
+			invalidGameIDs.NoVersion = append(invalidGameIDs.DontHaveVersionGameIDs, gameID)
+		case noAssets:
+			invalidGameIDs.NoAssets = append(invalidGameIDs.NoAssets, gameID)
 		}
 	}
 
-	if len(gameIDerr.NotFoundGameIDs) == 0 && len(gameIDerr.DontHaveVersionGameIDs) == 0 && len(gameIDerr.DontHaveAssetGameIDs) == 0 {
-		return nil
+	if len(invalidGameIDs.NotFound) > 0 || len(invalidGameIDs.NoVersion) > 0 || len(invalidGameIDs.NoAssets) > 0 {
+		return invalidGameIDs
 	}
 
-	return gameIDerr
+	return nil
 }
