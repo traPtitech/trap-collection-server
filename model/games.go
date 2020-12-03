@@ -243,9 +243,9 @@ type gameIDState int
 
 const (
 	notFound gameIDState = iota
-	dontHaveVersion
-	dontHaveAsset
-	found
+	noVersion
+	noAsset
+	ok
 )
 
 // CheckGameIDs gameIDが登録済みのものに該当するか確認
