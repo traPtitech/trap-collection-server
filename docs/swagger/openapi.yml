@@ -14,6 +14,7 @@ tags:
   - name: game
   - name: version
   - name: launcherAuth
+  - name: seatVersion
   - name: seat
 security:
   - TrapMemberAuth:
@@ -641,7 +642,6 @@ paths:
       - $ref: '#/components/parameters/launcherVersionID'
     get:
       tags:
-        - version
         - launcherAuth
       summary: バージョンのプロダクトキー一覧
       description: バージョンのプロダクトキー一覧
@@ -657,6 +657,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductKeyDetail'
+        "500":
+          description: 失敗
+  /versions/{launcherVersionID}/seats:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionID'
+    post:
+      tags:
+        - seatVersion
+      summary: バージョンに席のバージョン追加
+      description: バージョンに席のバージョン追加
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: postSeatVersion
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatVersion'
         "500":
           description: 失敗
   /versions/check:
@@ -750,38 +772,9 @@ paths:
                 $ref: '#/components/schemas/LauncherAuthToken'
         "500":
           description: 失敗
-  /seats/{seatID}:
+  /seats/versions/{seatVersionID}:
     parameters:
-      - $ref: '#/components/parameters/seatID'
-    post:
-      tags:
-        - seat
-      summary: 着席
-      description: 着席
-      security:
-        - TrapMemberAuth:
-            - read
-      operationId: postFixSeat
-      responses:
-        "200":
-          description: 成功
-        "500":
-          description: 失敗
-    delete:
-      tags:
-        - seat
-      summary: 離席
-      description: 離席
-      security:
-        - TrapMemberAuth:
-            - read
-      operationId: deleteFixSeat
-      responses:
-        "200":
-          description: 成功
-        "500":
-          description: 失敗
-  /seats:
+      - $ref: '#/components/parameters/seatVersionID'
     get:
       tags:
         - seat
@@ -790,20 +783,34 @@ paths:
       security:
         - TrapMemberAuth:
             - read
-      operationId: getSeat
+      operationId: getSeats
       responses:
         "200":
           description: 成功
           content:
             application/json:
               schema:
-                description: 状態inの席の一覧を取得します。
                 type: array
                 items:
-                  type: integer
-                  description: 埋まっている席のIDの一覧
+                  $ref: '#/components/schemas/SeatDetail'
         "500":
           description: 失敗
+    delete:
+      tags:
+        - seatVersion
+      summary: 席のバージョン消去
+      description: 席のバージョン消去
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: deleteSeatVersion
+      responses:
+        "200":
+          description: 成功
+        "500":
+          description: 失敗
+  /seats:
     post:
       tags:
         - seat
@@ -812,11 +819,19 @@ paths:
       security:
         - LauncherAuth: []
       operationId: postSeat
-      parameters:
-        - $ref: '#/components/parameters/sessions'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Seat'
       responses:
         "200":
           description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatDetail'
         "500":
           description: 失敗
     delete:
@@ -827,11 +842,19 @@ paths:
       security:
         - LauncherAuth: []
       operationId: deleteSeat
-      parameters:
-        - $ref: '#/components/parameters/sessions'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Seat'
       responses:
         "200":
           description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatDetail'
         "500":
           description: 失敗
 
@@ -946,6 +969,13 @@ components:
       schema:
         type: string
         format: uuid
+    seatVersionID:
+      description: 席のバージョンのID
+      name: seatVersionID
+      in: path
+      required: true
+      schema:
+        type: integer
     seatID:
       description: 席のID
       name: seatID
@@ -1364,3 +1394,49 @@ components:
           maxLength: 36
           minLength: 36
           pattern: '[0-9a-zA-Z]{36}'
+    SeatVersion:
+      description: 席のバージョン
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 0
+        createdAt:
+          description: 作成時刻
+          type: string
+          format: date-time
+          example: '2019-09-25T09:51:31Z'
+      required:
+        - id
+        - createdAt
+    Seat:
+      description: 席
+      type: object
+      properties:
+        seatVersionId:
+          type: integer
+          example: 0
+        seatId:
+          type: integer
+          example: 0
+      required:
+        - seatVersionId
+        - seatId
+    SeatDetail:
+      description: 席の詳細
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 0
+        status:
+          description: 席の状態(0で離席、1で着席)
+          type: integer
+        SeatingTime:
+          description: 着席時刻
+          type: string
+          format: date-time
+          example: '2019-09-25T09:51:31Z'
+      required:
+        - id
+        - status
