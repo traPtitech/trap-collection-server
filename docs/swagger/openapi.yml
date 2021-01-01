@@ -1394,6 +1394,10 @@ components:
           maxLength: 36
           minLength: 36
           pattern: '[0-9a-zA-Z]{36}'
+      required:
+        - accessToken
+        - expiresIn
+        - refreshToken
     SeatVersion:
       description: 席のバージョン
       type: object
