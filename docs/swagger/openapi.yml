@@ -13,6 +13,7 @@ tags:
   - name: user
   - name: game
   - name: version
+  - name: launcherAuth
   - name: seat
 security:
   - TrapMemberAuth:
@@ -635,6 +636,29 @@ paths:
                 $ref: '#/components/schemas/VersionDetails'
         "500":
           description: 失敗
+  /versions/{launcherVersionID}/keys:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionID'
+    get:
+      tags:
+        - version
+        - launcherAuth
+      summary: バージョンのプロダクトキー一覧
+      description: バージョンのプロダクトキー一覧
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: getProductKeys
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductKeyDetail'
+        "500":
+          description: 失敗
   /versions/check:
     get:
       tags:
@@ -658,6 +682,74 @@ paths:
                   $ref: '#/components/schemas/CheckItem'
         "500":
           description: 失敗時のレスポンス
+  /launcher/key/generate:
+    post:
+      tags:
+        - launcherAuth
+      summary: プロダクトキー作成
+      description: プロダクトキー作成
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: postKeyGenerate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductKeyGen'
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductKey'
+        "500":
+          description: 失敗
+  /launcher/key/{productKeyID}:
+    parameters:
+      - $ref: '#/components/parameters/productKeyID'
+    delete:
+      tags:
+        - launcherAuth
+      summary: プロダクトキー失効
+      description: プロダクトキー失効
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: deleteProductKey
+      responses:
+        "200":
+          description: 成功
+        "500":
+          description: 失敗
+  /launcher/login:
+    post:
+      tags:
+        - launcherAuth
+      summary: ランチャーのログイン
+      description: ランチャーのログイン
+      operationId: postLauncherLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductKey'
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherAuthToken'
+        "500":
+          description: 失敗
   /seats/{seatID}:
     parameters:
       - $ref: '#/components/parameters/seatID'
@@ -846,6 +938,14 @@ components:
       required: true
       schema:
         type: string
+    productKeyID:
+      description: productKeyのID
+      name: productKeyID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     seatID:
       description: 席のID
       name: seatID
@@ -1206,3 +1306,61 @@ components:
         - name
         - games
         - createdAt
+    ProductKeyGen:
+      description: プロダクトキー生成のリクエスト
+      type: object
+      properties:
+        num:
+          type: integer
+          example: 20
+        version:
+          description: バージョンID
+          type: integer
+          example: 0
+      required:
+        - num
+        - version
+    ProductKey:
+      description: プロダクトキー
+      type: object
+      properties:
+        key:
+          description: プロダクトキー
+          type: string
+          pattern: '^[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}'
+          example: xxxxx-xxxxx-xxxxx-xxxxx-xxxxx
+      required:
+        - key
+    ProductKeyDetail:
+      description: プロダクトキーの詳細
+      type: object
+      properties:
+        id:
+          description: プロダクトキーのID
+          type: string
+          format: uuid
+        key:
+          description: プロダクトキー
+          type: string
+          pattern: '^[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}'
+          example: xxxxx-xxxxx-xxxxx-xxxxx-xxxxx
+      required:
+        - key
+    LauncherAuthToken:
+      description: ランチャーのトークン
+      type: object
+      properties:
+        accessToken:
+          type: string
+          maxLength: 36
+          minLength: 36
+          pattern: '[0-9a-zA-Z]{36}'
+        expiresIn:
+          description: アクセストークンの持続時間(秒)
+          type: integer
+          example: 3600
+        refreshToken:
+          type: string
+          maxLength: 36
+          minLength: 36
+          pattern: '[0-9a-zA-Z]{36}'
