@@ -55,24 +55,46 @@
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
-### product_key
-| Name | Type | Null | Key | Default | Extra | 説明 |
-| --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| key | varchar(36) | NO | UNI |  |  |  |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
-| used | boolean | NO |  | false |  | access_tokenが使用済みかどうか |
-
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | launcher_version_id | int(11) | NO | MUL |  |  |  |
 | game_id | varchar(36) | NO | MUL |  |  |  |
 
-### players
+### product_keys
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| product_key_id | int(11) | NO | MUL |  |  |  |
+| key | char(29) | NO | UNI |  |  |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| created_at | datetime | NO |  |  |  |  |
+| deleted_at | datetime |  |  | NULL |  |  |
+
+### access_tokens
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| key_id | varchar(36) | NO | MUL |  |  |  |
+| access_token | varchar(36) | NO | UNI |  |  |  |
+| refresh_token | varchar(36) | NO | UNI |  |  |  |
+| refresh_enabled | bool | NO |  | true |  |  |
+| expires_in | int(11) | NO |  |  |  |  |
+| created_at | datetime | NO |  |  |  |  |
+| deleted_at | datetime |  |  | NULL |  |  |
+
+### seat_versions
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
+| deleted_at | datetime |  |  | NULL |  |  |
+
+### seats
+| Name | Type | Null | Key | Default | Extra | 説明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| seat_id | int(11) | NO |  |  |  |  |
+| seat_version_id | int(11) | NO | MUL |  |  |  |
 | started_at | datetime | NO |  | CURRENT_TIMESTAMP |  | 着席時刻 |
 | ended_at | datetime |  |  | NULL |  | 離席時刻 |

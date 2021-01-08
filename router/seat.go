@@ -1,9 +1,6 @@
 package router
 
 import (
-	"fmt"
-
-	echo "github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
@@ -26,7 +23,7 @@ func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
 }
 
 // PostSeat POST /seats の処理部分
-func (s *Seat) PostSeat(c echo.Context) error {
+/*func (s *Seat) PostSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting ProductKey: %w", err)
@@ -38,10 +35,10 @@ func (s *Seat) PostSeat(c echo.Context) error {
 	}
 
 	return nil
-}
+}*/
 
 // DeleteSeat DELETE /seats の処理部分
-func (s *Seat) DeleteSeat(c echo.Context) error {
+/*func (s *Seat) DeleteSeat(c echo.Context) error {
 	productKey, err := s.launcherAuth.GetProductKey(c)
 	if err != nil {
 		return fmt.Errorf("Failed In Getting ProductKey")
@@ -53,4 +50,4 @@ func (s *Seat) DeleteSeat(c echo.Context) error {
 	}
 
 	return nil
-}
+}*/
