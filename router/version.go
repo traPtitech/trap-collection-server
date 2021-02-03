@@ -63,7 +63,7 @@ func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails
 }
 
 // PostGameToVersion POST /version/:launcherVersionID/gameの処理部分
-func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.GameIDs) (*openapi.Version, error) {
+func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.GameIDs) (*openapi.VersionDetails, error) {
 	intLauncherVersionID, err := strconv.Atoi(launcherVersionID)
 	if err != nil {
 		return nil, errors.New("invalid launcherVersionID")

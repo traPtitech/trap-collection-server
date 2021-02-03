@@ -32,7 +32,7 @@ type GameMeta interface {
 	PostGame(userID string, gameName string, description string) (*openapi.GameInfo, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
-	UpdateGame(gameID string, gameMeta *openapi.NewGameMeta) (*openapi.GameMeta, error)
+	UpdateGame(gameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error)
 	CheckGameIDs(gameIDs []string) error
 }
 
