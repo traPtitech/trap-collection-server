@@ -35,7 +35,6 @@ type DBMeta interface {
 	GameMeta
 	LauncherVersionMeta
 	MaintainerMeta
-	PlayerMeta
 	ProductKeyMeta
 }
 
