@@ -338,36 +338,6 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	return file, nil
 }
 
-func (g *Game) postIntroduction(gameID string, introduction io.Reader, role string) error {
-	fileTypeBuf := bytes.NewBuffer(nil)
-	fileBuf := bytes.NewBuffer(nil)
-	mw := io.MultiWriter(fileTypeBuf, fileBuf)
-	_, err := io.Copy(mw, introduction)
-	if err != nil {
-		return fmt.Errorf("failed to make MultiWriter: %w", err)
-	}
-
-	fileType, err := filetype.MatchReader(fileTypeBuf)
-	if err != nil {
-		return fmt.Errorf("failed to get filetype: %w", err)
-	}
-
-	ext := fileType.Extension
-
-	err = g.db.InsertIntroduction(gameID, role, ext)
-	if err != nil {
-		return fmt.Errorf("failed to insert introduction: %w", err)
-	}
-
-	fileName := gameID + "_" + role + "." + ext
-	err = g.storage.Save(fileName, fileBuf)
-	if err != nil {
-		return fmt.Errorf("failed to save introduction: %w", err)
-	}
-
-	return nil
-}
-
 var fileTypeStrIntMap = map[string]uint8{
 	"jar":     model.AssetTypeJar,
 	"windows": model.AssetTypeWindowsExe,
