@@ -18,9 +18,11 @@ var (
 		GameIntroduction{},
 		Maintainer{},
 		LauncherVersion{},
-		ProductKey{},
 		GameVersionRelation{},
-		Player{},
+		ProductKey{},
+		AccessToken{},
+		SeatVersion{},
+		Seat{},
 	}
 )
 
