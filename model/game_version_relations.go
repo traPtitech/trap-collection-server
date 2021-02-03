@@ -61,47 +61,41 @@ func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.Chec
 
 func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error) {
 	var version openapi.VersionDetails
-	err := db.Transaction(func(tx *gorm.DB) error {
-		launcherVersion := LauncherVersion{}
-		err := tx.Where("id = ?", launcherVersionID).Find(&launcherVersion).Error
-		if gorm.IsRecordNotFoundError(err) {
-			return errors.New("No Launcher Version")
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get a launcher version by id: %w", err)
-		}
 
-		gameVersionRelations := make([]interface{}, 0, len(gameIDs))
-		for _, gameID := range gameIDs {
-			gameVersionRelation := GameVersionRelation{
-				LauncherVersionID: uint(launcherVersionID),
-				GameID:            gameID,
-			}
-
-			gameVersionRelations = append(gameVersionRelations, gameVersionRelation)
-		}
-
-		err = gormbulk.BulkInsert(tx, gameVersionRelations, 3000)
-		if err != nil {
-			return fmt.Errorf("failed to insert games into version: %w", err)
-		}
-
-		games, err := getGameVersion(tx, launcherVersionID)
-		if err != nil {
-			return fmt.Errorf("failed to get game by launcher version id: %w", err)
-		}
-
-		version = openapi.VersionDetails{
-			Id:        int32(launcherVersion.ID),
-			Name:      launcherVersion.Name,
-			Games:     games,
-			CreatedAt: launcherVersion.CreatedAt,
-		}
-
-		return nil
-	})
+	launcherVersion := LauncherVersion{}
+	err := db.Where("id = ?", launcherVersionID).Find(&launcherVersion).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, errors.New("No Launcher Version")
+	}
 	if err != nil {
-		return nil, fmt.Errorf("failed in transaction: %w", err)
+		return nil, fmt.Errorf("failed to get a launcher version by id: %w", err)
+	}
+
+	gameVersionRelations := make([]interface{}, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		gameVersionRelation := GameVersionRelation{
+			LauncherVersionID: uint(launcherVersionID),
+			GameID:            gameID,
+		}
+
+		gameVersionRelations = append(gameVersionRelations, gameVersionRelation)
+	}
+
+	err = gormbulk.BulkInsert(db, gameVersionRelations, 3000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert games into version: %w", err)
+	}
+
+	games, err := getGameVersion(db, launcherVersionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game by launcher version id: %w", err)
+	}
+
+	version = openapi.VersionDetails{
+		Id:        int32(launcherVersion.ID),
+		Name:      launcherVersion.Name,
+		Games:     games,
+		CreatedAt: launcherVersion.CreatedAt,
 	}
 
 	return &version, nil
