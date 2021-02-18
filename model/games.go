@@ -230,27 +230,27 @@ func (*DB) UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInf
 	return gameMeta, nil
 }
 
-// GameIDsError CheckGameIDs用のエラー
-type GameIDsError struct {
-	NotFoundGameIDs        []string
-	DontHaveVersionGameIDs []string
-	DontHaveAssetGameIDs   []string
+// InvalidGameIDs Checkをfailした理由ごとの不正なIDの配列
+type InvalidGameIDs struct {
+	NotFound  []string
+	NoVersion []string
+	NoAssets  []string
 }
 
-func (ge *GameIDsError) Error() string {
-	return fmt.Sprintf("invalid gameIDs(not found:%s, don't have version: %s, don't have asset: %s)", strings.Join(ge.NotFoundGameIDs, "/"), strings.Join(ge.DontHaveVersionGameIDs, "/"), strings.Join(ge.DontHaveAssetGameIDs, "/"))
+func (ids InvalidGameIDs) Error() string {
+	return fmt.Sprintf("invalid gameIds(not found:%s, no version: %s, no assets: %s)", strings.Join(ids.NotFound, "/"), strings.Join(ids.NoVersion, "/"), strings.Join(ids.NoAssets, "/"))
 }
 
 type gameIDState int
 
 const (
 	notFound gameIDState = iota
-	dontHaveVersion
-	dontHaveAsset
-	found
+	noVersion
+	noAsset
+	ok
 )
 
-// CheckGameIDs gameIDが全てあるか確認
+// CheckGameIDs gameIDが登録済みのものに該当するか確認
 func (*DB) CheckGameIDs(gameIDs []string) error {
 	rows, err := db.
 		Where("games.id IN (?)", gameIDs).
@@ -264,9 +264,9 @@ func (*DB) CheckGameIDs(gameIDs []string) error {
 		return fmt.Errorf("failed to find gameIDs: %w", err)
 	}
 
-	gameIDMap := make(map[string]gameIDState, len(gameIDs))
+	gameIDStateMap := make(map[string]gameIDState, len(gameIDs))
 	for _, gameID := range gameIDs {
-		gameIDMap[gameID] = notFound
+		gameIDStateMap[gameID] = notFound
 	}
 
 	for rows.Next() {
@@ -279,32 +279,32 @@ func (*DB) CheckGameIDs(gameIDs []string) error {
 		}
 
 		if versionNum == 0 {
-			gameIDMap[gameID] = dontHaveVersion
+			gameIDStateMap[gameID] = noVersion
 			continue
 		}
 		if assetNum == 0 {
-			gameIDMap[gameID] = dontHaveAsset
+			gameIDStateMap[gameID] = noAsset
 			continue
 		}
 
-		gameIDMap[gameID] = found
+		gameIDStateMap[gameID] = ok
 	}
 
-	gameIDerr := &GameIDsError{}
-	for gameID, state := range gameIDMap {
+	invalidGameIDs := &InvalidGameIDs{}
+	for gameID, state := range gameIDStateMap {
 		switch state {
 		case notFound:
-			gameIDerr.NotFoundGameIDs = append(gameIDerr.NotFoundGameIDs, gameID)
-		case dontHaveVersion:
-			gameIDerr.DontHaveVersionGameIDs = append(gameIDerr.DontHaveVersionGameIDs, gameID)
-		case dontHaveAsset:
-			gameIDerr.DontHaveAssetGameIDs = append(gameIDerr.DontHaveAssetGameIDs, gameID)
+			invalidGameIDs.NotFound = append(invalidGameIDs.NotFound, gameID)
+		case noVersion:
+			invalidGameIDs.NoVersion = append(invalidGameIDs.NoVersion, gameID)
+		case noAsset:
+			invalidGameIDs.NoAssets = append(invalidGameIDs.NoAssets, gameID)
 		}
 	}
 
-	if len(gameIDerr.NotFoundGameIDs) == 0 && len(gameIDerr.DontHaveVersionGameIDs) == 0 && len(gameIDerr.DontHaveAssetGameIDs) == 0 {
-		return nil
+	if len(invalidGameIDs.NotFound) > 0 || len(invalidGameIDs.NoVersion) > 0 || len(invalidGameIDs.NoAssets) > 0 {
+		return invalidGameIDs
 	}
 
-	return gameIDerr
+	return nil
 }
