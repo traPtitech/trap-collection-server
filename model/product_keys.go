@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// ProductKey アクセストークンの構造体
+// ProductKey ProductKeyの構造体
 type ProductKey struct {
 	ID                uint         `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	Key               string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
