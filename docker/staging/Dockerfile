@@ -30,7 +30,7 @@ COPY --from=generate /local/openapi ./openapi
 COPY ./ ./
 
 RUN go generate ./... \
-  && go build -o collection
+  && go build -o collection -ldflags "-s -w"
 
 FROM alpine:3.13.2
 
