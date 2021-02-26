@@ -6,7 +6,7 @@ on:
       - develop
 
 env:
-  IMAGE_NAME: collection
+  IMAGE_NAME: trap-collection-server
   IMAGE_TAG: develop
 
 jobs:
