@@ -41,7 +41,7 @@ groovyで本家OpenAPI Generatorを使っている関係で実行にそれなり
 # docker run -it --rm \
     -v $PWD:/local \
     -w /home/groovy/scripts \
-    groovy:3.0.2 \
+    groovy:3.0.8 \
     groovy /local/generate/generator.groovy generate \
     -i /local/docs/swagger/openapi.yml \
     -g CollectionCodegen \

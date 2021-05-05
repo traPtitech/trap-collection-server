@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.0-experimental
 
-FROM groovy:3.0.2 AS generate
+FROM groovy:3.0.8 AS generate
 WORKDIR /home/groovy/scripts
 COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
 USER root
@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
 COPY . /local
 
 
-FROM golang:1.15.2-alpine AS build
+FROM golang:1.16.3-alpine AS build
 
 RUN apk add --update --no-cache git
 
@@ -25,7 +25,7 @@ COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o main -ldflags "-s -w" -tags main
 
-FROM alpine:3.11.6 AS runtime
+FROM alpine:3.13.5 AS runtime
 
 ENV TZ=Asia/Tokyo
 RUN apk --update --no-cache add tzdata && \
