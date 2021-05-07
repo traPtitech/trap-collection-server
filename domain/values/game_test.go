@@ -10,9 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type id string
+type id uuid.UUID
 func (*id) Generate(rand *rand.Rand, size int) reflect.Value {
-	return reflect.ValueOf(uuid.New().String())
+	uuidObj, _ := uuid.NewRandom()
+
+	return reflect.ValueOf(id(uuidObj))
 }
 
 func TestNewGameIDFromString(t *testing.T) {
@@ -51,13 +53,16 @@ func TestNewGameIDFromString(t *testing.T) {
 		_, err := NewGameIDFromString(test.id)
 
 		if test.err == nil {
-			assertion.NoErrorf(err, test.description+"/error")
+			assertion.NoErrorf(err, test.description+"/no error")
+		} else {
+			assertion.ErrorIs(test.err, err, test.description+"/error")
 		}
 	}
 
 	err := quick.Check(func(id id) bool {
-		_, err := NewGameIDFromString(string(id))
-		return err != nil
+		_, err := NewGameIDFromString(uuid.UUID(id).String())
+		t.Log(id)
+		return err == nil
 	}, nil)
 	if err != nil {
 		t.Error("black box test error:", err.Error())
