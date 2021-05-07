@@ -10,6 +10,8 @@ import (
 
 type (
 	LauncherVersionID string
+	/* Calender Versioning: https://calver.org/
+	format: YYYY.0M.0D[-MODIFIER]*/
 	LauncherVersionName string
 	QuestionnaireURL string
 	LauncherVersionCreatedAt time.Time
@@ -17,15 +19,15 @@ type (
 )
 
 var (
-	launcherVersionNameRegexp = regexp.MustCompile(`\d{4}.[0-1]\d.[0-3]\d(|-[a-zA-Z0-9]+)`)
+	launcherVersionNameRegexp = regexp.MustCompile(`^\d{4}.[0-1]\d.[0-3]\d(|-[a-zA-Z0-9]+)$`)
 	NullLauncherVersionDeletedAt LauncherVersionDeletedAt = LauncherVersionDeletedAt(nullTime)
 )
 
-func NewLuncherVersion() LauncherVersionID {
+func NewLuncherVersionID() LauncherVersionID {
 	return LauncherVersionID(uuid.New().String())
 }
 
-func NewLauncherVersionFromString(id string) (LauncherVersionID, error) {
+func NewLauncherVersionIDFromString(id string) (LauncherVersionID, error) {
 	if _, err := uuid.Parse(id); err != nil {
 		return "", ErrInvalidFormat
 	}
@@ -42,7 +44,7 @@ func NewLauncherVersionName(name string) (LauncherVersionName, error) {
 }
 
 func NewQuestionnaireURL(u string) (QuestionnaireURL, error) {
-	if _, err := 	url.Parse(u); err != nil {
+	if urlObj, err := 	url.Parse(u); err != nil || !urlObj.IsAbs() {
 		return "", ErrInvalidFormat
 	}
 

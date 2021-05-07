@@ -1,8 +1,6 @@
 package values
 
 import (
-	"io"
-	"strings"
 	"testing"
 	"testing/quick"
 
@@ -10,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewGameAssetIDFromString(t *testing.T) {
+func TestNewLauncherVersionIDFromString(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -19,7 +17,7 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 		description string
 		id string
 		err error
-	} {
+	}{
 		{
 			description: "正しいuuid(大文字)なのでエラーなし",
 			id: "BFDF0B4B-0A5A-45E8-A41C-0976D12A115F",
@@ -43,7 +41,7 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := NewGameAssetIDFromString(test.id)
+		_, err := NewLauncherVersionIDFromString(test.id)
 
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
@@ -53,7 +51,7 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 	}
 
 	err := quick.Check(func(id id) bool {
-		_, err := NewGameAssetIDFromString(uuid.UUID(id).String())
+		_, err := NewLauncherVersionIDFromString(uuid.UUID(id).String())
 		return err == nil
 	}, nil)
 	if err != nil {
@@ -61,53 +59,55 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 	}
 }
 
-func TestNewGameFileMd5(t *testing.T) {
+func TestNewLauncherVersionName(t *testing.T) {
 	t.Parallel()
-	
+
 	assertion := assert.New(t)
 
 	tests := []struct{
 		description string
-		reader io.Reader
-		md5 string
+		name string
 		err error
-	} {
+	}{
 		{
-			description: "アルファベットはハッシュ化できる",
-			reader: strings.NewReader("nya nya nya"),
-			md5: "27225a004d56c42e01d825b64f2df976",
+			description: "正しいカレンダーバージョニングなのでエラーなし",
+			name: "2006.01.02",
 			err: nil,
 		},
 		{
-			description: "マルチバイト文字もハッシュ化できる",
-			reader: strings.NewReader("猫になりたい"),
-			md5: "2966bf92448017aa4a4010fd483efe4b",
+			description: "正しいカレンダーバージョニング(MODIFIERあり)なのでエラーなし",
+			name: "2006.01.02-kodaisai",
 			err: nil,
+		},
+		{
+			description: "最後に.があるのは誤りなのでエラー",
+			name: "2006.01.02.",
+			err: ErrInvalidFormat,
+		},
+		{
+			description: "0埋めでないのは誤りなのでエラー",
+			name: "2006.1.2",
+			err: ErrInvalidFormat,
+		},
+		{
+			description: "semantic versionは誤りなのでエラー",
+			name: "v1.0.0",
+			err: ErrInvalidFormat,
 		},
 	}
 
 	for _, test := range tests {
-		md5, err := NewGameFileMd5(test.reader)
+		_, err := NewLauncherVersionName(test.name)
 
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
 		} else {
 			assertion.ErrorIs(err, test.err, test.description+"/error")
 		}
-
-		assertion.Equal(test.md5, string(md5), test.description+"/md5")
-	}
-
-	err := quick.Check(func(reader string) bool {
-		_, err := NewGameFileMd5(strings.NewReader(reader))
-		return err == nil
-	}, nil)
-	if err != nil {
-		t.Error("black box test error:", err.Error())
 	}
 }
 
-func TestNewGameURL(t *testing.T) {
+func TestNewQuestionnaireURL(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -144,8 +144,8 @@ func TestNewGameURL(t *testing.T) {
 			err: nil,
 		},
 		{
-			// 無印Showcase対策
-			description: "_が入るが、エラーなし",
+			// TODO: :ha:?チェックある意味ないのでなんとかしたい
+			description: "_が入ってもエラーなし",
 			url: "https://hackason20_winter_2.trap.show/customtheme-server/gallery",
 			err: nil,
 		},
@@ -157,7 +157,7 @@ func TestNewGameURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := NewGameURL(test.url)
+		_, err := NewQuestionnaireURL(test.url)
 
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")

@@ -9,6 +9,7 @@ import (
 
 type (
 	GameVersionID string
+	// Semantic Versioning: https://semver.org/lang/ja/
 	GameVersionName string
 	GameVersionDescription string
 	GameVersionCreatedAt time.Time
