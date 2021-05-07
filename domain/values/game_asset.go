@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"net/url"
 
 	"github.com/google/uuid"
 )
@@ -54,9 +53,10 @@ func NewGameFileMd5FromString(md5 string) (GameFileMd5, error) {
 }
 
 func NewGameURL(u string) (GameURL, error) {
-	if _, err := 	url.Parse(u); err != nil {
+	// 無印ShowcaseではurlのRFC的にはアウトのunderbarが入りうるのでコメントアウト
+	/*if _, err := 	url.Parse(u); err != nil {
 		return "", ErrInvalidFormat
-	}
+	}*/
 
 	return GameURL(u), nil
 }

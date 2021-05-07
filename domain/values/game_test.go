@@ -55,7 +55,7 @@ func TestNewGameIDFromString(t *testing.T) {
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
 		} else {
-			assertion.ErrorIs(test.err, err, test.description+"/error")
+			assertion.ErrorIs(err, test.err, test.description+"/error")
 		}
 	}
 

@@ -48,7 +48,7 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
 		} else {
-			assertion.ErrorIs(test.err, err, test.description+"/error")
+			assertion.ErrorIs(err, test.err, test.description+"/error")
 		}
 	}
 
@@ -92,7 +92,7 @@ func TestNewGameFileMd5(t *testing.T) {
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
 		} else {
-			assertion.ErrorIs(test.err, err, test.description+"/error")
+			assertion.ErrorIs(err, test.err, test.description+"/error")
 		}
 
 		assertion.Equal(test.md5, string(md5), test.description+"/md5")
@@ -104,5 +104,66 @@ func TestNewGameFileMd5(t *testing.T) {
 	}, nil)
 	if err != nil {
 		t.Error("black box test error:", err.Error())
+	}
+}
+
+func TestNewGameURL(t *testing.T) {
+	t.Parallel()
+
+	assertion := assert.New(t)
+
+	tests := []struct{
+		description string
+		url string
+		err error
+	}{
+		{
+			description: "通常のurlなのでエラーなし",
+			url: "http://example.com",
+			err: nil,
+		},
+		{
+			description: "エンドポイントありでもエラーなし",
+			url: "http://example.com/hoge",
+			err: nil,
+		},
+		{
+			description: "エンドポイントあり(トレーリングスラッシュあり)でもエラーなし",
+			url: "http://example.com/hoge/",
+			err: nil,
+		},
+		{
+			description: "httpsでもエラーなし",
+			url: "https://example.com",
+			err: nil,
+		},
+		{
+			// TODO: :ha:?チェックある意味ないのでなんとかしたい
+			description: "スキームが誤っていてもエラーなし",
+			url: "htt://example.com/hoge",
+			err: nil,
+		},
+		{
+			// TODO: :ha:?チェックある意味ないのでなんとかしたい
+			description: "相対パスと解釈されてエラーなし",
+			url: "hoge",
+			err: nil,
+		},
+		{
+			// 無印Showcase対策
+			description: "_が入るが、エラーなし",
+			url: "https://hackason20_winter_2.trap.show/customtheme-server/gallery",
+			err: nil,
+		},
+	}
+
+	for _, test := range tests {
+		_, err := NewGameURL(test.url)
+
+		if test.err == nil {
+			assertion.NoErrorf(err, test.description+"/no error")
+		} else {
+			assertion.ErrorIs(err, test.err, test.description+"/error")
+		}
 	}
 }
