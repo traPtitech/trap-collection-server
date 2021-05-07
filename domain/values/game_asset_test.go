@@ -53,7 +53,7 @@ func TestNewGameAssetIDFromString(t *testing.T) {
 	}
 
 	err := quick.Check(func(id id) bool {
-		_, err := NewGameIDFromString(uuid.UUID(id).String())
+		_, err := NewGameAssetIDFromString(uuid.UUID(id).String())
 		return err == nil
 	}, nil)
 	if err != nil {
