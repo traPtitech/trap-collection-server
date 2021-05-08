@@ -2,8 +2,6 @@ package values
 
 import (
 	"errors"
-	"math/rand"
-	"reflect"
 	"testing"
 	"testing/quick"
 
@@ -11,14 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type id uuid.UUID
-func (*id) Generate(rand *rand.Rand, size int) reflect.Value {
-	uuidObj, _ := uuid.NewRandom()
-
-	return reflect.ValueOf(id(uuidObj))
-}
-
-func TestNewGameIDFromString(t *testing.T) {
+func TestNewEventIDFromString(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -51,7 +42,7 @@ func TestNewGameIDFromString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := NewGameIDFromString(test.id)
+		_, err := NewEventIDFromString(test.id)
 
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
@@ -61,8 +52,7 @@ func TestNewGameIDFromString(t *testing.T) {
 	}
 
 	err := quick.Check(func(id id) bool {
-		_, err := NewGameIDFromString(uuid.UUID(id).String())
-		t.Log(id)
+		_, err := NewEventIDFromString(uuid.UUID(id).String())
 		return err == nil
 	}, nil)
 	if err != nil {
@@ -70,7 +60,7 @@ func TestNewGameIDFromString(t *testing.T) {
 	}
 }
 
-func TestNewGameName(t *testing.T) {
+func TestNewEventName(t *testing.T) {
 	t.Parallel()
 
 	assertion := assert.New(t)
@@ -93,7 +83,7 @@ func TestNewGameName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := NewGameName(test.name)
+		_, err := NewEventName(test.name)
 
 		if test.err == nil {
 			assertion.NoErrorf(err, test.description+"/no error")
@@ -103,7 +93,7 @@ func TestNewGameName(t *testing.T) {
 	}
 
 	err := quick.Check(func(name string) bool {
-		_, err := NewGameName(name)
+		_, err := NewEventName(name)
 		return (len(name) >32 && errors.Is(err, ErrTooLong)) || (len(name) <= 32 && err == nil)
 	}, nil)
 	if err != nil {
