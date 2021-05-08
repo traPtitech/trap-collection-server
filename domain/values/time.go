@@ -3,12 +3,20 @@ package values
 import "time"
 
 type nullableTime struct {
-	Time time.Time
-	IsNull bool
+	time time.Time
+	isNull bool
 }
 
 var (
 	nullTime = nullableTime{
-		IsNull: true,
+		isNull: true,
 	}
 )
+
+func (nt *nullableTime) IsNull() bool {
+	return nt.isNull
+}
+
+func (nt *nullableTime) Time() time.Time {
+	return nt.time
+}

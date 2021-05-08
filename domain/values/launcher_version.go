@@ -57,6 +57,6 @@ func NewLauncherVersionCreatedAt(createdAt time.Time) (LauncherVersionCreatedAt,
 
 func NewLauncherVersionDeletedAt(deletedAt time.Time) (LauncherVersionDeletedAt, error) {
 	return LauncherVersionDeletedAt(nullableTime{
-		Time: deletedAt,
+		time: deletedAt,
 	}), nil
 }
