@@ -115,33 +115,33 @@ func Migrate(env string) error {
 		}
 
 		type gameDescription struct {
-			gameType uint8
+			gameType AssetType
 			md5      string
 			url      string
 		}
 		gameDescriptionMap := map[string]*gameDescription{
 			"72c0c88c-27fd-4b58-b08e-e3307d2c17df": {
-				gameType: 2,
+				gameType: AssetTypeWindowsExe,
 				md5:      "9bf87a506c93f1511fca62a4a97fbb71",
 			},
 			"0900b29f-61db-478a-bc51-135f723daab1": {
-				gameType: 1,
+				gameType: AssetTypeJar,
 				md5:      "1e210c55cfb159002b18f69bad3677c6",
 			},
 			"813bb858-7c1f-4cfb-8d54-f1483634e390": {
-				gameType: 0,
+				gameType: AssetTypeURL,
 				url:      "https://flythm.trap.games/",
 			},
 			"269fd8b7-75f9-4029-b5b2-50f2a878f15c": {
-				gameType: 0,
+				gameType: AssetTypeURL,
 				url:      "https://gachaking.trap.games/",
 			},
 			"b9ce327d-8ab8-4f4f-8fd1-714de175dc2a": {
-				gameType: 2,
+				gameType: AssetTypeWindowsExe,
 				md5:      "f1b8fac5278fa2ecccaf9f2b7d927ab7",
 			},
 			"b82b27c4-e837-497b-a099-4ccd08d19960": {
-				gameType: 1,
+				gameType: AssetTypeJar,
 				md5:      "da0057ac91d58adde3836797fa2fd9ad",
 			},
 		}
