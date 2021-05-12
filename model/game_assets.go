@@ -24,7 +24,7 @@ const (
 
 // GameAsset gameのassetの構造体
 type GameAsset struct {
-	ID            uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID            string `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameVersionID string `gorm:"type:varchar(36);NOT NULL;"`
 	GameVersion   GameVersion
 	Type          AssetType `gorm:"type:enum('url','jar','windows','mac');NOT NULL;"`
