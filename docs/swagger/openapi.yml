@@ -1436,7 +1436,7 @@ components:
         status:
           description: 席の状態(0で離席、1で着席)
           type: integer
-        SeatingTime:
+        seatingTime:
           description: 着席時刻
           type: string
           format: date-time
