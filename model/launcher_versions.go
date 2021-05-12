@@ -39,7 +39,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 	apiLauncherVersions := make([]*openapi.Version, 0, len(launcherVersions))
 	for _, launcherVersion := range launcherVersions {
 		apiLauncherVersion := openapi.Version{
-			Id:        int32(launcherVersion.ID),
+			Id:        launcherVersion.ID,
 			Name:      launcherVersion.Name,
 			AnkeTo:    launcherVersion.AnkeToURL,
 			CreatedAt: launcherVersion.CreatedAt,
