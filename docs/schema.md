@@ -76,7 +76,7 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | key_id | varchar(36) | NO | MUL |  |  |  |
 | access_token | varchar(36) | NO | UNI |  |  |  |
-| expires_in | datetime | NO |  |  |  |  |
+| expires_at | datetime | NO |  |  |  |  |
 | created_at | datetime | NO |  |  |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
