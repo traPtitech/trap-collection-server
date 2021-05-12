@@ -14,7 +14,7 @@ import (
 
 // LauncherVersion ランチャーのバージョンの構造体
 type LauncherVersion struct {
-	ID                   string                  `json:"id" gorm:"type:varchar(36);PRIMARY_KEY;"`
+	ID                   string                `json:"id" gorm:"type:varchar(36);PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
 	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:anke_to_url;type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
@@ -89,7 +89,7 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
-			ID: uuid.New().String(),
+			ID:     uuid.New().String(),
 			Name:   name,
 			AnkeTo: ankeToURL,
 		}

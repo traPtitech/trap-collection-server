@@ -49,7 +49,7 @@ func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionM
 
 // GetVersion GET /versions/:launcherVersionIDの処理部分
 func (v *Version) GetVersion(strLauncherVersionID string) (*openapi.VersionDetails, error) {
-	if _, err := uuid.Parse(strLauncherVersionID);err != nil {
+	if _, err := uuid.Parse(strLauncherVersionID); err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("invalid launcher version id(%s):%w", strLauncherVersionID, err)
 	}
 
