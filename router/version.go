@@ -3,8 +3,8 @@ package router
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
@@ -48,13 +48,12 @@ func (v *Version) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionM
 }
 
 // GetVersion GET /versions/:launcherVersionIDの処理部分
-func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails, error) {
-	launcherVersionID, err := strconv.Atoi(strLauncherVersion)
-	if err != nil {
-		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Comverting Launcher Version ID:%w", err)
+func (v *Version) GetVersion(strLauncherVersionID string) (*openapi.VersionDetails, error) {
+	if _, err := uuid.Parse(strLauncherVersionID);err != nil {
+		return &openapi.VersionDetails{}, fmt.Errorf("invalid launcher version id(%s):%w", strLauncherVersionID, err)
 	}
 
-	launcherVersion, err := v.db.GetLauncherVersionDetailsByID(uint(launcherVersionID))
+	launcherVersion, err := v.db.GetLauncherVersionDetailsByID(strLauncherVersionID)
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Version ID:%w", err)
 	}
