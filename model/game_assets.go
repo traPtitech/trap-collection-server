@@ -53,7 +53,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 		}
 
 		gameAsset := GameAsset{
-			ID: uuid.New().String(),
+			ID:            uuid.New().String(),
 			GameVersionID: gameVersion.ID,
 			Type:          AssetTypeURL,
 			URL:           url,
