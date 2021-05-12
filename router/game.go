@@ -335,6 +335,10 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 
 // PostFile POST /games/:gameID/asset/urlの処理部分
 func (g *Game) PostFile(gameID string, file multipartFile, fileType string) (*openapi.GameFile, error) {
+	if !g.db.IsValidAssetType(fileType) {
+		return nil, errors.New("invalid file type")
+	}
+
 	fileName, err := g.getGameFileName(gameID, fileType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file name: %w", err)

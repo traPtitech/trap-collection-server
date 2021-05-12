@@ -36,6 +36,7 @@ type GameAsset struct {
 type GameAssetMeta interface {
 	InsertGameURL(gameID string, url string) (*openapi.GameUrl, error)
 	InsertGameFile(gameID string, fileType AssetType, md5 string) (*openapi.GameFile, error)
+	IsValidAssetType(fileType string) bool
 }
 
 // InsertGameURL ゲームのURLの追加
@@ -116,4 +117,8 @@ func (*DB) InsertGameFile(gameID string, fileType AssetType, md5 string) (*opena
 	}
 
 	return &gameFile, nil
+}
+
+func (*DB) IsValidAssetType(fileType string) bool {
+	return fileType == string(AssetTypeJar) || fileType == string(AssetTypeWindowsExe) || fileType == string(AssetTypeMacApp)
 }
