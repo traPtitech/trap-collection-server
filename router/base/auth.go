@@ -18,6 +18,6 @@ type OAuth interface {
 
 // LauncherAuth ランチャーの認証の基本部分の構造体
 type LauncherAuth interface {
-	GetVersionID(c echo.Context) (versionID uint, err error)
+	GetVersionID(c echo.Context) (versionID string, err error)
 	GetProductKey(c echo.Context) (productKey string, err error)
 }

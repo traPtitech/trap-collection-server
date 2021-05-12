@@ -101,18 +101,18 @@ func NewLauncherAuth() LauncherAuth {
 type launcherAuth struct{}
 
 // GetVersionID バージョンのIDの取得
-func (*launcherAuth) GetVersionID(c echo.Context) (uint, error) {
+func (*launcherAuth) GetVersionID(c echo.Context) (string, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return 0, fmt.Errorf("Failed In Getting Session: %w", err)
+		return "", fmt.Errorf("Failed In Getting Session: %w", err)
 	}
 
 	interfaceVersion, ok := sess.Values["versionID"]
 	if !ok || interfaceVersion == nil {
 		log.Println("error: unexpected no versionID")
-		return 0, errors.New("No VersionID")
+		return "", errors.New("No VersionID")
 	}
-	versionID := interfaceVersion.(uint)
+	versionID := interfaceVersion.(string)
 
 	return versionID, nil
 }
