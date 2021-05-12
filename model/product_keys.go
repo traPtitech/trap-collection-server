@@ -19,7 +19,7 @@ type ProductKey struct {
 
 // ProductKeyMeta product_keyテーブルのリポジトリ
 type ProductKeyMeta interface {
-	CheckProductKey(key string) (bool, uint)
+	CheckProductKey(key string) (bool, string)
 }
 
 func getKeyIDByKey(key string) (uint, error) {
