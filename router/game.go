@@ -150,6 +150,13 @@ func (g *Game) DeleteGames(gameID string) error {
 
 // GetGameFile GET /games/asset/:gameID/fileの処理部分
 func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
+	switch operatingSystem {
+	case "win32":
+		operatingSystem = "windows"
+	case "darwin":
+		operatingSystem = "mac"
+	}
+
 	fileName, err := g.getGameFileName(gameID, operatingSystem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file name: %w", err)

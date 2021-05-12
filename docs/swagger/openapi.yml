@@ -915,7 +915,7 @@ components:
         type: integer
     operatingSystem:
       name: operatingSystem
-      description: osのパラメーター(mac,windows)
+      description: osのパラメーター(win32,darwin)
       in: query
       required: true
       schema:
