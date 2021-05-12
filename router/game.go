@@ -177,12 +177,7 @@ var typeExtMap map[string]string = map[string]string{
 	"mac":     "zip",
 }
 
-func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
-	fileType, err := g.db.GetGameType(gameID, operatingSystem)
-	if err != nil {
-		return "", fmt.Errorf("Failed In Getting Game Type: %w", err)
-	}
-
+func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
 	ext, ok := typeExtMap[fileType]
 	if !ok {
 		return "", errors.New("Invalid File Type")
@@ -338,19 +333,8 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	return file, nil
 }
 
-var fileTypeStrIntMap = map[string]uint8{
-	"jar":     model.AssetTypeJar,
-	"windows": model.AssetTypeWindowsExe,
-	"mac":     model.AssetTypeMacApp,
-}
-
 // PostFile POST /games/:gameID/asset/urlの処理部分
 func (g *Game) PostFile(gameID string, file multipartFile, fileType string) (*openapi.GameFile, error) {
-	intFileType, ok := fileTypeStrIntMap[fileType]
-	if !ok {
-		return nil, errors.New("invalid file type")
-	}
-
 	fileName, err := g.getGameFileName(gameID, fileType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file name: %w", err)
@@ -368,7 +352,7 @@ func (g *Game) PostFile(gameID string, file multipartFile, fileType string) (*op
 		byteMd5 := hash.Sum(nil)
 		strMd5 := hex.EncodeToString(byteMd5)
 
-		gameFile, err = g.db.InsertGameFile(gameID, intFileType, strMd5)
+		gameFile, err = g.db.InsertGameFile(gameID, model.AssetType(fileType), strMd5)
 		if err != nil {
 			return fmt.Errorf("failed to insert file: %w", err)
 		}
