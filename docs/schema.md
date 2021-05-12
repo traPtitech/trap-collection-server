@@ -84,7 +84,6 @@
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
 | width | int(11) | NO |  |  |  |  |
 | height | int(11) | NO |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
