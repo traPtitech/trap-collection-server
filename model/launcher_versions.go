@@ -24,7 +24,7 @@ type LauncherVersion struct {
 // LauncherVersionMeta launcher_versionテーブルのリポジトリ
 type LauncherVersionMeta interface {
 	GetLauncherVersions() ([]*openapi.Version, error)
-	GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error)
+	GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.VersionDetails, err error)
 	InsertLauncherVersion(name string, ankeToURL string) (*openapi.VersionMeta, error)
 }
 
