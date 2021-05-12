@@ -45,7 +45,7 @@ func (g *Game) PostGame(game *openapi.NewGame, c echo.Context) (*openapi.GameInf
 	interfaceAccessToken, ok := sess.Values["accessToken"]
 	if !ok {
 		log.Println("error: unexpected getting access token error")
-		return nil, errors.New("unexpected error occcured while getting access token")
+		return nil, errors.New("unexpected error occurred while getting access token")
 	}
 
 	accessToken, ok := interfaceAccessToken.(string)
@@ -362,7 +362,7 @@ func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c
 	interfaceAccessToken, ok := sess.Values["accessToken"]
 	if !ok {
 		log.Println("error: unexpected getting access token error")
-		return errors.New("unexpected error occcured while getting access token")
+		return errors.New("unexpected error occurred while getting access token")
 	}
 
 	accessToken, ok := interfaceAccessToken.(string)
@@ -406,7 +406,7 @@ func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintain
 	interfaceAccessToken, ok := sess.Values["accessToken"]
 	if !ok {
 		log.Println("error: unexpected getting access token error")
-		return nil, errors.New("unexpected error occcured while getting access token")
+		return nil, errors.New("unexpected error occurred while getting access token")
 	}
 
 	accessToken, ok := interfaceAccessToken.(string)
