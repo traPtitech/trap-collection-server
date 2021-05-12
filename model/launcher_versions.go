@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
@@ -88,8 +89,9 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
-			Name:      name,
-			AnkeToURL: ankeToURL,
+			ID: uuid.New().String(),
+			Name:   name,
+			AnkeTo: ankeToURL,
 		}
 
 		err := tx.Create(&launcherVersion).Error
