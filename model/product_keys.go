@@ -32,7 +32,7 @@ func getKeyIDByKey(key string) (uint, error) {
 }
 
 // CheckProductKey プロダクトキーが正しいか確認
-func (*DB) CheckProductKey(key string) (bool, uint) {
+func (*DB) CheckProductKey(key string) (bool, string) {
 	productKey := ProductKey{}
 	isNotThere := db.Where("`key` = ?", key).First(&productKey).RecordNotFound()
 	return !isNotThere, productKey.LauncherVersionID
