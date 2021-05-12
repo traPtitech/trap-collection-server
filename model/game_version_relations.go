@@ -21,12 +21,12 @@ type GameVersionRelation struct {
 
 // GameVersionRelationMeta game_version_relationテーブルのリポジトリ
 type GameVersionRelationMeta interface {
-	GetCheckList(versionID uint, operatingSystem string) ([]*openapi.CheckItem, error)
+	GetCheckList(versionID string, operatingSystem string) ([]*openapi.CheckItem, error)
 	InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error)
 }
 
 // GetCheckList チェックリストの取得
-func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.CheckItem, error) {
+func (*DB) GetCheckList(versionID string, operatingSystem string) ([]*openapi.CheckItem, error) {
 	types, ok := osGameTypeIntsMap[operatingSystem]
 	if !ok {
 		return []*openapi.CheckItem{}, errors.New("Unsupported OS")
