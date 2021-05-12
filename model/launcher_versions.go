@@ -51,7 +51,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 }
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
-func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error) {
+func (*DB) GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.VersionDetails, err error) {
 	versionDetails = &openapi.VersionDetails{
 		Games: []openapi.GameMeta{},
 	}
