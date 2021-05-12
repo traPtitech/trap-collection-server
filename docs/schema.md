@@ -49,7 +49,7 @@
 ### launcher_versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | name | varchar(32) | NO | UNI |  |  |  |
 | anke_to_url | text |  |  | NULL |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
@@ -58,7 +58,7 @@
 ### game_version_relations
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| launcher_version_id | varchar(36) | NO | MUL |  |  |  |
 | game_id | varchar(36) | NO | MUL |  |  |  |
 
 ### product_keys
@@ -66,7 +66,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | key | char(29) | NO | UNI |  |  |  |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| launcher_version_id | varchar(36) | NO | MUL |  |  |  |
 | created_at | datetime | NO |  |  |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
