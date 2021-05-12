@@ -58,7 +58,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		Limit(1).
 		SubQuery()
 	db := db.Table("games AS g").
-		Select("g.id, g.name, g.created_at, gv.id, gv.name, gv.description, gv.created_at").
+		Select("g.id, g.name, g.description as game_description, g.created_at, gv.id, gv.name, gv.description, gv.created_at").
 		Joins("LEFT OUTER JOIN game_versions AS gv ON g.id = gv.game_id")
 
 	var rows *sql.Rows
@@ -81,7 +81,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		var name sql.NullString
 		var description sql.NullString
 		var createdAt sql.NullTime
-		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &id, &name, &description, &createdAt)
+		err = rows.Scan(&game.Id, &game.Name, &game.Description, &game.CreatedAt, &id, &name, &description, &createdAt)
 		if err != nil {
 			return nil, fmt.Errorf("Failed In Scanning Game: %w", err)
 		}
