@@ -13,7 +13,7 @@ import (
 
 // LauncherVersion ランチャーのバージョンの構造体
 type LauncherVersion struct {
-	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID                   string                  `json:"id" gorm:"type:varchar(36);PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
 	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:anke_to_url;type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
