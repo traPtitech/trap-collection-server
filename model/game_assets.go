@@ -5,6 +5,7 @@ package model
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
@@ -52,6 +53,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 		}
 
 		gameAsset := GameAsset{
+			ID: uuid.New().String(),
 			GameVersionID: gameVersion.ID,
 			Type:          AssetTypeURL,
 			URL:           url,
@@ -66,7 +68,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 			return fmt.Errorf("failed to get the last game asset record: %w", err)
 		}
 		gameURL = openapi.GameUrl{
-			Id:  int32(gameAsset.ID),
+			Id:  gameAsset.ID,
 			Url: gameAsset.URL,
 		}
 
