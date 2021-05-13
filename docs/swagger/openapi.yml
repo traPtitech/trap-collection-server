@@ -1066,6 +1066,10 @@ components:
           description: ゲーム名
           type: string
           example: 'Flythm'
+        description:
+          description: ゲームの説明
+          type: string
+          example: 'キーボードとマウスで遊ぶ新感覚リズムゲーム！'
         createdAt:
           description: ゲームの登録時刻
           type: string
