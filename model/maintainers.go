@@ -14,7 +14,7 @@ import (
 
 // Maintainer gameのmaintainerの構造体
 type Maintainer struct {
-	ID        uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID          string      `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
 	Game      Game
 	UserID    string    `gorm:"type:varchar(36);NOT NULL;"`
