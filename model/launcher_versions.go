@@ -15,7 +15,7 @@ import (
 type LauncherVersion struct {
 	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
-	AnkeTo               string                `json:"anke_to,omitempty" gorm:"type:text;default:NULL;"`
+	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:anke_to_url;type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
 	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
@@ -41,7 +41,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 		apiLauncherVersion := openapi.Version{
 			Id:        int32(launcherVersion.ID),
 			Name:      launcherVersion.Name,
-			AnkeTo:    launcherVersion.AnkeTo,
+			AnkeTo:    launcherVersion.AnkeToURL,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 		apiLauncherVersions = append(apiLauncherVersions, &apiLauncherVersion)
@@ -88,8 +88,8 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
-			Name:   name,
-			AnkeTo: ankeToURL,
+			Name:      name,
+			AnkeToURL: ankeToURL,
 		}
 
 		err := tx.Create(&launcherVersion).Error
@@ -104,7 +104,7 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 		apiVersion = openapi.VersionMeta{
 			Id:        int32(launcherVersion.ID),
 			Name:      launcherVersion.Name,
-			AnkeTo:    launcherVersion.AnkeTo,
+			AnkeTo:    launcherVersion.AnkeToURL,
 			CreatedAt: launcherVersion.CreatedAt,
 		}
 
