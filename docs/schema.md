@@ -30,7 +30,7 @@
 ### game_introductions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | game_id | varchar(36) | NO | MUL |  |  | UUID |
 | role | tinyint | NO |  |  |  | 0:`image`,1:`video` |
 | extension | tinyint | NO |  |  |  | 0:`jpeg`,1:`png`,2:`gif`,3:`mp4` |
