@@ -15,7 +15,7 @@ import (
 
 // Maintainer gameのmaintainerの構造体
 type Maintainer struct {
-	ID          string      `gorm:"type:varchar(36);PRIMARY_KEY;"`
+	ID        string `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
 	Game      Game
 	UserID    string    `gorm:"type:varchar(36);NOT NULL;"`
@@ -52,7 +52,7 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	interfaceUserIDs := make([]interface{}, 0, len(userIDs))
 	for _, user := range userIDs {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
-			ID: uuid.New().String(),
+			ID:     uuid.New().String(),
 			GameID: gameID,
 			UserID: user,
 			Role:   0,
