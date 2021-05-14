@@ -1096,6 +1096,7 @@ components:
         description:
           description: 追加されたゲームの説明
           type: string
+          format: uuid
           example: 弾幕ゲーです。みんなやってね！
         createdAt:
           description: ゲームの追加された時刻
