@@ -124,6 +124,7 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 		}
 
 		maintainer := Maintainer{
+			ID: uuid.New().String(),
 			GameID: game.ID,
 			UserID: userID,
 			Role:   1,
