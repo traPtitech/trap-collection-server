@@ -28,8 +28,8 @@ type GameAsset struct {
 	GameVersionID uint `gorm:"type:int(11);NOT NULL;"`
 	GameVersion   GameVersion
 	Type          AssetType `gorm:"type:enum('url','jar','windows','mac');NOT NULL;"`
-	Md5           string `gorm:"type:char(32);"`
-	URL           string `gorm:"type:text"`
+	Md5           string    `gorm:"type:char(32);"`
+	URL           string    `gorm:"type:text"`
 }
 
 // GameAssetMeta game_assetsテーブルのリポジトリ

@@ -13,7 +13,7 @@ import (
 
 // GameVersion gameのversionの構造体
 type GameVersion struct {
-	ID          uint      `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID          string    `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID      string    `gorm:"type:varchar(36);NOT NULL;"`
 	Name        string    `gorm:"type:varchar(36);NOT NULL;"`
 	Description string    `gorm:"type:text;"`
