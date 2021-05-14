@@ -166,13 +166,13 @@ func Migrate(env string) error {
 		introductions := make([]*GameIntroduction, 0, len(games)*2)
 		for _, v := range games {
 			introductions = append(introductions, &GameIntroduction{
-				ID: uuid.New().String(),
+				ID:        uuid.New().String(),
 				GameID:    v.ID,
 				Role:      0,
 				Extension: 1,
 			})
 			introductions = append(introductions, &GameIntroduction{
-				ID: uuid.New().String(),
+				ID:        uuid.New().String(),
 				GameID:    v.ID,
 				Role:      1,
 				Extension: 3,
