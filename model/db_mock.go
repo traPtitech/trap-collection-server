@@ -13,7 +13,6 @@ type DBMock struct {
 	*MockGameMeta
 	*MockLauncherVersionMeta
 	*MockMaintainerMeta
-	*MockPlayerMeta
 	*MockProductKeyMeta
 }
 
@@ -27,7 +26,6 @@ func NewDBMock(ctrl *gomock.Controller) *DBMock {
 	dbMock.MockGameMeta = NewMockGameMeta(ctrl)
 	dbMock.MockLauncherVersionMeta = NewMockLauncherVersionMeta(ctrl)
 	dbMock.MockMaintainerMeta = NewMockMaintainerMeta(ctrl)
-	dbMock.MockPlayerMeta = NewMockPlayerMeta(ctrl)
 	dbMock.MockProductKeyMeta = NewMockProductKeyMeta(ctrl)
 
 	return dbMock

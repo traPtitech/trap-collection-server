@@ -2,14 +2,19 @@ package model
 
 //go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
-import "fmt"
+import (
+	"database/sql"
+	"fmt"
+	"time"
+)
 
-// ProductKey アクセストークンの構造体
+// ProductKey ProductKeyの構造体
 type ProductKey struct {
-	ID                uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
-	Key               string `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
-	LauncherVersionID uint   `gorm:"type:int(11) unsigned;"`
-	LauncherVersion   LauncherVersion
+	ID                uint         `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	Key               string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
+	LauncherVersionID uint         `gorm:"type:int(11) unsigned;"`
+	CreatedAt         time.Time    `gorm:"type:datetime;NOT NULL;"`
+	DeletedAt         sql.NullTime `gorm:"type:datetime;DEFAULT:NULL;"`
 }
 
 // ProductKeyMeta product_keyテーブルのリポジトリ

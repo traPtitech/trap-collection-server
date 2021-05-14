@@ -60,7 +60,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		Limit(1).
 		SubQuery()
 	db := db.Table("games AS g").
-		Select("g.id, g.name, g.created_at, gv.id, gv.name, gv.description, gv.created_at").
+		Select("g.id, g.name, g.description as game_description, g.created_at, gv.id, gv.name, gv.description, gv.created_at").
 		Joins("LEFT OUTER JOIN game_versions AS gv ON g.id = gv.game_id")
 
 	var rows *sql.Rows
@@ -83,7 +83,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		var name sql.NullString
 		var description sql.NullString
 		var createdAt sql.NullTime
-		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &id, &name, &description, &createdAt)
+		err = rows.Scan(&game.Id, &game.Name, &game.Description, &game.CreatedAt, &id, &name, &description, &createdAt)
 		if err != nil {
 			return nil, fmt.Errorf("Failed In Scanning Game: %w", err)
 		}
@@ -170,7 +170,7 @@ func (*DB) DeleteGame(gameID string) error {
 func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 	game := &openapi.Game{}
 	rows, err := db.Table("games").
-		Select("games.id, games.name, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
+		Select("games.id, games.name, games.description AS game_description, games.created_at, game_versions.id, game_versions.name, game_versions.description, game_versions.created_at").
 		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
 		Where("games.id = ?", gameID).
 		Order("game_versions.created_at").
@@ -184,7 +184,7 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		var versionName sql.NullString
 		var versionDescription sql.NullString
 		var versionCreatedAt sql.NullTime
-		err = rows.Scan(&game.Id, &game.Name, &game.CreatedAt, &versionID, &versionName, &versionDescription, &versionCreatedAt)
+		err = rows.Scan(&game.Id, &game.Name, &game.Description, &game.CreatedAt, &versionID, &versionName, &versionDescription, &versionCreatedAt)
 		if err != nil {
 			return &openapi.Game{}, fmt.Errorf("Failed In Scaning Game Info: %w", err)
 		}

@@ -1,4 +1,6 @@
 ## trap-collection-server
+[![swagger](https://img.shields.io/badge/swagger-docs-brightgreen)](https://apis.trap.jp/?urls.primaryName=traP%20Collection)
+[![go report](https://goreportcard.com/badge/traPtitech/trap-collection-server)](https://goreportcard.com/report/traPtitech/trap-collection-server)
 
 traPのゲームランチャーtraP Collectionのサーバーサイドです。
 
@@ -39,7 +41,7 @@ groovyで本家OpenAPI Generatorを使っている関係で実行にそれなり
 # docker run -it --rm \
     -v $PWD:/local \
     -w /home/groovy/scripts \
-    groovy:3.0.2 \
+    groovy:3.0.8 \
     groovy /local/generate/generator.groovy generate \
     -i /local/docs/swagger/openapi.yml \
     -g CollectionCodegen \

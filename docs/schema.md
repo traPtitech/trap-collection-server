@@ -76,9 +76,7 @@
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
 | key_id | varchar(36) | NO | MUL |  |  |  |
 | access_token | varchar(36) | NO | UNI |  |  |  |
-| refresh_token | varchar(36) | NO | UNI |  |  |  |
-| refresh_enabled | bool | NO |  | true |  |  |
-| expires_in | int(11) | NO |  |  |  |  |
+| expires_at | datetime | NO |  |  |  |  |
 | created_at | datetime | NO |  |  |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
@@ -86,7 +84,8 @@
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| launcher_version_id | int(11) | NO | MUL |  |  |  |
+| width | int(11) | NO |  |  |  |  |
+| height | int(11) | NO |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
 | deleted_at | datetime |  |  | NULL |  |  |
 
@@ -94,7 +93,8 @@
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
-| seat_id | int(11) | NO |  |  |  |  |
 | seat_version_id | int(11) | NO | MUL |  |  |  |
+| row | int(11) | NO |  |  |  |  |
+| column | int(11) | NO |  |  |  |  |
 | started_at | datetime | NO |  | CURRENT_TIMESTAMP |  | 着席時刻 |
 | ended_at | datetime |  |  | NULL |  | 離席時刻 |
