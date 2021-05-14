@@ -77,7 +77,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 	var games []*openapi.Game
 	for rows.Next() {
 		game := &openapi.Game{}
-		var id sql.NullInt32
+		var id sql.NullString
 		var name sql.NullString
 		var description sql.NullString
 		var createdAt sql.NullTime
@@ -87,7 +87,7 @@ func (*DB) GetGames(userID ...string) ([]*openapi.Game, error) {
 		}
 		if id.Valid && name.Valid && description.Valid && createdAt.Valid {
 			game.Version = &openapi.GameVersion{
-				Id:          id.Int32,
+				Id:          id.String,
 				Name:        name.String,
 				Description: description.String,
 				CreatedAt:   createdAt.Time,
@@ -178,7 +178,7 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		return &openapi.Game{}, fmt.Errorf("Failed In Getting Game Info: %w", err)
 	}
 	if rows.Next() {
-		var versionID sql.NullInt32
+		var versionID sql.NullString
 		var versionName sql.NullString
 		var versionDescription sql.NullString
 		var versionCreatedAt sql.NullTime
@@ -188,7 +188,7 @@ func (*DB) GetGameInfo(gameID string) (*openapi.Game, error) {
 		}
 		if versionID.Valid && versionName.Valid && versionCreatedAt.Valid {
 			game.Version = &openapi.GameVersion{
-				Id:        versionID.Int32,
+				Id:        versionID.String,
 				Name:      versionName.String,
 				CreatedAt: versionCreatedAt.Time,
 			}
