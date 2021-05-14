@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 	"github.com/traPtitech/trap-collection-server/openapi"
@@ -51,6 +52,7 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	interfaceUserIDs := make([]interface{}, 0, len(userIDs))
 	for _, user := range userIDs {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
+			ID: uuid.New().String(),
 			GameID: gameID,
 			UserID: user,
 			Role:   0,
