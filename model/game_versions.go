@@ -88,7 +88,7 @@ func (*DB) GetURL(gameID string) (string, error) {
 // InsertGameVersion GameVersionの追加
 func (*DB) InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error) {
 	newGameVersion := GameVersion{
-		ID: uuid.New().String(),
+		ID:          uuid.New().String(),
 		GameID:      gameID,
 		Name:        name,
 		Description: description,
