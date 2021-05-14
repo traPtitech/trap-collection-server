@@ -62,13 +62,13 @@ func (v *Version) GetVersion(strLauncherVersion string) (*openapi.VersionDetails
 }
 
 // GetCheckList GET /versions/checkの処理部分
-func (v *Version) GetCheckList(operationgSystem string, c echo.Context) ([]*openapi.CheckItem, error) {
+func (v *Version) GetCheckList(operatingSystem string, c echo.Context) ([]*openapi.CheckItem, error) {
 	versionID, err := v.launcherAuth.GetVersionID(c)
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting VersionID: %w", err)
 	}
 
-	checkList, err := v.db.GetCheckList(versionID, operationgSystem)
+	checkList, err := v.db.GetCheckList(versionID, operatingSystem)
 	if err != nil {
 		return []*openapi.CheckItem{}, fmt.Errorf("Failed In Getting CheckList: %w", err)
 	}

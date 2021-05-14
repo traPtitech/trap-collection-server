@@ -659,28 +659,6 @@ paths:
                 $ref: '#/components/schemas/ProductKeyDetail'
         "500":
           description: 失敗
-  /versions/{launcherVersionID}/seats:
-    parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
-    post:
-      tags:
-        - seatVersion
-      summary: バージョンに席のバージョン追加
-      description: バージョンに席のバージョン追加
-      security:
-        - TrapMemberAuth:
-            - read
-        - AdminAuth: []
-      operationId: postSeatVersion
-      responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SeatVersion'
-        "500":
-          description: 失敗
   /versions/check:
     get:
       tags:
@@ -770,6 +748,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LauncherAuthToken'
+        "500":
+          description: 失敗
+  /seats/versions:
+    post:
+      tags:
+        - seatVersion
+      summary: 席のバージョン追加
+      description: 席のバージョン追加
+      security:
+        - TrapMemberAuth:
+            - read
+        - AdminAuth: []
+      operationId: postSeatVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewSeatVersion'
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatVersion'
         "500":
           description: 失敗
   /seats/versions/{seatVersionID}:
@@ -915,7 +919,7 @@ components:
         type: integer
     operatingSystem:
       name: operatingSystem
-      description: osのパラメーター(mac,windows)
+      description: osのパラメーター(win32,darwin)
       in: query
       required: true
       schema:
@@ -1062,6 +1066,10 @@ components:
           description: ゲーム名
           type: string
           example: 'Flythm'
+        description:
+          description: ゲームの説明
+          type: string
+          example: 'キーボードとマウスで遊ぶ新感覚リズムゲーム！'
         createdAt:
           description: ゲームの登録時刻
           type: string
@@ -1398,6 +1406,19 @@ components:
         - accessToken
         - expiresIn
         - refreshToken
+    NewSeatVersion:
+      description: 新しい席のバージョン
+      type: object
+      properties:
+        width:
+          type: integer
+          example: 10
+        hight:
+          type: integer
+          example: 10
+      required:
+        - width
+        - height
     SeatVersion:
       description: 席のバージョン
       type: object
@@ -1405,6 +1426,12 @@ components:
         id:
           type: integer
           example: 0
+        width:
+          type: integer
+          example: 10
+        hight:
+          type: integer
+          example: 10
         createdAt:
           description: 作成時刻
           type: string
@@ -1412,6 +1439,8 @@ components:
           example: '2019-09-25T09:51:31Z'
       required:
         - id
+        - width
+        - height
         - createdAt
     Seat:
       description: 席
@@ -1436,7 +1465,7 @@ components:
         status:
           description: 席の状態(0で離席、1で着席)
           type: integer
-        SeatingTime:
+        seatingTime:
           description: 着席時刻
           type: string
           format: date-time

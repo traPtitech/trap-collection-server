@@ -31,6 +31,13 @@ type GameVersionMeta interface {
 
 // GetGameType ゲームの種類の取得
 func (*DB) GetGameType(gameID string, operatingSystem string) (string, error) {
+	switch operatingSystem {
+	case "win32":
+		operatingSystem = "windows"
+	case "darwin":
+		operatingSystem = "mac"
+	}
+
 	intOs, ok := osGameTypeIntMap[operatingSystem]
 	if !ok {
 		return "", errors.New("Invalid OS Error")
