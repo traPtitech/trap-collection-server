@@ -2,6 +2,8 @@ package router
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +17,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
 	"github.com/traPtitech/trap-collection-server/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 // Game gameの構造体
@@ -176,12 +179,7 @@ var typeExtMap map[string]string = map[string]string{
 	"mac":     "zip",
 }
 
-func (g *Game) getGameFileName(gameID string, operatingSystem string) (string, error) {
-	fileType, err := g.db.GetGameType(gameID, operatingSystem)
-	if err != nil {
-		return "", fmt.Errorf("Failed In Getting Game Type: %w", err)
-	}
-
+func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
 	ext, ok := typeExtMap[fileType]
 	if !ok {
 		return "", errors.New("Invalid File Type")
@@ -335,6 +333,52 @@ func (g *Game) getIntroduction(gameID string, role string) (io.Reader, error) {
 	}
 
 	return file, nil
+}
+
+// PostFile POST /games/:gameID/asset/urlの処理部分
+func (g *Game) PostFile(gameID string, file multipartFile, fileType string) (*openapi.GameFile, error) {
+	if !g.db.IsValidAssetType(fileType) {
+		return nil, errors.New("invalid file type")
+	}
+
+	fileName, err := g.getGameFileName(gameID, fileType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file name: %w", err)
+	}
+
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		return g.storage.Save(fileName, file)
+	})
+
+	hash := md5.New()
+	var gameFile *openapi.GameFile
+	eg.Go(func() error {
+		var err error
+		byteMd5 := hash.Sum(nil)
+		strMd5 := hex.EncodeToString(byteMd5)
+
+		gameFile, err = g.db.InsertGameFile(gameID, model.AssetType(fileType), strMd5)
+		if err != nil {
+			return fmt.Errorf("failed to insert file: %w", err)
+		}
+
+		return nil
+	})
+
+	fileBuf := bytes.NewBuffer(nil)
+	mw := io.MultiWriter(hash, fileBuf)
+	_, err = io.Copy(mw, file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make MultiWriter: %w", err)
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
+
+	return gameFile, nil
 }
 
 // PostURL POST /games/:gameID/asset/urlの処理部分

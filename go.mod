@@ -21,5 +21,6 @@ require (
 	github.com/t-tiger/gorm-bulk-insert v1.3.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666 // indirect
 )
