@@ -1286,6 +1286,7 @@ components:
         id:
           description: ID
           type: string
+          format: uuid
           example: "91f8feff-4293-468f-97fb-3c5b7726f815"
         name:
           description: 名前
@@ -1312,6 +1313,7 @@ components:
         id:
           description: ID
           type: string
+          format: uuid
           example: "91f8feff-4293-468f-97fb-3c5b7726f815"
         name:
           description: 名前
@@ -1338,6 +1340,7 @@ components:
         id:
           description: ID
           type: string
+          format: uuid
           example: "91f8feff-4293-468f-97fb-3c5b7726f815"
         name:
           description: 名前
