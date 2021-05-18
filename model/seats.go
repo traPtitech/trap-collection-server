@@ -8,7 +8,7 @@ import (
 
 // Seat プレイヤーの履歴の構造体
 type Seat struct {
-	ID            uint      `gorm:"type:int(11) unsigned auto_increment;NOT NULL;PRIMARY_KEY;"`
+	ID            string    `gorm:"type:varchar(36);NOT NULL;PRIMARY_KEY;"`
 	SeatVersionID uint      `gorm:"type:int(11) unsigned;not null;"`
 	Row           uint      `gorm:"type:int(11) unsigned;not null;"`
 	Column        uint      `gorm:"type:int(11) unsigned;not null;"`
