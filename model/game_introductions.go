@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // GameIntroduction gameのintroductionの構造体
 type GameIntroduction struct {
-	ID        uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID        string `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
 	Game      Game
 	Role      uint8     `gorm:"type:tinyint;NOT NULL;"`
@@ -49,6 +51,7 @@ func (*DB) InsertIntroduction(gameID string, resourceType string, ext string) er
 	intExt := extStrIntMap[ext]
 
 	introduction := &GameIntroduction{
+		ID:        uuid.New().String(),
 		GameID:    gameID,
 		Role:      intRole,
 		Extension: intExt,
