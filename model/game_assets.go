@@ -108,7 +108,7 @@ func (*DB) InsertGameFile(gameID string, fileType AssetType, md5 string) (*opena
 			return fmt.Errorf("failed to get the last game asset record: %w", err)
 		}
 		gameFile = openapi.GameFile{
-			Id:   int32(gameAsset.ID),
+			Id:   gameAsset.ID,
 			Type: string(gameAsset.Type),
 		}
 
