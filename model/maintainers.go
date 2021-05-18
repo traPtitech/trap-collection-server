@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	gormbulk "github.com/t-tiger/gorm-bulk-insert"
 	"github.com/traPtitech/trap-collection-server/openapi"
@@ -14,7 +15,7 @@ import (
 
 // Maintainer gameのmaintainerの構造体
 type Maintainer struct {
-	ID        uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID        string `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID    string `gorm:"type:varchar(36);NOT NULL;"`
 	Game      Game
 	UserID    string    `gorm:"type:varchar(36);NOT NULL;"`
@@ -51,6 +52,7 @@ func (*DB) InsertMaintainer(gameID string, userIDs []string) error {
 	interfaceUserIDs := make([]interface{}, 0, len(userIDs))
 	for _, user := range userIDs {
 		interfaceUserIDs = append(interfaceUserIDs, Maintainer{
+			ID:     uuid.New().String(),
 			GameID: gameID,
 			UserID: user,
 			Role:   0,
