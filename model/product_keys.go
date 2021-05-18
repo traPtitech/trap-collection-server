@@ -10,7 +10,7 @@ import (
 
 // ProductKey ProductKeyの構造体
 type ProductKey struct {
-	ID                uint         `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID                string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;"`
 	Key               string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
 	LauncherVersionID uint         `gorm:"type:int(11) unsigned;"`
 	CreatedAt         time.Time    `gorm:"type:datetime;NOT NULL;"`
