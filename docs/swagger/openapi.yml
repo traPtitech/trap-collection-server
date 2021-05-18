@@ -1096,7 +1096,6 @@ components:
         description:
           description: 追加されたゲームの説明
           type: string
-          format: uuid
           example: 弾幕ゲーです。みんなやってね！
         createdAt:
           description: ゲームの追加された時刻
@@ -1211,7 +1210,7 @@ components:
         id:
           description: アセットのID
           type: string
-          example: "16cbad5a-d1f2-41b4-806c-c4be733ac7bc"
+          format: uuid
         type:
           description: ゲームの種類（jar,windows,mac）
           type: string
@@ -1226,7 +1225,7 @@ components:
         id:
           description: アセットのID
           type: string
-          example: "16cbad5a-d1f2-41b4-806c-c4be733ac7bc"
+          format: uuid
         url:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string
