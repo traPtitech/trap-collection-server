@@ -2,8 +2,10 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -18,4 +20,26 @@ type SeatVersion struct {
 
 type SeatVersionMeta interface {
 	InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error)
+}
+
+func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error) {
+	id := uuid.New().String()
+
+	seatVersion := SeatVersion{
+		ID: id,
+		Height: height,
+		Width: width,
+	}
+
+	err := db.Create(&seatVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to INSERT seat version record")
+	}
+
+	return &openapi.SeatVersion{
+		Id: int32(seatVersion.ID),
+		Width: int32(seatVersion.Width),
+		Hight: int32(seatVersion.Height),
+		CreatedAt: seatVersion.CreatedAt,
+	}, nil
 }
