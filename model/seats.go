@@ -9,7 +9,7 @@ import (
 // Seat プレイヤーの履歴の構造体
 type Seat struct {
 	ID            string    `gorm:"type:varchar(36);NOT NULL;PRIMARY_KEY;"`
-	SeatVersionID uint      `gorm:"type:int(11) unsigned;not null;"`
+	SeatVersionID string    `gorm:"type:varchar(36);not null;"`
 	Row           uint      `gorm:"type:int(11) unsigned;not null;"`
 	Column        uint      `gorm:"type:int(11) unsigned;not null;"`
 	StartedAt     time.Time `gorm:"type:datetime;not null;default:current_timestamp;"`
