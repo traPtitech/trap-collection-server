@@ -6,6 +6,7 @@ import (
 
 	// sql init
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
@@ -102,6 +103,7 @@ func Migrate(env string) error {
 		versions := make([]*GameVersion, 0, len(games))
 		for _, v := range games {
 			versions = append(versions, &GameVersion{
+				ID:          uuid.New().String(),
 				GameID:      v.ID,
 				Name:        "1",
 				Description: v.Description,

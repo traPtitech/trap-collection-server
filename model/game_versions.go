@@ -8,12 +8,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // GameVersion gameのversionの構造体
 type GameVersion struct {
-	ID          uint      `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID          string    `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameID      string    `gorm:"type:varchar(36);NOT NULL;"`
 	Name        string    `gorm:"type:varchar(36);NOT NULL;"`
 	Description string    `gorm:"type:text;"`
@@ -87,6 +88,7 @@ func (*DB) GetURL(gameID string) (string, error) {
 // InsertGameVersion GameVersionの追加
 func (*DB) InsertGameVersion(gameID string, name string, description string) (*openapi.GameVersion, error) {
 	newGameVersion := GameVersion{
+		ID:          uuid.New().String(),
 		GameID:      gameID,
 		Name:        name,
 		Description: description,
@@ -104,7 +106,7 @@ func (*DB) InsertGameVersion(gameID string, name string, description string) (*o
 	}
 
 	apiGameVersion := openapi.GameVersion{
-		Id:          int32(gameVersion.ID),
+		Id:          gameVersion.ID,
 		Name:        gameVersion.Name,
 		Description: gameVersion.Description,
 		CreatedAt:   gameVersion.CreatedAt,
@@ -124,7 +126,7 @@ func (*DB) GetGameVersions(gameID string) ([]*openapi.GameVersion, error) {
 	apiGameVersions := make([]*openapi.GameVersion, 0, len(gameVersions))
 	for _, gameVersion := range gameVersions {
 		apiGameVersion := openapi.GameVersion{
-			Id:          int32(gameVersion.ID),
+			Id:          gameVersion.ID,
 			Name:        gameVersion.Name,
 			Description: gameVersion.Description,
 			CreatedAt:   gameVersion.CreatedAt,

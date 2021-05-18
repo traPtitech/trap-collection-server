@@ -12,7 +12,7 @@
 ### game_versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | game_id | varchar(36) | NO | MUL |  |  | UUID |
 | name | varchar(32) | NO |  |  |  | ゲームのバージョン名 |
 | description | text |  |  |  |  |  |

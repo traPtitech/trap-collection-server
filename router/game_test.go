@@ -1,20 +1,6 @@
 package router
 
-import (
-	"bytes"
-	"io/ioutil"
-	"strings"
-	"testing"
-	"time"
-
-	gomock "github.com/golang/mock/gomock"
-	"github.com/traPtitech/trap-collection-server/model"
-	"github.com/traPtitech/trap-collection-server/openapi"
-	"github.com/traPtitech/trap-collection-server/router/base"
-	"github.com/traPtitech/trap-collection-server/storage"
-)
-
-func TestGame(t *testing.T) {
+/*func TestGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -98,4 +84,4 @@ func TestGame(t *testing.T) {
 	if strRes != expectStr {
 		t.Fatalf("Unexpected File Value %s, Expected %s", strRes, expectStr)
 	}
-}
+}*/
