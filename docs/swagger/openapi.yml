@@ -978,7 +978,8 @@ components:
       in: path
       required: true
       schema:
-        type: integer
+        type: string
+        format: uuid
     seatID:
       description: 席のID
       name: seatID
@@ -1438,8 +1439,8 @@ components:
       type: object
       properties:
         id:
-          type: integer
-          example: 0
+          type: string
+          format: uuid
         width:
           type: integer
           example: 10
