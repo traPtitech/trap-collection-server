@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,7 +32,8 @@ type GameMeta interface {
 	PostGame(userID string, gameName string, description string) (*openapi.GameInfo, error)
 	DeleteGame(gameID string) error
 	GetGameInfo(gameID string) (*openapi.Game, error)
-	UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInfo, error)
+	UpdateGame(gameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error)
+	CheckGameIDs(gameIDs []string) error
 }
 
 // IsExistGame ゲームが存在するかの確認
@@ -227,4 +229,83 @@ func (*DB) UpdateGame(gameID string, newGame *openapi.NewGame) (*openapi.GameInf
 	}
 
 	return gameMeta, nil
+}
+
+// InvalidGameIDs Checkをfailした理由ごとの不正なIDの配列
+type InvalidGameIDs struct {
+	NotFound  []string
+	NoVersion []string
+	NoAssets  []string
+}
+
+func (ids InvalidGameIDs) Error() string {
+	return fmt.Sprintf("invalid gameIds(not found:%s, no version: %s, no assets: %s)", strings.Join(ids.NotFound, "/"), strings.Join(ids.NoVersion, "/"), strings.Join(ids.NoAssets, "/"))
+}
+
+type gameIDState int
+
+const (
+	notFound gameIDState = iota
+	noVersion
+	noAsset
+	ok
+)
+
+// CheckGameIDs gameIDが登録済みのものに該当するか確認
+func (*DB) CheckGameIDs(gameIDs []string) error {
+	rows, err := db.
+		Where("games.id IN (?)", gameIDs).
+		Table("games").
+		Joins("LEFT OUTER JOIN game_versions ON games.id = game_versions.game_id").
+		Joins("LEFT OUTER JOIN game_assets ON game_versions.id = game_assets.game_version_id").
+		Group("games.id").
+		Select("games.id, COUNT(game_versions.id), COUNT(game_assets.id)").
+		Rows()
+	if err != nil {
+		return fmt.Errorf("failed to find gameIDs: %w", err)
+	}
+
+	gameIDStateMap := make(map[string]gameIDState, len(gameIDs))
+	for _, gameID := range gameIDs {
+		gameIDStateMap[gameID] = notFound
+	}
+
+	for rows.Next() {
+		var gameID string
+		var versionNum int
+		var assetNum int
+		err := rows.Scan(&gameID, &versionNum, &assetNum)
+		if err != nil {
+			return fmt.Errorf("failed to scan gameIDs: %w", err)
+		}
+
+		if versionNum == 0 {
+			gameIDStateMap[gameID] = noVersion
+			continue
+		}
+		if assetNum == 0 {
+			gameIDStateMap[gameID] = noAsset
+			continue
+		}
+
+		gameIDStateMap[gameID] = ok
+	}
+
+	invalidGameIDs := &InvalidGameIDs{}
+	for gameID, state := range gameIDStateMap {
+		switch state {
+		case notFound:
+			invalidGameIDs.NotFound = append(invalidGameIDs.NotFound, gameID)
+		case noVersion:
+			invalidGameIDs.NoVersion = append(invalidGameIDs.NoVersion, gameID)
+		case noAsset:
+			invalidGameIDs.NoAssets = append(invalidGameIDs.NoAssets, gameID)
+		}
+	}
+
+	if len(invalidGameIDs.NotFound) > 0 || len(invalidGameIDs.NoVersion) > 0 || len(invalidGameIDs.NoAssets) > 0 {
+		return invalidGameIDs
+	}
+
+	return nil
 }
