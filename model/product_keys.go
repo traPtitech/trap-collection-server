@@ -10,7 +10,7 @@ import (
 
 // ProductKey ProductKeyの構造体
 type ProductKey struct {
-	ID                string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;"`
+	ID                uint         `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
 	Key               string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
 	LauncherVersionID uint         `gorm:"type:int(11) unsigned;"`
 	CreatedAt         time.Time    `gorm:"type:datetime;NOT NULL;"`
@@ -22,11 +22,11 @@ type ProductKeyMeta interface {
 	CheckProductKey(key string) (bool, uint)
 }
 
-func getKeyIDByKey(key string) (uint, error) {
+func getKeyIDByKey(key string) (string, error) {
 	productKey := ProductKey{}
 	err := db.Where("`key` = ?", key).First(&productKey).Error
 	if err != nil {
-		return 0, fmt.Errorf("Failed In Getting Key ID: %w", err)
+		return "", fmt.Errorf("Failed In Getting Key ID: %w", err)
 	}
 	return productKey.ID, nil
 }
