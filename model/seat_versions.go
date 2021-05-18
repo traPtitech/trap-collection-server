@@ -3,6 +3,8 @@ package model
 import (
 	"database/sql"
 	"time"
+
+	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // SeatVersion seat_versionsの構造体
@@ -12,4 +14,8 @@ type SeatVersion struct {
 	Width     uint         `gorm:"type:int(11) unsigned;not null;"`
 	CreatedAt time.Time    `gorm:"type:datetime;NOT NULL;"`
 	DeletedAt sql.NullTime `gorm:"type:datetime;DEFAULT:NULL;"`
+}
+
+type SeatVersionMeta interface {
+	InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error)
 }
