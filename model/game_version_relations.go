@@ -101,7 +101,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID string, gameIDs []stri
 	return &version, nil
 }
 
-func getGameVersion(db *gorm.DB, launcherVersionID int) ([]openapi.GameMeta, error) {
+func getGameVersion(db *gorm.DB, launcherVersionID string) ([]openapi.GameMeta, error) {
 	//IDだけなのがなにか気持ち悪いので他のカラムも入れられるようPluckではなくSelectにしている
 	rows, err := db.Table("game_version_relations").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id = games.id").
