@@ -63,12 +63,7 @@ func (v *Version) GetVersion(strLauncherVersionID string) (*openapi.VersionDetai
 
 // PostGameToVersion POST /version/:launcherVersionID/gameの処理部分
 func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.GameIDs) (*openapi.VersionDetails, error) {
-	intLauncherVersionID, err := strconv.Atoi(launcherVersionID)
-	if err != nil {
-		return nil, errors.New("invalid launcherVersionID")
-	}
-
-	err = v.db.CheckGameIDs(gameIDs.GameIDs)
+	err := v.db.CheckGameIDs(gameIDs.GameIDs)
 	if err != nil {
 		invalidIDs := &model.InvalidGameIDs{}
 		if errors.As(err, invalidIDs) {
@@ -78,7 +73,7 @@ func (v *Version) PostGameToVersion(launcherVersionID string, gameIDs *openapi.G
 		return nil, fmt.Errorf("failed to check gameIDs: %w", err)
 	}
 
-	version, err := v.db.InsertGamesToLauncherVersion(intLauncherVersionID, gameIDs.GameIDs)
+	version, err := v.db.InsertGamesToLauncherVersion(launcherVersionID, gameIDs.GameIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert games to version: %w", err)
 	}
