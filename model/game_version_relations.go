@@ -22,7 +22,7 @@ type GameVersionRelation struct {
 // GameVersionRelationMeta game_version_relationテーブルのリポジトリ
 type GameVersionRelationMeta interface {
 	GetCheckList(versionID string, operatingSystem string) ([]*openapi.CheckItem, error)
-	InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error)
+	InsertGamesToLauncherVersion(launcherVersionID string, gameIDs []string) (*openapi.VersionDetails, error)
 }
 
 // GetCheckList チェックリストの取得
@@ -59,7 +59,7 @@ func (*DB) GetCheckList(versionID string, operatingSystem string) ([]*openapi.Ch
 	return checkList, nil
 }
 
-func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error) {
+func (*DB) InsertGamesToLauncherVersion(launcherVersionID string, gameIDs []string) (*openapi.VersionDetails, error) {
 	var version openapi.VersionDetails
 
 	launcherVersion := LauncherVersion{}
@@ -74,7 +74,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 	gameVersionRelations := make([]interface{}, 0, len(gameIDs))
 	for _, gameID := range gameIDs {
 		gameVersionRelation := GameVersionRelation{
-			LauncherVersionID: uint(launcherVersionID),
+			LauncherVersionID: launcherVersionID,
 			GameID:            gameID,
 		}
 
@@ -92,7 +92,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 	}
 
 	version = openapi.VersionDetails{
-		Id:        int32(launcherVersion.ID),
+		Id:        launcherVersion.ID,
 		Name:      launcherVersion.Name,
 		Games:     games,
 		CreatedAt: launcherVersion.CreatedAt,
