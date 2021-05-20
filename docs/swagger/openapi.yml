@@ -1370,7 +1370,7 @@ components:
         version:
           description: バージョンID
           type: string
-          example: "91f8feff-4293-468f-97fb-3c5b7726f815"
+          format: uuid
       required:
         - num
         - version
