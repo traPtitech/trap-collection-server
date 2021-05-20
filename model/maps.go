@@ -9,13 +9,6 @@ var osGameTypeIntMap = map[string]uint{
 	"mac":     3,
 }
 
-var gameTypeIntStrMap = map[uint8]string{
-	0: "url",
-	1: "jar",
-	2: "windows",
-	3: "mac",
-}
-
 var extIntStrMap = map[uint8]string{
 	0: "jpg",
 	1: "png",
@@ -33,10 +26,4 @@ var extStrIntMap = map[string]uint8{
 var roleStrIntMap = map[string]uint8{
 	"image": 0,
 	"video": 1,
-}
-
-var questionTypeIntStrMap = map[uint8]string{
-	0: "radio",
-	1: "checkbox",
-	2: "text",
 }

@@ -64,7 +64,7 @@
 ### product_keys
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID ||
 | key | char(29) | NO | UNI |  |  |  |
 | launcher_version_id | int(11) | NO | MUL |  |  |  |
 | created_at | datetime | NO |  |  |  |  |

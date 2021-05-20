@@ -4,13 +4,12 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
 // ProductKey ProductKeyの構造体
 type ProductKey struct {
-	ID                uint         `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID                string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;"`
 	Key               string       `gorm:"type:varchar(29);NOT NULL;PRIMARY_KEY;default:\"\";"`
 	LauncherVersionID uint         `gorm:"type:int(11) unsigned;"`
 	CreatedAt         time.Time    `gorm:"type:datetime;NOT NULL;"`
@@ -20,15 +19,6 @@ type ProductKey struct {
 // ProductKeyMeta product_keyテーブルのリポジトリ
 type ProductKeyMeta interface {
 	CheckProductKey(key string) (bool, uint)
-}
-
-func getKeyIDByKey(key string) (uint, error) {
-	productKey := ProductKey{}
-	err := db.Where("`key` = ?", key).First(&productKey).Error
-	if err != nil {
-		return 0, fmt.Errorf("Failed In Getting Key ID: %w", err)
-	}
-	return productKey.ID, nil
 }
 
 // CheckProductKey プロダクトキーが正しいか確認
