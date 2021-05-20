@@ -89,9 +89,9 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
-			ID:     uuid.New().String(),
-			Name:   name,
-			AnkeTo: ankeToURL,
+			ID:        uuid.New().String(),
+			Name:      name,
+			AnkeToURL: ankeToURL,
 		}
 
 		err := tx.Create(&launcherVersion).Error
