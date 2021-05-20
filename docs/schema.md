@@ -73,7 +73,7 @@
 ### access_tokens
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | key_id | varchar(36) | NO | MUL |  |  |  |
 | access_token | varchar(36) | NO | UNI |  |  |  |
 | expires_at | datetime | NO |  |  |  |  |
