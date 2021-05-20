@@ -4,7 +4,6 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -20,15 +19,6 @@ type ProductKey struct {
 // ProductKeyMeta product_keyテーブルのリポジトリ
 type ProductKeyMeta interface {
 	CheckProductKey(key string) (bool, uint)
-}
-
-func getKeyIDByKey(key string) (string, error) {
-	productKey := ProductKey{}
-	err := db.Where("`key` = ?", key).First(&productKey).Error
-	if err != nil {
-		return "", fmt.Errorf("Failed In Getting Key ID: %w", err)
-	}
-	return productKey.ID, nil
 }
 
 // CheckProductKey プロダクトキーが正しいか確認
