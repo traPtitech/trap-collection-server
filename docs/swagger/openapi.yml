@@ -1209,8 +1209,8 @@ components:
       properties:
         id:
           description: アセットのID
-          type: integer
-          example: 1
+          type: string
+          format: uuid
         type:
           description: ゲームの種類（jar,windows,mac）
           type: string
@@ -1224,8 +1224,8 @@ components:
       properties:
         id:
           description: アセットのID
-          type: integer
-          example: 1
+          type: string
+          format: uuid
         url:
           description: ゲームのURL（タイプがURL以外のときはなし）
           type: string

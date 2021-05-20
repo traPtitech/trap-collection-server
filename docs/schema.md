@@ -21,7 +21,7 @@
 ### game_assets
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | game_version_id | int(11) | NO | MUL |  |  |  |
 | type | enum('url','jar','windows','mac') | NO |  |  |  | ` |
 | md5 | char(32) |  |  |  |  | typeが`url`時はNULL |

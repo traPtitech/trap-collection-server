@@ -151,6 +151,7 @@ func Migrate(env string) error {
 		for _, v := range versions {
 			dsc := gameDescriptionMap[v.GameID]
 			assets = append(assets, &GameAsset{
+				ID:            uuid.New().String(),
 				GameVersionID: v.ID,
 				Type:          dsc.gameType,
 				Md5:           dsc.md5,

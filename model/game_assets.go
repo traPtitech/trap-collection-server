@@ -5,6 +5,7 @@ package model
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
@@ -24,7 +25,7 @@ const (
 
 // GameAsset gameのassetの構造体
 type GameAsset struct {
-	ID            uint   `gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID            string `gorm:"type:varchar(36);PRIMARY_KEY;"`
 	GameVersionID string `gorm:"type:varchar(36);NOT NULL;"`
 	GameVersion   GameVersion
 	Type          AssetType `gorm:"type:enum('url','jar','windows','mac');NOT NULL;"`
@@ -52,6 +53,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 		}
 
 		gameAsset := GameAsset{
+			ID:            uuid.New().String(),
 			GameVersionID: gameVersion.ID,
 			Type:          AssetTypeURL,
 			URL:           url,
@@ -66,7 +68,7 @@ func (*DB) InsertGameURL(gameID string, url string) (*openapi.GameUrl, error) {
 			return fmt.Errorf("failed to get the last game asset record: %w", err)
 		}
 		gameURL = openapi.GameUrl{
-			Id:  int32(gameAsset.ID),
+			Id:  gameAsset.ID,
 			Url: gameAsset.URL,
 		}
 
@@ -106,7 +108,7 @@ func (*DB) InsertGameFile(gameID string, fileType AssetType, md5 string) (*opena
 			return fmt.Errorf("failed to get the last game asset record: %w", err)
 		}
 		gameFile = openapi.GameFile{
-			Id:   int32(gameAsset.ID),
+			Id:   gameAsset.ID,
 			Type: string(gameAsset.Type),
 		}
 
