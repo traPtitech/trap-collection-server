@@ -189,7 +189,7 @@ func Migrate(env string) error {
 
 		db.Create(&ProductKey{
 			Key:               os.Getenv("PRODUCT_KEY"),
-			LauncherVersionID: 1,
+			LauncherVersionID: "0831437a-e715-45d5-8d6a-0b4b065ae45d",
 		})
 	}
 

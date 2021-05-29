@@ -913,7 +913,8 @@ components:
       in: cookie
       required: false
       schema:
-        type: integer
+        type: string
+        format: uuid
     operatingSystem:
       name: operatingSystem
       description: osのパラメーター(win32,darwin)
@@ -933,7 +934,8 @@ components:
       description: ランチャーのバージョンのID
       required: true
       schema:
-        type: integer
+        type: string
+        format: uuid
     gameID:
       name: gameID
       description: ゲームのUUID
@@ -1282,8 +1284,8 @@ components:
       properties:
         id:
           description: ID
-          type: integer
-          example: 1
+          type: string
+          format: uuid
         name:
           description: 名前
           type: string
@@ -1308,8 +1310,8 @@ components:
       properties:
         id:
           description: ID
-          type: integer
-          example: 1
+          type: string
+          format: uuid
         name:
           description: 名前
           type: string
@@ -1334,8 +1336,8 @@ components:
       properties:
         id:
           description: ID
-          type: integer
-          example: 1
+          type: string
+          format: uuid
         name:
           description: 名前
           type: string
@@ -1368,8 +1370,8 @@ components:
           example: 20
         version:
           description: バージョンID
-          type: integer
-          example: 0
+          type: string
+          format: uuid
       required:
         - num
         - version

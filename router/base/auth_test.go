@@ -80,7 +80,7 @@ func TestLauncherAuth(t *testing.T) {
 		t.Fatal("VersionID Expected To Be Null,But Error Is Null")
 	}
 
-	var versionID uint = 0
+	versionID := "0831437a-e715-45d5-8d6a-0b4b065ae45d"
 	resVersionID, err := launcherAuthBase.GetVersionID(c)
 	if err != nil {
 		t.Fatalf("Failed In getVersionID: %#v", err)

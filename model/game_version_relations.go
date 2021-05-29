@@ -13,7 +13,7 @@ import (
 
 // GameVersionRelation ランチャーのバージョンに入るゲームの構造体
 type GameVersionRelation struct {
-	LauncherVersionID uint `gorm:"type:int(11) auto_increment;NOT NULL;PRIMARY_KEY;"`
+	LauncherVersionID string `gorm:"type:varchar(36);NOT NULL;PRIMARY_KEY;"`
 	LauncherVersion   LauncherVersion
 	GameID            string `gorm:"type:varchar(36);NOT NULL;PRIMARY_KEY;"`
 	Game              Game
@@ -21,12 +21,12 @@ type GameVersionRelation struct {
 
 // GameVersionRelationMeta game_version_relationテーブルのリポジトリ
 type GameVersionRelationMeta interface {
-	GetCheckList(versionID uint, operatingSystem string) ([]*openapi.CheckItem, error)
-	InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error)
+	GetCheckList(versionID string, operatingSystem string) ([]*openapi.CheckItem, error)
+	InsertGamesToLauncherVersion(launcherVersionID string, gameIDs []string) (*openapi.VersionDetails, error)
 }
 
 // GetCheckList チェックリストの取得
-func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.CheckItem, error) {
+func (*DB) GetCheckList(versionID string, operatingSystem string) ([]*openapi.CheckItem, error) {
 	types, ok := osGameTypeIntsMap[operatingSystem]
 	if !ok {
 		return []*openapi.CheckItem{}, errors.New("Unsupported OS")
@@ -59,7 +59,7 @@ func (*DB) GetCheckList(versionID uint, operatingSystem string) ([]*openapi.Chec
 	return checkList, nil
 }
 
-func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string) (*openapi.VersionDetails, error) {
+func (*DB) InsertGamesToLauncherVersion(launcherVersionID string, gameIDs []string) (*openapi.VersionDetails, error) {
 	var version openapi.VersionDetails
 
 	launcherVersion := LauncherVersion{}
@@ -74,7 +74,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 	gameVersionRelations := make([]interface{}, 0, len(gameIDs))
 	for _, gameID := range gameIDs {
 		gameVersionRelation := GameVersionRelation{
-			LauncherVersionID: uint(launcherVersionID),
+			LauncherVersionID: launcherVersionID,
 			GameID:            gameID,
 		}
 
@@ -92,7 +92,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 	}
 
 	version = openapi.VersionDetails{
-		Id:        int32(launcherVersion.ID),
+		Id:        launcherVersion.ID,
 		Name:      launcherVersion.Name,
 		Games:     games,
 		CreatedAt: launcherVersion.CreatedAt,
@@ -101,7 +101,7 @@ func (*DB) InsertGamesToLauncherVersion(launcherVersionID int, gameIDs []string)
 	return &version, nil
 }
 
-func getGameVersion(db *gorm.DB, launcherVersionID int) ([]openapi.GameMeta, error) {
+func getGameVersion(db *gorm.DB, launcherVersionID string) ([]openapi.GameMeta, error) {
 	//IDだけなのがなにか気持ち悪いので他のカラムも入れられるようPluckではなくSelectにしている
 	rows, err := db.Table("game_version_relations").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id = games.id").

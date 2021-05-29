@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
 // LauncherVersion ランチャーのバージョンの構造体
 type LauncherVersion struct {
-	ID                   uint                  `json:"id" gorm:"type:int(11) unsigned auto_increment;PRIMARY_KEY;"`
+	ID                   string                `json:"id" gorm:"type:varchar(36);PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
 	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:anke_to_url;type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
@@ -24,7 +25,7 @@ type LauncherVersion struct {
 // LauncherVersionMeta launcher_versionテーブルのリポジトリ
 type LauncherVersionMeta interface {
 	GetLauncherVersions() ([]*openapi.Version, error)
-	GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error)
+	GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.VersionDetails, err error)
 	InsertLauncherVersion(name string, ankeToURL string) (*openapi.VersionMeta, error)
 }
 
@@ -39,7 +40,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 	apiLauncherVersions := make([]*openapi.Version, 0, len(launcherVersions))
 	for _, launcherVersion := range launcherVersions {
 		apiLauncherVersion := openapi.Version{
-			Id:        int32(launcherVersion.ID),
+			Id:        launcherVersion.ID,
 			Name:      launcherVersion.Name,
 			AnkeTo:    launcherVersion.AnkeToURL,
 			CreatedAt: launcherVersion.CreatedAt,
@@ -51,7 +52,7 @@ func (*DB) GetLauncherVersions() ([]*openapi.Version, error) {
 }
 
 // GetLauncherVersionDetailsByID ランチャーのバージョンをIDから取得
-func (*DB) GetLauncherVersionDetailsByID(id uint) (versionDetails *openapi.VersionDetails, err error) {
+func (*DB) GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.VersionDetails, err error) {
 	versionDetails = &openapi.VersionDetails{
 		Games: []openapi.GameMeta{},
 	}
@@ -88,6 +89,7 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 	var apiVersion openapi.VersionMeta
 	err := db.Transaction(func(tx *gorm.DB) error {
 		launcherVersion := LauncherVersion{
+			ID:        uuid.New().String(),
 			Name:      name,
 			AnkeToURL: ankeToURL,
 		}
@@ -102,7 +104,7 @@ func (*DB) InsertLauncherVersion(name string, ankeToURL string) (*openapi.Versio
 			return fmt.Errorf("failed to get the last launcher version record: %w", err)
 		}
 		apiVersion = openapi.VersionMeta{
-			Id:        int32(launcherVersion.ID),
+			Id:        launcherVersion.ID,
 			Name:      launcherVersion.Name,
 			AnkeTo:    launcherVersion.AnkeToURL,
 			CreatedAt: launcherVersion.CreatedAt,
