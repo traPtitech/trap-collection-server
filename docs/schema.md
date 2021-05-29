@@ -83,7 +83,7 @@
 ### seat_versions
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | width | int(11) | NO |  |  |  |  |
 | height | int(11) | NO |  |  |  |  |
 | created_at | datetime | NO |  | CURRENT_TIMESTAMP |  |  |
@@ -92,7 +92,7 @@
 ### seats
 | Name | Type | Null | Key | Default | Extra | 説明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| id | int(11) | NO | PRI |  | AUTO_INCREMENT,unsigned |  |
+| id | varchar(36) | NO | PRI |  |  | UUID |
 | seat_version_id | int(11) | NO | MUL |  |  |  |
 | row | int(11) | NO |  |  |  |  |
 | column | int(11) | NO |  |  |  |  |
