@@ -1464,8 +1464,8 @@ components:
       type: object
       properties:
         seatVersionId:
-          type: integer
-          example: 0
+          type: string
+          format: uuid
         seatId:
           type: integer
           example: 0
