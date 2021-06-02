@@ -46,8 +46,8 @@ func (s *Seat) PostSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
 	}
 
 	return &openapi.SeatDetail{
-		Id: seatReq.SeatId,
-		Status: 1,
+		Id:          seatReq.SeatId,
+		Status:      1,
 		SeatingTime: seat.StartedAt,
 	}, nil
 }
@@ -74,7 +74,7 @@ func (s *Seat) DeleteSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
 	}
 
 	return &openapi.SeatDetail{
-		Id: seatReq.SeatId,
+		Id:     seatReq.SeatId,
 		Status: 0,
 	}, nil
 }

@@ -29,9 +29,9 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 	id := uuid.New().String()
 
 	seatVersion := SeatVersion{
-		ID: id,
+		ID:     id,
 		Height: height,
-		Width: width,
+		Width:  width,
 	}
 
 	err := db.Create(&seatVersion).Error
@@ -40,9 +40,9 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 	}
 
 	return &openapi.SeatVersion{
-		Id: seatVersion.ID,
-		Width: int32(seatVersion.Width),
-		Hight: int32(seatVersion.Height),
+		Id:        seatVersion.ID,
+		Width:     int32(seatVersion.Width),
+		Hight:     int32(seatVersion.Height),
 		CreatedAt: seatVersion.CreatedAt,
 	}, nil
 }

@@ -29,11 +29,11 @@ type SeatMeta interface {
 func (*DB) InsertSeat(seatVersionID string, row int, column int) (*Seat, error) {
 	//TODO:同時に2リクエストくると２重に着席できてしまう
 	newSeat := Seat{
-		ID: uuid.New().String(),
+		ID:            uuid.New().String(),
 		SeatVersionID: seatVersionID,
-		Row: uint(row),
-		Column: uint(column),
-		StartedAt: time.Now(),
+		Row:           uint(row),
+		Column:        uint(column),
+		StartedAt:     time.Now(),
 	}
 
 	err := db.

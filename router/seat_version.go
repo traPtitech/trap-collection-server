@@ -11,7 +11,7 @@ import (
 
 // SeatVersion 席のバージョン管理の構造体
 type SeatVersion struct {
-	db           model.DBMeta
+	db model.DBMeta
 	openapi.SeatVersionApi
 }
 
@@ -65,7 +65,7 @@ func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, er
 
 	seatingTimes := make([][]*time.Time, 0, seatVersion.Height)
 	var height uint
-	for height=0;height<seatVersion.Height;height++ {
+	for height = 0; height < seatVersion.Height; height++ {
 		seatingTimes = append(seatingTimes, make([]*time.Time, seatVersion.Width))
 	}
 
@@ -75,8 +75,8 @@ func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, er
 
 	var width uint
 	seatDetails := make([]*openapi.SeatDetail, 0, seatVersion.Width*seatVersion.Height)
-	for height=0;height<seatVersion.Height;height++ {
-		for width=0;width<seatVersion.Width;width++ {
+	for height = 0; height < seatVersion.Height; height++ {
+		for width = 0; width < seatVersion.Width; width++ {
 			var status int32
 			var seatingTime time.Time
 			if seatingTimes[height][width] != nil {
@@ -87,7 +87,7 @@ func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, er
 			}
 
 			seatDetails = append(seatDetails, &openapi.SeatDetail{
-				Id: int32(seatVersion.Width)*int32(height) + int32(width),
+				Id:     int32(seatVersion.Width)*int32(height) + int32(width),
 				Status: status,
 				//TODO:誰も座っていない時に0001-01-01T00:00:00Zになってしまう
 				SeatingTime: seatingTime,

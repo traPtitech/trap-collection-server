@@ -61,12 +61,12 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 	seatVersion := newSeatVersion(db)
 
 	api := &openapi.Api{
-		Middleware: middleware,
-		GameApi:    game,
-		Oauth2Api:  oAuth2,
-		SeatApi:    seat,
-		UserApi:    user,
-		VersionApi: version,
+		Middleware:     middleware,
+		GameApi:        game,
+		Oauth2Api:      oAuth2,
+		SeatApi:        seat,
+		UserApi:        user,
+		VersionApi:     version,
 		SeatVersionApi: seatVersion,
 	}
 
