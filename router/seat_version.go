@@ -37,6 +37,18 @@ func (sv *SeatVersion) PostSeatVersion(newSeatVersion *openapi.NewSeatVersion) (
 	return seatVersion, nil
 }
 
+func (sv *SeatVersion) DeleteSeatVersion(seatVersionID string) error {
+	err := sv.db.DeleteSeatVersion(seatVersionID)
+	if errors.Is(err, model.ErrNotFound) {
+		return errors.New("invalid seat version id")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check seat version id: %w", err)
+	}
+
+	return nil
+}
+
 func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, error) {
 	seatVersion, err := sv.db.GetSeatVersion(seatVersionID)
 	if errors.Is(err, model.ErrNotFound) {

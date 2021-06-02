@@ -21,6 +21,7 @@ type SeatVersion struct {
 
 type SeatVersionMeta interface {
 	InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error)
+	DeleteSeatVersion(seatVersionID string) error
 	GetSeatVersion(seatVersionID string) (*SeatVersion, error)
 }
 
@@ -44,6 +45,20 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 		Hight: int32(seatVersion.Height),
 		CreatedAt: seatVersion.CreatedAt,
 	}, nil
+}
+
+func (*DB) DeleteSeatVersion(seatVersionID string) error {
+	result := db.
+		Where("id = ?", seatVersionID).
+		Delete(&SeatVersion{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete seat version: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 func (*DB) GetSeatVersion(seatVersionID string) (*SeatVersion, error) {
