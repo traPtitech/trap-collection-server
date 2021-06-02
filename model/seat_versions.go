@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
 )
 
@@ -20,6 +21,7 @@ type SeatVersion struct {
 
 type SeatVersionMeta interface {
 	InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error)
+	GetSeatVersion(seatVersionID string) (*SeatVersion, error)
 }
 
 func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error) {
@@ -42,4 +44,19 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 		Hight: int32(seatVersion.Height),
 		CreatedAt: seatVersion.CreatedAt,
 	}, nil
+}
+
+func (*DB) GetSeatVersion(seatVersionID string) (*SeatVersion, error) {
+	var seatVersion SeatVersion
+	err := db.
+		Where("id = ?", seatVersionID).
+		Find(&seatVersion).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to check seat version: %w", err)
+	}
+
+	return &seatVersion, nil
 }

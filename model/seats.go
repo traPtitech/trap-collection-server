@@ -3,9 +3,10 @@ package model
 ////go:generate mockgen -source=$GOFILE -destination=mock_${GOFILE} -package=$GOPACKAGE
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/jinzhu/gorm"
 )
 
 // Seat プレイヤーの履歴の構造体
@@ -19,5 +20,17 @@ type Seat struct {
 }
 
 type SeatMeta interface {
-	GetSeatDetails(seatVersionID string) ([]*openapi.SeatDetail, error)
+	GetSeats(seatVersionID string) ([]*Seat, error)
+}
+
+func (*DB) GetSeats(seatVersionID string) ([]*Seat, error) {
+	var seats []*Seat
+	err := db.
+		Where("seat_version_id = ? AND ended_at IS NULL", seatVersionID).
+		Find(&seats).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return nil, fmt.Errorf("failed to get seats: %w", err)
+	}
+
+	return seats, nil
 }
