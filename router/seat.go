@@ -13,7 +13,6 @@ import (
 type Seat struct {
 	db           model.DBMeta
 	launcherAuth base.LauncherAuth
-	openapi.SeatApi
 }
 
 func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
