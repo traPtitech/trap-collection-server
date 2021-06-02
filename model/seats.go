@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
@@ -20,7 +21,36 @@ type Seat struct {
 }
 
 type SeatMeta interface {
+	InsertSeat(seatVersionID string, row int, column int) (*Seat, error)
 	GetSeats(seatVersionID string) ([]*Seat, error)
+}
+
+func (*DB) InsertSeat(seatVersionID string, row int, column int) (*Seat, error) {
+	//TODO:同時に2リクエストくると２重に着席できてしまう
+	newSeat := Seat{
+		ID: uuid.New().String(),
+		SeatVersionID: seatVersionID,
+		Row: uint(row),
+		Column: uint(column),
+		StartedAt: time.Now(),
+	}
+
+	err := db.
+		Where("`row` = ? AND `column` = ? AND ended_at IS NULL", row, column).
+		First(&Seat{}).Error
+	if err == nil {
+		return nil, ErrAlreadyExists
+	}
+	if !gorm.IsRecordNotFoundError(err) {
+		return nil, fmt.Errorf("failed to get seat: %w", err)
+	}
+
+	err = db.Create(&newSeat).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to create seat: %w", err)
+	}
+
+	return &newSeat, nil
 }
 
 func (*DB) GetSeats(seatVersionID string) ([]*Seat, error) {
