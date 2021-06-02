@@ -51,7 +51,7 @@ func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, er
 		return nil, fmt.Errorf("failed to check seats: %w", err)
 	}
 
-	seatingTimes := make([][]*time.Time, seatVersion.Height)
+	seatingTimes := make([][]*time.Time, 0, seatVersion.Height)
 	var height uint
 	for height=0;height<seatVersion.Height;height++ {
 		seatingTimes = append(seatingTimes, make([]*time.Time, seatVersion.Width))
@@ -77,6 +77,7 @@ func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, er
 			seatDetails = append(seatDetails, &openapi.SeatDetail{
 				Id: int32(seatVersion.Width)*int32(height) + int32(width),
 				Status: status,
+				//TODO:誰も座っていない時に0001-01-01T00:00:00Zになってしまう
 				SeatingTime: seatingTime,
 			})
 		}
