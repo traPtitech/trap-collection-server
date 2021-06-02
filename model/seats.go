@@ -22,6 +22,7 @@ type Seat struct {
 
 type SeatMeta interface {
 	InsertSeat(seatVersionID string, row int, column int) (*Seat, error)
+	DeleteSeat(seatVersionID string, row int, column int) error
 	GetSeats(seatVersionID string) ([]*Seat, error)
 }
 
@@ -51,6 +52,26 @@ func (*DB) InsertSeat(seatVersionID string, row int, column int) (*Seat, error) 
 	}
 
 	return &newSeat, nil
+}
+
+func (*DB) DeleteSeat(seatVersionID string, row int, column int) error {
+	newSeat := Seat{
+		EndedAt: time.Now(),
+	}
+
+	result := db.
+		Model(&newSeat).
+		Where("`row` = ? AND `column` = ?", row, column).
+		Select("ended_at").
+		Updates(newSeat)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update seat: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 func (*DB) GetSeats(seatVersionID string) ([]*Seat, error) {
