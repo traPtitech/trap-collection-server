@@ -34,6 +34,10 @@ func (s *Seat) PostSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
 		return nil, fmt.Errorf("failed to check seat version id: %w", err)
 	}
 
+	if seatReq.SeatId < 0 {
+		return nil, errors.New("invalid seat id")
+	}
+
 	row := seatReq.SeatId / int32(seatVersion.Height)
 	column := seatReq.SeatId % int32(seatVersion.Width)
 
@@ -60,6 +64,10 @@ func (s *Seat) DeleteSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to check seat version id: %w", err)
+	}
+
+	if seatReq.SeatId < 0 {
+		return nil, errors.New("invalid seat id")
 	}
 
 	row := seatReq.SeatId / int32(seatVersion.Height)
