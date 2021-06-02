@@ -21,7 +21,7 @@ type SeatVersion struct {
 
 type SeatVersionMeta interface {
 	InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error)
-	CheckSeatVersion(seatVersionID string) (bool, error)
+	GetSeatVersion(seatVersionID string) (*SeatVersion, error)
 }
 
 func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, error) {
@@ -46,16 +46,17 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 	}, nil
 }
 
-func (*DB) CheckSeatVersion(seatVersionID string) (bool, error) {
+func (*DB) GetSeatVersion(seatVersionID string) (*SeatVersion, error) {
+	var seatVersion SeatVersion
 	err := db.
 		Where("id = ?", seatVersionID).
-		Find(&SeatVersion{}).Error
+		Find(&seatVersion).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return false, nil
+		return nil, ErrNotFound
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to check seat version: %w", err)
+		return nil, fmt.Errorf("failed to check seat version: %w", err)
 	}
 
-	return true, nil
+	return &seatVersion, nil
 }
