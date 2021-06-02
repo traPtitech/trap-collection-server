@@ -37,6 +37,8 @@ type DBMeta interface {
 	LauncherVersionMeta
 	MaintainerMeta
 	ProductKeyMeta
+	SeatVersionMeta
+	SeatMeta
 }
 
 // DB DB関連の構造体

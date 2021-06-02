@@ -1,6 +1,9 @@
 package router
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
@@ -10,7 +13,6 @@ import (
 type Seat struct {
 	db           model.DBMeta
 	launcherAuth base.LauncherAuth
-	openapi.SeatApi
 }
 
 func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
@@ -23,31 +25,64 @@ func newSeat(db model.DBMeta, launcherAuth base.LauncherAuth) openapi.SeatApi {
 }
 
 // PostSeat POST /seats の処理部分
-/*func (s *Seat) PostSeat(c echo.Context) error {
-	productKey, err := s.launcherAuth.GetProductKey(c)
+func (s *Seat) PostSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
+	seatVersion, err := s.db.GetSeatVersion(seatReq.SeatVersionId)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, errors.New("invalid seat version id")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting ProductKey: %w", err)
+		return nil, fmt.Errorf("failed to check seat version id: %w", err)
 	}
 
-	err = s.db.PostPlayer(productKey)
-	if err != nil {
-		return fmt.Errorf("Failed In Inserting Player: %w", err)
+	if seatReq.SeatId < 0 {
+		return nil, errors.New("invalid seat id")
 	}
 
-	return nil
-}*/
+	row := seatReq.SeatId / int32(seatVersion.Height)
+	column := seatReq.SeatId % int32(seatVersion.Width)
+
+	seat, err := s.db.InsertSeat(seatReq.SeatVersionId, int(row), int(column))
+	if errors.Is(err, model.ErrAlreadyExists) {
+		return nil, errors.New("already seated")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert seat: %w", err)
+	}
+
+	return &openapi.SeatDetail{
+		Id:          seatReq.SeatId,
+		Status:      1,
+		SeatingTime: seat.StartedAt,
+	}, nil
+}
 
 // DeleteSeat DELETE /seats の処理部分
-/*func (s *Seat) DeleteSeat(c echo.Context) error {
-	productKey, err := s.launcherAuth.GetProductKey(c)
+func (s *Seat) DeleteSeat(seatReq *openapi.Seat) (*openapi.SeatDetail, error) {
+	seatVersion, err := s.db.GetSeatVersion(seatReq.SeatVersionId)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, errors.New("invalid seat version id")
+	}
 	if err != nil {
-		return fmt.Errorf("Failed In Getting ProductKey")
+		return nil, fmt.Errorf("failed to check seat version id: %w", err)
 	}
 
-	err = s.db.DeletePlayer(productKey)
-	if err != nil {
-		return fmt.Errorf("Failed In Deleting Player: %w", err)
+	if seatReq.SeatId < 0 {
+		return nil, errors.New("invalid seat id")
 	}
 
-	return nil
-}*/
+	row := seatReq.SeatId / int32(seatVersion.Height)
+	column := seatReq.SeatId % int32(seatVersion.Width)
+
+	err = s.db.DeleteSeat(seatReq.SeatVersionId, int(row), int(column))
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, errors.New("not seated")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete seat: %w", err)
+	}
+
+	return &openapi.SeatDetail{
+		Id:     seatReq.SeatId,
+		Status: 0,
+	}, nil
+}

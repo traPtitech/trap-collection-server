@@ -778,7 +778,7 @@ paths:
       - $ref: '#/components/parameters/seatVersionID'
     get:
       tags:
-        - seat
+        - seatVersion
       summary: 席の状態の取得
       description: 席の状態の取得
       security:
@@ -1464,8 +1464,8 @@ components:
       type: object
       properties:
         seatVersionId:
-          type: integer
-          example: 0
+          type: string
+          format: uuid
         seatId:
           type: integer
           example: 0
