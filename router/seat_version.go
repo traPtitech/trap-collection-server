@@ -35,3 +35,20 @@ func (sv *SeatVersion) PostSeatVersion(newSeatVersion *openapi.NewSeatVersion) (
 
 	return seatVersion, nil
 }
+
+func (sv *SeatVersion) GetSeats(seatVersionID string) ([]*openapi.SeatDetail, error) {
+	isValidSeatVersionID, err := sv.db.CheckSeatVersion(seatVersionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check seat version id: %w", err)
+	}
+	if !isValidSeatVersionID {
+		return nil, errors.New("invalid seat version id")
+	}
+
+	seatDetails, err := sv.db.GetSeatDetails(seatVersionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check seats: %w", err)
+	}
+
+	return seatDetails, nil
+}
