@@ -37,7 +37,7 @@ func (*DB) InsertSeatVersion(height uint, width uint) (*openapi.SeatVersion, err
 	}
 
 	return &openapi.SeatVersion{
-		Id: int32(seatVersion.ID),
+		Id: seatVersion.ID,
 		Width: int32(seatVersion.Width),
 		Hight: int32(seatVersion.Height),
 		CreatedAt: seatVersion.CreatedAt,

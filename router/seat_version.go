@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/traPtitech/trap-collection-server/model"
@@ -20,6 +21,13 @@ func newSeatVersion(db model.DBMeta) *SeatVersion {
 }
 
 func (sv *SeatVersion) PostSeatVersion(newSeatVersion *openapi.NewSeatVersion) (*openapi.SeatVersion, error) {
+	if newSeatVersion.Hight <= 0 {
+		return nil, errors.New("invalid height")
+	}
+	if newSeatVersion.Width <= 0 {
+		return nil, errors.New("invalid width")
+	}
+
 	seatVersion, err := sv.db.InsertSeatVersion(uint(newSeatVersion.Hight), uint(newSeatVersion.Width))
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert seat version: %w", err)
