@@ -22,6 +22,7 @@ type Service struct {
 	*Seat
 	*User
 	*Version
+	*LauncherAuth
 }
 
 // NewAPI Apiのコンストラクタ
@@ -52,19 +53,19 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 	launcherAuth := base.NewLauncherAuth()
 
 	middleware := newMiddleware(db, oauth)
-	game := newGame(db, oauth, str)
-	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
-	seat := newSeat(db, launcherAuth)
-	user := newUser(oauth)
-	version := newVersion(db, launcherAuth)
+	gameAPI := newGame(db, oauth, str)
+	oAuth2API := newOAuth2(sess, oauth, clientID, clientSecret)
+	seatAPI := newSeat(db, launcherAuth)
+	userAPI := newUser(oauth)
+	versionAPI := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
 		Middleware: middleware,
-		GameApi:    game,
-		Oauth2Api:  oAuth2,
-		SeatApi:    seat,
-		UserApi:    user,
-		VersionApi: version,
+		GameApi:    gameAPI,
+		Oauth2Api:  oAuth2API,
+		SeatApi:    seatAPI,
+		UserApi:    userAPI,
+		VersionApi: versionAPI,
 	}
 
 	return api, nil
