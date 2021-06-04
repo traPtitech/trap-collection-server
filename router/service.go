@@ -58,6 +58,7 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 	seatAPI := newSeat(db, launcherAuth)
 	userAPI := newUser(oauth)
 	versionAPI := newVersion(db, launcherAuth)
+	launcherAuthAPI := newLauncherAuth()
 
 	api := &openapi.Api{
 		Middleware: middleware,
@@ -66,6 +67,7 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 		SeatApi:    seatAPI,
 		UserApi:    userAPI,
 		VersionApi: versionAPI,
+		LauncherAuthApi: launcherAuthAPI,
 	}
 
 	return api, nil
