@@ -3,11 +3,11 @@ name: Deploy
 on: 
   push:
     branches: 
-      - develop
+      - main
 
 env:
   IMAGE_NAME: trap-collection-server
-  IMAGE_TAG: develop
+  IMAGE_TAG: main
 
 jobs:
   image:
