@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1.0-experimental
 
-FROM groovy:3.0.8 AS generate
+FROM groovy:4.0 AS generate
 WORKDIR /home/groovy/scripts
 COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
 USER root
