@@ -8,7 +8,7 @@ import (
 )
 
 type LauncherAuth interface {
-	CreateLauncherUser(ctx context.Context, launcherVersionID values.LauncherVersionID, userNum int) ([]values.LauncherUserProductKey, error)
+	CreateLauncherUser(ctx context.Context, launcherVersionID values.LauncherVersionID, userNum int) ([]*domain.LauncherUser, error)
 	GetLauncherUsers(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.LauncherUser, error)
 	RevokeProductKey(ctx context.Context, user values.LauncherUserID) error
 	LoginLauncher(ctx context.Context, productKey values.LauncherUserProductKey) (*domain.LauncherSession, error)
