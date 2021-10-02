@@ -251,6 +251,23 @@ func TestLauncherUserProductKey(t *testing.T) {
 	}
 }
 
+func TestNewLauncherSessionAccessToken(t *testing.T) {
+	t.Parallel()
+
+	loopNum := 100
+	accessTokenRegexp, err := regexp.Compile("^[0-9a-zA-Z]{64}$")
+	if err != nil {
+		t.Errorf("failed to compile product key regexp: %v", err)
+	}
+
+	for i := 0; i < loopNum; i++ {
+		token, err := NewLauncherSessionAccessToken()
+		assert.NoError(t, err)
+
+		assert.Regexp(t, accessTokenRegexp, token)
+	}
+}
+
 func TestLauncherSessionAccessTokenValidate(t *testing.T) {
 	t.Parallel()
 
