@@ -26,7 +26,11 @@ const (
 	LauncherUserStatusInactive
 )
 
-func NewLauncherVersionID(id uuid.UUID) LauncherVersionID {
+func NewLauncherVersionID() LauncherVersionID {
+	return LauncherVersionID(uuid.New())
+}
+
+func NewLauncherVersionIDFromUUID(id uuid.UUID) LauncherVersionID {
 	return LauncherVersionID(id)
 }
 
@@ -57,7 +61,11 @@ func NewLauncherVersionQuestionnaireURL(url *url.URL) LauncherVersionQuestionnai
 	return LauncherVersionQuestionnaireURL(url)
 }
 
-func NewLauncherUserID(id uuid.UUID) LauncherUserID {
+func NewLauncherUserID() LauncherUserID {
+	return LauncherUserID(uuid.New())
+}
+
+func NewLauncherUserIDFromUUID(id uuid.UUID) LauncherUserID {
 	return LauncherUserID(id)
 }
 
@@ -109,7 +117,11 @@ func (lupk LauncherUserProductKey) Validate() error {
 	return nil
 }
 
-func NewLauncherSessionID(id uuid.UUID) LauncherSessionID {
+func NewLauncherSessionID() LauncherSessionID {
+	return LauncherSessionID(uuid.New())
+}
+
+func NewLauncherSessionIDFromUUID(id uuid.UUID) LauncherSessionID {
 	return LauncherSessionID(id)
 }
 
