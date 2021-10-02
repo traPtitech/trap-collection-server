@@ -2,6 +2,7 @@ package values
 
 import (
 	"errors"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -67,6 +68,23 @@ func TestLauncherVersionNameValidate(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+func TestNewLauncherUserProductKey(t *testing.T) {
+	t.Parallel()
+
+	loopNum := 100
+	productKeyRegexp, err := regexp.Compile("^[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}$")
+	if err != nil {
+		t.Errorf("failed to compile product key regexp: %v", err)
+	}
+
+	for i := 0; i < loopNum; i++ {
+		userProductKey, err := NewLauncherUserProductKey()
+		assert.NoError(t, err)
+
+		assert.Regexp(t, productKeyRegexp, userProductKey)
 	}
 }
 
