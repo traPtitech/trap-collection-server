@@ -17,6 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.16
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/srinathgs/mysqlstore v0.0.0-20200417050510-9cbb9420fc4c
+	github.com/stretchr/testify v1.4.0
 	github.com/t-tiger/gorm-bulk-insert v1.3.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
