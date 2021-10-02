@@ -17,8 +17,8 @@ type LauncherUser struct {
 func NewLauncherUser(
 	id values.LauncherUserID,
 	productKey values.LauncherUserProductKey,
-) LauncherUser {
-	return LauncherUser{
+) *LauncherUser {
+	return &LauncherUser{
 		id:         id,
 		productKey: productKey,
 		status:     values.LauncherUserStatusActive,
