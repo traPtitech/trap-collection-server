@@ -10,3 +10,4 @@ mock
 upload/*
 !upload/.gitkeep
 mock_*.go
+!mock_db.go
