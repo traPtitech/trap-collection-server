@@ -69,3 +69,166 @@ func TestLauncherVersionNameValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestLauncherUserProductKey(t *testing.T) {
+	t.Parallel()
+
+	type test struct {
+		description string
+		productKey  string
+		isErr       bool
+		err         error
+	}
+
+	testCases := []test{
+		{
+			description: "英語小文字25文字の5文字ごとでの-区切りなのでエラーなし",
+			productKey:  "bbcde-fghij-klmno-pqrst-uvwxy",
+			isErr:       false,
+		},
+		{
+			description: "aを含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwxy",
+			isErr:       false,
+		},
+		{
+			description: "zを含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwxz",
+			isErr:       false,
+		},
+		{
+			description: "`を含むのでエラー",
+			productKey:  "`bcde-fghij-klmno-pqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "{を含むのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx}",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "英語大文字を含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pQrst-uvwxy",
+			isErr:       false,
+		},
+		{
+			description: "Zを含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwxZ",
+			isErr:       false,
+		},
+		{
+			description: "Aを含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwxA",
+			isErr:       false,
+		},
+		{
+			description: "[を含むのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx[",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "@を含むのでエラー",
+			productKey:  "@bcde-fghij-klmno-pqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "英語大文字のみでもエラーなし",
+			productKey:  "ABCDE-FGHIJ-KLMNO-PQRST-UVWXY",
+			isErr:       false,
+		},
+		{
+			description: "数字を含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx1",
+			isErr:       false,
+		},
+		{
+			description: "0を含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx0",
+			isErr:       false,
+		},
+		{
+			description: "9を含んでもエラーなし",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx9",
+			isErr:       false,
+		},
+		{
+			description: "/を含むのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx/",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: ":を含むのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx:",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "数字のみでもエラーなし",
+			productKey:  "12345-67890-12345-67890-12345",
+			isErr:       false,
+		},
+		{
+			description: "文字数が30文字以上なのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwxyz",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidLength,
+		},
+		{
+			description: "文字数が28文字以下なのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrst-uvwx",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidLength,
+		},
+		{
+			description: "6番目が-でないのでエラー",
+			productKey:  "abcdezfghij-klmno-pqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "12番目が-でないのでエラー",
+			productKey:  "abcde-fghijzklmno-pqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "18番目が-でないのでエラー",
+			productKey:  "abcde-fghij-klmnozpqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "24番目が-でないのでエラー",
+			productKey:  "abcde-fghij-klmno-pqrstzuvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+		{
+			description: "6,12,18,24番目以外に-があるのでエラー",
+			productKey:  "abcd--fghij-klmno-pqrst-uvwxy",
+			isErr:       true,
+			err:         ErrLauncherUserProductKeyInvalidRune,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := LauncherUserProductKey(testCase.productKey).Validate()
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
