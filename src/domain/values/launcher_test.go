@@ -232,3 +232,136 @@ func TestLauncherUserProductKey(t *testing.T) {
 		})
 	}
 }
+
+func TestLauncherSessionAccessTokenValidate(t *testing.T) {
+	t.Parallel()
+
+	type test struct {
+		description string
+		accessToken string
+		isErr       bool
+		err         error
+	}
+
+	testCases := []test{
+		{
+			description: "英語小文字64文字なのでエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopq",
+			isErr:       false,
+		},
+		{
+			description: "aを含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopa",
+			isErr:       false,
+		},
+		{
+			description: "zを含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopz",
+			isErr:       false,
+		},
+		{
+			description: "`を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop`",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: "{を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop{",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: "英語大文字を含んでもエラーなし",
+			accessToken: "Bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopq",
+			isErr:       false,
+		},
+		{
+			description: "Zを含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopZ",
+			isErr:       false,
+		},
+		{
+			description: "Aを含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopA",
+			isErr:       false,
+		},
+		{
+			description: "[を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop[",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: "@を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop@",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: "英語大文字のみでもエラーなし",
+			accessToken: "BCDEFGHIJKLMNOPQRSTUVWXYBCDEFGHIJKLMNOPQRSTUVWXYBCDEFGHIJKLMNOPQ",
+			isErr:       false,
+		},
+		{
+			description: "数字を含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop1",
+			isErr:       false,
+		},
+		{
+			description: "0を含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop0",
+			isErr:       false,
+		},
+		{
+			description: "9を含んでもエラーなし",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop9",
+			isErr:       false,
+		},
+		{
+			description: "/を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop/",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: ":を含むのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop:",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidRune,
+		},
+		{
+			description: "数字のみでもエラーなし",
+			accessToken: "1234567891234567891234567891234567891234567891234567891234567891",
+			isErr:       false,
+		},
+		{
+			description: "文字数が65文字以上なのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnopqr",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidLength,
+		},
+		{
+			description: "文字数が63文字以下なのでエラー",
+			accessToken: "bcdefghijklmnopqrstuvwxybcdefghijklmnopqrstuvwxybcdefghijklmnop",
+			isErr:       true,
+			err:         ErrLauncherSessionAccessTokenInvalidLength,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := LauncherSessionAccessToken(testCase.accessToken).Validate()
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
