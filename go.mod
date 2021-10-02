@@ -5,11 +5,10 @@ go 1.14
 require (
 	github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c
 	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.12.0
-	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/sessions v1.2.0
 	github.com/h2non/filetype v1.1.0
 	github.com/jinzhu/gorm v1.9.15
@@ -23,4 +22,6 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666 // indirect
+	gorm.io/driver/mysql v1.1.2
+	gorm.io/gorm v1.21.15
 )
