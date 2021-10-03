@@ -279,3 +279,70 @@ func TestGetLauncherUsers(t *testing.T) {
 		})
 	}
 }
+
+func TestRevokeProductKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockLauncherUserRepository := mock.NewMockLauncherUser(ctrl)
+	mockLauncherSessionRepository := mock.NewMockLauncherSession(ctrl)
+
+	launcherAuthService := NewLauncherAuth(
+		mockDB,
+		mockLauncherVersionRepository,
+		mockLauncherUserRepository,
+		mockLauncherSessionRepository,
+	)
+
+	type test struct {
+		description        string
+		DeleteLauncherUser error
+		isErr              bool
+		err                error
+	}
+
+	testCases := []test{
+		{
+			description: "削除に成功するのでエラーなし",
+		},
+		{
+			description:        "ユーザーが存在しないのでエラー",
+			DeleteLauncherUser: repository.ErrNoRecordDeleted,
+			isErr:              true,
+			err:                service.ErrInvalidLauncherUser,
+		},
+		{
+			description:        "削除に失敗するのでエラー",
+			DeleteLauncherUser: errors.New("failed to delete launcher user"),
+			isErr:              true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			launcherUserID := values.NewLauncherUserID()
+
+			mockLauncherUserRepository.
+				EXPECT().
+				DeleteLauncherUser(ctx, launcherUserID).
+				Return(testCase.DeleteLauncherUser)
+
+			err := launcherAuthService.RevokeProductKey(ctx, launcherUserID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
