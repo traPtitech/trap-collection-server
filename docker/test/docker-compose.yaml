@@ -7,9 +7,8 @@ services:
       dockerfile: ./docker/test/Dockerfile
     environment:
       COLLECTION_ENV: development
-      CGO_ENABLED: 0
       DB_USERNAME: root
-      DB_PASSWORD: pass
+      DB_PASSWORD: password
       DB_HOSTNAME: mariadb
       DB_PORT: 3306
       DB_DATABASE: trap_collection
