@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -442,5 +443,15 @@ func TestLoginLauncher(t *testing.T) {
 
 			assert.Equal(t, testCase.launcherSession, session)
 		})
+	}
+}
+
+func TestGetExpiresAt(t *testing.T) {
+	t.Parallel()
+
+	loopNum := 100
+	for i := 0; i < loopNum; i++ {
+		expiresAt := getExpiresAt()
+		assert.InDelta(t, expiresIn*time.Second, time.Until(expiresAt), float64(time.Second))
 	}
 }
