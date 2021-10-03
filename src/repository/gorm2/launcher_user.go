@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"gorm.io/gorm"
 )
 
 type LauncherUser struct {
@@ -66,4 +68,27 @@ func (lu *LauncherUser) DeleteLauncherUser(ctx context.Context, launcherUserID v
 	}
 
 	return nil
+}
+
+func (lu *LauncherUser) GetLauncherUserByProductKey(ctx context.Context, productKey values.LauncherUserProductKey) (*domain.LauncherUser, error) {
+	db, err := lu.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var dbLauncherUser LauncherUserTable
+	err = db.
+		Where("product_key = ?", string(productKey)).
+		Take(&dbLauncherUser).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher user: %w", err)
+	}
+
+	return domain.NewLauncherUser(
+		values.NewLauncherUserIDFromUUID(dbLauncherUser.ID),
+		values.NewLauncherUserProductKeyFromString(dbLauncherUser.ProductKey),
+	), nil
 }
