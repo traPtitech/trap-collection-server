@@ -1,6 +1,7 @@
 package gorm2
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,10 +10,24 @@ import (
 
 var (
 	tables = []interface{}{
+		&LauncherVersionTable{},
 		&LauncherUserTable{},
 		&LauncherSessionTable{},
 	}
 )
+
+type LauncherVersionTable struct {
+	ID               uuid.UUID           `gorm:"type:varchar(36);not null;primaryKey"`
+	Name             string              `gorm:"type:varchar(32);not null;unique"`
+	QuestionnaireURL sql.NullString      `gorm:"type:text;default:NULL"`
+	CreatedAt        time.Time           `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt        gorm.DeletedAt      `gorm:"type:DATETIME NULL;default:NULL"`
+	LauncherUsers    []LauncherUserTable `gorm:"foreignKey:LauncherVersionID"`
+}
+
+func (lvt *LauncherVersionTable) TableName() string {
+	return "launcher_versions"
+}
 
 type LauncherUserTable struct {
 	ID                uuid.UUID              `gorm:"type:varchar(36);not null;primaryKey"`
