@@ -228,3 +228,93 @@ func TestDeleteLauncherUser(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLauncherUserByProductKey(t *testing.T) {
+	t.Parallel()
+
+	launcherUserRepository := NewLauncherUser(testDB)
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	productKey1, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	productKey2, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+	launcherUserID := values.NewLauncherUserID()
+	launcherUser := domain.NewLauncherUser(
+		launcherUserID,
+		productKey1,
+	)
+	dbLauncherVersion := LauncherVersionTable{
+		ID:        uuid.UUID(launcherVersionID),
+		Name:      "TestGetLauncherUserByProductKey",
+		CreatedAt: time.Now(),
+		LauncherUsers: []LauncherUserTable{
+			{
+				ID:         uuid.UUID(launcherUserID),
+				ProductKey: string(productKey1),
+				CreatedAt:  time.Now(),
+			},
+		},
+	}
+
+	err = db.Create(&dbLauncherVersion).Error
+	if err != nil {
+		t.Errorf("failed to create launcher version: %v", err)
+	}
+
+	type test struct {
+		description  string
+		productKey   values.LauncherUserProductKey
+		launcherUser *domain.LauncherUser
+		isErr        bool
+		err          error
+	}
+
+	testCases := []test{
+		{
+			description:  "ユーザーが存在するのでエラーなし",
+			productKey:   productKey1,
+			launcherUser: launcherUser,
+		},
+		{
+			description: "ユーザーが存在しないのでエラー",
+			productKey:  productKey2,
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			launcherUser, err := launcherUserRepository.GetLauncherUserByProductKey(ctx, testCase.productKey)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, *testCase.launcherUser, *launcherUser)
+		})
+	}
+}
