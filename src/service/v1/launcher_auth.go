@@ -98,7 +98,7 @@ func (la *LauncherAuth) RevokeProductKey(ctx context.Context, user values.Launch
 }
 
 func (la *LauncherAuth) LoginLauncher(ctx context.Context, productKey values.LauncherUserProductKey) (*domain.LauncherSession, error) {
-	_, err := la.launcherUserRepository.GetLauncherUserByProductKey(ctx, productKey)
+	launcherUser, err := la.launcherUserRepository.GetLauncherUserByProductKey(ctx, productKey)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidLauncherUserProductKey
 	}
@@ -117,7 +117,7 @@ func (la *LauncherAuth) LoginLauncher(ctx context.Context, productKey values.Lau
 		getExpiresAt(),
 	)
 
-	launcherSession, err = la.launcherSessionRepository.CreateLauncherSession(ctx, launcherSession)
+	launcherSession, err = la.launcherSessionRepository.CreateLauncherSession(ctx, launcherUser.GetID(), launcherSession)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create launcher session: %w", err)
 	}

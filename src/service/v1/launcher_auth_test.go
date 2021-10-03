@@ -369,6 +369,7 @@ func TestLoginLauncher(t *testing.T) {
 
 	type test struct {
 		description                    string
+		launcherUser                   *domain.LauncherUser
 		GetLauncherUserByProductKeyErr error
 		launcherSession                *domain.LauncherSession
 		CreateLauncherSessionErr       error
@@ -376,13 +377,23 @@ func TestLoginLauncher(t *testing.T) {
 		err                            error
 	}
 
+	productKey, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
 	accessToken, err := values.NewLauncherSessionAccessToken()
 	if err != nil {
 		t.Errorf("failed to create access token: %v", err)
 	}
+
 	testCases := []test{
 		{
 			description: "ログインに成功するのでエラーなし",
+			launcherUser: domain.NewLauncherUser(
+				values.NewLauncherUserID(),
+				productKey,
+			),
 			launcherSession: domain.NewLauncherSession(
 				values.NewLauncherSessionID(),
 				accessToken,
@@ -391,17 +402,23 @@ func TestLoginLauncher(t *testing.T) {
 		},
 		{
 			description:                    "ユーザーが存在しないのでエラー",
+			launcherUser:                   nil,
 			GetLauncherUserByProductKeyErr: repository.ErrRecordNotFound,
 			isErr:                          true,
 			err:                            service.ErrInvalidLauncherUserProductKey,
 		},
 		{
 			description:                    "ユーザー確認に失敗するのでエラー",
+			launcherUser:                   nil,
 			GetLauncherUserByProductKeyErr: errors.New("failed to get launcher user by product key"),
 			isErr:                          true,
 		},
 		{
-			description:              "セッション作成に失敗するのでエラー",
+			description: "セッション作成に失敗するのでエラー",
+			launcherUser: domain.NewLauncherUser(
+				values.NewLauncherUserID(),
+				productKey,
+			),
 			CreateLauncherSessionErr: errors.New("failed to create launcher session"),
 			isErr:                    true,
 		},
@@ -417,12 +434,12 @@ func TestLoginLauncher(t *testing.T) {
 			mockLauncherUserRepository.
 				EXPECT().
 				GetLauncherUserByProductKey(ctx, productKey).
-				Return(&domain.LauncherUser{}, testCase.GetLauncherUserByProductKeyErr)
+				Return(testCase.launcherUser, testCase.GetLauncherUserByProductKeyErr)
 
 			if testCase.GetLauncherUserByProductKeyErr == nil {
 				mockLauncherSessionRepository.
 					EXPECT().
-					CreateLauncherSession(ctx, gomock.Any()).
+					CreateLauncherSession(ctx, testCase.launcherUser.GetID(), gomock.Any()).
 					Return(testCase.launcherSession, testCase.CreateLauncherSessionErr)
 			}
 
