@@ -81,3 +81,15 @@ func (la *LauncherAuth) GetLauncherUsers(ctx context.Context, launcherVersionID 
 
 	return launcherUsers, nil
 }
+
+func (la *LauncherAuth) RevokeProductKey(ctx context.Context, user values.LauncherUserID) error {
+	err := la.launcherUserRepository.DeleteLauncherUser(ctx, user)
+	if errors.Is(err, repository.ErrNoRecordDeleted) {
+		return service.ErrInvalidLauncherUser
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete launcher user: %w", err)
+	}
+
+	return nil
+}
