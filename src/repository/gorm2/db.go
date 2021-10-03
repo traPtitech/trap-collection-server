@@ -65,6 +65,11 @@ func NewDB(isProduction bool) (*DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
+	err = db.AutoMigrate(tables...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to auto migrate: %w", err)
+	}
+
 	return &DB{
 		db: db,
 	}, nil
