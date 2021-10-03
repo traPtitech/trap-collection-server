@@ -157,3 +157,125 @@ func TestCreateLauncherUser(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLauncherUsers(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockLauncherUserRepository := mock.NewMockLauncherUser(ctrl)
+	mockLauncherSessionRepository := mock.NewMockLauncherSession(ctrl)
+
+	launcherAuthService := NewLauncherAuth(
+		mockDB,
+		mockLauncherVersionRepository,
+		mockLauncherUserRepository,
+		mockLauncherSessionRepository,
+	)
+
+	type test struct {
+		description                            string
+		GetLauncherVersionErr                  error
+		launcherUsers                          []*domain.LauncherUser
+		GetLauncherUsersByLauncherVersionIDErr error
+		isErr                                  bool
+		err                                    error
+	}
+
+	productKey, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description:           "ランチャーバージョンが存在し、ユーザー作成も成功するのでエラーなし",
+			GetLauncherVersionErr: nil,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey,
+				),
+			},
+			GetLauncherUsersByLauncherVersionIDErr: nil,
+		},
+		{
+			description:           "ランチャーバージョンが存在しないのでエラー",
+			GetLauncherVersionErr: repository.ErrRecordNotFound,
+			isErr:                 true,
+			err:                   service.ErrInvalidLauncherVersion,
+		},
+		{
+			description:           "ランチャーバージョンのチェックに失敗するのでエラー",
+			GetLauncherVersionErr: errors.New("failed to get launcher version"),
+			isErr:                 true,
+		},
+		{
+			description:                            "ユーザー取得に失敗するのでエラー",
+			GetLauncherVersionErr:                  nil,
+			launcherUsers:                          nil,
+			GetLauncherUsersByLauncherVersionIDErr: errors.New("failed to get launcher users"),
+			isErr:                                  true,
+		},
+		{
+			description:                            "取得したユーザー数が0でもエラーなし",
+			GetLauncherVersionErr:                  nil,
+			launcherUsers:                          []*domain.LauncherUser{},
+			GetLauncherUsersByLauncherVersionIDErr: nil,
+		},
+		{
+			description:           "取得したユーザー数が複数でもエラーなし",
+			GetLauncherVersionErr: nil,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey,
+				),
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey,
+				),
+			},
+			GetLauncherUsersByLauncherVersionIDErr: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			launcherVersionID := values.NewLauncherVersionID()
+
+			mockLauncherVersionRepository.
+				EXPECT().
+				GetLauncherVersion(ctx, launcherVersionID).
+				Return(&domain.LauncherVersion{}, testCase.GetLauncherVersionErr)
+			if testCase.GetLauncherVersionErr == nil {
+				mockLauncherVersionRepository.
+					EXPECT().
+					GetLauncherUsersByLauncherVersionID(ctx, launcherVersionID).
+					Return(testCase.launcherUsers, testCase.GetLauncherUsersByLauncherVersionIDErr)
+			}
+
+			launcherUsers, err := launcherAuthService.GetLauncherUsers(ctx, launcherVersionID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.ElementsMatch(t, testCase.launcherUsers, launcherUsers)
+		})
+	}
+}
