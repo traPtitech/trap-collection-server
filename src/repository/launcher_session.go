@@ -6,8 +6,9 @@ import (
 	"context"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 type LauncherSession interface {
-	CreateLauncherSession(ctx context.Context, launcherSession *domain.LauncherSession) (*domain.LauncherSession, error)
+	CreateLauncherSession(ctx context.Context, launcherUserID values.LauncherUserID, launcherSession *domain.LauncherSession) (*domain.LauncherSession, error)
 }
