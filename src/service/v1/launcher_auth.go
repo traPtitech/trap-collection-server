@@ -128,3 +128,19 @@ func (la *LauncherAuth) LoginLauncher(ctx context.Context, productKey values.Lau
 func getExpiresAt() time.Time {
 	return time.Now().Add(expiresIn * time.Second)
 }
+
+func (la *LauncherAuth) LauncherAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+	launcherVersion, launcherUser, launcherSession, err := la.launcherVersionRepository.GetLauncherVersionAndUserAndSessionByAccessToken(ctx, accessToken)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidLauncherSessionAccessToken
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if launcherSession.IsExpired() {
+		return nil, nil, service.ErrLauncherSessionAccessTokenExpired
+	}
+
+	return launcherUser, launcherVersion, nil
+}
