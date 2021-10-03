@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
+
+const expiresIn = 3600
 
 type LauncherAuth struct {
 	db                        repository.DB
@@ -92,4 +95,36 @@ func (la *LauncherAuth) RevokeProductKey(ctx context.Context, user values.Launch
 	}
 
 	return nil
+}
+
+func (la *LauncherAuth) LoginLauncher(ctx context.Context, productKey values.LauncherUserProductKey) (*domain.LauncherSession, error) {
+	_, err := la.launcherUserRepository.GetLauncherUserByProductKey(ctx, productKey)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidLauncherUserProductKey
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher user: %w", err)
+	}
+
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create access token: %w", err)
+	}
+
+	launcherSession := domain.NewLauncherSession(
+		values.NewLauncherSessionID(),
+		accessToken,
+		getExpiresAt(),
+	)
+
+	launcherSession, err = la.launcherSessionRepository.CreateLauncherSession(ctx, launcherSession)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create launcher session: %w", err)
+	}
+
+	return launcherSession, nil
+}
+
+func getExpiresAt() time.Time {
+	return time.Now().Add(expiresIn * time.Second)
 }
