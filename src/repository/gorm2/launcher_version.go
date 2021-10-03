@@ -63,3 +63,28 @@ func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersi
 
 	return launcherVersion, nil
 }
+
+func (lv *LauncherVersion) GetLauncherUsersByLauncherVersionID(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.LauncherUser, error) {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var dbLauncherUsers []*LauncherUserTable
+	err = db.
+		Where("launcher_version_id = ?", uuid.UUID(launcherVersionID)).
+		Find(&dbLauncherUsers).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher users: %w", err)
+	}
+
+	launcherUsers := make([]*domain.LauncherUser, 0, len(dbLauncherUsers))
+	for _, dbLauncherUser := range dbLauncherUsers {
+		launcherUsers = append(launcherUsers, domain.NewLauncherUser(
+			values.NewLauncherUserIDFromUUID(dbLauncherUser.ID),
+			values.NewLauncherUserProductKeyFromString(dbLauncherUser.ProductKey),
+		))
+	}
+
+	return launcherUsers, nil
+}
