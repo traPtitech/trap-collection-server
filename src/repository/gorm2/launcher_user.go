@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 )
 
 type LauncherUser struct {
@@ -46,4 +47,23 @@ func (lu *LauncherUser) CreateLauncherUsers(ctx context.Context, launcherVersion
 	}
 
 	return launcherUsers, nil
+}
+
+func (lu *LauncherUser) DeleteLauncherUser(ctx context.Context, launcherUserID values.LauncherUserID) error {
+	db, err := lu.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.Delete(&LauncherUserTable{ID: uuid.UUID(launcherUserID)})
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to delete launcher user: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+
+	return nil
 }
