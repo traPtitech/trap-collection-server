@@ -455,3 +455,115 @@ func TestGetExpiresAt(t *testing.T) {
 		assert.InDelta(t, expiresIn*time.Second, time.Until(expiresAt), float64(time.Second))
 	}
 }
+
+func TestLauncherAuth(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockLauncherUserRepository := mock.NewMockLauncherUser(ctrl)
+	mockLauncherSessionRepository := mock.NewMockLauncherSession(ctrl)
+
+	launcherAuthService := NewLauncherAuth(
+		mockDB,
+		mockLauncherVersionRepository,
+		mockLauncherUserRepository,
+		mockLauncherSessionRepository,
+	)
+
+	type test struct {
+		description                                         string
+		launcherVersion                                     *domain.LauncherVersion
+		launcherUser                                        *domain.LauncherUser
+		launcherSession                                     *domain.LauncherSession
+		GetLauncherVersionAndUserAndSessionByAccessTokenErr error
+		isErr                                               bool
+		err                                                 error
+	}
+
+	productKey, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		t.Errorf("failed to create access token: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "認証に成功するのでエラーなし",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionID(),
+				values.NewLauncherVersionName("2021.10.03"),
+				time.Now(),
+			),
+			launcherUser: domain.NewLauncherUser(
+				values.NewLauncherUserID(),
+				productKey,
+			),
+			launcherSession: domain.NewLauncherSession(
+				values.NewLauncherSessionID(),
+				accessToken,
+				getExpiresAt(),
+			),
+		},
+		{
+			description: "アクセストークンが存在しないのでエラー",
+			GetLauncherVersionAndUserAndSessionByAccessTokenErr: repository.ErrRecordNotFound,
+			isErr: true,
+			err:   service.ErrInvalidLauncherSessionAccessToken,
+		},
+		{
+			description: "アクセストークンが期限切れのためエラー",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionID(),
+				values.NewLauncherVersionName("1.0.0"),
+				time.Now(),
+			),
+			launcherUser: domain.NewLauncherUser(
+				values.NewLauncherUserID(),
+				productKey,
+			),
+			launcherSession: domain.NewLauncherSession(
+				values.NewLauncherSessionID(),
+				accessToken,
+				time.Now().Add(-1*time.Hour),
+			),
+			isErr: true,
+			err:   service.ErrLauncherSessionAccessTokenExpired,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockLauncherVersionRepository.
+				EXPECT().
+				GetLauncherVersionAndUserAndSessionByAccessToken(ctx, accessToken).
+				Return(testCase.launcherVersion, testCase.launcherUser, testCase.launcherSession, testCase.GetLauncherVersionAndUserAndSessionByAccessTokenErr)
+
+			launcherUser, launcherVersion, err := launcherAuthService.LauncherAuth(ctx, accessToken)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.launcherUser, launcherUser)
+			assert.Equal(t, testCase.launcherVersion, launcherVersion)
+		})
+	}
+}
