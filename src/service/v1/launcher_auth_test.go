@@ -346,3 +346,101 @@ func TestRevokeProductKey(t *testing.T) {
 		})
 	}
 }
+
+func TestLoginLauncher(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockLauncherUserRepository := mock.NewMockLauncherUser(ctrl)
+	mockLauncherSessionRepository := mock.NewMockLauncherSession(ctrl)
+
+	launcherAuthService := NewLauncherAuth(
+		mockDB,
+		mockLauncherVersionRepository,
+		mockLauncherUserRepository,
+		mockLauncherSessionRepository,
+	)
+
+	type test struct {
+		description                    string
+		GetLauncherUserByProductKeyErr error
+		launcherSession                *domain.LauncherSession
+		CreateLauncherSessionErr       error
+		isErr                          bool
+		err                            error
+	}
+
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		t.Errorf("failed to create access token: %v", err)
+	}
+	testCases := []test{
+		{
+			description: "ログインに成功するのでエラーなし",
+			launcherSession: domain.NewLauncherSession(
+				values.NewLauncherSessionID(),
+				accessToken,
+				getExpiresAt(),
+			),
+		},
+		{
+			description:                    "ユーザーが存在しないのでエラー",
+			GetLauncherUserByProductKeyErr: repository.ErrRecordNotFound,
+			isErr:                          true,
+			err:                            service.ErrInvalidLauncherUserProductKey,
+		},
+		{
+			description:                    "ユーザー確認に失敗するのでエラー",
+			GetLauncherUserByProductKeyErr: errors.New("failed to get launcher user by product key"),
+			isErr:                          true,
+		},
+		{
+			description:              "セッション作成に失敗するのでエラー",
+			CreateLauncherSessionErr: errors.New("failed to create launcher session"),
+			isErr:                    true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			productKey, err := values.NewLauncherUserProductKey()
+			if err != nil {
+				t.Errorf("failed to create product key: %v", err)
+			}
+
+			mockLauncherUserRepository.
+				EXPECT().
+				GetLauncherUserByProductKey(ctx, productKey).
+				Return(&domain.LauncherUser{}, testCase.GetLauncherUserByProductKeyErr)
+
+			if testCase.GetLauncherUserByProductKeyErr == nil {
+				mockLauncherSessionRepository.
+					EXPECT().
+					CreateLauncherSession(ctx, gomock.Any()).
+					Return(testCase.launcherSession, testCase.CreateLauncherSessionErr)
+			}
+
+			session, err := launcherAuthService.LoginLauncher(ctx, productKey)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.launcherSession, session)
+		})
+	}
+}
