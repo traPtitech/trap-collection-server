@@ -64,3 +64,20 @@ func (la *LauncherAuth) CreateLauncherUser(ctx context.Context, launcherVersionI
 
 	return launcherUsers, nil
 }
+
+func (la *LauncherAuth) GetLauncherUsers(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.LauncherUser, error) {
+	_, err := la.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidLauncherVersion
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher version: %w", err)
+	}
+
+	launcherUsers, err := la.launcherVersionRepository.GetLauncherUsersByLauncherVersionID(ctx, launcherVersionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher users: %w", err)
+	}
+
+	return launcherUsers, nil
+}
