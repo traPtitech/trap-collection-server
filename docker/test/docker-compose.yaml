@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: ../../
+      dockerfile: ./docker/test/Dockerfile
+    environment:
+      COLLECTION_ENV: development
+      CGO_ENABLED: 0
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_HOSTNAME: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: trap_collection
+    volumes:
+      - ../../:/go/src/github.com/traPtitech/trap-collection-server
+    working_dir: /go/src/github.com/traPtitech/trap-collection-server
+    command: go test ./src/repository/... -v -cover -race
+    restart: on-failure
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.6.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: trap_collection
+    expose:
+      - "3306"
