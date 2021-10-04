@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"gorm.io/gorm"
 )
 
 func TestGetLauncherVersion(t *testing.T) {
@@ -125,6 +127,168 @@ func TestGetLauncherVersion(t *testing.T) {
 			assert.Equal(t, expectQuestionnaireURL, actualQuestionnaireURL)
 
 			assert.WithinDuration(t, testCase.launcherVersion.GetCreatedAt(), launcherVersion.GetCreatedAt(), time.Second)
+		})
+	}
+}
+
+func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
+	t.Parallel()
+
+	launcherVersionRepository := NewLauncherVersion(testDB)
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type test struct {
+		description     string
+		dbLauncherUsers []LauncherUserTable
+		launcherUsers   []*domain.LauncherUser
+		isErr           bool
+		err             error
+	}
+
+	launcherUserID1 := values.NewLauncherUserID()
+	launcherUserID2 := values.NewLauncherUserID()
+	launcherUserID3 := values.NewLauncherUserID()
+
+	productKey1, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	productKey2, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	productKey3, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "ユーザーが存在するのでエラーなし",
+			dbLauncherUsers: []LauncherUserTable{
+				{
+					ID:         uuid.UUID(launcherUserID1),
+					ProductKey: string(productKey1),
+					CreatedAt:  time.Now(),
+				},
+			},
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					launcherUserID1,
+					productKey1,
+				),
+			},
+		},
+		{
+			description:     "ユーザーが存在しなくてもエラーなし",
+			dbLauncherUsers: []LauncherUserTable{},
+			launcherUsers:   []*domain.LauncherUser{},
+		},
+		{
+			description: "ユーザーが複数人でもエラーなし",
+			dbLauncherUsers: []LauncherUserTable{
+				{
+					ID:         uuid.UUID(launcherUserID2),
+					ProductKey: string(productKey2),
+					CreatedAt:  time.Now(),
+				},
+				{
+					ID:         uuid.UUID(launcherUserID3),
+					ProductKey: string(productKey3),
+					CreatedAt:  time.Now(),
+				},
+			},
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					launcherUserID2,
+					productKey2,
+				),
+				domain.NewLauncherUser(
+					launcherUserID3,
+					productKey3,
+				),
+			},
+		},
+		{
+			description: "削除されたユーザーは含まれない",
+			dbLauncherUsers: []LauncherUserTable{
+				{
+					ID:         uuid.UUID(launcherUserID1),
+					ProductKey: string(productKey1),
+					CreatedAt:  time.Now(),
+					DeletedAt: gorm.DeletedAt{
+						Time:  time.Now(),
+						Valid: true,
+					},
+				},
+			},
+			launcherUsers: []*domain.LauncherUser{},
+		},
+	}
+
+	for i, testCase := range testCases {
+		testCase := testCase
+		t.Run(testCase.description, func(t *testing.T) {
+			launcherVersionID := values.NewLauncherVersionID()
+			dbLauncherVersion := LauncherVersionTable{
+				ID:            uuid.UUID(launcherVersionID),
+				Name:          fmt.Sprintf("TestCreateLauncherUsers%d", i),
+				CreatedAt:     time.Now(),
+				LauncherUsers: testCase.dbLauncherUsers,
+			}
+			err := db.Create(&dbLauncherVersion).Error
+			if err != nil {
+				t.Errorf("failed to create launcher version: %v", err)
+			}
+
+			deletedLauncherUserIDs := []uuid.UUID{}
+			for _, dbLauncherUser := range testCase.dbLauncherUsers {
+				if dbLauncherUser.DeletedAt.Valid {
+					deletedLauncherUserIDs = append(deletedLauncherUserIDs, dbLauncherUser.ID)
+				}
+			}
+			if len(deletedLauncherUserIDs) > 0 {
+				err = db.
+					Where("id IN ?", deletedLauncherUserIDs).
+					Delete(&LauncherUserTable{}).Error
+				if err != nil {
+					t.Errorf("failed to delete launcher user: %v", err)
+				}
+			}
+
+			launcherUsers, err := launcherVersionRepository.GetLauncherUsersByLauncherVersionID(ctx, values.NewLauncherVersionIDFromUUID(dbLauncherVersion.ID))
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, len(testCase.launcherUsers), len(launcherUsers))
+			launcherUserMap := make(map[values.LauncherUserID]*domain.LauncherUser, len(launcherUsers))
+			for _, launcherUser := range launcherUsers {
+				launcherUserMap[launcherUser.GetID()] = launcherUser
+			}
+			for _, launcherUser := range testCase.launcherUsers {
+				actualLauncherUser := launcherUserMap[launcherUser.GetID()]
+				assert.Equal(t, launcherUser.GetID(), actualLauncherUser.GetID())
+				assert.Equal(t, launcherUser.GetProductKey(), actualLauncherUser.GetProductKey())
+			}
 		})
 	}
 }
