@@ -12,7 +12,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
   tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
   rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-RUN apk add --update --no-cache git
+RUN apk add --update --no-cache git build-base
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
@@ -20,4 +20,5 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
 
-ENTRYPOINT dockerize -wait tcp://mariadb:3306
+ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306"]
+CMD []
