@@ -81,3 +81,24 @@ func (la *LauncherAuth) PostLauncherLogin(productKey *openapi.ProductKey) (*open
 		ExpiresIn:   int32(time.Until(launcherSession.GetExpiresAt()).Seconds()),
 	}, nil
 }
+
+func (la *LauncherAuth) DeleteProductKey(productKeyID string) error {
+	ctx := context.Background()
+
+	uuidLauncherUserID, err := uuid.Parse(productKeyID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid product key id")
+	}
+	launcherUserID := values.NewLauncherUserIDFromUUID(uuidLauncherUserID)
+
+	err = la.launcherAuthService.RevokeProductKey(ctx, launcherUserID)
+	if errors.Is(err, service.ErrInvalidLauncherUser) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid product key")
+	}
+	if err != nil {
+		log.Printf("error: failed to delete launcher user: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete launcher user")
+	}
+
+	return nil
+}
