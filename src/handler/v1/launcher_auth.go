@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -55,4 +56,28 @@ func (la *LauncherAuth) PostKeyGenerate(productKeyGen *openapi.ProductKeyGen) ([
 	}
 
 	return productKeys, nil
+}
+
+func (la *LauncherAuth) PostLauncherLogin(productKey *openapi.ProductKey) (*openapi.LauncherAuthToken, error) {
+	ctx := context.Background()
+
+	productKeyValue := values.NewLauncherUserProductKeyFromString(productKey.Key)
+	err := productKeyValue.Validate()
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	launcherSession, err := la.launcherAuthService.LoginLauncher(ctx, productKeyValue)
+	if errors.Is(err, service.ErrInvalidLauncherUserProductKey) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid product key")
+	}
+	if err != nil {
+		log.Printf("error: failed to login launcher: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to login launcher")
+	}
+
+	return &openapi.LauncherAuthToken{
+		AccessToken: string(launcherSession.GetAccessToken()),
+		ExpiresIn:   int32(time.Until(launcherSession.GetExpiresAt()).Seconds()),
+	}, nil
 }
