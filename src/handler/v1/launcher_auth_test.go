@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -199,6 +200,132 @@ func TestPostKeyGenerate(t *testing.T) {
 			for i, expect := range testCase.expect {
 				assert.Equal(t, *expect, *productKeys[i])
 			}
+		})
+	}
+}
+
+func TestPostLauncherLogin(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+
+	type test struct {
+		description          string
+		request              openapi.ProductKey
+		executeLoginLauncher bool
+		productKey           values.LauncherUserProductKey
+		launcherSession      *domain.LauncherSession
+		LoginLauncherErr     error
+		expect               openapi.LauncherAuthToken
+		isErr                bool
+		err                  error
+		statusCode           int
+	}
+
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		t.Errorf("failed to create access token: %v", err)
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "エラーなしなので問題なし",
+			request: openapi.ProductKey{
+				Key: "abcde-fghij-klmno-pqrst-uvwxy",
+			},
+			executeLoginLauncher: true,
+			productKey:           values.LauncherUserProductKey("abcde-fghij-klmno-pqrst-uvwxy"),
+			launcherSession: domain.NewLauncherSession(
+				values.NewLauncherSessionID(),
+				accessToken,
+				now.Add(time.Hour),
+			),
+			expect: openapi.LauncherAuthToken{
+				AccessToken: string(accessToken),
+				ExpiresIn:   int32(time.Until(now.Add(time.Hour)).Seconds()),
+			},
+		},
+		{
+			description: "productKeyが誤った形式なので400",
+			request: openapi.ProductKey{
+				Key: "abcde",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "productKeyが空文字なので400",
+			request: openapi.ProductKey{
+				Key: "",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "LoginLauncherがErrInvalidLauncherProductKeyなので400",
+			request: openapi.ProductKey{
+				Key: "abcde-fghij-klmno-pqrst-uvwxy",
+			},
+			executeLoginLauncher: true,
+			productKey:           values.LauncherUserProductKey("abcde-fghij-klmno-pqrst-uvwxy"),
+			LoginLauncherErr:     service.ErrInvalidLauncherUserProductKey,
+			isErr:                true,
+			statusCode:           http.StatusBadRequest,
+		},
+		{
+			description: "LoginLauncherがエラー(ErrInvalidLauncherProductKey以外)なので500",
+			request: openapi.ProductKey{
+				Key: "abcde-fghij-klmno-pqrst-uvwxy",
+			},
+			executeLoginLauncher: true,
+			productKey:           values.LauncherUserProductKey("abcde-fghij-klmno-pqrst-uvwxy"),
+			LoginLauncherErr:     errors.New("error"),
+			isErr:                true,
+			statusCode:           http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeLoginLauncher {
+				mockLauncherAuthService.
+					EXPECT().
+					LoginLauncher(ctx, testCase.productKey).
+					Return(testCase.launcherSession, testCase.LoginLauncherErr)
+			}
+
+			token, err := launcherAuthHandler.PostLauncherLogin(&testCase.request)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.expect, *token)
 		})
 	}
 }
