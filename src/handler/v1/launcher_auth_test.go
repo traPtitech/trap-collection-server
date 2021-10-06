@@ -1,0 +1,204 @@
+package v1
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/service"
+	"github.com/traPtitech/trap-collection-server/src/service/mock"
+)
+
+func TestPostKeyGenerate(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+
+	type test struct {
+		description               string
+		request                   openapi.ProductKeyGen
+		executeCreateLauncherUser bool
+		versionID                 values.LauncherVersionID
+		launcherUsers             []*domain.LauncherUser
+		CreateLauncherUserErr     error
+		expect                    []*openapi.ProductKey
+		isErr                     bool
+		err                       error
+		statusCode                int
+	}
+
+	versionID := values.NewLauncherVersionID()
+
+	productKey1, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	productKey2, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "エラーなしなので問題なし",
+			request: openapi.ProductKeyGen{
+				Num:     1,
+				Version: uuid.UUID(versionID).String(),
+			},
+			executeCreateLauncherUser: true,
+			versionID:                 versionID,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey1,
+				),
+			},
+			expect: []*openapi.ProductKey{
+				{
+					Key: string(productKey1),
+				},
+			},
+		},
+		{
+			description: "numが0なので400",
+			request: openapi.ProductKeyGen{
+				Num:     0,
+				Version: uuid.UUID(versionID).String(),
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "numが負なので400",
+			request: openapi.ProductKeyGen{
+				Num:     -1,
+				Version: uuid.UUID(versionID).String(),
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "versionIDがuuidでないので400",
+			request: openapi.ProductKeyGen{
+				Num:     1,
+				Version: "1.0.0",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "versionIDが空文字なので400",
+			request: openapi.ProductKeyGen{
+				Num:     1,
+				Version: "",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "CreateLauncherUserがErrInvalidLauncherVersionなので400",
+			request: openapi.ProductKeyGen{
+				Num:     1,
+				Version: uuid.UUID(versionID).String(),
+			},
+			executeCreateLauncherUser: true,
+			versionID:                 versionID,
+			CreateLauncherUserErr:     service.ErrInvalidLauncherVersion,
+			isErr:                     true,
+			statusCode:                http.StatusBadRequest,
+		},
+		{
+			description: "CreateLauncherUserがエラー(ErrInvalidLauncherVersion以外)なので500",
+			request: openapi.ProductKeyGen{
+				Num:     1,
+				Version: uuid.UUID(versionID).String(),
+			},
+			executeCreateLauncherUser: true,
+			versionID:                 versionID,
+			CreateLauncherUserErr:     errors.New("error"),
+			isErr:                     true,
+			statusCode:                http.StatusInternalServerError,
+		},
+		{
+			description: "launcherUserが複数でも問題なし",
+			request: openapi.ProductKeyGen{
+				Num:     2,
+				Version: uuid.UUID(versionID).String(),
+			},
+			executeCreateLauncherUser: true,
+			versionID:                 versionID,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey1,
+				),
+				domain.NewLauncherUser(
+					values.NewLauncherUserID(),
+					productKey2,
+				),
+			},
+			expect: []*openapi.ProductKey{
+				{
+					Key: string(productKey1),
+				},
+				{
+					Key: string(productKey2),
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeCreateLauncherUser {
+				mockLauncherAuthService.
+					EXPECT().
+					CreateLauncherUser(ctx, testCase.versionID, int(testCase.request.Num)).
+					Return(testCase.launcherUsers, testCase.CreateLauncherUserErr)
+			}
+
+			productKeys, err := launcherAuthHandler.PostKeyGenerate(&testCase.request)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, len(testCase.expect), len(productKeys))
+			for i, expect := range testCase.expect {
+				assert.Equal(t, *expect, *productKeys[i])
+			}
+		})
+	}
+}
