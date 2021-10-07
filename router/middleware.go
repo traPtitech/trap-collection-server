@@ -11,13 +11,14 @@ import (
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
+	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 )
 
 // Middleware middlewareの構造体
 type Middleware struct {
 	db    model.DBMeta
 	oauth base.OAuth
-	openapi.Middleware
+	*v1.Middleware
 }
 
 func newMiddleware(db model.DBMeta, oauth base.OAuth) openapi.Middleware {
@@ -162,53 +163,31 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 	}
 }
 
-// LauncherAuthMiddleware ランチャーの認証用のミドルウェア
-func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
+func (m *Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		ok, err := m.CheckLauncherAuth(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+		}
+
+		if ok {
+			return next(c)
+		}
+
 		sess, err := session.Get("sessions", c)
 		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
+			log.Printf("error: unexcepted no session: %v", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("failed to get session: %v", err))
 		}
 
-		interfaceProductKey := sess.Values["productKey"]
-		if interfaceProductKey != nil {
-			productKey, ok := interfaceProductKey.(string)
-			if ok {
-				isThere, versionID := m.db.CheckProductKey(productKey)
-				if isThere {
-					log.Printf("debug: %d", versionID)
-					sess.Values["versionID"] = versionID
-					err = sess.Save(c.Request(), c.Response())
-					if err != nil {
-						return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
-					}
-
-					return next(c)
-				}
-			}
+		accessToken, ok := sess.Values["accessToken"]
+		if !ok || accessToken == nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "No Access Token")
 		}
 
-		key := c.Request().Header.Get("X-Key")
-		isThere, versionID := m.db.CheckProductKey(key)
-		if !isThere {
-			return c.NoContent(http.StatusUnauthorized)
-		}
-		log.Printf("debug: %d", versionID)
+		c.Set("accessToken", accessToken)
 
-		sess.Values["productKey"] = key
-		sess.Values["version_id"] = versionID
-		err = sess.Save(c.Request(), c.Response())
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to save session: %w", err))
-		}
-
-		return next(c)
-	}
-}
-
-// BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
-func (*Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
 		return next(c)
 	}
 }
