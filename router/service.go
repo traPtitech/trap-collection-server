@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
 	"github.com/traPtitech/trap-collection-server/session"
+	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
 
@@ -25,7 +26,7 @@ type Service struct {
 }
 
 // NewAPI Apiのコンストラクタ
-func NewAPI(sess session.Session, env string, clientID string, clientSecret string) (*openapi.Api, error) {
+func NewAPI(newAPI *v1.API, sess session.Session, env string, clientID string, clientSecret string) (*openapi.Api, error) {
 	db := new(model.DB)
 
 	var str storage.Storage
@@ -51,7 +52,7 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 
 	launcherAuth := base.NewLauncherAuth()
 
-	middleware := newMiddleware(db, oauth)
+	middleware := newMiddleware(db, oauth, newAPI.Middleware)
 	game := newGame(db, oauth, str)
 	oAuth2 := newOAuth2(sess, oauth, clientID, clientSecret)
 	seat := newSeat(db, launcherAuth)
@@ -59,12 +60,13 @@ func NewAPI(sess session.Session, env string, clientID string, clientSecret stri
 	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
-		Middleware: middleware,
-		GameApi:    game,
-		Oauth2Api:  oAuth2,
-		SeatApi:    seat,
-		UserApi:    user,
-		VersionApi: version,
+		Middleware:      middleware,
+		GameApi:         game,
+		LauncherAuthApi: newAPI.LauncherAuth,
+		Oauth2Api:       oAuth2,
+		SeatApi:         seat,
+		UserApi:         user,
+		VersionApi:      version,
 	}
 
 	return api, nil

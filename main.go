@@ -22,13 +22,17 @@ import (
 
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/router"
 	sess "github.com/traPtitech/trap-collection-server/session"
+	"github.com/traPtitech/trap-collection-server/src"
 )
 
 func main() {
 	log.Printf("Server started")
 	env := os.Getenv("COLLECTION_ENV")
+
+	isProduction := env != "development" && env != "mock"
 
 	db, err := model.EstablishDB()
 	if err != nil {
@@ -50,7 +54,7 @@ func main() {
 	e.Use(session.Middleware(sess.Store()))
 	e.Use(middleware.Recover())
 
-	if env == "development" || env == "mock" {
+	if !isProduction {
 		colog.SetMinLevel(colog.LDebug)
 		colog.SetFormatter(&colog.StdFormatter{
 			Colors: true,
@@ -82,7 +86,12 @@ func main() {
 		panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	api, err := router.NewAPI(sess, env, clientID, clientSecret)
+	newAPI, err := src.InjectAPI(common.IsProduction(isProduction))
+	if err != nil {
+		panic(err)
+	}
+
+	api, err := router.NewAPI(newAPI, sess, env, clientID, clientSecret)
 	if err != nil {
 		panic(err)
 	}
