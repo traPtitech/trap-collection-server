@@ -102,3 +102,32 @@ func (la *LauncherAuth) DeleteProductKey(productKeyID string) error {
 
 	return nil
 }
+
+func (la *LauncherAuth) GetProductKeys(launcherVersionID string) ([]*openapi.ProductKeyDetail, error) {
+	ctx := context.Background()
+
+	uuidLauncherVersionID, err := uuid.Parse(launcherVersionID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid launcher version id")
+	}
+	launcherVersionIDValue := values.NewLauncherVersionIDFromUUID(uuidLauncherVersionID)
+
+	launcherUsers, err := la.launcherAuthService.GetLauncherUsers(ctx, launcherVersionIDValue)
+	if errors.Is(err, service.ErrInvalidLauncherVersion) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid launcher version")
+	}
+	if err != nil {
+		log.Printf("error: failed to get launcher users: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get launcher users")
+	}
+
+	productKeys := make([]*openapi.ProductKeyDetail, 0, len(launcherUsers))
+	for _, launcherUser := range launcherUsers {
+		productKeys = append(productKeys, &openapi.ProductKeyDetail{
+			Id:  uuid.UUID(launcherUser.GetID()).String(),
+			Key: string(launcherUser.GetProductKey()),
+		})
+	}
+
+	return productKeys, nil
+}
