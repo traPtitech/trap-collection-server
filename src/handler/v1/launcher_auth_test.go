@@ -424,3 +424,164 @@ func TestDeleteProductKey(t *testing.T) {
 		})
 	}
 }
+
+func TestGetProductKeys(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+
+	type test struct {
+		description              string
+		requestLauncherVersionID string
+		executeGetLauncherUsers  bool
+		launcherVersionID        values.LauncherVersionID
+		launcherUsers            []*domain.LauncherUser
+		GetLauncherUsersErr      error
+		expect                   []*openapi.ProductKeyDetail
+		isErr                    bool
+		err                      error
+		statusCode               int
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+	launcherUserID1 := values.NewLauncherUserID()
+	launcherUserID2 := values.NewLauncherUserID()
+
+	productKey1, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	productKey2, err := values.NewLauncherUserProductKey()
+	if err != nil {
+		t.Errorf("failed to create product key: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description:              "エラーなしなので問題なし",
+			requestLauncherVersionID: uuid.UUID(launcherVersionID).String(),
+			executeGetLauncherUsers:  true,
+			launcherVersionID:        launcherVersionID,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					launcherUserID1,
+					productKey1,
+				),
+			},
+			expect: []*openapi.ProductKeyDetail{
+				{
+					Id:  uuid.UUID(launcherUserID1).String(),
+					Key: string(productKey1),
+				},
+			},
+		},
+		{
+			description:              "ユーザーが複数でも問題なし",
+			requestLauncherVersionID: uuid.UUID(launcherVersionID).String(),
+			executeGetLauncherUsers:  true,
+			launcherVersionID:        launcherVersionID,
+			launcherUsers: []*domain.LauncherUser{
+				domain.NewLauncherUser(
+					launcherUserID1,
+					productKey1,
+				),
+				domain.NewLauncherUser(
+					launcherUserID2,
+					productKey2,
+				),
+			},
+			expect: []*openapi.ProductKeyDetail{
+				{
+					Id:  uuid.UUID(launcherUserID1).String(),
+					Key: string(productKey1),
+				},
+				{
+					Id:  uuid.UUID(launcherUserID2).String(),
+					Key: string(productKey2),
+				},
+			},
+		},
+		{
+			description:              "ユーザーがいなくても問題なし",
+			requestLauncherVersionID: uuid.UUID(launcherVersionID).String(),
+			executeGetLauncherUsers:  true,
+			launcherVersionID:        launcherVersionID,
+			launcherUsers:            []*domain.LauncherUser{},
+			expect:                   []*openapi.ProductKeyDetail{},
+		},
+		{
+			description:              "launcherVersionIDがuuidでないので400",
+			requestLauncherVersionID: "abcde",
+			isErr:                    true,
+			statusCode:               http.StatusBadRequest,
+		},
+		{
+			description:              "launcherVersionIDが空文字なので400",
+			requestLauncherVersionID: "",
+			isErr:                    true,
+			statusCode:               http.StatusBadRequest,
+		},
+		{
+			description:              "GetLauncherUsersがエラー(ErrInvalidLauncherVersion以外)なので500",
+			requestLauncherVersionID: uuid.UUID(launcherVersionID).String(),
+			executeGetLauncherUsers:  true,
+			launcherVersionID:        launcherVersionID,
+			GetLauncherUsersErr:      errors.New("error"),
+			isErr:                    true,
+			statusCode:               http.StatusInternalServerError,
+		},
+		{
+			description:              "GetLauncherUsersがErrInvalidLauncherVersionなので400",
+			requestLauncherVersionID: uuid.UUID(launcherVersionID).String(),
+			executeGetLauncherUsers:  true,
+			launcherVersionID:        launcherVersionID,
+			GetLauncherUsersErr:      service.ErrInvalidLauncherVersion,
+			isErr:                    true,
+			statusCode:               http.StatusBadRequest,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeGetLauncherUsers {
+				mockLauncherAuthService.
+					EXPECT().
+					GetLauncherUsers(ctx, testCase.launcherVersionID).
+					Return(testCase.launcherUsers, testCase.GetLauncherUsersErr)
+			}
+
+			actualProductKeys, err := launcherAuthHandler.GetProductKeys(testCase.requestLauncherVersionID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, len(testCase.expect), len(actualProductKeys))
+			for i, expect := range testCase.expect {
+				assert.Equal(t, expect.Id, actualProductKeys[i].Id)
+				assert.Equal(t, expect.Key, actualProductKeys[i].Key)
+			}
+		})
+	}
+}
