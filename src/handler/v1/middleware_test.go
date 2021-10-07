@@ -16,6 +16,85 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
 )
 
+type CallChecker struct {
+	IsCalled bool
+}
+
+func (cc *CallChecker) Handler(c echo.Context) error {
+	cc.IsCalled = true
+
+	return c.NoContent(http.StatusOK)
+}
+
+func TestLauncherAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	middleware := NewMiddleware(mockLauncherAuthService)
+
+	type test struct {
+		description            string
+		isOk                   bool
+		isCheckLauncherAuthErr bool
+		isCalled               bool
+		statusCode             int
+	}
+
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		t.Errorf("failed to create access token: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "okかつエラーなしなので通す",
+			isOk:        true,
+			isCalled:    true,
+			statusCode:  http.StatusOK,
+		},
+		{
+			description: "okでないなので401",
+			isOk:        false,
+			statusCode:  http.StatusUnauthorized,
+		},
+		{
+			description:            "CheckLauncherAuthがエラーなので401",
+			isCheckLauncherAuthErr: true,
+			statusCode:             http.StatusUnauthorized,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			if testCase.isOk {
+				req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
+				mockLauncherAuthService.
+					EXPECT().
+					LauncherAuth(c.Request().Context(), accessToken).
+					Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, nil)
+			} else if testCase.isCheckLauncherAuthErr {
+				req.Header.Set(echo.HeaderAuthorization, "Basic")
+			}
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.LauncherAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled, testCase.description)
+		})
+	}
+}
+
 func TestCheckLauncherAuth(t *testing.T) {
 	t.Parallel()
 
