@@ -6,6 +6,9 @@ services:
       dockerfile: ./docker/dev/Dockerfile
     restart: always
     volumes:
+      - ./.air.toml:/go/src/github.com/traPtitech/trap-collection-server/.air.toml
+      - ../../src/:/go/src/github.com/traPtitech/trap-collection-server/src
+      - ../../pkg/:/go/src/github.com/traPtitech/trap-collection-server/pkg
       - ../../model/:/go/src/github.com/traPtitech/trap-collection-server/model
       - ../../router/:/go/src/github.com/traPtitech/trap-collection-server/router
       - ../../storage/:/go/src/github.com/traPtitech/trap-collection-server/storage
