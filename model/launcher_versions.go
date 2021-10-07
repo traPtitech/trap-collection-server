@@ -16,7 +16,7 @@ import (
 type LauncherVersion struct {
 	ID                   string                `json:"id" gorm:"type:varchar(36);PRIMARY_KEY;"`
 	Name                 string                `json:"name,omitempty" gorm:"type:varchar(32);NOT NULL;"`
-	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:anke_to_url;type:text;default:NULL;"`
+	AnkeToURL            string                `json:"anke_to,omitempty" gorm:"column:questionnaire_url;type:text;default:NULL;"`
 	GameVersionRelations []GameVersionRelation `json:"games" gorm:"foreignkey:LauncherVersionID;"`
 	CreatedAt            time.Time             `json:"created_at,omitempty" gorm:"type:datetime;NOT NULL;default:CURRENT_TIMESTAMP;"`
 	DeletedAt            time.Time             `json:"deleted_at,omitempty" gorm:"type:datetime;default:NULL;"`
@@ -61,7 +61,7 @@ func (*DB) GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.Ver
 		Joins("LEFT OUTER JOIN game_version_relations ON launcher_versions.id = game_version_relations.launcher_version_id").
 		Joins("LEFT OUTER JOIN games ON game_version_relations.game_id <=> games.id").
 		Where("launcher_versions.id = ?", id).
-		Select("launcher_versions.id,launcher_versions.name,launcher_versions.anke_to,launcher_versions.created_at,games.id, games.name").
+		Select("launcher_versions.id,launcher_versions.name,launcher_versions.questionnaire_url,launcher_versions.created_at,games.id, games.name").
 		Rows()
 	if err != nil {
 		return &openapi.VersionDetails{}, fmt.Errorf("Failed In Getting Launcher Versions:%w", err)
@@ -69,7 +69,8 @@ func (*DB) GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.Ver
 	for rows.Next() {
 		var gameID sql.NullString
 		var gameName sql.NullString
-		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &versionDetails.AnkeTo, &versionDetails.CreatedAt, &gameID, &gameName)
+		var questionnaireURL sql.NullString
+		err = rows.Scan(&versionDetails.Id, &versionDetails.Name, &questionnaireURL, &versionDetails.CreatedAt, &gameID, &gameName)
 		if err != nil {
 			return &openapi.VersionDetails{}, fmt.Errorf("Failed In Scaning Launcher Version:%w", err)
 		}
@@ -78,6 +79,9 @@ func (*DB) GetLauncherVersionDetailsByID(id string) (versionDetails *openapi.Ver
 				Id:   gameID.String,
 				Name: gameName.String,
 			})
+		}
+		if questionnaireURL.Valid {
+			versionDetails.AnkeTo = questionnaireURL.String
 		}
 	}
 
