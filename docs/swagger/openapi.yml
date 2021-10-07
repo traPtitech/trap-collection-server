@@ -653,7 +653,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductKeyDetail'
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductKeyDetail'
         "500":
           description: 失敗
   /versions/check:
