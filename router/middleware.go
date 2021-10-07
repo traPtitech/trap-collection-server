@@ -21,11 +21,12 @@ type Middleware struct {
 	*v1.Middleware
 }
 
-func newMiddleware(db model.DBMeta, oauth base.OAuth) openapi.Middleware {
+func newMiddleware(db model.DBMeta, oauth base.OAuth, newMiddleware *v1.Middleware) openapi.Middleware {
 	middleware := new(Middleware)
 
 	middleware.db = db
 	middleware.oauth = oauth
+	middleware.Middleware = newMiddleware
 
 	return middleware
 }
