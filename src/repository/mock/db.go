@@ -33,11 +33,12 @@ func (m *MockDB) EXPECT() *MockDBMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockDB) Get() *sql.DB {
+func (m *MockDB) Get() (*sql.DB, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get")
 	ret0, _ := ret[0].(*sql.DB)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/traPtitech/trap-collection-server/pkg/common"
 	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -17,7 +18,7 @@ type DB struct {
 	db *gorm.DB
 }
 
-func NewDB(isProduction bool) (*DB, error) {
+func NewDB(isProduction common.IsProduction) (*DB, error) {
 	user, ok := os.LookupEnv("DB_USERNAME")
 	if !ok {
 		return nil, errors.New("DB_USERNAME is not set")
