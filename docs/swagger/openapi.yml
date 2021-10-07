@@ -16,10 +16,6 @@ tags:
   - name: launcherAuth
   - name: seatVersion
   - name: seat
-security:
-  - TrapMemberAuth:
-      - read
-  - LauncherAuth: []
 paths:
   /oauth2/callback:
     parameters:
