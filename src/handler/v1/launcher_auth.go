@@ -16,7 +16,6 @@ import (
 
 type LauncherAuth struct {
 	launcherAuthService service.LauncherAuth
-	openapi.LauncherAuthApi
 }
 
 func NewLauncherAuth(launcherAuthService service.LauncherAuth) *LauncherAuth {
