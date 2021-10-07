@@ -5,6 +5,7 @@ package {{packageName}}
 import (
 	"net/http"
   "fmt"
+  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
@@ -44,6 +45,11 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
     {{#isListContainer}}var res []*{{returnBaseType}}{{/isListContainer}}{{^isListContainer}}{{^returnTypeIsPrimitive}}{{#returnType}}var res {{^isResponseFile}}*{{/isResponseFile}}{{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{#returnTypeIsPrimitive}}{{#returnType}}var res {{returnType}}{{/returnType}}{{/returnTypeIsPrimitive}}{{/isListContainer}}
     {{#returnType}}res, {{/returnType}}err = {{classname}}.{{nickname}}({{^useSingleRequestParameter}}{{#allParams}}{{#isQueryParam}}{{paramName}}{{/isQueryParam}}{{^isQueryParam}}{{#isPathParam}}{{paramName}}{{/isPathParam}}{{^isPathParam}}{{#isFormParam}}{{paramName}}{{/isFormParam}}{{^isFormParam}}{{#isCookieParam}}{{paramName}}{{/isCookieParam}}{{^isCookieParam}}{{#isBodyParam}}{{#isPrimitiveType}}{{paramName}}{{/isPrimitiveType}}{{^isPrimitiveType}}&{{paramName}}{{/isPrimitiveType}}{{/isBodyParam}}{{^isBodyParam}}c{{/isBodyParam}}{{/isCookieParam}}{{/isFormParam}}{{/isPathParam}}{{/isQueryParam}}{{#hasMore}}, {{/hasMore}}{{/allParams}}{{/useSingleRequestParameter}})
     if err != nil {
+      var httpError *echo.HTTPError
+      if errors.As(err, &httpError) {
+        return httpError
+      }
+
       return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
