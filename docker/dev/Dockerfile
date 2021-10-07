@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.0-experimental
+# syntax = docker/dockerfile:1.3.0
 
 FROM groovy:4.0 AS generate
 WORKDIR /home/groovy/scripts
@@ -25,11 +25,8 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 RUN apk add --update --no-cache git
 
-ENV GO111MODULE=on
-
 RUN --mount=type=cache,target=/root/.cache/go-build \
-  GO111MODULE=off go get github.com/oxequa/realize && \
-  rm -rf /go/src/*
+  go install github.com/cosmtrek/air@v1.27.3
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
@@ -40,6 +37,6 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
 
 COPY --from=generate /local/openapi ./openapi
-COPY .realize.yaml ./
 
-ENTRYPOINT dockerize -wait tcp://mariadb:3306 realize start --name='server' --install --run
+ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306", "air"]
+CMD ["-c", ".air.toml"]
