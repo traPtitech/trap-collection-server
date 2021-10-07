@@ -329,3 +329,98 @@ func TestPostLauncherLogin(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProductKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+
+	type test struct {
+		description             string
+		requestProductKeyID     string
+		executeRevokeProductKey bool
+		launcherUserID          values.LauncherUserID
+		RevokeProductKeyErr     error
+		isErr                   bool
+		err                     error
+		statusCode              int
+	}
+
+	launcherUserID := values.NewLauncherUserID()
+
+	testCases := []test{
+		{
+			description:             "エラーなしなので問題なし",
+			requestProductKeyID:     uuid.UUID(launcherUserID).String(),
+			executeRevokeProductKey: true,
+			launcherUserID:          launcherUserID,
+		},
+		{
+			description:         "productKeyIDがuuidでないので400",
+			requestProductKeyID: "abcde",
+			isErr:               true,
+			statusCode:          http.StatusBadRequest,
+		},
+		{
+			description:         "productKeyIDが空文字なので400",
+			requestProductKeyID: "",
+			isErr:               true,
+			statusCode:          http.StatusBadRequest,
+		},
+		{
+			description:             "RevokeProductKeyがエラー(ErrInvalidLauncherProductKey以外)なので500",
+			requestProductKeyID:     uuid.UUID(launcherUserID).String(),
+			executeRevokeProductKey: true,
+			launcherUserID:          launcherUserID,
+			RevokeProductKeyErr:     errors.New("error"),
+			isErr:                   true,
+			statusCode:              http.StatusInternalServerError,
+		},
+		{
+			description:             "RevokeProductKeyがErrInvalidLauncherProductKeyなので400",
+			requestProductKeyID:     uuid.UUID(launcherUserID).String(),
+			executeRevokeProductKey: true,
+			launcherUserID:          launcherUserID,
+			RevokeProductKeyErr:     service.ErrInvalidLauncherUserProductKey,
+			isErr:                   true,
+			statusCode:              http.StatusBadRequest,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeRevokeProductKey {
+				mockLauncherAuthService.
+					EXPECT().
+					RevokeProductKey(ctx, testCase.launcherUserID).
+					Return(testCase.RevokeProductKeyErr)
+			}
+
+			err := launcherAuthHandler.DeleteProductKey(testCase.requestProductKeyID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
