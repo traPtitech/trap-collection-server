@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type OIDC struct {
@@ -51,6 +52,15 @@ func (o *OIDC) Logout(ctx context.Context, session *domain.OIDCSession) error {
 	err := o.oidcAuth.RevokeOIDCSession(ctx, o.client, session)
 	if err != nil {
 		return fmt.Errorf("failed to revoke OIDC session: %w", err)
+	}
+
+	return nil
+}
+
+// traQで凍結された場合の反映が遅れるのは許容しているので、sessionの有効期限確認のみ
+func (o *OIDC) TraPAuth(ctx context.Context, session *domain.OIDCSession) error {
+	if session.IsExpired() {
+		return service.ErrOIDCSessionExpired
 	}
 
 	return nil
