@@ -23,3 +23,31 @@ func TestNewOIDCCodeVerifier(t *testing.T) {
 		assert.Regexp(t, accessTokenRegexp, codeVerifier)
 	}
 }
+
+func TestGetCodeChallenge(t *testing.T) {
+	t.Parallel()
+
+	type test struct {
+		description           string
+		codeVerifier          string
+		hashMethod            OIDCCodeChallengeMethod
+		expectedCodeChallenge string
+	}
+
+	testCases := []test{
+		{
+			description:           "sha256",
+			codeVerifier:          "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+			hashMethod:            OIDCCodeChallengeMethodSha256,
+			expectedCodeChallenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			codeChallenge, err := OIDCCodeVerifier(testCase.codeVerifier).GetCodeChallenge(testCase.hashMethod)
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.expectedCodeChallenge, string(codeChallenge))
+		})
+	}
+}
