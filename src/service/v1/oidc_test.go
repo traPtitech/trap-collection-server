@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/auth/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -147,6 +148,66 @@ func TestLogout(t *testing.T) {
 				Return(testCase.RevokeOIDCSessionErr)
 
 			err := oidcService.Logout(ctx, session)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestTraPAuth(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+
+	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+
+	type test struct {
+		description string
+		isExpired   bool
+		isErr       bool
+		err         error
+	}
+
+	testCases := []test{
+		{
+			description: "期限前なので問題なし",
+		},
+		{
+			description: "期限切れなのでエラー",
+			isExpired:   true,
+			isErr:       true,
+			err:         service.ErrOIDCSessionExpired,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			var expiresAt time.Time
+			if testCase.isExpired {
+				expiresAt = time.Now().Add(-1 * time.Hour)
+			} else {
+				expiresAt = time.Now().Add(1 * time.Hour)
+			}
+
+			session := domain.NewOIDCSession(
+				values.NewAccessToken("access token"),
+				expiresAt,
+			)
+
+			err := oidcService.TraPAuth(ctx, session)
 
 			if testCase.isErr {
 				if testCase.err == nil {
