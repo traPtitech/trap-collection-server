@@ -8,4 +8,5 @@ var (
 	ErrInvalidLauncherUserProductKey     = errors.New("invalid launcher user product key")
 	ErrInvalidLauncherSessionAccessToken = errors.New("invalid launcher access token")
 	ErrLauncherSessionAccessTokenExpired = errors.New("launcher access token expired")
+	ErrOIDCSessionExpired                = errors.New("session access token expired")
 )

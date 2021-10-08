@@ -12,6 +12,7 @@ import (
 type (
 	OIDCClientID string
 
+	OIDCAuthorizationCode   string
 	OIDCCodeChallengeMethod int
 	OIDCCodeChallenge       string
 	OIDCCodeVerifier        string
@@ -25,6 +26,10 @@ const (
 
 func NewOIDCClientID(clientID string) OIDCClientID {
 	return OIDCClientID(clientID)
+}
+
+func NewOIDCAuthorizationCode(code string) OIDCAuthorizationCode {
+	return OIDCAuthorizationCode(code)
 }
 
 func NewOIDCCodeVerifier() (OIDCCodeVerifier, error) {
