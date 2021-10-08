@@ -55,6 +55,8 @@ func EstablishDB() (*gorm.DB, error) {
 
 // Migrate DBのマイグレーション
 func Migrate(env string) error {
+	db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
+
 	err := db.AutoMigrate(allTables...).Error
 	if err != nil {
 		return fmt.Errorf("Failed In Migration:%w", err)
