@@ -37,3 +37,12 @@ func (o *OIDC) Authorize(ctx context.Context) (*domain.OIDCClient, *domain.OIDCA
 
 	return o.client, state, nil
 }
+
+func (o *OIDC) Callback(ctx context.Context, authState *domain.OIDCAuthState, code values.OIDCAuthorizationCode) (*domain.OIDCSession, error) {
+	session, err := o.oidcAuth.GetOIDCSession(ctx, o.client, code, authState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OIDC session: %w", err)
+	}
+
+	return session, nil
+}
