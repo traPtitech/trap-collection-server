@@ -104,3 +104,59 @@ func TestCallback(t *testing.T) {
 		})
 	}
 }
+
+func TestLogout(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+
+	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+
+	type test struct {
+		description          string
+		RevokeOIDCSessionErr error
+		isErr                bool
+		err                  error
+	}
+
+	testCases := []test{
+		{
+			description: "エラーなしなので問題なし",
+		},
+		{
+			description:          "GetOIDCSessionでエラー",
+			RevokeOIDCSessionErr: errors.New("error"),
+			isErr:                true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			session := domain.NewOIDCSession(
+				values.NewAccessToken("access token"),
+				time.Now(),
+			)
+			mockOIDCAuth.
+				EXPECT().
+				RevokeOIDCSession(ctx, oidcService.client, session).
+				Return(testCase.RevokeOIDCSessionErr)
+
+			err := oidcService.Logout(ctx, session)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
