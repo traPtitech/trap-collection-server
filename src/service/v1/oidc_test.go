@@ -58,6 +58,12 @@ func TestCallback(t *testing.T) {
 			description: "エラーなしなので問題なし",
 		},
 		{
+			description:       "GetOIDCSessionでErrInvalidCredentials",
+			GetOIDCSessionErr: auth.ErrInvalidCredentials,
+			isErr:             true,
+			err:               service.ErrInvalidAuthStateOrCode,
+		},
+		{
 			description:       "GetOIDCSessionでエラー",
 			GetOIDCSessionErr: errors.New("error"),
 			isErr:             true,

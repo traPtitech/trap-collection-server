@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/traPtitech/trap-collection-server/pkg/common"
@@ -41,6 +42,9 @@ func (o *OIDC) Authorize(ctx context.Context) (*domain.OIDCClient, *domain.OIDCA
 
 func (o *OIDC) Callback(ctx context.Context, authState *domain.OIDCAuthState, code values.OIDCAuthorizationCode) (*domain.OIDCSession, error) {
 	session, err := o.oidcAuth.GetOIDCSession(ctx, o.client, code, authState)
+	if errors.Is(err, auth.ErrInvalidCredentials) {
+		return nil, service.ErrInvalidAuthStateOrCode
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get OIDC session: %w", err)
 	}
