@@ -79,3 +79,33 @@ func (o *OIDC) GetOIDCSession(ctx context.Context, client *domain.OIDCClient, co
 		time.Now().Add(time.Duration(response.ExpiresIn-5)*time.Second),
 	), nil
 }
+
+func (o *OIDC) RevokeOIDCSession(ctx context.Context, session *domain.OIDCSession) error {
+	path := *o.baseURL
+	path.Path += "/oauth2/revoke"
+
+	form := url.Values{}
+	form.Set("token", string(session.GetAccessToken()))
+	reqBody := strings.NewReader(form.Encode())
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.String(), reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	res, err := o.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+
+	switch res.StatusCode {
+	case http.StatusOK:
+	case http.StatusInternalServerError:
+		return auth.ErrIdpBroken
+	default:
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	return nil
+}
