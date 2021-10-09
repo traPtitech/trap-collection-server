@@ -16,7 +16,6 @@ import (
 	"os"
 
 	"github.com/comail/colog"
-	"github.com/labstack/echo-contrib/session"
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -56,7 +55,6 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(session.Middleware(sess.Store()))
 	e.Use(middleware.Recover())
 
 	if !isProduction {
@@ -91,10 +89,16 @@ func main() {
 		panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	newAPI, err := src.InjectAPI(common.IsProduction(isProduction))
+	newAPI, err := src.InjectAPI(&src.Config{
+		IsProduction:  common.IsProduction(isProduction),
+		SessionKey:    "sessions",
+		SessionSecret: common.SessionSecret(secret),
+	})
 	if err != nil {
 		panic(err)
 	}
+
+	newAPI.Session.Use(e)
 
 	api, err := router.NewAPI(newAPI, sess, env, clientID, clientSecret)
 	if err != nil {
