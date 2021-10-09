@@ -272,3 +272,121 @@ func TestGetOIDCSession(t *testing.T) {
 		})
 	}
 }
+
+func TestRevokeOIDCSession(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type mockHandlerParam struct {
+		isTraQBroken bool
+		token        string
+	}
+
+	var (
+		param      *mockHandlerParam
+		handlerErr error
+		callCount  int
+
+		errNoParamSet      = errors.New("param is not set")
+		errUnexpectedToken = errors.New("unexpected token")
+	)
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		if r.URL.Path != "/oauth2/revoke" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		if param.isTraQBroken {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if param == nil {
+			handlerErr = errNoParamSet
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		token := r.FormValue("token")
+		if token != param.token {
+			handlerErr = errUnexpectedToken
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	ts.EnableHTTP2 = true
+	ts.StartTLS()
+	defer ts.Close()
+
+	baseURL, err := url.Parse(ts.URL)
+	if err != nil {
+		t.Errorf("Error parsing base URL: %v", err)
+	}
+	oidcAuth := NewOIDC(ts.Client(), common.TraQBaseURL(baseURL))
+
+	type test struct {
+		description  string
+		isTraQBroken bool
+		session      *domain.OIDCSession
+		isErr        bool
+		err          error
+	}
+	testCases := []test{
+		{
+			description:  "問題がないのでエラーなし",
+			isTraQBroken: false,
+			session: domain.NewOIDCSession(
+				values.NewOIDCAccessToken("token"),
+				time.Now().Add(time.Hour),
+			),
+		},
+		{
+			description:  "traQが壊れているのでエラー",
+			isTraQBroken: true,
+			session: domain.NewOIDCSession(
+				values.NewOIDCAccessToken("token"),
+				time.Now().Add(time.Hour),
+			),
+			isErr: true,
+			err:   auth.ErrIdpBroken,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				param = nil
+				handlerErr = nil
+				callCount = 0
+			}()
+			param = &mockHandlerParam{
+				isTraQBroken: testCase.isTraQBroken,
+				token:        string(testCase.session.GetAccessToken()),
+			}
+
+			err := oidcAuth.RevokeOIDCSession(ctx, testCase.session)
+
+			assert.NoError(t, handlerErr)
+			assert.Equal(t, 1, callCount)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
