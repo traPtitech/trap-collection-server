@@ -45,7 +45,12 @@ func main() {
 		panic(err)
 	}
 
-	sess, err := sess.NewSession(db.DB())
+	secret, ok := os.LookupEnv("SESSION_SECRET")
+	if !ok {
+		panic("SESSION_SECRET is not set")
+	}
+
+	sess, err := sess.NewSession(secret)
 	if err != nil {
 		panic(fmt.Errorf("Failed In Session Constructor: %w", err))
 	}
