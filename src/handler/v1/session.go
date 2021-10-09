@@ -1,16 +1,10 @@
 package v1
 
 import (
-	"errors"
-	"fmt"
-	"time"
-
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
-	"github.com/traPtitech/trap-collection-server/src/domain"
-	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 type Session struct {
@@ -33,7 +27,7 @@ func (s *Session) Use(e *echo.Echo) {
 	e.Use(session.Middleware(s.store))
 }
 
-func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
+/*func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
 	session, err := s.store.Get(c.Request(), s.key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -111,4 +105,4 @@ func (s *Session) getAccessToken(session *sessions.Session) (*domain.OIDCSession
 		values.NewOIDCAccessToken(accessToken),
 		expiresAt,
 	), nil
-}
+}*/
