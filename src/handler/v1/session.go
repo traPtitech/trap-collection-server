@@ -37,3 +37,12 @@ func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
 
 	return session, nil
 }
+
+func (s *Session) save(c echo.Context, session *sessions.Session) error {
+	err := s.store.Save(c.Request(), c.Response(), session)
+	if err != nil {
+		return fmt.Errorf("failed to save session: %w", err)
+	}
+
+	return nil
+}
