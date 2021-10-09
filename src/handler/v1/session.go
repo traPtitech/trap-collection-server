@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gorilla/sessions"
@@ -45,4 +46,31 @@ func (s *Session) save(c echo.Context, session *sessions.Session) error {
 	}
 
 	return nil
+}
+
+var (
+	ErrNoValue     = errors.New("no value")
+	ErrValueBroken = errors.New("value broken")
+)
+
+const (
+	codeVerifierSessionKey = "codeVerifier"
+)
+
+func (s *Session) setCodeVerifier(session *sessions.Session, codeVerifier string) {
+	session.Values[codeVerifierSessionKey] = codeVerifier
+}
+
+func (s *Session) getCodeVerifier(session *sessions.Session) (string, error) {
+	iCodeVerifier, ok := session.Values[codeVerifierSessionKey]
+	if !ok {
+		return "", ErrNoValue
+	}
+
+	codeVerifier, ok := iCodeVerifier.(string)
+	if !ok {
+		return "", ErrValueBroken
+	}
+
+	return codeVerifier, nil
 }
