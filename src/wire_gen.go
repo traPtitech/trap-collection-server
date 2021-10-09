@@ -18,7 +18,8 @@ import (
 
 // Injectors from wire.go:
 
-func InjectAPI(isProduction common.IsProduction) (*v1.API, error) {
+func InjectAPI(config *Config) (*v1.API, error) {
+	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
 	if err != nil {
 		return nil, err
@@ -29,11 +30,20 @@ func InjectAPI(isProduction common.IsProduction) (*v1.API, error) {
 	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	middleware := v1.NewMiddleware(launcherAuth)
-	api := v1.NewAPI(v1LauncherAuth, middleware)
+	sessionKey := config.SessionKey
+	sessionSecret := config.SessionSecret
+	session := v1.NewSession(sessionKey, sessionSecret)
+	api := v1.NewAPI(v1LauncherAuth, middleware, session)
 	return api, nil
 }
 
 // wire.go:
+
+type Config struct {
+	IsProduction  common.IsProduction
+	SessionKey    common.SessionKey
+	SessionSecret common.SessionSecret
+}
 
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
@@ -42,4 +52,8 @@ var (
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
 
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
+
+	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
+	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
+	sessionSecretField = wire.FieldsOf(new(*Config), "SessionSecret")
 )
