@@ -11,5 +11,5 @@ import (
 
 type OIDC interface {
 	GetOIDCSession(ctx context.Context, client *domain.OIDCClient, code values.OIDCAuthorizationCode, authState *domain.OIDCAuthState) (*domain.OIDCSession, error)
-	RevokeOIDCSession(ctx context.Context, client *domain.OIDCClient, session *domain.OIDCSession) error
+	RevokeOIDCSession(ctx context.Context, session *domain.OIDCSession) error
 }
