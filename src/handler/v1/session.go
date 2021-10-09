@@ -3,11 +3,14 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 type Session struct {
@@ -55,6 +58,9 @@ var (
 
 const (
 	codeVerifierSessionKey = "codeVerifier"
+	// 旧実装と共存させるために、accessTokenとexpiresAtを別々に保存
+	accessTokenSessionKey = "accessToken"
+	expiresAtSessionKey   = "expiresAt"
 )
 
 func (s *Session) setCodeVerifier(session *sessions.Session, codeVerifier string) {
@@ -73,4 +79,36 @@ func (s *Session) getCodeVerifier(session *sessions.Session) (string, error) {
 	}
 
 	return codeVerifier, nil
+}
+
+func (s *Session) setAuthSession(session *sessions.Session, authSession *domain.OIDCSession) {
+	session.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
+	session.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
+}
+
+func (s *Session) getAccessToken(session *sessions.Session) (*domain.OIDCSession, error) {
+	iAccessToken, ok := session.Values[accessTokenSessionKey]
+	if !ok {
+		return nil, ErrNoValue
+	}
+
+	accessToken, ok := iAccessToken.(string)
+	if !ok {
+		return nil, ErrValueBroken
+	}
+
+	iExpiresAt, ok := session.Values[expiresAtSessionKey]
+	if !ok {
+		return nil, ErrNoValue
+	}
+
+	expiresAt, ok := iExpiresAt.(time.Time)
+	if !ok {
+		return nil, ErrValueBroken
+	}
+
+	return domain.NewOIDCSession(
+		values.NewOIDCAccessToken(accessToken),
+		expiresAt,
+	), nil
 }
