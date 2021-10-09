@@ -151,7 +151,7 @@ func TestLogout(t *testing.T) {
 			)
 			mockOIDCAuth.
 				EXPECT().
-				RevokeOIDCSession(ctx, oidcService.client, session).
+				RevokeOIDCSession(ctx, session).
 				Return(testCase.RevokeOIDCSessionErr)
 
 			err := oidcService.Logout(ctx, session)

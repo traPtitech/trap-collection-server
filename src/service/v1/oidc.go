@@ -53,7 +53,7 @@ func (o *OIDC) Callback(ctx context.Context, authState *domain.OIDCAuthState, co
 }
 
 func (o *OIDC) Logout(ctx context.Context, session *domain.OIDCSession) error {
-	err := o.oidcAuth.RevokeOIDCSession(ctx, o.client, session)
+	err := o.oidcAuth.RevokeOIDCSession(ctx, session)
 	if err != nil {
 		return fmt.Errorf("failed to revoke OIDC session: %w", err)
 	}
