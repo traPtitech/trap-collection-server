@@ -3,7 +3,9 @@ package common
 import "net/url"
 
 type (
-	IsProduction bool
-	ClientID     string
-	TraQBaseURL  *url.URL
+	IsProduction  bool
+	ClientID      string
+	TraQBaseURL   *url.URL
+	SessionSecret string
+	SessionKey    string
 )
