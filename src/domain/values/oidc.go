@@ -70,6 +70,6 @@ func (ocd OIDCCodeVerifier) GetCodeChallenge(method OIDCCodeChallengeMethod) (OI
 	return "", fmt.Errorf("unsupported code challenge method: %d", method)
 }
 
-func NewAccessToken(accessToken string) OIDCAccessToken {
+func NewOIDCAccessToken(accessToken string) OIDCAccessToken {
 	return OIDCAccessToken(accessToken)
 }

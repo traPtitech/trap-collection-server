@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/auth/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -83,7 +84,7 @@ func TestCallback(t *testing.T) {
 			var session *domain.OIDCSession
 			if testCase.GetOIDCSessionErr == nil {
 				session = domain.NewOIDCSession(
-					values.NewAccessToken("access token"),
+					values.NewOIDCAccessToken("access token"),
 					time.Now(),
 				)
 			}
@@ -145,7 +146,7 @@ func TestLogout(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			session := domain.NewOIDCSession(
-				values.NewAccessToken("access token"),
+				values.NewOIDCAccessToken("access token"),
 				time.Now(),
 			)
 			mockOIDCAuth.
@@ -209,7 +210,7 @@ func TestTraPAuth(t *testing.T) {
 			}
 
 			session := domain.NewOIDCSession(
-				values.NewAccessToken("access token"),
+				values.NewOIDCAccessToken("access token"),
 				expiresAt,
 			)
 
