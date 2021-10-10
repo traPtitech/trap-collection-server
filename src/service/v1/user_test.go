@@ -129,3 +129,118 @@ func TestGetMe(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllActiveUser(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userService := NewUser(mockUserAuth, mockUserCache)
+
+	type test struct {
+		description                  string
+		cacheUsers                   []*service.UserInfo
+		cacheGetAllActiveUsersErr    error
+		executeAuthGetAllActiveUsers bool
+		authUsers                    []*service.UserInfo
+		authGetAllActiveUsersErr     error
+		cacheSetAllActiveUsersErr    error
+		users                        []*service.UserInfo
+		isErr                        bool
+		err                          error
+	}
+
+	users := []*service.UserInfo{
+		service.NewUserInfo(
+			values.NewTrapMemberID(uuid.New()),
+			values.NewTrapMemberName("mazrean"),
+			values.TrapMemberStatusActive,
+		),
+	}
+
+	testCases := []test{
+		{
+			description: "cacheがhitするのでエラーなし",
+			cacheUsers:  users,
+			users:       users,
+		},
+		{
+			description:                  "cacheがhitしないがauthからの取り出しに成功するのでエラーなし",
+			cacheGetAllActiveUsersErr:    cache.ErrCacheMiss,
+			executeAuthGetAllActiveUsers: true,
+			authUsers:                    users,
+			users:                        users,
+		},
+		{
+			description:                  "cacheがエラー(ErrCacheMiss以外)でもauthからの取り出しに成功するのでエラーなし",
+			cacheGetAllActiveUsersErr:    errors.New("cache error"),
+			executeAuthGetAllActiveUsers: true,
+			authUsers:                    users,
+			users:                        users,
+		},
+		{
+			description:                  "cacheがhitせずauthからの取り出しがエラーなのでエラー",
+			cacheGetAllActiveUsersErr:    cache.ErrCacheMiss,
+			executeAuthGetAllActiveUsers: true,
+			authGetAllActiveUsersErr:     errors.New("auth error"),
+			isErr:                        true,
+		},
+		{
+			description:                  "cacheがhitしないがauthからの取り出しに成功するのでcache設定に失敗してもエラーなし",
+			cacheGetAllActiveUsersErr:    cache.ErrCacheMiss,
+			executeAuthGetAllActiveUsers: true,
+			authUsers:                    users,
+			cacheSetAllActiveUsersErr:    errors.New("cache error"),
+			users:                        users,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			session := domain.NewOIDCSession(
+				values.NewOIDCAccessToken("access token"),
+				time.Now(),
+			)
+
+			mockUserCache.
+				EXPECT().
+				GetAllActiveUsers(ctx).
+				Return(testCase.cacheUsers, testCase.cacheGetAllActiveUsersErr)
+			if testCase.executeAuthGetAllActiveUsers {
+				mockUserAuth.
+					EXPECT().
+					GetAllActiveUsers(ctx, session).
+					Return(testCase.authUsers, testCase.authGetAllActiveUsersErr)
+				if testCase.authGetAllActiveUsersErr == nil {
+					mockUserCache.
+						EXPECT().
+						SetAllActiveUsers(ctx, testCase.authUsers).
+						Return(testCase.cacheSetAllActiveUsersErr)
+				}
+			}
+
+			users, err := userService.GetAllActiveUser(ctx, session)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.users, users)
+		})
+	}
+}
