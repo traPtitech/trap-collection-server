@@ -26,6 +26,22 @@ func NewMiddleware(session *Session, launcherAuthService service.LauncherAuth, o
 	}
 }
 
+func (m *Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ok, message, err := m.checkTrapMemberAuth(c)
+		if err != nil {
+			log.Printf("error: failed to check trap member auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		if !ok {
+			return echo.NewHTTPError(http.StatusUnauthorized, message)
+		}
+
+		return next(c)
+	}
+}
+
 func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ok, message, err := m.checkLauncherAuth(c)
