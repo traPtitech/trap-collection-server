@@ -26,6 +26,92 @@ func (cc *CallChecker) Handler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+func TestTrapMemberAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+
+	type test struct {
+		description        string
+		isOk               bool
+		isCheckTraPAuthErr bool
+		isCalled           bool
+		statusCode         int
+	}
+
+	testCases := []test{
+		{
+			description: "okかつエラーなしなので通す",
+			isOk:        true,
+			isCalled:    true,
+			statusCode:  http.StatusOK,
+		},
+		{
+			description: "okでないなので401",
+			isOk:        false,
+			statusCode:  http.StatusUnauthorized,
+		},
+		{
+			description:        "CheckLauncherAuthがエラーなので401",
+			isCheckTraPAuthErr: true,
+			statusCode:         http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			var traPAuthErr error
+			if testCase.isOk {
+				traPAuthErr = nil
+			} else if testCase.isCheckTraPAuthErr {
+				traPAuthErr = errors.New("error")
+			} else {
+				traPAuthErr = service.ErrOIDCSessionExpired
+			}
+
+			accessToken := "access token"
+			sess, err := session.store.New(req, session.key)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			sess.Values[accessTokenSessionKey] = accessToken
+			sess.Values[expiresAtSessionKey] = time.Now()
+
+			err = sess.Save(req, rec)
+			if err != nil {
+				t.Fatalf("failed to save session: %v", err)
+			}
+
+			setCookieHeader(c)
+
+			mockOIDCService.
+				EXPECT().
+				TraPAuth(gomock.Any(), gomock.Any()).
+				Return(traPAuthErr)
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.TrapMemberAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled, testCase.description)
+		})
+	}
+}
+
 func TestLauncherAuthMiddleware(t *testing.T) {
 	t.Parallel()
 
