@@ -219,7 +219,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 					Return(testCase.launcherUser, testCase.launcherVersion, testCase.LauncherAuthErr)
 			}
 
-			ok, err := middleware.CheckLauncherAuth(c)
+			ok, err := middleware.checkLauncherAuth(c)
 
 			if testCase.isErr {
 				if testCase.err == nil {

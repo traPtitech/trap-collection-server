@@ -27,7 +27,7 @@ func NewMiddleware(session *Session, launcherAuthService service.LauncherAuth, o
 
 func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ok, err := m.CheckLauncherAuth(c)
+		ok, err := m.checkLauncherAuth(c)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 		}
@@ -40,8 +40,7 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 	}
 }
 
-// 旧実装でも使えるように大文字で定義している
-func (m *Middleware) CheckLauncherAuth(c echo.Context) (bool, error) {
+func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, error) {
 	authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 
 	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
