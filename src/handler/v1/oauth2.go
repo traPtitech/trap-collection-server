@@ -110,3 +110,36 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, e
 		ResponseType:        "code",
 	}, nil
 }
+
+func (o *OAuth2) PostLogout(c echo.Context) error {
+	session, err := o.session.getSession(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	authSession, err := o.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusBadRequest, "no auth session")
+	}
+	if err != nil {
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+	}
+
+	err = o.oidcService.Logout(c.Request().Context(), authSession)
+	if err != nil {
+		log.Printf("error: failed to logout: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to logout")
+	}
+
+	o.session.revoke(session)
+
+	err = o.session.save(c, session)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save session")
+	}
+
+	return nil
+}
