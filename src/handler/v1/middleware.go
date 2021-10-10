@@ -42,6 +42,31 @@ func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerF
 	}
 }
 
+func (m *Middleware) checkTrapMemberAuth(c echo.Context) (bool, string, error) {
+	session, err := m.session.getSession(c)
+	if err != nil {
+		return false, "", fmt.Errorf("failed to get session: %w", err)
+	}
+
+	authSession, err := m.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return false, "no access token", nil
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("failed to get auth session: %w", err)
+	}
+
+	err = m.oidcService.TraPAuth(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return false, "access token is expired", nil
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("failed to check traP auth: %w", err)
+	}
+
+	return true, "", nil
+}
+
 func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, string, error) {
 	authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 
