@@ -41,7 +41,7 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
 	oAuth2 := v1.NewOAuth2(session, v1OIDC)
-	middleware := v1.NewMiddleware(launcherAuth)
+	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
 	api := v1.NewAPI(v1LauncherAuth, oAuth2, middleware, session)
 	return api, nil
 }

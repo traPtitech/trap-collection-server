@@ -33,8 +33,10 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(mockLauncherAuthService)
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
 
 	type test struct {
 		description            string
@@ -102,8 +104,10 @@ func TestCheckLauncherAuth(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(mockLauncherAuthService)
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
 
 	type test struct {
 		description         string
