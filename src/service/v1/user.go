@@ -48,3 +48,28 @@ func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service
 
 	return user, nil
 }
+
+func (u *User) GetAllActiveUser(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
+	users, err := u.userCache.GetAllActiveUsers(ctx)
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// cacheからの取り出しに失敗してもauthからとって来れれば良いので、returnはしない
+		log.Printf("error: failed to get user info: %v\n", err)
+	}
+	// cacheから取り出した場合はそれを返す
+	if err == nil {
+		return users, nil
+	}
+
+	users, err = u.userAuth.GetAllActiveUsers(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	err = u.userCache.SetAllActiveUsers(ctx, users)
+	if err != nil {
+		// cacheの設定に失敗してもreturnはしない
+		log.Printf("error: failed to set user info: %v\n", err)
+	}
+
+	return users, nil
+}
