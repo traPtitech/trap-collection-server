@@ -1,9 +1,13 @@
 package ristretto
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dgraph-io/ristretto"
+	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type User struct {
@@ -44,4 +48,18 @@ func NewUser() (*User, error) {
 		meCache:     meCache,
 		activeUsers: activeUsers,
 	}, nil
+}
+
+func (u *User) GetMe(ctx context.Context, accessToken values.OIDCAccessToken) (*service.UserInfo, error) {
+	iUser, ok := u.meCache.Get(string(accessToken))
+	if !ok {
+		return nil, cache.ErrCacheMiss
+	}
+
+	user, ok := iUser.(*service.UserInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast meCache: %v", iUser)
+	}
+
+	return user, nil
 }
