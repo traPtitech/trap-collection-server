@@ -1,8 +1,15 @@
 package v1
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type User struct {
@@ -15,4 +22,29 @@ func NewUser(userAuth auth.User, userCache cache.User) *User {
 		userAuth:  userAuth,
 		userCache: userCache,
 	}
+}
+
+func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service.UserInfo, error) {
+	user, err := u.userCache.GetMe(ctx, session.GetAccessToken())
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// cacheからの取り出しに失敗してもauthからとって来れれば良いので、returnはしない
+		log.Printf("error: failed to get user info: %v\n", err)
+	}
+	// cacheから取り出した場合はそれを返す
+	if err == nil {
+		return user, nil
+	}
+
+	user, err = u.userAuth.GetMe(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	err = u.userCache.SetMe(ctx, session, user)
+	if err != nil {
+		// cacheの設定に失敗してもreturnはしない
+		log.Printf("error: failed to set user info: %v\n", err)
+	}
+
+	return user, nil
 }
