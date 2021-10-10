@@ -2,10 +2,13 @@ package ristretto
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -62,4 +65,20 @@ func (u *User) GetMe(ctx context.Context, accessToken values.OIDCAccessToken) (*
 	}
 
 	return user, nil
+}
+
+func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *service.UserInfo) error {
+	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
+	ok := u.meCache.SetWithTTL(
+		string(session.GetAccessToken()),
+		user,
+		8,
+		// sessionの有効期限が切れるとキャッシュが消えるようにTTLを設定する
+		time.Until(session.GetExpiresAt()),
+	)
+	if !ok {
+		return errors.New("failed to set meCache")
+	}
+
+	return nil
 }
