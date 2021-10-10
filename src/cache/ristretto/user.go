@@ -18,6 +18,11 @@ type User struct {
 	activeUsers *ristretto.Cache
 }
 
+const (
+	activeUsersKey = "active_users"
+	activeUsersTTL = time.Hour
+)
+
 func NewUser() (*User, error) {
 	meCache, err := ristretto.NewCache(&ristretto.Config{
 		/*
@@ -81,4 +86,18 @@ func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *ser
 	}
 
 	return nil
+}
+
+func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
+	iUsers, ok := u.activeUsers.Get(activeUsersKey)
+	if !ok {
+		return nil, cache.ErrCacheMiss
+	}
+
+	users, ok := iUsers.([]*service.UserInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast activeUsers: %v", iUsers)
+	}
+
+	return users, nil
 }
