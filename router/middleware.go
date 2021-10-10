@@ -31,25 +31,6 @@ func newMiddleware(db model.DBMeta, oauth base.OAuth, newMiddleware *v1.Middlewa
 	return middleware
 }
 
-// TrapMemberAuthMiddleware traQのOAuthのmiddleware
-func (m *Middleware) TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get("sessions", c)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-		}
-
-		accessToken, ok := sess.Values["accessToken"]
-		if !ok || accessToken == nil {
-			return c.String(http.StatusUnauthorized, errors.New("No Access Token").Error())
-		}
-
-		c.Set("accessToken", accessToken)
-
-		return next(c)
-	}
-}
-
 // GameMaintainerAuthMiddleware ゲーム管理者の認証用のミドルウェア
 func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -123,14 +104,19 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 
 		// 暫定的な実装。最終的にはDBにあるAdminと比べ、userIDを使い認証するようにする。
 		admins := []string{"mazrean"}
+
+		var userName string
 		interfaceUserName, ok1 := sess.Values["userName"]
-		userName, ok2 := interfaceUserName.(string)
-		if !ok2 {
-			log.Printf("error: unexcepted invalid userName")
-			return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
+		if ok1 {
+			var ok2 bool
+			userName, ok2 = interfaceUserName.(string)
+			if !ok2 {
+				log.Printf("error: unexcepted invalid userName")
+				return echo.NewHTTPError(http.StatusInternalServerError, errors.New("unexpected invalid userName"))
+			}
 		}
 		interfaceAccessToken, ok3 := sess.Values["accessToken"]
-		if !ok1 || !ok2 {
+		if !ok1 {
 			log.Printf("error: unexcepted no userName")
 
 			if !ok3 || interfaceAccessToken == nil {
@@ -161,34 +147,5 @@ func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 		}
 
 		return c.String(http.StatusUnauthorized, errors.New("You Are Not Admin").Error())
-	}
-}
-
-// BothAuthMiddleware ランチャー・traQの認証用のミドルウェア
-func (m *Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ok, err := m.CheckLauncherAuth(c)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
-		}
-
-		if ok {
-			return next(c)
-		}
-
-		sess, err := session.Get("sessions", c)
-		if err != nil {
-			log.Printf("error: unexcepted no session: %v", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("failed to get session: %v", err))
-		}
-
-		accessToken, ok := sess.Values["accessToken"]
-		if !ok || accessToken == nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "No Access Token")
-		}
-
-		c.Set("accessToken", accessToken)
-
-		return next(c)
 	}
 }

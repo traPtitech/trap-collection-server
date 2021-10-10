@@ -9,11 +9,14 @@ package src
 import (
 	"github.com/google/wire"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/auth"
+	"github.com/traPtitech/trap-collection-server/src/auth/traQ"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	v1_2 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	"net/http"
 )
 
 // Injectors from wire.go:
@@ -29,11 +32,17 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
-	middleware := v1.NewMiddleware(launcherAuth)
 	sessionKey := config.SessionKey
 	sessionSecret := config.SessionSecret
 	session := v1.NewSession(sessionKey, sessionSecret)
-	api := v1.NewAPI(v1LauncherAuth, middleware, session)
+	client := config.HttpClient
+	traQBaseURL := config.TraQBaseURL
+	oidc := traq.NewOIDC(client, traQBaseURL)
+	clientID := config.OAuthClientID
+	v1OIDC := v1_2.NewOIDC(oidc, clientID)
+	oAuth2 := v1.NewOAuth2(session, v1OIDC)
+	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
+	api := v1.NewAPI(v1LauncherAuth, oAuth2, middleware, session)
 	return api, nil
 }
 
@@ -43,6 +52,9 @@ type Config struct {
 	IsProduction  common.IsProduction
 	SessionKey    common.SessionKey
 	SessionSecret common.SessionSecret
+	TraQBaseURL   common.TraQBaseURL
+	OAuthClientID common.ClientID
+	HttpClient    *http.Client
 }
 
 var (
@@ -51,9 +63,15 @@ var (
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
 
+	oidcAuthBind = wire.Bind(new(auth.OIDC), new(*traq.OIDC))
+
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
+	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 
 	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
 	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
 	sessionSecretField = wire.FieldsOf(new(*Config), "SessionSecret")
+	traQBaseURLField   = wire.FieldsOf(new(*Config), "TraQBaseURL")
+	oAuthClientIDField = wire.FieldsOf(new(*Config), "OAuthClientID")
+	httpClientField    = wire.FieldsOf(new(*Config), "HttpClient")
 )

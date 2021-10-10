@@ -26,6 +26,92 @@ func (cc *CallChecker) Handler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+func TestTrapMemberAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+
+	type test struct {
+		description        string
+		isOk               bool
+		isCheckTraPAuthErr bool
+		isCalled           bool
+		statusCode         int
+	}
+
+	testCases := []test{
+		{
+			description: "okかつエラーなしなので通す",
+			isOk:        true,
+			isCalled:    true,
+			statusCode:  http.StatusOK,
+		},
+		{
+			description: "okでないなので401",
+			isOk:        false,
+			statusCode:  http.StatusUnauthorized,
+		},
+		{
+			description:        "CheckLauncherAuthがエラーなので401",
+			isCheckTraPAuthErr: true,
+			statusCode:         http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			var traPAuthErr error
+			if testCase.isOk {
+				traPAuthErr = nil
+			} else if testCase.isCheckTraPAuthErr {
+				traPAuthErr = errors.New("error")
+			} else {
+				traPAuthErr = service.ErrOIDCSessionExpired
+			}
+
+			accessToken := "access token"
+			sess, err := session.store.New(req, session.key)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			sess.Values[accessTokenSessionKey] = accessToken
+			sess.Values[expiresAtSessionKey] = time.Now()
+
+			err = sess.Save(req, rec)
+			if err != nil {
+				t.Fatalf("failed to save session: %v", err)
+			}
+
+			setCookieHeader(c)
+
+			mockOIDCService.
+				EXPECT().
+				TraPAuth(gomock.Any(), gomock.Any()).
+				Return(traPAuthErr)
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.TrapMemberAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled, testCase.description)
+		})
+	}
+}
+
 func TestLauncherAuthMiddleware(t *testing.T) {
 	t.Parallel()
 
@@ -33,8 +119,10 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(mockLauncherAuthService)
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
 
 	type test struct {
 		description            string
@@ -57,14 +145,14 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 			statusCode:  http.StatusOK,
 		},
 		{
-			description: "okでないなので401",
+			description: "okでないので401",
 			isOk:        false,
 			statusCode:  http.StatusUnauthorized,
 		},
 		{
 			description:            "CheckLauncherAuthがエラーなので401",
 			isCheckLauncherAuthErr: true,
-			statusCode:             http.StatusUnauthorized,
+			statusCode:             http.StatusInternalServerError,
 		},
 	}
 
@@ -75,15 +163,20 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := echo.New().NewContext(req, rec)
 
-			if testCase.isOk {
-				req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
-				mockLauncherAuthService.
-					EXPECT().
-					LauncherAuth(c.Request().Context(), accessToken).
-					Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, nil)
-			} else if testCase.isCheckLauncherAuthErr {
-				req.Header.Set(echo.HeaderAuthorization, "Basic")
+			var launcherAuthErr error
+			if testCase.isCheckLauncherAuthErr {
+				launcherAuthErr = errors.New("error")
+			} else if testCase.isOk {
+				launcherAuthErr = nil
+			} else {
+				launcherAuthErr = service.ErrInvalidLauncherSessionAccessToken
 			}
+
+			req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
+			mockLauncherAuthService.
+				EXPECT().
+				LauncherAuth(c.Request().Context(), accessToken).
+				Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, launcherAuthErr)
 
 			callChecker := CallChecker{}
 
@@ -95,6 +188,257 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	}
 }
 
+func TestBothAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+
+	type test struct {
+		description            string
+		isCheckLauncherAuthOk  bool
+		isCheckLauncherAuthErr bool
+		executeTraPAuth        bool
+		isCheckTraPAuthOk      bool
+		isCheckTraPAuthErr     bool
+		isCalled               bool
+		statusCode             int
+	}
+
+	testCases := []test{
+		{
+			description:           "LauncherAuthがokなので通す",
+			isCheckLauncherAuthOk: true,
+			isCalled:              true,
+			statusCode:            http.StatusOK,
+		},
+		{
+			description:            "CheckLauncherAuthがエラーなので500",
+			isCheckLauncherAuthErr: true,
+			statusCode:             http.StatusInternalServerError,
+		},
+		{
+			description:           "LauncherAuthがokでなくてもTraPAuthがokなので通す",
+			isCheckLauncherAuthOk: false,
+			executeTraPAuth:       true,
+			isCheckTraPAuthOk:     true,
+			isCalled:              true,
+			statusCode:            http.StatusOK,
+		},
+		{
+			description:           "TraPAuthがエラーなので500",
+			isCheckLauncherAuthOk: false,
+			executeTraPAuth:       true,
+			isCheckTraPAuthOk:     false,
+			isCheckTraPAuthErr:    true,
+			statusCode:            http.StatusInternalServerError,
+		},
+		{
+			description:           "LauncherAuth、TraPAuthともにfalseなので401",
+			isCheckLauncherAuthOk: false,
+			executeTraPAuth:       true,
+			isCheckTraPAuthOk:     false,
+			statusCode:            http.StatusUnauthorized,
+		},
+	}
+
+	launcherAccessToken, err := values.NewLauncherSessionAccessToken()
+	if err != nil {
+		t.Errorf("failed to create access token: %v", err)
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			var launcherAuthErr error
+			if testCase.isCheckLauncherAuthErr {
+				launcherAuthErr = errors.New("error")
+			} else if testCase.isCheckLauncherAuthOk {
+				launcherAuthErr = nil
+			} else {
+				launcherAuthErr = service.ErrInvalidLauncherSessionAccessToken
+			}
+			req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(launcherAccessToken))
+			mockLauncherAuthService.
+				EXPECT().
+				LauncherAuth(c.Request().Context(), launcherAccessToken).
+				Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, launcherAuthErr)
+
+			if testCase.executeTraPAuth {
+				var traPAuthErr error
+				if testCase.isCheckTraPAuthOk {
+					traPAuthErr = nil
+				} else if testCase.isCheckTraPAuthErr {
+					traPAuthErr = errors.New("error")
+				} else {
+					traPAuthErr = service.ErrOIDCSessionExpired
+				}
+
+				traPAuthAccessToken := "access token"
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				sess.Values[accessTokenSessionKey] = traPAuthAccessToken
+				sess.Values[expiresAtSessionKey] = time.Now()
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				mockOIDCService.
+					EXPECT().
+					TraPAuth(gomock.Any(), gomock.Any()).
+					Return(traPAuthErr)
+			}
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.BothAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled)
+		})
+	}
+}
+
+func TestCheckTrapMemberAuth(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+
+	type test struct {
+		description      string
+		sessionExist     bool
+		authSessionExist bool
+		accessToken      string
+		expiresAt        time.Time
+		executeTraPAuth  bool
+		TraPAuthErr      error
+		isOk             bool
+		message          string
+		isErr            bool
+		err              error
+	}
+
+	testCases := []test{
+		{
+			description:      "特に問題ないのでtrue",
+			sessionExist:     true,
+			authSessionExist: true,
+			accessToken:      "access token",
+			expiresAt:        time.Now(),
+			executeTraPAuth:  true,
+			isOk:             true,
+		},
+		{
+			description:  "セッションがないのでfalse",
+			sessionExist: false,
+			isOk:         false,
+			message:      "no access token",
+		},
+		{
+			description:      "authSessionがないのでfalse",
+			sessionExist:     true,
+			authSessionExist: false,
+			isOk:             false,
+			message:          "no access token",
+		},
+		{
+			description:      "TraPAuthがErrOIDCSessionExpiredなのでfalse",
+			sessionExist:     true,
+			authSessionExist: true,
+			accessToken:      "access token",
+			expiresAt:        time.Now(),
+			executeTraPAuth:  true,
+			TraPAuthErr:      service.ErrOIDCSessionExpired,
+			isOk:             false,
+			message:          "access token is expired",
+		},
+		{
+			description:      "TraPAuthがエラー(ErrOIDCSessionExpired以外)なのでエラー",
+			sessionExist:     true,
+			authSessionExist: true,
+			accessToken:      "access token",
+			expiresAt:        time.Now(),
+			executeTraPAuth:  true,
+			TraPAuthErr:      errors.New("error"),
+			isErr:            true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSessionExist {
+					sess.Values[accessTokenSessionKey] = testCase.accessToken
+					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+			}
+
+			if testCase.executeTraPAuth {
+				mockOIDCService.
+					EXPECT().
+					TraPAuth(gomock.Any(), gomock.Any()).
+					Return(testCase.TraPAuthErr)
+			}
+
+			ok, message, err := middleware.checkTrapMemberAuth(c)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, testCase.isOk, ok)
+			assert.Equal(t, testCase.message, message)
+		})
+	}
+}
+
 func TestCheckLauncherAuth(t *testing.T) {
 	t.Parallel()
 
@@ -102,8 +446,10 @@ func TestCheckLauncherAuth(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(mockLauncherAuthService)
+	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
 
 	type test struct {
 		description         string
@@ -115,6 +461,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 		LauncherAuthErr     error
 		setValues           bool
 		ok                  bool
+		message             string
 		isErr               bool
 		err                 error
 	}
@@ -131,46 +478,46 @@ func TestCheckLauncherAuth(t *testing.T) {
 
 	testCases := []test{
 		{
-			description:         "Authorizationヘッダーが空文字なのでエラー",
+			description:         "Authorizationヘッダーが空文字なのでfalse",
 			authorizationHeader: "",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid authorization header: ",
 		},
 		{
-			description:         "AuthorizationヘッダーがBearerトークンでないのでエラー",
+			description:         "AuthorizationヘッダーがBearerトークンでないのでfalse",
 			authorizationHeader: "Basic",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid authorization header: Basic",
 		},
 		{
-			description:         "accessTokenの形式が不正なのでエラー",
+			description:         "accessTokenの形式が不正なのでfalse",
 			authorizationHeader: "Bearer a",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token: a",
 		},
 		{
-			description:         "accessTokenが空文字なのでエラー",
+			description:         "accessTokenが空文字なのでfalse",
 			authorizationHeader: "Bearer ",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token: ",
 		},
 		{
-			description:         "LauncherAuthがErrInvalidLauncherSessionAccessTokenなのでエラー",
+			description:         "LauncherAuthがErrInvalidLauncherSessionAccessTokenなのでfalse",
 			authorizationHeader: "Bearer " + string(accessToken),
 			executeLauncherAuth: true,
 			accessToken:         accessToken,
 			LauncherAuthErr:     service.ErrInvalidLauncherSessionAccessToken,
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token",
 		},
 		{
-			description:         "LauncherAuthがErrLauncherSessionAccessTokenExpiredなのでエラー",
+			description:         "LauncherAuthがErrLauncherSessionAccessTokenExpiredなのでfalse",
 			authorizationHeader: "Bearer " + string(accessToken),
 			executeLauncherAuth: true,
 			accessToken:         accessToken,
 			LauncherAuthErr:     service.ErrLauncherSessionAccessTokenExpired,
 			ok:                  false,
-			isErr:               true,
+			message:             "access token expired",
 		},
 		{
 			description:         "LauncherAuthがエラーなのでエラー",
@@ -215,7 +562,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 					Return(testCase.launcherUser, testCase.launcherVersion, testCase.LauncherAuthErr)
 			}
 
-			ok, err := middleware.CheckLauncherAuth(c)
+			ok, message, err := middleware.checkLauncherAuth(c)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -231,6 +578,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 			}
 
 			assert.Equal(t, testCase.ok, ok)
+			assert.Equal(t, testCase.message, message)
 
 			if testCase.setValues {
 				launcherUser, err := getLauncherUser(c)

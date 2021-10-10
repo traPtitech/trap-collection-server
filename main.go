@@ -13,6 +13,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/comail/colog"
@@ -89,10 +91,18 @@ func main() {
 		panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
+	traQBaseURL, err := url.Parse("http://q.trap.jp/api/v3")
+	if err != nil {
+		panic(fmt.Errorf("failed to parse traQBaseURL: %w", err))
+	}
+
 	newAPI, err := src.InjectAPI(&src.Config{
 		IsProduction:  common.IsProduction(isProduction),
 		SessionKey:    "sessions",
 		SessionSecret: common.SessionSecret(secret),
+		TraQBaseURL:   common.TraQBaseURL(traQBaseURL),
+		OAuthClientID: common.ClientID(clientID),
+		HttpClient:    http.DefaultClient,
 	})
 	if err != nil {
 		panic(err)

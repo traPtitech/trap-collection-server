@@ -1,10 +1,17 @@
 package v1
 
 import (
+	"encoding/gob"
+	"errors"
+	"fmt"
+	"time"
+
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 type Session struct {
@@ -15,6 +22,12 @@ type Session struct {
 
 func NewSession(key common.SessionKey, secret common.SessionSecret) *Session {
 	store := sessions.NewCookieStore([]byte(secret))
+
+	/*
+		gorilla/sessionsの内部で使われているgobが
+		time.Timeのエンコード・デコードをできるようにRegisterする
+	*/
+	gob.Register(time.Time{})
 
 	return &Session{
 		key:    string(key),
@@ -27,7 +40,7 @@ func (s *Session) Use(e *echo.Echo) {
 	e.Use(session.Middleware(s.store))
 }
 
-/*func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
+func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
 	session, err := s.store.Get(c.Request(), s.key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -43,6 +56,10 @@ func (s *Session) save(c echo.Context, session *sessions.Session) error {
 	}
 
 	return nil
+}
+
+func (s *Session) revoke(session *sessions.Session) {
+	session.Options.MaxAge = -1
 }
 
 var (
@@ -80,7 +97,7 @@ func (s *Session) setAuthSession(session *sessions.Session, authSession *domain.
 	session.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
 }
 
-func (s *Session) getAccessToken(session *sessions.Session) (*domain.OIDCSession, error) {
+func (s *Session) getAuthSession(session *sessions.Session) (*domain.OIDCSession, error) {
 	iAccessToken, ok := session.Values[accessTokenSessionKey]
 	if !ok {
 		return nil, ErrNoValue
@@ -105,4 +122,4 @@ func (s *Session) getAccessToken(session *sessions.Session) (*domain.OIDCSession
 		values.NewOIDCAccessToken(accessToken),
 		expiresAt,
 	), nil
-}*/
+}
