@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -65,4 +66,47 @@ func (o *OAuth2) Callback(strCode string, c echo.Context) error {
 	}
 
 	return nil
+}
+
+func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, error) {
+	client, authState, err := o.oidcService.Authorize(c.Request().Context())
+	if err != nil {
+		log.Printf("error: failed to generate code: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to generate code")
+	}
+
+	codeChallenge, err := authState.GetCodeVerifier().GetCodeChallenge(authState.GetCodeChallengeMethod())
+	if err != nil {
+		log.Printf("error: failed to get code challenge: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get code challenge")
+	}
+
+	var strCodeChallengeMethod string
+	switch authState.GetCodeChallengeMethod() {
+	case values.OIDCCodeChallengeMethodSha256:
+		strCodeChallengeMethod = "S256"
+	default:
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get code challenge method")
+	}
+
+	session, err := o.session.getSession(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	o.session.setCodeVerifier(session, string(authState.GetCodeVerifier()))
+
+	err = o.session.save(c, session)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to save session")
+	}
+
+	return &openapi.InlineResponse200{
+		CodeChallenge:       string(codeChallenge),
+		CodeChallengeMethod: strCodeChallengeMethod,
+		ClientId:            string(client.GetClientID()),
+		ResponseType:        "code",
+	}, nil
 }
