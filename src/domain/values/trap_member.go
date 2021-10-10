@@ -37,11 +37,7 @@ const (
 	TrapMemberRoleAdmin
 )
 
-func NewTrapMemberID() TraPMemberID {
-	return TraPMemberID(uuid.New())
-}
-
-func NewTrapMemberIDFromUUID(id uuid.UUID) TraPMemberID {
+func NewTrapMemberID(id uuid.UUID) TraPMemberID {
 	return TraPMemberID(id)
 }
 
