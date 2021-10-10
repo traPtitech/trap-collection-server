@@ -83,6 +83,32 @@ func (m *Middleware) checkTrapMemberAuth(c echo.Context) (bool, string, error) {
 	return true, "", nil
 }
 
+func (m *Middleware) BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ok, launcherAuthMessage, err := m.checkLauncherAuth(c)
+		if err != nil {
+			log.Printf("error: failed to check launcher auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		if ok {
+			return next(c)
+		}
+
+		ok, traPAuthMessage, err := m.checkTrapMemberAuth(c)
+		if err != nil {
+			log.Printf("error: failed to check trap member auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		if !ok {
+			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("Launcher Auth: %s\ntraP Auth: %s", launcherAuthMessage, traPAuthMessage))
+		}
+
+		return next(c)
+	}
+}
+
 func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, string, error) {
 	authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 
