@@ -101,3 +101,18 @@ func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, erro
 
 	return users, nil
 }
+
+func (u *User) SetAllActiveUsers(ctx context.Context, users []*service.UserInfo) error {
+	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
+	ok := u.activeUsers.SetWithTTL(
+		activeUsersKey,
+		users,
+		1,
+		activeUsersTTL,
+	)
+	if !ok {
+		return errors.New("failed to set activeUsers")
+	}
+
+	return nil
+}
