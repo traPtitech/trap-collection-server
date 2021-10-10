@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -27,46 +28,47 @@ func NewMiddleware(session *Session, launcherAuthService service.LauncherAuth, o
 
 func (m *Middleware) LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ok, err := m.checkLauncherAuth(c)
+		ok, message, err := m.checkLauncherAuth(c)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+			log.Printf("error: failed to check launcher auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		if !ok {
-			return echo.NewHTTPError(http.StatusUnauthorized, "invalid launcher auth")
+			return echo.NewHTTPError(http.StatusUnauthorized, message)
 		}
 
 		return next(c)
 	}
 }
 
-func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, error) {
+func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, string, error) {
 	authorizationHeader := c.Request().Header.Get(echo.HeaderAuthorization)
 
 	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
-		return false, fmt.Errorf("invalid authorization header: %s", authorizationHeader)
+		return false, fmt.Sprintf("invalid authorization header: %s", authorizationHeader), nil
 	}
 
 	strAccessToken := strings.TrimPrefix(authorizationHeader, "Bearer ")
 	accessToken := values.NewLauncherSessionAccessTokenFromString(strAccessToken)
 	err := accessToken.Validate()
 	if err != nil {
-		return false, fmt.Errorf("invalid access token: %w", err)
+		return false, fmt.Sprintf("invalid access token: %s", accessToken), nil
 	}
 
 	launcherUser, launcherVersion, err := m.launcherAuthService.LauncherAuth(c.Request().Context(), accessToken)
 	if errors.Is(err, service.ErrInvalidLauncherSessionAccessToken) {
-		return false, fmt.Errorf("invalid access token: %w", err)
+		return false, "invalid access token", nil
 	}
 	if errors.Is(err, service.ErrLauncherSessionAccessTokenExpired) {
-		return false, fmt.Errorf("access token expired: %w", err)
+		return false, "access token expired", nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to check launcher auth: %w", err)
+		return false, "", fmt.Errorf("failed to check launcher auth: %w", err)
 	}
 
 	c.Set(launcherUserKey, launcherUser)
 	c.Set(launcherVersionKey, launcherVersion)
 
-	return true, nil
+	return true, "", nil
 }

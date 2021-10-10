@@ -59,14 +59,14 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 			statusCode:  http.StatusOK,
 		},
 		{
-			description: "okでないなので401",
+			description: "okでないので401",
 			isOk:        false,
 			statusCode:  http.StatusUnauthorized,
 		},
 		{
 			description:            "CheckLauncherAuthがエラーなので401",
 			isCheckLauncherAuthErr: true,
-			statusCode:             http.StatusUnauthorized,
+			statusCode:             http.StatusInternalServerError,
 		},
 	}
 
@@ -77,15 +77,20 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := echo.New().NewContext(req, rec)
 
-			if testCase.isOk {
-				req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
-				mockLauncherAuthService.
-					EXPECT().
-					LauncherAuth(c.Request().Context(), accessToken).
-					Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, nil)
-			} else if testCase.isCheckLauncherAuthErr {
-				req.Header.Set(echo.HeaderAuthorization, "Basic")
+			var launcherAuthErr error
+			if testCase.isCheckLauncherAuthErr {
+				launcherAuthErr = errors.New("error")
+			} else if testCase.isOk {
+				launcherAuthErr = nil
+			} else {
+				launcherAuthErr = service.ErrInvalidLauncherSessionAccessToken
 			}
+
+			req.Header.Set(echo.HeaderAuthorization, "Bearer "+string(accessToken))
+			mockLauncherAuthService.
+				EXPECT().
+				LauncherAuth(c.Request().Context(), accessToken).
+				Return(&domain.LauncherUser{}, &domain.LauncherVersion{}, launcherAuthErr)
 
 			callChecker := CallChecker{}
 
@@ -119,6 +124,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 		LauncherAuthErr     error
 		setValues           bool
 		ok                  bool
+		message             string
 		isErr               bool
 		err                 error
 	}
@@ -135,46 +141,46 @@ func TestCheckLauncherAuth(t *testing.T) {
 
 	testCases := []test{
 		{
-			description:         "Authorizationヘッダーが空文字なのでエラー",
+			description:         "Authorizationヘッダーが空文字なのでfalse",
 			authorizationHeader: "",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid authorization header: ",
 		},
 		{
-			description:         "AuthorizationヘッダーがBearerトークンでないのでエラー",
+			description:         "AuthorizationヘッダーがBearerトークンでないのでfalse",
 			authorizationHeader: "Basic",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid authorization header: Basic",
 		},
 		{
-			description:         "accessTokenの形式が不正なのでエラー",
+			description:         "accessTokenの形式が不正なのでfalse",
 			authorizationHeader: "Bearer a",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token: a",
 		},
 		{
-			description:         "accessTokenが空文字なのでエラー",
+			description:         "accessTokenが空文字なのでfalse",
 			authorizationHeader: "Bearer ",
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token: ",
 		},
 		{
-			description:         "LauncherAuthがErrInvalidLauncherSessionAccessTokenなのでエラー",
+			description:         "LauncherAuthがErrInvalidLauncherSessionAccessTokenなのでfalse",
 			authorizationHeader: "Bearer " + string(accessToken),
 			executeLauncherAuth: true,
 			accessToken:         accessToken,
 			LauncherAuthErr:     service.ErrInvalidLauncherSessionAccessToken,
 			ok:                  false,
-			isErr:               true,
+			message:             "invalid access token",
 		},
 		{
-			description:         "LauncherAuthがErrLauncherSessionAccessTokenExpiredなのでエラー",
+			description:         "LauncherAuthがErrLauncherSessionAccessTokenExpiredなのでfalse",
 			authorizationHeader: "Bearer " + string(accessToken),
 			executeLauncherAuth: true,
 			accessToken:         accessToken,
 			LauncherAuthErr:     service.ErrLauncherSessionAccessTokenExpired,
 			ok:                  false,
-			isErr:               true,
+			message:             "access token expired",
 		},
 		{
 			description:         "LauncherAuthがエラーなのでエラー",
@@ -219,7 +225,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 					Return(testCase.launcherUser, testCase.launcherVersion, testCase.LauncherAuthErr)
 			}
 
-			ok, err := middleware.checkLauncherAuth(c)
+			ok, message, err := middleware.checkLauncherAuth(c)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -235,6 +241,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 			}
 
 			assert.Equal(t, testCase.ok, ok)
+			assert.Equal(t, testCase.message, message)
 
 			if testCase.setValues {
 				launcherUser, err := getLauncherUser(c)
