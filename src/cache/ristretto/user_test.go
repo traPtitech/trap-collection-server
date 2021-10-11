@@ -283,3 +283,104 @@ func TestGetAllActiveUsers(t *testing.T) {
 		})
 	}
 }
+
+func TestSetAllActiveUsers(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	userCache, err := NewUser()
+	if err != nil {
+		t.Fatalf("failed to create user cache: %v", err)
+	}
+
+	type test struct {
+		description string
+		keyExist    bool
+		beforeValue []*service.UserInfo
+		users       []*service.UserInfo
+		isErr       bool
+		err         error
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(uuid.New()),
+					values.NewTrapMemberName("mazrean"),
+					values.TrapMemberStatusActive,
+				),
+			},
+		},
+		{
+			description: "ユーザー数が500人でもエラーなし",
+			users:       make([]*service.UserInfo, 500),
+		},
+		{
+			description: "元からキーがあっても上書きする",
+			keyExist:    true,
+			beforeValue: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(uuid.New()),
+					values.NewTrapMemberName("mazrean"),
+					values.TrapMemberStatusActive,
+				),
+			},
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(uuid.New()),
+					values.NewTrapMemberName("mazrean"),
+					values.TrapMemberStatusActive,
+				),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		testCase := testCase
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			if testCase.keyExist {
+				ok := userCache.activeUsers.Set(activeUsersKey, testCase.beforeValue, 1)
+				assert.True(t, ok)
+
+				userCache.activeUsers.Wait()
+			}
+
+			err := userCache.SetAllActiveUsers(ctx, testCase.users)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			// キャッシュが設定されるまで待機
+			userCache.activeUsers.Wait()
+
+			// OIDCSessionの期限前なのでキャッシュされている
+			value, ok := userCache.activeUsers.Get(activeUsersKey)
+			assert.True(t, ok)
+			assert.IsType(t, []*service.UserInfo{}, value)
+			actualUsers := value.([]*service.UserInfo)
+
+			for i, user := range testCase.users {
+				if user == nil {
+					assert.Nil(t, actualUsers[i])
+				} else {
+					assert.Equal(t, *actualUsers[i], *user)
+				}
+			}
+		})
+	}
+}
