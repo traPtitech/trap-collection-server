@@ -46,6 +46,8 @@ func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
+	c.Set(sessionContextKey, session)
+
 	return session, nil
 }
 

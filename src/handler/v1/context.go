@@ -3,6 +3,7 @@ package v1
 import (
 	"errors"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 )
@@ -10,6 +11,7 @@ import (
 const (
 	launcherUserKey    = "launcherUser"
 	launcherVersionKey = "launcherVersion"
+	sessionContextKey  = "session"
 )
 
 func getLauncherUser(c echo.Context) (*domain.LauncherUser, error) {
@@ -38,4 +40,18 @@ func getLauncherVersion(c echo.Context) (*domain.LauncherVersion, error) {
 	}
 
 	return launcherVersion, nil
+}
+
+func getSession(c echo.Context) (*sessions.Session, error) {
+	iSession := c.Get(sessionContextKey)
+	if iSession == nil {
+		return nil, errors.New("session is not set")
+	}
+
+	session, ok := iSession.(*sessions.Session)
+	if !ok {
+		return nil, errors.New("invalid session")
+	}
+
+	return session, nil
 }
