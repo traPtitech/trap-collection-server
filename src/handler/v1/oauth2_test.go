@@ -397,6 +397,13 @@ func TestPostLogout(t *testing.T) {
 				}
 
 				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
 			}
 
 			if testCase.executeLogout {

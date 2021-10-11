@@ -112,7 +112,7 @@ func (o *OAuth2) GetGeneratedCode(c echo.Context) (*openapi.InlineResponse200, e
 }
 
 func (o *OAuth2) PostLogout(c echo.Context) error {
-	session, err := o.session.getSession(c)
+	session, err := getSession(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
