@@ -197,3 +197,89 @@ func TestSetMe(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllActiveUsers(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	userCache, err := NewUser()
+	if err != nil {
+		t.Fatalf("failed to create user cache: %v", err)
+	}
+
+	type test struct {
+		description string
+		keyExist    bool
+		valueBroken bool
+		users       []*service.UserInfo
+		isErr       bool
+		err         error
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			keyExist:    true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(uuid.New()),
+					values.NewTrapMemberName("mazrean"),
+					values.TrapMemberStatusActive,
+				),
+			},
+		},
+		{
+			description: "ユーザー数が500人でも問題なし",
+			keyExist:    true,
+			users:       make([]*service.UserInfo, 500),
+		},
+		{
+			description: "キーが存在しないのでErrCacheMiss",
+			keyExist:    false,
+			isErr:       true,
+			err:         cache.ErrCacheMiss,
+		},
+		{
+			// 実際には発生しないが念の為確認
+			description: "値が壊れているのでエラー",
+			keyExist:    true,
+			valueBroken: true,
+			isErr:       true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.keyExist {
+				if testCase.valueBroken {
+					ok := userCache.activeUsers.Set(activeUsersKey, "broken", 8)
+					assert.True(t, ok)
+				} else {
+					ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
+					assert.True(t, ok)
+				}
+
+				userCache.activeUsers.Wait()
+				defer userCache.activeUsers.Clear()
+			}
+
+			users, err := userCache.GetAllActiveUsers(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.users, users)
+		})
+	}
+}
