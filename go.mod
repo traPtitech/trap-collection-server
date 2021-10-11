@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c
+	github.com/dgraph-io/ristretto v0.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.1.1
@@ -21,7 +22,6 @@ require (
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666 // indirect
 	gorm.io/driver/mysql v1.1.2
 	gorm.io/gorm v1.21.15
 )
