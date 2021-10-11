@@ -54,6 +54,7 @@ func (o *OIDC) GetOIDCSession(ctx context.Context, client *domain.OIDCClient, co
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
+	defer res.Body.Close()
 
 	switch res.StatusCode {
 	case http.StatusOK:
@@ -98,6 +99,7 @@ func (o *OIDC) RevokeOIDCSession(ctx context.Context, session *domain.OIDCSessio
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
+	defer res.Body.Close()
 
 	switch res.StatusCode {
 	case http.StatusOK:
