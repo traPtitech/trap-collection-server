@@ -157,3 +157,182 @@ func TestGetMe(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUsers(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserService := mock.NewMockUser(ctrl)
+	session := NewSession("key", "secret")
+
+	userHandler := NewUser(session, mockUserService)
+
+	type test struct {
+		description             string
+		sessionExist            bool
+		authSessionExist        bool
+		accessToken             string
+		expiresAt               time.Time
+		executeGetAllActiveUser bool
+		userInfos               []*service.UserInfo
+		GetAllActiveUserErr     error
+		users                   []*openapi.User
+		isErr                   bool
+		err                     error
+		statusCode              int
+	}
+
+	id1 := uuid.New()
+	id2 := uuid.New()
+
+	testCases := []test{
+		{
+			description:             "特に問題ないのでエラーなし",
+			sessionExist:            true,
+			authSessionExist:        true,
+			accessToken:             "accessToken",
+			expiresAt:               time.Now(),
+			executeGetAllActiveUser: true,
+			userInfos: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(id1),
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+			},
+			users: []*openapi.User{
+				{
+					Id:   id1.String(),
+					Name: "mazrean",
+				},
+			},
+		},
+		{
+			description:             "userが複数でもエラーなし",
+			sessionExist:            true,
+			authSessionExist:        true,
+			accessToken:             "accessToken",
+			expiresAt:               time.Now(),
+			executeGetAllActiveUser: true,
+			userInfos: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(id1),
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+				service.NewUserInfo(
+					values.NewTrapMemberID(id2),
+					"mazrean2",
+					values.TrapMemberStatusActive,
+				),
+			},
+			users: []*openapi.User{
+				{
+					Id:   id1.String(),
+					Name: "mazrean",
+				},
+				{
+					Id:   id2.String(),
+					Name: "mazrean2",
+				},
+			},
+		},
+		{
+			// 実際にはmiddlewareで弾かれるが、念の為確認
+			description:  "sessionが存在しないのでauthSessionも存在せず500",
+			sessionExist: false,
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			// 実際にはmiddlewareで弾かれるが、念の為確認
+			description:      "authSessionが存在しないので500",
+			sessionExist:     true,
+			authSessionExist: false,
+			isErr:            true,
+			statusCode:       http.StatusInternalServerError,
+		},
+		{
+			description:             "GetAllActiveUserがエラーなので500",
+			sessionExist:            true,
+			authSessionExist:        true,
+			accessToken:             "accessToken",
+			expiresAt:               time.Now(),
+			executeGetAllActiveUser: true,
+			GetAllActiveUserErr:     errors.New("error"),
+			isErr:                   true,
+			statusCode:              http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/users/me", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSessionExist {
+					sess.Values[accessTokenSessionKey] = testCase.accessToken
+					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeGetAllActiveUser {
+				mockUserService.
+					EXPECT().
+					GetAllActiveUser(gomock.Any(), gomock.Any()).
+					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
+			}
+
+			users, err := userHandler.GetUsers(c)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, len(testCase.users), len(users))
+			for i, user := range users {
+				assert.Equal(t, *testCase.users[i], *user)
+			}
+		})
+	}
+}
