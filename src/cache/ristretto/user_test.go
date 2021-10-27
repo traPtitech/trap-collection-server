@@ -339,10 +339,7 @@ func TestSetAllActiveUsers(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
-			t.Parallel()
-
 			if testCase.keyExist {
 				ok := userCache.activeUsers.Set(activeUsersKey, testCase.beforeValue, 1)
 				assert.True(t, ok)
