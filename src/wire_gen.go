@@ -49,7 +49,7 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	oidc := traq.NewOIDC(client, traQBaseURL)
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
-	oAuth2 := v1.NewOAuth2(session, v1OIDC)
+	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
 	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
 	api := v1.NewAPI(user2, v1LauncherAuth, oAuth2, middleware, session)
 	return api, nil

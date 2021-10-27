@@ -47,21 +47,8 @@ paths:
       description: OAuthのcode_challengeとかの取得
       operationId: getGeneratedCode
       responses:
-        "200":
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code_challenge:
-                    type: string
-                  code_challenge_method:
-                    type: string
-                  client_id:
-                    type: string
-                  response_type:
-                    type: string
+        "303":
+          description: 成功。traQの認可画面に遷移する。
         "500":
           description: 失敗
   /oauth2/logout:
