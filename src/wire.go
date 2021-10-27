@@ -10,6 +10,8 @@ import (
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/auth/traQ"
+	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/cache/ristretto"
 	v1Handler "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
@@ -33,9 +35,13 @@ var (
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
 
 	oidcAuthBind = wire.Bind(new(auth.OIDC), new(*traq.OIDC))
+	userAuthBind = wire.Bind(new(auth.User), new(*traq.User))
+
+	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
 	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
+	userServiceBind         = wire.Bind(new(service.User), new(*v1Service.User))
 
 	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
 	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
@@ -58,19 +64,26 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		launcherUserRepositoryBind,
 		launcherVersionRepositoryBind,
 		oidcAuthBind,
+		userAuthBind,
+		userCacheBind,
 		launcherAuthServiceBind,
 		oidcServiceBind,
+		userServiceBind,
 		gorm2.NewDB,
 		gorm2.NewLauncherSession,
 		gorm2.NewLauncherUser,
 		gorm2.NewLauncherVersion,
 		traq.NewOIDC,
+		traq.NewUser,
+		ristretto.NewUser,
 		v1Service.NewLauncherAuth,
 		v1Service.NewOIDC,
+		v1Service.NewUser,
 		v1Handler.NewAPI,
 		v1Handler.NewSession,
 		v1Handler.NewLauncherAuth,
 		v1Handler.NewOAuth2,
+		v1Handler.NewUser,
 		v1Handler.NewMiddleware,
 	)
 	return nil, nil

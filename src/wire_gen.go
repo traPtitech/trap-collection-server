@@ -11,6 +11,8 @@ import (
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/auth/traQ"
+	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/cache/ristretto"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
@@ -22,6 +24,18 @@ import (
 // Injectors from wire.go:
 
 func InjectAPI(config *Config) (*v1.API, error) {
+	sessionKey := config.SessionKey
+	sessionSecret := config.SessionSecret
+	session := v1.NewSession(sessionKey, sessionSecret)
+	client := config.HttpClient
+	traQBaseURL := config.TraQBaseURL
+	user := traq.NewUser(client, traQBaseURL)
+	ristrettoUser, err := ristretto.NewUser()
+	if err != nil {
+		return nil, err
+	}
+	v1User := v1_2.NewUser(user, ristrettoUser)
+	user2 := v1.NewUser(session, v1User)
 	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
 	if err != nil {
@@ -32,17 +46,12 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
-	sessionKey := config.SessionKey
-	sessionSecret := config.SessionSecret
-	session := v1.NewSession(sessionKey, sessionSecret)
-	client := config.HttpClient
-	traQBaseURL := config.TraQBaseURL
 	oidc := traq.NewOIDC(client, traQBaseURL)
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
 	oAuth2 := v1.NewOAuth2(session, v1OIDC)
 	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
-	api := v1.NewAPI(v1LauncherAuth, oAuth2, middleware, session)
+	api := v1.NewAPI(user2, v1LauncherAuth, oAuth2, middleware, session)
 	return api, nil
 }
 
@@ -64,9 +73,13 @@ var (
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
 
 	oidcAuthBind = wire.Bind(new(auth.OIDC), new(*traq.OIDC))
+	userAuthBind = wire.Bind(new(auth.User), new(*traq.User))
+
+	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
+	userServiceBind         = wire.Bind(new(service.User), new(*v1_2.User))
 
 	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
 	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
