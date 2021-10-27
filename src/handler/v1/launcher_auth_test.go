@@ -384,11 +384,11 @@ func TestDeleteProductKey(t *testing.T) {
 			statusCode:              http.StatusInternalServerError,
 		},
 		{
-			description:             "RevokeProductKeyがErrInvalidLauncherProductKeyなので400",
+			description:             "RevokeProductKeyがErrInvalidLauncherUserなので400",
 			requestProductKeyID:     uuid.UUID(launcherUserID).String(),
 			executeRevokeProductKey: true,
 			launcherUserID:          launcherUserID,
-			RevokeProductKeyErr:     service.ErrInvalidLauncherUserProductKey,
+			RevokeProductKeyErr:     service.ErrInvalidLauncherUser,
 			isErr:                   true,
 			statusCode:              http.StatusBadRequest,
 		},
