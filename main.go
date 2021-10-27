@@ -91,7 +91,7 @@ func main() {
 		panic(errors.New("ENV CLIENT_SECRET IS NULL"))
 	}
 
-	traQBaseURL, err := url.Parse("http://q.trap.jp/api/v3")
+	traQBaseURL, err := url.Parse("https://q.trap.jp/api/v3")
 	if err != nil {
 		panic(fmt.Errorf("failed to parse traQBaseURL: %w", err))
 	}
