@@ -177,15 +177,15 @@ func TestPostKeyGenerate(t *testing.T) {
 			productKeys, err := launcherAuthHandler.PostKeyGenerate(&testCase.request)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if testCase.statusCode != 0 {
+				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
 				} else if !errors.Is(err, testCase.err) {
 					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
 				}
@@ -306,15 +306,15 @@ func TestPostLauncherLogin(t *testing.T) {
 			token, err := launcherAuthHandler.PostLauncherLogin(&testCase.request)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if testCase.statusCode != 0 {
+				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
 				} else if !errors.Is(err, testCase.err) {
 					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
 				}
@@ -406,15 +406,15 @@ func TestDeleteProductKey(t *testing.T) {
 			err := launcherAuthHandler.DeleteProductKey(testCase.requestProductKeyID)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if testCase.statusCode != 0 {
+				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
 				} else if !errors.Is(err, testCase.err) {
 					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
 				}
@@ -561,15 +561,15 @@ func TestGetProductKeys(t *testing.T) {
 			actualProductKeys, err := launcherAuthHandler.GetProductKeys(testCase.requestLauncherVersionID)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if testCase.statusCode != 0 {
+				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
 				} else if !errors.Is(err, testCase.err) {
 					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
 				}
