@@ -385,10 +385,11 @@ func TestPostLogout(t *testing.T) {
 			executeLogout:    true,
 		},
 		{
-			description:  "sessionが存在しないのでauthSessionも存在せず400",
+			// middlewareで弾かれるので、ここでは500を返す
+			description:  "sessionが存在しないので500",
 			sessionExist: false,
 			isErr:        true,
-			statusCode:   http.StatusBadRequest,
+			statusCode:   http.StatusInternalServerError,
 		},
 		{
 			description:      "authSessionが存在しないので400",
