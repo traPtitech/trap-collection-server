@@ -4,13 +4,14 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -26,7 +27,11 @@ func TestCallback(t *testing.T) {
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	oauth := NewOAuth2(session, mockOIDCService)
+	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
+	if err != nil {
+		t.Errorf("Error parsing base URL: %v", err)
+	}
+	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
 
 	type test struct {
 		description       string
@@ -172,18 +177,28 @@ func TestGetGeneratedCode(t *testing.T) {
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	oauth := NewOAuth2(session, mockOIDCService)
+	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
+	if err != nil {
+		t.Errorf("Error parsing base URL: %v", err)
+	}
+	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
 
 	type test struct {
-		description  string
-		client       *domain.OIDCClient
-		authState    *domain.OIDCAuthState
-		AuthorizeErr error
-		sessionExist bool
-		response     openapi.InlineResponse200
-		isErr        bool
-		err          error
-		statusCode   int
+		description         string
+		client              *domain.OIDCClient
+		authState           *domain.OIDCAuthState
+		AuthorizeErr        error
+		sessionExist        bool
+		scheme              string
+		host                string
+		path                string
+		clientID            string
+		codeChallenge       string
+		codeChallengeMethod string
+		responseType        string
+		isErr               bool
+		err                 error
+		statusCode          int
 	}
 
 	codeVerifier, err := values.NewOIDCCodeVerifier()
@@ -205,13 +220,16 @@ func TestGetGeneratedCode(t *testing.T) {
 				values.OIDCCodeChallengeMethodSha256,
 				codeVerifier,
 			),
-			sessionExist: true,
-			response: openapi.InlineResponse200{
-				CodeChallenge:       string(codeChallenge),
-				CodeChallengeMethod: "S256",
-				ClientId:            "clientID",
-				ResponseType:        "code",
-			},
+			sessionExist:        true,
+			isErr:               true,
+			statusCode:          http.StatusSeeOther,
+			scheme:              "https",
+			host:                "q.trap.jp",
+			path:                "/api/v3/oauth2/authorize",
+			clientID:            "clientID",
+			codeChallenge:       string(codeChallenge),
+			codeChallengeMethod: "S256",
+			responseType:        "code",
 		},
 		{
 			description:  "Authorizeがエラーなので500",
@@ -241,13 +259,16 @@ func TestGetGeneratedCode(t *testing.T) {
 				values.OIDCCodeChallengeMethodSha256,
 				codeVerifier,
 			),
-			sessionExist: false,
-			response: openapi.InlineResponse200{
-				CodeChallenge:       string(codeChallenge),
-				CodeChallengeMethod: "S256",
-				ClientId:            "clientID",
-				ResponseType:        "code",
-			},
+			sessionExist:        false,
+			isErr:               true,
+			statusCode:          http.StatusSeeOther,
+			scheme:              "https",
+			host:                "q.trap.jp",
+			path:                "/api/v3/oauth2/authorize",
+			clientID:            "clientID",
+			codeChallenge:       string(codeChallenge),
+			codeChallengeMethod: "S256",
+			responseType:        "code",
 		},
 	}
 
@@ -277,18 +298,32 @@ func TestGetGeneratedCode(t *testing.T) {
 				Authorize(gomock.Any()).
 				Return(testCase.client, testCase.authState, testCase.AuthorizeErr)
 
-			response, err := oauth.GetGeneratedCode(c)
+			err := oauth.GetGeneratedCode(c)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if testCase.statusCode != 0 {
+				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
+
+						strRedirectURL := c.Response().Header().Get("Location")
+						redirectURL, err := url.Parse(strRedirectURL)
+						if err != nil {
+							t.Fatalf("failed to parse redirectURL: %v", err)
+						}
+
+						assert.Equal(t, testCase.scheme, redirectURL.Scheme)
+						assert.Equal(t, testCase.host, redirectURL.Host)
+						assert.Equal(t, testCase.path, redirectURL.Path)
+						assert.Equal(t, testCase.clientID, redirectURL.Query().Get("client_id"))
+						assert.Equal(t, testCase.codeChallenge, redirectURL.Query().Get("code_challenge"))
+						assert.Equal(t, testCase.codeChallengeMethod, redirectURL.Query().Get("code_challenge_method"))
+						assert.Equal(t, testCase.responseType, redirectURL.Query().Get("response_type"))
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
 				} else if !errors.Is(err, testCase.err) {
 					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
 				}
@@ -298,8 +333,6 @@ func TestGetGeneratedCode(t *testing.T) {
 			if err != nil {
 				return
 			}
-
-			assert.Equal(t, testCase.response, *response)
 
 			setCookieHeader(c)
 
@@ -323,7 +356,11 @@ func TestPostLogout(t *testing.T) {
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	oauth := NewOAuth2(session, mockOIDCService)
+	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
+	if err != nil {
+		t.Errorf("Error parsing base URL: %v", err)
+	}
+	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
 
 	type test struct {
 		description      string
