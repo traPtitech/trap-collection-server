@@ -13,5 +13,5 @@ linters:
     - ineffassign
     - deadcode
     - typecheck
-    - golint
+    - revive
     - gofmt
