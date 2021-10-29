@@ -1,7 +1,16 @@
 package v1
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameAuth struct {
@@ -23,4 +32,54 @@ func NewGameAuth(
 		gameManagementRoleRepository: gameManagementRoleRepository,
 		userUtils:                    userUtils,
 	}
+}
+
+func (ga *GameAuth) AddGameCollaborators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, userIDs []values.TraPMemberID) error {
+	err := ga.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := ga.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		users, err := ga.userUtils.getAllActiveUser(ctx, session)
+		if err != nil {
+			return fmt.Errorf("failed to get active users: %v", err)
+		}
+
+		userMap := make(map[values.TraPMemberID]struct{}, len(users))
+		for _, user := range users {
+			userMap[user.GetID()] = struct{}{}
+		}
+
+		invalidUserIDs := []string{}
+		for _, userID := range userIDs {
+			if _, ok := userMap[userID]; !ok {
+				invalidUserIDs = append(invalidUserIDs, uuid.UUID(userID).String())
+			}
+		}
+
+		if len(invalidUserIDs) != 0 {
+			return fmt.Errorf("invalid userID(%s): %w", strings.Join(invalidUserIDs, ", "), service.ErrInvalidUserID)
+		}
+
+		err = ga.gameManagementRoleRepository.AddGameManagementRoles(
+			ctx,
+			gameID,
+			userIDs,
+			values.GameManagementRoleCollaborator,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to add game management roles: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
 }
