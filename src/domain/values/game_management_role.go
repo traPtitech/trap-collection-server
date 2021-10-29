@@ -18,3 +18,11 @@ const (
 	*/
 	GameManagementRoleCollaborator
 )
+
+func (gmr GameManagementRole) HaveGameUpdatePermission() bool {
+	return gmr == GameManagementRoleAdministrator || gmr == GameManagementRoleCollaborator
+}
+
+func (gmr GameManagementRole) HaveUpdateManagementRolePermission() bool {
+	return gmr == GameManagementRoleAdministrator
+}
