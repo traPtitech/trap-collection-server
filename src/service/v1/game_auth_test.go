@@ -333,3 +333,118 @@ func TestUpdateGameManagementRole(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveGameCollaborator(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameAuthService := NewGameAuth(
+		mockDB,
+		mockGameRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
+
+	type test struct {
+		description                     string
+		gameID                          values.GameID
+		userID                          values.TraPMemberID
+		nowRole                         values.GameManagementRole
+		GetGameManagementRoleErr        error
+		executeRemoveGameManagementRole bool
+		RemoveGameManagementRoleErr     error
+		isErr                           bool
+		err                             error
+	}
+
+	testCases := []test{
+		{
+			description:                     "特に問題ないのでエラーなし",
+			gameID:                          values.NewGameID(),
+			userID:                          values.NewTrapMemberID(uuid.New()),
+			nowRole:                         values.GameManagementRoleCollaborator,
+			executeRemoveGameManagementRole: true,
+		},
+		{
+			description:              "GetGameManagementRoleがErrRecordNotFoundなのでエラー",
+			gameID:                   values.NewGameID(),
+			userID:                   values.NewTrapMemberID(uuid.New()),
+			nowRole:                  values.GameManagementRoleCollaborator,
+			GetGameManagementRoleErr: repository.ErrRecordNotFound,
+			isErr:                    true,
+			err:                      service.ErrInvalidRole,
+		},
+		{
+			description:              "GetGameManagementRoleがエラー(ErrRecordNotFound以外)なのでエラー",
+			gameID:                   values.NewGameID(),
+			userID:                   values.NewTrapMemberID(uuid.New()),
+			nowRole:                  values.GameManagementRoleCollaborator,
+			GetGameManagementRoleErr: errors.New("error"),
+			isErr:                    true,
+		},
+		{
+			description: "roleがCollaboratorでないのでエラー",
+			gameID:      values.NewGameID(),
+			userID:      values.NewTrapMemberID(uuid.New()),
+			nowRole:     values.GameManagementRoleAdministrator,
+			isErr:       true,
+			err:         service.ErrInvalidRole,
+		},
+		{
+			description:                     "RemoveGameCollaboratorがエラーなのでエラー",
+			gameID:                          values.NewGameID(),
+			userID:                          values.NewTrapMemberID(uuid.New()),
+			nowRole:                         values.GameManagementRoleCollaborator,
+			executeRemoveGameManagementRole: true,
+			RemoveGameManagementRoleErr:     errors.New("error"),
+			isErr:                           true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameManagementRoleRepository.
+				EXPECT().
+				GetGameManagementRole(gomock.Any(), testCase.gameID, testCase.userID, repository.LockTypeRecord).
+				Return(testCase.nowRole, testCase.GetGameManagementRoleErr)
+
+			if testCase.executeRemoveGameManagementRole {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					RemoveGameManagementRole(
+						gomock.Any(),
+						testCase.gameID,
+						testCase.userID,
+					).Return(testCase.RemoveGameManagementRoleErr)
+			}
+
+			err := gameAuthService.RemoveGameCollaborator(
+				ctx,
+				testCase.gameID,
+				testCase.userID,
+			)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
