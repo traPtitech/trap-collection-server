@@ -926,3 +926,177 @@ func TestUpdateGameAuth(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateGameManagementRoleAuth(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameAuthService := NewGameAuth(
+		mockDB,
+		mockGameRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
+
+	type test struct {
+		description                  string
+		gameID                       values.GameID
+		myInfo                       *service.UserInfo
+		isGetMeErr                   bool
+		executeGetGame               bool
+		GetGameErr                   error
+		executeGetGameManagementRole bool
+		role                         values.GameManagementRole
+		GetGameManagementRoleErr     error
+		isErr                        bool
+		err                          error
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame:               true,
+			executeGetGameManagementRole: true,
+			role:                         values.GameManagementRoleAdministrator,
+		},
+		{
+			description: "getMeがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			isGetMeErr:  true,
+			isErr:       true,
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでエラー",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame: true,
+			GetGameErr:     repository.ErrRecordNotFound,
+			isErr:          true,
+			err:            service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame: true,
+			GetGameErr:     errors.New("error"),
+			isErr:          true,
+		},
+		{
+			description: "GetGameManagementRoleがErrRecordNotFoundなのでエラー",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame:               true,
+			executeGetGameManagementRole: true,
+			GetGameManagementRoleErr:     repository.ErrRecordNotFound,
+			isErr:                        true,
+			err:                          service.ErrForbidden,
+		},
+		{
+			description: "GetGameManagementRoleがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame:               true,
+			executeGetGameManagementRole: true,
+			GetGameManagementRoleErr:     errors.New("error"),
+			isErr:                        true,
+		},
+		{
+			description: "roleがAdministrator以外なのでエラー",
+			gameID:      values.NewGameID(),
+			myInfo: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGame:               true,
+			executeGetGameManagementRole: true,
+			role:                         values.GameManagementRoleCollaborator,
+			isErr:                        true,
+			err:                          service.ErrForbidden,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			accessToken := values.NewOIDCAccessToken("access token")
+			session := domain.NewOIDCSession(accessToken, time.Now().Add(time.Second))
+
+			if testCase.isGetMeErr {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), accessToken).
+					Return(nil, cache.ErrCacheMiss)
+				mockUserAuth.
+					EXPECT().
+					GetMe(gomock.Any(), session).
+					Return(nil, errors.New("error"))
+			} else {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), accessToken).
+					Return(testCase.myInfo, nil)
+			}
+
+			if testCase.executeGetGame {
+				mockGameRepository.
+					EXPECT().
+					GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+					Return(nil, testCase.GetGameErr)
+			}
+
+			if testCase.executeGetGameManagementRole {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					GetGameManagementRole(gomock.Any(), testCase.gameID, testCase.myInfo.GetID(), repository.LockTypeNone).
+					Return(testCase.role, testCase.GetGameManagementRoleErr)
+			}
+
+			err := gameAuthService.UpdateGameManagementRoleAuth(ctx, session, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
