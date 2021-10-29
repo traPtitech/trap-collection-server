@@ -2,8 +2,11 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"gorm.io/gorm"
 )
 
@@ -52,6 +55,53 @@ func setupRoleTypeTable(db *gorm.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role type: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameID values.GameID, userIDs []values.TraPMemberID, role values.GameManagementRole) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	gormDB, err := gmr.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var roleTypeName string
+	switch role {
+	case values.GameManagementRoleAdministrator:
+		roleTypeName = gameManagementRoleTypeAdministrator
+	case values.GameManagementRoleCollaborator:
+		roleTypeName = gameManagementRoleTypeCollaborator
+	default:
+		return errors.New("invalid role")
+	}
+
+	var roleType GameManagementRoleTypeTable
+	err = gormDB.
+		Where("name = ?", roleTypeName).
+		Select("id").
+		First(&roleType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get role type: %w", err)
+	}
+	roleTypeID := roleType.ID
+
+	gameManagementRoles := make([]*GameManagementRoleTable, 0, len(userIDs))
+	for _, userID := range userIDs {
+		gameManagementRoles = append(gameManagementRoles, &GameManagementRoleTable{
+			GameID:     uuid.UUID(gameID),
+			UserID:     uuid.UUID(userID),
+			RoleTypeID: roleTypeID,
+		})
+	}
+
+	err = gormDB.Create(&gameManagementRoles).Error
+	if err != nil {
+		return fmt.Errorf("failed to create game management roles: %w", err)
 	}
 
 	return nil
