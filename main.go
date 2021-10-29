@@ -25,7 +25,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/router"
-	sess "github.com/traPtitech/trap-collection-server/session"
 	"github.com/traPtitech/trap-collection-server/src"
 )
 
@@ -49,11 +48,6 @@ func main() {
 	secret, ok := os.LookupEnv("SESSION_SECRET")
 	if !ok {
 		panic("SESSION_SECRET is not set")
-	}
-
-	sess, err := sess.NewSession(secret)
-	if err != nil {
-		panic(fmt.Errorf("Failed In Session Constructor: %w", err))
 	}
 
 	e := echo.New()
@@ -110,7 +104,7 @@ func main() {
 
 	newAPI.Session.Use(e)
 
-	api, err := router.NewAPI(newAPI, sess, env, clientID, clientSecret)
+	api, err := router.NewAPI(newAPI, env, clientID, clientSecret)
 	if err != nil {
 		panic(err)
 	}

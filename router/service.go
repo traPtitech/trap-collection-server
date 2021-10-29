@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
-	"github.com/traPtitech/trap-collection-server/session"
 	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/storage"
 )
@@ -24,7 +23,7 @@ type Service struct {
 }
 
 // NewAPI Apiのコンストラクタ
-func NewAPI(newAPI *v1.API, sess session.Session, env string, clientID string, clientSecret string) (*openapi.Api, error) {
+func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*openapi.Api, error) {
 	db := new(model.DB)
 
 	var str storage.Storage
