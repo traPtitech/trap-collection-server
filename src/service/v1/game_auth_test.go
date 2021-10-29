@@ -448,3 +448,305 @@ func TestRemoveGameCollaborator(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameManagers(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameAuthService := NewGameAuth(
+		mockDB,
+		mockGameRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
+
+	type test struct {
+		description                    string
+		gameID                         values.GameID
+		GetGameErr                     error
+		executeGetGameManagersByGameID bool
+		userIDAndRoles                 []*repository.UserIDAndManagementRole
+		GetGameManagersByGameIDErr     error
+		executeGetAllActiveUser        bool
+		users                          []*service.UserInfo
+		isGetAllActiveUserErr          bool
+		gameManagers                   []*service.GameManager
+		isErr                          bool
+		err                            error
+	}
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+
+	testCases := []test{
+		{
+			description:                    "特に問題ないのでエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					userID1,
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+			},
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+			},
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでエラー",
+			gameID:      values.NewGameID(),
+			GetGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			GetGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:                    "GetGameManagersByGameIDがエラーなのでエラー",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			GetGameManagersByGameIDErr:     errors.New("error"),
+			isErr:                          true,
+		},
+		{
+			description:                    "GetAllActiveUserがエラーなのでエラー",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			isGetAllActiveUserErr:   true,
+			isErr:                   true,
+		},
+		{
+			description:                    "roleのないユーザーが存在いてもエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					userID1,
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+				service.NewUserInfo(
+					values.NewTrapMemberID(uuid.New()),
+					"mazrean1",
+					values.TrapMemberStatusActive,
+				),
+			},
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+			},
+		},
+		{
+			// 凍結されたユーザーがroleに含まれている可能性があるため
+			description:                    "存在しないユーザーが存在してもエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID: values.NewTrapMemberID(uuid.New()),
+					Role:   values.GameManagementRoleCollaborator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					userID1,
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+			},
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+			},
+		},
+		{
+			// 実際にはまずあり得ないが、念の為確認
+			description:                    "roleを持つユーザーが存在しなくてもエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles:                 []*repository.UserIDAndManagementRole{},
+			executeGetAllActiveUser:        true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					userID1,
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+			},
+			gameManagers: []*service.GameManager{},
+		},
+		{
+			// 実際にはまずあり得ないが、念の為確認
+			description:                    "ユーザーが存在しなくてもエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			users:                   []*service.UserInfo{},
+			gameManagers:            []*service.GameManager{},
+		},
+		{
+			description:                    "Managerが複数いてもエラーなし",
+			gameID:                         values.NewGameID(),
+			executeGetGameManagersByGameID: true,
+			userIDAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID: userID2,
+					Role:   values.GameManagementRoleCollaborator,
+				},
+			},
+			executeGetAllActiveUser: true,
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					userID1,
+					"mazrean",
+					values.TrapMemberStatusActive,
+				),
+				service.NewUserInfo(
+					userID2,
+					"mazrean1",
+					values.TrapMemberStatusActive,
+				),
+			},
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID:     userID2,
+					UserName:   "mazrean1",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleCollaborator,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			session := &domain.OIDCSession{}
+
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.GetGameErr)
+
+			if testCase.executeGetGameManagersByGameID {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					GetGameManagersByGameID(gomock.Any(), testCase.gameID).
+					Return(testCase.userIDAndRoles, testCase.GetGameManagersByGameIDErr)
+			}
+
+			if testCase.executeGetAllActiveUser {
+				if testCase.isGetAllActiveUserErr {
+					mockUserCache.
+						EXPECT().
+						GetAllActiveUsers(gomock.Any()).
+						Return(nil, cache.ErrCacheMiss)
+					mockUserAuth.
+						EXPECT().
+						GetAllActiveUsers(gomock.Any(), session).
+						Return(nil, errors.New("error"))
+				} else {
+					mockUserCache.
+						EXPECT().
+						GetAllActiveUsers(gomock.Any()).
+						Return(testCase.users, nil)
+				}
+			}
+
+			gameManagers, err := gameAuthService.GetGameManagers(ctx, session, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, gameManagers, len(testCase.gameManagers))
+			for i, gameManager := range gameManagers {
+				assert.Equal(t, testCase.gameManagers[i].UserID, gameManager.UserID)
+				assert.Equal(t, testCase.gameManagers[i].UserName, gameManager.UserName)
+				assert.Equal(t, testCase.gameManagers[i].UserStatus, gameManager.UserStatus)
+				assert.Equal(t, testCase.gameManagers[i].Role, gameManager.Role)
+			}
+		})
+	}
+}
