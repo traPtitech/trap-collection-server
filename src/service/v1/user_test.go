@@ -28,7 +28,9 @@ func TestGetMe(t *testing.T) {
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
-	userService := NewUser(mockUserAuth, mockUserCache)
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	userService := NewUser(userUtils)
 
 	type test struct {
 		description      string
@@ -141,7 +143,9 @@ func TestGetAllActiveUser(t *testing.T) {
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
-	userService := NewUser(mockUserAuth, mockUserCache)
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	userService := NewUser(userUtils)
 
 	type test struct {
 		description                  string
