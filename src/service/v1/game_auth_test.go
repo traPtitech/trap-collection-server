@@ -210,3 +210,126 @@ func TestAddGameCollaborators(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateGameManagementRole(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameAuthService := NewGameAuth(
+		mockDB,
+		mockGameRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
+
+	type test struct {
+		description                     string
+		gameID                          values.GameID
+		userID                          values.TraPMemberID
+		role                            values.GameManagementRole
+		nowRole                         values.GameManagementRole
+		GetGameManagementRoleErr        error
+		executeUpdateGameManagementRole bool
+		UpdateGameManagementRoleErr     error
+		isErr                           bool
+		err                             error
+	}
+
+	testCases := []test{
+		{
+			description:                     "特に問題ないのでエラーなし",
+			gameID:                          values.NewGameID(),
+			userID:                          values.NewTrapMemberID(uuid.New()),
+			role:                            values.GameManagementRoleCollaborator,
+			nowRole:                         values.GameManagementRoleAdministrator,
+			executeUpdateGameManagementRole: true,
+		},
+		{
+			description:              "GetGameManagementRoleがErrRecordNotFoundなのでエラー",
+			gameID:                   values.NewGameID(),
+			userID:                   values.NewTrapMemberID(uuid.New()),
+			role:                     values.GameManagementRoleCollaborator,
+			nowRole:                  values.GameManagementRoleAdministrator,
+			GetGameManagementRoleErr: repository.ErrRecordNotFound,
+			isErr:                    true,
+			err:                      service.ErrInvalidRole,
+		},
+		{
+			description:              "GetGameManagementRoleがエラー(ErrRecordNotFound)なのでエラー",
+			gameID:                   values.NewGameID(),
+			userID:                   values.NewTrapMemberID(uuid.New()),
+			role:                     values.GameManagementRoleCollaborator,
+			nowRole:                  values.GameManagementRoleAdministrator,
+			GetGameManagementRoleErr: errors.New("error"),
+			isErr:                    true,
+		},
+		{
+			description: "roleが既に指定通りなのでエラー",
+			gameID:      values.NewGameID(),
+			userID:      values.NewTrapMemberID(uuid.New()),
+			role:        values.GameManagementRoleCollaborator,
+			nowRole:     values.GameManagementRoleCollaborator,
+			isErr:       true,
+			err:         service.ErrNoGameManagementRoleUpdated,
+		},
+		{
+			description:                     "UpdateGameManagementRoleがエラーなのでエラー",
+			gameID:                          values.NewGameID(),
+			userID:                          values.NewTrapMemberID(uuid.New()),
+			role:                            values.GameManagementRoleCollaborator,
+			nowRole:                         values.GameManagementRoleAdministrator,
+			executeUpdateGameManagementRole: true,
+			UpdateGameManagementRoleErr:     errors.New("error"),
+			isErr:                           true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameManagementRoleRepository.
+				EXPECT().
+				GetGameManagementRole(gomock.Any(), testCase.gameID, testCase.userID, repository.LockTypeRecord).
+				Return(testCase.nowRole, testCase.GetGameManagementRoleErr)
+
+			if testCase.executeUpdateGameManagementRole {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					UpdateGameManagementRole(
+						gomock.Any(),
+						testCase.gameID,
+						testCase.userID,
+						testCase.role,
+					).Return(testCase.UpdateGameManagementRoleErr)
+			}
+
+			err := gameAuthService.UpdateGameManagementRole(
+				ctx,
+				testCase.gameID,
+				testCase.userID,
+				testCase.role,
+			)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
