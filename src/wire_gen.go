@@ -34,7 +34,8 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	if err != nil {
 		return nil, err
 	}
-	v1User := v1_2.NewUser(user, ristrettoUser)
+	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
+	v1User := v1_2.NewUser(userUtils)
 	user2 := v1.NewUser(session, v1User)
 	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
