@@ -79,6 +79,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Service.NewLauncherAuth,
 		v1Service.NewOIDC,
 		v1Service.NewUser,
+		v1Service.NewUserUtils,
 		v1Handler.NewAPI,
 		v1Handler.NewSession,
 		v1Handler.NewLauncherAuth,
