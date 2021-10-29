@@ -221,3 +221,32 @@ func (ga *GameAuth) UpdateGameAuth(ctx context.Context, session *domain.OIDCSess
 
 	return nil
 }
+
+func (ga *GameAuth) UpdateGameManagementRoleAuth(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) error {
+	myInfo, err := ga.userUtils.getMe(ctx, session)
+	if err != nil {
+		return fmt.Errorf("failed to get me: %w", err)
+	}
+
+	_, err = ga.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return service.ErrInvalidGameID
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get game: %w", err)
+	}
+
+	role, err := ga.gameManagementRoleRepository.GetGameManagementRole(ctx, gameID, myInfo.GetID(), repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return service.ErrForbidden
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get game management role: %w", err)
+	}
+
+	if !role.HaveUpdateManagementRolePermission() {
+		return service.ErrForbidden
+	}
+
+	return nil
+}
