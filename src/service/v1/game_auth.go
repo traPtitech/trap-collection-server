@@ -83,3 +83,36 @@ func (ga *GameAuth) AddGameCollaborators(ctx context.Context, session *domain.OI
 
 	return nil
 }
+
+func (ga *GameAuth) UpdateGameManagementRole(ctx context.Context, gameID values.GameID, userID values.TraPMemberID, role values.GameManagementRole) error {
+	err := ga.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		nowRole, err := ga.gameManagementRoleRepository.GetGameManagementRole(
+			ctx,
+			gameID,
+			userID,
+			repository.LockTypeRecord,
+		)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidRole
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game management role: %w", err)
+		}
+
+		if role == nowRole {
+			return service.ErrNoGameManagementRoleUpdated
+		}
+
+		err = ga.gameManagementRoleRepository.UpdateGameManagementRole(ctx, gameID, userID, role)
+		if err != nil {
+			return fmt.Errorf("failed to update game management role: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
