@@ -149,3 +149,46 @@ func (ga *GameAuth) RemoveGameCollaborator(ctx context.Context, gameID values.Ga
 
 	return nil
 }
+
+func (ga *GameAuth) GetGameManagers(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) ([]*service.GameManager, error) {
+	_, err := ga.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	userIDAndRoles, err := ga.gameManagementRoleRepository.GetGameManagersByGameID(ctx, gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game managers: %w", err)
+	}
+
+	users, err := ga.userUtils.getAllActiveUser(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active users: %v", err)
+	}
+
+	userMap := make(map[values.TraPMemberID]*service.UserInfo, len(users))
+	for _, user := range users {
+		userMap[user.GetID()] = user
+	}
+
+	gameManagers := make([]*service.GameManager, 0, len(userIDAndRoles))
+	for _, userIDAndRole := range userIDAndRoles {
+		user, ok := userMap[userIDAndRole.UserID]
+		if !ok {
+			// 凍結された管理者がいる可能性があるので、エラーにはしない
+			continue
+		}
+
+		gameManagers = append(gameManagers, &service.GameManager{
+			UserID:     user.GetID(),
+			UserName:   user.GetName(),
+			UserStatus: user.GetStatus(),
+			Role:       userIDAndRole.Role,
+		})
+	}
+
+	return gameManagers, nil
+}
