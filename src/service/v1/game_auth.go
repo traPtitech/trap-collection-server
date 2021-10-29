@@ -116,3 +116,36 @@ func (ga *GameAuth) UpdateGameManagementRole(ctx context.Context, gameID values.
 
 	return nil
 }
+
+func (ga *GameAuth) RemoveGameCollaborator(ctx context.Context, gameID values.GameID, userID values.TraPMemberID) error {
+	err := ga.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		role, err := ga.gameManagementRoleRepository.GetGameManagementRole(
+			ctx,
+			gameID,
+			userID,
+			repository.LockTypeRecord,
+		)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidRole
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game management role: %w", err)
+		}
+
+		if role != values.GameManagementRoleCollaborator {
+			return service.ErrInvalidRole
+		}
+
+		err = ga.gameManagementRoleRepository.RemoveGameManagementRole(ctx, gameID, userID)
+		if err != nil {
+			return fmt.Errorf("failed to remove game management role: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
