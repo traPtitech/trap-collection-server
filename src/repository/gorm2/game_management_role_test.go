@@ -591,3 +591,203 @@ func TestUpdateGameManagementRole(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveGameManagementRole(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
+	if err != nil {
+		t.Fatalf("failed to create game management role repository: %+v\n", err)
+	}
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		userID      values.TraPMemberID
+		beforeGames []GameTable
+		beforeRoles []GameManagementRoleTable
+		expectRoles []GameManagementRoleTable
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+	userID3 := values.NewTrapMemberID(uuid.New())
+	userID4 := values.NewTrapMemberID(uuid.New())
+	userID5 := values.NewTrapMemberID(uuid.New())
+
+	var roleTypes []*GameManagementRoleTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&roleTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	roleTypeMap := make(map[string]int, len(roleTypes))
+	for _, roleType := range roleTypes {
+		roleTypeMap[roleType.Name] = roleType.ID
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			gameID:      gameID1,
+			userID:      userID1,
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			beforeRoles: []GameManagementRoleTable{
+				{
+					GameID:     uuid.UUID(gameID1),
+					UserID:     uuid.UUID(userID1),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+				},
+			},
+			expectRoles: []GameManagementRoleTable{},
+		},
+		{
+			description: "削除対象以外のユーザーのroleが存在しても問題なし",
+			gameID:      gameID2,
+			userID:      userID2,
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			beforeRoles: []GameManagementRoleTable{
+				{
+					GameID:     uuid.UUID(gameID2),
+					UserID:     uuid.UUID(userID2),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+				{
+					GameID:     uuid.UUID(gameID2),
+					UserID:     uuid.UUID(userID3),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+			},
+			expectRoles: []GameManagementRoleTable{
+				{
+					GameID:     uuid.UUID(gameID2),
+					UserID:     uuid.UUID(userID3),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+			},
+		},
+		{
+			description: "削除対象以外のゲームのroleが存在しても問題なし",
+			gameID:      gameID3,
+			userID:      userID4,
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			beforeRoles: []GameManagementRoleTable{
+				{
+					GameID:     uuid.UUID(gameID3),
+					UserID:     uuid.UUID(userID4),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+				{
+					GameID:     uuid.UUID(gameID4),
+					UserID:     uuid.UUID(userID4),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+			},
+			expectRoles: []GameManagementRoleTable{
+				{
+					GameID:     uuid.UUID(gameID4),
+					UserID:     uuid.UUID(userID4),
+					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+				},
+			},
+		},
+		{
+			description: "roleが事前に存在していないのでエラー",
+			gameID:      gameID5,
+			userID:      userID5,
+			beforeRoles: []GameManagementRoleTable{},
+			expectRoles: []GameManagementRoleTable{},
+			isErr:       true,
+			err:         repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.beforeGames) != 0 {
+				err := db.Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+			}
+
+			if len(testCase.beforeRoles) != 0 {
+				err = db.Create(&testCase.beforeRoles).Error
+				if err != nil {
+					t.Fatalf("failed to create game management role table: %+v\n", err)
+				}
+			}
+
+			err = gameManagementRoleRepository.RemoveGameManagementRole(ctx, testCase.gameID, testCase.userID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			for _, expectRole := range testCase.expectRoles {
+				var actualRole GameManagementRoleTable
+				err = db.
+					Where("game_id = ? and user_id = ?", expectRole.GameID, expectRole.UserID).
+					First(&actualRole).Error
+				if err != nil {
+					t.Fatalf("failed to get game management role table: %+v\n", err)
+				}
+
+				assert.Equal(t, expectRole.RoleTypeID, actualRole.RoleTypeID)
+			}
+		})
+	}
+}
