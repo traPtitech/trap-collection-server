@@ -157,3 +157,24 @@ func (gmr *GameManagementRole) UpdateGameManagementRole(ctx context.Context, gam
 
 	return nil
 }
+
+func (gmr *GameManagementRole) RemoveGameManagementRole(ctx context.Context, gameID values.GameID, userID values.TraPMemberID) error {
+	gormDB, err := gmr.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := gormDB.
+		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).
+		Delete(&GameManagementRoleTable{})
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to delete game management role: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+
+	return nil
+}
