@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const (
@@ -222,13 +221,9 @@ func (gmr *GameManagementRole) GetGameManagementRole(ctx context.Context, gameID
 		return 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	switch lockType {
-	case repository.LockTypeRecord:
-		gormDB = gormDB.
-			Clauses(clause.Locking{Strength: "UPDATE"})
-	case repository.LockTypeNone:
-	default:
-		return 0, errors.New("invalid lock type")
+	gormDB, err = gmr.db.setLock(gormDB, lockType)
+	if err != nil {
+		return 0, fmt.Errorf("failed to set lock: %w", err)
 	}
 
 	var gameManagementRole GameManagementRoleTable
