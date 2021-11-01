@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -213,4 +214,45 @@ func (gmr *GameManagementRole) GetGameManagersByGameID(ctx context.Context, game
 	}
 
 	return userIDAndManagementRoles, nil
+}
+
+func (gmr *GameManagementRole) GetGameManagementRole(ctx context.Context, gameID values.GameID, userID values.TraPMemberID, lockType repository.LockType) (values.GameManagementRole, error) {
+	gormDB, err := gmr.db.getDB(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	switch lockType {
+	case repository.LockTypeRecord:
+		gormDB = gormDB.
+			Clauses(clause.Locking{Strength: "UPDATE"})
+	case repository.LockTypeNone:
+	default:
+		return 0, errors.New("invalid lock type")
+	}
+
+	var gameManagementRole GameManagementRoleTable
+	err = gormDB.
+		Joins("RoleTypeTable").
+		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).
+		Select("RoleTypeTable.Name").
+		Take(&gameManagementRole).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to get game management role: %w", err)
+	}
+
+	var roleType values.GameManagementRole
+	switch gameManagementRole.RoleTypeTable.Name {
+	case gameManagementRoleTypeAdministrator:
+		roleType = values.GameManagementRoleAdministrator
+	case gameManagementRoleTypeCollaborator:
+		roleType = values.GameManagementRoleCollaborator
+	default:
+		return 0, errors.New("invalid role")
+	}
+
+	return roleType, nil
 }
