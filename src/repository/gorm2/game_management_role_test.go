@@ -791,3 +791,236 @@ func TestRemoveGameManagementRole(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameManagersByGameID(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
+	if err != nil {
+		t.Fatalf("failed to create game management role repository: %+v\n", err)
+	}
+
+	type test struct {
+		description        string
+		gameID             values.GameID
+		games              []GameTable
+		expectUserAndRoles []*repository.UserIDAndManagementRole
+		isErr              bool
+		err                error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+	userID3 := values.NewTrapMemberID(uuid.New())
+	userID4 := values.NewTrapMemberID(uuid.New())
+	userID5 := values.NewTrapMemberID(uuid.New())
+	userID6 := values.NewTrapMemberID(uuid.New())
+
+	var roleTypes []*GameManagementRoleTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&roleTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	roleTypeMap := make(map[string]int, len(roleTypes))
+	for _, roleType := range roleTypes {
+		roleTypeMap[roleType.Name] = roleType.ID
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			gameID:      gameID1,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID1),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+			},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+		},
+		{
+			description: "roleがcollaboratorでも問題なし",
+			gameID:      gameID7,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID7),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID6),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID6,
+					Role:   values.GameManagementRoleCollaborator,
+				},
+			},
+		},
+		{
+			description: "roleが存在しなくても問題なし",
+			gameID:      gameID2,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{},
+		},
+		{
+			// 実際にはあり得ないが念のため確認
+			description:        "gameが存在しなくても問題なし",
+			gameID:             gameID3,
+			games:              []GameTable{},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{},
+		},
+		{
+			description: "roleが複数でも問題なし",
+			gameID:      gameID4,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID2),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+						{
+							UserID:     uuid.UUID(userID3),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID2,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID: userID3,
+					Role:   values.GameManagementRoleCollaborator,
+				},
+			},
+		},
+		{
+			description: "他のgameにroleがあっても問題なし",
+			gameID:      gameID5,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID4),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID5),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+			},
+			expectUserAndRoles: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID4,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.games) != 0 {
+				err = db.
+					Session(&gorm.Session{}).
+					Create(&testCase.games).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+			}
+
+			userAndRoles, err := gameManagementRoleRepository.GetGameManagersByGameID(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, userAndRoles, len(testCase.expectUserAndRoles))
+
+			expectUserAndRoleMap := make(map[values.TraPMemberID]*repository.UserIDAndManagementRole, len(testCase.expectUserAndRoles))
+			for _, userAndRole := range testCase.expectUserAndRoles {
+				expectUserAndRoleMap[userAndRole.UserID] = userAndRole
+			}
+
+			for _, userAndRole := range userAndRoles {
+				expectUserAndRole := expectUserAndRoleMap[userAndRole.UserID]
+				assert.Equal(t, expectUserAndRole.UserID, userAndRole.UserID)
+				assert.Equal(t, expectUserAndRole.Role, userAndRole.Role)
+			}
+		})
+	}
+}
