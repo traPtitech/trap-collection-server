@@ -1024,3 +1024,320 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameManagementRole(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
+	if err != nil {
+		t.Fatalf("failed to create game management role repository: %+v\n", err)
+	}
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		userID      values.TraPMemberID
+		lockType    repository.LockType
+		games       []GameTable
+		role        values.GameManagementRole
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.GameID(uuid.New())
+	gameID2 := values.GameID(uuid.New())
+	gameID3 := values.GameID(uuid.New())
+	gameID4 := values.GameID(uuid.New())
+	gameID5 := values.GameID(uuid.New())
+	gameID6 := values.GameID(uuid.New())
+	gameID7 := values.GameID(uuid.New())
+	gameID8 := values.GameID(uuid.New())
+	gameID9 := values.GameID(uuid.New())
+	gameID10 := values.GameID(uuid.New())
+	gameID11 := values.GameID(uuid.New())
+	gameID12 := values.GameID(uuid.New())
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+	userID3 := values.NewTrapMemberID(uuid.New())
+	userID4 := values.NewTrapMemberID(uuid.New())
+	userID5 := values.NewTrapMemberID(uuid.New())
+	userID6 := values.NewTrapMemberID(uuid.New())
+	userID7 := values.NewTrapMemberID(uuid.New())
+	userID8 := values.NewTrapMemberID(uuid.New())
+	userID9 := values.NewTrapMemberID(uuid.New())
+	userID10 := values.NewTrapMemberID(uuid.New())
+	userID11 := values.NewTrapMemberID(uuid.New())
+	userID12 := values.NewTrapMemberID(uuid.New())
+
+	var roleTypes []*GameManagementRoleTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&roleTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	roleTypeMap := make(map[string]int, len(roleTypes))
+	for _, roleType := range roleTypes {
+		roleTypeMap[roleType.Name] = roleType.ID
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			gameID:      gameID1,
+			userID:      userID1,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID1),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+			},
+			role: values.GameManagementRoleAdministrator,
+		},
+		{
+			description: "roleがcollatorでも問題なし",
+			gameID:      gameID2,
+			userID:      userID2,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID2),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			role: values.GameManagementRoleCollaborator,
+		},
+		{
+			description: "roleが存在しないのでErrRecordNotFound",
+			gameID:      gameID3,
+			userID:      userID3,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
+		},
+		{
+			// 実際にはgameIDのチェックが入り、行われることはないが念のため確認
+			description: "gameIDが存在しないのでErrRecordNotFound",
+			gameID:      gameID4,
+			userID:      userID4,
+			lockType:    repository.LockTypeNone,
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
+		},
+		{
+			description: "別のユーザーのroleがあっても問題なし",
+			gameID:      gameID5,
+			userID:      userID5,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID5),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+						{
+							UserID:     uuid.UUID(userID6),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			role: values.GameManagementRoleAdministrator,
+		},
+		{
+			description: "別のユーザーのroleがあってもroleがなければErrRecordNotFound",
+			gameID:      gameID6,
+			userID:      userID7,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID8),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
+		},
+		{
+			description: "別のゲームのroleがあっても問題なし",
+			gameID:      gameID7,
+			userID:      userID9,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID7),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID9),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+				{
+					ID:          uuid.UUID(gameID8),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID9),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			role: values.GameManagementRoleAdministrator,
+		},
+		{
+			description: "別のゲームのroleがあってもroleがなければErrRecordNotFound",
+			gameID:      gameID9,
+			userID:      userID10,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID9),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+				{
+					ID:          uuid.UUID(gameID10),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID10),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
+						},
+					},
+				},
+			},
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
+		},
+		{
+			description: "行ロックでも問題なし",
+			gameID:      gameID11,
+			userID:      userID11,
+			lockType:    repository.LockTypeRecord,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID11),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID11),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+			},
+			role: values.GameManagementRoleAdministrator,
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ロックの種類が誤っているのでエラー",
+			gameID:      gameID12,
+			userID:      userID12,
+			lockType:    100,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID12),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameManagementRoles: []GameManagementRoleTable{
+						{
+							UserID:     uuid.UUID(userID12),
+							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
+						},
+					},
+				},
+			},
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.games) != 0 {
+				err = db.
+					Session(&gorm.Session{}).
+					Create(&testCase.games).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+			}
+
+			role, err := gameManagementRoleRepository.GetGameManagementRole(ctx, testCase.gameID, testCase.userID, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.role, role)
+		})
+	}
+}
