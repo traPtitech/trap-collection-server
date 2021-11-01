@@ -178,3 +178,39 @@ func (gmr *GameManagementRole) RemoveGameManagementRole(ctx context.Context, gam
 
 	return nil
 }
+
+func (gmr *GameManagementRole) GetGameManagersByGameID(ctx context.Context, gameID values.GameID) ([]*repository.UserIDAndManagementRole, error) {
+	gormDB, err := gmr.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var gameManagementRoles []GameManagementRoleTable
+	err = gormDB.
+		Joins("RoleTypeTable").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Find(&gameManagementRoles).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game management roles: %w", err)
+	}
+
+	userIDAndManagementRoles := make([]*repository.UserIDAndManagementRole, 0, len(gameManagementRoles))
+	for _, role := range gameManagementRoles {
+		var roleType values.GameManagementRole
+		switch role.RoleTypeTable.Name {
+		case gameManagementRoleTypeAdministrator:
+			roleType = values.GameManagementRoleAdministrator
+		case gameManagementRoleTypeCollaborator:
+			roleType = values.GameManagementRoleCollaborator
+		default:
+			return nil, errors.New("invalid role")
+		}
+
+		userIDAndManagementRoles = append(userIDAndManagementRoles, &repository.UserIDAndManagementRole{
+			UserID: values.NewTrapMemberID(role.UserID),
+			Role:   roleType,
+		})
+	}
+
+	return userIDAndManagementRoles, nil
+}
