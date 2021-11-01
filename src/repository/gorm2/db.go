@@ -9,8 +9,10 @@ import (
 
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 )
 
@@ -119,4 +121,16 @@ func (db *DB) getDB(ctx context.Context) (*gorm.DB, error) {
 	}
 
 	return gormDB.WithContext(ctx), nil
+}
+
+func (db *DB) setLock(gormDB *gorm.DB, lockType repository.LockType) (*gorm.DB, error) {
+	switch lockType {
+	case repository.LockTypeRecord:
+		gormDB = gormDB.Clauses(clause.Locking{Strength: "UPDATE"})
+	case repository.LockTypeNone:
+	default:
+		return nil, errors.New("invalid lock type")
+	}
+
+	return gormDB, nil
 }
