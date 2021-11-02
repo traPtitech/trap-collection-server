@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
+	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/storage"
 	"golang.org/x/sync/errgroup"
 )
@@ -25,15 +26,16 @@ type Game struct {
 	db      model.DBMeta
 	storage storage.Storage
 	oauth   base.OAuth
-	openapi.GameApi
+	*v1.GameRole
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole) *Game {
 	game := new(Game)
 
 	game.db = db
 	game.storage = storage
 	game.oauth = oauth
+	game.GameRole = gameRole
 
 	return game
 }
@@ -399,89 +401,6 @@ func (g *Game) GetGameURL(gameID string) (string, error) {
 	}
 
 	return url, nil
-}
-
-// PostMaintainer POST /games/:gameID/maintainerの処理部分
-func (g *Game) PostMaintainer(gameID string, maintainers *openapi.Maintainers, c echo.Context) error {
-	userIDs := maintainers.Maintainers
-
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return fmt.Errorf("failed to get session:%w", err)
-	}
-
-	interfaceAccessToken, ok := sess.Values["accessToken"]
-	if !ok {
-		log.Println("error: unexpected getting access token error")
-		return errors.New("unexpected error occurred while getting access token")
-	}
-
-	accessToken, ok := interfaceAccessToken.(string)
-	if !ok {
-		log.Println("error: unexpected parsing access token error")
-		return errors.New("failed to parse access token")
-	}
-
-	users, err := g.oauth.GetUsers(accessToken)
-	if err != nil {
-		return fmt.Errorf("failed to GetUsers: %w", err)
-	}
-
-	userMap := make(map[string]*openapi.User, len(users))
-	for _, user := range users {
-		userMap[user.Id] = user
-	}
-
-	for _, userID := range userIDs {
-		_, ok := userMap[userID]
-		if !ok {
-			return fmt.Errorf("invalid userID(%s)", userID)
-		}
-	}
-
-	err = g.db.InsertMaintainer(gameID, userIDs)
-	if err != nil {
-		return fmt.Errorf("failed to insert maintainers: %w", err)
-	}
-
-	return nil
-}
-
-// GetMaintainer GET /games/:gameID/maintainer
-func (g *Game) GetMaintainer(gameID string, c echo.Context) ([]*openapi.Maintainer, error) {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session:%w", err)
-	}
-
-	interfaceAccessToken, ok := sess.Values["accessToken"]
-	if !ok {
-		log.Println("error: unexpected getting access token error")
-		return nil, errors.New("unexpected error occurred while getting access token")
-	}
-
-	accessToken, ok := interfaceAccessToken.(string)
-	if !ok {
-		log.Println("error: unexpected parsing access token error")
-		return nil, errors.New("failed to parse access token")
-	}
-
-	users, err := g.oauth.GetUsers(accessToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to GetUsers: %w", err)
-	}
-
-	userMap := make(map[string]*openapi.User, len(users))
-	for _, user := range users {
-		userMap[user.Id] = user
-	}
-
-	maintainers, err := g.db.GetMaintainers(gameID, userMap)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get maintainers: %w", err)
-	}
-
-	return maintainers, nil
 }
 
 // PostGameVersion POST /games/:gameID/version
