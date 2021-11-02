@@ -16,4 +16,6 @@ var (
 	ErrInvalidGameID                     = errors.New("invalid game id")
 	ErrInvalidUserID                     = errors.New("invalid user id")
 	ErrForbidden                         = errors.New("forbidden")
+	ErrInvalidFormat                     = errors.New("invalid format")
+	ErrNoGameImage                       = errors.New("no game image")
 )
