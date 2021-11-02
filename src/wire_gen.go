@@ -27,16 +27,6 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	sessionKey := config.SessionKey
 	sessionSecret := config.SessionSecret
 	session := v1.NewSession(sessionKey, sessionSecret)
-	client := config.HttpClient
-	traQBaseURL := config.TraQBaseURL
-	user := traq.NewUser(client, traQBaseURL)
-	ristrettoUser, err := ristretto.NewUser()
-	if err != nil {
-		return nil, err
-	}
-	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
-	v1User := v1_2.NewUser(userUtils)
-	user2 := v1.NewUser(session, v1User)
 	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
 	if err != nil {
@@ -46,19 +36,30 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	launcherUser := gorm2.NewLauncherUser(db)
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
-	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
-	oidc := traq.NewOIDC(client, traQBaseURL)
-	clientID := config.OAuthClientID
-	v1OIDC := v1_2.NewOIDC(oidc, clientID)
-	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
 	game := gorm2.NewGame(db)
 	gameManagementRole, err := gorm2.NewGameManagementRole(db)
 	if err != nil {
 		return nil, err
 	}
+	client := config.HttpClient
+	traQBaseURL := config.TraQBaseURL
+	user := traq.NewUser(client, traQBaseURL)
+	ristrettoUser, err := ristretto.NewUser()
+	if err != nil {
+		return nil, err
+	}
+	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
 	gameAuth := v1_2.NewGameAuth(db, game, gameManagementRole, userUtils)
+	oidc := traq.NewOIDC(client, traQBaseURL)
+	clientID := config.OAuthClientID
+	v1OIDC := v1_2.NewOIDC(oidc, clientID)
 	middleware := v1.NewMiddleware(session, launcherAuth, gameAuth, v1OIDC)
-	api := v1.NewAPI(user2, v1LauncherAuth, oAuth2, middleware, session)
+	v1User := v1_2.NewUser(userUtils)
+	user2 := v1.NewUser(session, v1User)
+	gameRole := v1.NewGameRole(session, gameAuth)
+	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
+	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
+	api := v1.NewAPI(middleware, user2, gameRole, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 

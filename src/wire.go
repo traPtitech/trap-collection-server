@@ -91,6 +91,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Service.NewUserUtils,
 		v1Handler.NewAPI,
 		v1Handler.NewSession,
+		v1Handler.NewGameRole,
 		v1Handler.NewLauncherAuth,
 		v1Handler.NewOAuth2,
 		v1Handler.NewUser,
