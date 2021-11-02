@@ -15,13 +15,20 @@ import (
 type Middleware struct {
 	session             *Session
 	launcherAuthService service.LauncherAuth
+	gameAuthService     service.GameAuth
 	oidcService         service.OIDC
 }
 
-func NewMiddleware(session *Session, launcherAuthService service.LauncherAuth, oidcService service.OIDC) *Middleware {
+func NewMiddleware(
+	session *Session,
+	launcherAuthService service.LauncherAuth,
+	gameAuthService service.GameAuth,
+	oidcService service.OIDC,
+) *Middleware {
 	return &Middleware{
 		session:             session,
 		launcherAuthService: launcherAuthService,
+		gameAuthService:     gameAuthService,
 		oidcService:         oidcService,
 	}
 }
