@@ -33,10 +33,16 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
 
 	type test struct {
 		description        string
@@ -119,10 +125,16 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
 
 	type test struct {
 		description            string
@@ -195,10 +207,16 @@ func TestBothAuthMiddleware(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
 
 	type test struct {
 		description            string
@@ -323,10 +341,16 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
 
 	type test struct {
 		description      string
@@ -446,10 +470,16 @@ func TestCheckLauncherAuth(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
 	session := NewSession("key", "secret")
 
-	middleware := NewMiddleware(session, mockLauncherAuthService, mockOIDCService)
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
 
 	type test struct {
 		description         string
