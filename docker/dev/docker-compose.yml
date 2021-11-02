@@ -17,6 +17,7 @@ services:
       - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
     environment:
       COLLECTION_ENV: development
+      ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
       OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
       OS_USERNAME:
       OS_PASSWORD:
