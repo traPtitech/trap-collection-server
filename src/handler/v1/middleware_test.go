@@ -34,6 +34,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -41,6 +42,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -126,6 +128,7 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -133,6 +136,7 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -208,6 +212,7 @@ func TestBothAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -215,6 +220,7 @@ func TestBothAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -342,6 +348,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -349,6 +356,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -471,6 +479,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -478,6 +487,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -631,6 +641,7 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -638,6 +649,7 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -799,6 +811,7 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -806,6 +819,7 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
