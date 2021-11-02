@@ -1,0 +1,15 @@
+package service
+
+//go:generate mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+
+import (
+	"context"
+	"io"
+
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+)
+
+type GameImage interface {
+	SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) error
+	GetGameImage(ctx context.Context, writer io.Writer, gameID values.GameID) error
+}
