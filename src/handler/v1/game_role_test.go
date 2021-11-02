@@ -243,3 +243,287 @@ func TestPostMaintainer(t *testing.T) {
 		})
 	}
 }
+
+func TestGetMaintainer(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
+	session := NewSession("key", "secret")
+
+	gameRoleHandler := NewGameRole(session, mockGameAuthService)
+
+	type test struct {
+		description            string
+		sessionExist           bool
+		authSession            *domain.OIDCSession
+		strGameID              string
+		executeGetGameManagers bool
+		gameID                 values.GameID
+		gameManagers           []*service.GameManager
+		GetGameManagersErr     error
+		maintainers            []*openapi.Maintainer
+		isErr                  bool
+		err                    error
+		statusCode             int
+	}
+
+	gameID := values.NewGameID()
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+
+	testCases := []test{
+		{
+			description:  "特に問題ないのでエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+			},
+			maintainers: []*openapi.Maintainer{
+				{
+					Id:   uuid.UUID(userID1).String(),
+					Name: "mazrean",
+					Role: 1,
+				},
+			},
+		},
+		{
+			description:  "セッションがないので500",
+			sessionExist: false,
+			strGameID:    uuid.UUID(gameID).String(),
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "authSessionがないので400",
+			sessionExist: true,
+			strGameID:    uuid.UUID(gameID).String(),
+			isErr:        true,
+			statusCode:   http.StatusBadRequest,
+		},
+		{
+			description:  "gameIDの形式がuuidでないので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:  "invalid",
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description:  "ErrInvalidGameIDなので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			GetGameManagersErr:     service.ErrInvalidGameID,
+			isErr:                  true,
+			statusCode:             http.StatusBadRequest,
+		},
+		{
+			description:  "GetGameManagersがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			GetGameManagersErr:     errors.New("error"),
+			isErr:                  true,
+			statusCode:             http.StatusInternalServerError,
+		},
+		{
+			description:  "roleがcollaboratorでもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleCollaborator,
+				},
+			},
+			maintainers: []*openapi.Maintainer{
+				{
+					Id:   uuid.UUID(userID1).String(),
+					Name: "mazrean",
+					Role: 0,
+				},
+			},
+		},
+		{
+			// 実際には起き得ないが、念のため確認
+			description:  "roleが誤っているので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       100,
+				},
+			},
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			description:  "管理者が複数でもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			gameManagers: []*service.GameManager{
+				{
+					UserID:     userID1,
+					UserName:   "mazrean",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID:     userID2,
+					UserName:   "mazrean2",
+					UserStatus: values.TrapMemberStatusActive,
+					Role:       values.GameManagementRoleCollaborator,
+				},
+			},
+			maintainers: []*openapi.Maintainer{
+				{
+					Id:   uuid.UUID(userID1).String(),
+					Name: "mazrean",
+					Role: 1,
+				},
+				{
+					Id:   uuid.UUID(userID2).String(),
+					Name: "mazrean2",
+					Role: 0,
+				},
+			},
+		},
+		{
+			description:  "管理者がいなくてもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:              uuid.UUID(gameID).String(),
+			executeGetGameManagers: true,
+			gameID:                 gameID,
+			gameManagers:           []*service.GameManager{},
+			maintainers:            []*openapi.Maintainer{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/game/maintainer", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeGetGameManagers {
+				mockGameAuthService.
+					EXPECT().
+					GetGameManagers(gomock.Any(), gomock.Any(), testCase.gameID).
+					Return(testCase.gameManagers, testCase.GetGameManagersErr)
+			}
+
+			maintainers, err := gameRoleHandler.GetMaintainer(testCase.strGameID, c)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, maintainers, len(testCase.maintainers))
+
+			for i, maintainer := range maintainers {
+				assert.Equal(t, testCase.maintainers[i].Id, maintainer.Id)
+				assert.Equal(t, testCase.maintainers[i].Name, maintainer.Name)
+				assert.Equal(t, testCase.maintainers[i].Role, maintainer.Role)
+			}
+		})
+	}
+}
