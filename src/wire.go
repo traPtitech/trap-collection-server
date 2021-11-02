@@ -30,6 +30,8 @@ type Config struct {
 
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
+	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
@@ -39,6 +41,7 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
+	gameAuthServiceBind     = wire.Bind(new(service.GameAuth), new(*v1Service.GameAuth))
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
 	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
 	userServiceBind         = wire.Bind(new(service.User), new(*v1Service.User))
@@ -60,28 +63,35 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		oAuthClientIDField,
 		httpClientField,
 		dbBind,
+		gameRepositoryBind,
+		gameManagementRoleBind,
 		launcherSessionRepositoryBind,
 		launcherUserRepositoryBind,
 		launcherVersionRepositoryBind,
 		oidcAuthBind,
 		userAuthBind,
 		userCacheBind,
+		gameAuthServiceBind,
 		launcherAuthServiceBind,
 		oidcServiceBind,
 		userServiceBind,
 		gorm2.NewDB,
+		gorm2.NewGame,
+		gorm2.NewGameManagementRole,
 		gorm2.NewLauncherSession,
 		gorm2.NewLauncherUser,
 		gorm2.NewLauncherVersion,
 		traq.NewOIDC,
 		traq.NewUser,
 		ristretto.NewUser,
+		v1Service.NewGameAuth,
 		v1Service.NewLauncherAuth,
 		v1Service.NewOIDC,
 		v1Service.NewUser,
 		v1Service.NewUserUtils,
 		v1Handler.NewAPI,
 		v1Handler.NewSession,
+		v1Handler.NewGameRole,
 		v1Handler.NewLauncherAuth,
 		v1Handler.NewOAuth2,
 		v1Handler.NewUser,

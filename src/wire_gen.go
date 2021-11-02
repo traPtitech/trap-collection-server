@@ -27,16 +27,6 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	sessionKey := config.SessionKey
 	sessionSecret := config.SessionSecret
 	session := v1.NewSession(sessionKey, sessionSecret)
-	client := config.HttpClient
-	traQBaseURL := config.TraQBaseURL
-	user := traq.NewUser(client, traQBaseURL)
-	ristrettoUser, err := ristretto.NewUser()
-	if err != nil {
-		return nil, err
-	}
-	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
-	v1User := v1_2.NewUser(userUtils)
-	user2 := v1.NewUser(session, v1User)
 	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
 	if err != nil {
@@ -46,13 +36,30 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	launcherUser := gorm2.NewLauncherUser(db)
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
-	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
+	game := gorm2.NewGame(db)
+	gameManagementRole, err := gorm2.NewGameManagementRole(db)
+	if err != nil {
+		return nil, err
+	}
+	client := config.HttpClient
+	traQBaseURL := config.TraQBaseURL
+	user := traq.NewUser(client, traQBaseURL)
+	ristrettoUser, err := ristretto.NewUser()
+	if err != nil {
+		return nil, err
+	}
+	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
+	gameAuth := v1_2.NewGameAuth(db, game, gameManagementRole, userUtils)
 	oidc := traq.NewOIDC(client, traQBaseURL)
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
+	middleware := v1.NewMiddleware(session, launcherAuth, gameAuth, v1OIDC)
+	v1User := v1_2.NewUser(userUtils)
+	user2 := v1.NewUser(session, v1User)
+	gameRole := v1.NewGameRole(session, gameAuth)
+	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
-	api := v1.NewAPI(user2, v1LauncherAuth, oAuth2, middleware, session)
+	api := v1.NewAPI(middleware, user2, gameRole, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 
@@ -69,6 +76,8 @@ type Config struct {
 
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
+	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
@@ -78,6 +87,7 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
+	gameAuthServiceBind     = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind         = wire.Bind(new(service.User), new(*v1_2.User))

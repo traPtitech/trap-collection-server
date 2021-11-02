@@ -31,69 +31,6 @@ func newMiddleware(db model.DBMeta, oauth base.OAuth, newMiddleware *v1.Middlewa
 	return middleware
 }
 
-// GameMaintainerAuthMiddleware ゲーム管理者の認証用のミドルウェア
-func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get("sessions", c)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Getting Session:%w", err).Error())
-		}
-
-		var userID string
-		var accessToken string
-		interfaceUserID, ok := sess.Values["userID"]
-		if !ok || interfaceUserID == nil {
-			log.Println("error: unexcepted no userID")
-			interfaceAccessToken, ok := sess.Values["accessToken"]
-			if !ok || interfaceAccessToken == nil {
-				return c.String(http.StatusUnauthorized, "No Access Token")
-			}
-			accessToken = interfaceAccessToken.(string)
-			user, err := m.oauth.GetMe(accessToken)
-			if err != nil {
-				return c.String(http.StatusBadRequest, fmt.Errorf("Failed In Getting User: %w", err).Error())
-			}
-			userID = user.Id
-		} else {
-			userID = interfaceUserID.(string)
-		}
-
-		gameID := c.Param("gameID")
-		if len(gameID) == 0 {
-			log.Println("error: unexpected no gameID")
-			return c.String(http.StatusInternalServerError, "No GameID")
-		}
-
-		isThereGame, err := m.db.IsExistGame(gameID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check if there is the game: %w", err))
-		}
-		if !isThereGame {
-			return echo.NewHTTPError(http.StatusNotFound, errors.New("gameID doesn't exist"))
-		}
-
-		isMaintainer, err := m.db.CheckMaintainerID(userID, gameID)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Errorf("Failed In Checking MaintainerID: %w", err).Error())
-		}
-		if !isMaintainer {
-			return c.String(http.StatusUnauthorized, "You Are Not Maintainer")
-		}
-
-		c.Set("userID", userID)
-		c.Set("accessToken", accessToken)
-
-		return next(c)
-	}
-}
-
-// GameOwnerAuthMiddleware ゲーム管理者の認証用のミドルウェア
-func (*Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return next(c)
-	}
-}
-
 // AdminAuthMiddleware ランチャーの管理者の認証用のミドルウェア
 func (m *Middleware) AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -15,13 +16,20 @@ import (
 type Middleware struct {
 	session             *Session
 	launcherAuthService service.LauncherAuth
+	gameAuthService     service.GameAuth
 	oidcService         service.OIDC
 }
 
-func NewMiddleware(session *Session, launcherAuthService service.LauncherAuth, oidcService service.OIDC) *Middleware {
+func NewMiddleware(
+	session *Session,
+	launcherAuthService service.LauncherAuth,
+	gameAuthService service.GameAuth,
+	oidcService service.OIDC,
+) *Middleware {
 	return &Middleware{
 		session:             session,
 		launcherAuthService: launcherAuthService,
+		gameAuthService:     gameAuthService,
 		oidcService:         oidcService,
 	}
 }
@@ -138,4 +146,80 @@ func (m *Middleware) checkLauncherAuth(c echo.Context) (bool, string, error) {
 	c.Set(launcherVersionKey, launcherVersion)
 
 	return true, "", nil
+}
+
+func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		session, err := getSession(c)
+		if err != nil {
+			log.Printf("error: failed to get session: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		authSession, err := m.session.getAuthSession(session)
+		if err != nil {
+			// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
+			log.Printf("error: failed to get auth session: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		strGameID := c.Param("gameID")
+		uuidGameID, err := uuid.Parse(strGameID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		}
+		gameID := values.NewGameIDFromUUID(uuidGameID)
+
+		err = m.gameAuthService.UpdateGameAuth(c.Request().Context(), authSession, gameID)
+		if errors.Is(err, service.ErrInvalidGameID) {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		}
+		if errors.Is(err, service.ErrForbidden) {
+			return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+		}
+		if err != nil {
+			log.Printf("error: failed to update game auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return next(c)
+	}
+}
+
+func (m *Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		session, err := getSession(c)
+		if err != nil {
+			log.Printf("error: failed to get session: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		authSession, err := m.session.getAuthSession(session)
+		if err != nil {
+			// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
+			log.Printf("error: failed to get auth session: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		strGameID := c.Param("gameID")
+		uuidGameID, err := uuid.Parse(strGameID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		}
+		gameID := values.NewGameIDFromUUID(uuidGameID)
+
+		err = m.gameAuthService.UpdateGameManagementRoleAuth(c.Request().Context(), authSession, gameID)
+		if errors.Is(err, service.ErrInvalidGameID) {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		}
+		if errors.Is(err, service.ErrForbidden) {
+			return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+		}
+		if err != nil {
+			log.Printf("error: failed to update game auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return next(c)
+	}
 }

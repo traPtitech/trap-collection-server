@@ -17,7 +17,6 @@ var (
 		GameVersion{},
 		GameAsset{},
 		GameIntroduction{},
-		Maintainer{},
 		LauncherVersion{},
 		GameVersionRelation{},
 		ProductKey{},
@@ -35,7 +34,6 @@ type DBMeta interface {
 	GameVersionMeta
 	GameMeta
 	LauncherVersionMeta
-	MaintainerMeta
 	ProductKeyMeta
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 )
 
 // Game gameの構造体
@@ -125,11 +126,21 @@ func (*DB) PostGame(userID string, gameName string, gameDescription string) (*op
 			return fmt.Errorf("failed to GET added game record: %w", err)
 		}
 
-		maintainer := Maintainer{
-			ID:     uuid.New().String(),
-			GameID: game.ID,
-			UserID: userID,
-			Role:   1,
+		// アーキテクチャ移行途中に壊れないようにするための暫定対処
+		gameID, err := uuid.Parse(game.ID)
+		if err != nil {
+			return fmt.Errorf("failed to parse game id: %w", err)
+		}
+
+		uuidUserID, err := uuid.Parse(userID)
+		if err != nil {
+			return fmt.Errorf("failed to parse user id: %w", err)
+		}
+
+		maintainer := gorm2.GameManagementRoleTable{
+			GameID:     gameID,
+			UserID:     uuidUserID,
+			RoleTypeID: 1,
 		}
 		err = tx.Create(&maintainer).Error
 		if err != nil {
