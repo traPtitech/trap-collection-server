@@ -51,7 +51,13 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	middleware := v1.NewMiddleware(session, launcherAuth, v1OIDC)
+	game := gorm2.NewGame(db)
+	gameManagementRole, err := gorm2.NewGameManagementRole(db)
+	if err != nil {
+		return nil, err
+	}
+	gameAuth := v1_2.NewGameAuth(db, game, gameManagementRole, userUtils)
+	middleware := v1.NewMiddleware(session, launcherAuth, gameAuth, v1OIDC)
 	api := v1.NewAPI(user2, v1LauncherAuth, oAuth2, middleware, session)
 	return api, nil
 }
@@ -69,6 +75,8 @@ type Config struct {
 
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
+	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
 	launcherVersionRepositoryBind = wire.Bind(new(repository.LauncherVersion), new(*gorm2.LauncherVersion))
@@ -78,6 +86,7 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
+	gameAuthServiceBind     = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
 	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind         = wire.Bind(new(service.User), new(*v1_2.User))
