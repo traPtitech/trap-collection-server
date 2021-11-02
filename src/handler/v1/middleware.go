@@ -14,23 +14,26 @@ import (
 )
 
 type Middleware struct {
-	session             *Session
-	launcherAuthService service.LauncherAuth
-	gameAuthService     service.GameAuth
-	oidcService         service.OIDC
+	session                  *Session
+	administratorAuthService service.AdministratorAuth
+	launcherAuthService      service.LauncherAuth
+	gameAuthService          service.GameAuth
+	oidcService              service.OIDC
 }
 
 func NewMiddleware(
 	session *Session,
+	administratorAuthService service.AdministratorAuth,
 	launcherAuthService service.LauncherAuth,
 	gameAuthService service.GameAuth,
 	oidcService service.OIDC,
 ) *Middleware {
 	return &Middleware{
-		session:             session,
-		launcherAuthService: launcherAuthService,
-		gameAuthService:     gameAuthService,
-		oidcService:         oidcService,
+		session:                  session,
+		administratorAuthService: administratorAuthService,
+		launcherAuthService:      launcherAuthService,
+		gameAuthService:          gameAuthService,
+		oidcService:              oidcService,
 	}
 }
 
