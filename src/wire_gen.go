@@ -27,6 +27,16 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	sessionKey := config.SessionKey
 	sessionSecret := config.SessionSecret
 	session := v1.NewSession(sessionKey, sessionSecret)
+	administrators := config.Administrators
+	client := config.HttpClient
+	traQBaseURL := config.TraQBaseURL
+	user := traq.NewUser(client, traQBaseURL)
+	ristrettoUser, err := ristretto.NewUser()
+	if err != nil {
+		return nil, err
+	}
+	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
+	administratorAuth := v1_2.NewAdministratorAuth(administrators, userUtils)
 	isProduction := config.IsProduction
 	db, err := gorm2.NewDB(isProduction)
 	if err != nil {
@@ -41,19 +51,11 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := config.HttpClient
-	traQBaseURL := config.TraQBaseURL
-	user := traq.NewUser(client, traQBaseURL)
-	ristrettoUser, err := ristretto.NewUser()
-	if err != nil {
-		return nil, err
-	}
-	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
 	gameAuth := v1_2.NewGameAuth(db, game, gameManagementRole, userUtils)
 	oidc := traq.NewOIDC(client, traQBaseURL)
 	clientID := config.OAuthClientID
 	v1OIDC := v1_2.NewOIDC(oidc, clientID)
-	middleware := v1.NewMiddleware(session, launcherAuth, gameAuth, v1OIDC)
+	middleware := v1.NewMiddleware(session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
 	v1User := v1_2.NewUser(userUtils)
 	user2 := v1.NewUser(session, v1User)
 	gameRole := v1.NewGameRole(session, gameAuth)
@@ -66,12 +68,13 @@ func InjectAPI(config *Config) (*v1.API, error) {
 // wire.go:
 
 type Config struct {
-	IsProduction  common.IsProduction
-	SessionKey    common.SessionKey
-	SessionSecret common.SessionSecret
-	TraQBaseURL   common.TraQBaseURL
-	OAuthClientID common.ClientID
-	HttpClient    *http.Client
+	IsProduction   common.IsProduction
+	SessionKey     common.SessionKey
+	SessionSecret  common.SessionSecret
+	TraQBaseURL    common.TraQBaseURL
+	OAuthClientID  common.ClientID
+	Administrators common.Administrators
+	HttpClient     *http.Client
 }
 
 var (
@@ -87,15 +90,17 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
-	gameAuthServiceBind     = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
-	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
-	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
-	userServiceBind         = wire.Bind(new(service.User), new(*v1_2.User))
+	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
+	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
+	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
+	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
+	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
 
-	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
-	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField   = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField = wire.FieldsOf(new(*Config), "OAuthClientID")
-	httpClientField    = wire.FieldsOf(new(*Config), "HttpClient")
+	isProductionField   = wire.FieldsOf(new(*Config), "IsProduction")
+	sessionKeyField     = wire.FieldsOf(new(*Config), "SessionKey")
+	sessionSecretField  = wire.FieldsOf(new(*Config), "SessionSecret")
+	traQBaseURLField    = wire.FieldsOf(new(*Config), "TraQBaseURL")
+	oAuthClientIDField  = wire.FieldsOf(new(*Config), "OAuthClientID")
+	administratorsField = wire.FieldsOf(new(*Config), "Administrators")
+	httpClientField     = wire.FieldsOf(new(*Config), "HttpClient")
 )
