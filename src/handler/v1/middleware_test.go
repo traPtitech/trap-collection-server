@@ -792,3 +792,171 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestGameOwnerAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(
+		session,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
+
+	type test struct {
+		description                         string
+		sessionExist                        bool
+		authSession                         *domain.OIDCSession
+		strGameID                           string
+		executeUpdateGameManagementRoleAuth bool
+		gameID                              values.GameID
+		UpdateGameManagementRoleAuthErr     error
+		isCalled                            bool
+		statusCode                          int
+	}
+
+	gameID := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:  "特に問題ないので通過",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                           uuid.UUID(gameID).String(),
+			executeUpdateGameManagementRoleAuth: true,
+			gameID:                              gameID,
+			isCalled:                            true,
+			statusCode:                          http.StatusOK,
+		},
+		{
+			description:  "セッションがないので500",
+			sessionExist: false,
+			strGameID:    uuid.UUID(gameID).String(),
+			isCalled:     false,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "authSessionが存在しないので500",
+			sessionExist: true,
+			strGameID:    uuid.UUID(gameID).String(),
+			isCalled:     false,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "gameIDが不正なので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:  "invalid",
+			isCalled:   false,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description:  "ErrInvalidGameIDなので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                           uuid.UUID(gameID).String(),
+			executeUpdateGameManagementRoleAuth: true,
+			gameID:                              gameID,
+			UpdateGameManagementRoleAuthErr:     service.ErrInvalidGameID,
+			isCalled:                            false,
+			statusCode:                          http.StatusBadRequest,
+		},
+		{
+			description:  "ErrForbiddenなので403",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                           uuid.UUID(gameID).String(),
+			executeUpdateGameManagementRoleAuth: true,
+			gameID:                              gameID,
+			UpdateGameManagementRoleAuthErr:     service.ErrForbidden,
+			isCalled:                            false,
+			statusCode:                          http.StatusForbidden,
+		},
+		{
+			description:  "UpdateGameAuthがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                           uuid.UUID(gameID).String(),
+			executeUpdateGameManagementRoleAuth: true,
+			gameID:                              gameID,
+			UpdateGameManagementRoleAuthErr:     errors.New("error"),
+			isCalled:                            false,
+			statusCode:                          http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/games/%s", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetPath("/games/:gameID")
+			c.SetParamNames("gameID")
+			c.SetParamValues(testCase.strGameID)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeUpdateGameManagementRoleAuth {
+				mockGameAuthService.
+					EXPECT().
+					UpdateGameManagementRoleAuth(gomock.Any(), gomock.Any(), testCase.gameID).
+					Return(testCase.UpdateGameManagementRoleAuthErr)
+			}
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.GameOwnerAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled)
+		})
+	}
+}
