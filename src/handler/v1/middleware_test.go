@@ -34,6 +34,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -41,6 +42,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -126,6 +128,7 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -133,6 +136,7 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -208,6 +212,7 @@ func TestBothAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -215,6 +220,7 @@ func TestBothAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -342,6 +348,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -349,6 +356,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -471,6 +479,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -478,6 +487,7 @@ func TestCheckLauncherAuth(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -631,6 +641,7 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -638,6 +649,7 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -799,6 +811,7 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
@@ -806,6 +819,7 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 
 	middleware := NewMiddleware(
 		session,
+		mockAdministratorAuthService,
 		mockLauncherAuthService,
 		mockGameAuthService,
 		mockOIDCService,
@@ -954,6 +968,136 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 			callChecker := CallChecker{}
 
 			e.HTTPErrorHandler(middleware.GameOwnerAuthMiddleware(callChecker.Handler)(c), c)
+
+			assert.Equal(t, testCase.statusCode, rec.Code)
+			assert.Equal(t, testCase.isCalled, callChecker.IsCalled)
+		})
+	}
+}
+
+func TestAdminAuthMiddleware(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+	mockGameAuthService := mock.NewMockGameAuth(ctrl)
+	mockOIDCService := mock.NewMockOIDC(ctrl)
+	session := NewSession("key", "secret")
+
+	middleware := NewMiddleware(
+		session,
+		mockAdministratorAuthService,
+		mockLauncherAuthService,
+		mockGameAuthService,
+		mockOIDCService,
+	)
+
+	type test struct {
+		description              string
+		sessionExist             bool
+		authSession              *domain.OIDCSession
+		executeAdministratorAuth bool
+		AdministratorAuthErr     error
+		isCalled                 bool
+		statusCode               int
+	}
+
+	testCases := []test{
+		{
+			description:  "特に問題ないので通過",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeAdministratorAuth: true,
+			isCalled:                 true,
+			statusCode:               http.StatusOK,
+		},
+		{
+			description:  "セッションがないので500",
+			sessionExist: false,
+			isCalled:     false,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "authSessionが存在しないので500",
+			sessionExist: true,
+			isCalled:     false,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "ErrForbiddenなので403",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     service.ErrForbidden,
+			isCalled:                 false,
+			statusCode:               http.StatusForbidden,
+		},
+		{
+			description:  "AdministratorAuthがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     errors.New("error"),
+			isCalled:                 false,
+			statusCode:               http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeAdministratorAuth {
+				mockAdministratorAuthService.
+					EXPECT().
+					AdministratorAuth(gomock.Any(), gomock.Any()).
+					Return(testCase.AdministratorAuthErr)
+			}
+
+			callChecker := CallChecker{}
+
+			e.HTTPErrorHandler(middleware.AdminAuthMiddleware(callChecker.Handler)(c), c)
 
 			assert.Equal(t, testCase.statusCode, rec.Code)
 			assert.Equal(t, testCase.isCalled, callChecker.IsCalled)

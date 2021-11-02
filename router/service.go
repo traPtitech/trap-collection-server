@@ -16,7 +16,6 @@ type multipartFile = multipart.File
 
 // Service serviceの構造体
 type Service struct {
-	*Middleware
 	*Game
 	*Seat
 	*Version
@@ -49,13 +48,12 @@ func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*
 
 	launcherAuth := base.NewLauncherAuth()
 
-	middleware := newMiddleware(db, oauth, newAPI.Middleware)
 	game := newGame(db, oauth, str, newAPI.GameRole)
 	seat := newSeat(db, launcherAuth)
 	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
-		Middleware:      middleware,
+		Middleware:      newAPI.Middleware,
 		GameApi:         game,
 		LauncherAuthApi: newAPI.LauncherAuth,
 		Oauth2Api:       newAPI.OAuth2,

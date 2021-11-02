@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/comail/colog"
 	echo "github.com/labstack/echo/v4"
@@ -26,6 +27,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/router"
 	"github.com/traPtitech/trap-collection-server/src"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 func main() {
@@ -90,13 +92,29 @@ func main() {
 		panic(fmt.Errorf("failed to parse traQBaseURL: %w", err))
 	}
 
+	strAdministrators, ok := os.LookupEnv("ADMINISTRATORS")
+	if !ok {
+		panic("ENV ADMINISTRATORS is not set")
+	}
+	administrators := []values.TraPMemberName{}
+	for _, strAdministrator := range strings.Split(strings.TrimSpace(strAdministrators), ",") {
+		administrator := values.NewTrapMemberName(strAdministrator)
+		err := administrator.Validate()
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse administrator: %v\n", err))
+		}
+
+		administrators = append(administrators, administrator)
+	}
+
 	newAPI, err := src.InjectAPI(&src.Config{
-		IsProduction:  common.IsProduction(isProduction),
-		SessionKey:    "sessions",
-		SessionSecret: common.SessionSecret(secret),
-		TraQBaseURL:   common.TraQBaseURL(traQBaseURL),
-		OAuthClientID: common.ClientID(clientID),
-		HttpClient:    http.DefaultClient,
+		IsProduction:   common.IsProduction(isProduction),
+		SessionKey:     "sessions",
+		SessionSecret:  common.SessionSecret(secret),
+		TraQBaseURL:    common.TraQBaseURL(traQBaseURL),
+		OAuthClientID:  common.ClientID(clientID),
+		Administrators: administrators,
+		HttpClient:     http.DefaultClient,
 	})
 	if err != nil {
 		panic(err)

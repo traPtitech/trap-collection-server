@@ -20,12 +20,13 @@ import (
 )
 
 type Config struct {
-	IsProduction  common.IsProduction
-	SessionKey    common.SessionKey
-	SessionSecret common.SessionSecret
-	TraQBaseURL   common.TraQBaseURL
-	OAuthClientID common.ClientID
-	HttpClient    *http.Client
+	IsProduction   common.IsProduction
+	SessionKey     common.SessionKey
+	SessionSecret  common.SessionSecret
+	TraQBaseURL    common.TraQBaseURL
+	OAuthClientID  common.ClientID
+	Administrators common.Administrators
+	HttpClient     *http.Client
 }
 
 var (
@@ -41,17 +42,19 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
-	gameAuthServiceBind     = wire.Bind(new(service.GameAuth), new(*v1Service.GameAuth))
-	launcherAuthServiceBind = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
-	oidcServiceBind         = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
-	userServiceBind         = wire.Bind(new(service.User), new(*v1Service.User))
+	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1Service.AdministratorAuth))
+	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1Service.GameAuth))
+	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
+	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
+	userServiceBind              = wire.Bind(new(service.User), new(*v1Service.User))
 
-	isProductionField  = wire.FieldsOf(new(*Config), "IsProduction")
-	sessionKeyField    = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField   = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField = wire.FieldsOf(new(*Config), "OAuthClientID")
-	httpClientField    = wire.FieldsOf(new(*Config), "HttpClient")
+	isProductionField   = wire.FieldsOf(new(*Config), "IsProduction")
+	sessionKeyField     = wire.FieldsOf(new(*Config), "SessionKey")
+	sessionSecretField  = wire.FieldsOf(new(*Config), "SessionSecret")
+	traQBaseURLField    = wire.FieldsOf(new(*Config), "TraQBaseURL")
+	oAuthClientIDField  = wire.FieldsOf(new(*Config), "OAuthClientID")
+	administratorsField = wire.FieldsOf(new(*Config), "Administrators")
+	httpClientField     = wire.FieldsOf(new(*Config), "HttpClient")
 )
 
 func InjectAPI(config *Config) (*v1Handler.API, error) {
@@ -61,6 +64,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		sessionSecretField,
 		traQBaseURLField,
 		oAuthClientIDField,
+		administratorsField,
 		httpClientField,
 		dbBind,
 		gameRepositoryBind,
@@ -71,6 +75,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		oidcAuthBind,
 		userAuthBind,
 		userCacheBind,
+		administratorAuthServiceBind,
 		gameAuthServiceBind,
 		launcherAuthServiceBind,
 		oidcServiceBind,
@@ -84,6 +89,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		traq.NewOIDC,
 		traq.NewUser,
 		ristretto.NewUser,
+		v1Service.NewAdministratorAuth,
 		v1Service.NewGameAuth,
 		v1Service.NewLauncherAuth,
 		v1Service.NewOIDC,
