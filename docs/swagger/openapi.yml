@@ -341,7 +341,7 @@ paths:
       security:
         - TrapMemberAuth:
             - read
-        - GameMaintainerAuth: []
+        - GameOwnerAuth: []
       operationId: postMaintainer
       requestBody:
         content:
