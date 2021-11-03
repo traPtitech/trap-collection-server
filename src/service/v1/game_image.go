@@ -89,3 +89,35 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 
 	return nil
 }
+
+func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, gameID values.GameID) error {
+	err := gi.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gi.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		image, err := gi.gameImageRepository.GetGameImage(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGameImage
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game image: %w", err)
+		}
+
+		err = gi.gameImageStorage.GetGameImage(ctx, writer, image)
+		if err != nil {
+			return fmt.Errorf("failed to get game image file: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
