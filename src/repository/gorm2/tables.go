@@ -11,6 +11,8 @@ import (
 var (
 	tables = []interface{}{
 		&GameTable{},
+		&GameImageTable{},
+		&GameImageTypeTable{},
 		&GameManagementRoleTable{},
 		&GameManagementRoleTypeTable{},
 		&LauncherVersionTable{},
@@ -26,10 +28,32 @@ type GameTable struct {
 	CreatedAt           time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt           gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
 	GameManagementRoles []GameManagementRoleTable `gorm:"foreignKey:GameID"`
+	GameImages          []GameImageTable          `gorm:"foreignKey:GameID"`
 }
 
 func (gt *GameTable) TableName() string {
 	return "games"
+}
+
+type GameImageTable struct {
+	ID            uuid.UUID          `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID          `gorm:"type:varchar(36);not null"`
+	ImageTypeID   int                `gorm:"type:tinyint;not null"`
+	CreatedAt     time.Time          `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameImageType GameImageTypeTable `gorm:"foreignKey:ImageTypeID"`
+}
+
+func (gt *GameImageTable) TableName() string {
+	return "game_images"
+}
+
+type GameImageTypeTable struct {
+	ID   int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name string `gorm:"type:varchar(32);size:32;not null;unique"`
+}
+
+func (gtt *GameImageTypeTable) TableName() string {
+	return "game_image_types"
 }
 
 type GameManagementRoleTable struct {
