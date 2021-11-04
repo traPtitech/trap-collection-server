@@ -1,8 +1,11 @@
 package swift
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"time"
 
@@ -74,4 +77,76 @@ func setupSwift(
 	}
 
 	return c, nil
+}
+
+var (
+	ErrAlreadyExists = fmt.Errorf("already exists")
+)
+
+func (c *Client) saveFile(
+	ctx context.Context,
+	name string,
+	contentType string,
+	hash string,
+	content io.Reader,
+) error {
+	_, _, err := c.connection.Object(ctx, c.containerName, name)
+	if err == nil {
+		return ErrAlreadyExists
+	}
+	if err != nil && !errors.Is(err, swift.ObjectNotFound) {
+		return fmt.Errorf("failed to get object: %w", err)
+	}
+
+	var checksum string
+	if len(hash) == 0 {
+		checksum = ""
+	} else {
+		checksum = hash
+	}
+
+	f, err := c.connection.ObjectCreate(
+		ctx,
+		c.containerName,
+		name,
+		true,
+		checksum,
+		contentType,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create object: %w", err)
+	}
+	defer f.Close()
+
+	// cacheにも保存したいので、書き込みと同時にbufferに読み込む
+	buf := bytes.NewBuffer(nil)
+	tr := io.TeeReader(content, buf)
+
+	_, err = io.Copy(f, tr)
+	if err != nil {
+		return fmt.Errorf("failed to copy content: %w", err)
+	}
+
+	/*
+		オブジェクトストレージに存在しないことは確認済みなので、
+		ここでキャッシュが存在することはない
+	*/
+	r, w, err := c.cache.Get(name)
+	if err != nil {
+		return fmt.Errorf("failed to get cache: %w", err)
+	}
+	defer w.Close()
+
+	err = r.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close cache: %w", err)
+	}
+
+	_, err = io.Copy(w, buf)
+	if err != nil {
+		return fmt.Errorf("failed to copy buffer: %w", err)
+	}
+
+	return nil
 }
