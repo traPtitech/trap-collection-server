@@ -134,7 +134,7 @@ func TestSaveGameImage(t *testing.T) {
 			var file io.Reader
 			var expectBytes []byte
 			if testCase.isValidFile {
-				img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+				img := image.NewRGBA(image.Rect(0, 0, 3000, 3000))
 				imgBuf := bytes.NewBuffer(nil)
 
 				switch testCase.imageType {
