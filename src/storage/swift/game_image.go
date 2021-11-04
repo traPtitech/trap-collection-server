@@ -54,6 +54,24 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image 
 	return nil
 }
 
+func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
+	imageKey := gi.imageKey(image)
+
+	err := gi.client.loadFile(
+		ctx,
+		imageKey,
+		writer,
+	)
+	if errors.Is(err, ErrNotFound) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get image: %w", err)
+	}
+
+	return nil
+}
+
 // imageKey 変更時にはオブジェクトストレージのキーを変更する必要があるので要注意
 func (gi *GameImage) imageKey(image *domain.GameImage) string {
 	return fmt.Sprintf("images/%s", uuid.UUID(image.GetID()).String())
