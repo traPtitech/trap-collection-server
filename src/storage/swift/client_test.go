@@ -209,3 +209,152 @@ func TestSaveFile(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadFile(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	client, err := newTestClient(
+		ctx,
+		common.SwiftContainer("load_file"),
+		common.FilePath("load_file"),
+	)
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+	defer func() {
+		err := os.RemoveAll("load_file")
+		if err != nil {
+			t.Fatalf("failed to remove directory: %v", err)
+		}
+	}()
+
+	type test struct {
+		description  string
+		name         string
+		isCacheExist bool
+		isFileExist  bool
+		content      *bytes.Buffer
+		isErr        bool
+		err          error
+	}
+
+	testCases := []test{
+		{
+			description:  "特に問題ないので取得できる",
+			isCacheExist: true,
+			isFileExist:  true,
+			name:         "a",
+			content:      bytes.NewBufferString("a"),
+		},
+		{
+			description: "キャッシュが存在しなくても取得できる",
+			isFileExist: true,
+			name:        "b",
+			content:     bytes.NewBufferString("b"),
+		},
+		{
+			description: "ファイルが存在しないのでErrNotFound",
+			name:        "c",
+			isFileExist: false,
+			isErr:       true,
+			err:         ErrNotFound,
+		},
+		{
+			description:  "サイズが大きくても取得できる",
+			name:         "d",
+			isCacheExist: true,
+			isFileExist:  true,
+			content:      bytes.NewBufferString(strings.Repeat("d", 1024*1024*10)),
+		},
+		{
+			description: "サイズが大きくてキャッシュが存在しなくても取得できる",
+			name:        "e",
+			isFileExist: true,
+			content:     bytes.NewBufferString(strings.Repeat("e", 1024*1024*10)),
+		},
+		{
+			description:  "名前に/が含まれていても取得できる",
+			isCacheExist: true,
+			isFileExist:  true,
+			name:         "f/g",
+			content:      bytes.NewBufferString("f"),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				// 確実にキャッシュが残るように、キャッシュを消す
+				err := client.cache.Clean()
+				if err != nil {
+					t.Fatalf("failed to clean cache: %v", err)
+				}
+			}()
+
+			if testCase.isCacheExist {
+				func() {
+					r, w, err := client.cache.Get(testCase.name)
+					if err != nil {
+						t.Fatalf("failed to set cache: %v", err)
+					}
+					defer r.Close()
+
+					func() {
+						defer w.Close()
+
+						_, err = io.Copy(w, testCase.content)
+						if err != nil {
+							t.Fatalf("failed to write cache: %v", err)
+						}
+					}()
+
+					testCase.content.Reset()
+					_, err = io.Copy(testCase.content, r)
+					if err != nil {
+						t.Fatalf("failed to read cache: %v", err)
+					}
+				}()
+			}
+
+			var expectBytes []byte
+			if testCase.isFileExist {
+				expectBytes = testCase.content.Bytes()
+
+				_, err := client.connection.ObjectPut(
+					ctx,
+					client.containerName,
+					testCase.name,
+					testCase.content,
+					true,
+					"",
+					"",
+					nil,
+				)
+				if err != nil {
+					t.Fatalf("failed to put object: %v", err)
+				}
+			}
+
+			buf := bytes.NewBuffer(nil)
+
+			err := client.loadFile(ctx, testCase.name, buf)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, expectBytes, buf.Bytes())
+		})
+	}
+}
