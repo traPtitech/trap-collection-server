@@ -55,3 +55,23 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image 
 
 	return nil
 }
+
+func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
+	imagePath := path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())
+
+	f, err := os.Open(imagePath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(writer, f)
+	if err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+
+	return nil
+}
