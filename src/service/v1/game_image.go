@@ -66,6 +66,11 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 			return service.ErrInvalidFormat
 		}
 
+		_, err = io.ReadAll(r)
+		if err != nil {
+			return fmt.Errorf("failed to read image: %w", err)
+		}
+
 		image := domain.NewGameImage(
 			values.NewGameImageID(),
 			imageType,
