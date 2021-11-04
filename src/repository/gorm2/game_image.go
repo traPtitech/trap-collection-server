@@ -3,7 +3,11 @@ package gorm2
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -66,6 +70,47 @@ func setupImageTypeTable(db *gorm.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role type: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, image *domain.GameImage) error {
+	gormDB, err := gi.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var imageTypeName string
+	switch image.GetType() {
+	case values.GameImageTypeJpeg:
+		imageTypeName = gameImageTypeJpeg
+	case values.GameImageTypePng:
+		imageTypeName = gameImageTypePng
+	case values.GameImageTypeGif:
+		imageTypeName = gameImageTypeGif
+	default:
+		return fmt.Errorf("invalid image type: %d", image.GetType())
+	}
+
+	var imageType GameImageTypeTable
+	err = gormDB.
+		Where("name = ?", imageTypeName).
+		Select("id").
+		First(&imageType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get role type: %w", err)
+	}
+	imageTypeID := imageType.ID
+
+	err = gormDB.Create(&GameImageTable{
+		ID:          uuid.UUID(image.GetID()),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: imageTypeID,
+		CreatedAt:   time.Now(),
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create game image: %w", err)
 	}
 
 	return nil
