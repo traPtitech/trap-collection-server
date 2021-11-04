@@ -2,12 +2,14 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -114,4 +116,46 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, im
 	}
 
 	return nil
+}
+
+func (gi *GameImage) GetLatestGameImage(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.GameImage, error) {
+	gormDB, err := gi.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gormDB, err = gi.db.setLock(gormDB, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var image GameImageTable
+	err = gormDB.
+		Joins("GameImageType").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		First(&image).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game image: %w", err)
+	}
+
+	var imageType values.GameImageType
+	switch image.GameImageType.Name {
+	case gameImageTypeJpeg:
+		imageType = values.GameImageTypeJpeg
+	case gameImageTypePng:
+		imageType = values.GameImageTypePng
+	case gameImageTypeGif:
+		imageType = values.GameImageTypeGif
+	default:
+		return nil, fmt.Errorf("invalid image type: %s", image.GameImageType.Name)
+	}
+
+	return domain.NewGameImage(
+		values.GameImageIDFromUUID(image.ID),
+		imageType,
+	), nil
 }
