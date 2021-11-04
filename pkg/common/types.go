@@ -13,4 +13,5 @@ type (
 	SessionSecret  string
 	SessionKey     string
 	Administrators []values.TraPMemberName
+	FilePath       string
 )
