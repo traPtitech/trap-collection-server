@@ -27,15 +27,17 @@ type Game struct {
 	storage storage.Storage
 	oauth   base.OAuth
 	*v1.GameRole
+	*v1.GameImage
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage) *Game {
 	game := new(Game)
 
 	game.db = db
 	game.storage = storage
 	game.oauth = oauth
 	game.GameRole = gameRole
+	game.GameImage = gameImage
 
 	return game
 }
@@ -188,58 +190,6 @@ func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
 	}
 
 	return gameID + "_game." + ext, nil
-}
-
-// GetImage GET /games/:gameID/imageの処理部分
-func (g *Game) GetImage(gameID string) (io.Reader, error) {
-	imageFile, err := g.getIntroduction(gameID, "image")
-	if err != nil {
-		return nil, fmt.Errorf("Failed In Getting Introduction File: %w", err)
-	}
-
-	return imageFile, nil
-}
-
-var imageExts []string = []string{"jpg", "png"}
-
-// PostImage POST /game/:gameID/image
-func (g *Game) PostImage(gameID string, image multipartFile) error {
-	fileTypeBuf := bytes.NewBuffer(nil)
-	fileBuf := bytes.NewBuffer(nil)
-	mw := io.MultiWriter(fileTypeBuf, fileBuf)
-	_, err := io.Copy(mw, image)
-	if err != nil {
-		return fmt.Errorf("failed to make MultiWriter: %w", err)
-	}
-
-	fileType, err := filetype.MatchReader(fileTypeBuf)
-	if err != nil {
-		return fmt.Errorf("failed to get filetype")
-	}
-
-	ext := fileType.Extension
-	isValidExt := false
-	for _, validExt := range imageExts {
-		if ext == validExt {
-			isValidExt = true
-		}
-	}
-	if !isValidExt {
-		return errors.New("invalid extension")
-	}
-
-	err = g.db.InsertIntroduction(gameID, "image", ext)
-	if err != nil {
-		return fmt.Errorf("failed to insert introduction: %w", err)
-	}
-
-	fileName := g.getImageFileName(gameID, ext)
-	err = g.storage.Save(fileName, fileBuf)
-	if err != nil {
-		return fmt.Errorf("failed to save introduction: %w", err)
-	}
-
-	return nil
 }
 
 func (g *Game) getImageFileName(gameID string, ext string) string {
