@@ -1,8 +1,11 @@
 package v1
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -45,4 +48,37 @@ func (gi *GameImage) PostImage(strGameID string, image multipart.File) error {
 	}
 
 	return nil
+}
+
+func (gi *GameImage) GetImage(strGameID string) (io.Reader, error) {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	/*
+		メモリに保持してしまうので、
+		大きい画像を返すとメモリが溶けてしまう。
+		Pipeを使いたいが、openapiでの生成コードからio.Writerが渡されておらず、
+		エラーハンドリングが怪しくなるので一旦これで妥協する。
+	*/
+	buf := bytes.NewBuffer(nil)
+
+	err = gi.gameImageService.GetGameImage(ctx, buf, gameID)
+	if errors.Is(err, service.ErrNoGameImage) {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "no image")
+	}
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+	if err != nil {
+		log.Printf("error: failed to get image: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get image")
+	}
+
+	return buf, nil
 }
