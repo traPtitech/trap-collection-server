@@ -113,11 +113,12 @@ func main() {
 	}
 
 	var (
-		swiftAuthURL   common.SwiftAuthURL
-		swiftUserName  common.SwiftUserName
-		swiftPassword  common.SwiftPassword
-		swiftTenantID  common.SwiftTenantID
-		swiftContainer common.SwiftContainer
+		swiftAuthURL    common.SwiftAuthURL
+		swiftUserName   common.SwiftUserName
+		swiftPassword   common.SwiftPassword
+		swiftTenantID   common.SwiftTenantID
+		swiftTenantName common.SwiftTenantName
+		swiftContainer  common.SwiftContainer
 	)
 	if isProduction {
 		strSwiftAuthURL, ok := os.LookupEnv("OS_AUTH_URL")
@@ -147,6 +148,12 @@ func main() {
 		}
 		swiftTenantID = common.SwiftTenantID(strSwiftTenantID)
 
+		strSwiftTenantName, ok := os.LookupEnv("OS_TENANT_NAME")
+		if !ok {
+			panic("ENV OS_TENANT_NAME is not set")
+		}
+		swiftTenantName = common.SwiftTenantName(strSwiftTenantName)
+
 		strSwiftContainer, ok := os.LookupEnv("OS_CONTAINER")
 		if !ok {
 			panic("ENV OS_CONTAINER is not set")
@@ -155,19 +162,20 @@ func main() {
 	}
 
 	newAPI, err := src.InjectAPI(&src.Config{
-		IsProduction:   common.IsProduction(isProduction),
-		SessionKey:     "sessions",
-		SessionSecret:  common.SessionSecret(secret),
-		TraQBaseURL:    common.TraQBaseURL(traQBaseURL),
-		OAuthClientID:  common.ClientID(clientID),
-		Administrators: administrators,
-		SwiftAuthURL:   swiftAuthURL,
-		SwiftUserName:  swiftUserName,
-		SwiftPassword:  swiftPassword,
-		SwiftTenantID:  swiftTenantID,
-		SwiftContainer: swiftContainer,
-		FilePath:       common.FilePath(filePath),
-		HttpClient:     http.DefaultClient,
+		IsProduction:    common.IsProduction(isProduction),
+		SessionKey:      "sessions",
+		SessionSecret:   common.SessionSecret(secret),
+		TraQBaseURL:     common.TraQBaseURL(traQBaseURL),
+		OAuthClientID:   common.ClientID(clientID),
+		Administrators:  administrators,
+		SwiftAuthURL:    swiftAuthURL,
+		SwiftUserName:   swiftUserName,
+		SwiftPassword:   swiftPassword,
+		SwiftTenantID:   swiftTenantID,
+		SwiftTenantName: swiftTenantName,
+		SwiftContainer:  swiftContainer,
+		FilePath:        common.FilePath(filePath),
+		HttpClient:      http.DefaultClient,
 	})
 	if err != nil {
 		panic(err)

@@ -43,7 +43,8 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 		common.SwiftAuthURL(authURL),
 		common.SwiftUserName(swifttest.TEST_ACCOUNT),
 		common.SwiftPassword(swifttest.TEST_ACCOUNT),
-		// テスト用サーバーはv1での認証なので、tenantIDは必要ない
+		// テスト用サーバーはv1での認証なので、tenantName/tennantIDは必要ない
+		common.SwiftTenantName(""),
 		common.SwiftTenantID(""),
 		common.SwiftContainer(containerName),
 		cacheDirectory,

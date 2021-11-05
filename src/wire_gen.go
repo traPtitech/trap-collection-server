@@ -30,10 +30,11 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 	swiftAuthURL := config.SwiftAuthURL
 	swiftUserName := config.SwiftUserName
 	swiftPassword := config.SwiftPassword
+	swiftTenantName := config.SwiftTenantName
 	swiftTenantID := config.SwiftTenantID
 	swiftContainer := config.SwiftContainer
 	filePath := config.FilePath
-	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantID, swiftContainer, filePath)
+	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -109,19 +110,20 @@ func InjectAPI(config *Config) (*v1.API, error) {
 // wire.go:
 
 type Config struct {
-	IsProduction   common.IsProduction
-	SessionKey     common.SessionKey
-	SessionSecret  common.SessionSecret
-	TraQBaseURL    common.TraQBaseURL
-	OAuthClientID  common.ClientID
-	Administrators common.Administrators
-	SwiftAuthURL   common.SwiftAuthURL
-	SwiftUserName  common.SwiftUserName
-	SwiftPassword  common.SwiftPassword
-	SwiftTenantID  common.SwiftTenantID
-	SwiftContainer common.SwiftContainer
-	FilePath       common.FilePath
-	HttpClient     *http.Client
+	IsProduction    common.IsProduction
+	SessionKey      common.SessionKey
+	SessionSecret   common.SessionSecret
+	TraQBaseURL     common.TraQBaseURL
+	OAuthClientID   common.ClientID
+	Administrators  common.Administrators
+	SwiftAuthURL    common.SwiftAuthURL
+	SwiftUserName   common.SwiftUserName
+	SwiftPassword   common.SwiftPassword
+	SwiftTenantID   common.SwiftTenantID
+	SwiftTenantName common.SwiftTenantName
+	SwiftContainer  common.SwiftContainer
+	FilePath        common.FilePath
+	HttpClient      *http.Client
 }
 
 type Storage struct {
@@ -137,19 +139,20 @@ func newStorage(
 }
 
 var (
-	isProductionField   = wire.FieldsOf(new(*Config), "IsProduction")
-	sessionKeyField     = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField  = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField    = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField  = wire.FieldsOf(new(*Config), "OAuthClientID")
-	administratorsField = wire.FieldsOf(new(*Config), "Administrators")
-	swiftAuthURLField   = wire.FieldsOf(new(*Config), "SwiftAuthURL")
-	swiftUserNameField  = wire.FieldsOf(new(*Config), "SwiftUserName")
-	swiftPasswordField  = wire.FieldsOf(new(*Config), "SwiftPassword")
-	swiftTenantIDField  = wire.FieldsOf(new(*Config), "SwiftTenantID")
-	swiftContainerField = wire.FieldsOf(new(*Config), "SwiftContainer")
-	filePathField       = wire.FieldsOf(new(*Config), "FilePath")
-	httpClientField     = wire.FieldsOf(new(*Config), "HttpClient")
+	isProductionField    = wire.FieldsOf(new(*Config), "IsProduction")
+	sessionKeyField      = wire.FieldsOf(new(*Config), "SessionKey")
+	sessionSecretField   = wire.FieldsOf(new(*Config), "SessionSecret")
+	traQBaseURLField     = wire.FieldsOf(new(*Config), "TraQBaseURL")
+	oAuthClientIDField   = wire.FieldsOf(new(*Config), "OAuthClientID")
+	administratorsField  = wire.FieldsOf(new(*Config), "Administrators")
+	swiftAuthURLField    = wire.FieldsOf(new(*Config), "SwiftAuthURL")
+	swiftUserNameField   = wire.FieldsOf(new(*Config), "SwiftUserName")
+	swiftPasswordField   = wire.FieldsOf(new(*Config), "SwiftPassword")
+	swiftTenantIDField   = wire.FieldsOf(new(*Config), "SwiftTenantID")
+	swiftTenantNameField = wire.FieldsOf(new(*Config), "SwiftTenantName")
+	swiftContainerField  = wire.FieldsOf(new(*Config), "SwiftContainer")
+	filePathField        = wire.FieldsOf(new(*Config), "FilePath")
+	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
 
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
 )
