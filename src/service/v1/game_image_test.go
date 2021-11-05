@@ -215,32 +215,32 @@ func TestGetGameImage(t *testing.T) {
 	mockGameImageRepository := mockRepository.NewMockGameImage(ctrl)
 
 	type test struct {
-		description                   string
-		gameID                        values.GameID
-		GetGameErr                    error
-		isValidFile                   bool
-		imageType                     values.GameImageType
-		executeRepositoryGetGameImage bool
-		image                         *domain.GameImage
-		RepositoryGetGameImageErr     error
-		executeStorageGetGameImage    bool
-		StorageGetGameImageErr        error
-		isErr                         bool
-		err                           error
+		description               string
+		gameID                    values.GameID
+		GetGameErr                error
+		isValidFile               bool
+		imageType                 values.GameImageType
+		executeGetLatestGameImage bool
+		image                     *domain.GameImage
+		GetLatestGameImageErr     error
+		executeGetGameImage       bool
+		GetGameImageErr           error
+		isErr                     bool
+		err                       error
 	}
 
 	testCases := []test{
 		{
-			description:                   "特に問題ないのでエラーなし",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypeJpeg,
-			executeRepositoryGetGameImage: true,
+			description:               "特に問題ないのでエラーなし",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypeJpeg,
+			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 			),
-			executeStorageGetGameImage: true,
+			executeGetGameImage: true,
 		},
 		{
 			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
@@ -260,73 +260,73 @@ func TestGetGameImage(t *testing.T) {
 			isErr:       true,
 		},
 		{
-			description:                   "画像がpngでもエラーなし",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypePng,
-			executeRepositoryGetGameImage: true,
+			description:               "画像がpngでもエラーなし",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypePng,
+			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 			),
-			executeStorageGetGameImage: true,
+			executeGetGameImage: true,
 		},
 		{
-			description:                   "画像がgifでもエラーなし",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypeGif,
-			executeRepositoryGetGameImage: true,
+			description:               "画像がgifでもエラーなし",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypeGif,
+			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 			),
-			executeStorageGetGameImage: true,
+			executeGetGameImage: true,
 		},
 		{
 			// 実際には発生しないが、念のため確認
-			description:                   "画像が不正でもエラーなし",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   false,
-			executeRepositoryGetGameImage: true,
+			description:               "画像が不正でもエラーなし",
+			gameID:                    values.NewGameID(),
+			isValidFile:               false,
+			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 			),
-			executeStorageGetGameImage: true,
+			executeGetGameImage: true,
 		},
 		{
-			description:                   "repository.GetGameImageがErrRecordNotFoundなのでErrNoGameImage",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypeJpeg,
-			executeRepositoryGetGameImage: true,
-			RepositoryGetGameImageErr:     repository.ErrRecordNotFound,
-			isErr:                         true,
-			err:                           service.ErrNoGameImage,
+			description:               "GetLatestGameImageがErrRecordNotFoundなのでErrNoGameImage",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypeJpeg,
+			executeGetLatestGameImage: true,
+			GetLatestGameImageErr:     repository.ErrRecordNotFound,
+			isErr:                     true,
+			err:                       service.ErrNoGameImage,
 		},
 		{
-			description:                   "repository.GetGameImageがエラーなのでエラー",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypeJpeg,
-			executeRepositoryGetGameImage: true,
-			RepositoryGetGameImageErr:     errors.New("error"),
-			isErr:                         true,
+			description:               "GetLatestGameImageがエラーなのでエラー",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypeJpeg,
+			executeGetLatestGameImage: true,
+			GetLatestGameImageErr:     errors.New("error"),
+			isErr:                     true,
 		},
 		{
-			description:                   "storage.GetGameImageがエラーなのでエラー",
-			gameID:                        values.NewGameID(),
-			isValidFile:                   true,
-			imageType:                     values.GameImageTypeJpeg,
-			executeRepositoryGetGameImage: true,
+			description:               "GetGameImageがエラーなのでエラー",
+			gameID:                    values.NewGameID(),
+			isValidFile:               true,
+			imageType:                 values.GameImageTypeJpeg,
+			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 			),
-			executeStorageGetGameImage: true,
-			StorageGetGameImageErr:     errors.New("error"),
-			isErr:                      true,
+			executeGetGameImage: true,
+			GetGameImageErr:     errors.New("error"),
+			isErr:               true,
 		},
 	}
 
@@ -377,18 +377,18 @@ func TestGetGameImage(t *testing.T) {
 				GetGame(ctx, testCase.gameID, repository.LockTypeNone).
 				Return(nil, testCase.GetGameErr)
 
-			if testCase.executeRepositoryGetGameImage {
+			if testCase.executeGetLatestGameImage {
 				mockGameImageRepository.
 					EXPECT().
-					GetGameImage(ctx, testCase.gameID, repository.LockTypeRecord).
-					Return(testCase.image, testCase.RepositoryGetGameImageErr)
+					GetLatestGameImage(ctx, testCase.gameID, repository.LockTypeRecord).
+					Return(testCase.image, testCase.GetLatestGameImageErr)
 			}
 
-			if testCase.executeStorageGetGameImage {
+			if testCase.executeGetGameImage {
 				mockGameImageStorage.
 					EXPECT().
 					GetGameImage(ctx, testCase.image).
-					Return(testCase.StorageGetGameImageErr)
+					Return(testCase.GetGameImageErr)
 			}
 
 			buf := bytes.NewBuffer(nil)

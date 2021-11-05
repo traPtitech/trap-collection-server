@@ -105,7 +105,7 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, gameID 
 			return fmt.Errorf("failed to get game: %w", err)
 		}
 
-		image, err := gi.gameImageRepository.GetGameImage(ctx, gameID, repository.LockTypeRecord)
+		image, err := gi.gameImageRepository.GetLatestGameImage(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrNoGameImage
 		}
