@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
   -t /local \
   -o /local
 
-FROM golang:1.17.2-alpine AS build
+FROM golang:1.17.3-alpine AS build
 
 RUN apk add --update --no-cache git
 
