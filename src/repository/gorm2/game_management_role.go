@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +16,8 @@ const (
 	gameManagementRoleTypeAdministrator = "administrator"
 	gameManagementRoleTypeCollaborator  = "collaborator"
 )
+
+var gameManagementRoleTypeSetupGroup = &singleflight.Group{}
 
 type GameManagementRole struct {
 	db *DB
@@ -28,7 +31,14 @@ func NewGameManagementRole(db *DB) (*GameManagementRole, error) {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	err = setupRoleTypeTable(gormDB)
+	/*
+		実際の運用では並列で実行されないが、
+		テストで並列に実行されるため、
+		singleflightを使っている
+	*/
+	_, err, _ = gameManagementRoleTypeSetupGroup.Do("setupRoleTypeTable", func() (interface{}, error) {
+		return nil, setupRoleTypeTable(gormDB)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup role type table: %w", err)
 	}
