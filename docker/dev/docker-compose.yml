@@ -15,13 +15,11 @@ services:
       - ../../upload/:/go/src/github.com/traPtitech/trap-collection-server/upload
       - ../../session/:/go/src/github.com/traPtitech/trap-collection-server/session
       - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
+      - ../../cache/:/go/src/github.com/traPtitech/trap-collection-server/cache
     environment:
       COLLECTION_ENV: development
       ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
-      OS_AUTH_URL: https://identity.tyo2.conoha.io/v2.0
-      OS_USERNAME:
-      OS_PASSWORD:
-      OS_TENANT_ID:
+      FILE_PATH: ./cache
       CLIENT_ID:
       CLIENT_SECRET:
       PRODUCT_KEY:

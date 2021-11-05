@@ -107,6 +107,53 @@ func main() {
 		administrators = append(administrators, administrator)
 	}
 
+	filePath, ok := os.LookupEnv("FILE_PATH")
+	if !ok {
+		panic("ENV FILE_PATH is not set")
+	}
+
+	var (
+		swiftAuthURL   common.SwiftAuthURL
+		swiftUserName  common.SwiftUserName
+		swiftPassword  common.SwiftPassword
+		swiftTenantID  common.SwiftTenantID
+		swiftContainer common.SwiftContainer
+	)
+	if isProduction {
+		strSwiftAuthURL, ok := os.LookupEnv("OS_AUTH_URL")
+		if !ok {
+			panic("ENV OS_AUTH_URL is not set")
+		}
+		swiftAuthURL, err = url.Parse(strSwiftAuthURL)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse swiftAuthURL: %w", err))
+		}
+
+		strSwiftUserName, ok := os.LookupEnv("OS_USERNAME")
+		if !ok {
+			panic("ENV OS_USERNAME is not set")
+		}
+		swiftUserName = common.SwiftUserName(strSwiftUserName)
+
+		strSwiftPassword, ok := os.LookupEnv("OS_PASSWORD")
+		if !ok {
+			panic("ENV OS_PASSWORD is not set")
+		}
+		swiftPassword = common.SwiftPassword(strSwiftPassword)
+
+		strSwiftTenantID, ok := os.LookupEnv("OS_TENANT_ID")
+		if !ok {
+			panic("ENV OS_TENANT_ID is not set")
+		}
+		swiftTenantID = common.SwiftTenantID(strSwiftTenantID)
+
+		strSwiftContainer, ok := os.LookupEnv("OS_CONTAINER")
+		if !ok {
+			panic("ENV OS_CONTAINER is not set")
+		}
+		swiftContainer = common.SwiftContainer(strSwiftContainer)
+	}
+
 	newAPI, err := src.InjectAPI(&src.Config{
 		IsProduction:   common.IsProduction(isProduction),
 		SessionKey:     "sessions",
@@ -114,6 +161,12 @@ func main() {
 		TraQBaseURL:    common.TraQBaseURL(traQBaseURL),
 		OAuthClientID:  common.ClientID(clientID),
 		Administrators: administrators,
+		SwiftAuthURL:   swiftAuthURL,
+		SwiftUserName:  swiftUserName,
+		SwiftPassword:  swiftPassword,
+		SwiftTenantID:  swiftTenantID,
+		SwiftContainer: swiftContainer,
+		FilePath:       common.FilePath(filePath),
 		HttpClient:     http.DefaultClient,
 	})
 	if err != nil {

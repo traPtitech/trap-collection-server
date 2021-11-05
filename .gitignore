@@ -10,6 +10,7 @@ openapi
 !mysql/init/mock
 !docker/mock
 upload/*
+cache/*
 !upload/.gitkeep
 mock_*.go
 !mock_db.go
