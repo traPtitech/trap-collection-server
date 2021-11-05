@@ -11,5 +11,5 @@ import (
 
 type GameImage interface {
 	SaveGameImage(ctx context.Context, gameID values.GameID, image *domain.GameImage) error
-	GetGameImage(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.GameImage, error)
+	GetLatestGameImage(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.GameImage, error)
 }
