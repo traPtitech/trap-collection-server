@@ -18,10 +18,40 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	v1_2 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/src/storage/local"
+	"github.com/traPtitech/trap-collection-server/src/storage/swift"
 	"net/http"
 )
 
 // Injectors from wire.go:
+
+func injectSwiftStorage(config *Config) (*Storage, error) {
+	swiftAuthURL := config.SwiftAuthURL
+	swiftUserName := config.SwiftUserName
+	swiftPassword := config.SwiftPassword
+	swiftTenantID := config.SwiftTenantID
+	swiftContainer := config.SwiftContainer
+	filePath := config.FilePath
+	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantID, swiftContainer, filePath)
+	if err != nil {
+		return nil, err
+	}
+	gameImage := swift.NewGameImage(client)
+	storage := newStorage(gameImage)
+	return storage, nil
+}
+
+func injectLocalStorage(config *Config) (*Storage, error) {
+	filePath := config.FilePath
+	directoryManager := local.NewDirectoryManager(filePath)
+	gameImage, err := local.NewGameImage(directoryManager)
+	if err != nil {
+		return nil, err
+	}
+	storage := newStorage(gameImage)
+	return storage, nil
+}
 
 func InjectAPI(config *Config) (*v1.API, error) {
 	sessionKey := config.SessionKey
@@ -59,9 +89,20 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	v1User := v1_2.NewUser(userUtils)
 	user2 := v1.NewUser(session, v1User)
 	gameRole := v1.NewGameRole(session, gameAuth)
+	gameImage, err := gorm2.NewGameImage(db)
+	if err != nil {
+		return nil, err
+	}
+	storage, err := injectedStorage(config)
+	if err != nil {
+		return nil, err
+	}
+	storageGameImage := storage.GameImage
+	v1GameImage := v1_2.NewGameImage(db, game, gameImage, storageGameImage)
+	gameImage2 := v1.NewGameImage(v1GameImage)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, v1LauncherAuth, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 
@@ -74,12 +115,57 @@ type Config struct {
 	TraQBaseURL    common.TraQBaseURL
 	OAuthClientID  common.ClientID
 	Administrators common.Administrators
+	SwiftAuthURL   common.SwiftAuthURL
+	SwiftUserName  common.SwiftUserName
+	SwiftPassword  common.SwiftPassword
+	SwiftTenantID  common.SwiftTenantID
+	SwiftContainer common.SwiftContainer
+	FilePath       common.FilePath
 	HttpClient     *http.Client
+}
+
+type Storage struct {
+	GameImage storage.GameImage
+}
+
+func newStorage(
+	gameImage storage.GameImage,
+) *Storage {
+	return &Storage{
+		GameImage: gameImage,
+	}
+}
+
+var (
+	isProductionField   = wire.FieldsOf(new(*Config), "IsProduction")
+	sessionKeyField     = wire.FieldsOf(new(*Config), "SessionKey")
+	sessionSecretField  = wire.FieldsOf(new(*Config), "SessionSecret")
+	traQBaseURLField    = wire.FieldsOf(new(*Config), "TraQBaseURL")
+	oAuthClientIDField  = wire.FieldsOf(new(*Config), "OAuthClientID")
+	administratorsField = wire.FieldsOf(new(*Config), "Administrators")
+	swiftAuthURLField   = wire.FieldsOf(new(*Config), "SwiftAuthURL")
+	swiftUserNameField  = wire.FieldsOf(new(*Config), "SwiftUserName")
+	swiftPasswordField  = wire.FieldsOf(new(*Config), "SwiftPassword")
+	swiftTenantIDField  = wire.FieldsOf(new(*Config), "SwiftTenantID")
+	swiftContainerField = wire.FieldsOf(new(*Config), "SwiftContainer")
+	filePathField       = wire.FieldsOf(new(*Config), "FilePath")
+	httpClientField     = wire.FieldsOf(new(*Config), "HttpClient")
+
+	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
+)
+
+func injectedStorage(config *Config) (*Storage, error) {
+	if config.IsProduction {
+		return injectSwiftStorage(config)
+	}
+
+	return injectLocalStorage(config)
 }
 
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
@@ -92,15 +178,8 @@ var (
 
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
+	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
-
-	isProductionField   = wire.FieldsOf(new(*Config), "IsProduction")
-	sessionKeyField     = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField  = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField    = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField  = wire.FieldsOf(new(*Config), "OAuthClientID")
-	administratorsField = wire.FieldsOf(new(*Config), "Administrators")
-	httpClientField     = wire.FieldsOf(new(*Config), "HttpClient")
 )
