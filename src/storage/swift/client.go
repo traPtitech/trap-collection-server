@@ -28,6 +28,7 @@ func NewClient(
 	authURL common.SwiftAuthURL,
 	userName common.SwiftUserName,
 	password common.SwiftPassword,
+	tennantName common.SwiftTenantName,
 	tennantID common.SwiftTenantID,
 	containerName common.SwiftContainer,
 	cacheDirectory common.FilePath,
@@ -39,6 +40,7 @@ func NewClient(
 		(*url.URL)(authURL),
 		string(userName),
 		string(password),
+		string(tennantName),
 		string(tennantID),
 	)
 	if err != nil {
@@ -62,13 +64,15 @@ func setupSwift(
 	authURL *url.URL,
 	userName string,
 	password string,
+	tennantName string,
 	tennantID string,
 ) (*swift.Connection, error) {
 	c := &swift.Connection{
 		UserName: userName,
 		ApiKey:   password,
 		AuthUrl:  authURL.String(),
-		Tenant:   tennantID,
+		Tenant:   tennantName,
+		TenantId: tennantID,
 	}
 
 	err := c.Authenticate(ctx)

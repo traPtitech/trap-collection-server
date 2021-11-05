@@ -7,16 +7,17 @@ import (
 )
 
 type (
-	IsProduction   bool
-	ClientID       string
-	TraQBaseURL    *url.URL
-	SessionSecret  string
-	SessionKey     string
-	Administrators []values.TraPMemberName
-	SwiftAuthURL   *url.URL
-	SwiftUserName  string
-	SwiftPassword  string
-	SwiftTenantID  string
-	SwiftContainer string
-	FilePath       string
+	IsProduction    bool
+	ClientID        string
+	TraQBaseURL     *url.URL
+	SessionSecret   string
+	SessionKey      string
+	Administrators  []values.TraPMemberName
+	SwiftAuthURL    *url.URL
+	SwiftUserName   string
+	SwiftPassword   string
+	SwiftTenantID   string
+	SwiftTenantName string
+	SwiftContainer  string
+	FilePath        string
 )
