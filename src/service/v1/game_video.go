@@ -103,7 +103,7 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, gameID 
 
 		video, err := gv.gameVideoRepository.GetLatestGameVideo(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrNoGameImage
+			return service.ErrNoGameVideo
 		}
 		if err != nil {
 			return fmt.Errorf("failed to get game image: %w", err)

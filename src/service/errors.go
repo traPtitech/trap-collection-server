@@ -18,4 +18,5 @@ var (
 	ErrForbidden                         = errors.New("forbidden")
 	ErrInvalidFormat                     = errors.New("invalid format")
 	ErrNoGameImage                       = errors.New("no game image")
+	ErrNoGameVideo                       = errors.New("no game video")
 )
