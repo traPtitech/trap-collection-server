@@ -90,3 +90,35 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 
 	return nil
 }
+
+func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, gameID values.GameID) error {
+	err := gv.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		video, err := gv.gameVideoRepository.GetLatestGameVideo(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGameImage
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game image: %w", err)
+		}
+
+		err = gv.gameVideoStorage.GetGameVideo(ctx, writer, video)
+		if err != nil {
+			return fmt.Errorf("failed to get game image file: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
