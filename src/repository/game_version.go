@@ -1,0 +1,16 @@
+package repository
+
+//go:generate mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+
+import (
+	"context"
+
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+)
+
+type GameVersion interface {
+	CreateGameVersion(ctx context.Context, gameID values.GameID, version *domain.GameVersion) error
+	// GetGameVersions CreatedAtで降順にソートしたGameVersionのリストを取得
+	GetGameVersions(ctx context.Context, gameID values.GameID) ([]*domain.GameVersion, error)
+}
