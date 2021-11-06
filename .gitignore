@@ -5,7 +5,7 @@ mysql/data
 .openapi-generator
 openapi
 **/mock/*
-!src/storage/mock/game_image.go
+!src/storage/mock/*
 !src/repository/mock/db.go
 !mysql/init/mock
 !docker/mock
