@@ -50,6 +50,24 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video 
 	return nil
 }
 
+func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
+	videoKey := gv.videoKey(video)
+
+	err := gv.client.loadFile(
+		ctx,
+		videoKey,
+		writer,
+	)
+	if errors.Is(err, ErrNotFound) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get video: %w", err)
+	}
+
+	return nil
+}
+
 func (gv *GameVideo) videoKey(video *domain.GameVideo) string {
 	return fmt.Sprintf("videos/%s", uuid.UUID(video.GetID()).String())
 }
