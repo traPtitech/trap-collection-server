@@ -13,6 +13,8 @@ var (
 		&GameTable{},
 		&GameImageTable{},
 		&GameImageTypeTable{},
+		&GameVideoTable{},
+		&GameVideoTypeTable{},
 		&GameManagementRoleTable{},
 		&GameManagementRoleTypeTable{},
 		&LauncherVersionTable{},
@@ -29,6 +31,7 @@ type GameTable struct {
 	DeletedAt           gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
 	GameManagementRoles []GameManagementRoleTable `gorm:"foreignKey:GameID"`
 	GameImages          []GameImageTable          `gorm:"foreignKey:GameID"`
+	GameVideos          []GameVideoTable          `gorm:"foreignKey:GameID"`
 }
 
 func (gt *GameTable) TableName() string {
@@ -54,6 +57,27 @@ type GameImageTypeTable struct {
 
 func (gtt *GameImageTypeTable) TableName() string {
 	return "game_image_types"
+}
+
+type GameVideoTable struct {
+	ID            uuid.UUID          `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID          `gorm:"type:varchar(36);not null"`
+	VideoTypeID   int                `gorm:"type:tinyint;not null"`
+	CreatedAt     time.Time          `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameVideoType GameVideoTypeTable `gorm:"foreignKey:VideoTypeID"`
+}
+
+func (gt *GameVideoTable) TableName() string {
+	return "game_videos"
+}
+
+type GameVideoTypeTable struct {
+	ID   int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name string `gorm:"type:varchar(32);size:32;not null;unique"`
+}
+
+func (gtt *GameVideoTypeTable) TableName() string {
+	return "game_video_types"
 }
 
 type GameManagementRoleTable struct {
