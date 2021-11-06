@@ -16,7 +16,6 @@ services:
       - ../../:/go/src/github.com/traPtitech/trap-collection-server
     working_dir: /go/src/github.com/traPtitech/trap-collection-server
     command: go test ./src/repository/... -v -cover -race
-    restart: on-failure
     depends_on:
       - mariadb
 
