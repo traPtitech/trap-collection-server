@@ -38,5 +38,5 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
 
 COPY --from=generate /local/openapi ./openapi
 
-ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306", "air"]
+ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306", "-timeout", "5m", "air"]
 CMD ["-c", ".air.toml"]

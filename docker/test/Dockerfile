@@ -20,5 +20,5 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
 
-ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306"]
+ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306", "-timeout", "5m"]
 CMD []
