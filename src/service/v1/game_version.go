@@ -61,3 +61,28 @@ func (gv *GameVersion) CreateGameVersion(ctx context.Context, gameID values.Game
 
 	return gameVersion, nil
 }
+
+func (gv *GameVersion) GetGameVersions(ctx context.Context, gameID values.GameID) ([]*domain.GameVersion, error) {
+	var gameVersions []*domain.GameVersion
+	err := gv.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		gameVersions, err = gv.gameVersionRepository.GetGameVersions(ctx, gameID)
+		if err != nil {
+			return fmt.Errorf("failed to get game versions: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return gameVersions, nil
+}
