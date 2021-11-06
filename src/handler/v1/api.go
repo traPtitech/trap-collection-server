@@ -5,6 +5,7 @@ type API struct {
 	*User
 	*GameRole
 	*GameImage
+	*GameVideo
 	*LauncherAuth
 	*OAuth2
 	*Session
@@ -15,6 +16,7 @@ func NewAPI(
 	user *User,
 	gameRole *GameRole,
 	gameImage *GameImage,
+	gameVideo *GameVideo,
 	launcherAuth *LauncherAuth,
 	oAuth2 *OAuth2,
 	session *Session,
@@ -24,6 +26,7 @@ func NewAPI(
 		User:         user,
 		GameRole:     gameRole,
 		GameImage:    gameImage,
+		GameVideo:    gameVideo,
 		LauncherAuth: launcherAuth,
 		OAuth2:       oAuth2,
 		Session:      session,
