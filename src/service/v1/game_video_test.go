@@ -263,7 +263,7 @@ func TestGetGameVideo(t *testing.T) {
 			executeGetLatestGameVideo: true,
 			GetLatestGameVideoErr:     repository.ErrRecordNotFound,
 			isErr:                     true,
-			err:                       service.ErrNoGameImage,
+			err:                       service.ErrNoGameVideo,
 		},
 		{
 			description:               "GetLatestGameVideoがエラーなのでエラー",

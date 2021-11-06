@@ -39,7 +39,8 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 		return nil, err
 	}
 	gameImage := swift.NewGameImage(client)
-	storage := newStorage(gameImage)
+	gameVideo := swift.NewGameVideo(client)
+	storage := newStorage(gameImage, gameVideo)
 	return storage, nil
 }
 
@@ -50,7 +51,11 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	storage := newStorage(gameImage)
+	gameVideo, err := local.NewGameVideo(directoryManager)
+	if err != nil {
+		return nil, err
+	}
+	storage := newStorage(gameImage, gameVideo)
 	return storage, nil
 }
 
@@ -101,9 +106,16 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	storageGameImage := storage.GameImage
 	v1GameImage := v1_2.NewGameImage(db, game, gameImage, storageGameImage)
 	gameImage2 := v1.NewGameImage(v1GameImage)
+	gameVideo, err := gorm2.NewGameVideo(db)
+	if err != nil {
+		return nil, err
+	}
+	storageGameVideo := storage.GameVideo
+	v1GameVideo := v1_2.NewGameVideo(db, game, gameVideo, storageGameVideo)
+	gameVideo2 := v1.NewGameVideo(v1GameVideo)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, v1LauncherAuth, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 
@@ -128,13 +140,16 @@ type Config struct {
 
 type Storage struct {
 	GameImage storage.GameImage
+	GameVideo storage.GameVideo
 }
 
 func newStorage(
 	gameImage storage.GameImage,
+	gameVideo storage.GameVideo,
 ) *Storage {
 	return &Storage{
 		GameImage: gameImage,
+		GameVideo: gameVideo,
 	}
 }
 
@@ -155,6 +170,7 @@ var (
 	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
 
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
+	gameVideoField = wire.FieldsOf(new(*Storage), "GameVideo")
 )
 
 func injectedStorage(config *Config) (*Storage, error) {
@@ -169,6 +185,7 @@ var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
 	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
+	gameVideoRepositoryBind       = wire.Bind(new(repository.GameVideo), new(*gorm2.GameVideo))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
@@ -182,6 +199,7 @@ var (
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
+	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_2.GameVideo))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
