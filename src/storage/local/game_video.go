@@ -55,3 +55,23 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video 
 
 	return nil
 }
+
+func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
+	videoPath := path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())
+
+	f, err := os.Open(videoPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(writer, f)
+	if err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+
+	return nil
+}
