@@ -40,4 +40,4 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/main ./
 COPY ./upload ./upload
 
-ENTRYPOINT dockerize -wait tcp://collection-mariadb:3306 ./main
+ENTRYPOINT dockerize -wait tcp://collection-mariadb:3306 -timeout 5m ./main
