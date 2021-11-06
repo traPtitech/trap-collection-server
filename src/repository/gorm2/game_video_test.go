@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/gorm"
 )
 
@@ -290,6 +291,155 @@ func TestSaveGameVideo(t *testing.T) {
 				assert.Equal(t, expectVideo.VideoTypeID, actualVideo.VideoTypeID)
 				assert.WithinDuration(t, expectVideo.CreatedAt, actualVideo.CreatedAt, 2*time.Second)
 			}
+		})
+	}
+}
+
+func TestGetLatestGameVideo(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameVideoRepository, err := NewGameVideo(testDB)
+	if err != nil {
+		t.Fatalf("failed to create game management role repository: %+v\n", err)
+	}
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		lockType    repository.LockType
+		videos      []GameVideoTable
+		expectVideo *domain.GameVideo
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+
+	videoID1 := values.NewGameVideoID()
+	videoID4 := values.NewGameVideoID()
+	videoID5 := values.NewGameVideoID()
+	videoID6 := values.NewGameVideoID()
+
+	var videoTypes []*GameVideoTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&videoTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	videoTypeMap := make(map[string]int, len(videoTypes))
+	for _, videoType := range videoTypes {
+		videoTypeMap[videoType.Name] = videoType.ID
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID1,
+			lockType:    repository.LockTypeNone,
+			videos: []GameVideoTable{
+				{
+					ID:          uuid.UUID(videoID1),
+					GameID:      uuid.UUID(gameID1),
+					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					CreatedAt:   time.Now(),
+				},
+			},
+			expectVideo: domain.NewGameVideo(
+				videoID1,
+				values.GameVideoTypeMp4,
+			),
+		},
+		{
+			description: "画像がないのでエラー",
+			gameID:      gameID4,
+			lockType:    repository.LockTypeNone,
+			videos:      []GameVideoTable{},
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
+		},
+		{
+			description: "複数でも正しい画像が返る",
+			gameID:      gameID5,
+			lockType:    repository.LockTypeNone,
+			videos: []GameVideoTable{
+				{
+					ID:          uuid.UUID(videoID4),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					CreatedAt:   time.Now().Add(-24 * time.Hour),
+				},
+				{
+					ID:          uuid.UUID(videoID5),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					CreatedAt:   time.Now(),
+				},
+			},
+			expectVideo: domain.NewGameVideo(
+				videoID5,
+				values.GameVideoTypeMp4,
+			),
+		},
+		{
+			description: "行ロックをとっても問題なし",
+			gameID:      gameID6,
+			lockType:    repository.LockTypeRecord,
+			videos: []GameVideoTable{
+				{
+					ID:          uuid.UUID(videoID6),
+					GameID:      uuid.UUID(gameID6),
+					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					CreatedAt:   time.Now(),
+				},
+			},
+			expectVideo: domain.NewGameVideo(
+				videoID6,
+				values.GameVideoTypeMp4,
+			),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := db.Create(&GameTable{
+				ID:          uuid.UUID(testCase.gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   time.Now(),
+				GameVideos:  testCase.videos,
+			}).Error
+			if err != nil {
+				t.Fatalf("failed to create game table: %+v\n", err)
+			}
+
+			video, err := gameVideoRepository.GetLatestGameVideo(ctx, testCase.gameID, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, *testCase.expectVideo, *video)
 		})
 	}
 }
