@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -255,5 +256,27 @@ func TestGetGameVideo(t *testing.T) {
 
 			assert.Equal(t, expectBytes, buf.Bytes())
 		})
+	}
+}
+
+func TestVideoKey(t *testing.T) {
+	t.Parallel()
+
+	// clientは使わないのでnilでOK
+	gameVideoStorage := NewGameVideo(nil)
+
+	loopNum := 100
+
+	for i := 0; i < loopNum; i++ {
+		videoID := values.NewGameVideoID()
+
+		video := domain.NewGameVideo(
+			videoID,
+			values.GameVideoType(rand.Intn(1)),
+		)
+
+		key := gameVideoStorage.videoKey(video)
+
+		assert.Equal(t, fmt.Sprintf("videos/%s", uuid.UUID(video.GetID()).String()), key)
 	}
 }
