@@ -3,7 +3,11 @@ package gorm2
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -58,6 +62,43 @@ func setupVideoTypeTable(db *gorm.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role type: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (gv *GameVideo) SaveGameVideo(ctx context.Context, gameID values.GameID, video *domain.GameVideo) error {
+	gormDB, err := gv.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var videoTypeName string
+	switch video.GetType() {
+	case values.GameVideoTypeMp4:
+		videoTypeName = gameVideoTypeMp4
+	default:
+		return fmt.Errorf("invalid video type: %d", video.GetType())
+	}
+
+	var videoType GameVideoTypeTable
+	err = gormDB.
+		Where("name = ?", videoTypeName).
+		Select("id").
+		First(&videoType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get role type: %w", err)
+	}
+	videoTypeID := videoType.ID
+
+	err = gormDB.Create(&GameVideoTable{
+		ID:          uuid.UUID(video.GetID()),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: videoTypeID,
+		CreatedAt:   time.Now(),
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create game video: %w", err)
 	}
 
 	return nil
