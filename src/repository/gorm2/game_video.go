@@ -2,12 +2,14 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -102,4 +104,42 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, gameID values.GameID, vi
 	}
 
 	return nil
+}
+
+func (gv *GameVideo) GetLatestGameVideo(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.GameVideo, error) {
+	gormDB, err := gv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gormDB, err = gv.db.setLock(gormDB, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var video GameVideoTable
+	err = gormDB.
+		Joins("GameVideoType").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		First(&video).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game video: %w", err)
+	}
+
+	var videoType values.GameVideoType
+	switch video.GameVideoType.Name {
+	case gameVideoTypeMp4:
+		videoType = values.GameVideoTypeMp4
+	default:
+		return nil, fmt.Errorf("invalid video type: %s", video.GameVideoType.Name)
+	}
+
+	return domain.NewGameVideo(
+		values.NewGameVideoIDFromUUID(video.ID),
+		videoType,
+	), nil
 }
