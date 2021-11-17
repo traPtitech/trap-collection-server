@@ -61,9 +61,6 @@ func (la *LauncherAuth) CreateLauncherUser(ctx context.Context, launcherVersionI
 	if err != nil {
 		return nil, fmt.Errorf("failed to create launcher users: %w", err)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed in transaction: %w", err)
-	}
 
 	return launcherUsers, nil
 }
