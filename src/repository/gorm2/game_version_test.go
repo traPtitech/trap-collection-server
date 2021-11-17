@@ -1,0 +1,368 @@
+package gorm2
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"gorm.io/gorm"
+)
+
+func TestCreateGameVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %v", err)
+	}
+
+	gameVersionRepository := NewGameVersion(testDB)
+
+	type test struct {
+		description        string
+		isGameExist        bool
+		isGameDeleted      bool
+		gameID             values.GameID
+		version            *domain.GameVersion
+		beforeGameVersions []GameVersionTable
+		expectGameVersions []GameVersionTable
+		isErr              bool
+		err                error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+	gameID8 := values.NewGameID()
+	gameID9 := values.NewGameID()
+	gameID10 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	gameVersionID3 := values.NewGameVersionID()
+	gameVersionID4 := values.NewGameVersionID()
+	gameVersionID5 := values.NewGameVersionID()
+	gameVersionID6 := values.NewGameVersionID()
+	gameVersionID7 := values.NewGameVersionID()
+	gameVersionID8 := values.NewGameVersionID()
+	gameVersionID9 := values.NewGameVersionID()
+	gameVersionID10 := values.NewGameVersionID()
+	gameVersionID11 := values.NewGameVersionID()
+	gameVersionID12 := values.NewGameVersionID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			isGameExist: true,
+			gameID:      gameID1,
+			version: domain.NewGameVersion(
+				gameVersionID1,
+				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID1),
+					GameID:      uuid.UUID(gameID1),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "既にバージョンが存在してもエラーなし",
+			isGameExist: true,
+			gameID:      gameID2,
+			version: domain.NewGameVersion(
+				gameVersionID2,
+				values.NewGameVersionName("1.1.0"),
+				values.NewGameVersionDescription("アップデート"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID3),
+					GameID:      uuid.UUID(gameID2),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID2),
+					GameID:      uuid.UUID(gameID2),
+					Name:        "1.1.0",
+					Description: "アップデート",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameVersionID3),
+					GameID:      uuid.UUID(gameID2),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "既にIDが同じバージョンが存在するのでエラー",
+			isGameExist: true,
+			gameID:      gameID3,
+			version: domain.NewGameVersion(
+				gameVersionID4,
+				values.NewGameVersionName("1.1.0"),
+				values.NewGameVersionDescription("アップデート"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID4),
+					GameID:      uuid.UUID(gameID3),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID4),
+					GameID:      uuid.UUID(gameID3),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "同名のバージョンが存在してもエラーなし",
+			isGameExist: true,
+			gameID:      gameID4,
+			version: domain.NewGameVersion(
+				gameVersionID5,
+				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionDescription("アップデート"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID6),
+					GameID:      uuid.UUID(gameID4),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID5),
+					GameID:      uuid.UUID(gameID4),
+					Name:        "1.0.0",
+					Description: "アップデート",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameVersionID6),
+					GameID:      uuid.UUID(gameID4),
+					Name:        "1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+		},
+		{
+			description: "バージョン名が32文字でもエラーなし",
+			isGameExist: true,
+			gameID:      gameID5,
+			version: domain.NewGameVersion(
+				gameVersionID7,
+				values.NewGameVersionName("1.0.1234567890123456789012345678"),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID7),
+					GameID:      uuid.UUID(gameID5),
+					Name:        "1.0.1234567890123456789012345678",
+					Description: "リリース",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "バージョン名が33文字なのでエラー",
+			isGameExist: true,
+			gameID:      gameID6,
+			version: domain.NewGameVersion(
+				gameVersionID8,
+				values.NewGameVersionName("1.0.12345678901234567890123456789"),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{},
+			isErr:              true,
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ゲームが存在しないのでエラー",
+			gameID:      gameID7,
+			version: domain.NewGameVersion(
+				gameVersionID9,
+				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{},
+			isErr:              true,
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ゲームが削除されているのでエラー",
+			gameID:      gameID8,
+			version: domain.NewGameVersion(
+				gameVersionID10,
+				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{},
+			isErr:              true,
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "バージョン名が空文字でもエラーなし",
+			isGameExist: true,
+			gameID:      gameID9,
+			version: domain.NewGameVersion(
+				gameVersionID11,
+				values.NewGameVersionName(""),
+				values.NewGameVersionDescription("リリース"),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID11),
+					GameID:      uuid.UUID(gameID9),
+					Name:        "",
+					Description: "リリース",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "説明が空文字でもエラーなし",
+			isGameExist: true,
+			gameID:      gameID10,
+			version: domain.NewGameVersion(
+				gameVersionID12,
+				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionDescription(""),
+				now,
+			),
+			beforeGameVersions: []GameVersionTable{},
+			expectGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID12),
+					GameID:      uuid.UUID(gameID10),
+					Name:        "1.0.0",
+					Description: "",
+					CreatedAt:   now,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.isGameExist {
+				err := db.
+					Session(&gorm.Session{}).
+					Create(&GameTable{
+						ID:           uuid.UUID(testCase.gameID),
+						Name:         "test",
+						Description:  "test",
+						CreatedAt:    time.Now(),
+						GameVersions: testCase.beforeGameVersions,
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+
+				if testCase.isGameDeleted {
+					err := db.
+						Session(&gorm.Session{}).
+						Where("id = ?", uuid.UUID(testCase.gameID)).
+						Delete(&GameTable{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game table: %+v\n", err)
+					}
+				}
+			}
+
+			err := gameVersionRepository.CreateGameVersion(ctx, testCase.gameID, testCase.version)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			var gameVersions []GameVersionTable
+			err = db.
+				Where("game_id = ?", uuid.UUID(testCase.gameID)).
+				Find(&gameVersions).Error
+			if err != nil {
+				t.Fatalf("failed to get game versions: %+v\n", err)
+			}
+
+			assert.Len(t, gameVersions, len(testCase.expectGameVersions))
+
+			versionMap := make(map[uuid.UUID]GameVersionTable, len(gameVersions))
+			for _, version := range gameVersions {
+				versionMap[version.ID] = version
+			}
+
+			for _, expectVersion := range testCase.expectGameVersions {
+				actualVersion, ok := versionMap[expectVersion.ID]
+				if !ok {
+					t.Errorf("failed to find version: %s", expectVersion.Name)
+					continue
+				}
+
+				assert.Equal(t, expectVersion.ID, actualVersion.ID)
+				assert.Equal(t, expectVersion.GameID, actualVersion.GameID)
+				assert.Equal(t, expectVersion.Name, actualVersion.Name)
+				assert.Equal(t, expectVersion.Description, actualVersion.Description)
+				assert.WithinDuration(t, expectVersion.CreatedAt, actualVersion.CreatedAt, 2*time.Second)
+			}
+		})
+	}
+}
