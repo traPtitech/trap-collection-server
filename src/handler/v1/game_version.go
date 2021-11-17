@@ -58,3 +58,35 @@ func (gv *GameVersion) PostGameVersion(strGameID string, newGameVersion *openapi
 		CreatedAt:   gameVersion.GetCreatedAt(),
 	}, nil
 }
+
+func (gv *GameVersion) GetGameVersion(strGameID string) ([]*openapi.GameVersion, error) {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	gameVersions, err := gv.gameVersionService.GetGameVersions(ctx, gameID)
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game versions: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get game versions")
+	}
+
+	apiGameVersions := make([]*openapi.GameVersion, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		apiGameVersions = append(apiGameVersions, &openapi.GameVersion{
+			Id:          uuid.UUID(gameVersion.GetID()).String(),
+			Name:        string(gameVersion.GetName()),
+			Description: string(gameVersion.GetDescription()),
+			CreatedAt:   gameVersion.GetCreatedAt(),
+		})
+	}
+
+	return apiGameVersions, nil
+}
