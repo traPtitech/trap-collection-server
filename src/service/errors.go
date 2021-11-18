@@ -19,4 +19,6 @@ var (
 	ErrInvalidFormat                     = errors.New("invalid format")
 	ErrNoGameImage                       = errors.New("no game image")
 	ErrNoGameVideo                       = errors.New("no game video")
+	ErrNoGameVersion                     = errors.New("no game version")
+	ErrNoGameFile                        = errors.New("no game file")
 )
