@@ -6,17 +6,20 @@ import (
 
 type GameFile struct {
 	id         values.GameFileID
+	fileType   values.GameFileType
 	entryPoint values.GameFileEntryPoint
 	hash       values.GameFileHash
 }
 
 func NewGameFile(
 	id values.GameFileID,
+	fileType values.GameFileType,
 	entryPoint values.GameFileEntryPoint,
 	hash values.GameFileHash,
 ) *GameFile {
 	return &GameFile{
 		id:         id,
+		fileType:   fileType,
 		entryPoint: entryPoint,
 		hash:       hash,
 	}
@@ -24,6 +27,10 @@ func NewGameFile(
 
 func (gf *GameFile) GetID() values.GameFileID {
 	return gf.id
+}
+
+func (gf *GameFile) GetFileType() values.GameFileType {
+	return gf.fileType
 }
 
 func (gf *GameFile) GetEntryPoint() values.GameFileEntryPoint {
