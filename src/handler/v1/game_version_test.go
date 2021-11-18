@@ -210,3 +210,181 @@ func TestPostGameVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameVersion(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameVersionService := mock.NewMockGameVersion(ctrl)
+
+	gameVersionHandler := NewGameVersion(mockGameVersionService)
+
+	type test struct {
+		description           string
+		strGameID             string
+		executeGetGameVersion bool
+		gameID                values.GameID
+		gameVersions          []*domain.GameVersion
+		GetGameVersionErr     error
+		expectGameVersions    []*openapi.GameVersion
+		isErr                 bool
+		err                   error
+		statusCode            int
+	}
+
+	gameID := values.NewGameID()
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description:           "特に問題ないのでエラーなし",
+			strGameID:             uuid.UUID(gameID).String(),
+			executeGetGameVersion: true,
+			gameID:                gameID,
+			gameVersions: []*domain.GameVersion{
+				domain.NewGameVersion(
+					gameVersionID1,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					now,
+				),
+			},
+			expectGameVersions: []*openapi.GameVersion{
+				{
+					Id:          uuid.UUID(gameVersionID1).String(),
+					Name:        "v1.0.0",
+					Description: "リリース",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "gameIDがUUIDでないので400",
+			strGameID:   "invalid",
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			description:           "GetGameVersionsがErrInvalidGameIDなので400",
+			strGameID:             uuid.UUID(gameID).String(),
+			executeGetGameVersion: true,
+			gameID:                gameID,
+			gameVersions: []*domain.GameVersion{
+				domain.NewGameVersion(
+					gameVersionID1,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					now,
+				),
+			},
+			GetGameVersionErr: service.ErrInvalidGameID,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description:           "GetGameVersionsがエラーなので500",
+			strGameID:             uuid.UUID(gameID).String(),
+			executeGetGameVersion: true,
+			gameID:                gameID,
+			gameVersions: []*domain.GameVersion{
+				domain.NewGameVersion(
+					gameVersionID1,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					now,
+				),
+			},
+			GetGameVersionErr: errors.New("error"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+		{
+			description:           "gameVersionが存在しなくてもエラーなし",
+			strGameID:             uuid.UUID(gameID).String(),
+			executeGetGameVersion: true,
+			gameID:                gameID,
+			gameVersions:          []*domain.GameVersion{},
+			expectGameVersions:    []*openapi.GameVersion{},
+		},
+		{
+			description:           "gameVersionが複数でもエラーなし",
+			strGameID:             uuid.UUID(gameID).String(),
+			executeGetGameVersion: true,
+			gameID:                gameID,
+			gameVersions: []*domain.GameVersion{
+				domain.NewGameVersion(
+					gameVersionID2,
+					values.NewGameVersionName("v1.1.0"),
+					values.NewGameVersionDescription("アップデート"),
+					now,
+				),
+				domain.NewGameVersion(
+					gameVersionID1,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					now.Add(-time.Hour),
+				),
+			},
+			expectGameVersions: []*openapi.GameVersion{
+				{
+					Id:          uuid.UUID(gameVersionID2).String(),
+					Name:        "v1.1.0",
+					Description: "アップデート",
+					CreatedAt:   now,
+				},
+				{
+					Id:          uuid.UUID(gameVersionID1).String(),
+					Name:        "v1.0.0",
+					Description: "リリース",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeGetGameVersion {
+				mockGameVersionService.
+					EXPECT().
+					GetGameVersions(gomock.Any(), testCase.gameID).
+					Return(testCase.gameVersions, testCase.GetGameVersionErr)
+			}
+
+			gameVersions, err := gameVersionHandler.GetGameVersion(testCase.strGameID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, gameVersions, len(testCase.expectGameVersions))
+
+			for i, gameVersion := range gameVersions {
+				assert.Equal(t, testCase.expectGameVersions[i].Id, gameVersion.Id)
+				assert.Equal(t, testCase.expectGameVersions[i].Name, gameVersion.Name)
+				assert.Equal(t, testCase.expectGameVersions[i].Description, gameVersion.Description)
+				assert.WithinDuration(t, testCase.expectGameVersions[i].CreatedAt, gameVersion.CreatedAt, 2*time.Second)
+			}
+		})
+	}
+}
