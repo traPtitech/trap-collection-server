@@ -540,7 +540,7 @@ func TestLauncherAuth(t *testing.T) {
 			description: "アクセストークンが期限切れのためエラー",
 			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
 				values.NewLauncherVersionID(),
-				values.NewLauncherVersionName("1.0.0"),
+				values.NewLauncherVersionName("2021.01.25"),
 				time.Now(),
 			),
 			launcherUser: domain.NewLauncherUser(

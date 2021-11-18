@@ -45,14 +45,14 @@ func TestCreateGameVersion(t *testing.T) {
 		{
 			description:              "特に問題ないのでエラーなし",
 			gameID:                   values.NewGameID(),
-			versionName:              values.NewGameVersionName("1.0.0"),
+			versionName:              values.NewGameVersionName("v1.0.0"),
 			versionDescription:       values.NewGameVersionDescription("おいす〜"),
 			executeCreateGameVersion: true,
 		},
 		{
 			description:        "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
 			gameID:             values.NewGameID(),
-			versionName:        values.NewGameVersionName("1.0.0"),
+			versionName:        values.NewGameVersionName("v1.0.0"),
 			versionDescription: values.NewGameVersionDescription("おいす〜"),
 			GetGameErr:         repository.ErrRecordNotFound,
 			isErr:              true,
@@ -61,7 +61,7 @@ func TestCreateGameVersion(t *testing.T) {
 		{
 			description:        "GetGameがエラーなのでエラー",
 			gameID:             values.NewGameID(),
-			versionName:        values.NewGameVersionName("1.0.0"),
+			versionName:        values.NewGameVersionName("v1.0.0"),
 			versionDescription: values.NewGameVersionDescription("おいす〜"),
 			GetGameErr:         errors.New("error"),
 			isErr:              true,
@@ -69,7 +69,7 @@ func TestCreateGameVersion(t *testing.T) {
 		{
 			description:              "CreateGameVersionがエラーなのでエラー",
 			gameID:                   values.NewGameID(),
-			versionName:              values.NewGameVersionName("1.0.0"),
+			versionName:              values.NewGameVersionName("v1.0.0"),
 			versionDescription:       values.NewGameVersionDescription("おいす〜"),
 			executeCreateGameVersion: true,
 			CreateGameVersionErr:     errors.New("error"),
@@ -146,7 +146,7 @@ func TestGetGameVersions(t *testing.T) {
 			gameVersions: []*domain.GameVersion{
 				domain.NewGameVersion(
 					values.NewGameVersionID(),
-					values.NewGameVersionName("1.0.0"),
+					values.NewGameVersionName("v1.0.0"),
 					values.NewGameVersionDescription("おいす〜"),
 					time.Now(),
 				),
@@ -185,7 +185,7 @@ func TestGetGameVersions(t *testing.T) {
 				),
 				domain.NewGameVersion(
 					values.NewGameVersionID(),
-					values.NewGameVersionName("1.0.0"),
+					values.NewGameVersionName("v1.0.0"),
 					values.NewGameVersionDescription("おいす〜"),
 					time.Now(),
 				),

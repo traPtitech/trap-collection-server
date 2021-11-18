@@ -70,7 +70,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID1,
 			version: domain.NewGameVersion(
 				gameVersionID1,
-				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionName("v1.0.0"),
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
@@ -79,7 +79,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					GameID:      uuid.UUID(gameID1),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now,
 				},
@@ -91,7 +91,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID2,
 			version: domain.NewGameVersion(
 				gameVersionID2,
-				values.NewGameVersionName("1.1.0"),
+				values.NewGameVersionName("v1.1.0"),
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
@@ -99,7 +99,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID2),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -108,14 +108,14 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					GameID:      uuid.UUID(gameID2),
-					Name:        "1.1.0",
+					Name:        "v1.1.0",
 					Description: "アップデート",
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID2),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -128,7 +128,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID3,
 			version: domain.NewGameVersion(
 				gameVersionID4,
-				values.NewGameVersionName("1.1.0"),
+				values.NewGameVersionName("v1.1.0"),
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
@@ -136,7 +136,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -145,7 +145,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -158,7 +158,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID4,
 			version: domain.NewGameVersion(
 				gameVersionID5,
-				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionName("v1.0.0"),
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
@@ -166,7 +166,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -175,14 +175,14 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID5),
 					GameID:      uuid.UUID(gameID4),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "アップデート",
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
 				},
@@ -194,7 +194,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID5,
 			version: domain.NewGameVersion(
 				gameVersionID7,
-				values.NewGameVersionName("1.0.1234567890123456789012345678"),
+				values.NewGameVersionName("v1.0.123456789012345678901234567"),
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
@@ -203,7 +203,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID7),
 					GameID:      uuid.UUID(gameID5),
-					Name:        "1.0.1234567890123456789012345678",
+					Name:        "v1.0.123456789012345678901234567",
 					Description: "リリース",
 					CreatedAt:   now,
 				},
@@ -215,7 +215,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID6,
 			version: domain.NewGameVersion(
 				gameVersionID8,
-				values.NewGameVersionName("1.0.12345678901234567890123456789"),
+				values.NewGameVersionName("v1.0.1234567890123456789012345678"),
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
@@ -229,7 +229,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID7,
 			version: domain.NewGameVersion(
 				gameVersionID9,
-				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionName("v1.0.0"),
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
@@ -243,7 +243,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID8,
 			version: domain.NewGameVersion(
 				gameVersionID10,
-				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionName("v1.0.0"),
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
@@ -279,7 +279,7 @@ func TestCreateGameVersion(t *testing.T) {
 			gameID:      gameID10,
 			version: domain.NewGameVersion(
 				gameVersionID12,
-				values.NewGameVersionName("1.0.0"),
+				values.NewGameVersionName("v1.0.0"),
 				values.NewGameVersionDescription(""),
 				now,
 			),
@@ -288,7 +288,7 @@ func TestCreateGameVersion(t *testing.T) {
 				{
 					ID:          uuid.UUID(gameVersionID12),
 					GameID:      uuid.UUID(gameID10),
-					Name:        "1.0.0",
+					Name:        "v1.0.0",
 					Description: "",
 					CreatedAt:   now,
 				},
@@ -416,7 +416,7 @@ func TestGetGameVersions(t *testing.T) {
 					GameVersions: []GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID1),
-							Name:        "1.0.0",
+							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
 						},
@@ -426,7 +426,7 @@ func TestGetGameVersions(t *testing.T) {
 			expect: []*domain.GameVersion{
 				domain.NewGameVersion(
 					gameVersionID1,
-					values.NewGameVersionName("1.0.0"),
+					values.NewGameVersionName("v1.0.0"),
 					values.NewGameVersionDescription("リリース"),
 					time.Now(),
 				),
@@ -456,7 +456,7 @@ func TestGetGameVersions(t *testing.T) {
 					GameVersions: []GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID2),
-							Name:        "1.0.0",
+							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
 						},
@@ -477,13 +477,13 @@ func TestGetGameVersions(t *testing.T) {
 					GameVersions: []GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID3),
-							Name:        "1.1.0",
+							Name:        "v1.1.0",
 							Description: "アップデート",
 							CreatedAt:   time.Now(),
 						},
 						{
 							ID:          uuid.UUID(gameVersionID4),
-							Name:        "1.0.0",
+							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now().Add(-time.Hour),
 						},
@@ -493,13 +493,13 @@ func TestGetGameVersions(t *testing.T) {
 			expect: []*domain.GameVersion{
 				domain.NewGameVersion(
 					gameVersionID3,
-					values.NewGameVersionName("1.1.0"),
+					values.NewGameVersionName("v1.1.0"),
 					values.NewGameVersionDescription("アップデート"),
 					time.Now(),
 				),
 				domain.NewGameVersion(
 					gameVersionID4,
-					values.NewGameVersionName("1.0.0"),
+					values.NewGameVersionName("v1.0.0"),
 					values.NewGameVersionDescription("リリース"),
 					time.Now().Add(-time.Hour),
 				),
@@ -530,7 +530,7 @@ func TestGetGameVersions(t *testing.T) {
 					GameVersions: []GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID5),
-							Name:        "1.0.0",
+							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
 						},
@@ -544,7 +544,7 @@ func TestGetGameVersions(t *testing.T) {
 					GameVersions: []GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID6),
-							Name:        "1.0.0",
+							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
 						},
@@ -554,7 +554,7 @@ func TestGetGameVersions(t *testing.T) {
 			expect: []*domain.GameVersion{
 				domain.NewGameVersion(
 					gameVersionID5,
-					values.NewGameVersionName("1.0.0"),
+					values.NewGameVersionName("v1.0.0"),
 					values.NewGameVersionDescription("リリース"),
 					time.Now(),
 				),

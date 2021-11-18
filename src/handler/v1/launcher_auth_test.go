@@ -98,7 +98,7 @@ func TestPostKeyGenerate(t *testing.T) {
 			description: "versionIDがuuidでないので400",
 			request: openapi.ProductKeyGen{
 				Num:     1,
-				Version: "1.0.0",
+				Version: "2021.01.25",
 			},
 			isErr:      true,
 			statusCode: http.StatusBadRequest,
