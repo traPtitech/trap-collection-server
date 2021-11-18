@@ -119,6 +119,7 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
 	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
 	gameVideoRepositoryBind       = wire.Bind(new(repository.GameVideo), new(*gorm2.GameVideo))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
@@ -133,6 +134,7 @@ var (
 
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1Service.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1Service.GameAuth))
+	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1Service.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1Service.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1Service.GameVideo))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
@@ -153,6 +155,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		gameVideoField,
 		dbBind,
 		gameRepositoryBind,
+		gameVersionRepositoryBind,
 		gameImageRepositoryBind,
 		gameVideoRepositoryBind,
 		gameManagementRoleBind,
@@ -164,6 +167,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		userCacheBind,
 		administratorAuthServiceBind,
 		gameAuthServiceBind,
+		gameVersionServiceBind,
 		gameImageServiceBind,
 		gameVideoServiceBind,
 		launcherAuthServiceBind,
@@ -171,6 +175,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		userServiceBind,
 		gorm2.NewDB,
 		gorm2.NewGame,
+		gorm2.NewGameVersion,
 		gorm2.NewGameImage,
 		gorm2.NewGameVideo,
 		gorm2.NewGameManagementRole,
@@ -182,6 +187,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		ristretto.NewUser,
 		v1Service.NewAdministratorAuth,
 		v1Service.NewGameAuth,
+		v1Service.NewGameVersion,
 		v1Service.NewGameImage,
 		v1Service.NewGameVideo,
 		v1Service.NewLauncherAuth,
@@ -193,6 +199,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Handler.NewGameRole,
 		v1Handler.NewGameImage,
 		v1Handler.NewGameVideo,
+		v1Handler.NewGameVersion,
 		v1Handler.NewLauncherAuth,
 		v1Handler.NewOAuth2,
 		v1Handler.NewUser,

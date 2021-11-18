@@ -28,9 +28,10 @@ type Game struct {
 	*v1.GameRole
 	*v1.GameImage
 	*v1.GameVideo
+	*v1.GameVersion
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion) *Game {
 	game := new(Game)
 
 	game.db = db
@@ -39,6 +40,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRol
 	game.GameRole = gameRole
 	game.GameImage = gameImage
 	game.GameVideo = gameVideo
+	game.GameVersion = gameVersion
 
 	return game
 }
@@ -257,24 +259,4 @@ func (g *Game) GetGameURL(gameID string) (string, error) {
 	}
 
 	return url, nil
-}
-
-// PostGameVersion POST /games/:gameID/version
-func (g *Game) PostGameVersion(gameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
-	gameVersion, err := g.db.InsertGameVersion(gameID, newGameVersion.Name, newGameVersion.Description)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert game version: %w", err)
-	}
-
-	return gameVersion, nil
-}
-
-// GetGameVersion /games/:gameID/version
-func (g *Game) GetGameVersion(gameID string) ([]*openapi.GameVersion, error) {
-	gameVersions, err := g.db.GetGameVersions(gameID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get game version: %w", err)
-	}
-
-	return gameVersions, nil
 }

@@ -113,9 +113,12 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	storageGameVideo := storage.GameVideo
 	v1GameVideo := v1_2.NewGameVideo(db, game, gameVideo, storageGameVideo)
 	gameVideo2 := v1.NewGameVideo(v1GameVideo)
+	gameVersion := gorm2.NewGameVersion(db)
+	v1GameVersion := v1_2.NewGameVersion(db, game, gameVersion)
+	gameVersion2 := v1.NewGameVersion(v1GameVersion)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, v1LauncherAuth, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 
@@ -184,6 +187,7 @@ func injectedStorage(config *Config) (*Storage, error) {
 var (
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
+	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
 	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
 	gameVideoRepositoryBind       = wire.Bind(new(repository.GameVideo), new(*gorm2.GameVideo))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
@@ -198,6 +202,7 @@ var (
 
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
+	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1_2.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_2.GameVideo))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
