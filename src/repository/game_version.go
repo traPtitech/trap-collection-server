@@ -13,4 +13,5 @@ type GameVersion interface {
 	CreateGameVersion(ctx context.Context, gameID values.GameID, version *domain.GameVersion) error
 	// GetGameVersions CreatedAtで降順にソートしたGameVersionのリストを取得
 	GetGameVersions(ctx context.Context, gameID values.GameID) ([]*domain.GameVersion, error)
+	GetLatestGameVersion(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.GameVersion, error)
 }
