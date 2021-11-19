@@ -119,3 +119,64 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameV
 
 	return nil
 }
+
+func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameVersionID, fileTypes []values.GameFileType) ([]*domain.GameFile, error) {
+	if len(fileTypes) == 0 {
+		return []*domain.GameFile{}, nil
+	}
+
+	gormDB, err := gf.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	fileTypeNames := make([]string, 0, len(fileTypes))
+	for _, fileType := range fileTypes {
+		switch fileType {
+		case values.GameFileTypeJar:
+			fileTypeNames = append(fileTypeNames, gameFileTypeJar)
+		case values.GameFileTypeWindows:
+			fileTypeNames = append(fileTypeNames, gameFileTypeWindows)
+		case values.GameFileTypeMac:
+			fileTypeNames = append(fileTypeNames, gameFileTypeMac)
+		default:
+			return nil, fmt.Errorf("invalid file type: %d", fileType)
+		}
+	}
+
+	var dbGameFiles []GameFileTable
+	err = gormDB.
+		Joins("GameFileType").
+		Where("game_version_id = ?", uuid.UUID(gameVersionID)).
+		Where("GameFileType.Name IN (?)", fileTypeNames).
+		Where("GameFileType.Active"). // 無効化された種類のファイルは取得しない
+		Select("game_files.id", "GameFileType.Name", "hash", "entry_point").
+		Find(&dbGameFiles).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game files: %w", err)
+	}
+
+	gameFiles := make([]*domain.GameFile, 0, len(dbGameFiles))
+	for _, gameFile := range dbGameFiles {
+		var fileType values.GameFileType
+		switch gameFile.GameFileType.Name {
+		case gameFileTypeJar:
+			fileType = values.GameFileTypeJar
+		case gameFileTypeWindows:
+			fileType = values.GameFileTypeWindows
+		case gameFileTypeMac:
+			fileType = values.GameFileTypeMac
+		default:
+			return nil, fmt.Errorf("invalid file type: %s", gameFile.GameFileType.Name)
+		}
+
+		gameFiles = append(gameFiles, domain.NewGameFile(
+			values.NewGameFileIDFromUUID(gameFile.ID),
+			fileType,
+			values.NewGameFileEntryPoint(gameFile.EntryPoint),
+			values.NewGameFileHashFromBytes(gameFile.Hash),
+		))
+	}
+
+	return gameFiles, nil
+}
