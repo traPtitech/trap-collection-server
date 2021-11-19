@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 )
@@ -69,6 +72,49 @@ func setupFileTypeTable(db *gorm.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to create role type: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameVersionID, gameFile *domain.GameFile) error {
+	gormDB, err := gf.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var fileTypeName string
+	switch gameFile.GetFileType() {
+	case values.GameFileTypeJar:
+		fileTypeName = gameFileTypeJar
+	case values.GameFileTypeWindows:
+		fileTypeName = gameFileTypeWindows
+	case values.GameFileTypeMac:
+		fileTypeName = gameFileTypeMac
+	default:
+		return fmt.Errorf("invalid file type: %d", gameFile.GetFileType())
+	}
+
+	var fileType GameFileTypeTable
+	err = gormDB.
+		Where("name = ?", fileTypeName).
+		Where("active").
+		Select("id").
+		Take(&fileType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get role type: %w", err)
+	}
+	fileTypeID := fileType.ID
+
+	err = gormDB.Create(&GameFileTable{
+		ID:            uuid.UUID(gameFile.GetID()),
+		GameVersionID: uuid.UUID(gameVersionID),
+		FileTypeID:    fileTypeID,
+		Hash:          []byte(gameFile.GetHash()),
+		EntryPoint:    string(gameFile.GetEntryPoint()),
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create game image: %w", err)
 	}
 
 	return nil
