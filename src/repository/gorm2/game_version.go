@@ -2,11 +2,14 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
+	"gorm.io/gorm"
 )
 
 type GameVersion struct {
@@ -71,4 +74,36 @@ func (gv *GameVersion) GetGameVersions(ctx context.Context, gameID values.GameID
 	}
 
 	return versions, nil
+}
+
+func (gv *GameVersion) GetLatestGameVersion(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+	gormDB, err := gv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gorm DB: %w", err)
+	}
+
+	gormDB, err = gv.db.setLock(gormDB, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersion GameVersionTable
+	err = gormDB.
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at desc").
+		Select("id", "name", "description", "created_at").
+		First(&gameVersion).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest game version: %w", err)
+	}
+
+	return domain.NewGameVersion(
+		values.NewGameVersionIDFromUUID(gameVersion.ID),
+		values.NewGameVersionName(gameVersion.Name),
+		values.NewGameVersionDescription(gameVersion.Description),
+		gameVersion.CreatedAt,
+	), nil
 }
