@@ -90,3 +90,49 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 
 	return gameFile, nil
 }
+
+func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, gameID values.GameID, environment *values.LauncherEnvironment) (*domain.GameFile, error) {
+	_, err := gf.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	gameVersion, err := gf.gameVersionRepository.GetLatestGameVersion(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameVersion
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest game version: %w", err)
+	}
+
+	gameFiles, err := gf.gameFileRepository.GetGameFiles(ctx, gameVersion.GetID(), environment.AcceptGameFileTypes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game file: %w", err)
+	}
+
+	gameFileTypeMap := make(map[values.GameFileType]*domain.GameFile)
+	for _, gameFile := range gameFiles {
+		gameFileTypeMap[gameFile.GetFileType()] = gameFile
+	}
+
+	var gameFile *domain.GameFile
+	if winGameFile, ok := gameFileTypeMap[values.GameFileTypeWindows]; ok {
+		gameFile = winGameFile
+	} else if macGameFile, ok := gameFileTypeMap[values.GameFileTypeMac]; ok {
+		gameFile = macGameFile
+	} else if jarGameFile, ok := gameFileTypeMap[values.GameFileTypeJar]; ok {
+		gameFile = jarGameFile
+	} else {
+		return nil, service.ErrNoGameFile
+	}
+
+	err = gf.gameFileStorage.GetGameFile(ctx, writer, gameFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game file(storage): %w", err)
+	}
+
+	return gameFile, nil
+}
