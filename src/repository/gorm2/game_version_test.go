@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/gorm"
 )
 
@@ -603,6 +604,274 @@ func TestGetGameVersions(t *testing.T) {
 				assert.Equal(t, expectVersion.GetDescription(), actualVersion.GetDescription())
 				assert.WithinDuration(t, expectVersion.GetCreatedAt(), actualVersion.GetCreatedAt(), 2*time.Second)
 			}
+		})
+	}
+}
+
+func TestGetLatestGameVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %v", err)
+	}
+
+	gameVersionRepository := NewGameVersion(testDB)
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		lockType    repository.LockType
+		games       []GameTable
+		expect      *domain.GameVersion
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+	gameID8 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	gameVersionID3 := values.NewGameVersionID()
+	gameVersionID4 := values.NewGameVersionID()
+	gameVersionID5 := values.NewGameVersionID()
+	gameVersionID6 := values.NewGameVersionID()
+	gameVersionID7 := values.NewGameVersionID()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID1,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID1),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+						},
+					},
+				},
+			},
+			expect: domain.NewGameVersion(
+				gameVersionID1,
+				values.NewGameVersionName("v1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				time.Now(),
+			),
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ゲームが存在しないのでErrRecordNotFound",
+			gameID:      gameID2,
+			lockType:    repository.LockTypeNone,
+			games:       []GameTable{},
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ゲームが削除されていてもエラーなし",
+			gameID:      gameID3,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					DeletedAt: gorm.DeletedAt{
+						Time:  time.Now(),
+						Valid: true,
+					},
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID2),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+						},
+					},
+				},
+			},
+			expect: domain.NewGameVersion(
+				gameVersionID2,
+				values.NewGameVersionName("v1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				time.Now(),
+			),
+		},
+		{
+			description: "バージョンが複数あってもエラーなし",
+			gameID:      gameID4,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID3),
+							Name:        "v1.1.0",
+							Description: "アップデート",
+							CreatedAt:   time.Now(),
+						},
+						{
+							ID:          uuid.UUID(gameVersionID4),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now().Add(-time.Hour),
+						},
+					},
+				},
+			},
+			expect: domain.NewGameVersion(
+				gameVersionID3,
+				values.NewGameVersionName("v1.1.0"),
+				values.NewGameVersionDescription("アップデート"),
+				time.Now(),
+			),
+		},
+		{
+			description: "バージョンが存在しないのでErrRecordNotFound",
+			gameID:      gameID5,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
+		},
+		{
+			description: "別のゲームのバージョンが混ざることはない",
+			gameID:      gameID6,
+			lockType:    repository.LockTypeNone,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID5),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+						},
+					},
+				},
+				{
+					ID:          uuid.UUID(gameID7),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID6),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+						},
+					},
+				},
+			},
+			expect: domain.NewGameVersion(
+				gameVersionID5,
+				values.NewGameVersionName("v1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				time.Now(),
+			),
+		},
+		{
+			description: "lockTypeがRecordでもエラーなし",
+			gameID:      gameID8,
+			lockType:    repository.LockTypeRecord,
+			games: []GameTable{
+				{
+					ID:          uuid.UUID(gameID8),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []GameVersionTable{
+						{
+							ID:          uuid.UUID(gameVersionID7),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+						},
+					},
+				},
+			},
+			expect: domain.NewGameVersion(
+				gameVersionID7,
+				values.NewGameVersionName("v1.0.0"),
+				values.NewGameVersionDescription("リリース"),
+				time.Now(),
+			),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.games) != 0 {
+				err := db.Create(&testCase.games).Error
+				if err != nil {
+					t.Fatalf("failed to create games: %v", err)
+				}
+
+				for _, game := range testCase.games {
+					if game.DeletedAt.Valid {
+						err := db.Delete(&game).Error
+						if err != nil {
+							t.Fatalf("failed to delete game: %v", err)
+						}
+					}
+				}
+			}
+
+			gameVersion, err := gameVersionRepository.GetLatestGameVersion(ctx, testCase.gameID, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Log(gameVersion)
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, testCase.expect.GetID(), gameVersion.GetID())
+			assert.Equal(t, testCase.expect.GetName(), gameVersion.GetName())
+			assert.Equal(t, testCase.expect.GetDescription(), gameVersion.GetDescription())
+			assert.WithinDuration(t, testCase.expect.GetCreatedAt(), gameVersion.GetCreatedAt(), 2*time.Second)
 		})
 	}
 }
