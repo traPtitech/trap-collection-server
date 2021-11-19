@@ -12,6 +12,8 @@ var (
 	tables = []interface{}{
 		&GameTable{},
 		&GameVersionTable{},
+		&GameFileTable{},
+		&GameFileTypeTable{},
 		&GameImageTable{},
 		&GameImageTypeTable{},
 		&GameVideoTable{},
@@ -41,15 +43,39 @@ func (gt *GameTable) TableName() string {
 }
 
 type GameVersionTable struct {
-	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID      uuid.UUID `gorm:"type:varchar(36);not null"`
-	Name        string    `gorm:"type:varchar(32);size:32;not null"`
-	Description string    `gorm:"type:text;not null"`
-	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ID          uuid.UUID       `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID      uuid.UUID       `gorm:"type:varchar(36);not null"`
+	Name        string          `gorm:"type:varchar(32);size:32;not null"`
+	Description string          `gorm:"type:text;not null"`
+	CreatedAt   time.Time       `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameFiles   []GameFileTable `gorm:"foreignKey:GameVersionID"`
 }
 
 func (gt *GameVersionTable) TableName() string {
 	return "game_versions"
+}
+
+type GameFileTable struct {
+	ID            uuid.UUID         `gorm:"type:varchar(36);not null;primaryKey"`
+	GameVersionID uuid.UUID         `gorm:"type:varchar(36);not null;index:idx_game_file_unique,unique"`
+	FileTypeID    int               `gorm:"type:tinyint;not null;index:idx_game_file_unique,unique"`
+	Hash          []byte            `gorm:"type:char(32);size:32;not null"`
+	EntryPoint    string            `gorm:"type:text;not null"`
+	GameFileType  GameFileTypeTable `gorm:"foreignKey:FileTypeID"`
+}
+
+func (gt *GameFileTable) TableName() string {
+	return "game_files"
+}
+
+type GameFileTypeTable struct {
+	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
+	Active bool   `gorm:"type:boolean;default:true"`
+}
+
+func (gftt *GameFileTypeTable) TableName() string {
+	return "game_file_types"
 }
 
 type GameImageTable struct {
