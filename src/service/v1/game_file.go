@@ -57,6 +57,15 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 			return fmt.Errorf("failed to get latest game version: %w", err)
 		}
 
+		gameFiles, err := gf.gameFileRepository.GetGameFiles(ctx, gameVersion.GetID(), []values.GameFileType{fileType})
+		if err != nil {
+			return fmt.Errorf("failed to get game file: %w", err)
+		}
+
+		if len(gameFiles) != 0 {
+			return service.ErrGameFileAlreadyExists
+		}
+
 		buf := bytes.NewBuffer(nil)
 		tr := io.TeeReader(reader, buf)
 		hash, err := values.NewGameFileHash(tr)
