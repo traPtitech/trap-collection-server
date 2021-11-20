@@ -55,3 +55,23 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *do
 
 	return nil
 }
+
+func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *domain.GameFile) error {
+	filePath := path.Join(gf.fileRootPath, uuid.UUID(file.GetID()).String())
+
+	f, err := os.Open(filePath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(writer, f)
+	if err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+
+	return nil
+}
