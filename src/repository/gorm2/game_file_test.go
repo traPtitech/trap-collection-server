@@ -411,3 +411,448 @@ func TestSaveGameFile(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameFiles(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameFileRepository, err := NewGameFile(testDB)
+	if err != nil {
+		t.Fatalf("failed to create game management role repository: %+v\n", err)
+	}
+
+	type test struct {
+		description        string
+		gameVersionID      values.GameVersionID
+		fileTypes          []values.GameFileType
+		beforeGameVersions []GameVersionTable
+		gameFiles          []*domain.GameFile
+		isErr              bool
+		err                error
+	}
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	gameVersionID3 := values.NewGameVersionID()
+	gameVersionID4 := values.NewGameVersionID()
+	gameVersionID5 := values.NewGameVersionID()
+	gameVersionID6 := values.NewGameVersionID()
+	gameVersionID7 := values.NewGameVersionID()
+	gameVersionID8 := values.NewGameVersionID()
+	gameVersionID9 := values.NewGameVersionID()
+	gameVersionID10 := values.NewGameVersionID()
+	gameVersionID11 := values.NewGameVersionID()
+	gameVersionID12 := values.NewGameVersionID()
+
+	gameFileID1 := values.NewGameFileID()
+	gameFileID2 := values.NewGameFileID()
+	gameFileID3 := values.NewGameFileID()
+	gameFileID4 := values.NewGameFileID()
+	gameFileID5 := values.NewGameFileID()
+	gameFileID6 := values.NewGameFileID()
+	gameFileID7 := values.NewGameFileID()
+	gameFileID8 := values.NewGameFileID()
+	gameFileID9 := values.NewGameFileID()
+	gameFileID10 := values.NewGameFileID()
+	gameFileID11 := values.NewGameFileID()
+	gameFileID12 := values.NewGameFileID()
+
+	var fileTypes []*GameFileTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&fileTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get file types: %v\n", err)
+	}
+
+	fileTypeMap := make(map[string]int, len(fileTypes))
+	for _, fileType := range fileTypes {
+		fileTypeMap[fileType.Name] = fileType.ID
+	}
+
+	testCases := []test{
+		{
+			description:   "特に問題ないのでエラーなし",
+			gameVersionID: gameVersionID1,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID1),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID1,
+					values.GameFileTypeJar,
+					"/path/to/game.jar",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "fileTypeがwindowsでもエラーなし",
+			gameVersionID: gameVersionID2,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeWindows,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID2),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID2),
+							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.exe",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID2,
+					values.GameFileTypeWindows,
+					"/path/to/game.exe",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "fileTypeがmacでもエラーなし",
+			gameVersionID: gameVersionID3,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeMac,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID3),
+							FileTypeID: fileTypeMap[gameFileTypeMac],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.app",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID3,
+					values.GameFileTypeMac,
+					"/path/to/game.app",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "指定のfileType以外のものは含まない",
+			gameVersionID: gameVersionID4,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID4),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+						{
+							ID:         uuid.UUID(gameFileID5),
+							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.exe",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID4,
+					values.GameFileTypeJar,
+					"/path/to/game.jar",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "指定のfileTypeが複数でもエラーなし",
+			gameVersionID: gameVersionID5,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+				values.GameFileTypeWindows,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID5),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID6),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+						{
+							ID:         uuid.UUID(gameFileID7),
+							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.exe",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID6,
+					values.GameFileTypeJar,
+					"/path/to/game.jar",
+					[]byte("hash"),
+				),
+				domain.NewGameFile(
+					gameFileID7,
+					values.GameFileTypeWindows,
+					"/path/to/game.exe",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "ファイルがなくてもエラーなし",
+			gameVersionID: gameVersionID6,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID6),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles:   []GameFileTable{},
+				},
+			},
+			gameFiles: []*domain.GameFile{},
+		},
+		{
+			// 実際には発生しないが、念の為確認
+			description:   "ゲームバージョンがなくてもエラーなし",
+			gameVersionID: gameVersionID7,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+			},
+			beforeGameVersions: []GameVersionTable{},
+			gameFiles:          []*domain.GameFile{},
+		},
+		{
+			// 実際には発生しないが、念の為確認
+			description:   "fileTypesがなくてもエラーなし",
+			gameVersionID: gameVersionID8,
+			fileTypes:     []values.GameFileType{},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID8),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID8),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{},
+		},
+		{
+			description:   "別のゲームバージョンにファイルがあっても含まない",
+			gameVersionID: gameVersionID9,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID9),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID9),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+				{
+					ID:          uuid.UUID(gameVersionID10),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID10),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID9,
+					values.GameFileTypeJar,
+					"/path/to/game.jar",
+					[]byte("hash"),
+				),
+			},
+		},
+		{
+			description:   "fileTypesが不正なのでエラー",
+			gameVersionID: gameVersionID11,
+			fileTypes: []values.GameFileType{
+				100,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID11),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID11),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+			},
+			isErr: true,
+		},
+		{
+			description:   "fileTypeが存在しなければ含まない",
+			gameVersionID: gameVersionID12,
+			fileTypes: []values.GameFileType{
+				values.GameFileTypeJar,
+				values.GameFileTypeWindows,
+			},
+			beforeGameVersions: []GameVersionTable{
+				{
+					ID:          uuid.UUID(gameVersionID12),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameFiles: []GameFileTable{
+						{
+							ID:         uuid.UUID(gameFileID12),
+							FileTypeID: fileTypeMap[gameFileTypeJar],
+							Hash:       []byte("hash"),
+							EntryPoint: "/path/to/game.jar",
+						},
+					},
+				},
+			},
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					gameFileID12,
+					values.GameFileTypeJar,
+					"/path/to/game.jar",
+					[]byte("hash"),
+				),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.beforeGameVersions) != 0 {
+				err := db.Create(&GameTable{
+					ID:           uuid.UUID(values.NewGameID()),
+					Name:         "test",
+					Description:  "test",
+					CreatedAt:    time.Now(),
+					GameVersions: testCase.beforeGameVersions,
+				}).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %v\n", err)
+				}
+			}
+
+			gameFiles, err := gameFileRepository.GetGameFiles(ctx, testCase.gameVersionID, testCase.fileTypes)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, gameFiles, len(testCase.gameFiles))
+
+			fileMap := make(map[values.GameFileID]*domain.GameFile, len(gameFiles))
+			for _, gameFile := range gameFiles {
+				fileMap[gameFile.GetID()] = gameFile
+			}
+
+			for _, expectGameFile := range testCase.gameFiles {
+				actualGameFile, ok := fileMap[expectGameFile.GetID()]
+				if !ok {
+					t.Errorf("game file not found: %v", expectGameFile.GetID())
+					continue
+				}
+
+				assert.Equal(t, expectGameFile.GetID(), actualGameFile.GetID())
+				assert.Equal(t, expectGameFile.GetFileType(), actualGameFile.GetFileType())
+				assert.Equal(t, expectGameFile.GetEntryPoint(), actualGameFile.GetEntryPoint())
+				assert.Equal(t, expectGameFile.GetHash(), actualGameFile.GetHash())
+			}
+		})
+	}
+}
