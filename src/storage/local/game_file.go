@@ -1,6 +1,18 @@
 package local
 
-import "fmt"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path"
+
+	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/storage"
+)
 
 type GameFile struct {
 	fileRootPath     string
@@ -17,4 +29,29 @@ func NewGameFile(directoryManager *DirectoryManager) (*GameFile, error) {
 		fileRootPath:     fileRootPath,
 		directoryManager: directoryManager,
 	}, nil
+}
+
+func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *domain.GameFile) error {
+	filePath := path.Join(gf.fileRootPath, uuid.UUID(file.GetID()).String())
+
+	_, err := os.Stat(filePath)
+	if err == nil {
+		return storage.ErrAlreadyExists
+	}
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("failed to stat file: %w", err)
+	}
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, reader)
+	if err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+
+	return nil
 }
