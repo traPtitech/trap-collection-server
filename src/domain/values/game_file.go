@@ -30,8 +30,8 @@ func NewGameFileID() GameFileID {
 	return GameFileID(uuid.New())
 }
 
-func NewGameFileIDFromUUID(id uuid.UUID) GameVersionID {
-	return GameVersionID(id)
+func NewGameFileIDFromUUID(id uuid.UUID) GameFileID {
+	return GameFileID(id)
 }
 
 const (
