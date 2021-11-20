@@ -41,6 +41,9 @@ func TestSaveGameFile(t *testing.T) {
 		executeGetLatestGameVersion   bool
 		gameVersion                   *domain.GameVersion
 		GetLatestGameVersionErr       error
+		executeGetGameFiles           bool
+		gameFiles                     []*domain.GameFile
+		GetGameFilesErr               error
 		executeRepositorySaveGameFile bool
 		repositorySaveGameFileErr     error
 		executeStorageSaveGameVersion bool
@@ -66,6 +69,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
@@ -122,9 +127,53 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			repositorySaveGameFileErr:     errors.New("error"),
 			isErr:                         true,
+		},
+		{
+			description:                 "既にファイルが存在しているのでエラー",
+			reader:                      bytes.NewBufferString("test"),
+			gameID:                      gameID,
+			fileType:                    values.GameFileTypeJar,
+			entryPoint:                  values.NewGameFileEntryPoint("/path/to/file"),
+			executeGetLatestGameVersion: true,
+			gameVersion: domain.NewGameVersion(
+				values.NewGameVersionID(),
+				"v1.0.0",
+				"リリース",
+				time.Now(),
+			),
+			executeGetGameFiles: true,
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				),
+			},
+			isErr: true,
+			err:   service.ErrGameFileAlreadyExists,
+		},
+		{
+			description:                 "GetGameFilesがエラーなのでエラー",
+			reader:                      bytes.NewBufferString("test"),
+			gameID:                      gameID,
+			fileType:                    values.GameFileTypeJar,
+			entryPoint:                  values.NewGameFileEntryPoint("/path/to/file"),
+			executeGetLatestGameVersion: true,
+			gameVersion: domain.NewGameVersion(
+				values.NewGameVersionID(),
+				"v1.0.0",
+				"リリース",
+				time.Now(),
+			),
+			executeGetGameFiles: true,
+			GetGameFilesErr:     errors.New("error"),
+			isErr:               true,
 		},
 		{
 			description:                 "storageのSaveGameVersionがエラーなのでエラー",
@@ -139,6 +188,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			storageSaveGameVersionErr:     errors.New("error"),
@@ -157,6 +208,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
@@ -174,6 +227,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
@@ -191,6 +246,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
@@ -208,6 +265,8 @@ func TestSaveGameFile(t *testing.T) {
 				"リリース",
 				time.Now(),
 			),
+			executeGetGameFiles:           true,
+			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameVersion: true,
 			hash:                          values.NewGameFileHashFromBytes([]byte{0x70, 0x95, 0xba, 0xe0, 0x98, 0x25, 0x9e, 0xd, 0xda, 0x4b, 0x7a, 0xcc, 0x62, 0x4d, 0xe4, 0xe2}),
@@ -237,6 +296,13 @@ func TestSaveGameFile(t *testing.T) {
 					EXPECT().
 					GetLatestGameVersion(gomock.Any(), gameID, repository.LockTypeRecord).
 					Return(testCase.gameVersion, testCase.GetLatestGameVersionErr)
+			}
+
+			if testCase.executeGetGameFiles {
+				mockGameFileRepository.
+					EXPECT().
+					GetGameFiles(gomock.Any(), testCase.gameVersion.GetID(), []values.GameFileType{testCase.fileType}).
+					Return(testCase.gameFiles, testCase.GetGameFilesErr)
 			}
 
 			if testCase.executeRepositorySaveGameFile {
