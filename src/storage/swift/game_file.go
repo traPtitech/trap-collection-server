@@ -44,6 +44,24 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *do
 	return nil
 }
 
+func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *domain.GameFile) error {
+	fileKey := gf.fileKey(file)
+
+	err := gf.client.loadFile(
+		ctx,
+		fileKey,
+		writer,
+	)
+	if errors.Is(err, ErrNotFound) {
+		return storage.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get file: %w", err)
+	}
+
+	return nil
+}
+
 func (gf *GameFile) fileKey(file *domain.GameFile) string {
 	return fmt.Sprintf("files/%s", uuid.UUID(file.GetID()).String())
 }
