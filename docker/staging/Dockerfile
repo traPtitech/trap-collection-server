@@ -32,7 +32,7 @@ COPY ./ ./
 RUN go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.14.3
+FROM alpine:3.15.0
 
 RUN apk --update --no-cache add tzdata \
   && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
