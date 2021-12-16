@@ -14,6 +14,6 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 RUN ./main openapi.yml
 
 
-FROM stoplight/prism:4.6.1 AS main
+FROM stoplight/prism:4.6.2 AS main
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/openapi.yml /tmp/
