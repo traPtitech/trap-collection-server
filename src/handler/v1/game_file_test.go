@@ -250,3 +250,128 @@ func TestPostFile(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameFile(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameFileService := mock.NewMockGameFile(ctrl)
+
+	gameFileHandler := NewGameFile(mockGameFileService)
+
+	type test struct {
+		description        string
+		strGameID          string
+		strOperatingSystem string
+		executeGetGameFile bool
+		gameID             values.GameID
+		GetGameFileErr     error
+		isErr              bool
+		err                error
+		statusCode         int
+	}
+
+	gameID := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:        "特に問題ないのでエラーなし",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "win32",
+			executeGetGameFile: true,
+			gameID:             gameID,
+		},
+		{
+			description: "gameIDが不正なので400",
+			strGameID:   "invalid",
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			description:        "macでも問題なし",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "darwin",
+			executeGetGameFile: true,
+			gameID:             gameID,
+		},
+		{
+			description:        "osが不正なので400",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "invalid",
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:        "GetGameFileがErrInvalidGameIDなので400",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "win32",
+			executeGetGameFile: true,
+			gameID:             gameID,
+			GetGameFileErr:     service.ErrInvalidGameID,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:        "GetGameFileがErrNoGameVersionなので400",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "win32",
+			executeGetGameFile: true,
+			gameID:             gameID,
+			GetGameFileErr:     service.ErrNoGameVersion,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:        "GetGameFileがErrNoGameFileなので400",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "win32",
+			executeGetGameFile: true,
+			gameID:             gameID,
+			GetGameFileErr:     service.ErrNoGameFile,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:        "GetGameFileがエラーなので500",
+			strGameID:          uuid.UUID(gameID).String(),
+			strOperatingSystem: "win32",
+			executeGetGameFile: true,
+			gameID:             gameID,
+			GetGameFileErr:     errors.New("error"),
+			isErr:              true,
+			statusCode:         http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeGetGameFile {
+				mockGameFileService.
+					EXPECT().
+					GetGameFile(gomock.Any(), gomock.Any(), testCase.gameID, gomock.Any()).
+					Return(nil, testCase.GetGameFileErr)
+			}
+
+			_, err := gameFileHandler.GetGameFile(testCase.strGameID, testCase.strOperatingSystem)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
