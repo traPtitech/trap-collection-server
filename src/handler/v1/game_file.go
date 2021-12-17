@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -72,4 +74,49 @@ func (gf *GameFile) PostFile(strGameID string, entryPoint string, file multipart
 		Type:       strFileType,
 		EntryPoint: entryPoint,
 	}, nil
+}
+
+func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io.Reader, error) {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	var envOS values.LauncherEnvironmentOS
+	switch strOperatingSystem {
+	case "win32":
+		envOS = values.LauncherEnvironmentOSWindows
+	case "darwin":
+		envOS = values.LauncherEnvironmentOSMac
+	default:
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid operating system")
+	}
+
+	buf := bytes.NewBuffer(nil)
+
+	_, err = gf.gameFileService.GetGameFile(
+		ctx,
+		buf,
+		gameID,
+		values.NewLauncherEnvironment(envOS),
+	)
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+	if errors.Is(err, service.ErrNoGameVersion) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no game version")
+	}
+	if errors.Is(err, service.ErrNoGameFile) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no game file")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game file: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get game file")
+	}
+
+	return buf, nil
 }
