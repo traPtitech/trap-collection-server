@@ -21,5 +21,7 @@ var (
 	ErrNoGameVideo                       = errors.New("no game video")
 	ErrNoGameVersion                     = errors.New("no game version")
 	ErrNoGameFile                        = errors.New("no game file")
+	ErrNoGameURL                         = errors.New("no game url")
 	ErrGameFileAlreadyExists             = errors.New("game file already exists")
+	ErrGameURLAlreadyExists              = errors.New("game url already exists")
 )
