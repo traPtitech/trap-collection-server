@@ -59,7 +59,7 @@ type GameFileTable struct {
 	ID            uuid.UUID         `gorm:"type:varchar(36);not null;primaryKey"`
 	GameVersionID uuid.UUID         `gorm:"type:varchar(36);not null;index:idx_game_file_unique,unique"`
 	FileTypeID    int               `gorm:"type:tinyint;not null;index:idx_game_file_unique,unique"`
-	Hash          []byte            `gorm:"type:char(32);size:32;not null"`
+	Hash          string            `gorm:"type:char(32);size:32;not null"`
 	EntryPoint    string            `gorm:"type:text;not null"`
 	GameFileType  GameFileTypeTable `gorm:"foreignKey:FileTypeID"`
 }

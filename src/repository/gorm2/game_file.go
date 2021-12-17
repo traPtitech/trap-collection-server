@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -110,7 +111,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameV
 		ID:            uuid.UUID(gameFile.GetID()),
 		GameVersionID: uuid.UUID(gameVersionID),
 		FileTypeID:    fileTypeID,
-		Hash:          []byte(gameFile.GetHash()),
+		Hash:          hex.EncodeToString(gameFile.GetHash()),
 		EntryPoint:    string(gameFile.GetEntryPoint()),
 	}).Error
 	if err != nil {
@@ -170,11 +171,16 @@ func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameV
 			return nil, fmt.Errorf("invalid file type: %s", gameFile.GameFileType.Name)
 		}
 
+		bytesHash, err := hex.DecodeString(gameFile.Hash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode hash: %w", err)
+		}
+
 		gameFiles = append(gameFiles, domain.NewGameFile(
 			values.NewGameFileIDFromUUID(gameFile.ID),
 			fileType,
 			values.NewGameFileEntryPoint(gameFile.EntryPoint),
-			values.NewGameFileHashFromBytes(gameFile.Hash),
+			values.NewGameFileHashFromBytes(bytesHash),
 		))
 	}
 
