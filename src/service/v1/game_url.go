@@ -76,3 +76,31 @@ func (gu *GameURL) SaveGameURL(ctx context.Context, gameID values.GameID, link v
 
 	return gameURL, nil
 }
+
+func (gu *GameURL) GetGameURL(ctx context.Context, gameID values.GameID) (*domain.GameURL, error) {
+	_, err := gu.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	gameVersion, err := gu.gameVersionRepository.GetLatestGameVersion(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameVersion
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest game version: %w", err)
+	}
+
+	gameURL, err := gu.gameURLRepository.GetGameURL(ctx, gameVersion.GetID())
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameURL
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game url: %w", err)
+	}
+
+	return gameURL, nil
+}
