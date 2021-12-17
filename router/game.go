@@ -1,12 +1,8 @@
 package router
 
 import (
-	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"strconv"
 
@@ -17,7 +13,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/router/base"
 	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/storage"
-	"golang.org/x/sync/errgroup"
 )
 
 // Game gameの構造体
@@ -29,9 +24,10 @@ type Game struct {
 	*v1.GameImage
 	*v1.GameVideo
 	*v1.GameVersion
+	*v1.GameFile
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion, gameFile *v1.GameFile) *Game {
 	game := new(Game)
 
 	game.db = db
@@ -41,6 +37,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRol
 	game.GameImage = gameImage
 	game.GameVideo = gameVideo
 	game.GameVersion = gameVersion
+	game.GameFile = gameFile
 
 	return game
 }
@@ -158,28 +155,6 @@ func (g *Game) DeleteGames(gameID string) error {
 	return nil
 }
 
-// GetGameFile GET /games/asset/:gameID/fileの処理部分
-func (g *Game) GetGameFile(gameID string, operatingSystem string) (io.Reader, error) {
-	switch operatingSystem {
-	case "win32":
-		operatingSystem = "windows"
-	case "darwin":
-		operatingSystem = "mac"
-	}
-
-	fileName, err := g.getGameFileName(gameID, operatingSystem)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file name: %w", err)
-	}
-
-	file, err := g.storage.Open(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("Failed In Opening Game File: %w", err)
-	}
-
-	return file, nil
-}
-
 var typeExtMap map[string]string = map[string]string{
 	"jar":     "jar",
 	"windows": "zip",
@@ -193,52 +168,6 @@ func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
 	}
 
 	return gameID + "_game." + ext, nil
-}
-
-// PostFile POST /games/:gameID/asset/urlの処理部分
-func (g *Game) PostFile(gameID string, file multipartFile, fileType string) (*openapi.GameFile, error) {
-	if !g.db.IsValidAssetType(fileType) {
-		return nil, errors.New("invalid file type")
-	}
-
-	fileName, err := g.getGameFileName(gameID, fileType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file name: %w", err)
-	}
-
-	eg := errgroup.Group{}
-	eg.Go(func() error {
-		return g.storage.Save(fileName, file)
-	})
-
-	hash := md5.New()
-	var gameFile *openapi.GameFile
-	eg.Go(func() error {
-		var err error
-		byteMd5 := hash.Sum(nil)
-		strMd5 := hex.EncodeToString(byteMd5)
-
-		gameFile, err = g.db.InsertGameFile(gameID, model.AssetType(fileType), strMd5)
-		if err != nil {
-			return fmt.Errorf("failed to insert file: %w", err)
-		}
-
-		return nil
-	})
-
-	fileBuf := bytes.NewBuffer(nil)
-	mw := io.MultiWriter(hash, fileBuf)
-	_, err = io.Copy(mw, file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make MultiWriter: %w", err)
-	}
-
-	err = eg.Wait()
-	if err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
-	}
-
-	return gameFile, nil
 }
 
 // PostURL POST /games/:gameID/asset/urlの処理部分
