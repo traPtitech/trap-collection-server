@@ -40,7 +40,8 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 	}
 	gameImage := swift.NewGameImage(client)
 	gameVideo := swift.NewGameVideo(client)
-	storage := newStorage(gameImage, gameVideo)
+	gameFile := swift.NewGameFile(client)
+	storage := newStorage(gameImage, gameVideo, gameFile)
 	return storage, nil
 }
 
@@ -55,7 +56,11 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	storage := newStorage(gameImage, gameVideo)
+	gameFile, err := local.NewGameFile(directoryManager)
+	if err != nil {
+		return nil, err
+	}
+	storage := newStorage(gameImage, gameVideo, gameFile)
 	return storage, nil
 }
 
@@ -116,9 +121,16 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	gameVersion := gorm2.NewGameVersion(db)
 	v1GameVersion := v1_2.NewGameVersion(db, game, gameVersion)
 	gameVersion2 := v1.NewGameVersion(v1GameVersion)
+	gameFile, err := gorm2.NewGameFile(db)
+	if err != nil {
+		return nil, err
+	}
+	storageGameFile := storage.GameFile
+	v1GameFile := v1_2.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
+	gameFile2 := v1.NewGameFile(v1GameFile)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, v1LauncherAuth, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, v1LauncherAuth, oAuth2, session)
 	return api, nil
 }
 
@@ -144,15 +156,18 @@ type Config struct {
 type Storage struct {
 	GameImage storage.GameImage
 	GameVideo storage.GameVideo
+	GameFile  storage.GameFile
 }
 
 func newStorage(
 	gameImage storage.GameImage,
 	gameVideo storage.GameVideo,
+	gameFile storage.GameFile,
 ) *Storage {
 	return &Storage{
 		GameImage: gameImage,
 		GameVideo: gameVideo,
+		GameFile:  gameFile,
 	}
 }
 
@@ -174,6 +189,7 @@ var (
 
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
 	gameVideoField = wire.FieldsOf(new(*Storage), "GameVideo")
+	gameFileField  = wire.FieldsOf(new(*Storage), "GameFile")
 )
 
 func injectedStorage(config *Config) (*Storage, error) {
@@ -190,6 +206,7 @@ var (
 	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
 	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
 	gameVideoRepositoryBind       = wire.Bind(new(repository.GameVideo), new(*gorm2.GameVideo))
+	gameFileRepositoryBind        = wire.Bind(new(repository.GameFile), new(*gorm2.GameFile))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
@@ -205,6 +222,7 @@ var (
 	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1_2.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_2.GameVideo))
+	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1_2.GameFile))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
