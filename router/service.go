@@ -48,7 +48,7 @@ func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*
 
 	launcherAuth := base.NewLauncherAuth()
 
-	game := newGame(db, oauth, str, newAPI.GameRole, newAPI.GameImage, newAPI.GameVideo, newAPI.GameVersion)
+	game := newGame(db, oauth, str, newAPI.GameRole, newAPI.GameImage, newAPI.GameVideo, newAPI.GameVersion, newAPI.GameFile)
 	seat := newSeat(db, launcherAuth)
 	version := newVersion(db, launcherAuth)
 

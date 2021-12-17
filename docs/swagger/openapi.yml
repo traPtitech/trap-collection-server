@@ -1174,12 +1174,16 @@ components:
           description: ゲームの種類（jar,windows,mac）
           type: string
           example: jar
+        entryPoint:
+          description: ゲームの起動時に実行するファイル
+          type: string
         file:
           description: ゲームのファイル
           type: string
           format: binary
       required:
         - type
+        - entryPoint
         - file
     NewGameURL:
       description: 新しいゲームのURL
@@ -1203,9 +1207,13 @@ components:
           description: ゲームの種類（jar,windows,mac）
           type: string
           example: jar
+        entryPoint:
+          description: ゲームの起動時に実行するファイル
+          type: string
       required:
         - id
         - type
+        - entryPoint
     GameURL:
       description: ゲームのURLの情報
       type: object

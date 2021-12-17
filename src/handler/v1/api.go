@@ -7,6 +7,7 @@ type API struct {
 	*GameImage
 	*GameVideo
 	*GameVersion
+	*GameFile
 	*LauncherAuth
 	*OAuth2
 	*Session
@@ -19,6 +20,7 @@ func NewAPI(
 	gameImage *GameImage,
 	gameVideo *GameVideo,
 	gameVersion *GameVersion,
+	gameFile *GameFile,
 	launcherAuth *LauncherAuth,
 	oAuth2 *OAuth2,
 	session *Session,
@@ -30,6 +32,7 @@ func NewAPI(
 		GameImage:    gameImage,
 		GameVideo:    gameVideo,
 		GameVersion:  gameVersion,
+		GameFile:     gameFile,
 		LauncherAuth: launcherAuth,
 		OAuth2:       oAuth2,
 		Session:      session,

@@ -42,15 +42,18 @@ type Config struct {
 type Storage struct {
 	GameImage storage.GameImage
 	GameVideo storage.GameVideo
+	GameFile  storage.GameFile
 }
 
 func newStorage(
 	gameImage storage.GameImage,
 	gameVideo storage.GameVideo,
+	gameFile storage.GameFile,
 ) *Storage {
 	return &Storage{
 		GameImage: gameImage,
 		GameVideo: gameVideo,
+		GameFile:  gameFile,
 	}
 }
 
@@ -72,6 +75,7 @@ var (
 
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
 	gameVideoField = wire.FieldsOf(new(*Storage), "GameVideo")
+	gameFileField  = wire.FieldsOf(new(*Storage), "GameFile")
 )
 
 func injectedStorage(config *Config) (*Storage, error) {
@@ -93,9 +97,11 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 		filePathField,
 		wire.Bind(new(storage.GameImage), new(*swift.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*swift.GameVideo)),
+		wire.Bind(new(storage.GameFile), new(*swift.GameFile)),
 		swift.NewClient,
 		swift.NewGameImage,
 		swift.NewGameVideo,
+		swift.NewGameFile,
 		newStorage,
 	)
 
@@ -107,9 +113,11 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 		filePathField,
 		wire.Bind(new(storage.GameImage), new(*local.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*local.GameVideo)),
+		wire.Bind(new(storage.GameFile), new(*local.GameFile)),
 		local.NewDirectoryManager,
 		local.NewGameImage,
 		local.NewGameVideo,
+		local.NewGameFile,
 		newStorage,
 	)
 
@@ -122,6 +130,7 @@ var (
 	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
 	gameImageRepositoryBind       = wire.Bind(new(repository.GameImage), new(*gorm2.GameImage))
 	gameVideoRepositoryBind       = wire.Bind(new(repository.GameVideo), new(*gorm2.GameVideo))
+	gameFileRepositoryBind        = wire.Bind(new(repository.GameFile), new(*gorm2.GameFile))
 	gameManagementRoleBind        = wire.Bind(new(repository.GameManagementRole), new(*gorm2.GameManagementRole))
 	launcherSessionRepositoryBind = wire.Bind(new(repository.LauncherSession), new(*gorm2.LauncherSession))
 	launcherUserRepositoryBind    = wire.Bind(new(repository.LauncherUser), new(*gorm2.LauncherUser))
@@ -137,6 +146,7 @@ var (
 	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1Service.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1Service.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1Service.GameVideo))
+	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1Service.GameFile))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1Service.User))
@@ -153,11 +163,13 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		httpClientField,
 		gameImageField,
 		gameVideoField,
+		gameFileField,
 		dbBind,
 		gameRepositoryBind,
 		gameVersionRepositoryBind,
 		gameImageRepositoryBind,
 		gameVideoRepositoryBind,
+		gameFileRepositoryBind,
 		gameManagementRoleBind,
 		launcherSessionRepositoryBind,
 		launcherUserRepositoryBind,
@@ -170,6 +182,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		gameVersionServiceBind,
 		gameImageServiceBind,
 		gameVideoServiceBind,
+		gameFileServiceBind,
 		launcherAuthServiceBind,
 		oidcServiceBind,
 		userServiceBind,
@@ -178,6 +191,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		gorm2.NewGameVersion,
 		gorm2.NewGameImage,
 		gorm2.NewGameVideo,
+		gorm2.NewGameFile,
 		gorm2.NewGameManagementRole,
 		gorm2.NewLauncherSession,
 		gorm2.NewLauncherUser,
@@ -190,6 +204,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Service.NewGameVersion,
 		v1Service.NewGameImage,
 		v1Service.NewGameVideo,
+		v1Service.NewGameFile,
 		v1Service.NewLauncherAuth,
 		v1Service.NewOIDC,
 		v1Service.NewUser,
@@ -200,6 +215,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Handler.NewGameImage,
 		v1Handler.NewGameVideo,
 		v1Handler.NewGameVersion,
+		v1Handler.NewGameFile,
 		v1Handler.NewLauncherAuth,
 		v1Handler.NewOAuth2,
 		v1Handler.NewUser,
