@@ -12,6 +12,7 @@ var (
 	tables = []interface{}{
 		&GameTable{},
 		&GameVersionTable{},
+		&GameURLTable{},
 		&GameFileTable{},
 		&GameFileTypeTable{},
 		&GameImageTable{},
@@ -49,10 +50,21 @@ type GameVersionTable struct {
 	Description string          `gorm:"type:text;not null"`
 	CreatedAt   time.Time       `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	GameFiles   []GameFileTable `gorm:"foreignKey:GameVersionID"`
+	GameURL     GameURLTable    `gorm:"foreignKey:GameVersionID"`
 }
 
 func (gt *GameVersionTable) TableName() string {
 	return "game_versions"
+}
+
+type GameURLTable struct {
+	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameVersionID uuid.UUID `gorm:"type:varchar(36);not null;unique"`
+	URL           string    `gorm:"type:text;not null"`
+}
+
+func (gut *GameURLTable) TableName() string {
+	return "game_urls"
 }
 
 type GameFileTable struct {
