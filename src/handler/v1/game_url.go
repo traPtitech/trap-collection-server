@@ -61,3 +61,30 @@ func (gu *GameURL) PostURL(strGameID string, newGameURL *openapi.NewGameUrl) (*o
 		Url: (*url.URL)(gameURL.GetLink()).String(),
 	}, nil
 }
+
+func (gu *GameURL) GetGameURL(strGameID string) (string, error) {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return "", echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	gameURL, err := gu.gameURLService.GetGameURL(ctx, gameID)
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return "", echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+	if errors.Is(err, service.ErrNoGameVersion) {
+		return "", echo.NewHTTPError(http.StatusBadRequest, "no game version")
+	}
+	if errors.Is(err, service.ErrNoGameURL) {
+		return "", echo.NewHTTPError(http.StatusBadRequest, "no game url")
+	}
+	if err != nil {
+		return "", echo.NewHTTPError(http.StatusInternalServerError, "failed to get game url")
+	}
+
+	return (*url.URL)(gameURL.GetLink()).String(), nil
+}
