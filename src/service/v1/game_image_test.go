@@ -11,6 +11,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -239,6 +240,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			executeGetGameImage: true,
 		},
@@ -268,6 +270,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			executeGetGameImage: true,
 		},
@@ -280,6 +283,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			executeGetGameImage: true,
 		},
@@ -292,6 +296,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			executeGetGameImage: true,
 		},
@@ -323,6 +328,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			executeGetGameImage: true,
 			GetGameImageErr:     errors.New("error"),

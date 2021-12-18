@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -54,6 +55,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			reader: bytes.NewBufferString("a"),
 		},
@@ -62,6 +64,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			reader:      bytes.NewBufferString("b"),
 			isFileExist: true,
@@ -150,6 +153,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			isFileExist: true,
 			fileContent: bytes.NewBufferString("b"),
@@ -159,6 +163,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			isErr: true,
 			err:   storage.ErrNotFound,

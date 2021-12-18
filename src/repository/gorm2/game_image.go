@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -109,7 +108,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, im
 		ID:          uuid.UUID(image.GetID()),
 		GameID:      uuid.UUID(gameID),
 		ImageTypeID: imageTypeID,
-		CreatedAt:   time.Now(),
+		CreatedAt:   image.GetCreatedAt(),
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to create game image: %w", err)
@@ -157,5 +156,6 @@ func (gi *GameImage) GetLatestGameImage(ctx context.Context, gameID values.GameI
 	return domain.NewGameImage(
 		values.GameImageIDFromUUID(image.ID),
 		imageType,
+		image.CreatedAt,
 	), nil
 }

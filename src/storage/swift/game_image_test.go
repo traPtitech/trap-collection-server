@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -56,6 +57,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 		},
 		{
@@ -63,6 +65,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypePng,
+				time.Now(),
 			),
 		},
 		{
@@ -70,6 +73,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeGif,
+				time.Now(),
 			),
 		},
 		{
@@ -77,6 +81,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				100,
+				time.Now(),
 			),
 			isErr: true,
 		},
@@ -85,6 +90,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			isFileExist: true,
 			isErr:       true,
@@ -196,6 +202,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			isFileExist: true,
 		},
@@ -204,6 +211,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypePng,
+				time.Now(),
 			),
 			isFileExist: true,
 		},
@@ -212,6 +220,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeGif,
+				time.Now(),
 			),
 			isFileExist: true,
 		},
@@ -220,6 +229,7 @@ func TestGetGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
+				time.Now(),
 			),
 			isErr: true,
 			err:   storage.ErrNotFound,
@@ -301,6 +311,7 @@ func TestImageKey(t *testing.T) {
 		image := domain.NewGameImage(
 			imageID,
 			values.GameImageType(rand.Intn(3)),
+			time.Now(),
 		)
 
 		key := gameImageStorage.imageKey(image)
