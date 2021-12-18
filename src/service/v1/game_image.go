@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/matchers"
@@ -74,6 +75,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 		image := domain.NewGameImage(
 			values.NewGameImageID(),
 			imageType,
+			time.Now(),
 		)
 
 		err = gi.gameImageRepository.SaveGameImage(ctx, gameID, image)
