@@ -130,7 +130,7 @@ func TestCreateLauncherUser(t *testing.T) {
 
 			mockLauncherVersionRepository.
 				EXPECT().
-				GetLauncherVersion(ctx, launcherVersionID).
+				GetLauncherVersion(ctx, launcherVersionID, repository.LockTypeNone).
 				Return(&domain.LauncherVersion{}, testCase.GetLauncherVersionErr)
 			if testCase.GetLauncherVersionErr == nil {
 				mockLauncherUserRepository.
@@ -252,7 +252,7 @@ func TestGetLauncherUsers(t *testing.T) {
 
 			mockLauncherVersionRepository.
 				EXPECT().
-				GetLauncherVersion(ctx, launcherVersionID).
+				GetLauncherVersion(ctx, launcherVersionID, repository.LockTypeNone).
 				Return(&domain.LauncherVersion{}, testCase.GetLauncherVersionErr)
 			if testCase.GetLauncherVersionErr == nil {
 				mockLauncherVersionRepository.
