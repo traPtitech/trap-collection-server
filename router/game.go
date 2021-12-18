@@ -25,9 +25,10 @@ type Game struct {
 	*v1.GameVideo
 	*v1.GameVersion
 	*v1.GameFile
+	*v1.GameURL
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion, gameFile *v1.GameFile) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion, gameFile *v1.GameFile, gameURL *v1.GameURL) *Game {
 	game := new(Game)
 
 	game.db = db
@@ -38,6 +39,7 @@ func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRol
 	game.GameVideo = gameVideo
 	game.GameVersion = gameVersion
 	game.GameFile = gameFile
+	game.GameURL = gameURL
 
 	return game
 }
@@ -168,24 +170,4 @@ func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
 	}
 
 	return gameID + "_game." + ext, nil
-}
-
-// PostURL POST /games/:gameID/asset/urlの処理部分
-func (g *Game) PostURL(gameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
-	gameURL, err := g.db.InsertGameURL(gameID, newGameURL.Url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert url: %w", err)
-	}
-
-	return gameURL, nil
-}
-
-// GetGameURL GET /games/:gameID/urlの処理部分
-func (g *Game) GetGameURL(gameID string) (string, error) {
-	url, err := g.db.GetURL(gameID)
-	if err != nil {
-		return "", fmt.Errorf("Failed In Getting URL: %w", err)
-	}
-
-	return url, nil
 }
