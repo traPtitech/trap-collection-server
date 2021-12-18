@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -223,6 +224,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			executeGetGameVideo: true,
 		},
@@ -252,6 +254,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			executeGetGameVideo: true,
 		},
@@ -283,6 +286,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			executeGetGameVideo: true,
 			GetGameVideoErr:     errors.New("error"),

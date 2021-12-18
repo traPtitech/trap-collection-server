@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/matchers"
@@ -70,6 +71,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 		video := domain.NewGameVideo(
 			values.NewGameVideoID(),
 			videoType,
+			time.Now(),
 		)
 
 		err = gv.gameVideoRepository.SaveGameVideo(ctx, gameID, video)
