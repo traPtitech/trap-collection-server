@@ -2,12 +2,14 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type LauncherVersion struct {
@@ -77,4 +79,37 @@ func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, id values.Lau
 	}
 
 	return launcherVersion, games, nil
+}
+
+func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id values.LauncherVersionID, gameIDs []values.GameID) error {
+	err := lv.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := lv.launcherVersionRepository.GetLauncherVersion(ctx, id, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoLauncherVersion
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get launcher version: %w", err)
+		}
+
+		games, err := lv.gameRepository.GetGamesByIDs(ctx, gameIDs, repository.LockTypeRecord)
+		if err != nil {
+			return fmt.Errorf("failed to get games: %w", err)
+		}
+
+		if len(games) != len(gameIDs) {
+			return service.ErrNoGame
+		}
+
+		err = lv.launcherVersionRepository.AddGamesToLauncherVersion(ctx, id, gameIDs)
+		if err != nil {
+			return fmt.Errorf("failed to add games to launcher version: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
 }
