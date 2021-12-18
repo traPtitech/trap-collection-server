@@ -154,6 +154,8 @@ func TestSaveGameVideo(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
@@ -161,6 +163,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				videoID1,
 				values.GameVideoTypeMp4,
+				now,
 			),
 			beforeVideos: []GameVideoTable{},
 			expectVideos: []GameVideoTable{
@@ -168,7 +171,7 @@ func TestSaveGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -178,6 +181,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				videoID2,
 				100,
+				now,
 			),
 			beforeVideos: []GameVideoTable{},
 			expectVideos: []GameVideoTable{},
@@ -189,13 +193,14 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				videoID3,
 				values.GameVideoTypeMp4,
+				now,
 			),
 			beforeVideos: []GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			expectVideos: []GameVideoTable{
@@ -203,13 +208,13 @@ func TestSaveGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -219,13 +224,14 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				videoID5,
 				100,
+				now,
 			),
 			beforeVideos: []GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			expectVideos: []GameVideoTable{
@@ -233,7 +239,7 @@ func TestSaveGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			isErr: true,
@@ -343,6 +349,8 @@ func TestGetLatestGameVideo(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
@@ -353,12 +361,13 @@ func TestGetLatestGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectVideo: domain.NewGameVideo(
 				videoID1,
 				values.GameVideoTypeMp4,
+				now,
 			),
 		},
 		{
@@ -378,18 +387,19 @@ func TestGetLatestGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID5),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now().Add(-24 * time.Hour),
+					CreatedAt:   now.Add(-24 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID5),
 					GameID:      uuid.UUID(gameID5),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectVideo: domain.NewGameVideo(
 				videoID5,
 				values.GameVideoTypeMp4,
+				now,
 			),
 		},
 		{
@@ -401,12 +411,13 @@ func TestGetLatestGameVideo(t *testing.T) {
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID6),
 					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectVideo: domain.NewGameVideo(
 				videoID6,
 				values.GameVideoTypeMp4,
+				now,
 			),
 		},
 	}
@@ -439,7 +450,9 @@ func TestGetLatestGameVideo(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, *testCase.expectVideo, *video)
+			assert.Equal(t, testCase.expectVideo.GetID(), video.GetID())
+			assert.Equal(t, testCase.expectVideo.GetType(), video.GetType())
+			assert.WithinDuration(t, testCase.expectVideo.GetCreatedAt(), video.GetCreatedAt(), time.Second)
 		})
 	}
 }
