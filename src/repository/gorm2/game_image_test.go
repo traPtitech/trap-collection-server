@@ -175,6 +175,8 @@ func TestSaveGameImage(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
@@ -182,6 +184,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID1,
 				values.GameImageTypeJpeg,
+				now,
 			),
 			beforeImages: []GameImageTable{},
 			expectImages: []GameImageTable{
@@ -189,7 +192,7 @@ func TestSaveGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
 					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -199,6 +202,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID2,
 				values.GameImageTypePng,
+				now,
 			),
 			beforeImages: []GameImageTable{},
 			expectImages: []GameImageTable{
@@ -206,7 +210,7 @@ func TestSaveGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -216,6 +220,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID3,
 				values.GameImageTypeGif,
+				now,
 			),
 			beforeImages: []GameImageTable{},
 			expectImages: []GameImageTable{
@@ -223,7 +228,7 @@ func TestSaveGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
 					ImageTypeID: imageTypeMap[gameImageTypeGif],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -233,6 +238,7 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID4,
 				100,
+				now,
 			),
 			beforeImages: []GameImageTable{},
 			expectImages: []GameImageTable{},
@@ -244,13 +250,14 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID5,
 				values.GameImageTypeJpeg,
+				now,
 			),
 			beforeImages: []GameImageTable{
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			expectImages: []GameImageTable{
@@ -258,13 +265,13 @@ func TestSaveGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
 					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 		},
@@ -274,13 +281,14 @@ func TestSaveGameImage(t *testing.T) {
 			image: domain.NewGameImage(
 				imageID7,
 				100,
+				now,
 			),
 			beforeImages: []GameImageTable{
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			expectImages: []GameImageTable{
@@ -288,7 +296,7 @@ func TestSaveGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now().Add(-10 * time.Hour),
+					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
 			isErr: true,
@@ -402,6 +410,8 @@ func TestGetLatestGameImage(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
@@ -412,12 +422,13 @@ func TestGetLatestGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
 					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectImage: domain.NewGameImage(
 				imageID1,
 				values.GameImageTypeJpeg,
+				now,
 			),
 		},
 		{
@@ -429,12 +440,13 @@ func TestGetLatestGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectImage: domain.NewGameImage(
 				imageID2,
 				values.GameImageTypePng,
+				now,
 			),
 		},
 		{
@@ -446,12 +458,13 @@ func TestGetLatestGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
 					ImageTypeID: imageTypeMap[gameImageTypeGif],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectImage: domain.NewGameImage(
 				imageID3,
 				values.GameImageTypeGif,
+				now,
 			),
 		},
 		{
@@ -471,18 +484,19 @@ func TestGetLatestGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID5),
 					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
-					CreatedAt:   time.Now().Add(-24 * time.Hour),
+					CreatedAt:   now.Add(-24 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
 					ImageTypeID: imageTypeMap[gameImageTypePng],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectImage: domain.NewGameImage(
 				imageID5,
 				values.GameImageTypePng,
+				time.Now(),
 			),
 		},
 		{
@@ -494,12 +508,13 @@ func TestGetLatestGameImage(t *testing.T) {
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID6),
 					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
-					CreatedAt:   time.Now(),
+					CreatedAt:   now,
 				},
 			},
 			expectImage: domain.NewGameImage(
 				imageID6,
 				values.GameImageTypeJpeg,
+				now,
 			),
 		},
 	}
@@ -532,7 +547,9 @@ func TestGetLatestGameImage(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, *testCase.expectImage, *image)
+			assert.Equal(t, testCase.expectImage.GetID(), image.GetID())
+			assert.Equal(t, testCase.expectImage.GetType(), image.GetType())
+			assert.WithinDuration(t, testCase.expectImage.GetCreatedAt(), image.GetCreatedAt(), time.Second)
 		})
 	}
 }
