@@ -10,7 +10,10 @@ import (
 )
 
 type LauncherVersion interface {
-	GetLauncherVersion(context.Context, values.LauncherVersionID) (*domain.LauncherVersion, error)
+	CreateLauncherVersion(context.Context, *domain.LauncherVersion) error
+	GetLauncherVersions(context.Context) ([]*domain.LauncherVersion, error)
+	GetLauncherVersion(context.Context, values.LauncherVersionID, LockType) (*domain.LauncherVersion, error)
 	GetLauncherUsersByLauncherVersionID(context.Context, values.LauncherVersionID) ([]*domain.LauncherUser, error)
 	GetLauncherVersionAndUserAndSessionByAccessToken(context.Context, values.LauncherSessionAccessToken) (*domain.LauncherVersion, *domain.LauncherUser, *domain.LauncherSession, error)
+	AddGamesToLauncherVersion(context.Context, values.LauncherVersionID, []values.GameID) error
 }
