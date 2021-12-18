@@ -11,7 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/mock"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 func TestCreateLauncherVersion(t *testing.T) {
@@ -202,6 +204,178 @@ func TestGetLauncherVersions(t *testing.T) {
 					assert.False(t, errors.Is(err, domain.ErrNoQuestionnaire))
 					assert.Equal(t, expectQuestionnaireURL, questionnaireURL)
 				}
+			}
+		})
+	}
+}
+
+func TestGetLauncherVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockGameRepository := mock.NewMockGame(ctrl)
+
+	launcherVersionService := NewLauncherVersion(mockDB, mockLauncherVersionRepository, mockGameRepository)
+
+	type test struct {
+		description                     string
+		launcherVersionID               values.LauncherVersionID
+		launcherVersion                 *domain.LauncherVersion
+		GetLauncherVersionErr           error
+		executeGetGameByLauncherVersion bool
+		games                           []*domain.Game
+		GetGamesByLauncherVersionErr    error
+		isErr                           bool
+		err                             error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラーなし",
+			launcherVersionID: launcherVersionID,
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameByLauncherVersion: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					values.NewGameID(),
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+		},
+		{
+			description:           "GetLauncherVersionがErrRecordNotFoundなのでErrNoLauncherVersion",
+			launcherVersionID:     launcherVersionID,
+			GetLauncherVersionErr: repository.ErrRecordNotFound,
+			isErr:                 true,
+			err:                   service.ErrNoLauncherVersion,
+		},
+		{
+			description:           "GetLauncherVersionがエラーなのでエラー",
+			launcherVersionID:     launcherVersionID,
+			GetLauncherVersionErr: errors.New("error"),
+			isErr:                 true,
+		},
+		{
+			description:       "GetGamesByLauncherVersionがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameByLauncherVersion: true,
+			GetGamesByLauncherVersionErr:    errors.New("error"),
+			isErr:                           true,
+		},
+		{
+			description:       "gameが0個でもエラーなし",
+			launcherVersionID: launcherVersionID,
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameByLauncherVersion: true,
+			games:                           []*domain.Game{},
+		},
+		{
+			description:       "gameが複数でもエラーなし",
+			launcherVersionID: launcherVersionID,
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameByLauncherVersion: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					values.NewGameID(),
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+				domain.NewGame(
+					values.NewGameID(),
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockLauncherVersionRepository.
+				EXPECT().
+				GetLauncherVersion(ctx, testCase.launcherVersionID, repository.LockTypeNone).
+				Return(testCase.launcherVersion, testCase.GetLauncherVersionErr)
+
+			if testCase.executeGetGameByLauncherVersion {
+				mockGameRepository.
+					EXPECT().
+					GetGamesByLauncherVersion(ctx, testCase.launcherVersionID).
+					Return(testCase.games, testCase.GetGamesByLauncherVersionErr)
+			}
+
+			launcherVersion, games, err := launcherVersionService.GetLauncherVersion(ctx, testCase.launcherVersionID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.launcherVersion.GetID(), launcherVersion.GetID())
+			assert.Equal(t, testCase.launcherVersion.GetName(), launcherVersion.GetName())
+			assert.WithinDuration(t, testCase.launcherVersion.GetCreatedAt(), launcherVersion.GetCreatedAt(), time.Second)
+
+			questionnaireURL, err := launcherVersion.GetQuestionnaireURL()
+
+			if errors.Is(err, domain.ErrNoQuestionnaire) {
+				_, err = testCase.launcherVersion.GetQuestionnaireURL()
+				assert.True(t, errors.Is(err, domain.ErrNoQuestionnaire))
+			} else {
+				expectQuestionnaireURL, err := testCase.launcherVersion.GetQuestionnaireURL()
+				assert.False(t, errors.Is(err, domain.ErrNoQuestionnaire))
+				assert.Equal(t, expectQuestionnaireURL, questionnaireURL)
+			}
+
+			for i, game := range games {
+				assert.Equal(t, testCase.games[i].GetID(), game.GetID())
+				assert.Equal(t, testCase.games[i].GetName(), game.GetName())
+				assert.Equal(t, testCase.games[i].GetDescription(), game.GetDescription())
+				assert.WithinDuration(t, testCase.games[i].GetCreatedAt(), game.GetCreatedAt(), time.Second)
 			}
 		})
 	}
