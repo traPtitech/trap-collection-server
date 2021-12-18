@@ -113,3 +113,51 @@ func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id val
 
 	return nil
 }
+
+func (lv *LauncherVersion) GetLauncherVersionCheckList(ctx context.Context, launcherVersionID values.LauncherVersionID, env *values.LauncherEnvironment) ([]*service.CheckListItem, error) {
+	_, err := lv.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoLauncherVersion
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher version: %w", err)
+	}
+
+	gameInfos, err := lv.gameRepository.GetGameInfosByLauncherVersion(ctx, launcherVersionID, env.AcceptGameFileTypes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	checkList := make([]*service.CheckListItem, 0, len(gameInfos))
+	for _, gameInfo := range gameInfos {
+		// url,fileのうち、fileが存在する場合はurlを無視、存在しない場合はurlを使う
+		var url *domain.GameURL
+		var file *domain.GameFile
+		switch {
+		case len(gameInfo.LatestFiles) != 0:
+			for _, latestFile := range gameInfo.LatestFiles {
+				// Windows,Mac専用のファイルを優先
+				if latestFile.GetFileType() == values.GameFileTypeWindows || latestFile.GetFileType() == values.GameFileTypeMac {
+					file = latestFile
+					break
+				}
+
+				// Windows,Mac優先のため、その他の場合はbreakしない
+				file = latestFile
+			}
+		case gameInfo.LatestURL != nil:
+			url = gameInfo.LatestURL
+		}
+
+		checkList = append(checkList, &service.CheckListItem{
+			Game:          gameInfo.Game,
+			LatestVersion: gameInfo.LatestVersion,
+			LatestURL:     url,
+			LatestFile:    file,
+			LatestImage:   gameInfo.LatestImage,
+			LatestVideo:   gameInfo.LatestVideo,
+		})
+	}
+
+	return checkList, nil
+}
