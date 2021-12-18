@@ -380,3 +380,233 @@ func TestGetLauncherVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestAddGamesToLauncherVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockGameRepository := mock.NewMockGame(ctrl)
+
+	launcherVersionService := NewLauncherVersion(mockDB, mockLauncherVersionRepository, mockGameRepository)
+
+	type test struct {
+		description                      string
+		launcherVersionID                values.LauncherVersionID
+		gameIDs                          []values.GameID
+		launcherVersion                  *domain.LauncherVersion
+		GetLauncherVersionErr            error
+		executeGetGamesByIDs             bool
+		games                            []*domain.Game
+		GetGamesByIDsErr                 error
+		executeAddGamesToLauncherVersion bool
+		AddGamesToLauncherVersionErr     error
+		isErr                            bool
+		err                              error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラーなし",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+			executeAddGamesToLauncherVersion: true,
+		},
+		{
+			description:       "gameが複数でもエラーなし",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+				gameID2,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+				domain.NewGame(
+					gameID2,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+			executeAddGamesToLauncherVersion: true,
+		},
+		{
+			description:       "gameIDがからでもエラーなし",
+			launcherVersionID: launcherVersionID,
+			gameIDs:           []values.GameID{},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs:             true,
+			games:                            []*domain.Game{},
+			executeAddGamesToLauncherVersion: true,
+		},
+		{
+			description:       "LauncherVersionが存在しないのでErrNoLauncherVersion",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			GetLauncherVersionErr: repository.ErrRecordNotFound,
+			isErr:                 true,
+			err:                   service.ErrNoLauncherVersion,
+		},
+		{
+			description:       "GetLauncherVersionがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			GetLauncherVersionErr: errors.New("error"),
+			isErr:                 true,
+		},
+		{
+			description:       "GetGamesByIDsがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs: true,
+			GetGamesByIDsErr:     errors.New("error"),
+			isErr:                true,
+		},
+		{
+			description:       "存在しないGameIDが含まれるのでErrNoGame",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+				gameID2,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+			isErr: true,
+			err:   service.ErrNoGame,
+		},
+		{
+			description:       "AddGamesToLauncherVersionがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByIDs: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+			executeAddGamesToLauncherVersion: true,
+			AddGamesToLauncherVersionErr:     errors.New("error"),
+			isErr:                            true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockLauncherVersionRepository.
+				EXPECT().
+				GetLauncherVersion(gomock.Any(), testCase.launcherVersionID, repository.LockTypeRecord).
+				Return(testCase.launcherVersion, testCase.GetLauncherVersionErr)
+
+			if testCase.executeGetGamesByIDs {
+				mockGameRepository.
+					EXPECT().
+					GetGamesByIDs(gomock.Any(), testCase.gameIDs, repository.LockTypeRecord).
+					Return(testCase.games, testCase.GetGamesByIDsErr)
+			}
+
+			if testCase.executeAddGamesToLauncherVersion {
+				mockLauncherVersionRepository.
+					EXPECT().
+					AddGamesToLauncherVersion(gomock.Any(), testCase.launcherVersionID, testCase.gameIDs).
+					Return(testCase.AddGamesToLauncherVersionErr)
+			}
+
+			err := launcherVersionService.AddGamesToLauncherVersion(ctx, testCase.launcherVersionID, testCase.gameIDs)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
