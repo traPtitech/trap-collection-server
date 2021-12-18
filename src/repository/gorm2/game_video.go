@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -97,7 +96,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, gameID values.GameID, vi
 		ID:          uuid.UUID(video.GetID()),
 		GameID:      uuid.UUID(gameID),
 		VideoTypeID: videoTypeID,
-		CreatedAt:   time.Now(),
+		CreatedAt:   video.GetCreatedAt(),
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to create game video: %w", err)
@@ -141,5 +140,6 @@ func (gv *GameVideo) GetLatestGameVideo(ctx context.Context, gameID values.GameI
 	return domain.NewGameVideo(
 		values.NewGameVideoIDFromUUID(video.ID),
 		videoType,
+		video.CreatedAt,
 	), nil
 }

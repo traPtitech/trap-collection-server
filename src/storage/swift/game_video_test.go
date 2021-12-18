@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -55,6 +56,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 		},
 		{
@@ -63,6 +65,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				100,
+				time.Now(),
 			),
 			isErr: true,
 		},
@@ -71,6 +74,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isFileExist: true,
 			isErr:       true,
@@ -182,6 +186,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isFileExist: true,
 		},
@@ -190,6 +195,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isErr: true,
 			err:   storage.ErrNotFound,
@@ -273,6 +279,7 @@ func TestVideoKey(t *testing.T) {
 		video := domain.NewGameVideo(
 			videoID,
 			values.GameVideoType(rand.Intn(1)),
+			time.Now(),
 		)
 
 		key := gameVideoStorage.videoKey(video)

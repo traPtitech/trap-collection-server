@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -54,6 +55,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 		},
 		{
@@ -61,6 +63,7 @@ func TestSaveGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isFileExist: true,
 			isErr:       true,
@@ -172,6 +175,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isFileExist: true,
 		},
@@ -180,6 +184,7 @@ func TestGetGameVideo(t *testing.T) {
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
+				time.Now(),
 			),
 			isErr: true,
 			err:   storage.ErrNotFound,
