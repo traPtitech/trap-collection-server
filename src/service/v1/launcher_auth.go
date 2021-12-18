@@ -36,7 +36,7 @@ func NewLauncherAuth(
 }
 
 func (la *LauncherAuth) CreateLauncherUser(ctx context.Context, launcherVersionID values.LauncherVersionID, userNum int) ([]*domain.LauncherUser, error) {
-	_, err := la.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID)
+	_, err := la.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidLauncherVersion
 	}
@@ -66,7 +66,7 @@ func (la *LauncherAuth) CreateLauncherUser(ctx context.Context, launcherVersionI
 }
 
 func (la *LauncherAuth) GetLauncherUsers(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.LauncherUser, error) {
-	_, err := la.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID)
+	_, err := la.launcherVersionRepository.GetLauncherVersion(ctx, launcherVersionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidLauncherVersion
 	}
