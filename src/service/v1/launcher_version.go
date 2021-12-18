@@ -61,3 +61,20 @@ func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.L
 
 	return launcherVersions, nil
 }
+
+func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, id values.LauncherVersionID) (*domain.LauncherVersion, []*domain.Game, error) {
+	launcherVersion, err := lv.launcherVersionRepository.GetLauncherVersion(ctx, id, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrNoLauncherVersion
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version: %w", err)
+	}
+
+	games, err := lv.gameRepository.GetGamesByLauncherVersion(ctx, id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	return launcherVersion, games, nil
+}
