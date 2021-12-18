@@ -1,6 +1,10 @@
 package domain
 
-import "github.com/traPtitech/trap-collection-server/src/domain/values"
+import (
+	"time"
+
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+)
 
 /*
 	GameImage
@@ -9,15 +13,18 @@ import "github.com/traPtitech/trap-collection-server/src/domain/values"
 type GameImage struct {
 	id        values.GameImageID
 	imageType values.GameImageType
+	createdAt time.Time
 }
 
 func NewGameImage(
 	id values.GameImageID,
 	imageType values.GameImageType,
+	createdAt time.Time,
 ) *GameImage {
 	return &GameImage{
 		id:        id,
 		imageType: imageType,
+		createdAt: createdAt,
 	}
 }
 
@@ -27,4 +34,8 @@ func (gi *GameImage) GetID() values.GameImageID {
 
 func (gi *GameImage) GetType() values.GameImageType {
 	return gi.imageType
+}
+
+func (gi *GameImage) GetCreatedAt() time.Time {
+	return gi.createdAt
 }
