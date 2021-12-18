@@ -52,3 +52,12 @@ func (lv *LauncherVersion) CreateLauncherVersion(ctx context.Context, name value
 
 	return launcherVersion, nil
 }
+
+func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.LauncherVersion, error) {
+	launcherVersions, err := lv.launcherVersionRepository.GetLauncherVersions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher versions: %w", err)
+	}
+
+	return launcherVersions, nil
+}
