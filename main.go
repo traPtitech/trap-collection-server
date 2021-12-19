@@ -31,10 +31,11 @@ import (
 )
 
 func main() {
-	log.Printf("Server started")
 	env := os.Getenv("COLLECTION_ENV")
+	storageEnv := os.Getenv("STORAGE")
 
 	isProduction := env != "development" && env != "mock"
+	isSwift := storageEnv != "local"
 
 	db, err := model.EstablishDB()
 	if err != nil {
@@ -64,9 +65,6 @@ func main() {
 
 		db.LogMode(true)
 
-		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-			Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
-		}))
 		e.Use(middleware.Logger())
 	} else {
 		colog.SetMinLevel(colog.LError)
@@ -120,7 +118,7 @@ func main() {
 		swiftTenantName common.SwiftTenantName
 		swiftContainer  common.SwiftContainer
 	)
-	if isProduction {
+	if isSwift {
 		strSwiftAuthURL, ok := os.LookupEnv("OS_AUTH_URL")
 		if !ok {
 			panic("ENV OS_AUTH_URL is not set")

@@ -18,6 +18,7 @@ services:
       - ../../cache/:/go/src/github.com/traPtitech/trap-collection-server/cache
     environment:
       COLLECTION_ENV: development
+      STORAGE: local
       ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
       FILE_PATH: ./cache
       CLIENT_ID:

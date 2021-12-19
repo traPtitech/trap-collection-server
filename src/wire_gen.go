@@ -141,6 +141,7 @@ func InjectAPI(config *Config) (*v1.API, error) {
 
 type Config struct {
 	IsProduction    common.IsProduction
+	IsSwift         common.IsSwift
 	SessionKey      common.SessionKey
 	SessionSecret   common.SessionSecret
 	TraQBaseURL     common.TraQBaseURL
@@ -176,6 +177,7 @@ func newStorage(
 
 var (
 	isProductionField    = wire.FieldsOf(new(*Config), "IsProduction")
+	isSwiftField         = wire.FieldsOf(new(*Config), "IsSwift")
 	sessionKeyField      = wire.FieldsOf(new(*Config), "SessionKey")
 	sessionSecretField   = wire.FieldsOf(new(*Config), "SessionSecret")
 	traQBaseURLField     = wire.FieldsOf(new(*Config), "TraQBaseURL")
@@ -196,7 +198,7 @@ var (
 )
 
 func injectedStorage(config *Config) (*Storage, error) {
-	if config.IsProduction {
+	if config.IsSwift {
 		return injectSwiftStorage(config)
 	}
 
