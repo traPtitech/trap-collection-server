@@ -2,9 +2,12 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -21,6 +24,75 @@ func NewLauncherVersion(db *DB) *LauncherVersion {
 	return &LauncherVersion{
 		db: db,
 	}
+}
+
+func (lv *LauncherVersion) CreateLauncherVersion(ctx context.Context, launcherVersion *domain.LauncherVersion) error {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	questionnaireURL, err := launcherVersion.GetQuestionnaireURL()
+
+	var dbQuestionnaireURL sql.NullString
+	if errors.Is(err, domain.ErrNoQuestionnaire) {
+		dbQuestionnaireURL.Valid = false
+	} else {
+		dbQuestionnaireURL.Valid = true
+		dbQuestionnaireURL.String = (*url.URL)(questionnaireURL).String()
+	}
+
+	err = db.Create(&LauncherVersionTable{
+		ID:               uuid.UUID(launcherVersion.GetID()),
+		Name:             string(launcherVersion.GetName()),
+		QuestionnaireURL: dbQuestionnaireURL,
+		CreatedAt:        launcherVersion.GetCreatedAt(),
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create launcher version: %w", err)
+	}
+
+	return nil
+}
+
+func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.LauncherVersion, error) {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var dbLauncherVersions []*LauncherVersionTable
+	err = db.
+		Order("created_at desc").
+		Find(&dbLauncherVersions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher versions: %w", err)
+	}
+
+	launcherVersions := make([]*domain.LauncherVersion, 0, len(dbLauncherVersions))
+	for _, dbLauncherVersion := range dbLauncherVersions {
+		if dbLauncherVersion.QuestionnaireURL.Valid {
+			questionnaireURL, err := url.Parse(dbLauncherVersion.QuestionnaireURL.String)
+			if err != nil {
+				log.Printf("error: failed to parse questionnaire url(%s): %v", dbLauncherVersion.QuestionnaireURL.String, err)
+			}
+
+			launcherVersions = append(launcherVersions, domain.NewLauncherVersionWithQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(dbLauncherVersion.ID),
+				values.NewLauncherVersionName(dbLauncherVersion.Name),
+				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				dbLauncherVersion.CreatedAt,
+			))
+		} else {
+			launcherVersions = append(launcherVersions, domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(dbLauncherVersion.ID),
+				values.NewLauncherVersionName(dbLauncherVersion.Name),
+				dbLauncherVersion.CreatedAt,
+			))
+		}
+	}
+
+	return launcherVersions, nil
 }
 
 func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
@@ -96,7 +168,14 @@ func (lv *LauncherVersion) GetLauncherVersionAndUserAndSessionByAccessToken(ctx 
 	}
 
 	type LauncherVersion struct {
-		LauncherVersion LauncherVersionTable `gorm:"embedded;embeddedPrefix:launcher_versions_"`
+		// LancherVersionとGameのmany2manyを追加したら重複Fieldがないのに重複Fieldがあるというエラーが出たので、暫定対処
+		LauncherVersion struct {
+			ID               uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
+			Name             string         `gorm:"type:varchar(32);not null;unique"`
+			QuestionnaireURL sql.NullString `gorm:"type:text;default:NULL"`
+			CreatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+			DeletedAt        gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
+		} `gorm:"embedded;embeddedPrefix:launcher_versions_"`
 		LauncherUser    LauncherUserTable    `gorm:"embedded;embeddedPrefix:launcher_users_"`
 		LauncherSession LauncherSessionTable `gorm:"embedded;embeddedPrefix:launcher_sessions_"`
 	}
@@ -153,4 +232,30 @@ func (lv *LauncherVersion) GetLauncherVersionAndUserAndSessionByAccessToken(ctx 
 	)
 
 	return launcherVersion, launcherUser, launcherSession, nil
+}
+
+func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID, gameIDs []values.GameID) error {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTables := make([]*GameTable, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		gameTables = append(gameTables, &GameTable{
+			ID: uuid.UUID(gameID),
+		})
+	}
+
+	err = db.
+		Model(&LauncherVersionTable{
+			ID: uuid.UUID(launcherVersionID),
+		}).
+		Association("Games").
+		Append(gameTables)
+	if err != nil {
+		return fmt.Errorf("failed to add games to launcher version: %w", err)
+	}
+
+	return nil
 }
