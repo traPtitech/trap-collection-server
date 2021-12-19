@@ -248,7 +248,7 @@ func TestGetGameURL(t *testing.T) {
 				time.Now(),
 			),
 			executeGetGameURL: true,
-			gameURL:           domain.NewGameURL(values.NewGameURLID(), link),
+			gameURL:           domain.NewGameURL(values.NewGameURLID(), link, time.Now()),
 		},
 		{
 			description: "ゲームが存在しないのでエラー",
