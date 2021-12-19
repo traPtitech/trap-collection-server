@@ -774,6 +774,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 					LatestURL: domain.NewGameURL(
 						gameURLID1,
 						values.NewGameURLLink(urlLink),
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -804,6 +805,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 					LatestURL: domain.NewGameURL(
 						gameURLID1,
 						values.NewGameURLLink(urlLink),
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -846,6 +848,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 					LatestURL: domain.NewGameURL(
 						gameURLID1,
 						values.NewGameURLLink(urlLink),
+						now,
 					),
 					LatestFiles: []*domain.GameFile{
 						domain.NewGameFile(
