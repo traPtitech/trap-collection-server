@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -64,6 +65,7 @@ func TestPostFile(t *testing.T) {
 				values.GameFileTypeJar,
 				values.NewGameFileEntryPoint("main.jar"),
 				[]byte("a"),
+				time.Now(),
 			),
 			apiGameFile: &openapi.GameFile{
 				Id:         uuid.UUID(gameFileID).String(),
@@ -86,6 +88,7 @@ func TestPostFile(t *testing.T) {
 				values.GameFileTypeWindows,
 				values.NewGameFileEntryPoint("main.exe"),
 				[]byte("a"),
+				time.Now(),
 			),
 			apiGameFile: &openapi.GameFile{
 				Id:         uuid.UUID(gameFileID).String(),
@@ -108,6 +111,7 @@ func TestPostFile(t *testing.T) {
 				values.GameFileTypeMac,
 				values.NewGameFileEntryPoint("main.app"),
 				[]byte("a"),
+				time.Now(),
 			),
 			apiGameFile: &openapi.GameFile{
 				Id:         uuid.UUID(gameFileID).String(),
@@ -139,6 +143,7 @@ func TestPostFile(t *testing.T) {
 				values.GameFileTypeJar,
 				values.NewGameFileEntryPoint(""),
 				[]byte("a"),
+				time.Now(),
 			),
 			apiGameFile: &openapi.GameFile{
 				Id:         uuid.UUID(gameFileID).String(),
