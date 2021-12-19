@@ -95,10 +95,15 @@ func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.L
 	return launcherVersions, nil
 }
 
-func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
+func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID, lockType repository.LockType) (*domain.LauncherVersion, error) {
 	db, err := lv.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = lv.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
 	var dbLauncherVersion LauncherVersionTable
