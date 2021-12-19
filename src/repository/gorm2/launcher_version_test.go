@@ -139,6 +139,175 @@ func TestCreateLauncherVersion(t *testing.T) {
 	}
 }
 
+func TestGetLauncherVersions(t *testing.T) {
+	launcherVersionRepository := NewLauncherVersion(testDB)
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type test struct {
+		description            string
+		beforeLauncherVersions []*LauncherVersionTable
+		launcherVersions       []*domain.LauncherVersion
+		isErr                  bool
+		err                    error
+	}
+
+	launcherVersionID1 := values.NewLauncherVersionID()
+	launcherVersionID2 := values.NewLauncherVersionID()
+	launcherVersionID3 := values.NewLauncherVersionID()
+	launcherVersionID4 := values.NewLauncherVersionID()
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID1),
+					Name: "test",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+				},
+			},
+			launcherVersions: []*domain.LauncherVersion{
+				domain.NewLauncherVersionWithQuestionnaire(
+					launcherVersionID1,
+					values.NewLauncherVersionName("test"),
+					values.NewLauncherVersionQuestionnaireURL(urlLink),
+					now,
+				),
+			},
+		},
+		{
+			description: "Questionnaireなしでもエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{
+				{
+					ID:        uuid.UUID(launcherVersionID2),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			launcherVersions: []*domain.LauncherVersion{
+				domain.NewLauncherVersionWithoutQuestionnaire(
+					launcherVersionID2,
+					values.NewLauncherVersionName("test"),
+					now,
+				),
+			},
+		},
+		{
+			description:            "launcherVersionが存在しなくてもエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{},
+			launcherVersions:       []*domain.LauncherVersion{},
+		},
+		{
+			description: "launcherVersionが複数でもエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID3),
+					Name: "test1",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+				},
+				{
+					ID:   uuid.UUID(launcherVersionID4),
+					Name: "test2",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now.Add(-time.Hour),
+				},
+			},
+			launcherVersions: []*domain.LauncherVersion{
+				domain.NewLauncherVersionWithQuestionnaire(
+					launcherVersionID3,
+					values.NewLauncherVersionName("test1"),
+					values.NewLauncherVersionQuestionnaireURL(urlLink),
+					now,
+				),
+				domain.NewLauncherVersionWithQuestionnaire(
+					launcherVersionID4,
+					values.NewLauncherVersionName("test2"),
+					values.NewLauncherVersionQuestionnaireURL(urlLink),
+					now.Add(-time.Hour),
+				),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&LauncherVersionTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete table: %v", err)
+				}
+			}()
+
+			if testCase.beforeLauncherVersions != nil && len(testCase.beforeLauncherVersions) != 0 {
+				err := db.Create(&testCase.beforeLauncherVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create table: %v", err)
+				}
+			}
+
+			launcherVersions, err := launcherVersionRepository.GetLauncherVersions(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Len(t, launcherVersions, len(testCase.launcherVersions))
+
+			for i, launcherVersion := range launcherVersions {
+				assert.Equal(t, testCase.launcherVersions[i].GetID(), launcherVersion.GetID())
+				assert.Equal(t, testCase.launcherVersions[i].GetName(), launcherVersion.GetName())
+				assert.WithinDuration(t, testCase.launcherVersions[i].GetCreatedAt(), launcherVersion.GetCreatedAt(), time.Second)
+
+				questionnaireURL, err := launcherVersion.GetQuestionnaireURL()
+
+				if errors.Is(err, domain.ErrNoQuestionnaire) {
+					_, err = testCase.launcherVersions[i].GetQuestionnaireURL()
+					assert.True(t, errors.Is(err, domain.ErrNoQuestionnaire))
+				} else {
+					expectQuestionnaireURL, err := testCase.launcherVersions[i].GetQuestionnaireURL()
+					assert.False(t, errors.Is(err, domain.ErrNoQuestionnaire))
+					assert.Equal(t, expectQuestionnaireURL, questionnaireURL)
+				}
+			}
+		})
+	}
+}
+
 func TestGetLauncherVersion(t *testing.T) {
 	t.Parallel()
 
