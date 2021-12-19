@@ -88,3 +88,33 @@ func (g *Game) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockT
 
 	return gamesDomain, nil
 }
+
+func (g *Game) GetGamesByLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.Game, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var launcherVersion LauncherVersionTable
+	err = db.
+		Where("id = ?", uuid.UUID(launcherVersionID)).
+		Preload("Games", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at desc")
+		}).
+		Find(&launcherVersion).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher version: %w", err)
+	}
+
+	gamesDomain := make([]*domain.Game, 0, len(launcherVersion.Games))
+	for _, game := range launcherVersion.Games {
+		gamesDomain = append(gamesDomain, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomain, nil
+}
