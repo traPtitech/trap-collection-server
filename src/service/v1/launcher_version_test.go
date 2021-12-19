@@ -658,6 +658,8 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 	gameVideoID1 := values.NewGameVideoID()
 	gameVideoID2 := values.NewGameVideoID()
 
+	now := time.Now()
+
 	hash, err := values.NewGameFileHash(strings.NewReader("hash"))
 	if err != nil {
 		t.Fatalf("failed to create game file hash: %v", err)
@@ -695,6 +697,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -728,6 +731,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -849,6 +853,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -882,6 +887,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -1022,6 +1028,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: nil,
@@ -1051,6 +1058,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: nil,
 					LatestVideo: domain.NewGameVideo(
@@ -1092,6 +1100,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -1121,6 +1130,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -1176,6 +1186,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -1208,6 +1219,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -1241,6 +1253,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -1271,6 +1284,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeJar,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID2,
@@ -1316,12 +1330,14 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 						domain.NewGameFile(
 							gameFileID2,
 							values.GameFileTypeWindows,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -1355,6 +1371,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeWindows,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
@@ -1400,12 +1417,14 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 							values.GameFileTypeJar,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 						domain.NewGameFile(
 							gameFileID2,
 							values.GameFileTypeMac,
 							values.NewGameFileEntryPoint("entryPoint"),
 							hash,
+							now,
 						),
 					},
 					LatestImage: domain.NewGameImage(
@@ -1439,6 +1458,7 @@ func TestGetLauncherVersionCheckList(t *testing.T) {
 						values.GameFileTypeMac,
 						values.NewGameFileEntryPoint("entryPoint"),
 						hash,
+						now,
 					),
 					LatestImage: domain.NewGameImage(
 						gameImageID1,
