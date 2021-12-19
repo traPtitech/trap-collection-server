@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -79,7 +80,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 		}
 
 		gameFileID := values.NewGameFileID()
-		gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash)
+		gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash, time.Now())
 
 		err = gf.gameFileRepository.SaveGameFile(ctx, gameVersion.GetID(), gameFile)
 		if err != nil {

@@ -153,6 +153,7 @@ func TestSaveGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					values.NewGameFileEntryPoint("/path/to/file"),
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					time.Now(),
 				),
 			},
 			isErr: true,
@@ -342,6 +343,8 @@ func TestSaveGameFile(t *testing.T) {
 			assert.Equal(t, testCase.fileType, gameFile.GetFileType())
 			assert.Equal(t, testCase.entryPoint, gameFile.GetEntryPoint())
 			assert.Equal(t, testCase.hash, gameFile.GetHash())
+			assert.WithinDuration(t, time.Now(), gameFile.GetCreatedAt(), time.Second)
+
 			assert.Equal(t, expectBytes, buf.Bytes())
 		})
 	}
@@ -383,6 +386,8 @@ func TestGetGameFile(t *testing.T) {
 	gameFileID1 := values.NewGameFileID()
 	gameFileID2 := values.NewGameFileID()
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description:                 "特に問題ないのでエラーなし",
@@ -403,6 +408,7 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -410,6 +416,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -484,6 +491,7 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -491,6 +499,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 			storageGetGameFileErr:     errors.New("error"),
@@ -532,12 +541,14 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 				domain.NewGameFile(
 					gameFileID2,
 					values.GameFileTypeWindows,
 					"/path/to/game.exe",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -545,6 +556,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeWindows,
 				"/path/to/game.exe",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -567,12 +579,14 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeWindows,
 					"/path/to/game.exe",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 				domain.NewGameFile(
 					gameFileID1,
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -580,6 +594,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeWindows,
 				"/path/to/game.exe",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -602,12 +617,14 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 				domain.NewGameFile(
 					gameFileID2,
 					values.GameFileTypeMac,
 					"/path/to/game.app",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -615,6 +632,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeMac,
 				"/path/to/game.app",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -637,12 +655,14 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeMac,
 					"/path/to/game.app",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 				domain.NewGameFile(
 					gameFileID1,
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -650,6 +670,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeMac,
 				"/path/to/game.app",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -672,6 +693,7 @@ func TestGetGameFile(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					values.NewGameFileHashFromBytes([]byte{0x70, 0x95, 0xba, 0xe0, 0x98, 0x25, 0x9e, 0xd, 0xda, 0x4b, 0x7a, 0xcc, 0x62, 0x4d, 0xe4, 0xe2}),
+					now,
 				),
 			},
 			gameFile: domain.NewGameFile(
@@ -679,6 +701,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x70, 0x95, 0xba, 0xe0, 0x98, 0x25, 0x9e, 0xd, 0xda, 0x4b, 0x7a, 0xcc, 0x62, 0x4d, 0xe4, 0xe2}),
+				now,
 			),
 			executeStorageGetGameFile: true,
 		},
@@ -743,7 +766,12 @@ func TestGetGameFile(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, *testCase.gameFile, *gameFile)
+			assert.Equal(t, testCase.gameFile.GetID(), gameFile.GetID())
+			assert.Equal(t, testCase.gameFile.GetFileType(), gameFile.GetFileType())
+			assert.Equal(t, testCase.gameFile.GetEntryPoint(), gameFile.GetEntryPoint())
+			assert.Equal(t, testCase.gameFile.GetHash(), gameFile.GetHash())
+			assert.WithinDuration(t, testCase.gameFile.GetCreatedAt(), gameFile.GetCreatedAt(), time.Second)
+
 			assert.Equal(t, expectBytes, buf.Bytes())
 		})
 	}
