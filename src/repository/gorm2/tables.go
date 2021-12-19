@@ -161,6 +161,7 @@ type LauncherVersionTable struct {
 	CreatedAt        time.Time           `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt        gorm.DeletedAt      `gorm:"type:DATETIME NULL;default:NULL"`
 	LauncherUsers    []LauncherUserTable `gorm:"foreignKey:LauncherVersionID"`
+	Games            []GameTable         `gorm:"many2many:launcher_version_game_relations;"`
 }
 
 func (lvt *LauncherVersionTable) TableName() string {
