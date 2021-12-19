@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -96,7 +97,14 @@ func (lv *LauncherVersion) GetLauncherVersionAndUserAndSessionByAccessToken(ctx 
 	}
 
 	type LauncherVersion struct {
-		LauncherVersion LauncherVersionTable `gorm:"embedded;embeddedPrefix:launcher_versions_"`
+		// LancherVersionとGameのmany2manyを追加したら重複Fieldがないのに重複Fieldがあるというエラーが出たので、暫定対処
+		LauncherVersion struct {
+			ID               uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
+			Name             string         `gorm:"type:varchar(32);not null;unique"`
+			QuestionnaireURL sql.NullString `gorm:"type:text;default:NULL"`
+			CreatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+			DeletedAt        gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
+		} `gorm:"embedded;embeddedPrefix:launcher_versions_"`
 		LauncherUser    LauncherUserTable    `gorm:"embedded;embeddedPrefix:launcher_users_"`
 		LauncherSession LauncherSessionTable `gorm:"embedded;embeddedPrefix:launcher_sessions_"`
 	}
