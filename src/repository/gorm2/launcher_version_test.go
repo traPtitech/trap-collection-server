@@ -32,6 +32,7 @@ func TestGetLauncherVersion(t *testing.T) {
 	type test struct {
 		description       string
 		launcherVersionID values.LauncherVersionID
+		lockType          repository.LockType
 		launcherVersion   *domain.LauncherVersion
 		isErr             bool
 		err               error
@@ -39,6 +40,7 @@ func TestGetLauncherVersion(t *testing.T) {
 
 	launcherVersionID1 := values.NewLauncherVersionID()
 	launcherVersionID2 := values.NewLauncherVersionID()
+	launcherVersionID3 := values.NewLauncherVersionID()
 
 	questionnaireURL, err := url.Parse("https://example.com/questionnaire")
 	if err != nil {
@@ -49,12 +51,14 @@ func TestGetLauncherVersion(t *testing.T) {
 		{
 			description:       "ランチャーバージョンが存在しないのでエラー",
 			launcherVersionID: values.NewLauncherVersionID(),
+			lockType:          repository.LockTypeNone,
 			isErr:             true,
 			err:               repository.ErrRecordNotFound,
 		},
 		{
 			description:       "アンケートが存在しなくてもエラーなし",
 			launcherVersionID: launcherVersionID1,
+			lockType:          repository.LockTypeNone,
 			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
 				launcherVersionID1,
 				"TestGetLauncherVersion1",
@@ -64,10 +68,21 @@ func TestGetLauncherVersion(t *testing.T) {
 		{
 			description:       "アンケートが存在してもエラーなし",
 			launcherVersionID: launcherVersionID2,
+			lockType:          repository.LockTypeNone,
 			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
 				launcherVersionID2,
 				"TestGetLauncherVersion2",
 				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				time.Now(),
+			),
+		},
+		{
+			description:       "lockTypeがLockTypeRecordでもエラーなし",
+			launcherVersionID: launcherVersionID3,
+			lockType:          repository.LockTypeRecord,
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				launcherVersionID3,
+				"TestGetLauncherVersion3",
 				time.Now(),
 			),
 		},
@@ -104,7 +119,7 @@ func TestGetLauncherVersion(t *testing.T) {
 				}
 			}
 
-			launcherVersion, err := launcherVersionRepository.GetLauncherVersion(ctx, testCase.launcherVersionID)
+			launcherVersion, err := launcherVersionRepository.GetLauncherVersion(ctx, testCase.launcherVersionID, testCase.lockType)
 
 			if testCase.isErr {
 				if testCase.err == nil {
