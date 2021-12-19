@@ -61,6 +61,7 @@ type GameURLTable struct {
 	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
 	GameVersionID uuid.UUID `gorm:"type:varchar(36);not null;unique"`
 	URL           string    `gorm:"type:text;not null"`
+	CreatedAt     time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 }
 
 func (gut *GameURLTable) TableName() string {

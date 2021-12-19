@@ -33,6 +33,7 @@ func (gu *GameURL) SaveGameURL(ctx context.Context, gameVersionID values.GameVer
 		ID:            uuid.UUID(gameURL.GetID()),
 		GameVersionID: uuid.UUID(gameVersionID),
 		URL:           (*url.URL)(gameURL.GetLink()).String(),
+		CreatedAt:     gameURL.GetCreatedAt(),
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to create game url: %w", err)
@@ -66,5 +67,6 @@ func (gu *GameURL) GetGameURL(ctx context.Context, gameVersionID values.GameVers
 	return domain.NewGameURL(
 		values.NewGameURLIDFromUUID(gameURLTable.ID),
 		values.NewGameURLLink(urlGameLink),
+		gameURLTable.CreatedAt,
 	), nil
 }

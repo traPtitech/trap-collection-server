@@ -65,7 +65,7 @@ func TestSaveGameURL(t *testing.T) {
 		{
 			description:   "特に問題ないのでエラーなし",
 			gameVersionID: gameVersionID1,
-			gameURL:       domain.NewGameURL(gameURLID1, link),
+			gameURL:       domain.NewGameURL(gameURLID1, link, time.Now()),
 			beforeGameVersions: []GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID1),
@@ -85,7 +85,7 @@ func TestSaveGameURL(t *testing.T) {
 		{
 			description:   "空のURLでもエラーなし",
 			gameVersionID: gameVersionID2,
-			gameURL:       domain.NewGameURL(gameURLID2, &emptyLink),
+			gameURL:       domain.NewGameURL(gameURLID2, &emptyLink, time.Now()),
 			beforeGameVersions: []GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID2),
@@ -105,7 +105,7 @@ func TestSaveGameURL(t *testing.T) {
 		{
 			description:   "URLが既に存在するのでエラー",
 			gameVersionID: gameVersionID3,
-			gameURL:       domain.NewGameURL(gameURLID3, link),
+			gameURL:       domain.NewGameURL(gameURLID3, link, time.Now()),
 			beforeGameVersions: []GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID3),
@@ -130,7 +130,7 @@ func TestSaveGameURL(t *testing.T) {
 		{
 			description:   "他のゲームバージョンが存在してもエラーなし",
 			gameVersionID: gameVersionID4,
-			gameURL:       domain.NewGameURL(gameURLID4, link),
+			gameURL:       domain.NewGameURL(gameURLID4, link, time.Now()),
 			beforeGameVersions: []GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID4),
@@ -156,7 +156,7 @@ func TestSaveGameURL(t *testing.T) {
 		{
 			description:   "他のゲームバージョンにURLが存在してもエラーなし",
 			gameVersionID: gameVersionID6,
-			gameURL:       domain.NewGameURL(gameURLID7, link),
+			gameURL:       domain.NewGameURL(gameURLID7, link, time.Now()),
 			beforeGameVersions: []GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID6),
@@ -302,7 +302,7 @@ func TestGetGameURL(t *testing.T) {
 					},
 				},
 			},
-			gameURL: domain.NewGameURL(gameURLID1, link),
+			gameURL: domain.NewGameURL(gameURLID1, link, time.Now()),
 		},
 		{
 			description:   "空のURLでもエラーなし",
@@ -320,7 +320,7 @@ func TestGetGameURL(t *testing.T) {
 					},
 				},
 			},
-			gameURL: domain.NewGameURL(gameURLID2, &emptyLink),
+			gameURL: domain.NewGameURL(gameURLID2, &emptyLink, time.Now()),
 		},
 		{
 			description:   "URLが存在しないのでErrRecordNotFound",
@@ -364,7 +364,7 @@ func TestGetGameURL(t *testing.T) {
 					CreatedAt:   time.Now().Add(-time.Hour),
 				},
 			},
-			gameURL: domain.NewGameURL(gameURLID3, link),
+			gameURL: domain.NewGameURL(gameURLID3, link, time.Now()),
 		},
 		{
 			description:   "他のゲームバージョンにURLが存在してもエラーなし",
@@ -392,7 +392,7 @@ func TestGetGameURL(t *testing.T) {
 					},
 				},
 			},
-			gameURL: domain.NewGameURL(gameURLID5, link),
+			gameURL: domain.NewGameURL(gameURLID5, link, time.Now()),
 		},
 		{
 			description:   "誤った形式のURLがDBに入っていた場合、エラー",
