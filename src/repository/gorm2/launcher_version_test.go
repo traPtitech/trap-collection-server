@@ -17,6 +17,128 @@ import (
 	"gorm.io/gorm"
 )
 
+func TestCreateLauncherVersion(t *testing.T) {
+	launcherVersionRepository := NewLauncherVersion(testDB)
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type test struct {
+		description            string
+		beforeLauncherVersions []*LauncherVersionTable
+		launcherVersion        *domain.LauncherVersion
+		isErr                  bool
+		err                    error
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				values.NewLauncherVersionID(),
+				values.NewLauncherVersionName("test"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+		},
+		{
+			description: "Questionnaireなしでもエラーなし",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionID(),
+				values.NewLauncherVersionName("test"),
+				time.Now(),
+			),
+		},
+		{
+			description: "別のLauncherVersionが存在してもエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{
+				{
+					ID:   uuid.UUID(values.NewLauncherVersionID()),
+					Name: "test1",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: time.Now(),
+				},
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				values.NewLauncherVersionID(),
+				values.NewLauncherVersionName("test2"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+		},
+		{
+			description: "別のLauncherVersionが存在してもエラーなし",
+			beforeLauncherVersions: []*LauncherVersionTable{
+				{
+					ID:   uuid.UUID(values.NewLauncherVersionID()),
+					Name: "test",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: time.Now(),
+				},
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("test"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&LauncherVersionTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete table: %v", err)
+				}
+			}()
+
+			if testCase.beforeLauncherVersions != nil {
+				err := db.Create(&testCase.beforeLauncherVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create table: %v", err)
+				}
+			}
+
+			err := launcherVersionRepository.CreateLauncherVersion(ctx, testCase.launcherVersion)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestGetLauncherVersion(t *testing.T) {
 	t.Parallel()
 
