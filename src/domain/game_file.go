@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
@@ -9,6 +11,7 @@ type GameFile struct {
 	fileType   values.GameFileType
 	entryPoint values.GameFileEntryPoint
 	hash       values.GameFileHash
+	createdAt  time.Time
 }
 
 func NewGameFile(
@@ -16,12 +19,14 @@ func NewGameFile(
 	fileType values.GameFileType,
 	entryPoint values.GameFileEntryPoint,
 	hash values.GameFileHash,
+	createdAt time.Time,
 ) *GameFile {
 	return &GameFile{
 		id:         id,
 		fileType:   fileType,
 		entryPoint: entryPoint,
 		hash:       hash,
+		createdAt:  createdAt,
 	}
 }
 
@@ -39,4 +44,8 @@ func (gf *GameFile) GetEntryPoint() values.GameFileEntryPoint {
 
 func (gf *GameFile) GetHash() values.GameFileHash {
 	return gf.hash
+}
+
+func (gf *GameFile) GetCreatedAt() time.Time {
+	return gf.createdAt
 }

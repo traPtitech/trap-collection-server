@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -56,6 +57,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				time.Now(),
 			),
 			reader: bytes.NewBufferString("test"),
 		},
@@ -66,6 +68,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				time.Now(),
 			),
 			reader:      bytes.NewBufferString("test"),
 			isFileExist: true,
@@ -156,6 +159,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				time.Now(),
 			),
 			isFileExist: true,
 			fileContent: bytes.NewBufferString("test"),
@@ -167,6 +171,7 @@ func TestGetGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				time.Now(),
 			),
 			isErr: true,
 			err:   storage.ErrNotFound,
