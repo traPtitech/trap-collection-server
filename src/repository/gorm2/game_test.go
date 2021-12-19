@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -348,6 +349,258 @@ func TestGetGamesByIDs(t *testing.T) {
 			for _, game := range testCase.games {
 				actualGame, ok := gameMap[game.GetID()]
 				assert.True(t, ok)
+
+				assert.Equal(t, game.GetID(), actualGame.GetID())
+				assert.Equal(t, game.GetName(), actualGame.GetName())
+				assert.Equal(t, game.GetDescription(), actualGame.GetDescription())
+				assert.WithinDuration(t, game.GetCreatedAt(), actualGame.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
+func TestGetGamesByLauncherVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGame(testDB)
+
+	type test struct {
+		description            string
+		beforeLauncherVersions []LauncherVersionTable
+		launcherVersionID      values.LauncherVersionID
+		games                  []*domain.Game
+		isErr                  bool
+		err                    error
+	}
+
+	launcherVersionID1 := values.NewLauncherVersionID()
+	launcherVersionID2 := values.NewLauncherVersionID()
+	launcherVersionID3 := values.NewLauncherVersionID()
+	launcherVersionID4 := values.NewLauncherVersionID()
+	launcherVersionID5 := values.NewLauncherVersionID()
+	launcherVersionID6 := values.NewLauncherVersionID()
+	launcherVersionID7 := values.NewLauncherVersionID()
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID1),
+					Name: "TestGetGamesByLauncherVersion1",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID1),
+							Name:        "test1",
+							Description: "test1",
+							CreatedAt:   now,
+						},
+					},
+				},
+			},
+			launcherVersionID: launcherVersionID1,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test1",
+					"test1",
+					now,
+				),
+			},
+		},
+		{
+			description:            "存在しないランチャーバージョンIDを指定した場合空配列を返す",
+			beforeLauncherVersions: []LauncherVersionTable{},
+			launcherVersionID:      launcherVersionID2,
+			games:                  []*domain.Game{},
+		},
+		{
+			description: "ゲームが存在しなくてもエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID3),
+					Name: "TestGetGamesByLauncherVersion3",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games:     []GameTable{},
+				},
+			},
+			launcherVersionID: launcherVersionID3,
+			games:             []*domain.Game{},
+		},
+		{
+			description: "ゲームが複数でもエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID4),
+					Name: "TestGetGamesByLauncherVersion4",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID2),
+							Name:        "test2",
+							Description: "test2",
+							CreatedAt:   now,
+						},
+						{
+							ID:          uuid.UUID(gameID3),
+							Name:        "test3",
+							Description: "test3",
+							CreatedAt:   now.Add(-time.Hour),
+						},
+					},
+				},
+			},
+			launcherVersionID: launcherVersionID4,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID2,
+					"test2",
+					"test2",
+					now,
+				),
+				domain.NewGame(
+					gameID3,
+					"test3",
+					"test3",
+					now.Add(-time.Hour),
+				),
+			},
+		},
+		{
+			description: "他のランチャーバージョンのゲームは含まない",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID5),
+					Name: "TestGetGamesByLauncherVersion5",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID4),
+							Name:        "test4",
+							Description: "test4",
+							CreatedAt:   now,
+						},
+					},
+				},
+				{
+					ID:   uuid.UUID(launcherVersionID6),
+					Name: "TestGetGamesByLauncherVersion6",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID5),
+							Name:        "test5",
+							Description: "test5",
+							CreatedAt:   now,
+						},
+					},
+				},
+			},
+			launcherVersionID: launcherVersionID5,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID4,
+					"test4",
+					"test4",
+					now,
+				),
+			},
+		},
+		{
+			description: "削除されたゲームは含まない",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:   uuid.UUID(launcherVersionID7),
+					Name: "TestGetGamesByLauncherVersion7",
+					QuestionnaireURL: sql.NullString{
+						Valid:  true,
+						String: "https://example.com",
+					},
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID6),
+							Name:        "test1",
+							Description: "test1",
+							CreatedAt:   now,
+							DeletedAt: gorm.DeletedAt{
+								Valid: true,
+								Time:  now,
+							},
+						},
+					},
+				},
+			},
+			launcherVersionID: launcherVersionID7,
+			games:             []*domain.Game{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.beforeLauncherVersions != nil && len(testCase.beforeLauncherVersions) != 0 {
+				err := db.Create(&testCase.beforeLauncherVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create test data: %s", err)
+				}
+			}
+
+			games, err := gameRepository.GetGamesByLauncherVersion(ctx, testCase.launcherVersionID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, games, len(testCase.games))
+
+			for i, game := range testCase.games {
+				actualGame := games[i]
 
 				assert.Equal(t, game.GetID(), actualGame.GetID())
 				assert.Equal(t, game.GetName(), actualGame.GetName())
