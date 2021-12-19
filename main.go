@@ -64,9 +64,6 @@ func main() {
 
 		db.LogMode(true)
 
-		e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-			Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header}` + "\n",
-		}))
 		e.Use(middleware.Logger())
 	} else {
 		colog.SetMinLevel(colog.LError)
