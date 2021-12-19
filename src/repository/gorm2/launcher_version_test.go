@@ -908,3 +908,240 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		})
 	}
 }
+
+func TestAddGamesToLauncherVersion(t *testing.T) {
+	t.Parallel()
+
+	launcherVersionRepository := NewLauncherVersion(testDB)
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type test struct {
+		description            string
+		beforeLauncherVersions []LauncherVersionTable
+		beforeGames            []GameTable
+		launcherVersionID      values.LauncherVersionID
+		gameIDs                []values.GameID
+		afterGames             []GameTable
+		isErr                  bool
+		err                    error
+	}
+
+	launcherVersionID1 := values.NewLauncherVersionID()
+	launcherVersionID2 := values.NewLauncherVersionID()
+	launcherVersionID3 := values.NewLauncherVersionID()
+	launcherVersionID4 := values.NewLauncherVersionID()
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:        uuid.UUID(launcherVersionID1),
+					Name:      "TestAddGamesToLauncherVersion1",
+					CreatedAt: now,
+				},
+			},
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "TestAddGamesToLauncherVersion1",
+					Description: "TestAddGamesToLauncherVersion1",
+					CreatedAt:   now,
+				},
+			},
+			launcherVersionID: launcherVersionID1,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "TestAddGamesToLauncherVersion1",
+					Description: "TestAddGamesToLauncherVersion1",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "既にゲームが存在してもエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:        uuid.UUID(launcherVersionID2),
+					Name:      "TestAddGamesToLauncherVersion3",
+					CreatedAt: now,
+					Games: []GameTable{
+						{
+							ID:          uuid.UUID(gameID2),
+							Name:        "TestAddGamesToLauncherVersion3",
+							Description: "TestAddGamesToLauncherVersion3",
+							CreatedAt:   now.Add(-time.Hour),
+						},
+					},
+				},
+			},
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "TestAddGamesToLauncherVersion4",
+					Description: "TestAddGamesToLauncherVersion4",
+					CreatedAt:   now,
+				},
+			},
+			launcherVersionID: launcherVersionID2,
+			gameIDs: []values.GameID{
+				gameID3,
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "TestAddGamesToLauncherVersion3",
+					Description: "TestAddGamesToLauncherVersion3",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "TestAddGamesToLauncherVersion4",
+					Description: "TestAddGamesToLauncherVersion4",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description:            "ランチャーが存在しないのでエラー",
+			beforeLauncherVersions: []LauncherVersionTable{},
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "TestAddGamesToLauncherVersion5",
+					Description: "TestAddGamesToLauncherVersion5",
+					CreatedAt:   now,
+				},
+			},
+			launcherVersionID: launcherVersionID3,
+			gameIDs: []values.GameID{
+				gameID4,
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "TestAddGamesToLauncherVersion5",
+					Description: "TestAddGamesToLauncherVersion5",
+					CreatedAt:   now,
+				},
+			},
+			isErr: true,
+		},
+		{
+			description: "追加するゲームが複数でもエラーなし",
+			beforeLauncherVersions: []LauncherVersionTable{
+				{
+					ID:        uuid.UUID(launcherVersionID4),
+					Name:      "TestAddGamesToLauncherVersion5",
+					CreatedAt: now,
+				},
+			},
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "TestAddGamesToLauncherVersion6",
+					Description: "TestAddGamesToLauncherVersion6",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "TestAddGamesToLauncherVersion7",
+					Description: "TestAddGamesToLauncherVersion7",
+					CreatedAt:   now,
+				},
+			},
+			launcherVersionID: launcherVersionID4,
+			gameIDs: []values.GameID{
+				gameID5,
+				gameID6,
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "TestAddGamesToLauncherVersion6",
+					Description: "TestAddGamesToLauncherVersion6",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "TestAddGamesToLauncherVersion7",
+					Description: "TestAddGamesToLauncherVersion7",
+					CreatedAt:   now,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.beforeLauncherVersions != nil && len(testCase.beforeLauncherVersions) != 0 {
+				err := db.Create(testCase.beforeLauncherVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create launcher versions: %v", err)
+				}
+			}
+
+			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+				err := db.Create(testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create games: %v", err)
+				}
+			}
+
+			err := launcherVersionRepository.AddGamesToLauncherVersion(ctx, testCase.launcherVersionID, testCase.gameIDs)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var actualLauncherVersion LauncherVersionTable
+			err = db.
+				Where("id = ?", uuid.UUID(testCase.launcherVersionID)).
+				Preload("Games", func(db *gorm.DB) *gorm.DB {
+					return db.Order("created_at")
+				}).
+				First(&actualLauncherVersion).Error
+			if err != nil {
+				t.Fatalf("failed to get launcher version: %v", err)
+			}
+
+			assert.Len(t, actualLauncherVersion.Games, len(testCase.afterGames))
+
+			for i, actualGame := range actualLauncherVersion.Games {
+				expectedGame := testCase.afterGames[i]
+				assert.Equal(t, expectedGame.ID, actualGame.ID)
+				assert.Equal(t, expectedGame.Name, actualGame.Name)
+				assert.Equal(t, expectedGame.Description, actualGame.Description)
+				assert.WithinDuration(t, expectedGame.CreatedAt, actualGame.CreatedAt, time.Second)
+			}
+		})
+	}
+}
