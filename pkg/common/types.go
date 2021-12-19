@@ -8,6 +8,7 @@ import (
 
 type (
 	IsProduction    bool
+	IsSwift         bool
 	ClientID        string
 	TraQBaseURL     *url.URL
 	SessionSecret   string
