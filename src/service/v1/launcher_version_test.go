@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -606,6 +607,924 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGetLauncherVersionCheckList(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mock.NewMockDB(ctrl)
+	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
+	mockGameRepository := mock.NewMockGame(ctrl)
+
+	launcherVersionService := NewLauncherVersion(mockDB, mockLauncherVersionRepository, mockGameRepository)
+
+	type test struct {
+		description                          string
+		launcherVersionID                    values.LauncherVersionID
+		env                                  *values.LauncherEnvironment
+		launcherVersion                      *domain.LauncherVersion
+		GetLauncherVersionErr                error
+		executeGetGameInfosByLauncherVersion bool
+		gameInfos                            []*repository.GameInfo
+		GetGameInfosByLauncherVersionErr     error
+		checkList                            []*service.CheckListItem
+		isErr                                bool
+		err                                  error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	gameURLID1 := values.NewGameURLID()
+	gameFileID1 := values.NewGameFileID()
+	gameFileID2 := values.NewGameFileID()
+	gameImageID1 := values.NewGameImageID()
+	gameImageID2 := values.NewGameImageID()
+	gameVideoID1 := values.NewGameVideoID()
+	gameVideoID2 := values.NewGameVideoID()
+
+	hash, err := values.NewGameFileHash(strings.NewReader("hash"))
+	if err != nil {
+		t.Fatalf("failed to create game file hash: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID1,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "urlのゲームがあってもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestURL: domain.NewGameURL(
+						gameURLID1,
+						values.NewGameURLLink(urlLink),
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestURL: domain.NewGameURL(
+						gameURLID1,
+						values.NewGameURLLink(urlLink),
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "fileが存在する場合はurlは無視",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestURL: domain.NewGameURL(
+						gameURLID1,
+						values.NewGameURLLink(urlLink),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID1,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:           "GetLauncherVersionがRecordNotFoundなのでErrNoLauncherVersion",
+			launcherVersionID:     launcherVersionID,
+			env:                   values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			GetLauncherVersionErr: repository.ErrRecordNotFound,
+			isErr:                 true,
+			err:                   service.ErrNoLauncherVersion,
+		},
+		{
+			description:           "GetLauncherVersionがエラーなのでエラー",
+			launcherVersionID:     launcherVersionID,
+			env:                   values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			GetLauncherVersionErr: errors.New("error"),
+			isErr:                 true,
+		},
+		{
+			description:       "GetGameInfosByLauncherVersionがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			GetGameInfosByLauncherVersionErr:     errors.New("error"),
+			isErr:                                true,
+		},
+		{
+			description:       "Fileが存在しなくてもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: nil,
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "imageが存在しなくてもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: nil,
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID1,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: nil,
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "videoが存在しなくてもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: nil,
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID1,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: nil,
+				},
+			},
+		},
+		{
+			description:       "gameが存在しなくてもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos:                            []*repository.GameInfo{},
+			checkList:                            []*service.CheckListItem{},
+		},
+		{
+			description:       "ゲームが複数でもエラーなし",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID2,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID2,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID2,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID1,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID2,
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID2,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID2,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "ファイルが複数でwindows用のものがある時、そちらを優先",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+						domain.NewGameFile(
+							gameFileID2,
+							values.GameFileTypeWindows,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID2,
+						values.GameFileTypeWindows,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description:       "ファイルが複数でmac用のものがある時、そちらを優先",
+			launcherVersionID: launcherVersionID,
+			env:               values.NewLauncherEnvironment(values.LauncherEnvironmentOSMac),
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGameInfosByLauncherVersion: true,
+			gameInfos: []*repository.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFiles: []*domain.GameFile{
+						domain.NewGameFile(
+							gameFileID1,
+							values.GameFileTypeJar,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+						domain.NewGameFile(
+							gameFileID2,
+							values.GameFileTypeMac,
+							values.NewGameFileEntryPoint("entryPoint"),
+							hash,
+						),
+					},
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+			checkList: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("name"),
+						values.NewGameDescription("description"),
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("name"),
+						values.NewGameVersionDescription("description"),
+						time.Now(),
+					),
+					LatestFile: domain.NewGameFile(
+						gameFileID2,
+						values.GameFileTypeMac,
+						values.NewGameFileEntryPoint("entryPoint"),
+						hash,
+					),
+					LatestImage: domain.NewGameImage(
+						gameImageID1,
+						values.GameImageTypeJpeg,
+						time.Now(),
+					),
+					LatestVideo: domain.NewGameVideo(
+						gameVideoID1,
+						values.GameVideoTypeMp4,
+						time.Now(),
+					),
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockLauncherVersionRepository.
+				EXPECT().
+				GetLauncherVersion(gomock.Any(), launcherVersionID, repository.LockTypeNone).
+				Return(testCase.launcherVersion, testCase.GetLauncherVersionErr)
+
+			if testCase.executeGetGameInfosByLauncherVersion {
+				mockGameRepository.
+					EXPECT().
+					GetGameInfosByLauncherVersion(gomock.Any(), launcherVersionID, gomock.Any()).
+					Return(testCase.gameInfos, testCase.GetGameInfosByLauncherVersionErr)
+			}
+
+			checkList, err := launcherVersionService.GetLauncherVersionCheckList(
+				ctx,
+				testCase.launcherVersionID,
+				testCase.env,
+			)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, checkList, len(testCase.checkList))
+
+			for i, checkListItem := range checkList {
+				assert.Equal(t, testCase.checkList[i].Game.GetID(), checkListItem.Game.GetID())
+				assert.Equal(t, testCase.checkList[i].Game.GetName(), checkListItem.Game.GetName())
+				assert.Equal(t, testCase.checkList[i].Game.GetDescription(), checkListItem.Game.GetDescription())
+				assert.WithinDuration(t, testCase.checkList[i].Game.GetCreatedAt(), checkListItem.Game.GetCreatedAt(), time.Second)
+
+				assert.Equal(t, testCase.checkList[i].LatestVersion.GetID(), checkListItem.LatestVersion.GetID())
+				assert.Equal(t, testCase.checkList[i].LatestVersion.GetName(), checkListItem.LatestVersion.GetName())
+				assert.Equal(t, testCase.checkList[i].LatestVersion.GetDescription(), checkListItem.LatestVersion.GetDescription())
+				assert.WithinDuration(t, testCase.checkList[i].LatestVersion.GetCreatedAt(), checkListItem.LatestVersion.GetCreatedAt(), time.Second)
+
+				if testCase.checkList[i].LatestFile == nil {
+					assert.Nil(t, checkListItem.LatestFile)
+				} else {
+					assert.Equal(t, testCase.checkList[i].LatestFile.GetID(), checkListItem.LatestFile.GetID())
+					assert.Equal(t, testCase.checkList[i].LatestFile.GetFileType(), checkListItem.LatestFile.GetFileType())
+					assert.Equal(t, testCase.checkList[i].LatestFile.GetEntryPoint(), checkListItem.LatestFile.GetEntryPoint())
+					assert.Equal(t, testCase.checkList[i].LatestFile.GetHash(), checkListItem.LatestFile.GetHash())
+				}
+
+				if testCase.checkList[i].LatestImage == nil {
+					assert.Nil(t, checkListItem.LatestImage)
+				} else {
+					assert.Equal(t, testCase.checkList[i].LatestImage.GetID(), checkListItem.LatestImage.GetID())
+					assert.Equal(t, testCase.checkList[i].LatestImage.GetType(), checkListItem.LatestImage.GetType())
+					assert.WithinDuration(t, testCase.checkList[i].LatestImage.GetCreatedAt(), checkListItem.LatestImage.GetCreatedAt(), time.Second)
+				}
+
+				if testCase.checkList[i].LatestVideo == nil {
+					assert.Nil(t, checkListItem.LatestVideo)
+				} else {
+					assert.Equal(t, testCase.checkList[i].LatestVideo.GetID(), checkListItem.LatestVideo.GetID())
+					assert.Equal(t, testCase.checkList[i].LatestVideo.GetType(), checkListItem.LatestVideo.GetType())
+					assert.WithinDuration(t, testCase.checkList[i].LatestVideo.GetCreatedAt(), checkListItem.LatestVideo.GetCreatedAt(), time.Second)
+				}
 			}
 		})
 	}
