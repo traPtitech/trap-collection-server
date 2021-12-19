@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -61,7 +62,7 @@ func (gu *GameURL) SaveGameURL(ctx context.Context, gameID values.GameID, link v
 		}
 
 		gameURLID := values.NewGameURLID()
-		gameURL = domain.NewGameURL(gameURLID, link)
+		gameURL = domain.NewGameURL(gameURLID, link, time.Now())
 
 		err = gu.gameURLRepository.SaveGameURL(ctx, gameVersion.GetID(), gameURL)
 		if err != nil {
