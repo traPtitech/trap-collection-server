@@ -233,3 +233,29 @@ func (lv *LauncherVersion) GetLauncherVersionAndUserAndSessionByAccessToken(ctx 
 
 	return launcherVersion, launcherUser, launcherSession, nil
 }
+
+func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID, gameIDs []values.GameID) error {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTables := make([]*GameTable, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		gameTables = append(gameTables, &GameTable{
+			ID: uuid.UUID(gameID),
+		})
+	}
+
+	err = db.
+		Model(&LauncherVersionTable{
+			ID: uuid.UUID(launcherVersionID),
+		}).
+		Association("Games").
+		Append(gameTables)
+	if err != nil {
+		return fmt.Errorf("failed to add games to launcher version: %w", err)
+	}
+
+	return nil
+}
