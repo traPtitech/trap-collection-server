@@ -12,14 +12,12 @@ import (
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
 	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
-	"github.com/traPtitech/trap-collection-server/storage"
 )
 
 // Game gameの構造体
 type Game struct {
-	db      model.DBMeta
-	storage storage.Storage
-	oauth   base.OAuth
+	db    model.DBMeta
+	oauth base.OAuth
 	*v1.GameRole
 	*v1.GameImage
 	*v1.GameVideo
@@ -28,11 +26,10 @@ type Game struct {
 	*v1.GameURL
 }
 
-func newGame(db model.DBMeta, oauth base.OAuth, storage storage.Storage, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion, gameFile *v1.GameFile, gameURL *v1.GameURL) *Game {
+func newGame(db model.DBMeta, oauth base.OAuth, gameRole *v1.GameRole, gameImage *v1.GameImage, gameVideo *v1.GameVideo, gameVersion *v1.GameVersion, gameFile *v1.GameFile, gameURL *v1.GameURL) *Game {
 	game := new(Game)
 
 	game.db = db
-	game.storage = storage
 	game.oauth = oauth
 	game.GameRole = gameRole
 	game.GameImage = gameImage
@@ -155,19 +152,4 @@ func (g *Game) DeleteGames(gameID string) error {
 	}
 
 	return nil
-}
-
-var typeExtMap map[string]string = map[string]string{
-	"jar":     "jar",
-	"windows": "zip",
-	"mac":     "zip",
-}
-
-func (g *Game) getGameFileName(gameID string, fileType string) (string, error) {
-	ext, ok := typeExtMap[fileType]
-	if !ok {
-		return "", errors.New("Invalid File Type")
-	}
-
-	return gameID + "_game." + ext, nil
 }

@@ -2,17 +2,12 @@ package router
 
 import (
 	"fmt"
-	"mime/multipart"
-	"os"
 
 	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/router/base"
 	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
-	"github.com/traPtitech/trap-collection-server/storage"
 )
-
-type multipartFile = multipart.File
 
 // Service serviceの構造体
 type Service struct {
@@ -25,21 +20,6 @@ type Service struct {
 func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*openapi.Api, error) {
 	db := new(model.DB)
 
-	var str storage.Storage
-	if env == "development" || env == "mock" {
-		localStr, err := storage.NewLocalStorage("./upload")
-		if err != nil {
-			return &openapi.Api{}, fmt.Errorf("Failed In LoacalStorage Constructor: %w", err)
-		}
-		str = localStr
-	} else {
-		swiftStr, err := storage.NewSwiftStorage(os.Getenv("container"))
-		if err != nil {
-			return &openapi.Api{}, fmt.Errorf("Failed In Swift Storage Constructor: %w", err)
-		}
-		str = swiftStr
-	}
-
 	strBaseURL := "https://q.trap.jp/api/v3"
 	oauth, err := base.NewOAuth(strBaseURL)
 	if err != nil {
@@ -48,7 +28,7 @@ func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*
 
 	launcherAuth := base.NewLauncherAuth()
 
-	game := newGame(db, oauth, str, newAPI.GameRole, newAPI.GameImage, newAPI.GameVideo, newAPI.GameVersion, newAPI.GameFile, newAPI.GameURL)
+	game := newGame(db, oauth, newAPI.GameRole, newAPI.GameImage, newAPI.GameVideo, newAPI.GameVersion, newAPI.GameFile, newAPI.GameURL)
 	seat := newSeat(db, launcherAuth)
 	version := newVersion(db, launcherAuth)
 
