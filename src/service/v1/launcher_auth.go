@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-const expiresIn = 3600
+const expiresIn = 86400
 
 type LauncherAuth struct {
 	db                        repository.DB
