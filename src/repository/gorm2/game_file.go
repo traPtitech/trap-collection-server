@@ -113,6 +113,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameV
 		FileTypeID:    fileTypeID,
 		Hash:          hex.EncodeToString(gameFile.GetHash()),
 		EntryPoint:    string(gameFile.GetEntryPoint()),
+		CreatedAt:     gameFile.GetCreatedAt(),
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to create game image: %w", err)
@@ -151,7 +152,7 @@ func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameV
 		Where("game_version_id = ?", uuid.UUID(gameVersionID)).
 		Where("GameFileType.Name IN (?)", fileTypeNames).
 		Where("GameFileType.Active"). // 無効化された種類のファイルは取得しない
-		Select("game_files.id", "GameFileType.Name", "hash", "entry_point").
+		Select("game_files.id", "GameFileType.Name", "hash", "entry_point", "created_at").
 		Find(&dbGameFiles).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game files: %w", err)
@@ -181,6 +182,7 @@ func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameV
 			fileType,
 			values.NewGameFileEntryPoint(gameFile.EntryPoint),
 			values.NewGameFileHashFromBytes(bytesHash),
+			gameFile.CreatedAt,
 		))
 	}
 

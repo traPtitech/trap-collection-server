@@ -73,6 +73,7 @@ type GameFileTable struct {
 	FileTypeID    int               `gorm:"type:tinyint;not null;index:idx_game_file_unique,unique"`
 	Hash          string            `gorm:"type:char(32);size:32;not null"`
 	EntryPoint    string            `gorm:"type:text;not null"`
+	CreatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	GameFileType  GameFileTypeTable `gorm:"foreignKey:FileTypeID"`
 }
 

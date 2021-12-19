@@ -177,6 +177,8 @@ func TestSaveGameFile(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
+	now := time.Now()
+
 	testCases := []test{
 		{
 			description:   "特に問題ないので問題なし",
@@ -186,6 +188,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{},
 			expectFiles: []GameFileTable{
@@ -195,6 +198,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.jar",
+					CreatedAt:     now,
 				},
 			},
 		},
@@ -206,6 +210,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeWindows,
 				"/path/to/game.exe",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{},
 			expectFiles: []GameFileTable{
@@ -215,6 +220,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
+					CreatedAt:     now,
 				},
 			},
 		},
@@ -226,6 +232,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeMac,
 				"/path/to/game.app",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{},
 			expectFiles: []GameFileTable{
@@ -235,6 +242,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeMac],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.app",
+					CreatedAt:     now,
 				},
 			},
 		},
@@ -246,6 +254,7 @@ func TestSaveGameFile(t *testing.T) {
 				100,
 				"/path/to/game.jar",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{},
 			expectFiles: []GameFileTable{},
@@ -259,6 +268,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{
 				{
@@ -267,6 +277,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
+					CreatedAt:     now,
 				},
 			},
 			expectFiles: []GameFileTable{
@@ -276,6 +287,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
+					CreatedAt:     now,
 				},
 				{
 					ID:            uuid.UUID(fileID5),
@@ -283,6 +295,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.jar",
+					CreatedAt:     now,
 				},
 			},
 		},
@@ -295,6 +308,7 @@ func TestSaveGameFile(t *testing.T) {
 				values.GameFileTypeJar,
 				"/path/to/game.jar",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{
 				{
@@ -303,6 +317,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game2.jar",
+					CreatedAt:     now,
 				},
 			},
 			expectFiles: []GameFileTable{
@@ -312,6 +327,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game2.jar",
+					CreatedAt:     now,
 				},
 			},
 			isErr: true,
@@ -324,6 +340,7 @@ func TestSaveGameFile(t *testing.T) {
 				100,
 				"/path/to/game.jar",
 				[]byte("hash"),
+				now,
 			),
 			beforeFiles: []GameFileTable{
 				{
@@ -332,6 +349,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
+					CreatedAt:     now,
 				},
 			},
 			expectFiles: []GameFileTable{
@@ -341,6 +359,7 @@ func TestSaveGameFile(t *testing.T) {
 					FileTypeID:    fileTypeMap[gameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
+					CreatedAt:     now,
 				},
 			},
 			isErr: true,
@@ -407,6 +426,7 @@ func TestSaveGameFile(t *testing.T) {
 				assert.Equal(t, expectFile.FileTypeID, actualImage.FileTypeID)
 				assert.Equal(t, expectFile.EntryPoint, actualImage.EntryPoint)
 				assert.Equal(t, expectFile.Hash, actualImage.Hash)
+				assert.WithinDuration(t, expectFile.CreatedAt, actualImage.CreatedAt, time.Second)
 			}
 		})
 	}
@@ -463,6 +483,8 @@ func TestGetGameFiles(t *testing.T) {
 	gameFileID11 := values.NewGameFileID()
 	gameFileID12 := values.NewGameFileID()
 
+	now := time.Now()
+
 	var fileTypes []*GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
@@ -495,6 +517,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -505,6 +528,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -526,6 +550,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -536,6 +561,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeWindows,
 					"/path/to/game.exe",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -557,6 +583,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeMac],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.app",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -567,6 +594,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeMac,
 					"/path/to/game.app",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -588,12 +616,14 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 						{
 							ID:         uuid.UUID(gameFileID5),
 							FileTypeID: fileTypeMap[gameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -604,6 +634,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -626,12 +657,14 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 						{
 							ID:         uuid.UUID(gameFileID7),
 							FileTypeID: fileTypeMap[gameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -642,12 +675,14 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					[]byte("hash"),
+					now,
 				),
 				domain.NewGameFile(
 					gameFileID7,
 					values.GameFileTypeWindows,
 					"/path/to/game.exe",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -695,6 +730,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -719,6 +755,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -733,6 +770,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -743,6 +781,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -764,6 +803,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -789,6 +829,7 @@ func TestGetGameFiles(t *testing.T) {
 							FileTypeID: fileTypeMap[gameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
+							CreatedAt:  now,
 						},
 					},
 				},
@@ -799,6 +840,7 @@ func TestGetGameFiles(t *testing.T) {
 					values.GameFileTypeJar,
 					"/path/to/game.jar",
 					[]byte("hash"),
+					now,
 				),
 			},
 		},
@@ -852,6 +894,7 @@ func TestGetGameFiles(t *testing.T) {
 				assert.Equal(t, expectGameFile.GetFileType(), actualGameFile.GetFileType())
 				assert.Equal(t, expectGameFile.GetEntryPoint(), actualGameFile.GetEntryPoint())
 				assert.Equal(t, expectGameFile.GetHash(), actualGameFile.GetHash())
+				assert.WithinDuration(t, expectGameFile.GetCreatedAt(), actualGameFile.GetCreatedAt(), time.Second)
 			}
 		})
 	}
