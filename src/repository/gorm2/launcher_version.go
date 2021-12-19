@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/url"
@@ -22,6 +23,35 @@ func NewLauncherVersion(db *DB) *LauncherVersion {
 	return &LauncherVersion{
 		db: db,
 	}
+}
+
+func (lv *LauncherVersion) CreateLauncherVersion(ctx context.Context, launcherVersion *domain.LauncherVersion) error {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	questionnaireURL, err := launcherVersion.GetQuestionnaireURL()
+
+	var dbQuestionnaireURL sql.NullString
+	if errors.Is(err, domain.ErrNoQuestionnaire) {
+		dbQuestionnaireURL.Valid = false
+	} else {
+		dbQuestionnaireURL.Valid = true
+		dbQuestionnaireURL.String = (*url.URL)(questionnaireURL).String()
+	}
+
+	err = db.Create(&LauncherVersionTable{
+		ID:               uuid.UUID(launcherVersion.GetID()),
+		Name:             string(launcherVersion.GetName()),
+		QuestionnaireURL: dbQuestionnaireURL,
+		CreatedAt:        launcherVersion.GetCreatedAt(),
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create launcher version: %w", err)
+	}
+
+	return nil
 }
 
 func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
