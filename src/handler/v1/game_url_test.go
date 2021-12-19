@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -60,6 +61,7 @@ func TestPostURL(t *testing.T) {
 			gameURL: domain.NewGameURL(
 				gameURLID,
 				link,
+				time.Now(),
 			),
 			apiGameURL: &openapi.GameUrl{
 				Id:  uuid.UUID(gameURLID).String(),
@@ -201,6 +203,7 @@ func TestGetGameURL(t *testing.T) {
 			gameURL: domain.NewGameURL(
 				gameURLID,
 				link,
+				time.Now(),
 			),
 			apiGameURL: (*url.URL)(link).String(),
 		},
