@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"time"
 
@@ -52,6 +53,46 @@ func (lv *LauncherVersion) CreateLauncherVersion(ctx context.Context, launcherVe
 	}
 
 	return nil
+}
+
+func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.LauncherVersion, error) {
+	db, err := lv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var dbLauncherVersions []*LauncherVersionTable
+	err = db.
+		Order("created_at desc").
+		Find(&dbLauncherVersions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get launcher versions: %w", err)
+	}
+
+	launcherVersions := make([]*domain.LauncherVersion, 0, len(dbLauncherVersions))
+	for _, dbLauncherVersion := range dbLauncherVersions {
+		if dbLauncherVersion.QuestionnaireURL.Valid {
+			questionnaireURL, err := url.Parse(dbLauncherVersion.QuestionnaireURL.String)
+			if err != nil {
+				log.Printf("error: failed to parse questionnaire url(%s): %v", dbLauncherVersion.QuestionnaireURL.String, err)
+			}
+
+			launcherVersions = append(launcherVersions, domain.NewLauncherVersionWithQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(dbLauncherVersion.ID),
+				values.NewLauncherVersionName(dbLauncherVersion.Name),
+				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				dbLauncherVersion.CreatedAt,
+			))
+		} else {
+			launcherVersions = append(launcherVersions, domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(dbLauncherVersion.ID),
+				values.NewLauncherVersionName(dbLauncherVersion.Name),
+				dbLauncherVersion.CreatedAt,
+			))
+		}
+	}
+
+	return launcherVersions, nil
 }
 
 func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
