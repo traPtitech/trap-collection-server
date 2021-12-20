@@ -164,3 +164,150 @@ func TestGetVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestPostVersion(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
+
+	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+
+	type test struct {
+		description                  string
+		newVersion                   *openapi.NewVersion
+		version                      *domain.LauncherVersion
+		executeCreateLauncherVersion bool
+		CreateLauncherVersionErr     error
+		expect                       *openapi.VersionMeta
+		isErr                        bool
+		err                          error
+		statusCode                   int
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "エラーなしなので問題なし",
+			newVersion: &openapi.NewVersion{
+				Name:   "2020.1.1",
+				AnkeTo: "https://example.com",
+			},
+			executeCreateLauncherVersion: true,
+			version: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("2020.1.1"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				now,
+			),
+			expect: &openapi.VersionMeta{
+				Id:        uuid.UUID(launcherVersionID).String(),
+				Name:      "2020.1.1",
+				AnkeTo:    "https://example.com",
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "nameが空なので400",
+			newVersion: &openapi.NewVersion{
+				Name:   "",
+				AnkeTo: "https://example.com",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "nameが長すぎるので400",
+			newVersion: &openapi.NewVersion{
+				Name:   "2020.1.1-012345678901234567890123",
+				AnkeTo: "https://example.com",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "アンケートなしでも問題なし",
+			newVersion: &openapi.NewVersion{
+				Name:   "2020.1.1",
+				AnkeTo: "",
+			},
+			executeCreateLauncherVersion: true,
+			version: domain.NewLauncherVersionWithoutQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("2020.1.1"),
+				now,
+			),
+			expect: &openapi.VersionMeta{
+				Id:        uuid.UUID(launcherVersionID).String(),
+				Name:      "2020.1.1",
+				AnkeTo:    "",
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "アンケートのURLが不正なので400",
+			newVersion: &openapi.NewVersion{
+				Name:   "2020.1.1",
+				AnkeTo: " https://example.com",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "CreateLauncherVersionがエラーなので500",
+			newVersion: &openapi.NewVersion{
+				Name:   "2020.1.1",
+				AnkeTo: "https://example.com",
+			},
+			executeCreateLauncherVersion: true,
+			CreateLauncherVersionErr:     errors.New("error"),
+			isErr:                        true,
+			statusCode:                   http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeCreateLauncherVersion {
+				mockLauncherVersionService.
+					EXPECT().
+					CreateLauncherVersion(gomock.Any(), values.NewLauncherVersionName(testCase.newVersion.Name), gomock.Any()).
+					Return(testCase.version, testCase.CreateLauncherVersionErr)
+			}
+
+			launcherVersion, err := launcherVersionHandler.PostVersion(testCase.newVersion)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, *testCase.expect, *launcherVersion)
+		})
+	}
+}
