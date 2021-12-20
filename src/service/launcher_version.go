@@ -11,7 +11,7 @@ type LauncherVersion interface {
 	CreateLauncherVersion(ctx context.Context, name values.LauncherVersionName, questionnaireURL values.LauncherVersionQuestionnaireURL) (*domain.LauncherVersion, error)
 	GetLauncherVersions(ctx context.Context) ([]*domain.LauncherVersion, error)
 	GetLauncherVersion(ctx context.Context, id values.LauncherVersionID) (*domain.LauncherVersion, []*domain.Game, error)
-	AddGamesToLauncherVersion(ctx context.Context, id values.LauncherVersionID, gameIDs []values.GameID) error
+	AddGamesToLauncherVersion(ctx context.Context, id values.LauncherVersionID, gameIDs []values.GameID) (*domain.LauncherVersion, []*domain.Game, error)
 	GetLauncherVersionCheckList(ctx context.Context, launcherVersionID values.LauncherVersionID, env *values.LauncherEnvironment) ([]*CheckListItem, error)
 }
 
