@@ -2,11 +2,13 @@ package v1
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -221,4 +223,77 @@ func (lv *LauncherVersion) PostGameToVersion(strLauncherVersionID string, apiGam
 		CreatedAt: launcherVersion.GetCreatedAt(),
 		Games:     apiGames,
 	}, nil
+}
+
+func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) ([]*openapi.CheckItem, error) {
+	launcherVersion, err := getLauncherVersion(c)
+	if err != nil {
+		log.Printf("error: failed to get launcher version: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get launcher version")
+	}
+
+	var launcherEnvOS values.LauncherEnvironmentOS
+	switch operatingSystem {
+	case "win32":
+		launcherEnvOS = values.LauncherEnvironmentOSWindows
+	case "darwin":
+		launcherEnvOS = values.LauncherEnvironmentOSMac
+	default:
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid operating system")
+	}
+
+	checkList, err := lv.launcherVersionService.GetLauncherVersionCheckList(c.Request().Context(), launcherVersion.GetID(), values.NewLauncherEnvironment(launcherEnvOS))
+	if errors.Is(err, service.ErrNoLauncherVersion) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no such launcher version")
+	}
+	if err != nil {
+		log.Printf("error: failed to get launcher version check list: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get launcher version check list")
+	}
+
+	apiCheckList := make([]*openapi.CheckItem, 0, len(checkList))
+	for _, checkItem := range checkList {
+		var hash string
+		var bodyUpdatedAt time.Time
+		var gameType string
+		if checkItem.LatestFile != nil {
+			switch checkItem.LatestFile.GetFileType() {
+			case values.GameFileTypeJar:
+				gameType = "jar"
+			case values.GameFileTypeWindows:
+				gameType = "windows"
+			case values.GameFileTypeMac:
+				gameType = "mac"
+			default:
+				log.Printf("error: unknown game file type(gameID: %s): %d\n", uuid.UUID(checkItem.GetID()).String(), checkItem.LatestFile.GetFileType())
+				continue
+			}
+
+			hash = hex.EncodeToString([]byte(checkItem.LatestFile.GetHash()))
+			bodyUpdatedAt = checkItem.LatestFile.GetCreatedAt()
+		} else if checkItem.LatestURL != nil {
+			gameType = "url"
+
+			bodyUpdatedAt = checkItem.LatestURL.GetCreatedAt()
+		} else {
+			log.Printf("error: no game file or url specified(gameID: %s)\n", uuid.UUID(checkItem.GetID()).String())
+			continue
+		}
+
+		if checkItem.LatestImage == nil || checkItem.LatestVideo == nil {
+			log.Printf("error: no image or video specified(gameID: %s)\n", uuid.UUID(checkItem.GetID()).String())
+			continue
+		}
+
+		apiCheckList = append(apiCheckList, &openapi.CheckItem{
+			Id:             uuid.UUID(checkItem.Game.GetID()).String(),
+			Md5:            hash,
+			Type:           gameType,
+			BodyUpdatedAt:  bodyUpdatedAt,
+			ImgUpdatedAt:   checkItem.LatestImage.GetCreatedAt(),
+			MovieUpdatedAt: checkItem.LatestVideo.GetCreatedAt(),
+		})
+	}
+
+	return apiCheckList, nil
 }
