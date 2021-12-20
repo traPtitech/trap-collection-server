@@ -1190,7 +1190,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 			},
 		},
 		{
-			description: "Imageが存在しなくてもエラーなし",
+			description: "Imageが存在しない場合除外",
 			beforeLauncherVersions: []LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID7),
@@ -1242,41 +1242,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 			},
 			launcherVersionID: launcherVersionID7,
 			fileTypes:         []values.GameFileType{values.GameFileTypeJar, values.GameFileTypeWindows, values.GameFileTypeMac},
-			gameInfos: []*repository.GameInfo{
-				{
-					Game: domain.NewGame(
-						gameID5,
-						"test5",
-						"test5",
-						now,
-					),
-					LatestVersion: domain.NewGameVersion(
-						gameVersionID4,
-						"test4",
-						"test4",
-						now,
-					),
-					LatestFiles: []*domain.GameFile{
-						domain.NewGameFile(
-							gameFileID3,
-							values.GameFileTypeJar,
-							"main.jar",
-							values.NewGameFileHashFromBytes([]byte("hash")),
-							now,
-						),
-					},
-					LatestURL: domain.NewGameURL(
-						gameURLID3,
-						values.NewGameURLLink(urlLink),
-						now,
-					),
-					LatestVideo: domain.NewGameVideo(
-						gameVideoID5,
-						values.GameVideoTypeMp4,
-						now,
-					),
-				},
-			},
+			gameInfos:         []*repository.GameInfo{},
 		},
 		{
 			description: "ゲーム紹介動画が存在しなくてもエラーなし",
