@@ -109,3 +109,50 @@ func (lv *LauncherVersion) PostVersion(newVersion *openapi.NewVersion) (*openapi
 		CreatedAt: version.GetCreatedAt(),
 	}, nil
 }
+
+func (lv *LauncherVersion) GetVersion(strLauncherVersionID string) (*openapi.VersionDetails, error) {
+	ctx := context.Background()
+
+	uuidLauncherVersionID, err := uuid.Parse(strLauncherVersionID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid launcher version id")
+	}
+
+	launcherVersionID := values.NewLauncherVersionIDFromUUID(uuidLauncherVersionID)
+
+	version, games, err := lv.launcherVersionService.GetLauncherVersion(ctx, launcherVersionID)
+	if errors.Is(err, service.ErrNoLauncherVersion) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no such launcher version")
+	}
+	if err != nil {
+		log.Printf("error: failed to get launcher version: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get launcher version")
+	}
+
+	var strQuestionnaireURL string
+	questionnaireURL, err := version.GetQuestionnaireURL()
+	if errors.Is(err, domain.ErrNoQuestionnaire) {
+		strQuestionnaireURL = ""
+	} else if err != nil {
+		log.Printf("error: failed to get questionnaire url: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+	} else {
+		strQuestionnaireURL = (*url.URL)(questionnaireURL).String()
+	}
+
+	apiGames := make([]openapi.GameMeta, 0, len(games))
+	for _, game := range games {
+		apiGames = append(apiGames, openapi.GameMeta{
+			Id:   uuid.UUID(game.GetID()).String(),
+			Name: string(game.GetName()),
+		})
+	}
+
+	return &openapi.VersionDetails{
+		Id:        uuid.UUID(version.GetID()).String(),
+		Name:      string(version.GetName()),
+		AnkeTo:    strQuestionnaireURL,
+		CreatedAt: version.GetCreatedAt(),
+		Games:     apiGames,
+	}, nil
+}
