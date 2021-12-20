@@ -5,11 +5,13 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -129,4 +131,29 @@ func (la *LauncherAuth) GetProductKeys(launcherVersionID string) ([]*openapi.Pro
 	}
 
 	return productKeys, nil
+}
+
+func (la *LauncherAuth) GetLauncherMe(c echo.Context) (*openapi.Version, error) {
+	launcherVersion, err := getLauncherVersion(c)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get launcher version")
+	}
+
+	var strQuestionnaireURL string
+	questionnaireURL, err := launcherVersion.GetQuestionnaireURL()
+	if errors.Is(err, domain.ErrNoQuestionnaire) {
+		strQuestionnaireURL = ""
+	} else if err != nil {
+		log.Printf("error: failed to get questionnaire url: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+	} else {
+		strQuestionnaireURL = (*url.URL)(questionnaireURL).String()
+	}
+
+	return &openapi.Version{
+		Id:        uuid.UUID(launcherVersion.GetID()).String(),
+		Name:      string(launcherVersion.GetName()),
+		AnkeTo:    strQuestionnaireURL,
+		CreatedAt: launcherVersion.GetCreatedAt(),
+	}, nil
 }

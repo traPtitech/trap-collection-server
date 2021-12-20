@@ -732,6 +732,26 @@ paths:
                 $ref: '#/components/schemas/LauncherAuthToken'
         "500":
           description: 失敗
+  /launcher/me:
+    get:
+      tags:
+        - launcherAuth
+      summary: ランチャーが自身の情報を取得
+      description: ランチャーが自身の情報を取得
+      operationId: getLauncherMe
+      parameters:
+        - $ref: '#/components/parameters/sessions'
+      security:
+        - LauncherAuth: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        "500":
+          description: 失敗
   /seats/versions:
     post:
       tags:
