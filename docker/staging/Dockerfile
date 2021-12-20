@@ -34,6 +34,8 @@ RUN go generate ./... \
 
 FROM alpine:3.15.0
 
+WORKDIR /go/src/github.com/traPtitech/trap-collection-server
+
 RUN apk --update --no-cache add tzdata \
   && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
   && apk del tzdata \

@@ -161,6 +161,7 @@ func main() {
 
 	newAPI, err := src.InjectAPI(&src.Config{
 		IsProduction:    common.IsProduction(isProduction),
+		IsSwift:         common.IsSwift(isSwift),
 		SessionKey:      "sessions",
 		SessionSecret:   common.SessionSecret(secret),
 		TraQBaseURL:     common.TraQBaseURL(traQBaseURL),
