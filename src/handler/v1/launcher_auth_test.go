@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -582,6 +584,108 @@ func TestGetProductKeys(t *testing.T) {
 				assert.Equal(t, expect.Id, actualProductKeys[i].Id)
 				assert.Equal(t, expect.Key, actualProductKeys[i].Key)
 			}
+		})
+	}
+}
+
+func TestGetLauncherMe(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
+
+	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+
+	type test struct {
+		description     string
+		launcherVersion *domain.LauncherVersion
+		expect          *openapi.Version
+		isErr           bool
+		err             error
+		statusCode      int
+	}
+
+	launcherVersionID := values.NewLauncherVersionID()
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				launcherVersionID,
+				"2020.01.10",
+				now,
+			),
+			expect: &openapi.Version{
+				Id:        uuid.UUID(launcherVersionID).String(),
+				Name:      "2020.01.10",
+				AnkeTo:    "",
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "アンケートが存在しても問題なし",
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				"2020.01.10",
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				now,
+			),
+			expect: &openapi.Version{
+				Id:        uuid.UUID(launcherVersionID).String(),
+				Name:      "2020.01.10",
+				AnkeTo:    "https://example.com",
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "ランチャーバージョンが設定されていないので500",
+			isErr:       true,
+			statusCode:  http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			if testCase.launcherVersion != nil {
+				c.Set(launcherVersionKey, testCase.launcherVersion)
+			}
+
+			launcherVersion, err := launcherAuthHandler.GetLauncherMe(c)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, *testCase.expect, *launcherVersion)
 		})
 	}
 }
