@@ -81,9 +81,12 @@ func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, id values.Lau
 	return launcherVersion, games, nil
 }
 
-func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id values.LauncherVersionID, gameIDs []values.GameID) error {
+func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id values.LauncherVersionID, gameIDs []values.GameID) (*domain.LauncherVersion, []*domain.Game, error) {
+	var launcherVersion *domain.LauncherVersion
+	var games []*domain.Game
 	err := lv.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		_, err := lv.launcherVersionRepository.GetLauncherVersion(ctx, id, repository.LockTypeRecord)
+		var err error
+		launcherVersion, err = lv.launcherVersionRepository.GetLauncherVersion(ctx, id, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrNoLauncherVersion
 		}
@@ -91,12 +94,31 @@ func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id val
 			return fmt.Errorf("failed to get launcher version: %w", err)
 		}
 
-		games, err := lv.gameRepository.GetGamesByIDs(ctx, gameIDs, repository.LockTypeRecord)
+		games, err = lv.gameRepository.GetGamesByLauncherVersion(ctx, id)
 		if err != nil {
 			return fmt.Errorf("failed to get games: %w", err)
 		}
 
-		if len(games) != len(gameIDs) {
+		gameMap := make(map[values.GameID]struct{}, len(games))
+		for _, game := range games {
+			gameMap[game.GetID()] = struct{}{}
+		}
+
+		// 既にあるゲーム、新たに追加するゲームとの重複チェック
+		for _, gameID := range gameIDs {
+			if _, ok := gameMap[gameID]; ok {
+				return service.ErrDuplicateGame
+			}
+
+			gameMap[gameID] = struct{}{}
+		}
+
+		newGames, err := lv.gameRepository.GetGamesByIDs(ctx, gameIDs, repository.LockTypeRecord)
+		if err != nil {
+			return fmt.Errorf("failed to get games: %w", err)
+		}
+
+		if len(newGames) != len(gameIDs) {
 			return service.ErrNoGame
 		}
 
@@ -105,13 +127,15 @@ func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, id val
 			return fmt.Errorf("failed to add games to launcher version: %w", err)
 		}
 
+		games = append(games, newGames...)
+
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+		return nil, nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 
-	return nil
+	return launcherVersion, games, nil
 }
 
 func (lv *LauncherVersion) GetLauncherVersionCheckList(ctx context.Context, launcherVersionID values.LauncherVersionID, env *values.LauncherEnvironment) ([]*service.CheckListItem, error) {
