@@ -10,6 +10,7 @@ type API struct {
 	*GameFile
 	*GameURL
 	*LauncherAuth
+	*LauncherVersion
 	*OAuth2
 	*Session
 }
@@ -24,20 +25,22 @@ func NewAPI(
 	gameFile *GameFile,
 	gameURL *GameURL,
 	launcherAuth *LauncherAuth,
+	launcherVersion *LauncherVersion,
 	oAuth2 *OAuth2,
 	session *Session,
 ) *API {
 	return &API{
-		Middleware:   middleware,
-		User:         user,
-		GameRole:     gameRole,
-		GameImage:    gameImage,
-		GameVideo:    gameVideo,
-		GameVersion:  gameVersion,
-		GameFile:     gameFile,
-		GameURL:      gameURL,
-		LauncherAuth: launcherAuth,
-		OAuth2:       oAuth2,
-		Session:      session,
+		Middleware:      middleware,
+		User:            user,
+		GameRole:        gameRole,
+		GameImage:       gameImage,
+		GameVideo:       gameVideo,
+		GameVersion:     gameVersion,
+		GameFile:        gameFile,
+		GameURL:         gameURL,
+		LauncherAuth:    launcherAuth,
+		LauncherVersion: launcherVersion,
+		OAuth2:          oAuth2,
+		Session:         session,
 	}
 }
