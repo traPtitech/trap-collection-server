@@ -132,8 +132,10 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	v1GameURL := v1_2.NewGameURL(db, game, gameVersion, gameURL)
 	gameURL2 := v1.NewGameURL(v1GameURL)
 	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
+	v1LauncherVersion := v1_2.NewLauncherVersion(db, launcherVersion, game)
+	launcherVersion2 := v1.NewLauncherVersion(v1LauncherVersion)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
 	return api, nil
 }
 
@@ -231,6 +233,7 @@ var (
 	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1_2.GameFile))
 	gameURLServiceBind           = wire.Bind(new(service.GameURL), new(*v1_2.GameURL))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
+	launcherVersionServiceBind   = wire.Bind(new(service.LauncherVersion), new(*v1_2.LauncherVersion))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
 )

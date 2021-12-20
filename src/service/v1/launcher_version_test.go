@@ -402,6 +402,9 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 		gameIDs                          []values.GameID
 		launcherVersion                  *domain.LauncherVersion
 		GetLauncherVersionErr            error
+		executeGetGamesByLauncherVersion bool
+		previousGames                    []*domain.Game
+		GetGamesByLauncherVersionErr     error
 		executeGetGamesByIDs             bool
 		games                            []*domain.Game
 		GetGamesByIDsErr                 error
@@ -434,7 +437,9 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
-			executeGetGamesByIDs: true,
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			executeGetGamesByIDs:             true,
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -458,7 +463,9 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
-			executeGetGamesByIDs: true,
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			executeGetGamesByIDs:             true,
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -485,6 +492,8 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
 			executeGetGamesByIDs:             true,
 			games:                            []*domain.Game{},
 			executeAddGamesToLauncherVersion: true,
@@ -520,9 +529,11 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
-			executeGetGamesByIDs: true,
-			GetGamesByIDsErr:     errors.New("error"),
-			isErr:                true,
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			executeGetGamesByIDs:             true,
+			GetGamesByIDsErr:                 errors.New("error"),
+			isErr:                            true,
 		},
 		{
 			description:       "存在しないGameIDが含まれるのでErrNoGame",
@@ -537,7 +548,9 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
-			executeGetGamesByIDs: true,
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			executeGetGamesByIDs:             true,
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -561,7 +574,9 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				values.NewLauncherVersionQuestionnaireURL(urlLink),
 				time.Now(),
 			),
-			executeGetGamesByIDs: true,
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			executeGetGamesByIDs:             true,
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -574,6 +589,64 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 			AddGamesToLauncherVersionErr:     errors.New("error"),
 			isErr:                            true,
 		},
+		{
+			description:       "GetGamesByLauncherVersionがエラーなのでエラー",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByLauncherVersion: true,
+			GetGamesByLauncherVersionErr:     errors.New("error"),
+			isErr:                            true,
+		},
+		{
+			description:       "gameIDに重複があるのでErrDuplicateGame",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByLauncherVersion: true,
+			previousGames:                    []*domain.Game{},
+			isErr:                            true,
+			err:                              service.ErrDuplicateGame,
+		},
+		{
+			description:       "ゲームが既に存在するのでErrDuplicateGame",
+			launcherVersionID: launcherVersionID,
+			gameIDs: []values.GameID{
+				gameID1,
+			},
+			launcherVersion: domain.NewLauncherVersionWithQuestionnaire(
+				launcherVersionID,
+				values.NewLauncherVersionName("name"),
+				values.NewLauncherVersionQuestionnaireURL(urlLink),
+				time.Now(),
+			),
+			executeGetGamesByLauncherVersion: true,
+			previousGames: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("name"),
+					values.NewGameDescription("description"),
+					time.Now(),
+				),
+			},
+			isErr: true,
+			err:   service.ErrDuplicateGame,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -582,6 +655,13 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				EXPECT().
 				GetLauncherVersion(gomock.Any(), testCase.launcherVersionID, repository.LockTypeRecord).
 				Return(testCase.launcherVersion, testCase.GetLauncherVersionErr)
+
+			if testCase.executeGetGamesByLauncherVersion {
+				mockGameRepository.
+					EXPECT().
+					GetGamesByLauncherVersion(gomock.Any(), testCase.launcherVersionID).
+					Return(testCase.previousGames, testCase.GetGamesByLauncherVersionErr)
+			}
 
 			if testCase.executeGetGamesByIDs {
 				mockGameRepository.
@@ -597,7 +677,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 					Return(testCase.AddGamesToLauncherVersionErr)
 			}
 
-			err := launcherVersionService.AddGamesToLauncherVersion(ctx, testCase.launcherVersionID, testCase.gameIDs)
+			launcherVersion, games, err := launcherVersionService.AddGamesToLauncherVersion(ctx, testCase.launcherVersionID, testCase.gameIDs)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -608,6 +688,12 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.launcherVersion, launcherVersion)
+			assert.ElementsMatch(t, append(testCase.previousGames, testCase.games...), games)
 		})
 	}
 }

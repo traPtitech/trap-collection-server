@@ -26,4 +26,5 @@ var (
 	ErrNoLauncherVersion                 = errors.New("no launcher version")
 	ErrGameFileAlreadyExists             = errors.New("game file already exists")
 	ErrGameURLAlreadyExists              = errors.New("game url already exists")
+	ErrDuplicateGame                     = errors.New("duplicate game")
 )

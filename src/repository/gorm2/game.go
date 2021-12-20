@@ -203,7 +203,7 @@ func (g *Game) GetGameInfosByLauncherVersion(ctx context.Context, launcherVersio
 			default:
 				// ゲームの画像の種類の1つが誤っているだけでランチャーを動かなくしたくないのでエラーにしない
 				log.Printf("error: invalid game image type: %s", game.GameImages[0].GameImageType.Name)
-				goto ImageEnd
+				continue
 			}
 
 			gameImage = domain.NewGameImage(
@@ -211,8 +211,9 @@ func (g *Game) GetGameInfosByLauncherVersion(ctx context.Context, launcherVersio
 				imageType,
 				game.GameImages[0].CreatedAt,
 			)
+		} else {
+			continue
 		}
-	ImageEnd:
 
 		var gameVideo *domain.GameVideo
 		if len(game.GameVideos) != 0 {

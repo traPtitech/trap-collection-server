@@ -152,6 +152,7 @@ var (
 	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1Service.GameFile))
 	gameURLServiceBind           = wire.Bind(new(service.GameURL), new(*v1Service.GameURL))
 	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1Service.LauncherAuth))
+	launcherVersionServiceBind   = wire.Bind(new(service.LauncherVersion), new(*v1Service.LauncherVersion))
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1Service.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1Service.User))
 )
@@ -190,6 +191,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		gameFileServiceBind,
 		gameURLServiceBind,
 		launcherAuthServiceBind,
+		launcherVersionServiceBind,
 		oidcServiceBind,
 		userServiceBind,
 		gorm2.NewDB,
@@ -214,6 +216,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Service.NewGameFile,
 		v1Service.NewGameURL,
 		v1Service.NewLauncherAuth,
+		v1Service.NewLauncherVersion,
 		v1Service.NewOIDC,
 		v1Service.NewUser,
 		v1Service.NewUserUtils,
@@ -226,6 +229,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Handler.NewGameFile,
 		v1Handler.NewGameURL,
 		v1Handler.NewLauncherAuth,
+		v1Handler.NewLauncherVersion,
 		v1Handler.NewOAuth2,
 		v1Handler.NewUser,
 		v1Handler.NewMiddleware,

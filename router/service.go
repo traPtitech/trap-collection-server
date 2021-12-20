@@ -13,7 +13,6 @@ import (
 type Service struct {
 	*Game
 	*Seat
-	*Version
 }
 
 // NewAPI Apiのコンストラクタ
@@ -30,7 +29,6 @@ func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*
 
 	game := newGame(db, oauth, newAPI.GameRole, newAPI.GameImage, newAPI.GameVideo, newAPI.GameVersion, newAPI.GameFile, newAPI.GameURL)
 	seat := newSeat(db, launcherAuth)
-	version := newVersion(db, launcherAuth)
 
 	api := &openapi.Api{
 		Middleware:      newAPI.Middleware,
@@ -39,7 +37,7 @@ func NewAPI(newAPI *v1.API, env string, clientID string, clientSecret string) (*
 		Oauth2Api:       newAPI.OAuth2,
 		SeatApi:         seat,
 		UserApi:         newAPI.User,
-		VersionApi:      version,
+		VersionApi:      newAPI.LauncherVersion,
 	}
 
 	return api, nil
