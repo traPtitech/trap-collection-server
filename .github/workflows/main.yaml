@@ -178,7 +178,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.5.5
+        uses: stoplightio/spectral-action@v0.8.1
         with:
           file_glob: docs/swagger/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
