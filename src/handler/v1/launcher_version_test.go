@@ -1298,6 +1298,80 @@ func TestGetCheckList(t *testing.T) {
 				},
 			},
 		},
+		{
+			description:     "画像なしの場合無視",
+			operatingSystem: "win32",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				launcherVersionID1,
+				values.NewLauncherVersionName("2020.1.1"),
+				now,
+			),
+			executeGetLauncherVersionCheckList: true,
+			checkListItems: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("game1"),
+						values.NewGameDescription("description1"),
+						now,
+					),
+					LatestFile: domain.NewGameFile(
+						values.NewGameFileID(),
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("main.jar"),
+						values.NewGameFileHashFromBytes([]byte("hash1")),
+						now,
+					),
+					LatestVideo: domain.NewGameVideo(
+						values.NewGameVideoID(),
+						values.GameVideoTypeMp4,
+						now,
+					),
+				},
+			},
+			expect: []*openapi.CheckItem{},
+		},
+		{
+			description:     "紹介動画なしでも問題なし",
+			operatingSystem: "win32",
+			launcherVersion: domain.NewLauncherVersionWithoutQuestionnaire(
+				launcherVersionID1,
+				values.NewLauncherVersionName("2020.1.1"),
+				now,
+			),
+			executeGetLauncherVersionCheckList: true,
+			checkListItems: []*service.CheckListItem{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("game1"),
+						values.NewGameDescription("description1"),
+						now,
+					),
+					LatestFile: domain.NewGameFile(
+						values.NewGameFileID(),
+						values.GameFileTypeJar,
+						values.NewGameFileEntryPoint("main.jar"),
+						values.NewGameFileHashFromBytes([]byte("hash1")),
+						now,
+					),
+					LatestImage: domain.NewGameImage(
+						values.NewGameImageID(),
+						values.GameImageTypePng,
+						now,
+					),
+				},
+			},
+			expect: []*openapi.CheckItem{
+				{
+					Id:            uuid.UUID(gameID1).String(),
+					Md5:           "6861736831",
+					Type:          "jar",
+					BodyUpdatedAt: now,
+					ImgUpdatedAt:  now,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
