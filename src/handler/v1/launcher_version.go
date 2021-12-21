@@ -280,9 +280,14 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 			continue
 		}
 
-		if checkItem.LatestImage == nil || checkItem.LatestVideo == nil {
+		if checkItem.LatestImage == nil {
 			log.Printf("error: no image or video specified(gameID: %s)\n", uuid.UUID(checkItem.GetID()).String())
 			continue
+		}
+
+		var movieUpdatedAt time.Time
+		if checkItem.LatestVideo != nil {
+			movieUpdatedAt = checkItem.LatestVideo.GetCreatedAt()
 		}
 
 		apiCheckList = append(apiCheckList, &openapi.CheckItem{
@@ -291,7 +296,7 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 			Type:           gameType,
 			BodyUpdatedAt:  bodyUpdatedAt,
 			ImgUpdatedAt:   checkItem.LatestImage.GetCreatedAt(),
-			MovieUpdatedAt: checkItem.LatestVideo.GetCreatedAt(),
+			MovieUpdatedAt: movieUpdatedAt,
 		})
 	}
 
