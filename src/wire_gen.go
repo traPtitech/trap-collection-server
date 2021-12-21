@@ -64,7 +64,7 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 	return storage, nil
 }
 
-func InjectAPI(config *Config) (*v1.API, error) {
+func InjectAPI(config *Config) (*Service, error) {
 	sessionKey := config.SessionKey
 	sessionSecret := config.SessionSecret
 	session := v1.NewSession(sessionKey, sessionSecret)
@@ -136,7 +136,8 @@ func InjectAPI(config *Config) (*v1.API, error) {
 	launcherVersion2 := v1.NewLauncherVersion(v1LauncherVersion)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
 	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
-	return api, nil
+	service := NewService(api, db)
+	return service, nil
 }
 
 // wire.go:
@@ -237,3 +238,15 @@ var (
 	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
 	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
 )
+
+type Service struct {
+	*v1.API
+	repository.DB
+}
+
+func NewService(api *v1.API, db repository.DB) *Service {
+	return &Service{
+		API: api,
+		DB:  db,
+	}
+}

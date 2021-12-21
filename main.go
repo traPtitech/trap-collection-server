@@ -159,7 +159,7 @@ func main() {
 		swiftContainer = common.SwiftContainer(strSwiftContainer)
 	}
 
-	newAPI, err := src.InjectAPI(&src.Config{
+	service, err := src.InjectAPI(&src.Config{
 		IsProduction:    common.IsProduction(isProduction),
 		IsSwift:         common.IsSwift(isSwift),
 		SessionKey:      "sessions",
@@ -179,10 +179,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer service.DB.Close()
 
-	newAPI.Session.Use(e)
+	service.API.Session.Use(e)
 
-	api, err := router.NewAPI(newAPI, env, clientID, clientSecret)
+	api, err := router.NewAPI(service.API, env, clientID, clientSecret)
 	if err != nil {
 		panic(err)
 	}
