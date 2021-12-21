@@ -45,7 +45,7 @@ updates:
     - 1.16.1.pre.alpine
     - 1.16.2.pre.alpine
 - package-ecosystem: github-actions
-  directory: "/.github/workflows"
+  directory: "/"
   schedule:
     interval: daily
   open-pull-requests-limit: 10
