@@ -47,6 +47,10 @@ func (mr *MockDBMockRecorder) Get() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDB)(nil).Get))
 }
 
+func (m *MockDB) Close() error {
+	return nil
+}
+
 // Transaction mocks base method.
 func (m *MockDB) Transaction(ctx context.Context, txOpt *sql.TxOptions, fn func(context.Context) error) error {
 	err := fn(ctx)

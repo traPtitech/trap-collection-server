@@ -157,7 +157,19 @@ var (
 	userServiceBind              = wire.Bind(new(service.User), new(*v1Service.User))
 )
 
-func InjectAPI(config *Config) (*v1Handler.API, error) {
+type Service struct {
+	*v1Handler.API
+	repository.DB
+}
+
+func NewService(api *v1Handler.API, db repository.DB) *Service {
+	return &Service{
+		API: api,
+		DB:  db,
+	}
+}
+
+func InjectAPI(config *Config) (*Service, error) {
 	wire.Build(
 		isProductionField,
 		sessionKeyField,
@@ -234,6 +246,7 @@ func InjectAPI(config *Config) (*v1Handler.API, error) {
 		v1Handler.NewUser,
 		v1Handler.NewMiddleware,
 		injectedStorage,
+		NewService,
 	)
 	return nil, nil
 }

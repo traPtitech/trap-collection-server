@@ -78,6 +78,20 @@ func NewDB(isProduction common.IsProduction) (*DB, error) {
 	}, nil
 }
 
+func (db *DB) Close() error {
+	sqldb, err := db.db.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get sql.DB: %w", err)
+	}
+
+	err = sqldb.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close sql.DB: %w", err)
+	}
+
+	return nil
+}
+
 func (db *DB) Get() (*sql.DB, error) {
 	return db.db.DB()
 }
