@@ -1,33 +1,55 @@
 module github.com/traPtitech/trap-collection-server
 
-go 1.14
+go 1.17
 
 require (
 	github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/golang/mock v1.4.4
-	github.com/google/uuid v1.1.1
+	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
-	github.com/gorilla/sessions v1.2.0
-	github.com/h2non/filetype v1.1.0
-	github.com/jinzhu/gorm v1.9.15
-	github.com/kr/pretty v0.2.0 // indirect
-	github.com/labstack/echo-contrib v0.9.0
-	github.com/labstack/echo/v4 v4.1.16
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
+	github.com/gorilla/sessions v1.2.1
+	github.com/h2non/filetype v1.1.3
+	github.com/jinzhu/gorm v1.9.16
+	github.com/labstack/echo-contrib v0.11.0
+	github.com/labstack/echo/v4 v4.6.1
 	github.com/ncw/swift/v2 v2.0.1
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/t-tiger/gorm-bulk-insert v1.3.0
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
 	golang.org/x/mod v0.5.1
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/tools v0.0.0-20191203134012-c197fd4bf371 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/djherbis/atime.v1 v1.0.0 // indirect
 	gopkg.in/djherbis/fscache.v0 v0.10.1
+	gorm.io/driver/mysql v1.2.1
+	gorm.io/gorm v1.22.4
+)
+
+require (
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang/glog v1.0.0 // indirect
+	github.com/google/subcommands v1.2.0 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/labstack/gommon v0.3.1 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.1 // indirect
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
+	golang.org/x/tools v0.1.8 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	gopkg.in/djherbis/atime.v1 v1.0.0 // indirect
 	gopkg.in/djherbis/stream.v1 v1.3.1 // indirect
-	gorm.io/driver/mysql v1.1.2
-	gorm.io/gorm v1.21.15
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
