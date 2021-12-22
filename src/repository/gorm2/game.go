@@ -25,6 +25,27 @@ func NewGame(db *DB) *Game {
 	}
 }
 
+func (g *Game) SaveGame(ctx context.Context, game *domain.Game) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTable := GameTable{
+		ID:          uuid.UUID(game.GetID()),
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+		CreatedAt:   game.GetCreatedAt(),
+	}
+
+	err = db.Create(&gameTable).Error
+	if err != nil {
+		return fmt.Errorf("failed to save game: %w", err)
+	}
+
+	return nil
+}
+
 func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
