@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	mockAuth "github.com/traPtitech/trap-collection-server/src/auth/mock"
+	"github.com/traPtitech/trap-collection-server/src/cache"
 	mockCache "github.com/traPtitech/trap-collection-server/src/cache/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -671,6 +673,333 @@ func TestGetGames(t *testing.T) {
 			}
 
 			gameInfos, err := gameVersionService.GetGames(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, gameInfos, len(testCase.gameInfos))
+
+			for i, gameInfo := range gameInfos {
+				assert.Equal(t, testCase.gameInfos[i].Game.GetID(), gameInfo.Game.GetID())
+				assert.Equal(t, testCase.gameInfos[i].Game.GetName(), gameInfo.Game.GetName())
+				assert.Equal(t, testCase.gameInfos[i].Game.GetDescription(), gameInfo.Game.GetDescription())
+				assert.WithinDuration(t, testCase.gameInfos[i].Game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
+
+				if testCase.gameInfos[i].LatestVersion == nil {
+					assert.Nil(t, gameInfo.LatestVersion)
+				} else {
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetID(), gameInfo.LatestVersion.GetID())
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetName(), gameInfo.LatestVersion.GetName())
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetDescription(), gameInfo.LatestVersion.GetDescription())
+					assert.WithinDuration(t, testCase.gameInfos[i].LatestVersion.GetCreatedAt(), gameInfo.LatestVersion.GetCreatedAt(), time.Second)
+				}
+			}
+		})
+	}
+}
+
+func TestGetMyGames(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+
+	type test struct {
+		description                  string
+		authSession                  *domain.OIDCSession
+		user                         *service.UserInfo
+		isGetMeErr                   bool
+		executeGetGamesByUser        bool
+		games                        []*domain.Game
+		GetGamesByUserErr            error
+		executeGetLatestGameVersions bool
+		gameVersionMap               map[values.GameID]*domain.GameVersion
+		GetLatestGameVersionsErr     error
+		gameInfos                    []*service.GameInfo
+		isErr                        bool
+		err                          error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap: map[values.GameID]*domain.GameVersion{
+				gameID1: domain.NewGameVersion(
+					gameVersionID1,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+			},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description: "バージョンが存在しないゲームがあっても問題なし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap:               map[values.GameID]*domain.GameVersion{},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: nil,
+				},
+			},
+		},
+		{
+			description: "ゲームが存在しなくてもエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			games:                 []*domain.Game{},
+			gameInfos:             []*service.GameInfo{},
+		},
+		{
+			description: "ゲームが複数でもエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+				domain.NewGame(
+					gameID2,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap: map[values.GameID]*domain.GameVersion{
+				gameID1: domain.NewGameVersion(
+					gameVersionID1,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+				gameID2: domain.NewGameVersion(
+					gameVersionID2,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+			},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description: "getMeがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			isGetMeErr: true,
+			isErr:      true,
+		},
+		{
+			description: "GetGamesがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			GetGamesByUserErr:     errors.New("error"),
+			isErr:                 true,
+		},
+		{
+			description: "GetLatestGameVersionsByGameIDsがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			GetLatestGameVersionsErr:     errors.New("error"),
+			isErr:                        true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.isGetMeErr {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
+					Return(nil, cache.ErrCacheMiss)
+				mockUserAuth.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession).
+					Return(nil, errors.New("error"))
+			} else {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
+					Return(testCase.user, nil)
+			}
+
+			if testCase.executeGetGamesByUser {
+				mockGameRepository.
+					EXPECT().
+					GetGamesByUser(gomock.Any(), testCase.user.GetID()).
+					Return(testCase.games, testCase.GetGamesByUserErr)
+			}
+
+			if testCase.executeGetLatestGameVersions {
+				mockGameVersionRepository.
+					EXPECT().
+					GetLatestGameVersionsByGameIDs(gomock.Any(), gomock.Any(), repository.LockTypeNone).
+					Return(testCase.gameVersionMap, testCase.GetLatestGameVersionsErr)
+			}
+
+			gameInfos, err := gameVersionService.GetMyGames(ctx, testCase.authSession)
 
 			if testCase.isErr {
 				if testCase.err == nil {
