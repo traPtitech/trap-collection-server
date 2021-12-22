@@ -94,3 +94,27 @@ func (g *Game) DeleteGame(ctx context.Context, id values.GameID) error {
 
 	return nil
 }
+
+func (g *Game) GetGame(ctx context.Context, id values.GameID) (*service.GameInfo, error) {
+	game, err := g.gameRepository.GetGame(ctx, id, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGame
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	gameVersion, err := g.gameVersionRepository.GetLatestGameVersion(ctx, id, repository.LockTypeNone)
+	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to get game version: %w", err)
+	}
+
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		gameVersion = nil
+	}
+
+	return &service.GameInfo{
+		Game:          game,
+		LatestVersion: gameVersion,
+	}, nil
+}
