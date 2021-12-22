@@ -10,7 +10,12 @@ import (
 )
 
 type Game interface {
+	SaveGame(ctx context.Context, game *domain.Game) error
+	UpdateGame(ctx context.Context, game *domain.Game) error
+	RemoveGame(ctx context.Context, gameID values.GameID) error
 	GetGame(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.Game, error)
+	GetGames(ctx context.Context) ([]*domain.Game, error)
+	GetGamesByUser(ctx context.Context, userID values.TraPMemberID) ([]*domain.Game, error)
 	GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType LockType) ([]*domain.Game, error)
 	GetGamesByLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID) ([]*domain.Game, error)
 	GetGameInfosByLauncherVersion(ctx context.Context, launcherVersionID values.LauncherVersionID, fileTypes []values.GameFileType) ([]*GameInfo, error)
