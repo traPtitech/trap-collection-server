@@ -469,3 +469,239 @@ func TestGetGame(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGames(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+
+	type test struct {
+		description                  string
+		games                        []*domain.Game
+		GetGamesErr                  error
+		executeGetLatestGameVersions bool
+		gameVersionMap               map[values.GameID]*domain.GameVersion
+		GetLatestGameVersionsErr     error
+		gameInfos                    []*service.GameInfo
+		isErr                        bool
+		err                          error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap: map[values.GameID]*domain.GameVersion{
+				gameID1: domain.NewGameVersion(
+					gameVersionID1,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+			},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description: "バージョンが存在しないゲームがあっても問題なし",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap:               map[values.GameID]*domain.GameVersion{},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: nil,
+				},
+			},
+		},
+		{
+			description: "ゲームが存在しなくてもエラーなし",
+			games:       []*domain.Game{},
+			gameInfos:   []*service.GameInfo{},
+		},
+		{
+			description: "ゲームが複数でもエラーなし",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+				domain.NewGame(
+					gameID2,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			gameVersionMap: map[values.GameID]*domain.GameVersion{
+				gameID1: domain.NewGameVersion(
+					gameVersionID1,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+				gameID2: domain.NewGameVersion(
+					gameVersionID2,
+					"v1.0.0",
+					"game version description",
+					time.Now(),
+				),
+			},
+			gameInfos: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						"game name",
+						"game description",
+						time.Now(),
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						"v1.0.0",
+						"game version description",
+						time.Now(),
+					),
+				},
+			},
+		},
+		{
+			description: "GetGamesがエラーなのでエラー",
+			GetGamesErr: errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description: "GetLatestGameVersionsByGameIDsがエラーなのでエラー",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			executeGetLatestGameVersions: true,
+			GetLatestGameVersionsErr:     errors.New("error"),
+			isErr:                        true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGames(gomock.Any()).
+				Return(testCase.games, testCase.GetGamesErr)
+
+			if testCase.executeGetLatestGameVersions {
+				mockGameVersionRepository.
+					EXPECT().
+					GetLatestGameVersionsByGameIDs(gomock.Any(), gomock.Any(), repository.LockTypeNone).
+					Return(testCase.gameVersionMap, testCase.GetLatestGameVersionsErr)
+			}
+
+			gameInfos, err := gameVersionService.GetGames(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, gameInfos, len(testCase.gameInfos))
+
+			for i, gameInfo := range gameInfos {
+				assert.Equal(t, testCase.gameInfos[i].Game.GetID(), gameInfo.Game.GetID())
+				assert.Equal(t, testCase.gameInfos[i].Game.GetName(), gameInfo.Game.GetName())
+				assert.Equal(t, testCase.gameInfos[i].Game.GetDescription(), gameInfo.Game.GetDescription())
+				assert.WithinDuration(t, testCase.gameInfos[i].Game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
+
+				if testCase.gameInfos[i].LatestVersion == nil {
+					assert.Nil(t, gameInfo.LatestVersion)
+				} else {
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetID(), gameInfo.LatestVersion.GetID())
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetName(), gameInfo.LatestVersion.GetName())
+					assert.Equal(t, testCase.gameInfos[i].LatestVersion.GetDescription(), gameInfo.LatestVersion.GetDescription())
+					assert.WithinDuration(t, testCase.gameInfos[i].LatestVersion.GetCreatedAt(), gameInfo.LatestVersion.GetCreatedAt(), time.Second)
+				}
+			}
+		})
+	}
+}
