@@ -82,3 +82,15 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 
 	return game, nil
 }
+
+func (g *Game) DeleteGame(ctx context.Context, id values.GameID) error {
+	err := g.gameRepository.RemoveGame(ctx, id)
+	if errors.Is(err, repository.ErrNoRecordDeleted) {
+		return service.ErrNoGame
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete game: %w", err)
+	}
+
+	return nil
+}
