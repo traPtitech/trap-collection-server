@@ -32,7 +32,7 @@ type CheckListItem struct {
 		nullableなことに注意!
 	*/
 	LatestFile *domain.GameFile
-	// LatestImage nullableなことに注意!
+	// LatestImage nullableでない
 	LatestImage *domain.GameImage
 	// LatestVideo nullableなことに注意!
 	LatestVideo *domain.GameVideo
