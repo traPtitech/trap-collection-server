@@ -297,6 +297,165 @@ func TestUpdateGame(t *testing.T) {
 	}
 }
 
+func TestRemoveGame(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGame(testDB)
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		beforeGames []GameTable
+		afterGames  []GameTable
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID1,
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					DeletedAt: gorm.DeletedAt{
+						Valid: true,
+						Time:  now,
+					},
+				},
+			},
+		},
+		{
+			description: "別のゲームが存在してもエラーなし",
+			gameID:      gameID1,
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			afterGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					DeletedAt: gorm.DeletedAt{
+						Valid: true,
+						Time:  now,
+					},
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+		},
+		{
+			description: "ゲームが存在しないのでErrNoRecordDeleted",
+			gameID:      gameID1,
+			beforeGames: []GameTable{},
+			afterGames:  []GameTable{},
+			isErr:       true,
+			err:         repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&GameTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
+			}()
+
+			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Info),
+					}).
+					Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %+v\n", err)
+				}
+			}
+
+			err := gameRepository.RemoveGame(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var games []GameTable
+			err = db.
+				Unscoped().
+				Session(&gorm.Session{}).
+				Order("created_at desc").
+				Find(&games).Error
+			if err != nil {
+				t.Fatalf("failed to get games: %+v\n", err)
+			}
+
+			assert.Len(t, games, len(testCase.afterGames))
+
+			for i, game := range games {
+				assert.Equal(t, testCase.afterGames[i].ID, game.ID)
+				assert.Equal(t, testCase.afterGames[i].Name, game.Name)
+				assert.Equal(t, testCase.afterGames[i].Description, game.Description)
+				assert.WithinDuration(t, testCase.afterGames[i].CreatedAt, game.CreatedAt, time.Second)
+				assert.Equal(t, testCase.afterGames[i].DeletedAt.Valid, game.DeletedAt.Valid)
+				assert.WithinDuration(t, testCase.afterGames[i].DeletedAt.Time, game.DeletedAt.Time, time.Second)
+			}
+		})
+	}
+}
+
 func TestGetGame(t *testing.T) {
 	t.Parallel()
 
