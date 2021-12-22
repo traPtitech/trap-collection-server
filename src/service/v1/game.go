@@ -118,3 +118,39 @@ func (g *Game) GetGame(ctx context.Context, id values.GameID) (*service.GameInfo
 		LatestVersion: gameVersion,
 	}, nil
 }
+
+func (g *Game) GetGames(ctx context.Context) ([]*service.GameInfo, error) {
+	games, err := g.gameRepository.GetGames(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	if len(games) == 0 {
+		return []*service.GameInfo{}, nil
+	}
+
+	gameIDs := make([]values.GameID, 0, len(games))
+	for _, game := range games {
+		gameIDs = append(gameIDs, game.GetID())
+	}
+
+	gameVersions, err := g.gameVersionRepository.GetLatestGameVersionsByGameIDs(ctx, gameIDs, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game versions: %w", err)
+	}
+
+	var gameInfos []*service.GameInfo
+	for _, game := range games {
+		gameVersion, ok := gameVersions[game.GetID()]
+		if !ok {
+			gameVersion = nil
+		}
+
+		gameInfos = append(gameInfos, &service.GameInfo{
+			Game:          game,
+			LatestVersion: gameVersion,
+		})
+	}
+
+	return gameInfos, nil
+}
