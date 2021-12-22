@@ -615,6 +615,135 @@ func TestGetGame(t *testing.T) {
 	}
 }
 
+func TestGetGames(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGame(testDB)
+
+	type test struct {
+		description string
+		beforeGames []GameTable
+		games       []*domain.Game
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   now,
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test",
+					"test",
+					now,
+				),
+			},
+		},
+		{
+			description: "ゲームが存在しなくてもエラーなし",
+			beforeGames: []GameTable{},
+			games:       []*domain.Game{},
+		},
+		{
+			description: "ゲームが複数でもエラーなし",
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test1",
+					"test1",
+					now,
+				),
+				domain.NewGame(
+					gameID2,
+					"test2",
+					"test2",
+					now.Add(-time.Hour),
+				),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&GameTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
+			}()
+
+			if len(testCase.beforeGames) != 0 {
+				err := db.Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			games, err := gameRepository.GetGames(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, games, len(testCase.games))
+
+			for i, game := range testCase.games {
+				assert.Equal(t, game.GetID(), games[i].GetID())
+				assert.Equal(t, game.GetName(), games[i].GetName())
+				assert.Equal(t, game.GetDescription(), games[i].GetDescription())
+				assert.WithinDuration(t, game.GetCreatedAt(), games[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
 func TestGetGamesByIDs(t *testing.T) {
 	t.Parallel()
 
