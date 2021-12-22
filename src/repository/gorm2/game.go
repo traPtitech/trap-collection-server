@@ -46,6 +46,32 @@ func (g *Game) SaveGame(ctx context.Context, game *domain.Game) error {
 	return nil
 }
 
+func (g *Game) UpdateGame(ctx context.Context, game *domain.Game) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTable := GameTable{
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+	}
+
+	result := db.
+		Where("id = ?", uuid.UUID(game.GetID())).
+		Updates(gameTable)
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to update game: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordUpdated
+	}
+
+	return nil
+}
+
 func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
