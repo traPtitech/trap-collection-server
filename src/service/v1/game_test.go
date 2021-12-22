@@ -326,3 +326,146 @@ func TestDeleteGame(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGame(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+
+	type test struct {
+		description                 string
+		gameID                      values.GameID
+		game                        *domain.Game
+		GetGameErr                  error
+		executeGetLatestGameVersion bool
+		gameVersion                 *domain.GameVersion
+		GetLatestGameVersionErr     error
+		isErr                       bool
+		err                         error
+	}
+
+	gameID := values.NewGameID()
+
+	gameVersionID := values.NewGameVersionID()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				time.Now(),
+			),
+			executeGetLatestGameVersion: true,
+			gameVersion: domain.NewGameVersion(
+				gameVersionID,
+				"v1.0.0",
+				"game version description",
+				time.Now(),
+			),
+		},
+		{
+			description: "ゲームが存在しないのでErrNoGame",
+			gameID:      gameID,
+			GetGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrNoGame,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      gameID,
+			GetGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description: "ゲームバージョンが存在しなくても問題なし",
+			gameID:      gameID,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				time.Now(),
+			),
+			executeGetLatestGameVersion: true,
+			GetLatestGameVersionErr:     repository.ErrRecordNotFound,
+		},
+		{
+			description: "GetLatestGameVersionがエラーなのでエラー",
+			gameID:      gameID,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				time.Now(),
+			),
+			executeGetLatestGameVersion: true,
+			GetLatestGameVersionErr:     errors.New("error"),
+			isErr:                       true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(testCase.game, testCase.GetGameErr)
+
+			if testCase.executeGetLatestGameVersion {
+				mockGameVersionRepository.
+					EXPECT().
+					GetLatestGameVersion(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+					Return(testCase.gameVersion, testCase.GetLatestGameVersionErr)
+			}
+
+			gameInfo, err := gameVersionService.GetGame(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.game, gameInfo.Game)
+
+			assert.Equal(t, testCase.game.GetID(), gameInfo.Game.GetID())
+			assert.Equal(t, testCase.game.GetName(), gameInfo.Game.GetName())
+			assert.Equal(t, testCase.game.GetDescription(), gameInfo.Game.GetDescription())
+			assert.WithinDuration(t, testCase.game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
+
+			if testCase.gameVersion != nil {
+				assert.Equal(t, testCase.gameVersion, gameInfo.LatestVersion)
+
+				assert.Equal(t, testCase.gameVersion.GetID(), gameInfo.LatestVersion.GetID())
+				assert.Equal(t, testCase.gameVersion.GetName(), gameInfo.LatestVersion.GetName())
+				assert.Equal(t, testCase.gameVersion.GetDescription(), gameInfo.LatestVersion.GetDescription())
+				assert.WithinDuration(t, testCase.gameVersion.GetCreatedAt(), gameInfo.LatestVersion.GetCreatedAt(), time.Second)
+			} else {
+				assert.Nil(t, gameInfo.LatestVersion)
+			}
+		})
+	}
+}
