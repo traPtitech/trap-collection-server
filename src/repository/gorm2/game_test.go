@@ -16,6 +16,120 @@ import (
 	"gorm.io/gorm"
 )
 
+func TestSaveGame(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGame(testDB)
+
+	type test struct {
+		description string
+		game        *domain.Game
+		beforeGames []GameTable
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			game: domain.NewGame(
+				gameID1,
+				"test",
+				"test",
+				now,
+			),
+		},
+		{
+			description: "別のゲームが存在してもエラーなし",
+			game: domain.NewGame(
+				gameID2,
+				"test",
+				"test",
+				now,
+			),
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "同じIDを持つゲームがあるのでエラー",
+			game: domain.NewGame(
+				gameID4,
+				"test",
+				"test",
+				now,
+			),
+			beforeGames: []GameTable{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   now,
+				},
+			},
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+				err := db.Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %+v\n", err)
+				}
+			}
+
+			err := gameRepository.SaveGame(ctx, testCase.game)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var game GameTable
+			err = db.
+				Where("id = ?", uuid.UUID(testCase.game.GetID())).
+				First(&game).Error
+			if err != nil {
+				t.Fatalf("failed to get game: %+v\n", err)
+			}
+
+			assert.Equal(t, uuid.UUID(testCase.game.GetID()), game.ID)
+			assert.Equal(t, string(testCase.game.GetName()), game.Name)
+			assert.Equal(t, string(testCase.game.GetDescription()), game.Description)
+			assert.WithinDuration(t, testCase.game.GetCreatedAt(), game.CreatedAt, time.Second)
+		})
+	}
+}
+
 func TestGetGame(t *testing.T) {
 	t.Parallel()
 
