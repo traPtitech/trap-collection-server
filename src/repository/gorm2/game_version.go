@@ -107,3 +107,48 @@ func (gv *GameVersion) GetLatestGameVersion(ctx context.Context, gameID values.G
 		gameVersion.CreatedAt,
 	), nil
 }
+
+func (gv *GameVersion) GetLatestGameVersionsByGameIDs(ctx context.Context, gameIDs []values.GameID, lockType repository.LockType) (map[values.GameID]*domain.GameVersion, error) {
+	db, err := gv.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gorm DB: %w", err)
+	}
+
+	db, err = gv.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	uuidGameIDs := make([]uuid.UUID, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
+	}
+
+	var gameVersionTables []GameVersionTable
+	err = db.
+		Where("game_versions.game_id in (?)", uuidGameIDs).
+		Joins("JOIN (" +
+			"SELECT game_id, MAX(created_at) AS created_at FROM game_versions GROUP BY game_id" +
+			") as max_versions ON game_versions.game_id = max_versions.game_id AND game_versions.created_at = max_versions.created_at").
+		Find(&gameVersionTables).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest game versions: %w", err)
+	}
+
+	gameVersions := make(map[values.GameID]*domain.GameVersion, len(gameVersionTables))
+	for _, gameVersion := range gameVersionTables {
+		gameID := values.NewGameIDFromUUID(gameVersion.GameID)
+		gameVersionID := values.NewGameVersionIDFromUUID(gameVersion.ID)
+		gameVersionName := values.NewGameVersionName(gameVersion.Name)
+		gameVersionDescription := values.NewGameVersionDescription(gameVersion.Description)
+
+		gameVersions[gameID] = domain.NewGameVersion(
+			gameVersionID,
+			gameVersionName,
+			gameVersionDescription,
+			gameVersion.CreatedAt,
+		)
+	}
+
+	return gameVersions, nil
+}
