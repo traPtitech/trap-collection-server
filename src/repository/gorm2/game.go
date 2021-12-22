@@ -72,6 +72,27 @@ func (g *Game) UpdateGame(ctx context.Context, game *domain.Game) error {
 	return nil
 }
 
+func (g *Game) RemoveGame(ctx context.Context, gameID values.GameID) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.
+		Where("id = ?", uuid.UUID(gameID)).
+		Delete(&GameTable{})
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to remove game: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+
+	return nil
+}
+
 func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
