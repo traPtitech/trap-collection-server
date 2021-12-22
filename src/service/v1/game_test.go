@@ -257,3 +257,72 @@ func TestUpdateGame(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGame(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
+
+	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+
+	type test struct {
+		description   string
+		gameID        values.GameID
+		RemoveGameErr error
+		isErr         bool
+		err           error
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      values.NewGameID(),
+		},
+		{
+			description:   "ゲームが存在しないのでErrNoGame",
+			gameID:        values.NewGameID(),
+			RemoveGameErr: repository.ErrNoRecordDeleted,
+			isErr:         true,
+			err:           service.ErrNoGame,
+		},
+		{
+			description:   "RemoveGameがエラーなのでエラー",
+			gameID:        values.NewGameID(),
+			RemoveGameErr: errors.New("error"),
+			isErr:         true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				RemoveGame(gomock.Any(), testCase.gameID).
+				Return(testCase.RemoveGameErr)
+
+			err := gameVersionService.DeleteGame(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
