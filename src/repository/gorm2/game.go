@@ -150,6 +150,35 @@ func (g *Game) GetGames(ctx context.Context) ([]*domain.Game, error) {
 	return gamesDomain, nil
 }
 
+func (g *Game) GetGamesByUser(ctx context.Context, userID values.TraPMemberID) ([]*domain.Game, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []GameTable
+	err = db.
+		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+		Order("created_at DESC").
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gamesDomain := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		gamesDomain = append(gamesDomain, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomain, nil
+}
+
 func (g *Game) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType repository.LockType) ([]*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
