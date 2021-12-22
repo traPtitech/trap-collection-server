@@ -70,6 +70,7 @@ jobs:
       - uses: actions/download-artifact@v2.1.0
         with:
           name: openapi
+          path: openapi
       - name: Add PATH
         run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - run: go install github.com/golang/mock/mockgen
@@ -104,7 +105,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
-      - run: cd mockGenerated && go build -o collection
+      - run: go build -o collection
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -131,7 +132,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - run: cd mockGenerated && go test ./src/... -v -coverprofile=../coverage.txt -race -vet=off
+      - run: go test ./src/... -v -coverprofile=../coverage.txt -race -vet=off
         env:
           COLLECTION_ENV: production
           DB_USERNAME: root
@@ -170,7 +171,6 @@ jobs:
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          workdir: mockGenerated
           fail_on_error: true
   spectral:
     name: Spectral
