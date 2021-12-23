@@ -12,5 +12,5 @@ import (
 
 type GameFile interface {
 	SaveGameFile(ctx context.Context, reader io.Reader, gameID values.GameID, fileType values.GameFileType, entryPoint values.GameFileEntryPoint) (*domain.GameFile, error)
-	GetGameFile(ctx context.Context, writer io.Writer, gameID values.GameID, environment *values.LauncherEnvironment) (*domain.GameFile, error)
+	GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (io.Reader, *domain.GameFile, error)
 }

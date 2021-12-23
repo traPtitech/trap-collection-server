@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -473,7 +474,7 @@ func TestGetGameFile(t *testing.T) {
 			isErr:                        true,
 		},
 		{
-			description:                 "storageのGetGameFileがエラーなのでエラー",
+			description:                 "storageのGetGameFileがエラーでもエラーにならない",
 			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
@@ -503,7 +504,6 @@ func TestGetGameFile(t *testing.T) {
 			),
 			executeStorageGetGameFile: true,
 			storageGetGameFileErr:     errors.New("error"),
-			isErr:                     true,
 		},
 		{
 			description:                 "ゲームファイルが存在しないのでエラー",
@@ -750,8 +750,7 @@ func TestGetGameFile(t *testing.T) {
 				expectBytes = testCase.fileContent.Bytes()
 			}
 
-			buf := bytes.NewBuffer(nil)
-			gameFile, err := gameFileService.GetGameFile(ctx, buf, testCase.gameID, testCase.environment)
+			r, gameFile, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.environment)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -772,7 +771,12 @@ func TestGetGameFile(t *testing.T) {
 			assert.Equal(t, testCase.gameFile.GetHash(), gameFile.GetHash())
 			assert.WithinDuration(t, testCase.gameFile.GetCreatedAt(), gameFile.GetCreatedAt(), time.Second)
 
-			assert.Equal(t, expectBytes, buf.Bytes())
+			data, err := io.ReadAll(r)
+			if err != nil {
+				t.Fatalf("failed to read response body: %v\n", err)
+			}
+
+			assert.Equal(t, expectBytes, data)
 		})
 	}
 }

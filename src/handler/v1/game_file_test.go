@@ -352,14 +352,16 @@ func TestGetGameFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			r := bytes.NewReader([]byte("a"))
+
 			if testCase.executeGetGameFile {
 				mockGameFileService.
 					EXPECT().
-					GetGameFile(gomock.Any(), gomock.Any(), testCase.gameID, gomock.Any()).
-					Return(nil, testCase.GetGameFileErr)
+					GetGameFile(gomock.Any(), testCase.gameID, gomock.Any()).
+					Return(r, nil, testCase.GetGameFileErr)
 			}
 
-			_, err := gameFileHandler.GetGameFile(testCase.strGameID, testCase.strOperatingSystem)
+			res, err := gameFileHandler.GetGameFile(testCase.strGameID, testCase.strOperatingSystem)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -377,6 +379,11 @@ func TestGetGameFile(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, r, res)
 		})
 	}
 }

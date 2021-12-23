@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -96,11 +95,8 @@ func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid operating system")
 	}
 
-	buf := bytes.NewBuffer(nil)
-
-	_, err = gf.gameFileService.GetGameFile(
+	r, _, err := gf.gameFileService.GetGameFile(
 		ctx,
-		buf,
 		gameID,
 		values.NewLauncherEnvironment(envOS),
 	)
@@ -118,5 +114,5 @@ func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get game file")
 	}
 
-	return buf, nil
+	return r, nil
 }
