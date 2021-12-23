@@ -139,12 +139,19 @@ func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.Ga
 }
 
 func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) {
-	isAll, err := strconv.ParseBool(strAll)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "all is invalid")
+	var isAll bool
+	if len(strAll) != 0 {
+		isAll = false
+	} else {
+		var err error
+		isAll, err = strconv.ParseBool(strAll)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "all is invalid")
+		}
 	}
 
 	var games []*service.GameInfo
+	var err error
 	if isAll {
 		games, err = g.gameService.GetGames(c.Request().Context())
 		if err != nil {
