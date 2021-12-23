@@ -190,3 +190,25 @@ func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) 
 
 	return gameInfos, nil
 }
+
+func (g *Game) DeleteGames(strGameID string) error {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	err = g.gameService.DeleteGame(ctx, gameID)
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusBadRequest, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to delete game: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete game")
+	}
+
+	return nil
+}
