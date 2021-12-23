@@ -25,6 +25,74 @@ func NewGame(db *DB) *Game {
 	}
 }
 
+func (g *Game) SaveGame(ctx context.Context, game *domain.Game) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTable := GameTable{
+		ID:          uuid.UUID(game.GetID()),
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+		CreatedAt:   game.GetCreatedAt(),
+	}
+
+	err = db.Create(&gameTable).Error
+	if err != nil {
+		return fmt.Errorf("failed to save game: %w", err)
+	}
+
+	return nil
+}
+
+func (g *Game) UpdateGame(ctx context.Context, game *domain.Game) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameTable := GameTable{
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+	}
+
+	result := db.
+		Where("id = ?", uuid.UUID(game.GetID())).
+		Updates(gameTable)
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to update game: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordUpdated
+	}
+
+	return nil
+}
+
+func (g *Game) RemoveGame(ctx context.Context, gameID values.GameID) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.
+		Where("id = ?", uuid.UUID(gameID)).
+		Delete(&GameTable{})
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to remove game: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+
+	return nil
+}
+
 func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
@@ -53,6 +121,62 @@ func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repos
 		values.NewGameDescription(game.Description),
 		game.CreatedAt,
 	), nil
+}
+
+func (g *Game) GetGames(ctx context.Context) ([]*domain.Game, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []GameTable
+	err = db.
+		Order("created_at DESC").
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gamesDomain := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		gamesDomain = append(gamesDomain, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomain, nil
+}
+
+func (g *Game) GetGamesByUser(ctx context.Context, userID values.TraPMemberID) ([]*domain.Game, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []GameTable
+	err = db.
+		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+		Order("created_at DESC").
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gamesDomain := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		gamesDomain = append(gamesDomain, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomain, nil
 }
 
 func (g *Game) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType repository.LockType) ([]*domain.Game, error) {
