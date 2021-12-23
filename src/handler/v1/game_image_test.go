@@ -192,14 +192,16 @@ func TestGetImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			r := bytes.NewReader([]byte("a"))
+
 			if testCase.executeGetGameImage {
 				mockGameImageService.
 					EXPECT().
-					GetGameImage(gomock.Any(), gomock.Any(), testCase.gameID).
-					Return(testCase.GetGameImageErr)
+					GetGameImage(gomock.Any(), testCase.gameID).
+					Return(r, testCase.GetGameImageErr)
 			}
 
-			_, err := gameImageHandler.GetImage(testCase.strGameID)
+			res, err := gameImageHandler.GetImage(testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -217,6 +219,11 @@ func TestGetImage(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, r, res)
 		})
 	}
 }

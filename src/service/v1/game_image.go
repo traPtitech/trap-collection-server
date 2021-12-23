@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -97,34 +98,33 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, gameID values.GameID) error {
-	err := gi.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		_, err := gi.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidGameID
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get game: %w", err)
-		}
-
-		image, err := gi.gameImageRepository.GetLatestGameImage(ctx, gameID, repository.LockTypeRecord)
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrNoGameImage
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get game image: %w", err)
-		}
-
-		err = gi.gameImageStorage.GetGameImage(ctx, writer, image)
-		if err != nil {
-			return fmt.Errorf("failed to get game image file: %w", err)
-		}
-
-		return nil
-	})
+func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (io.Reader, error) {
+	_, err := gi.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
 	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	return nil
+	image, err := gi.gameImageRepository.GetLatestGameImage(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameImage
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game image: %w", err)
+	}
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		defer pw.Close()
+
+		err = gi.gameImageStorage.GetGameImage(ctx, pw, image)
+		if err != nil {
+			log.Printf("failed to get game image file: %v\n", err)
+		}
+	}()
+
+	return pr, nil
 }

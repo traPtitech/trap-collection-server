@@ -320,7 +320,7 @@ func TestGetGameImage(t *testing.T) {
 			isErr:                     true,
 		},
 		{
-			description:               "GetGameImageがエラーなのでエラー",
+			description:               "GetGameImageがエラーでもエラーなし",
 			gameID:                    values.NewGameID(),
 			isValidFile:               true,
 			imageType:                 values.GameImageTypeJpeg,
@@ -332,7 +332,6 @@ func TestGetGameImage(t *testing.T) {
 			),
 			executeGetGameImage: true,
 			GetGameImageErr:     errors.New("error"),
-			isErr:               true,
 		},
 	}
 
@@ -386,7 +385,7 @@ func TestGetGameImage(t *testing.T) {
 			if testCase.executeGetLatestGameImage {
 				mockGameImageRepository.
 					EXPECT().
-					GetLatestGameImage(ctx, testCase.gameID, repository.LockTypeRecord).
+					GetLatestGameImage(ctx, testCase.gameID, repository.LockTypeNone).
 					Return(testCase.image, testCase.GetLatestGameImageErr)
 			}
 
@@ -397,9 +396,7 @@ func TestGetGameImage(t *testing.T) {
 					Return(testCase.GetGameImageErr)
 			}
 
-			buf := bytes.NewBuffer(nil)
-
-			err := gameImageService.GetGameImage(ctx, buf, testCase.gameID)
+			r, err := gameImageService.GetGameImage(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -414,7 +411,12 @@ func TestGetGameImage(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, expectBytes, buf.Bytes())
+			data, err := io.ReadAll(r)
+			if err != nil {
+				t.Fatalf("failed to read response body: %v\n", err)
+			}
+
+			assert.Equal(t, expectBytes, data)
 		})
 	}
 }
