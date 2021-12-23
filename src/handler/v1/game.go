@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -135,4 +136,57 @@ func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.Ga
 		Description: string(game.GetDescription()),
 		CreatedAt:   game.GetCreatedAt(),
 	}, nil
+}
+
+func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) {
+	isAll, err := strconv.ParseBool(strAll)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "all is invalid")
+	}
+
+	var games []*service.GameInfo
+	if isAll {
+		games, err = g.gameService.GetGames(c.Request().Context())
+		if err != nil {
+			log.Printf("error: failed to get games: %v\n", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
+		}
+	} else {
+		session, err := getSession(c)
+		if err != nil {
+			log.Printf("error: failed to get session: %v\n", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+		}
+
+		authSession, err := g.session.getAuthSession(session)
+		if err != nil {
+			// middlewareでログイン済みなことは確認しているので、ここではエラーになりえないはず
+			log.Printf("error: failed to get auth session: %v\n", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		games, err = g.gameService.GetMyGames(c.Request().Context(), authSession)
+		if err != nil {
+			log.Printf("error: failed to get latest games: %v\n", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get latest games")
+		}
+	}
+
+	gameInfos := make([]*openapi.Game, 0, len(games))
+	for _, game := range games {
+		gameInfos = append(gameInfos, &openapi.Game{
+			Id:          uuid.UUID(game.Game.GetID()).String(),
+			Name:        string(game.Game.GetName()),
+			Description: string(game.Game.GetDescription()),
+			CreatedAt:   game.Game.GetCreatedAt(),
+			Version: &openapi.GameVersion{
+				Id:          uuid.UUID(game.LatestVersion.GetID()).String(),
+				Name:        string(game.LatestVersion.GetName()),
+				Description: string(game.LatestVersion.GetDescription()),
+				CreatedAt:   game.LatestVersion.GetCreatedAt(),
+			},
+		})
+	}
+
+	return gameInfos, nil
 }
