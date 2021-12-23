@@ -132,7 +132,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - run: go test ./src/... -v -coverprofile=../coverage.txt -race -vet=off
+      - run: go test ./src/... -v -coverprofile=./coverage.txt -race -vet=off
         env:
           COLLECTION_ENV: production
           DB_USERNAME: root
