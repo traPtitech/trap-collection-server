@@ -94,3 +94,45 @@ func (g *Game) GetGame(strGameID string) (*openapi.Game, error) {
 		},
 	}, nil
 }
+
+func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error) {
+	ctx := context.Background()
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+	}
+
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	name := values.NewGameName(gameMeta.Name)
+	err = name.Validate()
+	if errors.Is(err, values.ErrGameNameEmpty) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "game name is empty")
+	}
+	if errors.Is(err, values.ErrGameNameTooLong) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "game name is too long")
+	}
+	if err != nil {
+		log.Printf("error: failed to validate game name: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
+	}
+
+	description := values.NewGameDescription(gameMeta.Description)
+
+	game, err := g.gameService.UpdateGame(ctx, gameID, name, description)
+	if errors.Is(err, service.ErrNoGame) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to update game: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to update game")
+	}
+
+	return &openapi.GameInfo{
+		Id:          uuid.UUID(game.GetID()).String(),
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+		CreatedAt:   game.GetCreatedAt(),
+	}, nil
+}
