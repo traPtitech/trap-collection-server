@@ -22,7 +22,6 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/traPtitech/trap-collection-server/model"
 	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/router"
@@ -37,17 +36,6 @@ func main() {
 	isProduction := env != "development" && env != "mock"
 	isSwift := storageEnv != "local"
 
-	db, err := model.EstablishDB()
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	err = model.Migrate(env)
-	if err != nil {
-		panic(err)
-	}
-
 	secret, ok := os.LookupEnv("SESSION_SECRET")
 	if !ok {
 		panic("SESSION_SECRET is not set")
@@ -55,6 +43,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
 
 	if !isProduction {
 		colog.SetMinLevel(colog.LDebug)
@@ -62,10 +51,6 @@ func main() {
 			Colors: true,
 			Flag:   log.Ldate | log.Ltime | log.Lshortfile,
 		})
-
-		db.LogMode(true)
-
-		e.Use(middleware.Logger())
 	} else {
 		colog.SetMinLevel(colog.LError)
 		colog.SetFormatter(&colog.StdFormatter{

@@ -3,6 +3,7 @@ package v1
 type API struct {
 	*Middleware
 	*User
+	*Game
 	*GameRole
 	*GameImage
 	*GameVideo
@@ -18,6 +19,7 @@ type API struct {
 func NewAPI(
 	middleware *Middleware,
 	user *User,
+	game *Game,
 	gameRole *GameRole,
 	gameImage *GameImage,
 	gameVideo *GameVideo,
@@ -32,6 +34,7 @@ func NewAPI(
 	return &API{
 		Middleware:      middleware,
 		User:            user,
+		Game:            game,
 		GameRole:        gameRole,
 		GameImage:       gameImage,
 		GameVideo:       gameVideo,

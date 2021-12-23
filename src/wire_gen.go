@@ -99,6 +99,9 @@ func InjectAPI(config *Config) (*Service, error) {
 	middleware := v1.NewMiddleware(session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
 	v1User := v1_2.NewUser(userUtils)
 	user2 := v1.NewUser(session, v1User)
+	gameVersion := gorm2.NewGameVersion(db)
+	v1Game := v1_2.NewGame(db, game, gameVersion, userUtils)
+	game2 := v1.NewGame(session, v1Game)
 	gameRole := v1.NewGameRole(session, gameAuth)
 	gameImage, err := gorm2.NewGameImage(db)
 	if err != nil {
@@ -118,7 +121,6 @@ func InjectAPI(config *Config) (*Service, error) {
 	storageGameVideo := storage.GameVideo
 	v1GameVideo := v1_2.NewGameVideo(db, game, gameVideo, storageGameVideo)
 	gameVideo2 := v1.NewGameVideo(v1GameVideo)
-	gameVersion := gorm2.NewGameVersion(db)
 	v1GameVersion := v1_2.NewGameVersion(db, game, gameVersion)
 	gameVersion2 := v1.NewGameVersion(v1GameVersion)
 	gameFile, err := gorm2.NewGameFile(db)
@@ -135,7 +137,7 @@ func InjectAPI(config *Config) (*Service, error) {
 	v1LauncherVersion := v1_2.NewLauncherVersion(db, launcherVersion, game)
 	launcherVersion2 := v1.NewLauncherVersion(v1LauncherVersion)
 	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
+	api := v1.NewAPI(middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
 	service := NewService(api, db)
 	return service, nil
 }
@@ -228,6 +230,7 @@ var (
 
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
+	gameServiceBind              = wire.Bind(new(service.Game), new(*v1_2.Game))
 	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1_2.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_2.GameVideo))
