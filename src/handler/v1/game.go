@@ -1,6 +1,16 @@
 package v1
 
-import "github.com/traPtitech/trap-collection-server/src/service"
+import (
+	"errors"
+	"log"
+	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/service"
+)
 
 type Game struct {
 	session     *Session
@@ -15,4 +25,38 @@ func NewGame(
 		session:     session,
 		gameService: gameService,
 	}
+}
+
+func (g *Game) PostGame(newGame *openapi.NewGame, c echo.Context) (*openapi.GameInfo, error) {
+	name := values.NewGameName(newGame.Name)
+	err := name.Validate()
+	if errors.Is(err, values.ErrGameNameEmpty) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "game name is empty")
+	}
+	if errors.Is(err, values.ErrGameNameTooLong) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "game name is too long")
+	}
+	if err != nil {
+		log.Printf("error: failed to validate game name: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
+	}
+
+	description := values.NewGameDescription(newGame.Description)
+
+	game, err := g.gameService.CreateGame(
+		c.Request().Context(),
+		name,
+		description,
+	)
+	if err != nil {
+		log.Printf("error: failed to create game: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to create game")
+	}
+
+	return &openapi.GameInfo{
+		Id:          uuid.UUID(game.GetID()).String(),
+		Name:        string(game.GetName()),
+		Description: string(game.GetDescription()),
+		CreatedAt:   game.GetCreatedAt(),
+	}, nil
 }
