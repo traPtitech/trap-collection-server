@@ -42,7 +42,7 @@ func TestSaveGameImage(t *testing.T) {
 
 	type test struct {
 		description string
-		image       *domain.GameImage
+		imageID     values.GameImageID
 		reader      *bytes.Buffer
 		isFileExist bool
 		isErr       bool
@@ -52,20 +52,12 @@ func TestSaveGameImage(t *testing.T) {
 	testCases := []test{
 		{
 			description: "ファイルが存在しないので保存できる",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeJpeg,
-				time.Now(),
-			),
-			reader: bytes.NewBufferString("a"),
+			imageID:     values.NewGameImageID(),
+			reader:      bytes.NewBufferString("a"),
 		},
 		{
 			description: "ファイルが存在するので保存できない",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeJpeg,
-				time.Now(),
-			),
+			imageID:     values.NewGameImageID(),
 			reader:      bytes.NewBufferString("b"),
 			isFileExist: true,
 			isErr:       true,
@@ -76,7 +68,7 @@ func TestSaveGameImage(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.isFileExist {
-				f, err := os.Create(filepath.Join(imageRootPath, uuid.UUID(testCase.image.GetID()).String()))
+				f, err := os.Create(filepath.Join(imageRootPath, uuid.UUID(testCase.imageID).String()))
 				if err != nil {
 					t.Fatalf("failed to write file: %v", err)
 				}
@@ -85,7 +77,7 @@ func TestSaveGameImage(t *testing.T) {
 
 			expectBytes := testCase.reader.Bytes()
 
-			err := gameImage.SaveGameImage(ctx, testCase.reader, testCase.image)
+			err := gameImage.SaveGameImage(ctx, testCase.reader, testCase.imageID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -100,7 +92,7 @@ func TestSaveGameImage(t *testing.T) {
 				return
 			}
 
-			f, err := os.Open(filepath.Join(imageRootPath, uuid.UUID(testCase.image.GetID()).String()))
+			f, err := os.Open(filepath.Join(imageRootPath, uuid.UUID(testCase.imageID).String()))
 			if err != nil {
 				t.Fatalf("failed to read file: %v", err)
 			}

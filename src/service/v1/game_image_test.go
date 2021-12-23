@@ -92,11 +92,12 @@ func TestSaveGameImage(t *testing.T) {
 			executeStorageSaveGameImage:    true,
 		},
 		{
-			description: "画像が不正なのでエラー",
-			gameID:      values.NewGameID(),
-			isValidFile: false,
-			isErr:       true,
-			err:         service.ErrInvalidFormat,
+			description:                 "画像が不正なのでエラー",
+			gameID:                      values.NewGameID(),
+			executeStorageSaveGameImage: true,
+			isValidFile:                 false,
+			isErr:                       true,
+			err:                         service.ErrInvalidFormat,
 		},
 		{
 			description:                    "repository.SaveGameImageがエラーなのでエラー",
@@ -104,6 +105,7 @@ func TestSaveGameImage(t *testing.T) {
 			isValidFile:                    true,
 			imageType:                      values.GameImageTypeJpeg,
 			executeRepositorySaveGameImage: true,
+			executeStorageSaveGameImage:    true,
 			RepositorySaveGameImageErr:     errors.New("error"),
 			isErr:                          true,
 		},
@@ -172,14 +174,14 @@ func TestSaveGameImage(t *testing.T) {
 			if testCase.executeRepositorySaveGameImage {
 				mockGameImageRepository.
 					EXPECT().
-					SaveGameImage(ctx, testCase.gameID, gomock.Any()).
+					SaveGameImage(gomock.Any(), testCase.gameID, gomock.Any()).
 					Return(testCase.RepositorySaveGameImageErr)
 			}
 
 			if testCase.executeStorageSaveGameImage {
 				mockGameImageStorage.
 					EXPECT().
-					SaveGameImage(ctx, gomock.Any()).
+					SaveGameImage(gomock.Any(), gomock.Any()).
 					Return(testCase.StorageSaveGameImageErr)
 			}
 

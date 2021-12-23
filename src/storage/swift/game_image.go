@@ -22,25 +22,13 @@ func NewGameImage(client *Client) *GameImage {
 	}
 }
 
-func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image *domain.GameImage) error {
-	imageKey := gi.imageKey(image)
-
-	var contentType string
-	switch image.GetType() {
-	case values.GameImageTypeJpeg:
-		contentType = "image/jpeg"
-	case values.GameImageTypePng:
-		contentType = "image/png"
-	case values.GameImageTypeGif:
-		contentType = "image/gif"
-	default:
-		return fmt.Errorf("unsupported image type: %d", image.GetType())
-	}
+func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error {
+	imageKey := gi.imageKey(imageID)
 
 	err := gi.client.saveFile(
 		ctx,
 		imageKey,
-		contentType,
+		"",
 		"",
 		reader,
 	)
@@ -55,7 +43,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image 
 }
 
 func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
-	imageKey := gi.imageKey(image)
+	imageKey := gi.imageKey(image.GetID())
 
 	err := gi.client.loadFile(
 		ctx,
@@ -73,6 +61,6 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 }
 
 // imageKey 変更時にはオブジェクトストレージのキーを変更する必要があるので要注意
-func (gi *GameImage) imageKey(image *domain.GameImage) string {
-	return fmt.Sprintf("images/%s", uuid.UUID(image.GetID()).String())
+func (gi *GameImage) imageKey(imageID values.GameImageID) string {
+	return fmt.Sprintf("images/%s", uuid.UUID(imageID).String())
 }

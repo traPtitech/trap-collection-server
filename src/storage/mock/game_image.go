@@ -8,6 +8,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 // GameImage is a mock of GameImage interface.
@@ -62,8 +63,8 @@ func (mr *GameImageMockRecorder) GetGameImage(ctx, image interface{}) *gomock.Ca
 }
 
 // SaveGameImage mocks base method.
-func (m *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image *domain.GameImage) error {
-	ret0 := m.saveGameImage(ctx, image)
+func (m *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error {
+	ret0 := m.saveGameImage(ctx, imageID)
 
 	_, err := io.Copy(m.buf, reader)
 	if err != nil {
@@ -73,9 +74,9 @@ func (m *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image *
 	return ret0
 }
 
-func (m *GameImage) saveGameImage(ctx context.Context, image *domain.GameImage) error {
+func (m *GameImage) saveGameImage(ctx context.Context, imageID values.GameImageID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveGameImage", ctx, image)
+	ret := m.ctrl.Call(m, "SaveGameImage", ctx, imageID)
 	ret0, _ := ret[0].(error)
 
 	return ret0
