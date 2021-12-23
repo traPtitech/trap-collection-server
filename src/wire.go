@@ -146,6 +146,7 @@ var (
 
 	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1Service.AdministratorAuth))
 	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1Service.GameAuth))
+	gameServiceBind              = wire.Bind(new(service.Game), new(*v1Service.Game))
 	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1Service.GameVersion))
 	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1Service.GameImage))
 	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1Service.GameVideo))
@@ -197,6 +198,7 @@ func InjectAPI(config *Config) (*Service, error) {
 		userCacheBind,
 		administratorAuthServiceBind,
 		gameAuthServiceBind,
+		gameServiceBind,
 		gameVersionServiceBind,
 		gameImageServiceBind,
 		gameVideoServiceBind,
@@ -222,6 +224,7 @@ func InjectAPI(config *Config) (*Service, error) {
 		ristretto.NewUser,
 		v1Service.NewAdministratorAuth,
 		v1Service.NewGameAuth,
+		v1Service.NewGame,
 		v1Service.NewGameVersion,
 		v1Service.NewGameImage,
 		v1Service.NewGameVideo,
@@ -234,6 +237,7 @@ func InjectAPI(config *Config) (*Service, error) {
 		v1Service.NewUserUtils,
 		v1Handler.NewAPI,
 		v1Handler.NewSession,
+		v1Handler.NewGame,
 		v1Handler.NewGameRole,
 		v1Handler.NewGameImage,
 		v1Handler.NewGameVideo,
