@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/prometheus"
 )
 
 type DB struct {
@@ -71,6 +72,17 @@ func NewDB(isProduction common.IsProduction) (*DB, error) {
 	err = db.AutoMigrate(tables...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to auto migrate: %w", err)
+	}
+
+	err = db.Use(prometheus.New(prometheus.Config{
+		DBName:          "trap_collection",
+		RefreshInterval: 15,
+		MetricsCollector: []prometheus.MetricsCollector{
+			&MetricsCollector{},
+		},
+	}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to use prometheus plugin: %w", err)
 	}
 
 	return &DB{
