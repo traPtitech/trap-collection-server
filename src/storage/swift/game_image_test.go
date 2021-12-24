@@ -101,7 +101,7 @@ func TestSaveGameImage(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err = client.loadFile(ctx, fmt.Sprintf("images/%s", uuid.UUID(testCase.imageID).String()), buf)
+			_, err = client.loadFile(ctx, fmt.Sprintf("images/%s", uuid.UUID(testCase.imageID).String()), buf)
 			if err != nil {
 				t.Fatalf("failed to load file: %v", err)
 			}

@@ -7,17 +7,25 @@ import (
 	"io"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
 type GameImage struct {
-	client *Client
+	gameImageHitGauge *prometheus.GaugeVec
+	client            *Client
 }
 
 func NewGameImage(client *Client) *GameImage {
 	return &GameImage{
+		gameImageHitGauge: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "storage_trap_collection",
+			Subsystem: "game_image",
+			Name:      "cache_hit_count",
+			Help:      "game image storage cache hit rate",
+		}, []string{"result"}),
 		client: client,
 	}
 }
@@ -45,7 +53,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageI
 func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
 	imageKey := gi.imageKey(image.GetID())
 
-	err := gi.client.loadFile(
+	useCache, err := gi.client.loadFile(
 		ctx,
 		imageKey,
 		writer,
@@ -55,6 +63,16 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get image: %w", err)
+	}
+
+	if useCache {
+		gi.gameImageHitGauge.
+			WithLabelValues("hit").
+			Inc()
+	} else {
+		gi.gameImageHitGauge.
+			WithLabelValues("miss").
+			Inc()
 	}
 
 	return nil

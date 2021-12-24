@@ -340,7 +340,7 @@ func TestLoadFile(t *testing.T) {
 
 			buf := bytes.NewBuffer(nil)
 
-			err := client.loadFile(ctx, testCase.name, buf)
+			useCache, err := client.loadFile(ctx, testCase.name, buf)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -356,6 +356,7 @@ func TestLoadFile(t *testing.T) {
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
+			assert.Equal(t, testCase.isCacheExist, useCache)
 		})
 	}
 }
