@@ -147,28 +147,28 @@ var (
 	ErrNotFound = fmt.Errorf("not found")
 )
 
-func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) error {
+func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) (bool, error) {
 	if c.cache.Exists(name) {
 		r, _, err := c.cache.Get(name)
 		if err != nil {
-			return fmt.Errorf("failed to get cache: %w", err)
+			return false, fmt.Errorf("failed to get cache: %w", err)
 		}
 		defer r.Close()
 
 		_, err = io.Copy(w, r)
 		if err != nil {
-			return fmt.Errorf("failed to copy cache: %w", err)
+			return false, fmt.Errorf("failed to copy cache: %w", err)
 		}
 
-		return nil
+		return true, nil
 	}
 
 	_, _, err := c.connection.Object(ctx, c.containerName, name)
 	if errors.Is(err, swift.ObjectNotFound) {
-		return ErrNotFound
+		return false, ErrNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get object: %w", err)
+		return false, fmt.Errorf("failed to get object: %w", err)
 	}
 
 	_, err = c.connection.ObjectGet(
@@ -180,8 +180,8 @@ func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) error {
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to get object: %w", err)
+		return false, fmt.Errorf("failed to get object: %w", err)
 	}
 
-	return nil
+	return false, nil
 }
