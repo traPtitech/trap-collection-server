@@ -51,10 +51,12 @@ func NewGameManagementRole(db *DB) (*GameManagementRole, error) {
 func setupRoleTypeTable(db *gorm.DB) error {
 	roleTypes := []GameManagementRoleTypeTable{
 		{
-			Name: gameManagementRoleTypeAdministrator,
+			Name:   gameManagementRoleTypeAdministrator,
+			Active: true,
 		},
 		{
-			Name: gameManagementRoleTypeCollaborator,
+			Name:   gameManagementRoleTypeCollaborator,
+			Active: true,
 		},
 	}
 
