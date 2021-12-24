@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/comail/colog"
+	"github.com/labstack/echo-contrib/prometheus"
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -44,6 +45,10 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
+
+	p := prometheus.NewPrometheus("echo", nil)
+	p.MetricsPath = "/api/metrics"
+	p.Use(e)
 
 	if !isProduction {
 		colog.SetMinLevel(colog.LDebug)
