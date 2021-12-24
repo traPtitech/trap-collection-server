@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
@@ -31,8 +32,8 @@ func NewGameVideo(directoryManager *DirectoryManager) (*GameVideo, error) {
 	}, nil
 }
 
-func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video *domain.GameVideo) error {
-	videoPath := path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())
+func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoID values.GameVideoID) error {
+	videoPath := path.Join(gv.videoRootPath, uuid.UUID(videoID).String())
 
 	_, err := os.Stat(videoPath)
 	if err == nil {

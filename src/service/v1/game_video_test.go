@@ -74,11 +74,12 @@ func TestSaveGameVideo(t *testing.T) {
 			isErr:       true,
 		},
 		{
-			description: "動画が不正なのでエラー",
-			gameID:      values.NewGameID(),
-			isValidFile: false,
-			isErr:       true,
-			err:         service.ErrInvalidFormat,
+			description:                 "動画が不正なのでエラー",
+			gameID:                      values.NewGameID(),
+			isValidFile:                 false,
+			executeStorageSaveGameVideo: true,
+			isErr:                       true,
+			err:                         service.ErrInvalidFormat,
 		},
 		{
 			description:                    "repository.SaveGameVideoがエラーなのでエラー",
@@ -86,6 +87,7 @@ func TestSaveGameVideo(t *testing.T) {
 			isValidFile:                    true,
 			videoType:                      values.GameVideoTypeMp4,
 			executeRepositorySaveGameVideo: true,
+			executeStorageSaveGameVideo:    true,
 			RepositorySaveGameVideoErr:     errors.New("error"),
 			isErr:                          true,
 		},
@@ -156,14 +158,14 @@ func TestSaveGameVideo(t *testing.T) {
 			if testCase.executeRepositorySaveGameVideo {
 				mockGameVideoRepository.
 					EXPECT().
-					SaveGameVideo(ctx, testCase.gameID, gomock.Any()).
+					SaveGameVideo(gomock.Any(), testCase.gameID, gomock.Any()).
 					Return(testCase.RepositorySaveGameVideoErr)
 			}
 
 			if testCase.executeStorageSaveGameVideo {
 				mockGameVideoStorage.
 					EXPECT().
-					SaveGameVideo(ctx, gomock.Any()).
+					SaveGameVideo(gomock.Any(), gomock.Any()).
 					Return(testCase.StorageSaveGameVideoErr)
 			}
 
