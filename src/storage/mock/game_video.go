@@ -8,6 +8,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 // GameVideo is a mock of GameVideo interface.
@@ -62,8 +63,8 @@ func (mr *GameVideoMockRecorder) GetGameVideo(ctx, video interface{}) *gomock.Ca
 }
 
 // SaveGameVideo mocks base method.
-func (m *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video *domain.GameVideo) error {
-	ret0 := m.saveGameVideo(ctx, video)
+func (m *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoID values.GameVideoID) error {
+	ret0 := m.saveGameVideo(ctx, videoID)
 
 	_, err := io.Copy(m.buf, reader)
 	if err != nil {
@@ -73,9 +74,9 @@ func (m *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video *
 	return ret0
 }
 
-func (m *GameVideo) saveGameVideo(ctx context.Context, video *domain.GameVideo) error {
+func (m *GameVideo) saveGameVideo(ctx context.Context, videoID values.GameVideoID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveGameVideo", ctx, video)
+	ret := m.ctrl.Call(m, "SaveGameVideo", ctx, videoID)
 	ret0, _ := ret[0].(error)
 
 	return ret0

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
@@ -31,8 +32,8 @@ func NewGameImage(directoryManager *DirectoryManager) (*GameImage, error) {
 	}, nil
 }
 
-func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, image *domain.GameImage) error {
-	imagePath := path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())
+func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error {
+	imagePath := path.Join(gi.imageRootPath, uuid.UUID(imageID).String())
 
 	_, err := os.Stat(imagePath)
 	if err == nil {

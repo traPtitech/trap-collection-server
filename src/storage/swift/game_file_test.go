@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -41,7 +40,7 @@ func TestSaveGameFile(t *testing.T) {
 
 	type test struct {
 		description string
-		file        *domain.GameFile
+		fileID      values.GameFileID
 		reader      *bytes.Buffer
 		isFileExist bool
 		isErr       bool
@@ -51,24 +50,12 @@ func TestSaveGameFile(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			file: domain.NewGameFile(
-				values.NewGameFileID(),
-				values.GameFileTypeJar,
-				"path/to/game.jar",
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
-				time.Now(),
-			),
-			reader: bytes.NewBufferString("test"),
+			fileID:      values.NewGameFileID(),
+			reader:      bytes.NewBufferString("test"),
 		},
 		{
 			description: "ファイルが存在するのでErrAlreadyExists",
-			file: domain.NewGameFile(
-				values.NewGameFileID(),
-				values.GameFileTypeJar,
-				"path/to/game.jar",
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
-				time.Now(),
-			),
+			fileID:      values.NewGameFileID(),
 			reader:      bytes.NewBufferString("test"),
 			isFileExist: true,
 			isErr:       true,
@@ -83,7 +70,7 @@ func TestSaveGameFile(t *testing.T) {
 			if testCase.isFileExist {
 				err := client.saveFile(
 					ctx,
-					fmt.Sprintf("files/%s", uuid.UUID(testCase.file.GetID()).String()),
+					fmt.Sprintf("files/%s", uuid.UUID(testCase.fileID).String()),
 					"text/plain",
 					"",
 					strings.NewReader(""),
@@ -95,7 +82,7 @@ func TestSaveGameFile(t *testing.T) {
 
 			expectBytes := testCase.reader.Bytes()
 
-			err := gameFileStorage.SaveGameFile(ctx, testCase.reader, testCase.file)
+			err := gameFileStorage.SaveGameFile(ctx, testCase.reader, testCase.fileID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -111,7 +98,7 @@ func TestSaveGameFile(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err = client.loadFile(ctx, fmt.Sprintf("files/%s", uuid.UUID(testCase.file.GetID()).String()), buf)
+			err = client.loadFile(ctx, fmt.Sprintf("files/%s", uuid.UUID(testCase.fileID).String()), buf)
 			if err != nil {
 				t.Fatalf("failed to load file: %v", err)
 			}
@@ -229,16 +216,8 @@ func TestFileKey(t *testing.T) {
 	for i := 0; i < loopNum; i++ {
 		fileID := values.NewGameFileID()
 
-		file := domain.NewGameFile(
-			fileID,
-			values.GameFileType(rand.Intn(3)),
-			"path/to/file",
-			[]byte("hash"),
-			time.Now(),
-		)
+		key := gameFileStorage.fileKey(fileID)
 
-		key := gameFileStorage.fileKey(file)
-
-		assert.Equal(t, fmt.Sprintf("files/%s", uuid.UUID(file.GetID()).String()), key)
+		assert.Equal(t, fmt.Sprintf("files/%s", uuid.UUID(fileID).String()), key)
 	}
 }

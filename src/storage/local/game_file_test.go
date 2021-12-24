@@ -42,7 +42,7 @@ func TestSaveGameFile(t *testing.T) {
 
 	type test struct {
 		description string
-		file        *domain.GameFile
+		fileID      values.GameFileID
 		reader      *bytes.Buffer
 		isFileExist bool
 		isErr       bool
@@ -52,24 +52,12 @@ func TestSaveGameFile(t *testing.T) {
 	testCases := []test{
 		{
 			description: "ファイルが存在しないので保存できる",
-			file: domain.NewGameFile(
-				values.NewGameFileID(),
-				values.GameFileTypeJar,
-				"/path/to/game.jar",
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
-				time.Now(),
-			),
-			reader: bytes.NewBufferString("test"),
+			fileID:      values.NewGameFileID(),
+			reader:      bytes.NewBufferString("test"),
 		},
 		{
 			description: "ファイルが存在するので保存できない",
-			file: domain.NewGameFile(
-				values.NewGameFileID(),
-				values.GameFileTypeJar,
-				"/path/to/game.jar",
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
-				time.Now(),
-			),
+			fileID:      values.NewGameFileID(),
 			reader:      bytes.NewBufferString("test"),
 			isFileExist: true,
 			isErr:       true,
@@ -80,7 +68,7 @@ func TestSaveGameFile(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.isFileExist {
-				f, err := os.Create(filepath.Join(fileRootPath, uuid.UUID(testCase.file.GetID()).String()))
+				f, err := os.Create(filepath.Join(fileRootPath, uuid.UUID(testCase.fileID).String()))
 				if err != nil {
 					t.Fatalf("failed to write file: %v", err)
 				}
@@ -89,7 +77,7 @@ func TestSaveGameFile(t *testing.T) {
 
 			expectBytes := testCase.reader.Bytes()
 
-			err := gameFile.SaveGameFile(ctx, testCase.reader, testCase.file)
+			err := gameFile.SaveGameFile(ctx, testCase.reader, testCase.fileID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -104,7 +92,7 @@ func TestSaveGameFile(t *testing.T) {
 				return
 			}
 
-			f, err := os.Open(filepath.Join(fileRootPath, uuid.UUID(testCase.file.GetID()).String()))
+			f, err := os.Open(filepath.Join(fileRootPath, uuid.UUID(testCase.fileID).String()))
 			if err != nil {
 				t.Fatalf("failed to read file: %v", err)
 			}

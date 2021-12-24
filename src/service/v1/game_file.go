@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 type GameFile struct {
@@ -67,29 +68,57 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 			return service.ErrGameFileAlreadyExists
 		}
 
-		buf := bytes.NewBuffer(nil)
-		tr := io.TeeReader(reader, buf)
-		hash, err := values.NewGameFileHash(tr)
-		if err != nil {
-			return fmt.Errorf("failed to get hash: %w", err)
-		}
-
-		_, err = io.ReadAll(tr)
-		if err != nil {
-			return fmt.Errorf("failed to read all: %w", err)
-		}
-
 		gameFileID := values.NewGameFileID()
-		gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash, time.Now())
 
-		err = gf.gameFileRepository.SaveGameFile(ctx, gameVersion.GetID(), gameFile)
-		if err != nil {
-			return fmt.Errorf("failed to save game file(repository): %w", err)
-		}
+		eg, ctx := errgroup.WithContext(ctx)
+		hashPr, hashPw := io.Pipe()
+		filePr, filePw := io.Pipe()
 
-		err = gf.gameFileStorage.SaveGameFile(ctx, buf, gameFile)
+		eg.Go(func() error {
+			defer hashPr.Close()
+
+			hash, err := values.NewGameFileHash(hashPr)
+			if err != nil {
+				return fmt.Errorf("failed to get hash: %w", err)
+			}
+
+			gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash, time.Now())
+
+			err = gf.gameFileRepository.SaveGameFile(ctx, gameVersion.GetID(), gameFile)
+			if err != nil {
+				return fmt.Errorf("failed to save game file(repository): %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePr.Close()
+
+			err = gf.gameFileStorage.SaveGameFile(ctx, filePr, gameFileID)
+			if err != nil {
+				return fmt.Errorf("failed to save game file(storage): %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer hashPw.Close()
+			defer filePw.Close()
+
+			mw := io.MultiWriter(hashPw, filePw)
+			_, err := io.Copy(mw, reader)
+			if err != nil {
+				return fmt.Errorf("failed to copy: %w", err)
+			}
+
+			return nil
+		})
+
+		err = eg.Wait()
 		if err != nil {
-			return fmt.Errorf("failed to save game file(storage): %w", err)
+			return fmt.Errorf("failed to save game file: %w", err)
 		}
 
 		return nil
@@ -101,26 +130,26 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 	return gameFile, nil
 }
 
-func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, gameID values.GameID, environment *values.LauncherEnvironment) (*domain.GameFile, error) {
+func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (io.Reader, *domain.GameFile, error) {
 	_, err := gf.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
-		return nil, service.ErrInvalidGameID
+		return nil, nil, service.ErrInvalidGameID
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to get game: %w", err)
+		return nil, nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
 	gameVersion, err := gf.gameVersionRepository.GetLatestGameVersion(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
-		return nil, service.ErrNoGameVersion
+		return nil, nil, service.ErrNoGameVersion
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to get latest game version: %w", err)
+		return nil, nil, fmt.Errorf("failed to get latest game version: %w", err)
 	}
 
 	gameFiles, err := gf.gameFileRepository.GetGameFiles(ctx, gameVersion.GetID(), environment.AcceptGameFileTypes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get game file: %w", err)
+		return nil, nil, fmt.Errorf("failed to get game file: %w", err)
 	}
 
 	gameFileTypeMap := make(map[values.GameFileType]*domain.GameFile)
@@ -136,13 +165,19 @@ func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, gameID va
 	} else if jarGameFile, ok := gameFileTypeMap[values.GameFileTypeJar]; ok {
 		gameFile = jarGameFile
 	} else {
-		return nil, service.ErrNoGameFile
+		return nil, nil, service.ErrNoGameFile
 	}
 
-	err = gf.gameFileStorage.GetGameFile(ctx, writer, gameFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get game file(storage): %w", err)
-	}
+	pr, pw := io.Pipe()
 
-	return gameFile, nil
+	go func() {
+		defer pw.Close()
+
+		err = gf.gameFileStorage.GetGameFile(ctx, pw, gameFile)
+		if err != nil {
+			log.Printf("error: failed to get game file: %v\n", err)
+		}
+	}()
+
+	return pr, gameFile, nil
 }

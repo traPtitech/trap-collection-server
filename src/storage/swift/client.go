@@ -1,7 +1,6 @@
 package swift
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -123,19 +122,6 @@ func (c *Client) saveFile(
 	}
 	defer f.Close()
 
-	// cacheにも保存したいので、書き込みと同時にbufferに読み込む
-	buf := bytes.NewBuffer(nil)
-	tr := io.TeeReader(content, buf)
-
-	_, err = io.Copy(f, tr)
-	if err != nil {
-		return fmt.Errorf("failed to copy content: %w", err)
-	}
-
-	/*
-		オブジェクトストレージに存在しないことは確認済みなので、
-		ここでキャッシュが存在することはない
-	*/
 	r, w, err := c.cache.Get(name)
 	if err != nil {
 		return fmt.Errorf("failed to get cache: %w", err)
@@ -147,9 +133,11 @@ func (c *Client) saveFile(
 		return fmt.Errorf("failed to close cache: %w", err)
 	}
 
-	_, err = io.Copy(w, buf)
+	mw := io.MultiWriter(f, w)
+
+	_, err = io.Copy(mw, content)
 	if err != nil {
-		return fmt.Errorf("failed to copy buffer: %w", err)
+		return fmt.Errorf("failed to copy content: %w", err)
 	}
 
 	return nil

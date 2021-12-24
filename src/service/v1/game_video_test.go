@@ -74,11 +74,12 @@ func TestSaveGameVideo(t *testing.T) {
 			isErr:       true,
 		},
 		{
-			description: "動画が不正なのでエラー",
-			gameID:      values.NewGameID(),
-			isValidFile: false,
-			isErr:       true,
-			err:         service.ErrInvalidFormat,
+			description:                 "動画が不正なのでエラー",
+			gameID:                      values.NewGameID(),
+			isValidFile:                 false,
+			executeStorageSaveGameVideo: true,
+			isErr:                       true,
+			err:                         service.ErrInvalidFormat,
 		},
 		{
 			description:                    "repository.SaveGameVideoがエラーなのでエラー",
@@ -86,6 +87,7 @@ func TestSaveGameVideo(t *testing.T) {
 			isValidFile:                    true,
 			videoType:                      values.GameVideoTypeMp4,
 			executeRepositorySaveGameVideo: true,
+			executeStorageSaveGameVideo:    true,
 			RepositorySaveGameVideoErr:     errors.New("error"),
 			isErr:                          true,
 		},
@@ -156,14 +158,14 @@ func TestSaveGameVideo(t *testing.T) {
 			if testCase.executeRepositorySaveGameVideo {
 				mockGameVideoRepository.
 					EXPECT().
-					SaveGameVideo(ctx, testCase.gameID, gomock.Any()).
+					SaveGameVideo(gomock.Any(), testCase.gameID, gomock.Any()).
 					Return(testCase.RepositorySaveGameVideoErr)
 			}
 
 			if testCase.executeStorageSaveGameVideo {
 				mockGameVideoStorage.
 					EXPECT().
-					SaveGameVideo(ctx, gomock.Any()).
+					SaveGameVideo(gomock.Any(), gomock.Any()).
 					Return(testCase.StorageSaveGameVideoErr)
 			}
 
@@ -278,7 +280,7 @@ func TestGetGameVideo(t *testing.T) {
 			isErr:                     true,
 		},
 		{
-			description:               "GetGameVideoがエラーなのでエラー",
+			description:               "GetGameVideoがエラーでもエラーなし",
 			gameID:                    values.NewGameID(),
 			isValidFile:               true,
 			videoType:                 values.GameVideoTypeMp4,
@@ -290,7 +292,6 @@ func TestGetGameVideo(t *testing.T) {
 			),
 			executeGetGameVideo: true,
 			GetGameVideoErr:     errors.New("error"),
-			isErr:               true,
 		},
 	}
 
@@ -346,7 +347,7 @@ func TestGetGameVideo(t *testing.T) {
 			if testCase.executeGetLatestGameVideo {
 				mockGameVideoRepository.
 					EXPECT().
-					GetLatestGameVideo(ctx, testCase.gameID, repository.LockTypeRecord).
+					GetLatestGameVideo(ctx, testCase.gameID, repository.LockTypeNone).
 					Return(testCase.video, testCase.GetLatestGameVideoErr)
 			}
 
@@ -357,9 +358,7 @@ func TestGetGameVideo(t *testing.T) {
 					Return(testCase.GetGameVideoErr)
 			}
 
-			buf := bytes.NewBuffer(nil)
-
-			err := gameVideoService.GetGameVideo(ctx, buf, testCase.gameID)
+			r, err := gameVideoService.GetGameVideo(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -374,7 +373,12 @@ func TestGetGameVideo(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, expectBytes, buf.Bytes())
+			data, err := io.ReadAll(r)
+			if err != nil {
+				t.Fatalf("failed to read response body: %v\n", err)
+			}
+
+			assert.Equal(t, expectBytes, data)
 		})
 	}
 }

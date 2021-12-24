@@ -11,5 +11,5 @@ import (
 
 type GameVideo interface {
 	SaveGameVideo(ctx context.Context, reader io.Reader, gameID values.GameID) error
-	GetGameVideo(ctx context.Context, writer io.Writer, gameID values.GameID) error
+	GetGameVideo(ctx context.Context, gameID values.GameID) (io.Reader, error)
 }

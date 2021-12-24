@@ -192,14 +192,16 @@ func TestGetVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			r := bytes.NewReader([]byte("a"))
+
 			if testCase.executeGetGameVideo {
 				mockGameVideoService.
 					EXPECT().
-					GetGameVideo(gomock.Any(), gomock.Any(), testCase.gameID).
-					Return(testCase.GetGameVideoErr)
+					GetGameVideo(gomock.Any(), testCase.gameID).
+					Return(r, testCase.GetGameVideoErr)
 			}
 
-			_, err := gameVideoHandler.GetVideo(testCase.strGameID)
+			res, err := gameVideoHandler.GetVideo(testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -217,6 +219,11 @@ func TestGetVideo(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, r, res)
 		})
 	}
 }

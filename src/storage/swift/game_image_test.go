@@ -45,7 +45,7 @@ func TestSaveGameImage(t *testing.T) {
 
 	type test struct {
 		description string
-		image       *domain.GameImage
+		imageID     values.GameImageID
 		isFileExist bool
 		isErr       bool
 		err         error
@@ -54,44 +54,11 @@ func TestSaveGameImage(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeJpeg,
-				time.Now(),
-			),
-		},
-		{
-			description: "pngでもエラーなし",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypePng,
-				time.Now(),
-			),
-		},
-		{
-			description: "gifでもエラーなし",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeGif,
-				time.Now(),
-			),
-		},
-		{
-			description: "想定外のファイルタイプなのでエラー",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				100,
-				time.Now(),
-			),
-			isErr: true,
+			imageID:     values.NewGameImageID(),
 		},
 		{
 			description: "ファイルが存在するのでErrAlreadyExists",
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeJpeg,
-				time.Now(),
-			),
+			imageID:     values.NewGameImageID(),
 			isFileExist: true,
 			isErr:       true,
 			err:         storage.ErrAlreadyExists,
@@ -105,7 +72,7 @@ func TestSaveGameImage(t *testing.T) {
 			if testCase.isFileExist {
 				err := client.saveFile(
 					ctx,
-					fmt.Sprintf("images/%s", uuid.UUID(testCase.image.GetID()).String()),
+					fmt.Sprintf("images/%s", uuid.UUID(testCase.imageID).String()),
 					"text/plain",
 					"",
 					strings.NewReader(""),
@@ -115,32 +82,10 @@ func TestSaveGameImage(t *testing.T) {
 				}
 			}
 
-			var expectBytes []byte
-			img := image.NewRGBA(image.Rect(0, 0, 3000, 3000))
-			imgBuf := bytes.NewBuffer(nil)
+			imgBuf := bytes.NewBufferString("hoge")
+			expectBytes := imgBuf.Bytes()
 
-			switch testCase.image.GetType() {
-			case values.GameImageTypeJpeg:
-				err := jpeg.Encode(imgBuf, img, nil)
-				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
-				}
-			case values.GameImageTypePng:
-				err := png.Encode(imgBuf, img)
-				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
-				}
-			case values.GameImageTypeGif:
-				err := gif.Encode(imgBuf, img, nil)
-				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
-				}
-			default:
-				imgBuf = bytes.NewBufferString("hoge")
-			}
-			expectBytes = imgBuf.Bytes()
-
-			err := gameImageStorage.SaveGameImage(ctx, imgBuf, testCase.image)
+			err := gameImageStorage.SaveGameImage(ctx, imgBuf, testCase.imageID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -156,7 +101,7 @@ func TestSaveGameImage(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err = client.loadFile(ctx, fmt.Sprintf("images/%s", uuid.UUID(testCase.image.GetID()).String()), buf)
+			err = client.loadFile(ctx, fmt.Sprintf("images/%s", uuid.UUID(testCase.imageID).String()), buf)
 			if err != nil {
 				t.Fatalf("failed to load file: %v", err)
 			}
@@ -314,7 +259,7 @@ func TestImageKey(t *testing.T) {
 			time.Now(),
 		)
 
-		key := gameImageStorage.imageKey(image)
+		key := gameImageStorage.imageKey(imageID)
 
 		assert.Equal(t, fmt.Sprintf("images/%s", uuid.UUID(image.GetID()).String()), key)
 	}

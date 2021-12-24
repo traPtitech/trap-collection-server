@@ -2,13 +2,13 @@ package swift
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
@@ -22,8 +22,8 @@ func NewGameFile(client *Client) *GameFile {
 	}
 }
 
-func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *domain.GameFile) error {
-	fileKey := gf.fileKey(file)
+func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID values.GameFileID) error {
+	fileKey := gf.fileKey(fileID)
 
 	contentType := "application/zip"
 
@@ -31,7 +31,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *do
 		ctx,
 		fileKey,
 		contentType,
-		hex.EncodeToString([]byte(file.GetHash())),
+		"",
 		reader,
 	)
 	if errors.Is(err, ErrAlreadyExists) {
@@ -45,7 +45,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *do
 }
 
 func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *domain.GameFile) error {
-	fileKey := gf.fileKey(file)
+	fileKey := gf.fileKey(file.GetID())
 
 	err := gf.client.loadFile(
 		ctx,
@@ -62,6 +62,6 @@ func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *dom
 	return nil
 }
 
-func (gf *GameFile) fileKey(file *domain.GameFile) string {
-	return fmt.Sprintf("files/%s", uuid.UUID(file.GetID()).String())
+func (gf *GameFile) fileKey(fileID values.GameFileID) string {
+	return fmt.Sprintf("files/%s", uuid.UUID(fileID).String())
 }

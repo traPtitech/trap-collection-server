@@ -8,6 +8,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 // GameFile is a mock of GameFile interface.
@@ -62,8 +63,8 @@ func (mr *GameFileMockRecorder) GetGameFile(ctx, file interface{}) *gomock.Call 
 }
 
 // SaveGameFile mocks base method.
-func (m *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *domain.GameFile) error {
-	ret0 := m.saveGameFile(ctx, file)
+func (m *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID values.GameFileID) error {
+	ret0 := m.saveGameFile(ctx, fileID)
 
 	_, err := io.Copy(m.buf, reader)
 	if err != nil {
@@ -73,9 +74,9 @@ func (m *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *dom
 	return ret0
 }
 
-func (m *GameFile) saveGameFile(ctx context.Context, file *domain.GameFile) error {
+func (m *GameFile) saveGameFile(ctx context.Context, fileID values.GameFileID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveGameFile", ctx, file)
+	ret := m.ctrl.Call(m, "SaveGameFile", ctx, fileID)
 	ret0, _ := ret[0].(error)
 
 	return ret0

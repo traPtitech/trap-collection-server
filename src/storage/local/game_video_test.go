@@ -43,7 +43,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 	type test struct {
 		description string
-		video       *domain.GameVideo
+		videoID     values.GameVideoID
 		isFileExist bool
 		isErr       bool
 		err         error
@@ -52,19 +52,11 @@ func TestSaveGameVideo(t *testing.T) {
 	testCases := []test{
 		{
 			description: "ファイルが存在しないので保存できる",
-			video: domain.NewGameVideo(
-				values.NewGameVideoID(),
-				values.GameVideoTypeMp4,
-				time.Now(),
-			),
+			videoID:     values.NewGameVideoID(),
 		},
 		{
 			description: "ファイルが存在するので保存できない",
-			video: domain.NewGameVideo(
-				values.NewGameVideoID(),
-				values.GameVideoTypeMp4,
-				time.Now(),
-			),
+			videoID:     values.NewGameVideoID(),
 			isFileExist: true,
 			isErr:       true,
 			err:         storage.ErrAlreadyExists,
@@ -74,7 +66,7 @@ func TestSaveGameVideo(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.isFileExist {
-				f, err := os.Create(filepath.Join(videoRootPath, uuid.UUID(testCase.video.GetID()).String()))
+				f, err := os.Create(filepath.Join(videoRootPath, uuid.UUID(testCase.videoID).String()))
 				if err != nil {
 					t.Fatalf("failed to write file: %v", err)
 				}
@@ -82,33 +74,27 @@ func TestSaveGameVideo(t *testing.T) {
 			}
 
 			videoBuf := bytes.NewBuffer(nil)
-
-			switch testCase.video.GetType() {
-			case values.GameVideoTypeMp4:
-				err := func() error {
-					f, err := os.Open("../../../testdata/1.mp4")
-					if err != nil {
-						return fmt.Errorf("failed to open file: %w", err)
-					}
-					defer f.Close()
-
-					_, err = io.Copy(videoBuf, f)
-					if err != nil {
-						return fmt.Errorf("failed to copy file: %w", err)
-					}
-
-					return nil
-				}()
+			err := func() error {
+				f, err := os.Open("../../../testdata/1.mp4")
 				if err != nil {
-					t.Fatalf("failed to encode image: %s", err)
+					return fmt.Errorf("failed to open file: %w", err)
 				}
-			default:
-				t.Fatalf("invalid video type: %v\n", testCase.video.GetType())
+				defer f.Close()
+
+				_, err = io.Copy(videoBuf, f)
+				if err != nil {
+					return fmt.Errorf("failed to copy file: %w", err)
+				}
+
+				return nil
+			}()
+			if err != nil {
+				t.Fatalf("failed to encode image: %s", err)
 			}
 
 			expectBytes := videoBuf.Bytes()
 
-			err := gameVideo.SaveGameVideo(ctx, videoBuf, testCase.video)
+			err = gameVideo.SaveGameVideo(ctx, videoBuf, testCase.videoID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -123,7 +109,7 @@ func TestSaveGameVideo(t *testing.T) {
 				return
 			}
 
-			f, err := os.Open(filepath.Join(videoRootPath, uuid.UUID(testCase.video.GetID()).String()))
+			f, err := os.Open(filepath.Join(videoRootPath, uuid.UUID(testCase.videoID).String()))
 			if err != nil {
 				t.Fatalf("failed to read file: %v", err)
 			}

@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 type GameVideo struct {
@@ -48,40 +49,74 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 			return fmt.Errorf("failed to get game: %w", err)
 		}
 
-		buf := bytes.NewBuffer(nil)
-		r := io.TeeReader(reader, buf)
-		fType, err := filetype.MatchReader(r)
-		if err != nil {
-			return fmt.Errorf("failed to get file type: %w", err)
-		}
+		videoID := values.NewGameVideoID()
 
-		var videoType values.GameVideoType
-		switch fType.Extension {
-		case matchers.TypeMp4.Extension:
-			videoType = values.GameVideoTypeMp4
-		default:
-			return service.ErrInvalidFormat
-		}
+		eg, ctx := errgroup.WithContext(ctx)
+		fileTypePr, fileTypePw := io.Pipe()
+		filePr, filePw := io.Pipe()
 
-		_, err = io.ReadAll(r)
-		if err != nil {
-			return fmt.Errorf("failed to read video: %w", err)
-		}
+		eg.Go(func() error {
+			defer fileTypePr.Close()
 
-		video := domain.NewGameVideo(
-			values.NewGameVideoID(),
-			videoType,
-			time.Now(),
-		)
+			fType, err := filetype.MatchReader(fileTypePr)
+			if err != nil {
+				return fmt.Errorf("failed to get file type: %w", err)
+			}
 
-		err = gv.gameVideoRepository.SaveGameVideo(ctx, gameID, video)
+			var videoType values.GameVideoType
+			switch fType.Extension {
+			case matchers.TypeMp4.Extension:
+				videoType = values.GameVideoTypeMp4
+			default:
+				return service.ErrInvalidFormat
+			}
+
+			_, err = io.ReadAll(fileTypePr)
+			if err != nil {
+				return fmt.Errorf("failed to read video: %w", err)
+			}
+
+			video := domain.NewGameVideo(
+				videoID,
+				videoType,
+				time.Now(),
+			)
+
+			err = gv.gameVideoRepository.SaveGameVideo(ctx, gameID, video)
+			if err != nil {
+				return fmt.Errorf("failed to save game video: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePr.Close()
+
+			err = gv.gameVideoStorage.SaveGameVideo(ctx, filePr, videoID)
+			if err != nil {
+				return fmt.Errorf("failed to save game video file: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePw.Close()
+			defer fileTypePw.Close()
+
+			mw := io.MultiWriter(fileTypePw, filePw)
+			_, err = io.Copy(mw, reader)
+			if err != nil {
+				return fmt.Errorf("failed to copy video: %w", err)
+			}
+
+			return nil
+		})
+
+		err = eg.Wait()
 		if err != nil {
 			return fmt.Errorf("failed to save game video: %w", err)
-		}
-
-		err = gv.gameVideoStorage.SaveGameVideo(ctx, buf, video)
-		if err != nil {
-			return fmt.Errorf("failed to save game video file: %w", err)
 		}
 
 		return nil
@@ -93,34 +128,33 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, gameID values.GameID) error {
-	err := gv.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidGameID
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get game: %w", err)
-		}
-
-		video, err := gv.gameVideoRepository.GetLatestGameVideo(ctx, gameID, repository.LockTypeRecord)
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrNoGameVideo
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get game image: %w", err)
-		}
-
-		err = gv.gameVideoStorage.GetGameVideo(ctx, writer, video)
-		if err != nil {
-			return fmt.Errorf("failed to get game image file: %w", err)
-		}
-
-		return nil
-	})
+func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (io.Reader, error) {
+	_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
 	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	return nil
+	video, err := gv.gameVideoRepository.GetLatestGameVideo(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameVideo
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game image: %w", err)
+	}
+
+	pr, pw := io.Pipe()
+
+	go func() {
+		defer pw.Close()
+
+		err = gv.gameVideoStorage.GetGameVideo(ctx, pw, video)
+		if err != nil {
+			log.Printf("error: failed to get game video: %+v", err)
+		}
+	}()
+
+	return pr, nil
 }

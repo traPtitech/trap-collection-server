@@ -22,21 +22,13 @@ func NewGameVideo(client *Client) *GameVideo {
 	}
 }
 
-func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video *domain.GameVideo) error {
-	videoKey := gv.videoKey(video)
-
-	var contentType string
-	switch video.GetType() {
-	case values.GameVideoTypeMp4:
-		contentType = "video/mp4"
-	default:
-		return fmt.Errorf("unsupported video type: %d", video.GetType())
-	}
+func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoID values.GameVideoID) error {
+	videoKey := gv.videoKey(videoID)
 
 	err := gv.client.saveFile(
 		ctx,
 		videoKey,
-		contentType,
+		"",
 		"",
 		reader,
 	)
@@ -51,7 +43,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, video 
 }
 
 func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
-	videoKey := gv.videoKey(video)
+	videoKey := gv.videoKey(video.GetID())
 
 	err := gv.client.loadFile(
 		ctx,
@@ -68,6 +60,6 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 	return nil
 }
 
-func (gv *GameVideo) videoKey(video *domain.GameVideo) string {
-	return fmt.Sprintf("videos/%s", uuid.UUID(video.GetID()).String())
+func (gv *GameVideo) videoKey(videoID values.GameVideoID) string {
+	return fmt.Sprintf("videos/%s", uuid.UUID(videoID).String())
 }
