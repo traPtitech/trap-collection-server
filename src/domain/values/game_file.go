@@ -3,6 +3,7 @@ package values
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 
@@ -42,6 +43,18 @@ const (
 
 func NewGameFileEntryPoint(entryPoint string) GameFileEntryPoint {
 	return GameFileEntryPoint(entryPoint)
+}
+
+var (
+	ErrGameFileEntryPointEmpty = errors.New("entry point must not be empty")
+)
+
+func (ep GameFileEntryPoint) Validate() error {
+	if len(ep) == 0 {
+		return ErrGameFileEntryPointEmpty
+	}
+
+	return nil
 }
 
 func NewGameFileHash(r io.Reader) (GameFileHash, error) {

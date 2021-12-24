@@ -25,7 +25,7 @@ func NewGameFile(gameFileService service.GameFile) *GameFile {
 	}
 }
 
-func (gf *GameFile) PostFile(strGameID string, entryPoint string, file multipart.File, strFileType string) (*openapi.GameFile, error) {
+func (gf *GameFile) PostFile(strGameID string, strEntryPoint string, file multipart.File, strFileType string) (*openapi.GameFile, error) {
 	ctx := context.Background()
 
 	uuidGameID, err := uuid.Parse(strGameID)
@@ -47,12 +47,22 @@ func (gf *GameFile) PostFile(strGameID string, entryPoint string, file multipart
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid file type")
 	}
 
+	entryPoint := values.NewGameFileEntryPoint(strEntryPoint)
+	err = entryPoint.Validate()
+	if errors.Is(err, values.ErrGameFileEntryPointEmpty) {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "entry point must not be empty")
+	}
+	if err != nil {
+		log.Printf("error: failed to validate entry point: %v\n", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to validate entry point")
+	}
+
 	gameFile, err := gf.gameFileService.SaveGameFile(
 		ctx,
 		file,
 		gameID,
 		fileType,
-		values.NewGameFileEntryPoint(entryPoint),
+		entryPoint,
 	)
 	if errors.Is(err, service.ErrInvalidGameID) {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
@@ -71,7 +81,7 @@ func (gf *GameFile) PostFile(strGameID string, entryPoint string, file multipart
 	return &openapi.GameFile{
 		Id:         uuid.UUID(gameFile.GetID()).String(),
 		Type:       strFileType,
-		EntryPoint: entryPoint,
+		EntryPoint: string(gameFile.GetEntryPoint()),
 	}, nil
 }
 
