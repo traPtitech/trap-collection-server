@@ -8,24 +8,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
+var gameFileHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "storage_trap_collection",
+	Subsystem: "game_file",
+	Name:      "cache_hit_count",
+	Help:      "game file storage cache hit rate",
+}, []string{"result"})
+
 type GameFile struct {
-	gameFileHitGauge *prometheus.GaugeVec
-	client           *Client
+	client *Client
 }
 
 func NewGameFile(client *Client) *GameFile {
 	return &GameFile{
-		gameFileHitGauge: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "storage_trap_collection",
-			Subsystem: "game_file",
-			Name:      "cache_hit_count",
-			Help:      "game file storage cache hit rate",
-		}, []string{"result"}),
 		client: client,
 	}
 }
@@ -68,11 +69,11 @@ func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *dom
 	}
 
 	if useCache {
-		gf.gameFileHitGauge.
+		gameFileHitGauge.
 			WithLabelValues("hit").
 			Inc()
 	} else {
-		gf.gameFileHitGauge.
+		gameFileHitGauge.
 			WithLabelValues("miss").
 			Inc()
 	}
