@@ -7,17 +7,25 @@ import (
 	"io"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
 type GameVideo struct {
-	client *Client
+	gameVideoHitGauge *prometheus.GaugeVec
+	client            *Client
 }
 
 func NewGameVideo(client *Client) *GameVideo {
 	return &GameVideo{
+		gameVideoHitGauge: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "storage_trap_collection",
+			Subsystem: "game_video",
+			Name:      "cache_hit_count",
+			Help:      "game video storage cache hit rate",
+		}, []string{"result"}),
 		client: client,
 	}
 }
@@ -45,7 +53,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoI
 func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
 	videoKey := gv.videoKey(video.GetID())
 
-	err := gv.client.loadFile(
+	useCache, err := gv.client.loadFile(
 		ctx,
 		videoKey,
 		writer,
@@ -55,6 +63,16 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get video: %w", err)
+	}
+
+	if useCache {
+		gv.gameVideoHitGauge.
+			WithLabelValues("hit").
+			Inc()
+	} else {
+		gv.gameVideoHitGauge.
+			WithLabelValues("miss").
+			Inc()
 	}
 
 	return nil
