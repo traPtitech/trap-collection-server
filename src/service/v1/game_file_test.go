@@ -131,6 +131,7 @@ func TestSaveGameFile(t *testing.T) {
 			executeGetGameFiles:           true,
 			gameFiles:                     []*domain.GameFile{},
 			executeRepositorySaveGameFile: true,
+			executeStorageSaveGameVersion: true,
 			repositorySaveGameFileErr:     errors.New("error"),
 			isErr:                         true,
 		},

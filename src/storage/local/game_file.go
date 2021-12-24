@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
@@ -31,8 +32,8 @@ func NewGameFile(directoryManager *DirectoryManager) (*GameFile, error) {
 	}, nil
 }
 
-func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, file *domain.GameFile) error {
-	filePath := path.Join(gf.fileRootPath, uuid.UUID(file.GetID()).String())
+func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID values.GameFileID) error {
+	filePath := path.Join(gf.fileRootPath, uuid.UUID(fileID).String())
 
 	_, err := os.Stat(filePath)
 	if err == nil {

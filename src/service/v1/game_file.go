@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 type GameFile struct {
@@ -68,29 +68,57 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 			return service.ErrGameFileAlreadyExists
 		}
 
-		buf := bytes.NewBuffer(nil)
-		tr := io.TeeReader(reader, buf)
-		hash, err := values.NewGameFileHash(tr)
-		if err != nil {
-			return fmt.Errorf("failed to get hash: %w", err)
-		}
-
-		_, err = io.ReadAll(tr)
-		if err != nil {
-			return fmt.Errorf("failed to read all: %w", err)
-		}
-
 		gameFileID := values.NewGameFileID()
-		gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash, time.Now())
 
-		err = gf.gameFileRepository.SaveGameFile(ctx, gameVersion.GetID(), gameFile)
-		if err != nil {
-			return fmt.Errorf("failed to save game file(repository): %w", err)
-		}
+		eg, ctx := errgroup.WithContext(ctx)
+		hashPr, hashPw := io.Pipe()
+		filePr, filePw := io.Pipe()
 
-		err = gf.gameFileStorage.SaveGameFile(ctx, buf, gameFile)
+		eg.Go(func() error {
+			defer hashPr.Close()
+
+			hash, err := values.NewGameFileHash(hashPr)
+			if err != nil {
+				return fmt.Errorf("failed to get hash: %w", err)
+			}
+
+			gameFile = domain.NewGameFile(gameFileID, fileType, entryPoint, hash, time.Now())
+
+			err = gf.gameFileRepository.SaveGameFile(ctx, gameVersion.GetID(), gameFile)
+			if err != nil {
+				return fmt.Errorf("failed to save game file(repository): %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePr.Close()
+
+			err = gf.gameFileStorage.SaveGameFile(ctx, filePr, gameFileID)
+			if err != nil {
+				return fmt.Errorf("failed to save game file(storage): %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer hashPw.Close()
+			defer filePw.Close()
+
+			mw := io.MultiWriter(hashPw, filePw)
+			_, err := io.Copy(mw, reader)
+			if err != nil {
+				return fmt.Errorf("failed to copy: %w", err)
+			}
+
+			return nil
+		})
+
+		err = eg.Wait()
 		if err != nil {
-			return fmt.Errorf("failed to save game file(storage): %w", err)
+			return fmt.Errorf("failed to save game file: %w", err)
 		}
 
 		return nil
