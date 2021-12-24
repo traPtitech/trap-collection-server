@@ -1024,6 +1024,10 @@ components:
           description: ゲームの種類（url,jar,windows,mac）
           type: string
           example: url
+        entryPoint:
+          description: 実行ファイルの相対パス
+          type: string
+          example: PPP.exe
         bodyUpdatedAt:
           description: ゲーム本体の更新日時
           type: string
@@ -1045,7 +1049,6 @@ components:
         - type
         - bodyUpdatedAt
         - imgUpdatedAt
-        - movieUpdatedAt
     NewGame:
       description: 新しいゲームの名前
       type: object
