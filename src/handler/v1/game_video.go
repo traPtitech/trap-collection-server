@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -60,15 +59,7 @@ func (gv *GameVideo) GetVideo(strGameID string) (io.Reader, error) {
 
 	gameID := values.NewGameIDFromUUID(uuidGameID)
 
-	/*
-		メモリに保持してしまうので、
-		大きい画像を返すとメモリが溶けてしまう。
-		Pipeを使いたいが、openapiでの生成コードからio.Writerが渡されておらず、
-		エラーハンドリングが怪しくなるので一旦これで妥協する。
-	*/
-	buf := bytes.NewBuffer(nil)
-
-	err = gv.gameVideoService.GetGameVideo(ctx, buf, gameID)
+	r, err := gv.gameVideoService.GetGameVideo(ctx, gameID)
 	if errors.Is(err, service.ErrNoGameVideo) {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "no video")
 	}
@@ -80,5 +71,5 @@ func (gv *GameVideo) GetVideo(strGameID string) (io.Reader, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get video")
 	}
 
-	return buf, nil
+	return r, nil
 }
