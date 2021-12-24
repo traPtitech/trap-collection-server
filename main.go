@@ -19,13 +19,8 @@ import (
 	"strings"
 
 	"github.com/comail/colog"
-	"github.com/labstack/echo-contrib/prometheus"
-	echo "github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
-	"github.com/traPtitech/trap-collection-server/router"
 	"github.com/traPtitech/trap-collection-server/src"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -41,14 +36,6 @@ func main() {
 	if !ok {
 		panic("SESSION_SECRET is not set")
 	}
-
-	e := echo.New()
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-
-	p := prometheus.NewPrometheus("echo", nil)
-	p.MetricsPath = "/api/metrics"
-	p.Use(e)
 
 	if !isProduction {
 		colog.SetMinLevel(colog.LDebug)
@@ -171,16 +158,7 @@ func main() {
 	}
 	defer service.DB.Close()
 
-	service.API.Session.Use(e)
-
-	api, err := router.NewAPI(service.API, env, clientID, clientSecret)
-	if err != nil {
-		panic(err)
-	}
-
-	openapi.SetupRouting(e, api)
-
-	err = e.Start(os.Getenv("PORT"))
+	err = service.API.Start(os.Getenv("PORT"))
 	if err != nil {
 		panic(err)
 	}
