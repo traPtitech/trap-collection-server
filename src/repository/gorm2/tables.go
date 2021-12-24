@@ -105,8 +105,9 @@ func (gt *GameImageTable) TableName() string {
 }
 
 type GameImageTypeTable struct {
-	ID   int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
-	Name string `gorm:"type:varchar(32);size:32;not null;unique"`
+	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
+	Active bool   `gorm:"type:boolean;default:true"`
 }
 
 func (gtt *GameImageTypeTable) TableName() string {
@@ -126,8 +127,9 @@ func (gt *GameVideoTable) TableName() string {
 }
 
 type GameVideoTypeTable struct {
-	ID   int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
-	Name string `gorm:"type:varchar(32);size:32;not null;unique"`
+	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
+	Active bool   `gorm:"type:boolean;default:true"`
 }
 
 func (gtt *GameVideoTypeTable) TableName() string {
@@ -146,8 +148,9 @@ func (gmrt *GameManagementRoleTable) TableName() string {
 }
 
 type GameManagementRoleTypeTable struct {
-	ID   int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
-	Name string `gorm:"type:varchar(32);size:32;not null;unique"`
+	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
+	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
+	Active bool   `gorm:"type:boolean;default:true"`
 }
 
 func (gmrt *GameManagementRoleTypeTable) TableName() string {

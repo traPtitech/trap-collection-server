@@ -53,13 +53,16 @@ func NewGameImage(db *DB) (*GameImage, error) {
 func setupImageTypeTable(db *gorm.DB) error {
 	imageTypes := []GameImageTypeTable{
 		{
-			Name: gameImageTypeJpeg,
+			Name:   gameImageTypeJpeg,
+			Active: true,
 		},
 		{
-			Name: gameImageTypePng,
+			Name:   gameImageTypePng,
+			Active: true,
 		},
 		{
-			Name: gameImageTypeGif,
+			Name:   gameImageTypeGif,
+			Active: true,
 		},
 	}
 

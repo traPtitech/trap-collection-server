@@ -51,7 +51,8 @@ func NewGameVideo(db *DB) (*GameVideo, error) {
 func setupVideoTypeTable(db *gorm.DB) error {
 	videoTypes := []GameVideoTypeTable{
 		{
-			Name: gameVideoTypeMp4,
+			Name:   gameVideoTypeMp4,
+			Active: true,
 		},
 	}
 
