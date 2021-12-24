@@ -256,6 +256,7 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 		var hash string
 		var bodyUpdatedAt time.Time
 		var gameType string
+		var entryPoint string
 		if checkItem.LatestFile != nil {
 			switch checkItem.LatestFile.GetFileType() {
 			case values.GameFileTypeJar:
@@ -271,6 +272,7 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 
 			hash = hex.EncodeToString([]byte(checkItem.LatestFile.GetHash()))
 			bodyUpdatedAt = checkItem.LatestFile.GetCreatedAt()
+			entryPoint = string(checkItem.LatestFile.GetEntryPoint())
 		} else if checkItem.LatestURL != nil {
 			gameType = "url"
 
@@ -294,6 +296,7 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 			Id:             uuid.UUID(checkItem.Game.GetID()).String(),
 			Md5:            hash,
 			Type:           gameType,
+			EntryPoint:     entryPoint,
 			BodyUpdatedAt:  bodyUpdatedAt,
 			ImgUpdatedAt:   checkItem.LatestImage.GetCreatedAt(),
 			MovieUpdatedAt: movieUpdatedAt,
