@@ -8,24 +8,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
+var gameImageHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "storage_trap_collection",
+	Subsystem: "game_image",
+	Name:      "cache_hit_count",
+	Help:      "game image storage cache hit rate",
+}, []string{"result"})
+
 type GameImage struct {
-	gameImageHitGauge *prometheus.GaugeVec
-	client            *Client
+	client *Client
 }
 
 func NewGameImage(client *Client) *GameImage {
 	return &GameImage{
-		gameImageHitGauge: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "storage_trap_collection",
-			Subsystem: "game_image",
-			Name:      "cache_hit_count",
-			Help:      "game image storage cache hit rate",
-		}, []string{"result"}),
 		client: client,
 	}
 }
@@ -66,11 +67,11 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	}
 
 	if useCache {
-		gi.gameImageHitGauge.
+		gameImageHitGauge.
 			WithLabelValues("hit").
 			Inc()
 	} else {
-		gi.gameImageHitGauge.
+		gameImageHitGauge.
 			WithLabelValues("miss").
 			Inc()
 	}
