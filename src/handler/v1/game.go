@@ -82,17 +82,22 @@ func (g *Game) GetGame(strGameID string) (*openapi.Game, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get game")
 	}
 
+	var gameVersion *openapi.GameVersion
+	if game.LatestVersion != nil {
+		gameVersion = &openapi.GameVersion{
+			Id:          uuid.UUID(game.LatestVersion.GetID()).String(),
+			Name:        string(game.LatestVersion.GetName()),
+			Description: string(game.LatestVersion.GetDescription()),
+			CreatedAt:   game.LatestVersion.GetCreatedAt(),
+		}
+	}
+
 	return &openapi.Game{
 		Id:          uuid.UUID(game.Game.GetID()).String(),
 		Name:        string(game.Game.GetName()),
 		Description: string(game.Game.GetDescription()),
 		CreatedAt:   game.Game.GetCreatedAt(),
-		Version: &openapi.GameVersion{
-			Id:          uuid.UUID(game.LatestVersion.GetID()).String(),
-			Name:        string(game.LatestVersion.GetName()),
-			Description: string(game.LatestVersion.GetDescription()),
-			CreatedAt:   game.LatestVersion.GetCreatedAt(),
-		},
+		Version:     gameVersion,
 	}, nil
 }
 
@@ -181,17 +186,22 @@ func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) 
 
 	gameInfos := make([]*openapi.Game, 0, len(games))
 	for _, game := range games {
+		var gameVersion *openapi.GameVersion
+		if game.LatestVersion != nil {
+			gameVersion = &openapi.GameVersion{
+				Id:          uuid.UUID(game.LatestVersion.GetID()).String(),
+				Name:        string(game.LatestVersion.GetName()),
+				Description: string(game.LatestVersion.GetDescription()),
+				CreatedAt:   game.LatestVersion.GetCreatedAt(),
+			}
+		}
+
 		gameInfos = append(gameInfos, &openapi.Game{
 			Id:          uuid.UUID(game.Game.GetID()).String(),
 			Name:        string(game.Game.GetName()),
 			Description: string(game.Game.GetDescription()),
 			CreatedAt:   game.Game.GetCreatedAt(),
-			Version: &openapi.GameVersion{
-				Id:          uuid.UUID(game.LatestVersion.GetID()).String(),
-				Name:        string(game.LatestVersion.GetName()),
-				Description: string(game.LatestVersion.GetDescription()),
-				CreatedAt:   game.LatestVersion.GetCreatedAt(),
-			},
+			Version:     gameVersion,
 		})
 	}
 
