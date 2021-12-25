@@ -656,15 +656,17 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 	)
 
 	type test struct {
-		description           string
-		sessionExist          bool
-		authSession           *domain.OIDCSession
-		strGameID             string
-		executeUpdateGameAuth bool
-		gameID                values.GameID
-		UpdateGameAuthErr     error
-		isCalled              bool
-		statusCode            int
+		description              string
+		sessionExist             bool
+		authSession              *domain.OIDCSession
+		strGameID                string
+		executeAdministratorAuth bool
+		AdministratorAuthErr     error
+		executeUpdateGameAuth    bool
+		gameID                   values.GameID
+		UpdateGameAuthErr        error
+		isCalled                 bool
+		statusCode               int
 	}
 
 	gameID := values.NewGameID()
@@ -677,11 +679,25 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			strGameID:             uuid.UUID(gameID).String(),
-			executeUpdateGameAuth: true,
-			gameID:                gameID,
-			isCalled:              true,
-			statusCode:            http.StatusOK,
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     service.ErrForbidden,
+			executeUpdateGameAuth:    true,
+			gameID:                   gameID,
+			isCalled:                 true,
+			statusCode:               http.StatusOK,
+		},
+		{
+			description:  "Administratorなので通過",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			isCalled:                 true,
+			statusCode:               http.StatusOK,
 		},
 		{
 			description:  "セッションがないので500",
@@ -715,12 +731,14 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			strGameID:             uuid.UUID(gameID).String(),
-			executeUpdateGameAuth: true,
-			gameID:                gameID,
-			UpdateGameAuthErr:     service.ErrInvalidGameID,
-			isCalled:              false,
-			statusCode:            http.StatusBadRequest,
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     service.ErrForbidden,
+			executeUpdateGameAuth:    true,
+			gameID:                   gameID,
+			UpdateGameAuthErr:        service.ErrInvalidGameID,
+			isCalled:                 false,
+			statusCode:               http.StatusBadRequest,
 		},
 		{
 			description:  "ErrForbiddenなので403",
@@ -729,12 +747,14 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			strGameID:             uuid.UUID(gameID).String(),
-			executeUpdateGameAuth: true,
-			gameID:                gameID,
-			UpdateGameAuthErr:     service.ErrForbidden,
-			isCalled:              false,
-			statusCode:            http.StatusForbidden,
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     service.ErrForbidden,
+			executeUpdateGameAuth:    true,
+			gameID:                   gameID,
+			UpdateGameAuthErr:        service.ErrForbidden,
+			isCalled:                 false,
+			statusCode:               http.StatusForbidden,
 		},
 		{
 			description:  "UpdateGameAuthがエラーなので500",
@@ -743,12 +763,26 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			strGameID:             uuid.UUID(gameID).String(),
-			executeUpdateGameAuth: true,
-			gameID:                gameID,
-			UpdateGameAuthErr:     errors.New("error"),
-			isCalled:              false,
-			statusCode:            http.StatusInternalServerError,
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     service.ErrForbidden,
+			executeUpdateGameAuth:    true,
+			gameID:                   gameID,
+			UpdateGameAuthErr:        errors.New("error"),
+			isCalled:                 false,
+			statusCode:               http.StatusInternalServerError,
+		},
+		{
+			description:  "AdministratorAuthがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     errors.New("error"),
+			statusCode:               http.StatusInternalServerError,
 		},
 	}
 
@@ -786,6 +820,13 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 				}
 
 				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeAdministratorAuth {
+				mockAdministratorAuthService.
+					EXPECT().
+					AdministratorAuth(gomock.Any(), gomock.Any()).
+					Return(testCase.AdministratorAuthErr)
 			}
 
 			if testCase.executeUpdateGameAuth {
@@ -830,6 +871,8 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 		sessionExist                        bool
 		authSession                         *domain.OIDCSession
 		strGameID                           string
+		executeAdministratorAuth            bool
+		AdministratorAuthErr                error
 		executeUpdateGameManagementRoleAuth bool
 		gameID                              values.GameID
 		UpdateGameManagementRoleAuthErr     error
@@ -848,10 +891,24 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			strGameID:                           uuid.UUID(gameID).String(),
+			executeAdministratorAuth:            true,
+			AdministratorAuthErr:                service.ErrForbidden,
 			executeUpdateGameManagementRoleAuth: true,
 			gameID:                              gameID,
 			isCalled:                            true,
 			statusCode:                          http.StatusOK,
+		},
+		{
+			description:  "Administratorなので通過",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			isCalled:                 true,
+			statusCode:               http.StatusOK,
 		},
 		{
 			description:  "セッションがないので500",
@@ -886,6 +943,8 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			strGameID:                           uuid.UUID(gameID).String(),
+			executeAdministratorAuth:            true,
+			AdministratorAuthErr:                service.ErrForbidden,
 			executeUpdateGameManagementRoleAuth: true,
 			gameID:                              gameID,
 			UpdateGameManagementRoleAuthErr:     service.ErrInvalidGameID,
@@ -900,6 +959,8 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			strGameID:                           uuid.UUID(gameID).String(),
+			executeAdministratorAuth:            true,
+			AdministratorAuthErr:                service.ErrForbidden,
 			executeUpdateGameManagementRoleAuth: true,
 			gameID:                              gameID,
 			UpdateGameManagementRoleAuthErr:     service.ErrForbidden,
@@ -914,11 +975,25 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			strGameID:                           uuid.UUID(gameID).String(),
+			executeAdministratorAuth:            true,
+			AdministratorAuthErr:                service.ErrForbidden,
 			executeUpdateGameManagementRoleAuth: true,
 			gameID:                              gameID,
 			UpdateGameManagementRoleAuthErr:     errors.New("error"),
 			isCalled:                            false,
 			statusCode:                          http.StatusInternalServerError,
+		},
+		{
+			description:  "AdministratorAuthがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			strGameID:                uuid.UUID(gameID).String(),
+			executeAdministratorAuth: true,
+			AdministratorAuthErr:     errors.New("error"),
+			statusCode:               http.StatusInternalServerError,
 		},
 	}
 
@@ -956,6 +1031,13 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 				}
 
 				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeAdministratorAuth {
+				mockAdministratorAuthService.
+					EXPECT().
+					AdministratorAuth(gomock.Any(), gomock.Any()).
+					Return(testCase.AdministratorAuthErr)
 			}
 
 			if testCase.executeUpdateGameManagementRoleAuth {
