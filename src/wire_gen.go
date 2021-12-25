@@ -33,8 +33,7 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 	swiftTenantName := config.SwiftTenantName
 	swiftTenantID := config.SwiftTenantID
 	swiftContainer := config.SwiftContainer
-	filePath := config.FilePath
-	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer, filePath)
+	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer)
 	if err != nil {
 		return nil, err
 	}
