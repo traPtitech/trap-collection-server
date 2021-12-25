@@ -20,8 +20,6 @@ import (
 )
 
 func TestSaveGameVideo(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	client, err := newTestClient(
@@ -126,8 +124,6 @@ func TestSaveGameVideo(t *testing.T) {
 }
 
 func TestGetGameVideo(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	client, err := newTestClient(

@@ -19,8 +19,6 @@ import (
 )
 
 func TestSaveGameFile(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	client, err := newTestClient(
@@ -109,8 +107,6 @@ func TestSaveGameFile(t *testing.T) {
 }
 
 func TestGetGameFile(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	client, err := newTestClient(
