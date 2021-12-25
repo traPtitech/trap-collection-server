@@ -176,7 +176,7 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 		err = m.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
 		if err != nil && !errors.Is(err, service.ErrForbidden) {
 			log.Printf("error: failed to check admin auth: %v\n", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check admin auth")
 		}
 
 		if err == nil {
@@ -224,7 +224,7 @@ func (m *Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.Handler
 		err = m.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
 		if err != nil && !errors.Is(err, service.ErrForbidden) {
 			log.Printf("error: failed to check admin auth: %v\n", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check admin auth")
 		}
 
 		if err == nil {
