@@ -82,12 +82,8 @@ func main() {
 		administrators = append(administrators, administrator)
 	}
 
-	filePath, ok := os.LookupEnv("FILE_PATH")
-	if !ok {
-		panic("ENV FILE_PATH is not set")
-	}
-
 	var (
+		filePath        string
 		swiftAuthURL    common.SwiftAuthURL
 		swiftUserName   common.SwiftUserName
 		swiftPassword   common.SwiftPassword
@@ -134,6 +130,11 @@ func main() {
 			panic("ENV OS_CONTAINER is not set")
 		}
 		swiftContainer = common.SwiftContainer(strSwiftContainer)
+	} else {
+		filePath, ok = os.LookupEnv("FILE_PATH")
+		if !ok {
+			panic("ENV FILE_PATH is not set")
+		}
 	}
 
 	service, err := src.InjectAPI(&src.Config{
