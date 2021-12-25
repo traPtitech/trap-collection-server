@@ -173,6 +173,16 @@ func (m *Middleware) GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.Ha
 		}
 		gameID := values.NewGameIDFromUUID(uuidGameID)
 
+		err = m.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+		if err != nil && !errors.Is(err, service.ErrForbidden) {
+			log.Printf("error: failed to check admin auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		if err == nil {
+			return next(c)
+		}
+
 		err = m.gameAuthService.UpdateGameAuth(c.Request().Context(), authSession, gameID)
 		if errors.Is(err, service.ErrInvalidGameID) {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
@@ -210,6 +220,16 @@ func (m *Middleware) GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.Handler
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
 		}
 		gameID := values.NewGameIDFromUUID(uuidGameID)
+
+		err = m.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+		if err != nil && !errors.Is(err, service.ErrForbidden) {
+			log.Printf("error: failed to check admin auth: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		if err == nil {
+			return next(c)
+		}
 
 		err = m.gameAuthService.UpdateGameManagementRoleAuth(c.Request().Context(), authSession, gameID)
 		if errors.Is(err, service.ErrInvalidGameID) {
