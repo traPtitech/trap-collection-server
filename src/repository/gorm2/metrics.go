@@ -147,7 +147,7 @@ func (mc *MetricsCollector) collectAccessTokenMetrics(ctx context.Context, p *go
 		Session(&gorm.Session{}).
 		Unscoped().
 		Model(&LauncherSessionTable{}).
-		Select("deleted_at IS NOT NULL OR expires_at < ? AS is_deleted, count(*) as count", time.Now().Add(-24*time.Hour)).
+		Select("deleted_at IS NOT NULL OR expires_at < ? AS is_deleted, count(*) as count", time.Now()).
 		Group("is_deleted").
 		Find(&accessTokenCounts).Error
 	if err != nil {
