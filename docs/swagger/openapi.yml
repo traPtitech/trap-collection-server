@@ -1091,7 +1091,6 @@ components:
         - id
         - name
         - createdAt
-        - version
     GameInfo:
       description: ゲーム名とID
       type: object
