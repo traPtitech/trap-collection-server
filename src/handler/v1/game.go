@@ -145,7 +145,7 @@ func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.Ga
 
 func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) {
 	var isAll bool
-	if len(strAll) != 0 {
+	if len(strAll) == 0 {
 		isAll = false
 	} else {
 		var err error
