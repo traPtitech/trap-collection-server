@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -39,6 +38,11 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 		return nil, fmt.Errorf("failed to parse auth url: %w", err)
 	}
 
+	cache, err := NewCache(cacheDirectory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cache: %w", err)
+	}
+
 	client, err := NewClient(
 		common.SwiftAuthURL(authURL),
 		common.SwiftUserName(swifttest.TEST_ACCOUNT),
@@ -47,7 +51,7 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 		common.SwiftTenantName(""),
 		common.SwiftTenantID(""),
 		common.SwiftContainer(containerName),
-		cacheDirectory,
+		cache,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
@@ -142,7 +146,7 @@ func TestSaveFile(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			defer func() {
 				// 確実にキャッシュが残るように、キャッシュを消す
-				err := client.cache.Clean()
+				err := client.cache.clean()
 				if err != nil {
 					t.Fatalf("failed to clean cache: %v", err)
 				}
@@ -193,20 +197,15 @@ func TestSaveFile(t *testing.T) {
 
 			assert.Equal(t, expectBytes, actualBytes)
 
-			assert.True(t, client.cache.Exists(testCase.name))
-
-			r, _, err := client.cache.Get(testCase.name)
+			buf := bytes.NewBuffer(nil)
+			exist, err := client.cache.load(strings.ReplaceAll(testCase.name, "/", "_"), buf)
 			if err != nil {
-				t.Fatalf("failed to get cache: %v", err)
-			}
-			defer r.Close()
-
-			actualBytes, err = io.ReadAll(r)
-			if err != nil {
-				t.Fatalf("failed to read cache: %v", err)
+				t.Fatalf("failed to load cache: %v", err)
 			}
 
-			assert.Equal(t, expectBytes, actualBytes)
+			assert.True(t, exist)
+
+			assert.Equal(t, expectBytes, buf.Bytes())
 		})
 	}
 }
@@ -288,7 +287,7 @@ func TestLoadFile(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			defer func() {
 				// 確実にキャッシュが残るように、キャッシュを消す
-				err := client.cache.Clean()
+				err := client.cache.clean()
 				if err != nil {
 					t.Fatalf("failed to clean cache: %v", err)
 				}
@@ -296,25 +295,19 @@ func TestLoadFile(t *testing.T) {
 
 			if testCase.isCacheExist {
 				func() {
-					r, w, err := client.cache.Get(testCase.name)
+					err := client.cache.save(strings.ReplaceAll(testCase.name, "/", "_"), testCase.content)
 					if err != nil {
 						t.Fatalf("failed to set cache: %v", err)
 					}
-					defer r.Close()
-
-					func() {
-						defer w.Close()
-
-						_, err = io.Copy(w, testCase.content)
-						if err != nil {
-							t.Fatalf("failed to write cache: %v", err)
-						}
-					}()
 
 					testCase.content.Reset()
-					_, err = io.Copy(testCase.content, r)
+					hit, err := client.cache.load(strings.ReplaceAll(testCase.name, "/", "_"), testCase.content)
 					if err != nil {
 						t.Fatalf("failed to read cache: %v", err)
+					}
+
+					if !hit {
+						t.Fatalf("cache not hit")
 					}
 				}()
 			}

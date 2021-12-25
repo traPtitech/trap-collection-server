@@ -6,21 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"time"
+	"strings"
 
 	"github.com/ncw/swift/v2"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
-	"gopkg.in/djherbis/fscache.v0"
-)
-
-const (
-	cacheDuration = 7 * 24 * time.Hour
+	"golang.org/x/sync/errgroup"
 )
 
 type Client struct {
 	connection    *swift.Connection
 	containerName string
-	cache         fscache.Cache
+	cache         *Cache
 }
 
 func NewClient(
@@ -30,7 +26,7 @@ func NewClient(
 	tennantName common.SwiftTenantName,
 	tennantID common.SwiftTenantID,
 	containerName common.SwiftContainer,
-	cacheDirectory common.FilePath,
+	cache *Cache,
 ) (*Client, error) {
 	ctx := context.Background()
 
@@ -44,11 +40,6 @@ func NewClient(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup swift: %w", err)
-	}
-
-	cache, err := fscache.New(string(cacheDirectory), 0755, cacheDuration)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup cache: %w", err)
 	}
 
 	return &Client{
@@ -122,22 +113,38 @@ func (c *Client) saveFile(
 	}
 	defer f.Close()
 
-	r, w, err := c.cache.Get(name)
-	if err != nil {
-		return fmt.Errorf("failed to get cache: %w", err)
-	}
-	defer w.Close()
+	eg, _ := errgroup.WithContext(ctx)
+	pr, pw := io.Pipe()
 
-	err = r.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close cache: %w", err)
-	}
+	mw := io.MultiWriter(f, pw)
 
-	mw := io.MultiWriter(f, w)
+	eg.Go(func() error {
+		defer pr.Close()
 
-	_, err = io.Copy(mw, content)
+		cacheName := strings.ReplaceAll(name, "/", "_")
+
+		err := c.cache.save(cacheName, pr)
+		if err != nil {
+			return fmt.Errorf("failed to copy content: %w", err)
+		}
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		defer pw.Close()
+
+		_, err = io.Copy(mw, content)
+		if err != nil {
+			return fmt.Errorf("failed to copy content: %w", err)
+		}
+
+		return nil
+	})
+
+	err = eg.Wait()
 	if err != nil {
-		return fmt.Errorf("failed to copy content: %w", err)
+		return fmt.Errorf("failed to save file: %w", err)
 	}
 
 	return nil
@@ -148,22 +155,18 @@ var (
 )
 
 func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) (bool, error) {
-	if c.cache.Exists(name) {
-		r, _, err := c.cache.Get(name)
-		if err != nil {
-			return false, fmt.Errorf("failed to get cache: %w", err)
-		}
-		defer r.Close()
+	cacheName := strings.ReplaceAll(name, "/", "_")
 
-		_, err = io.Copy(w, r)
-		if err != nil {
-			return false, fmt.Errorf("failed to copy cache: %w", err)
-		}
+	hit, err := c.cache.load(cacheName, w)
+	if err != nil {
+		return false, fmt.Errorf("failed to load cache: %w", err)
+	}
 
+	if hit {
 		return true, nil
 	}
 
-	_, _, err := c.connection.Object(ctx, c.containerName, name)
+	_, _, err = c.connection.Object(ctx, c.containerName, name)
 	if errors.Is(err, swift.ObjectNotFound) {
 		return false, ErrNotFound
 	}
@@ -171,14 +174,41 @@ func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) (bool, 
 		return false, fmt.Errorf("failed to get object: %w", err)
 	}
 
-	_, err = c.connection.ObjectGet(
-		ctx,
-		c.containerName,
-		name,
-		w,
-		true,
-		nil,
-	)
+	eg, ctx := errgroup.WithContext(ctx)
+	pr, pw := io.Pipe()
+
+	mw := io.MultiWriter(w, pw)
+
+	eg.Go(func() error {
+		defer pr.Close()
+
+		err := c.cache.save(cacheName, pr)
+		if err != nil {
+			return fmt.Errorf("failed to save cache: %w", err)
+		}
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		defer pw.Close()
+
+		_, err = c.connection.ObjectGet(
+			ctx,
+			c.containerName,
+			name,
+			mw,
+			true,
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to get object: %w", err)
+		}
+
+		return nil
+	})
+
+	err = eg.Wait()
 	if err != nil {
 		return false, fmt.Errorf("failed to get object: %w", err)
 	}
