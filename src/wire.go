@@ -100,6 +100,7 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 		wire.Bind(new(storage.GameImage), new(*swift.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*swift.GameVideo)),
 		wire.Bind(new(storage.GameFile), new(*swift.GameFile)),
+		swift.NewCache,
 		swift.NewClient,
 		swift.NewGameImage,
 		swift.NewGameVideo,
