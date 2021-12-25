@@ -8,7 +8,7 @@ import (
 )
 
 type Game interface {
-	CreateGame(ctx context.Context, name values.GameName, description values.GameDescription) (*domain.Game, error)
+	CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription) (*domain.Game, error)
 	UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error)
 	GetGame(ctx context.Context, id values.GameID) (*GameInfo, error)
 	GetGames(ctx context.Context) ([]*GameInfo, error)

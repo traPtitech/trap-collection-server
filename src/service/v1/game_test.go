@@ -30,56 +30,164 @@ func TestCreateGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
-		description     string
-		name            values.GameName
-		gameDescription values.GameDescription
-		SaveGameErr     error
-		isErr           bool
-		err             error
+		description                   string
+		authSession                   *domain.OIDCSession
+		user                          *service.UserInfo
+		isGetMeErr                    bool
+		name                          values.GameName
+		gameDescription               values.GameDescription
+		executeSaveGame               bool
+		SaveGameErr                   error
+		executeAddGameManagementRoles bool
+		AddGameManagementRolesErr     error
+		isErr                         bool
+		err                           error
 	}
 
 	testCases := []test{
 		{
-			description:     "特に問題ないのでエラーなし",
-			name:            values.GameName("test"),
-			gameDescription: values.GameDescription("test"),
+			description: "ユーザー情報の取得に失敗したのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			isGetMeErr: true,
+			isErr:      true,
 		},
 		{
-			description:     "nameが空でもエラーなし",
-			name:            values.GameName(""),
-			gameDescription: values.GameDescription("test"),
+			description: "特に問題ないのでエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test"),
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
 		},
 		{
-			description:     "descriptionが空でもエラーなし",
-			name:            values.GameName("test"),
-			gameDescription: values.GameDescription(""),
+			description: "nameが空でもエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName(""),
+			gameDescription:               values.GameDescription("test"),
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
 		},
 		{
-			description:     "CreateGameがエラーなのでエラー",
+			description: "descriptionが空でもエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription(""),
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+		},
+		{
+			description: "SaveGameがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
 			name:            values.GameName("test"),
 			gameDescription: values.GameDescription("test"),
+			executeSaveGame: true,
 			SaveGameErr:     errors.New("test"),
 			isErr:           true,
+		},
+		{
+			description: "AddGameManagementRolesがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"mazrean",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test"),
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			AddGameManagementRolesErr:     errors.New("test"),
+			isErr:                         true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			mockGameRepository.
-				EXPECT().
-				SaveGame(gomock.Any(), gomock.Any()).
-				Return(testCase.SaveGameErr)
+			if testCase.isGetMeErr {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
+					Return(nil, cache.ErrCacheMiss)
+				mockUserAuth.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession).
+					Return(nil, errors.New("error"))
+			} else {
+				mockUserCache.
+					EXPECT().
+					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
+					Return(testCase.user, nil)
+			}
 
-			game, err := gameVersionService.CreateGame(ctx, testCase.name, testCase.gameDescription)
+			if testCase.executeSaveGame {
+				mockGameRepository.
+					EXPECT().
+					SaveGame(gomock.Any(), gomock.Any()).
+					Return(testCase.SaveGameErr)
+			}
+
+			if testCase.executeAddGameManagementRoles {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
+					Return(testCase.AddGameManagementRolesErr)
+			}
+
+			game, err := gameVersionService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -112,13 +220,20 @@ func TestUpdateGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
 		description       string
@@ -271,13 +386,20 @@ func TestDeleteGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
 		description   string
@@ -340,13 +462,20 @@ func TestGetGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
 		description                 string
@@ -483,13 +612,20 @@ func TestGetGames(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
 		description                  string
@@ -719,13 +855,20 @@ func TestGetMyGames(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGame(ctrl)
 	mockGameVersionRepository := mockRepository.NewMockGameVersion(ctrl)
+	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
 	userUtils := NewUserUtils(mockUserAuth, mockUserCache)
 
-	gameVersionService := NewGame(mockDB, mockGameRepository, mockGameVersionRepository, userUtils)
+	gameVersionService := NewGame(
+		mockDB,
+		mockGameRepository,
+		mockGameVersionRepository,
+		mockGameManagementRoleRepository,
+		userUtils,
+	)
 
 	type test struct {
 		description                  string
