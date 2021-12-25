@@ -96,7 +96,6 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 		swiftTenantIDField,
 		swiftTenantNameField,
 		swiftContainerField,
-		filePathField,
 		wire.Bind(new(storage.GameImage), new(*swift.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*swift.GameVideo)),
 		wire.Bind(new(storage.GameFile), new(*swift.GameFile)),

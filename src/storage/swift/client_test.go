@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -47,7 +46,6 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 		common.SwiftTenantName(""),
 		common.SwiftTenantID(""),
 		common.SwiftContainer(containerName),
-		cacheDirectory,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
@@ -140,14 +138,6 @@ func TestSaveFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				// 確実にキャッシュが残るように、キャッシュを消す
-				err := client.cache.Clean()
-				if err != nil {
-					t.Fatalf("failed to clean cache: %v", err)
-				}
-			}()
-
 			expectBytes := testCase.content.Bytes()
 
 			if testCase.isAlreadyFileExist {
@@ -192,21 +182,6 @@ func TestSaveFile(t *testing.T) {
 			}
 
 			assert.Equal(t, expectBytes, actualBytes)
-
-			assert.True(t, client.cache.Exists(testCase.name))
-
-			r, _, err := client.cache.Get(testCase.name)
-			if err != nil {
-				t.Fatalf("failed to get cache: %v", err)
-			}
-			defer r.Close()
-
-			actualBytes, err = io.ReadAll(r)
-			if err != nil {
-				t.Fatalf("failed to read cache: %v", err)
-			}
-
-			assert.Equal(t, expectBytes, actualBytes)
 		})
 	}
 }
@@ -232,28 +207,20 @@ func TestLoadFile(t *testing.T) {
 	}()
 
 	type test struct {
-		description  string
-		name         string
-		isCacheExist bool
-		isFileExist  bool
-		content      *bytes.Buffer
-		isErr        bool
-		err          error
+		description string
+		name        string
+		isFileExist bool
+		content     *bytes.Buffer
+		isErr       bool
+		err         error
 	}
 
 	testCases := []test{
 		{
-			description:  "特に問題ないので取得できる",
-			isCacheExist: true,
-			isFileExist:  true,
-			name:         "a",
-			content:      bytes.NewBufferString("a"),
-		},
-		{
-			description: "キャッシュが存在しなくても取得できる",
+			description: "特に問題ないので取得できる",
 			isFileExist: true,
-			name:        "b",
-			content:     bytes.NewBufferString("b"),
+			name:        "a",
+			content:     bytes.NewBufferString("a"),
 		},
 		{
 			description: "ファイルが存在しないのでErrNotFound",
@@ -263,62 +230,21 @@ func TestLoadFile(t *testing.T) {
 			err:         ErrNotFound,
 		},
 		{
-			description:  "サイズが大きくても取得できる",
-			name:         "d",
-			isCacheExist: true,
-			isFileExist:  true,
-			content:      bytes.NewBufferString(strings.Repeat("d", 1024*1024*10)),
-		},
-		{
-			description: "サイズが大きくてキャッシュが存在しなくても取得できる",
-			name:        "e",
+			description: "サイズが大きくても取得できる",
+			name:        "d",
 			isFileExist: true,
-			content:     bytes.NewBufferString(strings.Repeat("e", 1024*1024*10)),
+			content:     bytes.NewBufferString(strings.Repeat("d", 1024*1024*10)),
 		},
 		{
-			description:  "名前に/が含まれていても取得できる",
-			isCacheExist: true,
-			isFileExist:  true,
-			name:         "f/g",
-			content:      bytes.NewBufferString("f"),
+			description: "名前に/が含まれていても取得できる",
+			isFileExist: true,
+			name:        "f/g",
+			content:     bytes.NewBufferString("f"),
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				// 確実にキャッシュが残るように、キャッシュを消す
-				err := client.cache.Clean()
-				if err != nil {
-					t.Fatalf("failed to clean cache: %v", err)
-				}
-			}()
-
-			if testCase.isCacheExist {
-				func() {
-					r, w, err := client.cache.Get(testCase.name)
-					if err != nil {
-						t.Fatalf("failed to set cache: %v", err)
-					}
-					defer r.Close()
-
-					func() {
-						defer w.Close()
-
-						_, err = io.Copy(w, testCase.content)
-						if err != nil {
-							t.Fatalf("failed to write cache: %v", err)
-						}
-					}()
-
-					testCase.content.Reset()
-					_, err = io.Copy(testCase.content, r)
-					if err != nil {
-						t.Fatalf("failed to read cache: %v", err)
-					}
-				}()
-			}
-
 			var expectBytes []byte
 			if testCase.isFileExist {
 				expectBytes = testCase.content.Bytes()
@@ -340,7 +266,7 @@ func TestLoadFile(t *testing.T) {
 
 			buf := bytes.NewBuffer(nil)
 
-			useCache, err := client.loadFile(ctx, testCase.name, buf)
+			err := client.loadFile(ctx, testCase.name, buf)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -356,7 +282,6 @@ func TestLoadFile(t *testing.T) {
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
-			assert.Equal(t, testCase.isCacheExist, useCache)
 		})
 	}
 }

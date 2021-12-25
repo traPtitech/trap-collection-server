@@ -54,7 +54,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoI
 func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
 	videoKey := gv.videoKey(video.GetID())
 
-	useCache, err := gv.client.loadFile(
+	err := gv.client.loadFile(
 		ctx,
 		videoKey,
 		writer,
@@ -64,16 +64,6 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get video: %w", err)
-	}
-
-	if useCache {
-		gameVideoHitGauge.
-			WithLabelValues("hit").
-			Inc()
-	} else {
-		gameVideoHitGauge.
-			WithLabelValues("miss").
-			Inc()
 	}
 
 	return nil

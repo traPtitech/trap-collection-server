@@ -54,7 +54,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageI
 func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
 	imageKey := gi.imageKey(image.GetID())
 
-	useCache, err := gi.client.loadFile(
+	err := gi.client.loadFile(
 		ctx,
 		imageKey,
 		writer,
@@ -64,16 +64,6 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get image: %w", err)
-	}
-
-	if useCache {
-		gameImageHitGauge.
-			WithLabelValues("hit").
-			Inc()
-	} else {
-		gameImageHitGauge.
-			WithLabelValues("miss").
-			Inc()
 	}
 
 	return nil

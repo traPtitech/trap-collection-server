@@ -7,19 +7,10 @@ import (
 	"io"
 
 	"github.com/google/uuid"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
-
-var gameFileHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Namespace: "storage_trap_collection",
-	Subsystem: "game_file",
-	Name:      "cache_hit_count",
-	Help:      "game file storage cache hit rate",
-}, []string{"result"})
 
 type GameFile struct {
 	client *Client
@@ -56,7 +47,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID v
 func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *domain.GameFile) error {
 	fileKey := gf.fileKey(file.GetID())
 
-	useCache, err := gf.client.loadFile(
+	err := gf.client.loadFile(
 		ctx,
 		fileKey,
 		writer,
@@ -66,16 +57,6 @@ func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *dom
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get file: %w", err)
-	}
-
-	if useCache {
-		gameFileHitGauge.
-			WithLabelValues("hit").
-			Inc()
-	} else {
-		gameFileHitGauge.
-			WithLabelValues("miss").
-			Inc()
 	}
 
 	return nil

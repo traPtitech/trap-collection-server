@@ -10,7 +10,6 @@ import (
 
 	"github.com/ncw/swift/v2"
 	"github.com/traPtitech/trap-collection-server/pkg/common"
-	"gopkg.in/djherbis/fscache.v0"
 )
 
 const (
@@ -20,7 +19,6 @@ const (
 type Client struct {
 	connection    *swift.Connection
 	containerName string
-	cache         fscache.Cache
 }
 
 func NewClient(
@@ -30,7 +28,6 @@ func NewClient(
 	tennantName common.SwiftTenantName,
 	tennantID common.SwiftTenantID,
 	containerName common.SwiftContainer,
-	cacheDirectory common.FilePath,
 ) (*Client, error) {
 	ctx := context.Background()
 
@@ -46,15 +43,9 @@ func NewClient(
 		return nil, fmt.Errorf("failed to setup swift: %w", err)
 	}
 
-	cache, err := fscache.New(string(cacheDirectory), 0755, cacheDuration)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup cache: %w", err)
-	}
-
 	return &Client{
 		connection:    connection,
 		containerName: string(containerName),
-		cache:         cache,
 	}, nil
 }
 
@@ -122,20 +113,7 @@ func (c *Client) saveFile(
 	}
 	defer f.Close()
 
-	r, w, err := c.cache.Get(name)
-	if err != nil {
-		return fmt.Errorf("failed to get cache: %w", err)
-	}
-	defer w.Close()
-
-	err = r.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close cache: %w", err)
-	}
-
-	mw := io.MultiWriter(f, w)
-
-	_, err = io.Copy(mw, content)
+	_, err = io.Copy(f, content)
 	if err != nil {
 		return fmt.Errorf("failed to copy content: %w", err)
 	}
@@ -147,28 +125,13 @@ var (
 	ErrNotFound = fmt.Errorf("not found")
 )
 
-func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) (bool, error) {
-	if c.cache.Exists(name) {
-		r, _, err := c.cache.Get(name)
-		if err != nil {
-			return false, fmt.Errorf("failed to get cache: %w", err)
-		}
-		defer r.Close()
-
-		_, err = io.Copy(w, r)
-		if err != nil {
-			return false, fmt.Errorf("failed to copy cache: %w", err)
-		}
-
-		return true, nil
-	}
-
+func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) error {
 	_, _, err := c.connection.Object(ctx, c.containerName, name)
 	if errors.Is(err, swift.ObjectNotFound) {
-		return false, ErrNotFound
+		return ErrNotFound
 	}
 	if err != nil {
-		return false, fmt.Errorf("failed to get object: %w", err)
+		return fmt.Errorf("failed to get object: %w", err)
 	}
 
 	_, err = c.connection.ObjectGet(
@@ -180,8 +143,8 @@ func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) (bool, 
 		nil,
 	)
 	if err != nil {
-		return false, fmt.Errorf("failed to get object: %w", err)
+		return fmt.Errorf("failed to get object: %w", err)
 	}
 
-	return false, nil
+	return nil
 }
