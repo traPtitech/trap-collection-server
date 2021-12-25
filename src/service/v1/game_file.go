@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 )
 
 type GameFile struct {
@@ -22,6 +23,7 @@ type GameFile struct {
 	gameVersionRepository repository.GameVersion
 	gameFileRepository    repository.GameFile
 	gameFileStorage       storage.GameFile
+	downloadSemaphore     *semaphore.Weighted
 }
 
 func NewGameFile(
@@ -37,6 +39,7 @@ func NewGameFile(
 		gameVersionRepository: gameVersionRepository,
 		gameFileRepository:    gameFileRepository,
 		gameFileStorage:       gameFileStorage,
+		downloadSemaphore:     semaphore.NewWeighted(2),
 	}
 }
 
@@ -172,6 +175,14 @@ func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, envir
 
 	go func() {
 		defer pw.Close()
+
+		ctx := context.Background()
+		err := gf.downloadSemaphore.Acquire(ctx, 1)
+		if err != nil {
+			log.Printf("failed to acquire semaphore: %v", err)
+			return
+		}
+		defer gf.downloadSemaphore.Release(1)
 
 		err = gf.gameFileStorage.GetGameFile(ctx, pw, gameFile)
 		if err != nil {
