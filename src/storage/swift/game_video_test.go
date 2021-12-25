@@ -115,7 +115,7 @@ func TestSaveGameVideo(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			_, err = client.loadFile(ctx, fmt.Sprintf("videos/%s", uuid.UUID(testCase.videoID).String()), buf)
+			err = client.loadFile(ctx, fmt.Sprintf("videos/%s", uuid.UUID(testCase.videoID).String()), buf)
 			if err != nil {
 				t.Fatalf("failed to load file: %v", err)
 			}
