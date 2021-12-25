@@ -99,7 +99,7 @@ func InjectAPI(config *Config) (*Service, error) {
 	v1User := v1_2.NewUser(userUtils)
 	user2 := v1.NewUser(session, v1User)
 	gameVersion := gorm2.NewGameVersion(db)
-	v1Game := v1_2.NewGame(db, game, gameVersion, userUtils)
+	v1Game := v1_2.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
 	game2 := v1.NewGame(session, v1Game)
 	gameRole := v1.NewGameRole(session, gameAuth)
 	gameImage, err := gorm2.NewGameImage(db)

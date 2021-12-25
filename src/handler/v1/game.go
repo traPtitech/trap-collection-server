@@ -30,8 +30,18 @@ func NewGame(
 }
 
 func (g *Game) PostGame(newGame *openapi.NewGame, c echo.Context) (*openapi.GameInfo, error) {
+	session, err := getSession(c)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	authSession, err := g.session.getAuthSession(session)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+	}
+
 	name := values.NewGameName(newGame.Name)
-	err := name.Validate()
+	err = name.Validate()
 	if errors.Is(err, values.ErrGameNameEmpty) {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "game name is empty")
 	}
@@ -47,6 +57,7 @@ func (g *Game) PostGame(newGame *openapi.NewGame, c echo.Context) (*openapi.Game
 
 	game, err := g.gameService.CreateGame(
 		c.Request().Context(),
+		authSession,
 		name,
 		description,
 	)

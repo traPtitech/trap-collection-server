@@ -16,6 +16,7 @@ type Game struct {
 	db                    repository.DB
 	gameRepository        repository.Game
 	gameVersionRepository repository.GameVersion
+	gameManagementRole    repository.GameManagementRole
 	userUtils             *UserUtils
 }
 
@@ -23,17 +24,24 @@ func NewGame(
 	db repository.DB,
 	gameRepository repository.Game,
 	gameVersionRepository repository.GameVersion,
+	gameManagementRole repository.GameManagementRole,
 	userUtils *UserUtils,
 ) *Game {
 	return &Game{
 		db:                    db,
 		gameRepository:        gameRepository,
 		gameVersionRepository: gameVersionRepository,
+		gameManagementRole:    gameManagementRole,
 		userUtils:             userUtils,
 	}
 }
 
-func (g *Game) CreateGame(ctx context.Context, name values.GameName, description values.GameDescription) (*domain.Game, error) {
+func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription) (*domain.Game, error) {
+	user, err := g.userUtils.getMe(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
 	game := domain.NewGame(
 		values.NewGameID(),
 		name,
@@ -41,9 +49,26 @@ func (g *Game) CreateGame(ctx context.Context, name values.GameName, description
 		time.Now(),
 	)
 
-	err := g.gameRepository.SaveGame(ctx, game)
+	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		err := g.gameRepository.SaveGame(ctx, game)
+		if err != nil {
+			return fmt.Errorf("failed to create game: %w", err)
+		}
+
+		err = g.gameManagementRole.AddGameManagementRoles(
+			ctx,
+			game.GetID(),
+			[]values.TraPMemberID{user.GetID()},
+			values.GameManagementRoleAdministrator,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to add game management role: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to save game: %w", err)
+		return nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 
 	return game, nil
