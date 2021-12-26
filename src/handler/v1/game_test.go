@@ -1001,3 +1001,91 @@ func TestGetGames(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGames(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	session := NewSession("key", "secret")
+	mockGameService := mock.NewMockGame(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		strGameID         string
+		executeDeleteGame bool
+		gameID            values.GameID
+		DeleteGameErr     error
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラーなし",
+			strGameID:         uuid.UUID(gameID).String(),
+			executeDeleteGame: true,
+			gameID:            gameID,
+		},
+		{
+			description: "gameIDが不正なので400",
+			strGameID:   "invalid",
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			description:       "ゲームが存在しないので400",
+			strGameID:         uuid.UUID(gameID).String(),
+			executeDeleteGame: true,
+			gameID:            gameID,
+			DeleteGameErr:     service.ErrNoGame,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description:       "DeleteGameがエラーなので500",
+			strGameID:         uuid.UUID(gameID).String(),
+			executeDeleteGame: true,
+			gameID:            gameID,
+			DeleteGameErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeDeleteGame {
+				mockGameService.
+					EXPECT().
+					DeleteGame(gomock.Any(), testCase.gameID).
+					Return(testCase.DeleteGameErr)
+			}
+
+			err := gameHandler.DeleteGames(testCase.strGameID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
