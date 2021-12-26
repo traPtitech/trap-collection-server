@@ -361,3 +361,162 @@ func TestGetGame(t *testing.T) {
 		})
 	}
 }
+
+func TestPutGame(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	session := NewSession("key", "secret")
+	mockGameService := mock.NewMockGame(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		strGameID         string
+		newGame           *openapi.NewGame
+		executeUpdateGame bool
+		game              *domain.Game
+		UpdateGameErr     error
+		apiGame           openapi.GameInfo
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			game: domain.NewGame(
+				gameID,
+				values.NewGameName("test"),
+				values.NewGameDescription("test"),
+				now,
+			),
+			apiGame: openapi.GameInfo{
+				Id:          uuid.UUID(gameID).String(),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+			},
+		},
+		{
+			description: "gameIDがuuidでないので400",
+			strGameID:   "invalid",
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			description: "名前が空なので400",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "",
+				Description: "test",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "名前が長すぎるので400",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "012345678901234567890123456789012",
+				Description: "test",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "説明が空文字でもエラーなし",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "",
+			},
+			executeUpdateGame: true,
+			game: domain.NewGame(
+				gameID,
+				values.NewGameName("test"),
+				values.NewGameDescription(""),
+				now,
+			),
+			apiGame: openapi.GameInfo{
+				Id:          uuid.UUID(gameID).String(),
+				Name:        "test",
+				Description: "",
+				CreatedAt:   now,
+			},
+		},
+		{
+			description: "ゲームが存在しないので400",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			UpdateGameErr:     service.ErrNoGame,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description: "UpdateGameがエラーなので500",
+			strGameID:   uuid.UUID(gameID).String(),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			UpdateGameErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeUpdateGame {
+				mockGameService.
+					EXPECT().
+					UpdateGame(gomock.Any(), gomock.Any(), values.NewGameName(testCase.newGame.Name), values.NewGameDescription(testCase.newGame.Description)).
+					Return(testCase.game, testCase.UpdateGameErr)
+			}
+
+			game, err := gameHandler.PutGame(testCase.strGameID, testCase.newGame)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.apiGame, *game)
+		})
+	}
+}
