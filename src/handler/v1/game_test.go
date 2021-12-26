@@ -520,3 +520,484 @@ func TestPutGame(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGames(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	session := NewSession("key", "secret")
+	mockGameService := mock.NewMockGame(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		strAll            string
+		executeGetGames   bool
+		GetGamesErr       error
+		sessionExist      bool
+		authSession       *domain.OIDCSession
+		executeGetMyGames bool
+		GetMyGamesErr     error
+		games             []*service.GameInfo
+		apiGames          []*openapi.Game
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description:     "特に問題ないので問題なし",
+			strAll:          "true",
+			executeGetGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("test1"),
+						values.NewGameVersionDescription("test1"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID1).String(),
+						Name:        "test1",
+						Description: "test1",
+						CreatedAt:   now,
+					},
+				},
+			},
+		},
+		{
+			description:     "GetGamesがエラーなので500",
+			strAll:          "true",
+			executeGetGames: true,
+			GetGamesErr:     errors.New("test"),
+			isErr:           true,
+			statusCode:      http.StatusInternalServerError,
+		},
+		{
+			description: "allが誤っているので400",
+			strAll:      "invalid",
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+		{
+			description:  "allがfalseなので問題なし",
+			strAll:       "false",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("test1"),
+						values.NewGameVersionDescription("test1"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID1).String(),
+						Name:        "test1",
+						Description: "test1",
+						CreatedAt:   now,
+					},
+				},
+			},
+		},
+		{
+			description:  "allが空文字でも問題なし",
+			strAll:       "",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("test1"),
+						values.NewGameVersionDescription("test1"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID1).String(),
+						Name:        "test1",
+						Description: "test1",
+						CreatedAt:   now,
+					},
+				},
+			},
+		},
+		{
+			description:  "sessionが存在しないので500",
+			strAll:       "false",
+			sessionExist: false,
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "authSessionが存在しないので500",
+			strAll:       "false",
+			sessionExist: true,
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description:  "GetMyGamesがエラーなので500",
+			strAll:       "false",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			GetMyGamesErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+		{
+			description:     "ゲームが存在しなくても問題なし",
+			strAll:          "true",
+			executeGetGames: true,
+			games:           []*service.GameInfo{},
+			apiGames:        []*openapi.Game{},
+		},
+		{
+			description:     "ゲームが複数でも問題なし",
+			strAll:          "true",
+			executeGetGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("test1"),
+						values.NewGameVersionDescription("test1"),
+						now,
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						values.NewGameName("test2"),
+						values.NewGameDescription("test2"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						values.NewGameVersionName("test2"),
+						values.NewGameVersionDescription("test2"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID1).String(),
+						Name:        "test1",
+						Description: "test1",
+						CreatedAt:   now,
+					},
+				},
+				{
+					Id:          uuid.UUID(gameID2).String(),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID2).String(),
+						Name:        "test2",
+						Description: "test2",
+						CreatedAt:   now,
+					},
+				},
+			},
+		},
+		{
+			description:     "versionが存在しなくても問題なし",
+			strAll:          "true",
+			executeGetGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description:  "falseかつゲームが存在しなくても問題なし",
+			strAll:       "false",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games:             []*service.GameInfo{},
+			apiGames:          []*openapi.Game{},
+		},
+		{
+			description:  "falseかつゲームが複数でも問題なし",
+			strAll:       "false",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID1,
+						values.NewGameVersionName("test1"),
+						values.NewGameVersionDescription("test1"),
+						now,
+					),
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						values.NewGameName("test2"),
+						values.NewGameDescription("test2"),
+						now,
+					),
+					LatestVersion: domain.NewGameVersion(
+						gameVersionID2,
+						values.NewGameVersionName("test2"),
+						values.NewGameVersionDescription("test2"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID1).String(),
+						Name:        "test1",
+						Description: "test1",
+						CreatedAt:   now,
+					},
+				},
+				{
+					Id:          uuid.UUID(gameID2).String(),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+					Version: &openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID2).String(),
+						Name:        "test2",
+						Description: "test2",
+						CreatedAt:   now,
+					},
+				},
+			},
+		},
+		{
+			description:  "falseかつversionが存在しなくても問題なし",
+			strAll:       "false",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*service.GameInfo{
+				{
+					Game: domain.NewGame(
+						gameID1,
+						values.NewGameName("test1"),
+						values.NewGameDescription("test1"),
+						now,
+					),
+				},
+			},
+			apiGames: []*openapi.Game{
+				{
+					Id:          uuid.UUID(gameID1).String(),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/games", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.store.New(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.store.Get(req, session.key)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeGetGames {
+				mockGameService.
+					EXPECT().
+					GetGames(gomock.Any()).
+					Return(testCase.games, testCase.GetGamesErr)
+			}
+
+			if testCase.executeGetMyGames {
+				mockGameService.
+					EXPECT().
+					GetMyGames(gomock.Any(), gomock.Any()).
+					Return(testCase.games, testCase.GetMyGamesErr)
+			}
+
+			games, err := gameHandler.GetGames(testCase.strAll, c)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, games, len(testCase.apiGames))
+
+			for i, game := range games {
+				assert.Equal(t, testCase.apiGames[i].Id, game.Id)
+				assert.Equal(t, testCase.apiGames[i].Name, game.Name)
+				assert.Equal(t, testCase.apiGames[i].Description, game.Description)
+				assert.Equal(t, testCase.apiGames[i].CreatedAt, game.CreatedAt)
+
+				if testCase.apiGames[i].Version != nil {
+					assert.Equal(t, testCase.apiGames[i].Version.Id, game.Version.Id)
+					assert.Equal(t, testCase.apiGames[i].Version.Name, game.Version.Name)
+					assert.Equal(t, testCase.apiGames[i].Version.Description, game.Version.Description)
+					assert.Equal(t, testCase.apiGames[i].Version.CreatedAt, game.Version.CreatedAt)
+				} else {
+					assert.Nil(t, game.Version)
+				}
+			}
+		})
+	}
+}
