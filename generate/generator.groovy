@@ -11,9 +11,9 @@ class CollectionCodegen extends GoGinServerCodegen {
   CollectionCodegen() {
     super()
     this.apiPath = "openapi"
-    this.typeMapping.put("File", "ioReader");
-    this.typeMapping.put("file", "ioReader");
-    this.typeMapping.put("binary", "ioReader");
+    this.typeMapping.put("File", "ioReadCloser");
+    this.typeMapping.put("file", "ioReadCloser");
+    this.typeMapping.put("binary", "ioReadCloser");
   }
 
   @Override

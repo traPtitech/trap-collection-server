@@ -10,7 +10,7 @@ import (
   "github.com/gorilla/sessions"
 )
 
-type ioReader = io.Reader
+type ioReadCloser = io.ReadCloser
 type multipartFile = multipart.File
 type sessionsSession = sessions.Session
 var getSession = session.Get
