@@ -54,6 +54,7 @@ func {{baseName}}Handler({{classname}} {{classname}}) echo.HandlerFunc {
     }{{^isResponseFile}}{{#returnType}}
     return c.JSON(http.StatusOK, res){{/returnType}}{{^returnType}}
     return c.NoContent(http.StatusOK){{/returnType}}{{/isResponseFile}}{{#isResponseFile}}
+    defer res.Close()
     return c.Stream(http.StatusOK, {{#produces.0}}"{{mediaType}}"{{/produces.0}}, res){{/isResponseFile}}
   }
 }{{/operation}}{{/operations}}

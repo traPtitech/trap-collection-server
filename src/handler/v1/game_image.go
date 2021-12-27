@@ -49,7 +49,7 @@ func (gi *GameImage) PostImage(strGameID string, image multipart.File) error {
 	return nil
 }
 
-func (gi *GameImage) GetImage(strGameID string) (io.Reader, error) {
+func (gi *GameImage) GetImage(strGameID string) (io.ReadCloser, error) {
 	ctx := context.Background()
 
 	uuidGameID, err := uuid.Parse(strGameID)

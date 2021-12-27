@@ -132,7 +132,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (io.Reader, error) {
+func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (io.ReadCloser, error) {
 	_, err := gi.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID

@@ -128,7 +128,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (io.Reader, error) {
+func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (io.ReadCloser, error) {
 	_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID
