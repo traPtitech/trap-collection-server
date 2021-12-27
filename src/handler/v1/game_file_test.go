@@ -3,6 +3,7 @@ package v1
 import (
 	"bytes"
 	"errors"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -338,7 +339,7 @@ func TestGetGameFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			r := bytes.NewReader([]byte("a"))
+			r := io.NopCloser(bytes.NewReader([]byte("a")))
 
 			if testCase.executeGetGameFile {
 				mockGameFileService.

@@ -85,7 +85,7 @@ func (gf *GameFile) PostFile(strGameID string, strEntryPoint string, file multip
 	}, nil
 }
 
-func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io.Reader, error) {
+func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io.ReadCloser, error) {
 	ctx := context.Background()
 
 	uuidGameID, err := uuid.Parse(strGameID)

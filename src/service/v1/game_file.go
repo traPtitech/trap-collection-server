@@ -133,7 +133,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 	return gameFile, nil
 }
 
-func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (io.Reader, *domain.GameFile, error) {
+func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (io.ReadCloser, *domain.GameFile, error) {
 	_, err := gf.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidGameID
