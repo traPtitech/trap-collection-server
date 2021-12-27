@@ -889,7 +889,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.jar",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -937,7 +937,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.jar",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1028,7 +1028,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.exe",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1076,7 +1076,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.app",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1122,7 +1122,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1208,7 +1208,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.jar",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1293,7 +1293,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.jar",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 				{
 					Id:             uuid.UUID(gameID2).String(),
@@ -1302,7 +1302,7 @@ func TestGetCheckList(t *testing.T) {
 					EntryPoint:     "main.jar",
 					BodyUpdatedAt:  now,
 					ImgUpdatedAt:   now,
-					MovieUpdatedAt: now,
+					MovieUpdatedAt: &now,
 				},
 			},
 		},
@@ -1430,7 +1430,12 @@ func TestGetCheckList(t *testing.T) {
 				assert.Equal(t, expect.Type, checkList[i].Type)
 				assert.Equal(t, expect.BodyUpdatedAt, checkList[i].BodyUpdatedAt)
 				assert.Equal(t, expect.ImgUpdatedAt, checkList[i].ImgUpdatedAt)
-				assert.Equal(t, expect.MovieUpdatedAt, checkList[i].MovieUpdatedAt)
+
+				if expect.MovieUpdatedAt != nil {
+					assert.Equal(t, *expect.MovieUpdatedAt, *checkList[i].MovieUpdatedAt)
+				} else {
+					assert.Nil(t, checkList[i].MovieUpdatedAt)
+				}
 			}
 		})
 	}
