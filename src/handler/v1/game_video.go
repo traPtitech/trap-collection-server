@@ -49,7 +49,7 @@ func (gv *GameVideo) PostVideo(strGameID string, video multipart.File) error {
 	return nil
 }
 
-func (gv *GameVideo) GetVideo(strGameID string) (io.Reader, error) {
+func (gv *GameVideo) GetVideo(strGameID string) (io.ReadCloser, error) {
 	ctx := context.Background()
 
 	uuidGameID, err := uuid.Parse(strGameID)
