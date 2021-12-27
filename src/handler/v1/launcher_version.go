@@ -287,9 +287,10 @@ func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) 
 			continue
 		}
 
-		var movieUpdatedAt time.Time
+		var movieUpdatedAt *time.Time
 		if checkItem.LatestVideo != nil {
-			movieUpdatedAt = checkItem.LatestVideo.GetCreatedAt()
+			createdAt := checkItem.LatestVideo.GetCreatedAt()
+			movieUpdatedAt = &createdAt
 		}
 
 		apiCheckList = append(apiCheckList, &openapi.CheckItem{
