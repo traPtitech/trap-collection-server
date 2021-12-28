@@ -36,6 +36,7 @@ type Config struct {
 	SwiftTenantID   common.SwiftTenantID
 	SwiftTenantName common.SwiftTenantName
 	SwiftContainer  common.SwiftContainer
+	SwiftTmpURLKey  common.SwiftTmpURLKey
 	FilePath        common.FilePath
 	HttpClient      *http.Client
 }
@@ -72,6 +73,7 @@ var (
 	swiftTenantIDField   = wire.FieldsOf(new(*Config), "SwiftTenantID")
 	swiftTenantNameField = wire.FieldsOf(new(*Config), "SwiftTenantName")
 	swiftContainerField  = wire.FieldsOf(new(*Config), "SwiftContainer")
+	swiftTmpURLKeyField  = wire.FieldsOf(new(*Config), "SwiftTmpURLKey")
 	filePathField        = wire.FieldsOf(new(*Config), "FilePath")
 	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
 
@@ -96,6 +98,7 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 		swiftTenantIDField,
 		swiftTenantNameField,
 		swiftContainerField,
+		swiftTmpURLKeyField,
 		wire.Bind(new(storage.GameImage), new(*swift.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*swift.GameVideo)),
 		wire.Bind(new(storage.GameFile), new(*swift.GameFile)),
