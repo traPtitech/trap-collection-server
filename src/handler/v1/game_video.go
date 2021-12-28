@@ -2,10 +2,11 @@ package v1
 
 import (
 	"errors"
-	"io"
+	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -48,27 +49,29 @@ func (gv *GameVideo) PostVideo(c echo.Context, strGameID string, video multipart
 	return nil
 }
 
-func (gv *GameVideo) GetVideo(c echo.Context, strGameID string) (io.ReadCloser, error) {
+func (gv *GameVideo) GetVideo(c echo.Context, strGameID string) error {
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
 	}
 
 	gameID := values.NewGameIDFromUUID(uuidGameID)
 
-	r, err := gv.gameVideoService.GetGameVideo(ctx, gameID)
+	tmpURL, err := gv.gameVideoService.GetGameVideo(ctx, gameID)
 	if errors.Is(err, service.ErrNoGameVideo) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "no video")
+		return echo.NewHTTPError(http.StatusNotFound, "no video")
 	}
 	if errors.Is(err, service.ErrInvalidGameID) {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
 	}
 	if err != nil {
 		log.Printf("error: failed to get video: %v\n", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get video")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get video")
 	}
 
-	return r, nil
+	c.Response().Header().Set(echo.HeaderLocation, (*url.URL)(tmpURL).String())
+
+	return echo.NewHTTPError(http.StatusSeeOther, fmt.Sprintf("redirect to %s", (*url.URL)(tmpURL).String()))
 }
