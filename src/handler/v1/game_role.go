@@ -24,7 +24,7 @@ func NewGameRole(session *Session, gameAuthService service.GameAuth) *GameRole {
 	}
 }
 
-func (gr *GameRole) PostMaintainer(strGameID string, maintainers *openapi.Maintainers, c echo.Context) error {
+func (gr *GameRole) PostMaintainer(c echo.Context, strGameID string, maintainers *openapi.Maintainers) error {
 	session, err := getSession(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)
@@ -72,7 +72,7 @@ func (gr *GameRole) PostMaintainer(strGameID string, maintainers *openapi.Mainta
 	return nil
 }
 
-func (gr *GameRole) GetMaintainer(strGameID string, c echo.Context) ([]*openapi.Maintainer, error) {
+func (gr *GameRole) GetMaintainer(c echo.Context, strGameID string) ([]*openapi.Maintainer, error) {
 	session, err := getSession(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)

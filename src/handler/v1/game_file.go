@@ -1,12 +1,13 @@
 package v1
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -25,8 +26,8 @@ func NewGameFile(gameFileService service.GameFile) *GameFile {
 	}
 }
 
-func (gf *GameFile) PostFile(strGameID string, strEntryPoint string, file multipart.File, strFileType string) (*openapi.GameFile, error) {
-	ctx := context.Background()
+func (gf *GameFile) PostFile(c echo.Context, strGameID string, strEntryPoint string, file multipart.File, strFileType string) (*openapi.GameFile, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -85,8 +86,8 @@ func (gf *GameFile) PostFile(strGameID string, strEntryPoint string, file multip
 	}, nil
 }
 
-func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io.ReadCloser, error) {
-	ctx := context.Background()
+func (gf *GameFile) GetGameFile(c echo.Context, strGameID string, strOperatingSystem string) (io.ReadCloser, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -105,7 +106,7 @@ func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid operating system")
 	}
 
-	r, _, err := gf.gameFileService.GetGameFile(
+	tmpURL, _, err := gf.gameFileService.GetGameFile(
 		ctx,
 		gameID,
 		values.NewLauncherEnvironment(envOS),
@@ -124,5 +125,7 @@ func (gf *GameFile) GetGameFile(strGameID string, strOperatingSystem string) (io
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get game file")
 	}
 
-	return r, nil
+	c.Response().Header().Set(echo.HeaderLocation, (*url.URL)(tmpURL).String())
+
+	return nil, echo.NewHTTPError(http.StatusSeeOther, fmt.Sprintf("redirect to %s", (*url.URL)(tmpURL).String()))
 }

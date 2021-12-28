@@ -2,7 +2,9 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -126,6 +128,11 @@ func TestPostURL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/game/%s/asset/url", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeSaveGameURL {
 				mockGameURLService.
 					EXPECT().
@@ -133,7 +140,7 @@ func TestPostURL(t *testing.T) {
 					Return(testCase.gameURL, testCase.SaveGameURLErr)
 			}
 
-			gameURL, err := gameURLHandler.PostURL(testCase.strGameID, &openapi.NewGameUrl{
+			gameURL, err := gameURLHandler.PostURL(c, testCase.strGameID, &openapi.NewGameUrl{
 				Url: testCase.strGameURL,
 			})
 
@@ -253,6 +260,11 @@ func TestGetGameURL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/game/%s/asset/url", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeGetGameURL {
 				mockGameURLService.
 					EXPECT().
@@ -260,7 +272,7 @@ func TestGetGameURL(t *testing.T) {
 					Return(testCase.gameURL, testCase.GetGameURLErr)
 			}
 
-			gameURL, err := gameURLHandler.GetGameURL(testCase.strGameID)
+			gameURL, err := gameURLHandler.GetGameURL(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

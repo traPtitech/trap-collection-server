@@ -2,7 +2,9 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -170,6 +172,11 @@ func TestPostGameVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/games/%s/versions", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeCreateGameVersion {
 				mockGameVersionService.
 					EXPECT().
@@ -181,7 +188,7 @@ func TestPostGameVersion(t *testing.T) {
 					).Return(testCase.gameVersion, testCase.CreateGameVersionErr)
 			}
 
-			gameVersion, err := gameVersionHandler.PostGameVersion(testCase.strGameID, testCase.apiGameVersion)
+			gameVersion, err := gameVersionHandler.PostGameVersion(c, testCase.strGameID, testCase.apiGameVersion)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -348,6 +355,11 @@ func TestGetGameVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/games/%s/version", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeGetGameVersion {
 				mockGameVersionService.
 					EXPECT().
@@ -355,7 +367,7 @@ func TestGetGameVersion(t *testing.T) {
 					Return(testCase.gameVersions, testCase.GetGameVersionErr)
 			}
 
-			gameVersions, err := gameVersionHandler.GetGameVersion(testCase.strGameID)
+			gameVersions, err := gameVersionHandler.GetGameVersion(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

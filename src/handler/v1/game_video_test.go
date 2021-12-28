@@ -3,8 +3,10 @@ package v1
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -92,6 +94,11 @@ func TestPostVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/game/%s/video", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			r := &NopCloser{testCase.reader}
 
 			if testCase.executeSaveGameVideo {
@@ -101,7 +108,7 @@ func TestPostVideo(t *testing.T) {
 					Return(testCase.SaveGameVideoErr)
 			}
 
-			err := gameVideoHandler.PostVideo(testCase.strGameID, r)
+			err := gameVideoHandler.PostVideo(c, testCase.strGameID, r)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -193,6 +200,11 @@ func TestGetVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/game/%s/video", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			r := io.NopCloser(bytes.NewReader([]byte("a")))
 
 			if testCase.executeGetGameVideo {
@@ -202,7 +214,7 @@ func TestGetVideo(t *testing.T) {
 					Return(r, testCase.GetGameVideoErr)
 			}
 
-			res, err := gameVideoHandler.GetVideo(testCase.strGameID)
+			res, err := gameVideoHandler.GetVideo(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

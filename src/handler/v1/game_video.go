@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"io"
 	"log"
@@ -24,8 +23,8 @@ func NewGameVideo(gameVideoService service.GameVideo) *GameVideo {
 	}
 }
 
-func (gv *GameVideo) PostVideo(strGameID string, video multipart.File) error {
-	ctx := context.Background()
+func (gv *GameVideo) PostVideo(c echo.Context, strGameID string, video multipart.File) error {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -49,8 +48,8 @@ func (gv *GameVideo) PostVideo(strGameID string, video multipart.File) error {
 	return nil
 }
 
-func (gv *GameVideo) GetVideo(strGameID string) (io.ReadCloser, error) {
-	ctx := context.Background()
+func (gv *GameVideo) GetVideo(c echo.Context, strGameID string) (io.ReadCloser, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {

@@ -3,8 +3,10 @@ package v1
 import (
 	"bytes"
 	"errors"
-	"io"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -207,6 +209,11 @@ func TestPostFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/game/%s/asset/file", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			r := &NopCloser{testCase.reader}
 
 			if testCase.executeSaveGameFile {
@@ -216,7 +223,7 @@ func TestPostFile(t *testing.T) {
 					Return(testCase.gameFile, testCase.SaveGameFileErr)
 			}
 
-			gameFile, err := gameFileHandler.PostFile(testCase.strGameID, testCase.strEntryPoint, r, testCase.strFileType)
+			gameFile, err := gameFileHandler.PostFile(c, testCase.strGameID, testCase.strEntryPoint, r, testCase.strFileType)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -259,6 +266,7 @@ func TestGetGameFile(t *testing.T) {
 		strOperatingSystem string
 		executeGetGameFile bool
 		gameID             values.GameID
+		tmpURL             values.GameFileTmpURL
 		GetGameFileErr     error
 		isErr              bool
 		err                error
@@ -267,6 +275,11 @@ func TestGetGameFile(t *testing.T) {
 
 	gameID := values.NewGameID()
 
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
 	testCases := []test{
 		{
 			description:        "特に問題ないのでエラーなし",
@@ -274,6 +287,9 @@ func TestGetGameFile(t *testing.T) {
 			strOperatingSystem: "win32",
 			executeGetGameFile: true,
 			gameID:             gameID,
+			tmpURL:             values.NewGameFileTmpURL(urlLink),
+			isErr:              true,
+			statusCode:         http.StatusSeeOther,
 		},
 		{
 			description: "gameIDが不正なので400",
@@ -287,6 +303,9 @@ func TestGetGameFile(t *testing.T) {
 			strOperatingSystem: "darwin",
 			executeGetGameFile: true,
 			gameID:             gameID,
+			tmpURL:             values.NewGameFileTmpURL(urlLink),
+			isErr:              true,
+			statusCode:         http.StatusSeeOther,
 		},
 		{
 			description:        "osが不正なので400",
@@ -339,22 +358,29 @@ func TestGetGameFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			r := io.NopCloser(bytes.NewReader([]byte("a")))
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/games/%s/asset/file", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
 			if testCase.executeGetGameFile {
 				mockGameFileService.
 					EXPECT().
 					GetGameFile(gomock.Any(), testCase.gameID, gomock.Any()).
-					Return(r, nil, testCase.GetGameFileErr)
+					Return(testCase.tmpURL, nil, testCase.GetGameFileErr)
 			}
 
-			res, err := gameFileHandler.GetGameFile(testCase.strGameID, testCase.strOperatingSystem)
+			_, err := gameFileHandler.GetGameFile(c, testCase.strGameID, testCase.strOperatingSystem)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
+
+						if testCase.statusCode == http.StatusSeeOther {
+							assert.Equal(t, (*url.URL)(testCase.tmpURL).String(), c.Response().Header().Get(echo.HeaderLocation))
+						}
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
@@ -366,11 +392,6 @@ func TestGetGameFile(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, r, res)
 		})
 	}
 }

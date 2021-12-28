@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -26,8 +25,8 @@ func NewLauncherAuth(launcherAuthService service.LauncherAuth) *LauncherAuth {
 	}
 }
 
-func (la *LauncherAuth) PostKeyGenerate(productKeyGen *openapi.ProductKeyGen) ([]*openapi.ProductKey, error) {
-	ctx := context.Background()
+func (la *LauncherAuth) PostKeyGenerate(c echo.Context, productKeyGen *openapi.ProductKeyGen) ([]*openapi.ProductKey, error) {
+	ctx := c.Request().Context()
 
 	keyNum := int(productKeyGen.Num)
 	if keyNum < 1 {
@@ -59,8 +58,8 @@ func (la *LauncherAuth) PostKeyGenerate(productKeyGen *openapi.ProductKeyGen) ([
 	return productKeys, nil
 }
 
-func (la *LauncherAuth) PostLauncherLogin(productKey *openapi.ProductKey) (*openapi.LauncherAuthToken, error) {
-	ctx := context.Background()
+func (la *LauncherAuth) PostLauncherLogin(c echo.Context, productKey *openapi.ProductKey) (*openapi.LauncherAuthToken, error) {
+	ctx := c.Request().Context()
 
 	productKeyValue := values.NewLauncherUserProductKeyFromString(productKey.Key)
 	err := productKeyValue.Validate()
@@ -83,8 +82,8 @@ func (la *LauncherAuth) PostLauncherLogin(productKey *openapi.ProductKey) (*open
 	}, nil
 }
 
-func (la *LauncherAuth) DeleteProductKey(productKeyID string) error {
-	ctx := context.Background()
+func (la *LauncherAuth) DeleteProductKey(c echo.Context, productKeyID string) error {
+	ctx := c.Request().Context()
 
 	uuidLauncherUserID, err := uuid.Parse(productKeyID)
 	if err != nil {
@@ -104,8 +103,8 @@ func (la *LauncherAuth) DeleteProductKey(productKeyID string) error {
 	return nil
 }
 
-func (la *LauncherAuth) GetProductKeys(launcherVersionID string) ([]*openapi.ProductKeyDetail, error) {
-	ctx := context.Background()
+func (la *LauncherAuth) GetProductKeys(c echo.Context, launcherVersionID string) ([]*openapi.ProductKeyDetail, error) {
+	ctx := c.Request().Context()
 
 	uuidLauncherVersionID, err := uuid.Parse(launcherVersionID)
 	if err != nil {

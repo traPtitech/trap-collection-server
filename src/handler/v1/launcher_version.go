@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -28,8 +27,8 @@ func NewLauncherVersion(launcherVersionService service.LauncherVersion) *Launche
 	}
 }
 
-func (lv *LauncherVersion) GetVersions() ([]*openapi.Version, error) {
-	ctx := context.Background()
+func (lv *LauncherVersion) GetVersions(c echo.Context) ([]*openapi.Version, error) {
+	ctx := c.Request().Context()
 
 	versions, err := lv.launcherVersionService.GetLauncherVersions(ctx)
 	if err != nil {
@@ -61,8 +60,8 @@ func (lv *LauncherVersion) GetVersions() ([]*openapi.Version, error) {
 	return apiVersions, nil
 }
 
-func (lv *LauncherVersion) PostVersion(newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
-	ctx := context.Background()
+func (lv *LauncherVersion) PostVersion(c echo.Context, newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
+	ctx := c.Request().Context()
 
 	name := values.NewLauncherVersionName(newVersion.Name)
 
@@ -113,8 +112,8 @@ func (lv *LauncherVersion) PostVersion(newVersion *openapi.NewVersion) (*openapi
 	}, nil
 }
 
-func (lv *LauncherVersion) GetVersion(strLauncherVersionID string) (*openapi.VersionDetails, error) {
-	ctx := context.Background()
+func (lv *LauncherVersion) GetVersion(c echo.Context, strLauncherVersionID string) (*openapi.VersionDetails, error) {
+	ctx := c.Request().Context()
 
 	uuidLauncherVersionID, err := uuid.Parse(strLauncherVersionID)
 	if err != nil {
@@ -160,8 +159,8 @@ func (lv *LauncherVersion) GetVersion(strLauncherVersionID string) (*openapi.Ver
 	}, nil
 }
 
-func (lv *LauncherVersion) PostGameToVersion(strLauncherVersionID string, apiGameIDs *openapi.GameIDs) (*openapi.VersionDetails, error) {
-	ctx := context.Background()
+func (lv *LauncherVersion) PostGameToVersion(c echo.Context, strLauncherVersionID string, apiGameIDs *openapi.GameIDs) (*openapi.VersionDetails, error) {
+	ctx := c.Request().Context()
 
 	uuidLauncherVersionID, err := uuid.Parse(strLauncherVersionID)
 	if err != nil {
@@ -225,7 +224,7 @@ func (lv *LauncherVersion) PostGameToVersion(strLauncherVersionID string, apiGam
 	}, nil
 }
 
-func (lv *LauncherVersion) GetCheckList(operatingSystem string, c echo.Context) ([]*openapi.CheckItem, error) {
+func (lv *LauncherVersion) GetCheckList(c echo.Context, operatingSystem string) ([]*openapi.CheckItem, error) {
 	launcherVersion, err := getLauncherVersion(c)
 	if err != nil {
 		log.Printf("error: failed to get launcher version: %v\n", err)
