@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"path"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -75,4 +77,13 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 	}
 
 	return nil
+}
+
+func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
+	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url: %w", err)
+	}
+
+	return values.NewGameVideoTmpURL(tmpURL), nil
 }

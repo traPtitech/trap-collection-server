@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -58,6 +59,20 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 	}
 
 	return nil
+}
+
+func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
+	fileKey := gv.videoKey(video.GetID())
+
+	url, err := gv.client.createTempURL(ctx, fileKey, expires)
+	if errors.Is(err, ErrNotFound) {
+		return nil, storage.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get temp url: %w", err)
+	}
+
+	return url, nil
 }
 
 func (gv *GameVideo) videoKey(videoID values.GameVideoID) string {
