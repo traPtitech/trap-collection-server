@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -19,6 +20,7 @@ const (
 type Client struct {
 	connection    *swift.Connection
 	containerName string
+	tmpURLKey     string
 }
 
 func NewClient(
@@ -28,6 +30,7 @@ func NewClient(
 	tennantName common.SwiftTenantName,
 	tennantID common.SwiftTenantID,
 	containerName common.SwiftContainer,
+	tmpURLKey common.SwiftTmpURLKey,
 ) (*Client, error) {
 	ctx := context.Background()
 
@@ -46,6 +49,7 @@ func NewClient(
 	return &Client{
 		connection:    connection,
 		containerName: string(containerName),
+		tmpURLKey:     string(tmpURLKey),
 	}, nil
 }
 
@@ -147,4 +151,23 @@ func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) error {
 	}
 
 	return nil
+}
+
+func (c *Client) createTempURL(ctx context.Context, name string, expires time.Duration) (*url.URL, error) {
+	_, _, err := c.connection.Object(ctx, c.containerName, name)
+	if errors.Is(err, swift.ObjectNotFound) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object: %w", err)
+	}
+
+	strURL := c.connection.ObjectTempUrl(c.containerName, name, c.tmpURLKey, http.MethodGet, time.Now().Add(expires))
+
+	tmpURL, err := url.Parse(strURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url: %w", err)
+	}
+
+	return tmpURL, nil
 }

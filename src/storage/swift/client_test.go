@@ -46,6 +46,7 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 		common.SwiftTenantName(""),
 		common.SwiftTenantID(""),
 		common.SwiftContainer(containerName),
+		common.SwiftTmpURLKey(""),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
