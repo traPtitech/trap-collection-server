@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -205,36 +206,37 @@ func TestGetGameVideo(t *testing.T) {
 		description               string
 		gameID                    values.GameID
 		GetGameErr                error
-		isValidFile               bool
-		videoType                 values.GameVideoType
 		executeGetLatestGameVideo bool
 		video                     *domain.GameVideo
 		GetLatestGameVideoErr     error
-		executeGetGameVideo       bool
-		GetGameVideoErr           error
+		executeGetTempURL         bool
+		videoURL                  values.GameVideoTmpURL
+		GetTempURLErr             error
 		isErr                     bool
 		err                       error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
 	}
 
 	testCases := []test{
 		{
 			description:               "特に問題ないのでエラーなし",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			videoType:                 values.GameVideoTypeMp4,
 			executeGetLatestGameVideo: true,
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
 				time.Now(),
 			),
-			executeGetGameVideo: true,
+			executeGetTempURL: true,
+			videoURL:          values.NewGameVideoTmpURL(urlLink),
 		},
 		{
 			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
 			gameID:      values.NewGameID(),
-			isValidFile: true,
-			videoType:   values.GameVideoTypeMp4,
 			GetGameErr:  repository.ErrRecordNotFound,
 			isErr:       true,
 			err:         service.ErrInvalidGameID,
@@ -242,29 +244,12 @@ func TestGetGameVideo(t *testing.T) {
 		{
 			description: "GetGameがエラーなのでエラー",
 			gameID:      values.NewGameID(),
-			isValidFile: true,
-			videoType:   values.GameVideoTypeMp4,
 			GetGameErr:  errors.New("error"),
 			isErr:       true,
 		},
 		{
-			// 実際には発生しないが、念のため確認
-			description:               "動画が不正でもエラーなし",
-			gameID:                    values.NewGameID(),
-			isValidFile:               false,
-			executeGetLatestGameVideo: true,
-			video: domain.NewGameVideo(
-				values.NewGameVideoID(),
-				values.GameVideoTypeMp4,
-				time.Now(),
-			),
-			executeGetGameVideo: true,
-		},
-		{
 			description:               "GetLatestGameVideoがErrRecordNotFoundなのでErrNoGameImage",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			videoType:                 values.GameVideoTypeMp4,
 			executeGetLatestGameVideo: true,
 			GetLatestGameVideoErr:     repository.ErrRecordNotFound,
 			isErr:                     true,
@@ -273,64 +258,29 @@ func TestGetGameVideo(t *testing.T) {
 		{
 			description:               "GetLatestGameVideoがエラーなのでエラー",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			videoType:                 values.GameVideoTypeMp4,
 			executeGetLatestGameVideo: true,
 			GetLatestGameVideoErr:     errors.New("error"),
 			isErr:                     true,
 		},
 		{
-			description:               "GetGameVideoがエラーでもエラーなし",
+			description:               "GetTempURLがエラーなのでエラー",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			videoType:                 values.GameVideoTypeMp4,
 			executeGetLatestGameVideo: true,
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),
 				values.GameVideoTypeMp4,
 				time.Now(),
 			),
-			executeGetGameVideo: true,
-			GetGameVideoErr:     errors.New("error"),
+			executeGetTempURL: true,
+			videoURL:          values.NewGameVideoTmpURL(urlLink),
+			GetTempURLErr:     errors.New("error"),
+			isErr:             true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			var file *bytes.Buffer
-			if testCase.isValidFile {
-				videoBuf := bytes.NewBuffer(nil)
-
-				switch testCase.videoType {
-				case values.GameVideoTypeMp4:
-					err := func() error {
-						f, err := os.Open("../../../testdata/1.mp4")
-						if err != nil {
-							return fmt.Errorf("failed to open file: %w", err)
-						}
-						defer f.Close()
-
-						_, err = io.Copy(videoBuf, f)
-						if err != nil {
-							return fmt.Errorf("failed to copy file: %w", err)
-						}
-
-						return nil
-					}()
-					if err != nil {
-						t.Fatalf("failed to encode image: %s", err)
-					}
-				default:
-					t.Fatalf("invalid video type: %v\n", testCase.videoType)
-				}
-
-				file = videoBuf
-			} else {
-				file = bytes.NewBufferString("invalid file")
-			}
-			expectBytes := file.Bytes()
-
-			mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, file)
+			mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, nil)
 
 			gameVideoService := NewGameVideo(
 				mockDB,
@@ -351,14 +301,14 @@ func TestGetGameVideo(t *testing.T) {
 					Return(testCase.video, testCase.GetLatestGameVideoErr)
 			}
 
-			if testCase.executeGetGameVideo {
+			if testCase.executeGetTempURL {
 				mockGameVideoStorage.
 					EXPECT().
-					GetGameVideo(ctx, testCase.video).
-					Return(testCase.GetGameVideoErr)
+					GetTempURL(ctx, testCase.video, time.Minute).
+					Return(testCase.videoURL, testCase.GetTempURLErr)
 			}
 
-			r, err := gameVideoService.GetGameVideo(ctx, testCase.gameID)
+			tmpURL, err := gameVideoService.GetGameVideo(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -373,12 +323,7 @@ func TestGetGameVideo(t *testing.T) {
 				return
 			}
 
-			data, err := io.ReadAll(r)
-			if err != nil {
-				t.Fatalf("failed to read response body: %v\n", err)
-			}
-
-			assert.Equal(t, expectBytes, data)
+			assert.Equal(t, testCase.videoURL, tmpURL)
 		})
 	}
 }
