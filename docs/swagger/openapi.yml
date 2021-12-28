@@ -447,6 +447,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameFile'
+        "303":
+          description: object storageへのredirect
         "400":
           description: 既に同じタイプのファイルがある
         "500":
