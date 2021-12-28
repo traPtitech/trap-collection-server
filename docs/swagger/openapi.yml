@@ -319,13 +319,8 @@ paths:
         - LauncherAuth: []
       operationId: getVideo
       responses:
-        "200":
-          description: 成功
-          content:
-            video/mp4:
-              schema:
-                type: string
-                format: binary
+        "303":
+          description: object storageのtmpURLにredirect
         "500":
           description: 失敗
   /games/{gameID}/maintainers:

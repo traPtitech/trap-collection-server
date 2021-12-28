@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -145,6 +145,7 @@ func TestGetVideo(t *testing.T) {
 		strGameID           string
 		executeGetGameVideo bool
 		gameID              values.GameID
+		tmpURL              values.GameVideoTmpURL
 		GetGameVideoErr     error
 		isErr               bool
 		err                 error
@@ -156,12 +157,20 @@ func TestGetVideo(t *testing.T) {
 	gameID3 := values.NewGameID()
 	gameID4 := values.NewGameID()
 
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
 	testCases := []test{
 		{
-			description:         "特に問題ないのでエラーなし",
+			description:         "特に問題ないので303",
 			strGameID:           uuid.UUID(gameID1).String(),
 			executeGetGameVideo: true,
 			gameID:              gameID1,
+			tmpURL:              values.NewGameVideoTmpURL(urlLink),
+			isErr:               true,
+			statusCode:          http.StatusSeeOther,
 		},
 		{
 			description: "gameIDが不正なので400",
@@ -205,22 +214,24 @@ func TestGetVideo(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			r := io.NopCloser(bytes.NewReader([]byte("a")))
-
 			if testCase.executeGetGameVideo {
 				mockGameVideoService.
 					EXPECT().
 					GetGameVideo(gomock.Any(), testCase.gameID).
-					Return(r, testCase.GetGameVideoErr)
+					Return(testCase.tmpURL, testCase.GetGameVideoErr)
 			}
 
-			res, err := gameVideoHandler.GetVideo(c, testCase.strGameID)
+			err := gameVideoHandler.GetVideo(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
+
+						if testCase.statusCode == http.StatusSeeOther {
+							assert.Equal(t, (*url.URL)(testCase.tmpURL).String(), c.Response().Header().Get(echo.HeaderLocation))
+						}
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
@@ -232,11 +243,6 @@ func TestGetVideo(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, r, res)
 		})
 	}
 }

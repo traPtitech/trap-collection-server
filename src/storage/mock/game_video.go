@@ -5,10 +5,11 @@ import (
 	context "context"
 	io "io"
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
-	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	values "github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 // GameVideo is a mock of GameVideo interface.
@@ -36,30 +37,19 @@ func (m *GameVideo) EXPECT() *GameVideoMockRecorder {
 	return m.recorder
 }
 
-// GetGameVideo mocks base method.
-func (m *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
-	ret0 := m.getGameVideo(ctx, video)
-
-	_, err := io.Copy(writer, m.buf)
-	if err != nil {
-		m.ctrl.T.Fatalf("unexpected error copying from buffer: %v", err)
-	}
-
-	return ret0
-}
-
-// GetGameVideo mocks base method.
-func (m *GameVideo) getGameVideo(ctx context.Context, video *domain.GameVideo) error {
+// GetTempURL mocks base method.
+func (m *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGameVideo", ctx, video)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetTempURL", ctx, video, expires)
+	ret0, _ := ret[0].(values.GameVideoTmpURL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetGameVideo indicates an expected call of GetGameVideo.
-func (mr *GameVideoMockRecorder) GetGameVideo(ctx, video interface{}) *gomock.Call {
+// GetTempURL indicates an expected call of GetTempURL.
+func (mr *GameVideoMockRecorder) GetTempURL(ctx, video, expires interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameVideo", reflect.TypeOf((*GameVideo)(nil).GetGameVideo), ctx, video)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTempURL", reflect.TypeOf((*GameVideo)(nil).GetTempURL), ctx, video, expires)
 }
 
 // SaveGameVideo mocks base method.

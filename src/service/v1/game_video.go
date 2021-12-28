@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -128,7 +127,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (io.ReadCloser, error) {
+func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (values.GameVideoTmpURL, error) {
 	_, err := gv.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID
@@ -145,16 +144,10 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID) (io
 		return nil, fmt.Errorf("failed to get game image: %w", err)
 	}
 
-	pr, pw := io.Pipe()
+	tmpURL, err := gv.gameVideoStorage.GetTempURL(ctx, video, time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game video temp url: %w", err)
+	}
 
-	go func() {
-		defer pw.Close()
-
-		err = gv.gameVideoStorage.GetGameVideo(ctx, pw, video)
-		if err != nil {
-			log.Printf("error: failed to get game video: %+v", err)
-		}
-	}()
-
-	return pr, nil
+	return tmpURL, nil
 }
