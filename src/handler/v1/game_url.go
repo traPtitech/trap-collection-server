@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -23,8 +22,8 @@ func NewGameURL(gameURLService service.GameURL) *GameURL {
 	}
 }
 
-func (gu *GameURL) PostURL(strGameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
-	ctx := context.Background()
+func (gu *GameURL) PostURL(c echo.Context, strGameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -62,8 +61,8 @@ func (gu *GameURL) PostURL(strGameID string, newGameURL *openapi.NewGameUrl) (*o
 	}, nil
 }
 
-func (gu *GameURL) GetGameURL(strGameID string) (string, error) {
-	ctx := context.Background()
+func (gu *GameURL) GetGameURL(c echo.Context, strGameID string) (string, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {

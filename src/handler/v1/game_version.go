@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -24,8 +23,8 @@ func NewGameVersion(gameVersionService service.GameVersion) *GameVersion {
 	}
 }
 
-func (gv *GameVersion) PostGameVersion(strGameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
-	ctx := context.Background()
+func (gv *GameVersion) PostGameVersion(c echo.Context, strGameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -59,8 +58,8 @@ func (gv *GameVersion) PostGameVersion(strGameID string, newGameVersion *openapi
 	}, nil
 }
 
-func (gv *GameVersion) GetGameVersion(strGameID string) ([]*openapi.GameVersion, error) {
-	ctx := context.Background()
+func (gv *GameVersion) GetGameVersion(c echo.Context, strGameID string) ([]*openapi.GameVersion, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {

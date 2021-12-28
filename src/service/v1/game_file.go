@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -133,7 +132,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID v
 	return gameFile, nil
 }
 
-func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (io.ReadCloser, *domain.GameFile, error) {
+func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) (values.GameFileTmpURL, *domain.GameFile, error) {
 	_, err := gf.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidGameID
@@ -171,24 +170,10 @@ func (gf *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, envir
 		return nil, nil, service.ErrNoGameFile
 	}
 
-	pr, pw := io.Pipe()
+	tmpURL, err := gf.gameFileStorage.GetTempURL(ctx, gameFile, time.Minute)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get temp url: %w", err)
+	}
 
-	go func() {
-		defer pw.Close()
-
-		ctx := context.Background()
-		err := gf.downloadSemaphore.Acquire(ctx, 1)
-		if err != nil {
-			log.Printf("failed to acquire semaphore: %v", err)
-			return
-		}
-		defer gf.downloadSemaphore.Release(1)
-
-		err = gf.gameFileStorage.GetGameFile(ctx, pw, gameFile)
-		if err != nil {
-			log.Printf("error: failed to get game file: %v\n", err)
-		}
-	}()
-
-	return pr, gameFile, nil
+	return tmpURL, gameFile, nil
 }

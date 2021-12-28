@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +26,8 @@ type (
 		ランチャーでファイルが壊れていないかの確認に使用する。
 	*/
 	GameFileHash []byte
+
+	GameFileTmpURL *url.URL
 )
 
 func NewGameFileID() GameFileID {
@@ -73,4 +76,8 @@ func NewGameFileHashFromBytes(hash []byte) GameFileHash {
 
 func (h GameFileHash) String() string {
 	return hex.EncodeToString(h)
+}
+
+func NewGameFileTmpURL(tmpURL *url.URL) GameFileTmpURL {
+	return GameFileTmpURL(tmpURL)
 }

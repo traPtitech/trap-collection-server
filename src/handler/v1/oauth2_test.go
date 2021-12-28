@@ -135,7 +135,7 @@ func TestCallback(t *testing.T) {
 					Return(testCase.authSession, testCase.CallbackErr)
 			}
 
-			err := oauth.Callback(testCase.strCode, c)
+			err := oauth.Callback(c, testCase.strCode)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

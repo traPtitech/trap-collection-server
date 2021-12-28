@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -131,12 +132,17 @@ func TestGetVersions(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/api/versions", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			mockLauncherVersionService.
 				EXPECT().
 				GetLauncherVersions(gomock.Any()).
 				Return(testCase.launcherVersions, testCase.GetLauncherVersionsErr)
 
-			launcherVersions, err := launcherVersionHandler.GetVersions()
+			launcherVersions, err := launcherVersionHandler.GetVersions(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -280,6 +286,11 @@ func TestPostVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/versions", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeCreateLauncherVersion {
 				mockLauncherVersionService.
 					EXPECT().
@@ -287,7 +298,7 @@ func TestPostVersion(t *testing.T) {
 					Return(testCase.version, testCase.CreateLauncherVersionErr)
 			}
 
-			launcherVersion, err := launcherVersionHandler.PostVersion(testCase.newVersion)
+			launcherVersion, err := launcherVersionHandler.PostVersion(c, testCase.newVersion)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -502,6 +513,11 @@ func TestGetVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/versions/%s", testCase.strLauncherVersionID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeGetLauncherVersion {
 				mockLauncherVersionService.
 					EXPECT().
@@ -509,7 +525,7 @@ func TestGetVersion(t *testing.T) {
 					Return(testCase.launcherVersion, testCase.games, testCase.GetLauncherVersionErr)
 			}
 
-			launcherVersion, err := launcherVersionHandler.GetVersion(testCase.strLauncherVersionID)
+			launcherVersion, err := launcherVersionHandler.GetVersion(c, testCase.strLauncherVersionID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -766,6 +782,11 @@ func TestPostGameToVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/versions/%s/game", testCase.strLauncherVersionID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeAddGamesToLauncherVersion {
 				mockLauncherVersionService.
 					EXPECT().
@@ -773,7 +794,7 @@ func TestPostGameToVersion(t *testing.T) {
 					Return(testCase.launcherVersion, testCase.games, testCase.AddGamesToLauncherVersionErr)
 			}
 
-			launcherVersion, err := launcherVersionHandler.PostGameToVersion(testCase.strLauncherVersionID, testCase.apiGameIDs)
+			launcherVersion, err := launcherVersionHandler.PostGameToVersion(c, testCase.strLauncherVersionID, testCase.apiGameIDs)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -1400,7 +1421,7 @@ func TestGetCheckList(t *testing.T) {
 					Return(testCase.checkListItems, testCase.GetLauncherVersionCheckListErr)
 			}
 
-			checkList, err := launcherVersionHandler.GetCheckList(testCase.operatingSystem, c)
+			checkList, err := launcherVersionHandler.GetCheckList(c, testCase.operatingSystem)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

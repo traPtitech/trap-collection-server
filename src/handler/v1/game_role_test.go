@@ -220,9 +220,9 @@ func TestPostMaintainer(t *testing.T) {
 					Return(testCase.AddGameCollaboratorsErr)
 			}
 
-			err := gameRoleHandler.PostMaintainer(testCase.strGameID, &openapi.Maintainers{
+			err := gameRoleHandler.PostMaintainer(c, testCase.strGameID, &openapi.Maintainers{
 				Maintainers: testCase.maintainers,
-			}, c)
+			})
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -495,7 +495,7 @@ func TestGetMaintainer(t *testing.T) {
 					Return(testCase.gameManagers, testCase.GetGameManagersErr)
 			}
 
-			maintainers, err := gameRoleHandler.GetMaintainer(testCase.strGameID, c)
+			maintainers, err := gameRoleHandler.GetMaintainer(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

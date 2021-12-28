@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -196,7 +197,7 @@ func TestPostGame(t *testing.T) {
 					Return(testCase.game, testCase.CreateGameErr)
 			}
 
-			game, err := gameHandler.PostGame(testCase.newGame, c)
+			game, err := gameHandler.PostGame(c, testCase.newGame)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -328,6 +329,11 @@ func TestGetGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/game/%s", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeGetGame {
 				mockGameService.
 					EXPECT().
@@ -335,7 +341,7 @@ func TestGetGame(t *testing.T) {
 					Return(testCase.game, testCase.GetGameErr)
 			}
 
-			game, err := gameHandler.GetGame(testCase.strGameID)
+			game, err := gameHandler.GetGame(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -487,6 +493,11 @@ func TestPutGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/game/%s", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeUpdateGame {
 				mockGameService.
 					EXPECT().
@@ -494,7 +505,7 @@ func TestPutGame(t *testing.T) {
 					Return(testCase.game, testCase.UpdateGameErr)
 			}
 
-			game, err := gameHandler.PutGame(testCase.strGameID, testCase.newGame)
+			game, err := gameHandler.PutGame(c, testCase.strGameID, testCase.newGame)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -959,7 +970,7 @@ func TestGetGames(t *testing.T) {
 					Return(testCase.games, testCase.GetMyGamesErr)
 			}
 
-			games, err := gameHandler.GetGames(testCase.strAll, c)
+			games, err := gameHandler.GetGames(c, testCase.strAll)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -1061,6 +1072,11 @@ func TestDeleteGames(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/game/%s", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeDeleteGame {
 				mockGameService.
 					EXPECT().
@@ -1068,7 +1084,7 @@ func TestDeleteGames(t *testing.T) {
 					Return(testCase.DeleteGameErr)
 			}
 
-			err := gameHandler.DeleteGames(testCase.strGameID)
+			err := gameHandler.DeleteGames(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

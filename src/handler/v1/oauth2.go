@@ -28,7 +28,7 @@ func NewOAuth2(baseURL common.TraQBaseURL, session *Session, oidcService service
 	}
 }
 
-func (o *OAuth2) Callback(strCode string, c echo.Context) error {
+func (o *OAuth2) Callback(c echo.Context, strCode string) error {
 	code := values.NewOIDCAuthorizationCode(strCode)
 
 	session, err := o.session.getSession(c)

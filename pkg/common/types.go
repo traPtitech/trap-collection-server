@@ -20,5 +20,6 @@ type (
 	SwiftTenantID   string
 	SwiftTenantName string
 	SwiftContainer  string
+	SwiftTmpURLKey  string
 	FilePath        string
 )

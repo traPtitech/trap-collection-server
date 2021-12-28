@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -29,7 +28,7 @@ func NewGame(
 	}
 }
 
-func (g *Game) PostGame(newGame *openapi.NewGame, c echo.Context) (*openapi.GameInfo, error) {
+func (g *Game) PostGame(c echo.Context, newGame *openapi.NewGame) (*openapi.GameInfo, error) {
 	session, err := getSession(c)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
@@ -74,8 +73,8 @@ func (g *Game) PostGame(newGame *openapi.NewGame, c echo.Context) (*openapi.Game
 	}, nil
 }
 
-func (g *Game) GetGame(strGameID string) (*openapi.Game, error) {
-	ctx := context.Background()
+func (g *Game) GetGame(c echo.Context, strGameID string) (*openapi.Game, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -112,8 +111,8 @@ func (g *Game) GetGame(strGameID string) (*openapi.Game, error) {
 	}, nil
 }
 
-func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error) {
-	ctx := context.Background()
+func (g *Game) PutGame(c echo.Context, strGameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -154,7 +153,7 @@ func (g *Game) PutGame(strGameID string, gameMeta *openapi.NewGame) (*openapi.Ga
 	}, nil
 }
 
-func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) {
+func (g *Game) GetGames(c echo.Context, strAll string) ([]*openapi.Game, error) {
 	var isAll bool
 	if len(strAll) == 0 {
 		isAll = false
@@ -219,8 +218,8 @@ func (g *Game) GetGames(strAll string, c echo.Context) ([]*openapi.Game, error) 
 	return gameInfos, nil
 }
 
-func (g *Game) DeleteGames(strGameID string) error {
-	ctx := context.Background()
+func (g *Game) DeleteGames(c echo.Context, strGameID string) error {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {

@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -169,6 +170,11 @@ func TestPostKeyGenerate(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/launcher/key/generate", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeCreateLauncherUser {
 				mockLauncherAuthService.
 					EXPECT().
@@ -176,7 +182,7 @@ func TestPostKeyGenerate(t *testing.T) {
 					Return(testCase.launcherUsers, testCase.CreateLauncherUserErr)
 			}
 
-			productKeys, err := launcherAuthHandler.PostKeyGenerate(&testCase.request)
+			productKeys, err := launcherAuthHandler.PostKeyGenerate(c, &testCase.request)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -298,6 +304,11 @@ func TestPostLauncherLogin(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/launcher/login", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeLoginLauncher {
 				mockLauncherAuthService.
 					EXPECT().
@@ -305,7 +316,7 @@ func TestPostLauncherLogin(t *testing.T) {
 					Return(testCase.launcherSession, testCase.LoginLauncherErr)
 			}
 
-			token, err := launcherAuthHandler.PostLauncherLogin(&testCase.request)
+			token, err := launcherAuthHandler.PostLauncherLogin(c, &testCase.request)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -398,6 +409,11 @@ func TestDeleteProductKey(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/launcher/key/%s", testCase.requestProductKeyID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeRevokeProductKey {
 				mockLauncherAuthService.
 					EXPECT().
@@ -405,7 +421,7 @@ func TestDeleteProductKey(t *testing.T) {
 					Return(testCase.RevokeProductKeyErr)
 			}
 
-			err := launcherAuthHandler.DeleteProductKey(testCase.requestProductKeyID)
+			err := launcherAuthHandler.DeleteProductKey(c, testCase.requestProductKeyID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -553,6 +569,11 @@ func TestGetProductKeys(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/versions/%s/keys", testCase.requestLauncherVersionID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			if testCase.executeGetLauncherUsers {
 				mockLauncherAuthService.
 					EXPECT().
@@ -560,7 +581,7 @@ func TestGetProductKeys(t *testing.T) {
 					Return(testCase.launcherUsers, testCase.GetLauncherUsersErr)
 			}
 
-			actualProductKeys, err := launcherAuthHandler.GetProductKeys(testCase.requestLauncherVersionID)
+			actualProductKeys, err := launcherAuthHandler.GetProductKeys(c, testCase.requestLauncherVersionID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

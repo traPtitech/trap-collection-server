@@ -3,8 +3,10 @@ package v1
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -92,6 +94,11 @@ func TestPostImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/game/%s/image", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			r := &NopCloser{testCase.reader}
 
 			if testCase.executeSaveGameImage {
@@ -101,7 +108,7 @@ func TestPostImage(t *testing.T) {
 					Return(testCase.SaveGameImageErr)
 			}
 
-			err := gameImageHandler.PostImage(testCase.strGameID, r)
+			err := gameImageHandler.PostImage(c, testCase.strGameID, r)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -193,6 +200,11 @@ func TestGetImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/game/%s/image", testCase.strGameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
 			r := io.NopCloser(bytes.NewReader([]byte("a")))
 
 			if testCase.executeGetGameImage {
@@ -202,7 +214,7 @@ func TestGetImage(t *testing.T) {
 					Return(r, testCase.GetGameImageErr)
 			}
 
-			res, err := gameImageHandler.GetImage(testCase.strGameID)
+			res, err := gameImageHandler.GetImage(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

@@ -90,6 +90,7 @@ func main() {
 		swiftTenantID   common.SwiftTenantID
 		swiftTenantName common.SwiftTenantName
 		swiftContainer  common.SwiftContainer
+		swiftTmpURLKey  common.SwiftTmpURLKey
 	)
 	if isSwift {
 		strSwiftAuthURL, ok := os.LookupEnv("OS_AUTH_URL")
@@ -130,6 +131,12 @@ func main() {
 			panic("ENV OS_CONTAINER is not set")
 		}
 		swiftContainer = common.SwiftContainer(strSwiftContainer)
+
+		strSwiftTmpURLKey, ok := os.LookupEnv("OS_TMP_URL_KEY")
+		if !ok {
+			panic("ENV OS_TMP_URL_KEY is not set")
+		}
+		swiftTmpURLKey = common.SwiftTmpURLKey(strSwiftTmpURLKey)
 	} else {
 		filePath, ok = os.LookupEnv("FILE_PATH")
 		if !ok {
@@ -151,6 +158,7 @@ func main() {
 		SwiftTenantID:   swiftTenantID,
 		SwiftTenantName: swiftTenantName,
 		SwiftContainer:  swiftContainer,
+		SwiftTmpURLKey:  swiftTmpURLKey,
 		FilePath:        common.FilePath(filePath),
 		HttpClient:      http.DefaultClient,
 	})

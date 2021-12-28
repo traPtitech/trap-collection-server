@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"errors"
 	"io"
 	"log"
@@ -24,8 +23,8 @@ func NewGameImage(gameImageService service.GameImage) *GameImage {
 	}
 }
 
-func (gi *GameImage) PostImage(strGameID string, image multipart.File) error {
-	ctx := context.Background()
+func (gi *GameImage) PostImage(c echo.Context, strGameID string, image multipart.File) error {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -49,8 +48,8 @@ func (gi *GameImage) PostImage(strGameID string, image multipart.File) error {
 	return nil
 }
 
-func (gi *GameImage) GetImage(strGameID string) (io.ReadCloser, error) {
-	ctx := context.Background()
+func (gi *GameImage) GetImage(c echo.Context, strGameID string) (io.ReadCloser, error) {
+	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {

@@ -33,7 +33,8 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 	swiftTenantName := config.SwiftTenantName
 	swiftTenantID := config.SwiftTenantID
 	swiftContainer := config.SwiftContainer
-	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer)
+	swiftTmpURLKey := config.SwiftTmpURLKey
+	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer, swiftTmpURLKey)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +158,7 @@ type Config struct {
 	SwiftTenantID   common.SwiftTenantID
 	SwiftTenantName common.SwiftTenantName
 	SwiftContainer  common.SwiftContainer
+	SwiftTmpURLKey  common.SwiftTmpURLKey
 	FilePath        common.FilePath
 	HttpClient      *http.Client
 }
@@ -193,6 +195,7 @@ var (
 	swiftTenantIDField   = wire.FieldsOf(new(*Config), "SwiftTenantID")
 	swiftTenantNameField = wire.FieldsOf(new(*Config), "SwiftTenantName")
 	swiftContainerField  = wire.FieldsOf(new(*Config), "SwiftContainer")
+	swiftTmpURLKeyField  = wire.FieldsOf(new(*Config), "SwiftTmpURLKey")
 	filePathField        = wire.FieldsOf(new(*Config), "FilePath")
 	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
 
