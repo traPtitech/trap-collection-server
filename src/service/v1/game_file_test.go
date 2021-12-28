@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -367,7 +367,6 @@ func TestGetGameFile(t *testing.T) {
 
 	type test struct {
 		description                  string
-		fileContent                  *bytes.Buffer
 		gameID                       values.GameID
 		environment                  *values.LauncherEnvironment
 		GetGameErr                   error
@@ -379,6 +378,7 @@ func TestGetGameFile(t *testing.T) {
 		repositoryGetGameFileErr     error
 		gameFile                     *domain.GameFile
 		executeStorageGetGameFile    bool
+		gameURL                      values.GameFileTmpURL
 		storageGetGameFileErr        error
 		isErr                        bool
 		err                          error
@@ -388,12 +388,16 @@ func TestGetGameFile(t *testing.T) {
 	gameFileID1 := values.NewGameFileID()
 	gameFileID2 := values.NewGameFileID()
 
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
 	now := time.Now()
 
 	testCases := []test{
 		{
 			description:                 "特に問題ないのでエラーなし",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -421,10 +425,10 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 		{
 			description: "ゲームが存在しないのでエラー",
-			fileContent: bytes.NewBufferString("test"),
 			gameID:      gameID,
 			environment: values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			GetGameErr:  repository.ErrRecordNotFound,
@@ -433,7 +437,6 @@ func TestGetGameFile(t *testing.T) {
 		},
 		{
 			description: "GetGameがエラーなのでエラー",
-			fileContent: bytes.NewBufferString("test"),
 			gameID:      gameID,
 			environment: values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			GetGameErr:  errors.New("error"),
@@ -441,7 +444,6 @@ func TestGetGameFile(t *testing.T) {
 		},
 		{
 			description:                 "ゲームバージョンが存在しないのでエラー",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -451,7 +453,6 @@ func TestGetGameFile(t *testing.T) {
 		},
 		{
 			description:                 "GetLatestGameVersionがエラーなのでエラー",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -460,7 +461,6 @@ func TestGetGameFile(t *testing.T) {
 		},
 		{
 			description:                 "repositoryのGetGameFileがエラーなのでエラー",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -475,8 +475,7 @@ func TestGetGameFile(t *testing.T) {
 			isErr:                        true,
 		},
 		{
-			description:                 "storageのGetGameFileがエラーでもエラーにならない",
-			fileContent:                 bytes.NewBufferString("test"),
+			description:                 "storageのGetGameFileがエラーの時エラー",
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -504,11 +503,12 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 			storageGetGameFileErr:     errors.New("error"),
+			isErr:                     true,
 		},
 		{
 			description:                 "ゲームファイルが存在しないのでエラー",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -525,7 +525,6 @@ func TestGetGameFile(t *testing.T) {
 		},
 		{
 			description:                 "windows用のファイルが存在すればjarよりそちらを優先する",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -560,10 +559,10 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 		{
 			description:                 "順番に関わらずwindows用のファイルが存在すればjarよりそちらを優先する",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -598,10 +597,10 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 		{
 			description:                 "mac用のファイルが存在すればjarよりそちらを優先する",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSMac),
 			executeGetLatestGameVersion: true,
@@ -636,10 +635,10 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 		{
 			description:                 "順番に関わらずmac用のファイルが存在すればjarよりそちらを優先する",
-			fileContent:                 bytes.NewBufferString("test"),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSMac),
 			executeGetLatestGameVersion: true,
@@ -674,10 +673,10 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 		{
 			description:                 "ファイルが大きくても問題なし",
-			fileContent:                 bytes.NewBufferString(strings.Repeat("a", 1e7)),
 			gameID:                      gameID,
 			environment:                 values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetLatestGameVersion: true,
@@ -705,12 +704,13 @@ func TestGetGameFile(t *testing.T) {
 				now,
 			),
 			executeStorageGetGameFile: true,
+			gameURL:                   values.NewGameFileTmpURL(urlLink),
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			mockGameFileStorage := mockStorage.NewGameFile(ctrl, testCase.fileContent)
+			mockGameFileStorage := mockStorage.NewGameFile(ctrl, nil)
 
 			gameFileService := NewGameFile(
 				mockDB,
@@ -742,16 +742,11 @@ func TestGetGameFile(t *testing.T) {
 			if testCase.executeStorageGetGameFile {
 				mockGameFileStorage.
 					EXPECT().
-					GetGameFile(gomock.Any(), gomock.Any()).
-					Return(testCase.storageGetGameFileErr)
+					GetTempURL(gomock.Any(), gomock.Any(), time.Minute).
+					Return(testCase.gameURL, testCase.storageGetGameFileErr)
 			}
 
-			var expectBytes []byte
-			if testCase.fileContent != nil {
-				expectBytes = testCase.fileContent.Bytes()
-			}
-
-			r, gameFile, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.environment)
+			tmpURL, gameFile, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.environment)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -772,12 +767,7 @@ func TestGetGameFile(t *testing.T) {
 			assert.Equal(t, testCase.gameFile.GetHash(), gameFile.GetHash())
 			assert.WithinDuration(t, testCase.gameFile.GetCreatedAt(), gameFile.GetCreatedAt(), time.Second)
 
-			data, err := io.ReadAll(r)
-			if err != nil {
-				t.Fatalf("failed to read response body: %v\n", err)
-			}
-
-			assert.Equal(t, expectBytes, data)
+			assert.Equal(t, testCase.gameURL, tmpURL)
 		})
 	}
 }
