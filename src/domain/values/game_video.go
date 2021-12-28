@@ -1,10 +1,15 @@
 package values
 
-import "github.com/google/uuid"
+import (
+	"net/url"
+
+	"github.com/google/uuid"
+)
 
 type (
-	GameVideoID   uuid.UUID
-	GameVideoType int
+	GameVideoID     uuid.UUID
+	GameVideoType   int
+	GameVideoTmpURL *url.URL
 )
 
 func NewGameVideoID() GameVideoID {
@@ -18,3 +23,7 @@ func NewGameVideoIDFromUUID(id uuid.UUID) GameVideoID {
 const (
 	GameVideoTypeMp4 GameVideoType = iota
 )
+
+func NewGameVideoTmpURL(tmpURL *url.URL) GameVideoTmpURL {
+	return GameVideoTmpURL(tmpURL)
+}
