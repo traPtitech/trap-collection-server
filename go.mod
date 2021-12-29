@@ -3,7 +3,6 @@ module github.com/traPtitech/trap-collection-server
 go 1.17
 
 require (
-	github.com/comail/colog v0.0.0-20160416085026-fba8e7b1f46c
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
@@ -16,7 +15,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/mod v0.5.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	gopkg.in/djherbis/fscache.v0 v0.10.1
 	gorm.io/driver/mysql v1.2.2
 	gorm.io/gorm v1.22.4
 )
@@ -55,8 +53,6 @@ require (
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/djherbis/atime.v1 v1.0.0 // indirect
-	gopkg.in/djherbis/stream.v1 v1.3.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/plugin/prometheus v0.0.0-20211123021611-a2bccbfb6cbf
 )

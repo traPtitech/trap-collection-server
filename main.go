@@ -12,13 +12,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-
-	"github.com/comail/colog"
 
 	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src"
@@ -36,22 +33,6 @@ func main() {
 	if !ok {
 		panic("SESSION_SECRET is not set")
 	}
-
-	if !isProduction {
-		colog.SetMinLevel(colog.LDebug)
-		colog.SetFormatter(&colog.StdFormatter{
-			Colors: true,
-			Flag:   log.Ldate | log.Ltime | log.Lshortfile,
-		})
-	} else {
-		colog.SetMinLevel(colog.LError)
-		colog.SetFormatter(&colog.StdFormatter{
-			Colors: false,
-			Flag:   log.Ldate | log.Ltime | log.Lshortfile,
-		})
-	}
-
-	colog.Register()
 
 	clientID := os.Getenv("CLIENT_ID")
 	if len(clientID) == 0 {
