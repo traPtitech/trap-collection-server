@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
   -t /local \
   -o /local
 
-FROM golang:1.17.5-alpine AS build
+FROM golang:1.17.6-alpine AS build
 
 RUN apk --update --no-cache add tzdata && \
   cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
