@@ -167,7 +167,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gomod-
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.0.3
+        uses: reviewdog/action-golangci-lint@v2.1
         with:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
