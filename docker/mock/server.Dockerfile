@@ -25,7 +25,7 @@ COPY --from=generate /local/ ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
   go build -o main -ldflags "-s -w" -tags main
 
-FROM alpine:3.15.0 AS runtime
+FROM alpine:3.15.1 AS runtime
 
 ENV TZ=Asia/Tokyo
 RUN apk --update --no-cache add tzdata && \
