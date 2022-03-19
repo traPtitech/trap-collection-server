@@ -11,7 +11,7 @@ jobs:
     name: Mod
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2.2.0
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17
       - uses: actions/checkout@v2
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [mod,generate]
     steps:
-      - uses: actions/setup-go@v2.2.0
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17
       - uses: actions/checkout@v1
@@ -86,7 +86,7 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/setup-go@v2.2.0
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17
       - uses: actions/download-artifact@v2.1.0
@@ -119,7 +119,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: trap_collection
     steps:
-      - uses: actions/setup-go@v2.2.0
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17
       - uses: actions/checkout@v2
@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [mockgen]
     steps:
-      - uses: actions/setup-go@v2.2.0
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.17
       - uses: actions/download-artifact@v2.1.0
