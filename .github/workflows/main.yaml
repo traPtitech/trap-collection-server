@@ -54,7 +54,7 @@ jobs:
             -g CollectionCodegen \
             -t /local/generate \
             -o /local
-      - uses: actions/upload-artifact@v2.3.1
+      - uses: actions/upload-artifact@v3
         with:
           name: openapi
           path: openapi
@@ -75,7 +75,7 @@ jobs:
         run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
       - run: go install github.com/golang/mock/mockgen
       - run: go generate ./...
-      - uses: actions/upload-artifact@v2.3.1
+      - uses: actions/upload-artifact@v3
         with:
           name: mockGenerated
           path: ./
@@ -145,7 +145,7 @@ jobs:
         with:
           file: ./coverage.txt
           yml: ./codecov.yml
-      - uses: actions/upload-artifact@v2.3.1
+      - uses: actions/upload-artifact@v3
         with:
           name: coverage.txt
           path: coverage.txt
