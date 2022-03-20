@@ -3,13 +3,13 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: friday
 - package-ecosystem: docker
   directory: "/docker/dev"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: friday
   ignore:
   - dependency-name: golang
     versions:
@@ -21,8 +21,8 @@ updates:
 - package-ecosystem: docker
   directory: "/docker/staging"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: friday
   ignore:
   - dependency-name: golang
     versions:
@@ -34,8 +34,8 @@ updates:
 - package-ecosystem: docker
   directory: "/docker/mock"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: friday
   ignore:
   - dependency-name: golang
     versions:
@@ -47,5 +47,5 @@ updates:
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: friday
