@@ -4,12 +4,16 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
-    day: friday
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
 - package-ecosystem: docker
   directory: "/docker/dev"
   schedule:
     interval: weekly
-    day: friday
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -22,7 +26,9 @@ updates:
   directory: "/docker/staging"
   schedule:
     interval: weekly
-    day: friday
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -35,7 +41,9 @@ updates:
   directory: "/docker/mock"
   schedule:
     interval: weekly
-    day: friday
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -48,4 +56,6 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
-    day: friday
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
