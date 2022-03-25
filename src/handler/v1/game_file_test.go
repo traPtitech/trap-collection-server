@@ -223,7 +223,7 @@ func TestPostFile(t *testing.T) {
 					Return(testCase.gameFile, testCase.SaveGameFileErr)
 			}
 
-			gameFile, err := gameFileHandler.PostFile(c, testCase.strGameID, testCase.strEntryPoint, r, testCase.strFileType)
+			gameFile, err := gameFileHandler.PostFile(c, testCase.strGameID, testCase.strEntryPoint, testCase.strFileType, r)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

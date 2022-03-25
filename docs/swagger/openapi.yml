@@ -1201,7 +1201,7 @@ components:
           type: string
           format: binary
       required:
-        - type
+        - fileType
         - entryPoint
         - file
     NewGameURL:
