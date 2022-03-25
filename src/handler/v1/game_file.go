@@ -26,7 +26,7 @@ func NewGameFile(gameFileService service.GameFile) *GameFile {
 	}
 }
 
-func (gf *GameFile) PostFile(c echo.Context, strGameID string, strEntryPoint string, file multipart.File, strFileType string) (*openapi.GameFile, error) {
+func (gf *GameFile) PostFile(c echo.Context, strGameID string, strEntryPoint string, strFileType string, file multipart.File) (*openapi.GameFile, error) {
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
