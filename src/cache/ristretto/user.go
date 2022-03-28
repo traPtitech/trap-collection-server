@@ -8,22 +8,28 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type User struct {
-	meCache     *ristretto.Cache
-	activeUsers *ristretto.Cache
+	meCache        *ristretto.Cache
+	activeUsers    *ristretto.Cache
+	activeUsersTTL time.Duration
 }
 
 const (
 	activeUsersKey = "active_users"
-	activeUsersTTL = time.Hour
 )
 
-func NewUser() (*User, error) {
+func NewUser(conf config.CacheRistretto) (*User, error) {
+	activeUsersTTL, err := conf.ActiveUsersTTL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get activeUsersTTL: %w", err)
+	}
+
 	meCache, err := ristretto.NewCache(&ristretto.Config{
 		/*
 			アクセス頻度を保持する要素の数。
@@ -53,8 +59,9 @@ func NewUser() (*User, error) {
 	}
 
 	return &User{
-		meCache:     meCache,
-		activeUsers: activeUsers,
+		meCache:        meCache,
+		activeUsers:    activeUsers,
+		activeUsersTTL: activeUsersTTL,
 	}, nil
 }
 
@@ -108,7 +115,7 @@ func (u *User) SetAllActiveUsers(ctx context.Context, users []*service.UserInfo)
 		activeUsersKey,
 		users,
 		1,
-		activeUsersTTL,
+		u.activeUsersTTL,
 	)
 	if !ok {
 		return errors.New("failed to set activeUsers")
