@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -20,12 +20,17 @@ type OAuth2 struct {
 	oidcService service.OIDC
 }
 
-func NewOAuth2(baseURL common.TraQBaseURL, session *Session, oidcService service.OIDC) *OAuth2 {
+func NewOAuth2(conf config.HandlerV1, session *Session, oidcService service.OIDC) (*OAuth2, error) {
+	baseURL, err := conf.TraqBaseURL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get traq base url: %v", err)
+	}
+
 	return &OAuth2{
 		baseURL:     baseURL,
 		session:     session,
 		oidcService: oidcService,
-	}
+	}, nil
 }
 
 func (o *OAuth2) Callback(c echo.Context, strCode string) error {

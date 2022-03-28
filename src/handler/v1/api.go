@@ -1,10 +1,13 @@
 package v1
 
 import (
+	"fmt"
+
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	"github.com/traPtitech/trap-collection-server/src/config"
 )
 
 type GameAPI struct {
@@ -18,6 +21,7 @@ type GameAPI struct {
 }
 
 type API struct {
+	addr string
 	*Middleware
 	*User
 	*Game
@@ -34,6 +38,7 @@ type API struct {
 }
 
 func NewAPI(
+	conf config.HandlerV1,
 	middleware *Middleware,
 	user *User,
 	game *Game,
@@ -47,8 +52,14 @@ func NewAPI(
 	launcherVersion *LauncherVersion,
 	oAuth2 *OAuth2,
 	session *Session,
-) *API {
+) (*API, error) {
+	addr, err := conf.Addr()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get addr: %w", err)
+	}
+
 	return &API{
+		addr:            addr,
 		Middleware:      middleware,
 		User:            user,
 		Game:            game,
@@ -62,10 +73,10 @@ func NewAPI(
 		LauncherVersion: launcherVersion,
 		OAuth2:          oAuth2,
 		Session:         session,
-	}
+	}, nil
 }
 
-func (api *API) Start(addr string) error {
+func (api *API) Start() error {
 	openapiAPI := &openapi.Api{
 		Middleware: api.Middleware,
 		GameApi: GameAPI{
@@ -95,5 +106,5 @@ func (api *API) Start(addr string) error {
 
 	openapi.SetupRouting(e, openapiAPI)
 
-	return e.Start(addr)
+	return e.Start(api.addr)
 }

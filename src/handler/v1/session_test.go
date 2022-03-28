@@ -6,8 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 )
 
 // テスト用のレスポンスのSet-CookieヘッダーをCookieヘッダーに移す関数
@@ -19,8 +21,23 @@ func setCookieHeader(c echo.Context) {
 
 func TestGetSession(t *testing.T) {
 	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mock.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	type test struct {
 		description  string

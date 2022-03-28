@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -20,7 +20,17 @@ type Session struct {
 	store  sessions.Store
 }
 
-func NewSession(key common.SessionKey, secret common.SessionSecret) *Session {
+func NewSession(conf config.HandlerV1) (*Session, error) {
+	secret, err := conf.SessionSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session secret: %w", err)
+	}
+
+	key, err := conf.SessionKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session key: %w", err)
+	}
+
 	store := sessions.NewCookieStore([]byte(secret))
 
 	/*
@@ -30,10 +40,10 @@ func NewSession(key common.SessionKey, secret common.SessionSecret) *Session {
 	gob.Register(time.Time{})
 
 	return &Session{
-		key:    string(key),
-		secret: string(secret),
+		key:    key,
+		secret: secret,
 		store:  store,
-	}
+	}, nil
 }
 
 func (s *Session) Use(e *echo.Echo) {

@@ -11,7 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -25,13 +25,36 @@ func TestCallback(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
 
 	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
+
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		TraqBaseURL().
+		Return(baseURL, nil)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	oauth, err := NewOAuth2(mockConf, session, mockOIDCService)
+	if err != nil {
+		t.Fatalf("failed to create oauth: %v", err)
+	}
 
 	type test struct {
 		description       string
@@ -175,13 +198,35 @@ func TestGetGeneratedCode(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
 
 	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
+
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		TraqBaseURL().
+		Return(baseURL, nil)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+	}
+
+	oauth, err := NewOAuth2(mockConf, session, mockOIDCService)
+	if err != nil {
+		t.Fatalf("failed to create oauth: %v", err)
+	}
 
 	type test struct {
 		description         string
@@ -354,13 +399,34 @@ func TestPostLogout(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
 
 	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	oauth := NewOAuth2(common.TraQBaseURL(baseURL), session, mockOIDCService)
+
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		TraqBaseURL().
+		Return(baseURL, nil)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	oauth, err := NewOAuth2(mockConf, session, mockOIDCService)
+	if err != nil {
+		t.Fatalf("failed to create oauth: %v", err)
+	}
 
 	type test struct {
 		description      string
