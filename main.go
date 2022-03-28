@@ -127,12 +127,12 @@ func main() {
 
 	service, err := src.InjectAPI(&src.Config{
 		IsProduction:    common.IsProduction(isProduction),
-		IsSwift:         common.IsSwift(isSwift),
+		Administrators:  administrators,
 		SessionKey:      "sessions",
 		SessionSecret:   common.SessionSecret(secret),
 		TraQBaseURL:     common.TraQBaseURL(traQBaseURL),
 		OAuthClientID:   common.ClientID(clientID),
-		Administrators:  administrators,
+		IsSwift:         common.IsSwift(isSwift),
 		SwiftAuthURL:    swiftAuthURL,
 		SwiftUserName:   swiftUserName,
 		SwiftPassword:   swiftPassword,
