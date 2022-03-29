@@ -1,17 +1,16 @@
 package main
 
 import (
-	"github.com/traPtitech/trap-collection-server/src"
+	"github.com/traPtitech/trap-collection-server/src/wire"
 )
 
 func main() {
-	service, err := src.InjectAPI()
+	app, err := wire.InjectApp()
 	if err != nil {
 		panic(err)
 	}
-	defer service.DB.Close()
 
-	err = service.Start()
+	err = app.Run()
 	if err != nil {
 		panic(err)
 	}
