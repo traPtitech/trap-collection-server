@@ -200,7 +200,7 @@ func injectedStorage(conf config.Storage) (*Storage, error) {
 		return injectLocalStorage()
 	}
 
-	return nil, fmt.Errorf("unknown storage type: %s", storageType)
+	return nil, fmt.Errorf("unknown storage type: %d", storageType)
 }
 
 var (
