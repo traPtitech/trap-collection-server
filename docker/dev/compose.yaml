@@ -1,4 +1,3 @@
-version: "3"
 services:
   collection-server:
     build:
@@ -9,11 +8,6 @@ services:
       - ./.air.toml:/go/src/github.com/traPtitech/trap-collection-server/.air.toml
       - ../../src/:/go/src/github.com/traPtitech/trap-collection-server/src
       - ../../pkg/:/go/src/github.com/traPtitech/trap-collection-server/pkg
-      - ../../model/:/go/src/github.com/traPtitech/trap-collection-server/model
-      - ../../router/:/go/src/github.com/traPtitech/trap-collection-server/router
-      - ../../storage/:/go/src/github.com/traPtitech/trap-collection-server/storage
-      - ../../upload/:/go/src/github.com/traPtitech/trap-collection-server/upload
-      - ../../session/:/go/src/github.com/traPtitech/trap-collection-server/session
       - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
       - ../../cache/:/go/src/github.com/traPtitech/trap-collection-server/cache
     environment:
@@ -23,7 +17,6 @@ services:
       FILE_PATH: ./cache
       CLIENT_ID:
       CLIENT_SECRET:
-      PRODUCT_KEY:
       DB_USERNAME: root
       DB_PASSWORD: pass
       DB_HOSTNAME: mariadb
@@ -34,7 +27,7 @@ services:
     ports: 
       - 3000:3000
   mariadb:
-    image: mariadb:10.5.2
+    image: mariadb:10.6.4
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: trap_collection
