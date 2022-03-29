@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.0-experimental
+# syntax = docker/dockerfile:1.3.0
 
 FROM groovy:4.0 AS generate
 WORKDIR /home/groovy/scripts
@@ -16,10 +16,6 @@ FROM golang:1.17.5-alpine AS build
 RUN apk add --update --no-cache git
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
-
-RUN mkdir upload
-
-RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.5.0
 
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \

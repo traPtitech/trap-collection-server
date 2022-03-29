@@ -23,7 +23,7 @@ updates:
     - 1.16.1.pre.alpine
     - 1.16.2.pre.alpine
 - package-ecosystem: docker
-  directory: "/docker/staging"
+  directory: "/docker/production"
   schedule:
     interval: weekly
     day: saturday
@@ -38,7 +38,7 @@ updates:
     - 1.16.1.pre.alpine
     - 1.16.2.pre.alpine
 - package-ecosystem: docker
-  directory: "/docker/mock"
+  directory: "/docker/test"
   schedule:
     interval: weekly
     day: saturday
