@@ -12,6 +12,7 @@ import (
 	mockAuth "github.com/traPtitech/trap-collection-server/src/auth/mock"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	mockCache "github.com/traPtitech/trap-collection-server/src/cache/mock"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -33,7 +34,7 @@ func TestAdministratorAuth(t *testing.T) {
 	type test struct {
 		description    string
 		authSession    *domain.OIDCSession
-		administrators []values.TraPMemberName
+		administrators []string
 		user           *service.UserInfo
 		isGetMeErr     bool
 		isErr          bool
@@ -47,7 +48,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{
+			administrators: []string{
 				"mazrean",
 			},
 			user: service.NewUserInfo(
@@ -62,7 +63,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{
+			administrators: []string{
 				"mazrean",
 			},
 			isGetMeErr: true,
@@ -74,7 +75,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{
+			administrators: []string{
 				"mazrean",
 			},
 			user: service.NewUserInfo(
@@ -91,7 +92,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{
+			administrators: []string{
 				"mazrean",
 				"mazrean1",
 			},
@@ -107,7 +108,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{
+			administrators: []string{
 				"mazrean",
 				"mazrean1",
 			},
@@ -125,7 +126,7 @@ func TestAdministratorAuth(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			administrators: []values.TraPMemberName{},
+			administrators: []string{},
 			user: service.NewUserInfo(
 				values.NewTrapMemberID(uuid.New()),
 				"mazrean",
@@ -138,7 +139,16 @@ func TestAdministratorAuth(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			administratorAuthService := NewAdministratorAuth(testCase.administrators, userUtils)
+			mockConf := mock.NewMockServiceV1(ctrl)
+			mockConf.
+				EXPECT().
+				Administrators().
+				Return(testCase.administrators, nil)
+			administratorAuthService, err := NewAdministratorAuth(mockConf, userUtils)
+			if err != nil {
+				t.Fatalf("failed to create service: %v", err)
+				return
+			}
 
 			if testCase.isGetMeErr {
 				mockUserCache.
@@ -156,7 +166,7 @@ func TestAdministratorAuth(t *testing.T) {
 					Return(testCase.user, nil)
 			}
 
-			err := administratorAuthService.AdministratorAuth(ctx, testCase.authSession)
+			err = administratorAuthService.AdministratorAuth(ctx, testCase.authSession)
 
 			if testCase.isErr {
 				if testCase.err == nil {
