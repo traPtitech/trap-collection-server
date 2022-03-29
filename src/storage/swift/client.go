@@ -10,11 +10,7 @@ import (
 	"time"
 
 	"github.com/ncw/swift/v2"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
-)
-
-const (
-	cacheDuration = 7 * 24 * time.Hour
+	"github.com/traPtitech/trap-collection-server/src/config"
 )
 
 type Client struct {
@@ -23,33 +19,53 @@ type Client struct {
 	tmpURLKey     string
 }
 
-func NewClient(
-	authURL common.SwiftAuthURL,
-	userName common.SwiftUserName,
-	password common.SwiftPassword,
-	tennantName common.SwiftTenantName,
-	tennantID common.SwiftTenantID,
-	containerName common.SwiftContainer,
-	tmpURLKey common.SwiftTmpURLKey,
-) (*Client, error) {
+func NewClient(conf config.StorageSwift) (*Client, error) {
 	ctx := context.Background()
 
-	connection, err := setupSwift(
-		ctx,
-		(*url.URL)(authURL),
-		string(userName),
-		string(password),
-		string(tennantName),
-		string(tennantID),
-	)
+	authURL, err := conf.AuthURL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get auth url: %w", err)
+	}
+
+	userName, err := conf.UserName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user name: %w", err)
+	}
+
+	password, err := conf.Password()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get password: %w", err)
+	}
+
+	tennantName, err := conf.TenantName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant name: %w", err)
+	}
+
+	tennantID, err := conf.TenantID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant id: %w", err)
+	}
+
+	containerName, err := conf.Container()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get container name: %w", err)
+	}
+
+	tmpURLKey, err := conf.TmpURLKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tmp url key: %w", err)
+	}
+
+	connection, err := setupSwift(ctx, authURL, userName, password, tennantName, tennantID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup swift: %w", err)
 	}
 
 	return &Client{
 		connection:    connection,
-		containerName: string(containerName),
-		tmpURLKey:     string(tmpURLKey),
+		containerName: containerName,
+		tmpURLKey:     tmpURLKey,
 	}, nil
 }
 

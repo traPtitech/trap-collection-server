@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
@@ -23,12 +24,21 @@ func TestSaveGameVideo(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	rootPath := common.FilePath("./save_game_video_test")
-
-	directoryManager := NewDirectoryManager(rootPath)
+	rootPath := "./save_game_video_test"
+	mockConf := mock.NewMockStorageLocal(ctrl)
+	mockConf.
+		EXPECT().
+		Path().
+		Return(rootPath, nil)
+	directoryManager, err := NewDirectoryManager(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create directory manager: %v", err)
+		return
+	}
 	defer func() {
-		err := os.RemoveAll(string(rootPath))
+		err := os.RemoveAll(rootPath)
 		if err != nil {
 			t.Fatalf("failed to remove directory: %v\n", err)
 		}
@@ -129,12 +139,21 @@ func TestGetGameVideo(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	rootPath := common.FilePath("./get_game_video_test")
-
-	directoryManager := NewDirectoryManager(rootPath)
+	rootPath := "./get_game_video_test"
+	mockConf := mock.NewMockStorageLocal(ctrl)
+	mockConf.
+		EXPECT().
+		Path().
+		Return(rootPath, nil)
+	directoryManager, err := NewDirectoryManager(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create directory manager: %v", err)
+		return
+	}
 	defer func() {
-		err := os.RemoveAll(string(rootPath))
+		err := os.RemoveAll(rootPath)
 		if err != nil {
 			t.Fatalf("failed to remove directory: %v", err)
 		}

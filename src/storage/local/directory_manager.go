@@ -6,17 +6,22 @@ import (
 	"os"
 	"path"
 
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config"
 )
 
 type DirectoryManager struct {
 	rootPath string
 }
 
-func NewDirectoryManager(rootPath common.FilePath) *DirectoryManager {
-	return &DirectoryManager{
-		rootPath: string(rootPath),
+func NewDirectoryManager(conf config.StorageLocal) (*DirectoryManager, error) {
+	rootPath, err := conf.Path()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get root path: %w", err)
 	}
+
+	return &DirectoryManager{
+		rootPath: rootPath,
+	}, nil
 }
 
 func (m *DirectoryManager) setupDirectory(directoryName string) (string, error) {

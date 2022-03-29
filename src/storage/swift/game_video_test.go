@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
@@ -21,21 +21,12 @@ import (
 
 func TestSaveGameVideo(t *testing.T) {
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	client, err := newTestClient(
-		ctx,
-		common.SwiftContainer("save_game_video"),
-		common.FilePath("save_game_video"),
-	)
+	client, err := newTestClient(ctx, ctrl, "save_game_video")
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
-	defer func() {
-		err := os.RemoveAll("save_game_video")
-		if err != nil {
-			t.Fatalf("failed to remove directory: %v", err)
-		}
-	}()
 
 	gameVideoStorage := NewGameVideo(client)
 
@@ -125,21 +116,12 @@ func TestSaveGameVideo(t *testing.T) {
 
 func TestGetGameVideo(t *testing.T) {
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	client, err := newTestClient(
-		ctx,
-		common.SwiftContainer("get_game_video"),
-		common.FilePath("get_game_video"),
-	)
+	client, err := newTestClient(ctx, ctrl, "get_game_video")
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
-	defer func() {
-		err := os.RemoveAll("get_game_video")
-		if err != nil {
-			t.Fatalf("failed to remove directory: %v", err)
-		}
-	}()
 
 	gameVideoStorage := NewGameVideo(client)
 
