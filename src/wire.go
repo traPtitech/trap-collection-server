@@ -4,14 +4,15 @@
 package src
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/google/wire"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
-	"github.com/traPtitech/trap-collection-server/src/auth/traQ"
+	traq "github.com/traPtitech/trap-collection-server/src/auth/traQ"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/cache/ristretto"
+	"github.com/traPtitech/trap-collection-server/src/config"
+	v1Config "github.com/traPtitech/trap-collection-server/src/config/v1"
 	v1Handler "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
@@ -21,25 +22,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
 	"github.com/traPtitech/trap-collection-server/src/storage/swift"
 )
-
-type Config struct {
-	IsProduction    common.IsProduction
-	IsSwift         common.IsSwift
-	SessionKey      common.SessionKey
-	SessionSecret   common.SessionSecret
-	TraQBaseURL     common.TraQBaseURL
-	OAuthClientID   common.ClientID
-	Administrators  common.Administrators
-	SwiftAuthURL    common.SwiftAuthURL
-	SwiftUserName   common.SwiftUserName
-	SwiftPassword   common.SwiftPassword
-	SwiftTenantID   common.SwiftTenantID
-	SwiftTenantName common.SwiftTenantName
-	SwiftContainer  common.SwiftContainer
-	SwiftTmpURLKey  common.SwiftTmpURLKey
-	FilePath        common.FilePath
-	HttpClient      *http.Client
-}
 
 type Storage struct {
 	GameImage storage.GameImage
@@ -60,68 +42,63 @@ func newStorage(
 }
 
 var (
-	isProductionField    = wire.FieldsOf(new(*Config), "IsProduction")
-	isSwiftField         = wire.FieldsOf(new(*Config), "IsSwift")
-	sessionKeyField      = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField   = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField     = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField   = wire.FieldsOf(new(*Config), "OAuthClientID")
-	administratorsField  = wire.FieldsOf(new(*Config), "Administrators")
-	swiftAuthURLField    = wire.FieldsOf(new(*Config), "SwiftAuthURL")
-	swiftUserNameField   = wire.FieldsOf(new(*Config), "SwiftUserName")
-	swiftPasswordField   = wire.FieldsOf(new(*Config), "SwiftPassword")
-	swiftTenantIDField   = wire.FieldsOf(new(*Config), "SwiftTenantID")
-	swiftTenantNameField = wire.FieldsOf(new(*Config), "SwiftTenantName")
-	swiftContainerField  = wire.FieldsOf(new(*Config), "SwiftContainer")
-	swiftTmpURLKeyField  = wire.FieldsOf(new(*Config), "SwiftTmpURLKey")
-	filePathField        = wire.FieldsOf(new(*Config), "FilePath")
-	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
-
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
 	gameVideoField = wire.FieldsOf(new(*Storage), "GameVideo")
 	gameFileField  = wire.FieldsOf(new(*Storage), "GameFile")
 )
 
-func injectedStorage(config *Config) (*Storage, error) {
-	if config.IsSwift {
-		return injectSwiftStorage(config)
+func injectedStorage(conf config.Storage) (*Storage, error) {
+	storageType, err := conf.Type()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get storage type: %w", err)
 	}
 
-	return injectLocalStorage(config)
+	switch storageType {
+	case config.StorageTypeSwift:
+		return injectSwiftStorage()
+	case config.StorageTypeLocal:
+		return injectLocalStorage()
+	}
+
+	return nil, fmt.Errorf("unknown storage type: %s", storageType)
 }
 
-func injectSwiftStorage(config *Config) (*Storage, error) {
+func injectSwiftStorage() (*Storage, error) {
 	wire.Build(
-		swiftAuthURLField,
-		swiftUserNameField,
-		swiftPasswordField,
-		swiftTenantIDField,
-		swiftTenantNameField,
-		swiftContainerField,
-		swiftTmpURLKeyField,
+		wire.Bind(new(config.StorageSwift), new(*v1Config.StorageSwift)),
+
+		v1Config.NewStorageSwift,
+
 		wire.Bind(new(storage.GameImage), new(*swift.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*swift.GameVideo)),
 		wire.Bind(new(storage.GameFile), new(*swift.GameFile)),
+
 		swift.NewClient,
 		swift.NewGameImage,
 		swift.NewGameVideo,
 		swift.NewGameFile,
+
 		newStorage,
 	)
 
 	return nil, nil
 }
 
-func injectLocalStorage(config *Config) (*Storage, error) {
+func injectLocalStorage() (*Storage, error) {
 	wire.Build(
-		filePathField,
+		wire.Bind(new(config.StorageLocal), new(*v1Config.StorageLocal)),
+
+		v1Config.NewStorageLocal,
+
 		wire.Bind(new(storage.GameImage), new(*local.GameImage)),
 		wire.Bind(new(storage.GameVideo), new(*local.GameVideo)),
 		wire.Bind(new(storage.GameFile), new(*local.GameFile)),
+
 		local.NewDirectoryManager,
 		local.NewGameImage,
 		local.NewGameVideo,
 		local.NewGameFile,
+
 		newStorage,
 	)
 
@@ -129,6 +106,14 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 }
 
 var (
+	appConfigBind             = wire.Bind(new(config.App), new(*v1Config.App))
+	authTraQConfigBind        = wire.Bind(new(config.AuthTraQ), new(*v1Config.AuthTraQ))
+	cacheRistrettoConfigBind  = wire.Bind(new(config.CacheRistretto), new(*v1Config.CacheRistretto))
+	handlerV1ConfigBind       = wire.Bind(new(config.HandlerV1), new(*v1Config.HandlerV1))
+	repositoryGorm2ConfigBind = wire.Bind(new(config.RepositoryGorm2), new(*v1Config.RepositoryGorm2))
+	serviceV1ConfigBind       = wire.Bind(new(config.ServiceV1), new(*v1Config.ServiceV1))
+	storageConfigBind         = wire.Bind(new(config.Storage), new(*v1Config.Storage))
+
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
 	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
@@ -172,18 +157,19 @@ func NewService(api *v1Handler.API, db repository.DB) *Service {
 	}
 }
 
-func InjectAPI(config *Config) (*Service, error) {
+func InjectAPI() (*Service, error) {
 	wire.Build(
-		isProductionField,
-		sessionKeyField,
-		sessionSecretField,
-		traQBaseURLField,
-		oAuthClientIDField,
-		administratorsField,
-		httpClientField,
 		gameImageField,
 		gameVideoField,
 		gameFileField,
+
+		appConfigBind,
+		authTraQConfigBind,
+		cacheRistrettoConfigBind,
+		handlerV1ConfigBind,
+		repositoryGorm2ConfigBind,
+		serviceV1ConfigBind,
+		storageConfigBind,
 		dbBind,
 		gameRepositoryBind,
 		gameVersionRepositoryBind,
@@ -210,6 +196,14 @@ func InjectAPI(config *Config) (*Service, error) {
 		launcherVersionServiceBind,
 		oidcServiceBind,
 		userServiceBind,
+
+		v1Config.NewApp,
+		v1Config.NewAuthTraQ,
+		v1Config.NewCacheRistretto,
+		v1Config.NewHandlerV1,
+		v1Config.NewRepositoryGorm2,
+		v1Config.NewServiceV1,
+		v1Config.NewStorage,
 		gorm2.NewDB,
 		gorm2.NewGame,
 		gorm2.NewGameVersion,

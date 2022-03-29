@@ -7,34 +7,29 @@
 package src
 
 import (
+	"fmt"
 	"github.com/google/wire"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/auth/traQ"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/cache/ristretto"
-	"github.com/traPtitech/trap-collection-server/src/handler/v1"
+	"github.com/traPtitech/trap-collection-server/src/config"
+	"github.com/traPtitech/trap-collection-server/src/config/v1"
+	v1_2 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 	"github.com/traPtitech/trap-collection-server/src/service"
-	v1_2 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	v1_3 "github.com/traPtitech/trap-collection-server/src/service/v1"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
 	"github.com/traPtitech/trap-collection-server/src/storage/swift"
-	"net/http"
 )
 
 // Injectors from wire.go:
 
-func injectSwiftStorage(config *Config) (*Storage, error) {
-	swiftAuthURL := config.SwiftAuthURL
-	swiftUserName := config.SwiftUserName
-	swiftPassword := config.SwiftPassword
-	swiftTenantName := config.SwiftTenantName
-	swiftTenantID := config.SwiftTenantID
-	swiftContainer := config.SwiftContainer
-	swiftTmpURLKey := config.SwiftTmpURLKey
-	client, err := swift.NewClient(swiftAuthURL, swiftUserName, swiftPassword, swiftTenantName, swiftTenantID, swiftContainer, swiftTmpURLKey)
+func injectSwiftStorage() (*Storage, error) {
+	storageSwift := v1.NewStorageSwift()
+	client, err := swift.NewClient(storageSwift)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +40,12 @@ func injectSwiftStorage(config *Config) (*Storage, error) {
 	return storage, nil
 }
 
-func injectLocalStorage(config *Config) (*Storage, error) {
-	filePath := config.FilePath
-	directoryManager := local.NewDirectoryManager(filePath)
+func injectLocalStorage() (*Storage, error) {
+	storageLocal := v1.NewStorageLocal()
+	directoryManager, err := local.NewDirectoryManager(storageLocal)
+	if err != nil {
+		return nil, err
+	}
 	gameImage, err := local.NewGameImage(directoryManager)
 	if err != nil {
 		return nil, err
@@ -64,104 +62,106 @@ func injectLocalStorage(config *Config) (*Storage, error) {
 	return storage, nil
 }
 
-func InjectAPI(config *Config) (*Service, error) {
-	sessionKey := config.SessionKey
-	sessionSecret := config.SessionSecret
-	session := v1.NewSession(sessionKey, sessionSecret)
-	administrators := config.Administrators
-	client := config.HttpClient
-	traQBaseURL := config.TraQBaseURL
-	user := traq.NewUser(client, traQBaseURL)
-	ristrettoUser, err := ristretto.NewUser()
+func InjectAPI() (*Service, error) {
+	handlerV1 := v1.NewHandlerV1()
+	session, err := v1_2.NewSession(handlerV1)
 	if err != nil {
 		return nil, err
 	}
-	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
-	administratorAuth := v1_2.NewAdministratorAuth(administrators, userUtils)
-	isProduction := config.IsProduction
-	db, err := gorm2.NewDB(isProduction)
+	serviceV1 := v1.NewServiceV1()
+	authTraQ := v1.NewAuthTraQ()
+	user, err := traq.NewUser(authTraQ)
+	if err != nil {
+		return nil, err
+	}
+	cacheRistretto := v1.NewCacheRistretto()
+	ristrettoUser, err := ristretto.NewUser(cacheRistretto)
+	if err != nil {
+		return nil, err
+	}
+	userUtils := v1_3.NewUserUtils(user, ristrettoUser)
+	administratorAuth, err := v1_3.NewAdministratorAuth(serviceV1, userUtils)
+	if err != nil {
+		return nil, err
+	}
+	app := v1.NewApp()
+	repositoryGorm2 := v1.NewRepositoryGorm2()
+	db, err := gorm2.NewDB(app, repositoryGorm2)
 	if err != nil {
 		return nil, err
 	}
 	launcherVersion := gorm2.NewLauncherVersion(db)
 	launcherUser := gorm2.NewLauncherUser(db)
 	launcherSession := gorm2.NewLauncherSession(db)
-	launcherAuth := v1_2.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
+	launcherAuth := v1_3.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	game := gorm2.NewGame(db)
 	gameManagementRole, err := gorm2.NewGameManagementRole(db)
 	if err != nil {
 		return nil, err
 	}
-	gameAuth := v1_2.NewGameAuth(db, game, gameManagementRole, userUtils)
-	oidc := traq.NewOIDC(client, traQBaseURL)
-	clientID := config.OAuthClientID
-	v1OIDC := v1_2.NewOIDC(oidc, clientID)
-	middleware := v1.NewMiddleware(session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
-	v1User := v1_2.NewUser(userUtils)
-	user2 := v1.NewUser(session, v1User)
+	gameAuth := v1_3.NewGameAuth(db, game, gameManagementRole, userUtils)
+	oidc, err := traq.NewOIDC(authTraQ)
+	if err != nil {
+		return nil, err
+	}
+	v1OIDC, err := v1_3.NewOIDC(serviceV1, oidc)
+	if err != nil {
+		return nil, err
+	}
+	middleware := v1_2.NewMiddleware(session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
+	v1User := v1_3.NewUser(userUtils)
+	user2 := v1_2.NewUser(session, v1User)
 	gameVersion := gorm2.NewGameVersion(db)
-	v1Game := v1_2.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
-	game2 := v1.NewGame(session, v1Game)
-	gameRole := v1.NewGameRole(session, gameAuth)
+	v1Game := v1_3.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
+	game2 := v1_2.NewGame(session, v1Game)
+	gameRole := v1_2.NewGameRole(session, gameAuth)
 	gameImage, err := gorm2.NewGameImage(db)
 	if err != nil {
 		return nil, err
 	}
-	storage, err := injectedStorage(config)
+	storage := v1.NewStorage()
+	srcStorage, err := injectedStorage(storage)
 	if err != nil {
 		return nil, err
 	}
-	storageGameImage := storage.GameImage
-	v1GameImage := v1_2.NewGameImage(db, game, gameImage, storageGameImage)
-	gameImage2 := v1.NewGameImage(v1GameImage)
+	storageGameImage := srcStorage.GameImage
+	v1GameImage := v1_3.NewGameImage(db, game, gameImage, storageGameImage)
+	gameImage2 := v1_2.NewGameImage(v1GameImage)
 	gameVideo, err := gorm2.NewGameVideo(db)
 	if err != nil {
 		return nil, err
 	}
-	storageGameVideo := storage.GameVideo
-	v1GameVideo := v1_2.NewGameVideo(db, game, gameVideo, storageGameVideo)
-	gameVideo2 := v1.NewGameVideo(v1GameVideo)
-	v1GameVersion := v1_2.NewGameVersion(db, game, gameVersion)
-	gameVersion2 := v1.NewGameVersion(v1GameVersion)
+	storageGameVideo := srcStorage.GameVideo
+	v1GameVideo := v1_3.NewGameVideo(db, game, gameVideo, storageGameVideo)
+	gameVideo2 := v1_2.NewGameVideo(v1GameVideo)
+	v1GameVersion := v1_3.NewGameVersion(db, game, gameVersion)
+	gameVersion2 := v1_2.NewGameVersion(v1GameVersion)
 	gameFile, err := gorm2.NewGameFile(db)
 	if err != nil {
 		return nil, err
 	}
-	storageGameFile := storage.GameFile
-	v1GameFile := v1_2.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
-	gameFile2 := v1.NewGameFile(v1GameFile)
+	storageGameFile := srcStorage.GameFile
+	v1GameFile := v1_3.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
+	gameFile2 := v1_2.NewGameFile(v1GameFile)
 	gameURL := gorm2.NewGameURL(db)
-	v1GameURL := v1_2.NewGameURL(db, game, gameVersion, gameURL)
-	gameURL2 := v1.NewGameURL(v1GameURL)
-	v1LauncherAuth := v1.NewLauncherAuth(launcherAuth)
-	v1LauncherVersion := v1_2.NewLauncherVersion(db, launcherVersion, game)
-	launcherVersion2 := v1.NewLauncherVersion(v1LauncherVersion)
-	oAuth2 := v1.NewOAuth2(traQBaseURL, session, v1OIDC)
-	api := v1.NewAPI(middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
+	v1GameURL := v1_3.NewGameURL(db, game, gameVersion, gameURL)
+	gameURL2 := v1_2.NewGameURL(v1GameURL)
+	v1LauncherAuth := v1_2.NewLauncherAuth(launcherAuth)
+	v1LauncherVersion := v1_3.NewLauncherVersion(db, launcherVersion, game)
+	launcherVersion2 := v1_2.NewLauncherVersion(v1LauncherVersion)
+	oAuth2, err := v1_2.NewOAuth2(handlerV1, session, v1OIDC)
+	if err != nil {
+		return nil, err
+	}
+	api, err := v1_2.NewAPI(handlerV1, middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
+	if err != nil {
+		return nil, err
+	}
 	service := NewService(api, db)
 	return service, nil
 }
 
 // wire.go:
-
-type Config struct {
-	IsProduction    common.IsProduction
-	IsSwift         common.IsSwift
-	SessionKey      common.SessionKey
-	SessionSecret   common.SessionSecret
-	TraQBaseURL     common.TraQBaseURL
-	OAuthClientID   common.ClientID
-	Administrators  common.Administrators
-	SwiftAuthURL    common.SwiftAuthURL
-	SwiftUserName   common.SwiftUserName
-	SwiftPassword   common.SwiftPassword
-	SwiftTenantID   common.SwiftTenantID
-	SwiftTenantName common.SwiftTenantName
-	SwiftContainer  common.SwiftContainer
-	SwiftTmpURLKey  common.SwiftTmpURLKey
-	FilePath        common.FilePath
-	HttpClient      *http.Client
-}
 
 type Storage struct {
 	GameImage storage.GameImage
@@ -182,37 +182,36 @@ func newStorage(
 }
 
 var (
-	isProductionField    = wire.FieldsOf(new(*Config), "IsProduction")
-	isSwiftField         = wire.FieldsOf(new(*Config), "IsSwift")
-	sessionKeyField      = wire.FieldsOf(new(*Config), "SessionKey")
-	sessionSecretField   = wire.FieldsOf(new(*Config), "SessionSecret")
-	traQBaseURLField     = wire.FieldsOf(new(*Config), "TraQBaseURL")
-	oAuthClientIDField   = wire.FieldsOf(new(*Config), "OAuthClientID")
-	administratorsField  = wire.FieldsOf(new(*Config), "Administrators")
-	swiftAuthURLField    = wire.FieldsOf(new(*Config), "SwiftAuthURL")
-	swiftUserNameField   = wire.FieldsOf(new(*Config), "SwiftUserName")
-	swiftPasswordField   = wire.FieldsOf(new(*Config), "SwiftPassword")
-	swiftTenantIDField   = wire.FieldsOf(new(*Config), "SwiftTenantID")
-	swiftTenantNameField = wire.FieldsOf(new(*Config), "SwiftTenantName")
-	swiftContainerField  = wire.FieldsOf(new(*Config), "SwiftContainer")
-	swiftTmpURLKeyField  = wire.FieldsOf(new(*Config), "SwiftTmpURLKey")
-	filePathField        = wire.FieldsOf(new(*Config), "FilePath")
-	httpClientField      = wire.FieldsOf(new(*Config), "HttpClient")
-
 	gameImageField = wire.FieldsOf(new(*Storage), "GameImage")
 	gameVideoField = wire.FieldsOf(new(*Storage), "GameVideo")
 	gameFileField  = wire.FieldsOf(new(*Storage), "GameFile")
 )
 
-func injectedStorage(config *Config) (*Storage, error) {
-	if config.IsSwift {
-		return injectSwiftStorage(config)
+func injectedStorage(conf config.Storage) (*Storage, error) {
+	storageType, err := conf.Type()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get storage type: %w", err)
 	}
 
-	return injectLocalStorage(config)
+	switch storageType {
+	case config.StorageTypeSwift:
+		return injectSwiftStorage()
+	case config.StorageTypeLocal:
+		return injectLocalStorage()
+	}
+
+	return nil, fmt.Errorf("unknown storage type: %s", storageType)
 }
 
 var (
+	appConfigBind             = wire.Bind(new(config.App), new(*v1.App))
+	authTraQConfigBind        = wire.Bind(new(config.AuthTraQ), new(*v1.AuthTraQ))
+	cacheRistrettoConfigBind  = wire.Bind(new(config.CacheRistretto), new(*v1.CacheRistretto))
+	handlerV1ConfigBind       = wire.Bind(new(config.HandlerV1), new(*v1.HandlerV1))
+	repositoryGorm2ConfigBind = wire.Bind(new(config.RepositoryGorm2), new(*v1.RepositoryGorm2))
+	serviceV1ConfigBind       = wire.Bind(new(config.ServiceV1), new(*v1.ServiceV1))
+	storageConfigBind         = wire.Bind(new(config.Storage), new(*v1.Storage))
+
 	dbBind                        = wire.Bind(new(repository.DB), new(*gorm2.DB))
 	gameRepositoryBind            = wire.Bind(new(repository.Game), new(*gorm2.Game))
 	gameVersionRepositoryBind     = wire.Bind(new(repository.GameVersion), new(*gorm2.GameVersion))
@@ -230,26 +229,26 @@ var (
 
 	userCacheBind = wire.Bind(new(cache.User), new(*ristretto.User))
 
-	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_2.AdministratorAuth))
-	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_2.GameAuth))
-	gameServiceBind              = wire.Bind(new(service.Game), new(*v1_2.Game))
-	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1_2.GameVersion))
-	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_2.GameImage))
-	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_2.GameVideo))
-	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1_2.GameFile))
-	gameURLServiceBind           = wire.Bind(new(service.GameURL), new(*v1_2.GameURL))
-	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_2.LauncherAuth))
-	launcherVersionServiceBind   = wire.Bind(new(service.LauncherVersion), new(*v1_2.LauncherVersion))
-	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_2.OIDC))
-	userServiceBind              = wire.Bind(new(service.User), new(*v1_2.User))
+	administratorAuthServiceBind = wire.Bind(new(service.AdministratorAuth), new(*v1_3.AdministratorAuth))
+	gameAuthServiceBind          = wire.Bind(new(service.GameAuth), new(*v1_3.GameAuth))
+	gameServiceBind              = wire.Bind(new(service.Game), new(*v1_3.Game))
+	gameVersionServiceBind       = wire.Bind(new(service.GameVersion), new(*v1_3.GameVersion))
+	gameImageServiceBind         = wire.Bind(new(service.GameImage), new(*v1_3.GameImage))
+	gameVideoServiceBind         = wire.Bind(new(service.GameVideo), new(*v1_3.GameVideo))
+	gameFileServiceBind          = wire.Bind(new(service.GameFile), new(*v1_3.GameFile))
+	gameURLServiceBind           = wire.Bind(new(service.GameURL), new(*v1_3.GameURL))
+	launcherAuthServiceBind      = wire.Bind(new(service.LauncherAuth), new(*v1_3.LauncherAuth))
+	launcherVersionServiceBind   = wire.Bind(new(service.LauncherVersion), new(*v1_3.LauncherVersion))
+	oidcServiceBind              = wire.Bind(new(service.OIDC), new(*v1_3.OIDC))
+	userServiceBind              = wire.Bind(new(service.User), new(*v1_3.User))
 )
 
 type Service struct {
-	*v1.API
+	*v1_2.API
 	repository.DB
 }
 
-func NewService(api *v1.API, db repository.DB) *Service {
+func NewService(api *v1_2.API, db repository.DB) *Service {
 	return &Service{
 		API: api,
 		DB:  db,
