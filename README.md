@@ -17,7 +17,7 @@ CLIENT_SECRET={{traQのClientのClientSecret}}
 ```
 のように書き、
 ```
-$ docker compose -f docker/dev/docker-compose.yml up
+$ docker compose -f docker/dev/compose.yaml up
 ```
 をすると動きます。
 
