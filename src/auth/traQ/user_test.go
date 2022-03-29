@@ -11,10 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -24,6 +25,8 @@ func TestGetMe(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	type mockHandlerParam struct {
 		isTraQBroken     bool
@@ -98,7 +101,20 @@ func TestGetMe(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	userAuth := NewUser(ts.Client(), common.TraQBaseURL(baseURL))
+
+	mockConfig := mock.NewMockAuthTraQ(ctrl)
+	mockConfig.
+		EXPECT().
+		HTTPClient().
+		Return(ts.Client(), nil)
+	mockConfig.
+		EXPECT().
+		BaseURL().
+		Return(baseURL, nil)
+	userAuth, err := NewUser(mockConfig)
+	if err != nil {
+		t.Fatalf("Error creating user auth: %v", err)
+	}
 
 	type test struct {
 		description      string
@@ -252,6 +268,8 @@ func TestGetAllActiveUsers(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	type mockHandlerParam struct {
 		isTraQBroken     bool
@@ -326,7 +344,21 @@ func TestGetAllActiveUsers(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	userAuth := NewUser(ts.Client(), common.TraQBaseURL(baseURL))
+
+	mockConfig := mock.NewMockAuthTraQ(ctrl)
+	mockConfig.
+		EXPECT().
+		HTTPClient().
+		Return(ts.Client(), nil)
+	mockConfig.
+		EXPECT().
+		BaseURL().
+		Return(baseURL, nil)
+	userAuth, err := NewUser(mockConfig)
+	if err != nil {
+		t.Fatalf("Error creating user auth: %v", err)
+		return
+	}
 
 	type test struct {
 		description      string

@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -21,40 +20,48 @@ type DB struct {
 	db *gorm.DB
 }
 
-func NewDB(isProduction common.IsProduction) (*DB, error) {
-	user, ok := os.LookupEnv("DB_USERNAME")
-	if !ok {
-		return nil, errors.New("DB_USERNAME is not set")
-	}
-
-	pass, ok := os.LookupEnv("DB_PASSWORD")
-	if !ok {
-		return nil, errors.New("DB_PASSWORD is not set")
-	}
-
-	host, ok := os.LookupEnv("DB_HOSTNAME")
-	if !ok {
-		return nil, errors.New("DB_HOSTNAME is not set")
-	}
-
-	port, ok := os.LookupEnv("DB_PORT")
-	if !ok {
-		return nil, errors.New("DB_PORT is not set")
-	}
-
-	database, ok := os.LookupEnv("DB_DATABASE")
-	if !ok {
-		return nil, errors.New("DB_DATABASE is not set")
+func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
+	appStatus, err := appConf.Status()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get app status: %w", err)
 	}
 
 	var logLevel logger.LogLevel
-	if isProduction {
+	switch appStatus {
+	case config.AppStatusProduction:
 		logLevel = logger.Silent
-	} else {
+	case config.AppStatusDevelopment:
 		logLevel = logger.Info
+	default:
+		return nil, errors.New("invalid app status")
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Asia%%2FTokyo&charset=utf8mb4",
+	user, err := conf.User()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	pass, err := conf.Password()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get password: %w", err)
+	}
+
+	host, err := conf.Host()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get host: %w", err)
+	}
+
+	port, err := conf.Port()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get port: %w", err)
+	}
+
+	database, err := conf.Database()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database: %w", err)
+	}
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=Asia%%2FTokyo&charset=utf8mb4",
 		user,
 		pass,
 		host,

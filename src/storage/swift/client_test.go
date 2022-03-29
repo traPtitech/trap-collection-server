@@ -10,10 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 )
 
 var testServer *swifttest.SwiftServer
@@ -32,22 +33,43 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func newTestClient(ctx context.Context, containerName common.SwiftContainer, cacheDirectory common.FilePath) (*Client, error) {
+func newTestClient(ctx context.Context, ctrl *gomock.Controller, containerName string) (*Client, error) {
 	authURL, err := url.Parse(testServer.AuthURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse auth url: %w", err)
 	}
 
-	client, err := NewClient(
-		common.SwiftAuthURL(authURL),
-		common.SwiftUserName(swifttest.TEST_ACCOUNT),
-		common.SwiftPassword(swifttest.TEST_ACCOUNT),
-		// テスト用サーバーはv1での認証なので、tenantName/tennantIDは必要ない
-		common.SwiftTenantName(""),
-		common.SwiftTenantID(""),
-		common.SwiftContainer(containerName),
-		common.SwiftTmpURLKey(""),
-	)
+	mockConf := mock.NewMockStorageSwift(ctrl)
+	mockConf.
+		EXPECT().
+		AuthURL().
+		Return(authURL, nil)
+	mockConf.
+		EXPECT().
+		UserName().
+		Return(swifttest.TEST_ACCOUNT, nil)
+	mockConf.
+		EXPECT().
+		Password().
+		Return(swifttest.TEST_ACCOUNT, nil)
+	mockConf.
+		EXPECT().
+		TenantName().
+		Return("", nil)
+	mockConf.
+		EXPECT().
+		TenantID().
+		Return("", nil)
+	mockConf.
+		EXPECT().
+		Container().
+		Return(containerName, nil)
+	mockConf.
+		EXPECT().
+		TmpURLKey().
+		Return("", nil)
+
+	client, err := NewClient(mockConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
@@ -62,21 +84,12 @@ func newTestClient(ctx context.Context, containerName common.SwiftContainer, cac
 
 func TestSaveFile(t *testing.T) {
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	client, err := newTestClient(
-		ctx,
-		common.SwiftContainer("save_file"),
-		common.FilePath("save_file"),
-	)
+	client, err := newTestClient(ctx, ctrl, "save_file")
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
-	defer func() {
-		err := os.RemoveAll("save_file")
-		if err != nil {
-			t.Fatalf("failed to remove directory: %v", err)
-		}
-	}()
 
 	type test struct {
 		description        string
@@ -187,21 +200,12 @@ func TestSaveFile(t *testing.T) {
 
 func TestLoadFile(t *testing.T) {
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
 
-	client, err := newTestClient(
-		ctx,
-		common.SwiftContainer("load_file"),
-		common.FilePath("load_file"),
-	)
+	client, err := newTestClient(ctx, ctrl, "load_file")
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
-	defer func() {
-		err := os.RemoveAll("load_file")
-		if err != nil {
-			t.Fatalf("failed to remove directory: %v", err)
-		}
-	}()
 
 	type test struct {
 		description string

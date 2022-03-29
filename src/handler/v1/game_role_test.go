@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -25,7 +26,20 @@ func TestPostMaintainer(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	gameRoleHandler := NewGameRole(session, mockGameAuthService)
 
@@ -251,7 +265,20 @@ func TestGetMaintainer(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	gameRoleHandler := NewGameRole(session, mockGameAuthService)
 

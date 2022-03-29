@@ -8,9 +8,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/auth/mock"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -26,7 +26,16 @@ func TestAuthorize(t *testing.T) {
 
 	mockOIDCAuth := mock.NewMockOIDC(ctrl)
 
-	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+	mockConf := mockConfig.NewMockServiceV1(ctrl)
+	mockConf.
+		EXPECT().
+		ClientID().
+		Return("clientID", nil)
+	oidcService, err := NewOIDC(mockConf, mockOIDCAuth)
+	if err != nil {
+		t.Fatalf("failed to create oidc service: %v", err)
+		return
+	}
 
 	client, session, err := oidcService.Authorize(ctx)
 	assert.NoError(t, err)
@@ -45,7 +54,16 @@ func TestCallback(t *testing.T) {
 
 	mockOIDCAuth := mock.NewMockOIDC(ctrl)
 
-	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+	mockConf := mockConfig.NewMockServiceV1(ctrl)
+	mockConf.
+		EXPECT().
+		ClientID().
+		Return("clientID", nil)
+	oidcService, err := NewOIDC(mockConf, mockOIDCAuth)
+	if err != nil {
+		t.Fatalf("failed to create oidc service: %v", err)
+		return
+	}
 
 	type test struct {
 		description       string
@@ -123,7 +141,16 @@ func TestLogout(t *testing.T) {
 
 	mockOIDCAuth := mock.NewMockOIDC(ctrl)
 
-	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+	mockConf := mockConfig.NewMockServiceV1(ctrl)
+	mockConf.
+		EXPECT().
+		ClientID().
+		Return("clientID", nil)
+	oidcService, err := NewOIDC(mockConf, mockOIDCAuth)
+	if err != nil {
+		t.Fatalf("failed to create oidc service: %v", err)
+		return
+	}
 
 	type test struct {
 		description          string
@@ -179,7 +206,16 @@ func TestTraPAuth(t *testing.T) {
 
 	mockOIDCAuth := mock.NewMockOIDC(ctrl)
 
-	oidcService := NewOIDC(mockOIDCAuth, common.ClientID("clientID"))
+	mockConf := mockConfig.NewMockServiceV1(ctrl)
+	mockConf.
+		EXPECT().
+		ClientID().
+		Return("clientID", nil)
+	oidcService, err := NewOIDC(mockConf, mockOIDCAuth)
+	if err != nil {
+		t.Fatalf("failed to create oidc service: %v", err)
+		return
+	}
 
 	type test struct {
 		description string

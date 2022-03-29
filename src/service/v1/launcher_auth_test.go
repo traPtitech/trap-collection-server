@@ -287,6 +287,7 @@ func TestRevokeProductKey(t *testing.T) {
 	ctx := context.Background()
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	mockDB := mock.NewMockDB(ctrl)
 	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
@@ -354,6 +355,7 @@ func TestLoginLauncher(t *testing.T) {
 	ctx := context.Background()
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	mockDB := mock.NewMockDB(ctrl)
 	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)
@@ -479,6 +481,7 @@ func TestLauncherAuth(t *testing.T) {
 	ctx := context.Background()
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	mockDB := mock.NewMockDB(ctrl)
 	mockLauncherVersionRepository := mock.NewMockLauncherVersion(ctrl)

@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/openapi"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -25,7 +26,20 @@ func TestPostGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 	mockGameService := mock.NewMockGame(ctrl)
 
 	gameHandler := NewGame(session, mockGameService)
@@ -230,7 +244,20 @@ func TestGetGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 	mockGameService := mock.NewMockGame(ctrl)
 
 	gameHandler := NewGame(session, mockGameService)
@@ -374,7 +401,20 @@ func TestPutGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 	mockGameService := mock.NewMockGame(ctrl)
 
 	gameHandler := NewGame(session, mockGameService)
@@ -538,7 +578,20 @@ func TestGetGames(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 	mockGameService := mock.NewMockGame(ctrl)
 
 	gameHandler := NewGame(session, mockGameService)
@@ -1019,7 +1072,20 @@ func TestDeleteGames(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 	mockGameService := mock.NewMockGame(ctrl)
 
 	gameHandler := NewGame(session, mockGameService)
