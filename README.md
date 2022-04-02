@@ -6,9 +6,6 @@
 
 traPのゲームランチャーtraP Collectionのサーバーサイドです。
 
-### ディレクトリの構成
-OpenAPI Generatorにより、openapiディレクトリ内にルーティング関連の関数（Bodyからパラメーターの取り出しなどを行う）、main.go、が生成されます。
-
 ### 開発環境の起動
 `.env`ファイルに
 ```
@@ -20,24 +17,3 @@ CLIENT_SECRET={{traQのClientのClientSecret}}
 $ docker compose -f docker/dev/compose.yaml up
 ```
 をすると動きます。
-
-### コードの生成
-最初にする必要があります。
-swaggerの変更をしたときにも行ってください。
-groovyで本家OpenAPI Generatorを使っている関係で実行にそれなりに時間がかかります。
-```
-# docker run -it --rm \
-    -v $PWD:/local \
-    -w /home/groovy/scripts \
-    groovy:3.0.8 \
-    groovy /local/generate/generator.groovy generate \
-    -i /local/docs/swagger/openapi.yml \
-    -g CollectionCodegen \
-    -t /local/generate \
-    -o /local
-```
-
-### コードの書き換え
-`openapi/`は書き換えないでください。
-書き換えても再生成で全て消えます。
-これらのファイルを書き換えたい場合は大抵`generate/`または`docs/swagger/openapi.yml`を書き換えることで対応できます。

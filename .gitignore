@@ -1,8 +1,6 @@
 .env
 .vscode
 mysql/data
-.openapi-generator
-openapi
 **/mock/*
 !src/storage/mock/*
 !src/repository/mock/db.go

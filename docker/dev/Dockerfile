@@ -1,16 +1,5 @@
 # syntax = docker/dockerfile:1.3.0
 
-FROM groovy:4.0 AS generate
-WORKDIR /home/groovy/scripts
-COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
-USER root
-RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
-  groovy /local/generator.groovy generate \
-  -i /local/openapi.yml \
-  -g CollectionCodegen \
-  -t /local \
-  -o /local
-
 FROM golang:1.17.7-alpine AS build
 
 RUN apk --update --no-cache add tzdata && \
@@ -33,8 +22,6 @@ WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
-
-COPY --from=generate /local/openapi ./openapi
 
 ENTRYPOINT ["dockerize", "-wait", "tcp://mariadb:3306", "-timeout", "5m", "air"]
 CMD ["-c", ".air.toml"]
