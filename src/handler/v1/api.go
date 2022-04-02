@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/src/config"
+	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 )
 
 type GameAPI struct {
