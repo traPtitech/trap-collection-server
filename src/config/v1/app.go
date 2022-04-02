@@ -24,8 +24,6 @@ func (*App) Status() (config.AppStatus, error) {
 		return config.AppStatusProduction, nil
 	case "development":
 		return config.AppStatusDevelopment, nil
-	case "mock":
-		return config.AppStatusDevelopment, nil
 	}
 
 	return 0, errors.New("invalid env")
