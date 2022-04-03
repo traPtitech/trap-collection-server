@@ -7,9 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/cache"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -19,8 +21,15 @@ func TestGetMe(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	userCache, err := NewUser()
+	mockConf := mock.NewMockCacheRistretto(ctrl)
+	mockConf.
+		EXPECT().
+		ActiveUsersTTL().
+		Return(time.Hour, nil)
+	userCache, err := NewUser(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create user cache: %v", err)
 	}
@@ -101,37 +110,25 @@ func TestSetMe(t *testing.T) {
 
 	ctx := context.Background()
 
-	userCache, err := NewUser()
-	if err != nil {
-		t.Fatalf("failed to create user cache: %v", err)
-	}
-
 	type test struct {
 		description string
 		keyExist    bool
 		beforeValue *service.UserInfo
-		session     *domain.OIDCSession
+		accessToken values.OIDCAccessToken
 		userInfo    *service.UserInfo
-		ttl         time.Duration
 		isErr       bool
 		err         error
 	}
 
-	now := time.Now()
-
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			session: domain.NewOIDCSession(
-				values.NewOIDCAccessToken("access token1"),
-				now.Add(2*time.Second),
-			),
+			accessToken: values.NewOIDCAccessToken("access token1"),
 			userInfo: service.NewUserInfo(
 				values.NewTrapMemberID(uuid.New()),
 				values.NewTrapMemberName("mazrean"),
 				values.TrapMemberStatusActive,
 			),
-			ttl: 2 * time.Second,
 		},
 		{
 			description: "元からキーがあっても上書きする",
@@ -141,16 +138,12 @@ func TestSetMe(t *testing.T) {
 				values.NewTrapMemberName("mazrean"),
 				values.TrapMemberStatusActive,
 			),
-			session: domain.NewOIDCSession(
-				values.NewOIDCAccessToken("access token2"),
-				now.Add(2*time.Second),
-			),
+			accessToken: values.NewOIDCAccessToken("access token2"),
 			userInfo: service.NewUserInfo(
 				values.NewTrapMemberID(uuid.New()),
 				values.NewTrapMemberName("mazrean"),
 				values.TrapMemberStatusActive,
 			),
-			ttl: 2 * time.Second,
 		},
 	}
 
@@ -159,14 +152,29 @@ func TestSetMe(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
 
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockConf := mock.NewMockCacheRistretto(ctrl)
+			mockConf.
+				EXPECT().
+				ActiveUsersTTL().
+				Return(time.Hour, nil)
+			userCache, err := NewUser(mockConf)
+			if err != nil {
+				t.Fatalf("failed to create user cache: %v", err)
+			}
+
 			if testCase.keyExist {
-				ok := userCache.meCache.Set(string(testCase.session.GetAccessToken()), testCase.beforeValue, 8)
+				ok := userCache.meCache.Set(string(testCase.accessToken), testCase.beforeValue, 8)
 				assert.True(t, ok)
 
 				userCache.meCache.Wait()
 			}
 
-			err := userCache.SetMe(ctx, testCase.session, testCase.userInfo)
+			session := domain.NewOIDCSession(testCase.accessToken, time.Now().Add(2*time.Second))
+
+			err = userCache.SetMe(ctx, session, testCase.userInfo)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -185,14 +193,14 @@ func TestSetMe(t *testing.T) {
 			userCache.meCache.Wait()
 
 			// OIDCSessionの期限前なのでキャッシュされている
-			value, ok := userCache.meCache.Get(string(testCase.session.GetAccessToken()))
+			value, ok := userCache.meCache.Get(string(testCase.accessToken))
 			assert.True(t, ok)
 			assert.Equal(t, testCase.userInfo, value)
 
-			<-time.NewTimer(testCase.ttl).C
+			<-time.NewTimer(2 * time.Second).C
 
 			// OIDCSessionの期限が切れたらキャッシュは削除される
-			_, ok = userCache.meCache.Get(string(testCase.session.GetAccessToken()))
+			_, ok = userCache.meCache.Get(string(testCase.accessToken))
 			assert.False(t, ok)
 		})
 	}
@@ -202,8 +210,15 @@ func TestGetAllActiveUsers(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	userCache, err := NewUser()
+	mockConf := mock.NewMockCacheRistretto(ctrl)
+	mockConf.
+		EXPECT().
+		ActiveUsersTTL().
+		Return(time.Hour, nil)
+	userCache, err := NewUser(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create user cache: %v", err)
 	}
@@ -288,8 +303,15 @@ func TestSetAllActiveUsers(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	userCache, err := NewUser()
+	mockConf := mock.NewMockCacheRistretto(ctrl)
+	mockConf.
+		EXPECT().
+		ActiveUsersTTL().
+		Return(time.Hour, nil)
+	userCache, err := NewUser(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create user cache: %v", err)
 	}

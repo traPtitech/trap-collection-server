@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -21,6 +22,8 @@ func TestGetOIDCSession(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	// ref: https://github.com/traPtitech/traQ/blob/master/router/oauth2/token_endpoint.go#L21-L27
 	type tokenResponse struct {
@@ -124,7 +127,21 @@ func TestGetOIDCSession(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	oidcAuth := NewOIDC(ts.Client(), common.TraQBaseURL(baseURL))
+
+	mockConfig := mock.NewMockAuthTraQ(ctrl)
+	mockConfig.
+		EXPECT().
+		HTTPClient().
+		Return(ts.Client(), nil)
+	mockConfig.
+		EXPECT().
+		BaseURL().
+		Return(baseURL, nil)
+	oidcAuth, err := NewOIDC(mockConfig)
+	if err != nil {
+		t.Fatalf("Error creating OIDC: %v", err)
+		return
+	}
 
 	type test struct {
 		description       string
@@ -277,6 +294,8 @@ func TestRevokeOIDCSession(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	type mockHandlerParam struct {
 		isTraQBroken bool
@@ -331,7 +350,21 @@ func TestRevokeOIDCSession(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
-	oidcAuth := NewOIDC(ts.Client(), common.TraQBaseURL(baseURL))
+
+	mockConfig := mock.NewMockAuthTraQ(ctrl)
+	mockConfig.
+		EXPECT().
+		HTTPClient().
+		Return(ts.Client(), nil)
+	mockConfig.
+		EXPECT().
+		BaseURL().
+		Return(baseURL, nil)
+	oidcAuth, err := NewOIDC(mockConfig)
+	if err != nil {
+		t.Fatalf("Error creating OIDC: %v", err)
+		return
+	}
 
 	type test struct {
 		description  string

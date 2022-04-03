@@ -1,0 +1,17 @@
+run:
+  skip-dirs:
+    - openapi
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - structcheck
+    - varcheck
+    - ineffassign
+    - deadcode
+    - typecheck
+    - revive
+    - gofmt

@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -38,7 +39,20 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -132,7 +146,20 @@ func TestLauncherAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -216,7 +243,20 @@ func TestBothAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -352,7 +392,20 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -483,7 +536,20 @@ func TestCheckLauncherAuth(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -645,7 +711,20 @@ func TestGameMaintainerAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -856,7 +935,20 @@ func TestGameOwnerAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,
@@ -1067,7 +1159,20 @@ func TestAdminAuthMiddleware(t *testing.T) {
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockOIDCService := mock.NewMockOIDC(ctrl)
-	session := NewSession("key", "secret")
+	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	session, err := NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
 
 	middleware := NewMiddleware(
 		session,

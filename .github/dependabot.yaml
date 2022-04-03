@@ -3,13 +3,17 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
 - package-ecosystem: docker
   directory: "/docker/dev"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -19,10 +23,12 @@ updates:
     - 1.16.1.pre.alpine
     - 1.16.2.pre.alpine
 - package-ecosystem: docker
-  directory: "/docker/staging"
+  directory: "/docker/production"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -32,10 +38,12 @@ updates:
     - 1.16.1.pre.alpine
     - 1.16.2.pre.alpine
 - package-ecosystem: docker
-  directory: "/docker/mock"
+  directory: "/docker/test"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo
   ignore:
   - dependency-name: golang
     versions:
@@ -47,5 +55,7 @@ updates:
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: daily
-  open-pull-requests-limit: 10
+    interval: weekly
+    day: saturday
+    time: "00:00"
+    timezone: Asia/Tokyo

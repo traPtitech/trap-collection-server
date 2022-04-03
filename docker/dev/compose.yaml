@@ -1,0 +1,37 @@
+services:
+  collection-server:
+    build:
+      context: ../../
+      dockerfile: ./docker/dev/Dockerfile
+    restart: always
+    volumes:
+      - ./.air.toml:/go/src/github.com/traPtitech/trap-collection-server/.air.toml
+      - ../../src/:/go/src/github.com/traPtitech/trap-collection-server/src
+      - ../../pkg/:/go/src/github.com/traPtitech/trap-collection-server/pkg
+      - ../../main.go:/go/src/github.com/traPtitech/trap-collection-server/main.go
+      - ../../cache/:/go/src/github.com/traPtitech/trap-collection-server/cache
+    environment:
+      COLLECTION_ENV: development
+      STORAGE: local
+      ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
+      FILE_PATH: ./cache
+      CLIENT_ID:
+      CLIENT_SECRET:
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_HOSTNAME: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: trap_collection
+      SESSION_SECRET: secret
+      PORT: :3000
+    ports: 
+      - 3000:3000
+  mariadb:
+    image: mariadb:10.6.4
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: trap_collection
+      TZ: Asia/Tokyo
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - ../../mysql/data:/var/lib/mysql

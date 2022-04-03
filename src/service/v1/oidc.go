@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -17,7 +17,12 @@ type OIDC struct {
 	oidcAuth auth.OIDC
 }
 
-func NewOIDC(oidc auth.OIDC, strClientID common.ClientID) *OIDC {
+func NewOIDC(conf config.ServiceV1, oidc auth.OIDC) (*OIDC, error) {
+	strClientID, err := conf.ClientID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client ID: %w", err)
+	}
+
 	clientID := values.NewOIDCClientID(string(strClientID))
 
 	client := domain.NewOIDCClient(clientID)
@@ -25,7 +30,7 @@ func NewOIDC(oidc auth.OIDC, strClientID common.ClientID) *OIDC {
 	return &OIDC{
 		client:   client,
 		oidcAuth: oidc,
-	}
+	}, nil
 }
 
 func (o *OIDC) Authorize(ctx context.Context) (*domain.OIDCClient, *domain.OIDCAuthState, error) {

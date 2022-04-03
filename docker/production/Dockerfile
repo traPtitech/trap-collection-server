@@ -1,38 +1,21 @@
-# syntax = docker/dockerfile:1.0-experimental
+# syntax = docker/dockerfile:1.3.0
 
-FROM groovy:4.0 AS generate
-WORKDIR /home/groovy/scripts
-COPY --chown=groovy:groovy ./docs/swagger/openapi.yml ./generate /local/
-USER root
-RUN --mount=type=cache,target=/home/groovy/.groovy/grapes \
-  groovy /local/generator.groovy generate \
-  -i /local/openapi.yml \
-  -g CollectionCodegen \
-  -t /local \
-  -o /local
-
-FROM golang:1.17.5-alpine AS build
+FROM golang:1.17.8-alpine AS build
 
 RUN apk add --update --no-cache git
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
-RUN mkdir upload
-
-RUN GO111MODULE=on go get github.com/golang/mock/mockgen@v1.5.0
-
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go mod download
-
-COPY --from=generate /local/openapi ./openapi
 
 COPY ./ ./
 
 RUN go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.15.0
+FROM alpine:3.15.3
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 

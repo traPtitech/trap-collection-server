@@ -1,10 +1,7 @@
-**/mock_*.go
 .*
-main
 mysql/data
 docs
 docker
 !docs/swagger/openapi.yml
-!.realize.yaml
 openapi
 mock

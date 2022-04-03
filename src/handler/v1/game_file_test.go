@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/openapi"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
 )
@@ -223,7 +223,7 @@ func TestPostFile(t *testing.T) {
 					Return(testCase.gameFile, testCase.SaveGameFileErr)
 			}
 
-			gameFile, err := gameFileHandler.PostFile(c, testCase.strGameID, testCase.strEntryPoint, r, testCase.strFileType)
+			gameFile, err := gameFileHandler.PostFile(c, testCase.strGameID, testCase.strEntryPoint, testCase.strFileType, r)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {

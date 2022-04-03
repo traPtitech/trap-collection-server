@@ -1,16 +1,7 @@
 .env
-main
 .vscode
 mysql/data
-.openapi-generator
-openapi
 **/mock/*
 !src/storage/mock/*
 !src/repository/mock/db.go
-!mysql/init/mock
-!docker/mock
-upload/*
 cache/*
-!upload/.gitkeep
-mock_*.go
-!mock_db.go

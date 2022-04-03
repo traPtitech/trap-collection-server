@@ -6,18 +6,29 @@ import (
 	"path"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 )
 
 func TestSetupDirectory(t *testing.T) {
 	t.Parallel()
 
-	rootPath := common.FilePath("./directory_manager_test")
+	ctrl := gomock.NewController(t)
 
-	directoryManager := NewDirectoryManager(rootPath)
+	rootPath := "./directory_manager_test"
+	mockConf := mock.NewMockStorageLocal(ctrl)
+	mockConf.
+		EXPECT().
+		Path().
+		Return(rootPath, nil)
+	directoryManager, err := NewDirectoryManager(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create directory manager: %v", err)
+		return
+	}
 	defer func() {
-		err := os.RemoveAll(string(rootPath))
+		err := os.RemoveAll(rootPath)
 		if err != nil {
 			t.Fatalf("failed to remove directory: %v", err)
 		}

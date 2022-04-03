@@ -8,8 +8,8 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/traPtitech/trap-collection-server/pkg/common"
 	"github.com/traPtitech/trap-collection-server/src/auth"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -20,11 +20,21 @@ type User struct {
 	baseURL *url.URL
 }
 
-func NewUser(client *http.Client, baseURL common.TraQBaseURL) *User {
+func NewUser(conf config.AuthTraQ) (*User, error) {
+	client, err := conf.HTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create http client: %w", err)
+	}
+
+	baseURL, err := conf.BaseURL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base url: %w", err)
+	}
+
 	return &User{
 		client:  client,
-		baseURL: (*url.URL)(baseURL),
-	}
+		baseURL: baseURL,
+	}, nil
 }
 
 type getUsersMeResponse struct {
