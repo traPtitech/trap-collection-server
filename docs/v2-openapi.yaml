@@ -312,7 +312,8 @@ paths:
       operationId: deleteGames
       responses:
         "200":
-          description: 成功
+          description: |
+            ゲームの削除に成功した際に返されます。
         "400":
           description: |
             ゲームIDが不正な値である場合に返されます。
