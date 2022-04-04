@@ -21,7 +21,7 @@ tags:
   - name: gameURL
   - name: gameImage
   - name: gameVideo
-  - name: version
+  - name: launcherVersion
   - name: launcherAuth
   - name: seat
 
