@@ -26,6 +26,7 @@ tags:
   - name: seat
 
 paths:
+  # oauth2
   /oauth2/callback:
     parameters:
       - $ref: '#/components/parameters/authorizationCodeInQuery'
@@ -110,6 +111,7 @@ paths:
         traP Collectionの管理画面からログアウトします。
         成功するとセッションが削除されます。
 
+  # user
   /users/me:
     get:
       tags:
@@ -157,6 +159,7 @@ paths:
       description: |
         traPのアクティブメンバーの一覧を取得します。
 
+  # game
   /games:
     post:
       tags:
