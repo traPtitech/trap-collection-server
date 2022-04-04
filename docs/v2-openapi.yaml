@@ -12,18 +12,44 @@ info:
     url: 'https://github.com/traPtitech/trap-collection-server'
 tags:
   - name: oauth2
+    description: |
+      OAuth 2.0を利用しての管理画面の認証を行うAPIです。
   - name: user
+    description: |
+      管理画面のユーザー関連のAPIです。
   - name: admin
+    description: |
+      traP Collection全体の管理者関連のAPIです。
   - name: game
+    description: |
+      ゲーム関連のAPIです。
   - name: gameRole
+    description: |
+      ゲームの操作権限関連のAPIです。
   - name: gameVersion
+    description: |
+      ゲームのバージョン関連のAPIです。
   - name: gameFile
+    description: |
+      ゲームのファイル関連のAPIです。
   - name: gameURL
+    description: |
+      ゲームのURL関連のAPIです。
   - name: gameImage
+    description: |
+      ゲームの画像関連のAPIです。
   - name: gameVideo
+    description: |
+      ゲームのビデオ関連のAPIです。
   - name: launcherVersion
+    description: |
+      ランチャーのバージョン関連のAPIです。
   - name: launcherAuth
+    description: |
+      ランチャーの認証関連のAPIです。
   - name: seat
+    description: |
+      席管理関連のAPIです。
 
 paths:
   # oauth2
