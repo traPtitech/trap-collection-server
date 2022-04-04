@@ -302,7 +302,6 @@ paths:
       tags:
         - game
       security:
-        - TrapMemberAuth: []
         - GameMaintainerAuth: []
       operationId: putGame
       requestBody:
