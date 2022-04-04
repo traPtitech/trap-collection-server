@@ -311,11 +311,13 @@ paths:
               $ref: '#/components/schemas/PatchGame'
       responses:
         "200":
-          description: 成功
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Game'
+          description: |
+            ゲームの情報の修正に成功した際に返されます。
+            レスポンスで修正後のゲームの情報が返されます。
         "400":
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
