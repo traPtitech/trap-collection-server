@@ -1,0 +1,298 @@
+openapi: "3.0.3"
+servers:
+  - url: https://collection.trap.jp/api/v2
+  - url: https://collection-dev.trapti.tech/api/v2
+  - url: http://localhost:3000/api/v2
+info:
+  description: 'traP Collection v2'
+  version: '2.0.0'
+  title: 'traP Collection v2'
+  contact:
+    name: traP
+    url: 'https://github.com/traPtitech/trap-collection-server'
+tags:
+  - name: oauth2
+  - name: user
+  - name: admin
+  - name: game
+  - name: gameRole
+  - name: gameVersion
+  - name: gameFile
+  - name: gameURL
+  - name: gameImage
+  - name: gameVideo
+  - name: version
+  - name: launcherAuth
+  - name: seat
+
+paths:
+  /oauth2/callback:
+    parameters:
+      - $ref: '#/components/parameters/authorizationCodeInQuery'
+    get:
+      tags:
+        - oauth2
+      operationId: getCallback
+      responses:
+        "200":
+          description: |
+            認証が成功した場合に返されます。
+            セッションにユーザー情報が保存され、セッションが切れるまでログイン状態になります。
+            また、Code Challengeなどは削除されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            セッション、またはAuthorization Codeになんらかの誤りがあり、
+            認証に失敗した場合に返されます。
+            誤りの内容はレスポンスのmessageに出力されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traQのOAuth 2.0のコールバック
+      description: |
+        traQ上での認証後にtraQから
+        Authorization Codeがクエリパラメーターにつけられて、
+        リダイレクトされます。
+  /oauth2/code:
+    get:
+      tags:
+        - oauth2
+      operationId: getCode
+      responses:
+        "303":
+          headers:
+            Set-Cookie:
+              schema: 
+                type: string
+                example: sessions=abcd1234; Path=/; Expires=Wed, 04 May 2022 16:24:11 GMT; Max-Age=2592000; HttpOnly; Secure
+            Location:
+              schema:
+                type: string
+                example: https://q.trap.jp/api/v3/oauth2/authorize?response_type=code&client_id=<ClientID>&code_challenge=<Code Challenge>&code_challenge_method=S256
+          description: |
+            セッションの設定などに成功した場合に返されます。
+            traQの認可ページにリダイレクトされます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: OAuth 2.0のCode Verifierなどのセッションへの設定とtraQへのリダイレクト
+      description: |
+        OAuth 2.0を利用しての認証に必要なPKCEのCode Verifierを生成し、
+        セッションに設定した上でCode ChallengeやClientIDなどを設定したtraQのURLへリダイレクトします。
+  /oauth2/logout:
+    post:
+      tags:
+        - oauth2
+      security:
+        - TrapMemberAuth: []
+      operationId: postLogout
+      responses:
+        "200":
+          description: |
+            ログアウトに成功した場合に返されます。
+            セッションが削除されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            セッションになんらかの誤りがあり、
+            認証に失敗した場合に返されます。
+            誤りの内容はレスポンスのmessageに出力されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traP Collectionの管理画面からのログアウト
+      description: traP Collectionのログアウト
+
+  /users/me:
+    get:
+      tags:
+        - user
+      summary: 自分の情報の取得
+      description: 自分の情報の取得
+      security:
+        - TrapMemberAuth: []
+      operationId: getMe
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: |
+            自分の情報の取得に成功した際に返されます。
+            レスポンスでログインしているユーザーの情報が返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+  /users:
+    get:
+      tags:
+        - user
+      summary: traQの全ユーザー取得
+      description: traQの全ユーザー取得
+      security:
+        - TrapMemberAuth: []
+      operationId: getUsers
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  responses:
+    TraPUnauthorized:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: |
+        traQのOAuth 2.0での認証がされていない、
+        もしくは認証したが既にセッションが切れている場合に返されます。
+    InternalServerError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: |
+        何らかの予期しないエラーが発生した場合に返されます。
+        このレスポンスが返された場合、サーバーのバグやインフラの障害の可能性が高いです。
+  securitySchemes:
+    TrapMemberAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        traQのOAuth 2.0を利用してのログインをすでにしている場合のみアクセスできます。
+        ユーザーがtraQで凍結された場合、1日以内に反映されます。
+    GameMaintainerAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームのmaintainer以上の権限を持っている、
+        またはtraP Collectionの管理者である場合のみアクセスできます。
+        ユーザーがtraQで凍結された場合、1日以内に反映されます。
+    GameOwnerAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームのowner以上の権限を持っている、
+        またはtraP Collectionの管理者である場合のみアクセスできます。
+        ユーザーがtraQで凍結された場合、1日以内に反映されます。
+    AdminAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        traP Collectionの管理者である場合のみアクセスできます。
+        ユーザーがtraQで凍結された場合、1日以内に反映されます。
+    LauncherAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+  parameters:
+    authorizationCodeInQuery:
+      name: code
+      in: query
+      required: true
+      schema:
+        type: string
+      description: |
+        OAuth 2.0のAuthorization Codeです。
+    operatingSystemInQuery:
+      name: operatingSystem
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/OperatingSystem'
+      description: |
+        OSの種類を示すクエリパラメータです。
+    launcherVersionIDInPath:
+      name: launcherVersionID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ランチャーのバージョンのIDを示すパスパラメータです。
+    gameIDInPath:
+      name: gameID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ゲームのIDを示すパスパラメータです。
+    gameVersionIDInPath:
+      name: gameVersionID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ゲームのバージョンのIDを示すパスパラメータです。
+    productKeyIDInPath:
+      name: productKeyID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ランチャーのプロダクトキーのIDを示すパスパラメータです。
+    seatIDInPath:
+      name: seatID
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: |
+        席のIDを示すパスパラメータです。
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal Server Error
+    OperatingSystem:
+      type: string
+      enum:
+        - win32
+        - darwin
+    User:
+      description: ユーザー
+      type: object
+      properties:
+        id:
+          description: traQのID（UUID）
+          type: string
+          format: uuid
+        name:
+          description: traQID（UUIDでない方）
+          type: string
+          example: mazrean
+      required:
+        - id
+        - name
