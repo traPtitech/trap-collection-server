@@ -32,9 +32,6 @@ tags:
   - name: gameFile
     description: |
       ゲームのファイル関連のAPIです。
-  - name: gameURL
-    description: |
-      ゲームのURL関連のAPIです。
   - name: gameImage
     description: |
       ゲームの画像関連のAPIです。
