@@ -266,6 +266,7 @@ paths:
       summary: ゲーム一覧の取得
       description: |
         ゲームの一覧を取得します。
+        作成時刻での降順で結果が返されます。
   /games/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
@@ -431,6 +432,124 @@ paths:
       description: |
         指定したゲームIDのゲームからowner・maintainerを削除します。
 
+  # gameVersion
+  /games/{gameID}/versions:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
+    post:
+      tags:
+        - gameVersion
+      security:
+        - GameMaintainerAuth: []
+      operationId: postGameVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGameVersion'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVersion'
+          description: |
+            ゲームのバージョンの作成に成功した際に返されます。
+            レスポンスで作成したゲームのバージョンが返されます。
+        "400":
+          description: |
+            ゲームID、またはリクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームのバージョンの作成
+      description: |
+        指定したゲームIDのゲームにバージョンを作成します。
+    get:
+      tags:
+        - gameVersion
+      security:
+        - TrapMemberAuth: []
+      operationId: getGameVersion
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: |
+            取得するゲームバージョンの上限数を指定します。
+            指定なしの場合は制限なしです。
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: |
+            取得するゲームバージョンの開始位置を指定します。
+            指定なしの場合は0となります。
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGameVersionsResponse'
+          description: |
+            ゲームバージョン一覧の取得に成功した際に返されます。
+            レスポンスで取得したゲームバージョンの一覧が返されます。
+        "400":
+          description: |
+            ゲームIDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームバージョン一覧の取得
+      description: |
+        指定したゲームIDのゲームのバージョン一覧を取得します。
+        作成時刻での降順で結果が返されます。
+  /games/{gameID}/versions/latest:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
+    get:
+      tags:
+        - gameVersion
+      security:
+        - TrapMemberAuth: []
+      operationId: getLatestGameVersion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVersion'
+          description: |
+            ゲームの最新バージョンの取得に成功した際に返されます。
+            レスポンスで取得したゲームの最新バージョンが返されます。
+        "400":
+          description: |
+            ゲームIDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+            また、API v1で追加され、バージョンが存在しないゲームであった場合にも返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームの最新バージョンの取得
+      description: |
+        指定したゲームIDのゲームの最新バージョンを取得します。
+
 components:
   responses:
     TraPUnauthorized:
@@ -530,8 +649,8 @@ components:
         format: uuid
       description: |
         ゲームのIDを示すパスパラメータです。
-    gameVersionIDInPath:
-      name: gameVersionID
+    gameFileIDInPath:
+      name: gameFileID
       in: path
       required: true
       schema:
@@ -589,26 +708,25 @@ components:
       description: |
         ゲームの一覧を取得します。
         ページングのために、limit、offsetを適用する前のゲームの数をnumで返しています。
-    GameRoleResponse:
+    GetGameVersionsResponse:
       type: object
       properties:
-        owners:
+        num:
+          type: integer
+          description: |
+            limit、offsetが適用される前のゲームバージョンの数です。
+        versions:
           type: array
           items:
-            $ref: '#/components/schemas/UserName'
+            $ref: '#/components/schemas/GameVersion'
           description: |
-            ゲームのownerの一覧です。
-        maintainers:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserName'
-          description: |
-            ゲームのmaintainerの一覧です。
-            maintainerがいない場合、このフィールドは存在しません。
+            limit、offsetが適用された後のゲームバージョンの一覧です。
       required:
-        - owners
+        - num
+        - versions
       description: |
-        ゲームのownerとmaintainerの一覧です。
+        ゲームバージョンの一覧を取得します。
+        ページングのために、limit、offsetを適用する前のゲームバージョンの数もnumで返しています。
 
     # エンティティ
     # ユーザー
@@ -751,8 +869,12 @@ components:
           $ref: '#/components/schemas/GameVersionDescription'
         url:
           $ref: '#/components/schemas/GameURL'
-        file:
-          $ref: '#/components/schemas/GameFileGroup'
+        files:
+          type: array
+          minLength: 1
+          maxLength: 3
+          items:
+            $ref: '#/components/schemas/GameFileID'
         imageID:
           $ref: '#/components/schemas/GameImageID'
         videoID:
@@ -763,8 +885,8 @@ components:
         - imageID
         - videoID
       description: |
-        新しいゲームのバージョンです。
-        url、fileはゲームの種類に応じていずれかが存在します。
+        新しいゲームのバージョンの作成に必要な情報です。
+        url、filesはゲームの種類に応じていずれかが存在します。
     GameVersion:
       type: object
       properties:
@@ -792,6 +914,29 @@ components:
         - id
         - name
         - description
+        - imageID
+        - videoID
+        - createdAt
+      description: |
+        ゲームのバージョンです。
+        url、filesはゲームの種類に応じていずれかが存在します。
+
+    # ゲームファイル
+    GameFile:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameFileID'
+        md5:
+          $ref: '#/components/schemas/GameFileMd5'
+        entryPoint:
+          $ref: '#/components/schemas/GameFileEntryPoint'
+        createdAt:
+          $ref: '#/components/schemas/GameFileCreatedAt'
+      required:
+        - id
+        - md5
+        - entryPoint
         - createdAt
       description: |
         ゲームのファイルです。
