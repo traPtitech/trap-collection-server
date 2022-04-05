@@ -654,7 +654,7 @@ paths:
       summary: ゲームファイルの作成
       description: |
         指定したゲームIDのゲームにファイルを作成します。
-        作成したゲームファイルは、ゲームのバージョンに紐付けられます。
+        作成したゲームファイルは、1日以内にゲームバージョンと紐づけられない場合自動で削除されます。
   /games/files/{gameFileID}:
     parameters:
       - $ref: '#/components/parameters/gameFileIDInPath'
@@ -703,11 +703,12 @@ paths:
         - gameFile
       security:
         - TrapMemberAuth: []
+        - LauncherGameFileAuth: []
       operationId: getGameFileMeta
       responses:
         "200":
           content:
-            application/octet-stream:
+            application/json:
               schema:
                 $ref: '#/components/schemas/GameFile'
           description: |
@@ -734,6 +735,131 @@ paths:
       summary: ゲームファイルのメタ情報の取得
       description: |
         指定したゲームファイルIDのゲームファイルを取得します。
+
+  # gameImage
+  /games/images:
+    post:
+      tags:
+        - gameImage
+      security:
+        - TrapMemberAuth: []
+      operationId: postGameImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewGameImage'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameImage'
+          description: |
+            ゲーム画像の作成に成功した際に返されます。
+            レスポンスで作成したゲーム画像のメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム画像の作成
+      description: |
+        指定したゲームIDのゲームに画像を作成します。
+        作成したゲーム画像は、1日以内にゲームバージョンと紐づけられない場合に自動で削除されます。
+  /games/images/{gameImageID}:
+    parameters:
+      - $ref: '#/components/parameters/gameImageIDInPath'
+    get:
+      tags:
+        - gameImage
+      security:
+        - TrapMemberAuth: []
+        - LauncherGameImageAuth: []
+      operationId: getGameImage
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/GameImageContent'
+          description: |
+            ゲーム画像の取得に成功した際に返されます。
+            レスポンスで取得したゲーム画像のバイナリが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            画像IDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲーム画像が存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム画像のバイナリの取得
+      description: |
+        指定したゲーム画像IDのゲーム画像を取得します。
+  /games/images/{gameImageID}/meta:
+    parameters:
+      - $ref: '#/components/parameters/gameImageIDInPath'
+    get:
+      tags:
+        - gameImage
+      security:
+        - TrapMemberAuth: []
+        - LauncherGameImageAuth: []
+      operationId: getGameImageMeta
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameImage'
+          description: |
+            ゲーム画像のメタ情報の取得に成功した際に返されます。
+            レスポンスで取得したゲーム画像のメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            画像IDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲーム画像が存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム画像のメタ情報の取得
+      description: |
+        指定したゲーム画像IDのゲーム画像のメタ情報を取得します。
 
 components:
   responses:
@@ -854,8 +980,7 @@ components:
       in: path
       required: true
       schema:
-        type: string
-        format: uuid
+        $ref: '#/components/schemas/GameID'
       description: |
         ゲームのIDを示すパスパラメータです。
     gameFileIDInPath:
@@ -863,10 +988,17 @@ components:
       in: path
       required: true
       schema:
-        type: string
-        format: uuid
+        $ref: '#/components/schemas/GameFileID'
       description: |
         ゲームのファイルのIDを示すパスパラメータです。
+    gameImageIDInPath:
+      name: gameImageID
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/GameImageID'
+      description: |
+        ゲームの画像のIDを示すパスパラメータです。
     productKeyIDInPath:
       name: productKeyID
       in: path
@@ -1167,6 +1299,35 @@ components:
       description: |
         ゲームのファイルのメタ情報です。
 
+    # ゲーム画像
+    NewGameImage:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/GameImageType'
+        content:
+          $ref: '#/components/schemas/GameImageContent'
+      required:
+        - type
+        - content
+      description: |
+        ゲームの画像を新しく作成する際に必要な情報です。
+    GameImage:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameImageID'
+        type:
+          $ref: '#/components/schemas/GameImageType'
+        createdAt:
+          $ref: '#/components/schemas/GameImageCreatedAt'
+      required:
+        - id
+        - type
+        - createdAt
+      description: |
+        ゲームの画像のメタ情報です。
+
     # 値オブジェクト
     # ユーザー
     UserID:
@@ -1279,7 +1440,6 @@ components:
       format: date-time
       description: |
         ゲームファイルが作成された時刻です。
-        サーバーでの未使用ゲームファイルの削除にのみ使用されます。
 
     # ゲームURL
     GameURL:
@@ -1312,7 +1472,6 @@ components:
       format: date-time
       description: |
         ゲーム画像の作成時刻です。
-        サーバーでの未使用画像の削除にのみ使用されます。
 
     # ゲーム紹介動画
     GameVideoID:
@@ -1336,4 +1495,3 @@ components:
       format: date-time
       description: |
         ゲーム紹介動画の作成時刻です。
-        サーバーでの未使用動画の削除にのみ使用されます。
