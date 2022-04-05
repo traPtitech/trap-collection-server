@@ -284,11 +284,19 @@ paths:
             ゲームの情報の取得に成功した際に返されます。
             レスポンスで取得したゲームの情報が返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正な値である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -317,11 +325,19 @@ paths:
             ゲームの情報の修正に成功した際に返されます。
             レスポンスで修正後のゲームの情報が返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -340,11 +356,19 @@ paths:
           description: |
             ゲームの削除に成功した際に返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正な値である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -378,12 +402,20 @@ paths:
             ゲームのロールの作成に成功した際に返されます。
             レスポンスでロールを作成したゲームのowner、maintainerの一覧が返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
             既にmaintainerまたはownerとなっているユーザーが含まれる場合にも返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -414,6 +446,10 @@ paths:
             ゲームの管理権限の削除に成功した際に返されます。
             レスポンスで管理権限を削除したゲームのowner、maintainerの一覧が返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
             指定されたユーザーのうち1人でもownerまたはmaintainerでない場合にも返されます。
@@ -421,6 +457,10 @@ paths:
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -454,11 +494,19 @@ paths:
             ゲームのバージョンの作成に成功した際に返されます。
             レスポンスで作成したゲームのバージョンが返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -501,11 +549,19 @@ paths:
             ゲームバージョン一覧の取得に成功した際に返されます。
             レスポンスで取得したゲームバージョンの一覧が返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
@@ -533,11 +589,19 @@ paths:
             ゲームの最新バージョンの取得に成功した際に返されます。
             レスポンスで取得したゲームの最新バージョンが返されます。
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
             また、API v1で追加され、バージョンが存在しないゲームであった場合にも返されます。
@@ -546,6 +610,130 @@ paths:
       summary: ゲームの最新バージョンの取得
       description: |
         指定したゲームIDのゲームの最新バージョンを取得します。
+
+  # gameFile
+  /games/files:
+    post:
+      tags:
+        - gameFile
+      security:
+        - TrapMemberAuth: []
+      operationId: postGameFile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewGameFile'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameFile'
+          description: |
+            ゲームファイルの作成に成功した際に返されます。
+            レスポンスで作成したゲームファイルのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームファイルの作成
+      description: |
+        指定したゲームIDのゲームにファイルを作成します。
+        作成したゲームファイルは、ゲームのバージョンに紐付けられます。
+  /games/files/{gameFileID}:
+    parameters:
+      - $ref: '#/components/parameters/gameFileIDInPath'
+    get:
+      tags:
+        - gameFile
+      security:
+        - TrapMemberAuth: []
+        - LauncherGameFileAuth: []
+      operationId: getGameFile
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/GameFileContent'
+          description: |
+            ゲームファイルの取得に成功した際に返されます。
+            レスポンスで取得したゲームファイルのバイナリが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ファイルIDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームファイルが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームファイルのバイナリの取得
+      description: |
+        指定したゲームファイルIDのゲームファイルを取得します。
+  /games/files/{gameFileID}/meta:
+    parameters:
+      - $ref: '#/components/parameters/gameFileIDInPath'
+    get:
+      tags:
+        - gameFile
+      security:
+        - TrapMemberAuth: []
+      operationId: getGameFileMeta
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/GameFile'
+          description: |
+            ゲームファイルのメタ情報の取得に成功した際に返されます。
+            レスポンスで取得したゲームファイルのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ファイルIDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームファイルが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームファイルのメタ情報の取得
+      description: |
+        指定したゲームファイルIDのゲームファイルを取得します。
 
 components:
   responses:
@@ -611,6 +799,30 @@ components:
         アクセストークンから得られるランチャーのバージョンに、
         ゲームIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
+    LauncherGameFileAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるランチャーのバージョンに、
+        ファイルIDで指定されたファイルに対応するゲームが含まれる場合のみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+    LauncherGameImageAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるランチャーのバージョンに、
+        画像IDで指定された画像に対応するゲームが含まれる場合のみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+    LauncherGameVideoAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるランチャーのバージョンに、
+        動画IDで指定された動画に対応するゲームが含まれる場合のみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
   parameters:
     authorizationCodeInQuery:
       name: code
@@ -654,7 +866,7 @@ components:
         type: string
         format: uuid
       description: |
-        ゲームのバージョンのIDを示すパスパラメータです。
+        ゲームのファイルのIDを示すパスパラメータです。
     productKeyIDInPath:
       name: productKeyID
       in: path
@@ -918,11 +1130,28 @@ components:
         url、filesはゲームの種類に応じていずれかが存在します。
 
     # ゲームファイル
+    NewGameFile:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/GameFileType'
+        entryPoint:
+          $ref: '#/components/schemas/GameFileEntryPoint'
+        content:
+          $ref: '#/components/schemas/GameFileContent'
+      required:
+        - type
+        - entryPoint
+        - content
+      description: |
+        ゲームのファイルを新しく作成する際に必要な情報です。
     GameFile:
       type: object
       properties:
         id:
           $ref: '#/components/schemas/GameFileID'
+        type:
+          $ref: '#/components/schemas/GameFileType'
         md5:
           $ref: '#/components/schemas/GameFileMd5'
         entryPoint:
@@ -931,11 +1160,12 @@ components:
           $ref: '#/components/schemas/GameFileCreatedAt'
       required:
         - id
+        - type
         - md5
         - entryPoint
         - createdAt
       description: |
-        ゲームのファイルです。
+        ゲームのファイルのメタ情報です。
 
     # 値オブジェクト
     # ユーザー
@@ -1017,6 +1247,17 @@ components:
       format: uuid
       description: |
         ゲームファイルのIDです。
+    GameFileType:
+      type: string
+      enum:
+        - jar
+        - win32
+        - darwin
+      description: |
+        ゲームファイルのタイプです。
+        jarはJavaで起動しWindows、OSXの両方で実行できるもの、
+        windowsはWindows用の実行ファイル、
+        macはOSX用の実行ファイルです。
     GameFileMd5:
       type: string
       pattern: ^[0-9a-f]{32}$
