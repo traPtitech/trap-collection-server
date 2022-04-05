@@ -274,7 +274,7 @@ paths:
         - game
       security:
         - TrapMemberAuth: []
-        - LauncherAuth: []
+        - LauncherGameAuth: []
       operationId: getGame
       responses:
         "200":
@@ -355,6 +355,82 @@ paths:
       description: |
         指定したゲームIDのゲームを削除します。
 
+  # gameRole
+  /games/{gameID}/roles:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
+    post:
+      tags:
+        - gameRole
+      security:
+        - GameOwnerAuth: []
+      operationId: postGameRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameRole'
+          description: |
+            ゲームのロールの作成に成功した際に返されます。
+            レスポンスでロールを作成したゲームのowner、maintainerの一覧が返されます。
+        "400":
+          description: |
+            ゲームID、またはリクエストが不正である場合に返されます。
+            既にmaintainerまたはownerとなっているユーザーが含まれる場合にも返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームの管理権限の追加
+      description: |
+        指定したゲームIDのゲームにowner・maintainerを追加します。
+    delete:
+      tags:
+        - gameRole
+      security:
+        - GameOwnerAuth: []
+      operationId: deleteGameRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/GameRole'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameRoleResponse'
+          description: |
+            ゲームの管理権限の削除に成功した際に返されます。
+            レスポンスで管理権限を削除したゲームのowner、maintainerの一覧が返されます。
+        "400":
+          description: |
+            ゲームID、またはリクエストが不正である場合に返されます。
+            指定されたユーザーのうち1人でもownerまたはmaintainerでない場合にも返されます。
+            また、管理権限が削除されるとownerが1人もいなくなる場合にも返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームの管理権限の削除
+      description: |
+        指定したゲームIDのゲームからowner・maintainerを削除します。
+
 components:
   responses:
     TraPUnauthorized:
@@ -409,6 +485,15 @@ components:
       scheme: bearer
       description: |
         ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンが正しく、有効期限が切れていない場合にのみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+    LauncherGameAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるランチャーのバージョンに、
+        ゲームIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
   parameters:
     authorizationCodeInQuery:
@@ -496,6 +581,21 @@ components:
             $ref: '#/components/schemas/Game'
           description: |
             ゲームの一覧です。
+    GameRoleResponse:
+      type: object
+      properties:
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
+          description: |
+            ゲームのownerの一覧です。
+        maintainers:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
+          description: |
+            ゲームのmaintainerの一覧です。
 
     # エンティティ
     # ユーザー
@@ -600,6 +700,30 @@ components:
           description: |
             ゲームとその最新バージョンの情報です。
             ゲームの作成時のレスポンスのみで使用します。
+
+    # ゲーム管理権限
+    GameRole:
+      type: object
+      properties:
+        owners:
+          type: array
+          minLength: 1
+          items:
+            $ref: '#/components/schemas/UserID'
+          description: |
+            ゲームのownerの一覧です。
+        maintainers:
+          type: array
+          minLength: 1
+          items:
+            $ref: '#/components/schemas/UserID'
+          description: |
+            ゲームのmaintainerの一覧です。
+            maintainerがいない場合、このフィールドは存在しません。
+      required:
+        - owners
+      description: |
+        ゲームのownerとmaintainerの一覧です。
 
     # ゲームバージョン
     NewGameVersion:
