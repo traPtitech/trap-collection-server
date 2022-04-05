@@ -563,6 +563,8 @@ components:
         message:
           type: string
           example: Internal Server Error
+      required:
+        - message
     OperatingSystem:
       type: string
       enum:
@@ -574,13 +576,19 @@ components:
         num:
           type: integer
           description: |
-            取得したゲームの数です。
+            limit、offsetが適用される前のゲームの数です。
         games:
           type: array
           items:
             $ref: '#/components/schemas/Game'
           description: |
-            ゲームの一覧です。
+            limit、offsetが適用された後のゲームの一覧です。
+      required:
+        - num
+        - games
+      description: |
+        ゲームの一覧を取得します。
+        ページングのために、limit、offsetを適用する前のゲームの数をnumで返しています。
     GameRoleResponse:
       type: object
       properties:
@@ -596,6 +604,11 @@ components:
             $ref: '#/components/schemas/UserName'
           description: |
             ゲームのmaintainerの一覧です。
+            maintainerがいない場合、このフィールドは存在しません。
+      required:
+        - owners
+      description: |
+        ゲームのownerとmaintainerの一覧です。
 
     # エンティティ
     # ユーザー
@@ -653,6 +666,9 @@ components:
           $ref: '#/components/schemas/GameName'
         description:
           $ref: '#/components/schemas/GameDescription'
+      required:
+        - name
+        - description
       description: |
         ゲームの情報を修正する際に必要な情報です。
     Game:
@@ -727,16 +743,28 @@ components:
 
     # ゲームバージョン
     NewGameVersion:
-      description: 新しいゲームのバージョン
       type: object
       properties:
         name:
           $ref: '#/components/schemas/GameVersionName'
         description:
           $ref: '#/components/schemas/GameVersionDescription'
+        url:
+          $ref: '#/components/schemas/GameURL'
+        file:
+          $ref: '#/components/schemas/GameFileGroup'
+        imageID:
+          $ref: '#/components/schemas/GameImageID'
+        videoID:
+          $ref: '#/components/schemas/GameVideoID'
       required:
         - name
         - description
+        - imageID
+        - videoID
+      description: |
+        新しいゲームのバージョンです。
+        url、fileはゲームの種類に応じていずれかが存在します。
     GameVersion:
       type: object
       properties:
@@ -746,6 +774,18 @@ components:
           $ref: '#/components/schemas/GameVersionName'
         description:
           $ref: '#/components/schemas/GameVersionDescription'
+        url:
+          $ref: '#/components/schemas/GameURL'
+        files:
+          type: array
+          minLength: 1
+          maxLength: 3
+          items:
+            $ref: '#/components/schemas/GameFileID'
+        imageID:
+          $ref: '#/components/schemas/GameImageID'
+        videoID:
+          $ref: '#/components/schemas/GameVideoID'
         createdAt:
           $ref: '#/components/schemas/GameVersionCreatedAt'
       required:
@@ -753,6 +793,8 @@ components:
         - name
         - description
         - createdAt
+      description: |
+        ゲームのファイルです。
 
     # 値オブジェクト
     # ユーザー
@@ -827,3 +869,89 @@ components:
       format: date-time
       description: |
         ゲームのバージョンが作成された時刻です。
+
+    # ゲームファイル
+    GameFileID:
+      type: string
+      format: uuid
+      description: |
+        ゲームファイルのIDです。
+    GameFileMd5:
+      type: string
+      pattern: ^[0-9a-f]{32}$
+      example: 3bccfb0579ab5d81289c459aa8c9a1b0
+      description: |
+        ゲームファイルのmd5ハッシュ値です。
+    GameFileEntryPoint:
+      type: string
+      example: PPP.exe
+      description: |
+        ゲームファイルの解凍後の実行ファイルのパスです。
+    GameFileContent:
+      type: string
+      format: binary
+      description: |
+        ゲームの実行ファイルやデータをzipしたバイナリです。
+    GameFileCreatedAt:
+      type: string
+      format: date-time
+      description: |
+        ゲームファイルが作成された時刻です。
+        サーバーでの未使用ゲームファイルの削除にのみ使用されます。
+
+    # ゲームURL
+    GameURL:
+      type: string
+      format: uri
+      description: |
+        ゲームのURLの値です。
+
+    # ゲーム画像
+    GameImageID:
+      type: string
+      format: uuid
+      description: |
+        ゲーム画像のIDです。
+    GameImageType:
+      type: string
+      enum:
+        - jpeg
+        - png
+        - gif
+      description: |
+        ゲーム画像の種類です。
+    GameImageContent:
+      type: string
+      format: binary
+      description: |
+        ゲーム画像のバイナリです。
+    GameImageCreatedAt:
+      type: string
+      format: date-time
+      description: |
+        ゲーム画像の作成時刻です。
+        サーバーでの未使用画像の削除にのみ使用されます。
+
+    # ゲーム紹介動画
+    GameVideoID:
+      type: string
+      format: uuid
+      description: |
+        ゲーム紹介動画のIDです。
+    GameVideoType:
+      type: string
+      enum:
+        - mp4
+      description: |
+        ゲーム紹介動画の種類です。
+    GameVideoContent:
+      type: string
+      format: binary
+      description: |
+        ゲーム紹介動画のバイナリです。
+    GameVideoCreatedAt:
+      type: string
+      format: date-time
+      description: |
+        ゲーム紹介動画の作成時刻です。
+        サーバーでの未使用動画の削除にのみ使用されます。
