@@ -25,7 +25,7 @@ tags:
       ゲーム関連のAPIです。
   - name: gameRole
     description: |
-      ゲームの操作権限関連のAPIです。
+      ゲームの管理権限関連のAPIです。
   - name: gameVersion
     description: |
       ゲームのバージョン関連のAPIです。
@@ -43,7 +43,7 @@ tags:
       ランチャーのバージョン関連のAPIです。
   - name: launcherAuth
     description: |
-      ランチャーの認証関連のAPIです。
+      ランチャーの認可関連のAPIです。
   - name: seat
     description: |
       席管理関連のAPIです。
@@ -58,7 +58,7 @@ paths:
         - oauth2
       operationId: getCallback
       responses:
-        "200":
+        "204":
           description: |
             認証が成功した場合に返されます。
             セッションにユーザー情報が保存され、セッションが切れるまでログイン状態になります。
@@ -112,7 +112,7 @@ paths:
         - TrapMemberAuth: []
       operationId: postLogout
       responses:
-        "200":
+        "204":
           description: |
             ログアウトに成功した場合に返されます。
             セッションが削除されます。
@@ -342,7 +342,7 @@ paths:
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ゲームの情報の修正
+      summary: ゲームの情報の変更
       description: |
         指定したゲームIDのゲームの情報を修正します。
     delete:
@@ -352,7 +352,7 @@ paths:
         - GameOwnerAuth: []
       operationId: deleteGames
       responses:
-        "200":
+        "204":
           description: |
             ゲームの削除に成功した際に返されます。
         "400":
@@ -381,7 +381,7 @@ paths:
   /games/{gameID}/roles:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
-    post:
+    patch:
       tags:
         - gameRole
       security:
@@ -393,14 +393,14 @@ paths:
             schema:
               $ref: '#/components/schemas/GameRole'
       responses:
-        "201":
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameRole'
           description: |
-            ゲームのロールの作成に成功した際に返されます。
-            レスポンスでロールを作成したゲームのowner、maintainerの一覧が返されます。
+            ゲームの管理権限の変更に成功した際に返されます。
+            レスポンスで変更後のowner、maintainerの一覧が返されます。
         "400":
           content:
             application/json:
@@ -420,54 +420,10 @@ paths:
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ゲームの管理権限の追加
+      summary: ゲームの管理権限の変更
       description: |
-        指定したゲームIDのゲームにowner・maintainerを追加します。
-    delete:
-      tags:
-        - gameRole
-      security:
-        - GameOwnerAuth: []
-      operationId: deleteGameRole
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/GameRole'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GameRoleResponse'
-          description: |
-            ゲームの管理権限の削除に成功した際に返されます。
-            レスポンスで管理権限を削除したゲームのowner、maintainerの一覧が返されます。
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            ゲームID、またはリクエストが不正である場合に返されます。
-            指定されたユーザーのうち1人でもownerまたはmaintainerでない場合にも返されます。
-            また、管理権限が削除されるとownerが1人もいなくなる場合にも返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            指定したIDのゲームが存在しない、または削除されている場合に返されます。
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      summary: ゲームの管理権限の削除
-      description: |
-        指定したゲームIDのゲームからowner・maintainerを削除します。
+        指定したゲームIDのゲームの管理権限を変更します。
+        ownerは1人以上はいる必要があります。
 
   # gameVersion
   /games/{gameID}/versions:
@@ -986,6 +942,262 @@ paths:
       description: |
         指定したゲーム動画IDのゲーム動画のメタ情報を取得します。
 
+  # launcherVersion
+  /launchers/versions:
+    post:
+      tags:
+        - launcherVersion
+      security:
+        - AdminAuth: []
+      operationId: postLauncherVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewLauncherVersion'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherVersion'
+          description: |
+            ランチャーのバージョンの作成に成功した際に返されます。
+            レスポンスで作成したランチャーのバージョンのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョンの作成
+      description: |
+        ランチャーのバージョンを作成します。
+    get:
+      tags:
+        - launcherVersion
+      security:
+        - TrapMemberAuth: []
+      operationId: getLauncherVersions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LauncherVersion'
+          description: |
+            ランチャーのバージョンの取得に成功した際に返されます。
+            レスポンスで取得したランチャーのバージョンのリストが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョン一覧の取得
+      description: |
+        ランチャーのバージョンの一覧を取得します。
+  /launchers/versions/{launcherVersionID}:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionIDInPath'
+    get:
+      tags:
+        - launcherVersion
+      security:
+        - TrapMemberAuth: []
+      operationId: getLauncherVersion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherVersion'
+          description: |
+            ランチャーのバージョンの取得に成功した際に返されます。
+            レスポンスで取得したランチャーのバージョンのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョン情報の取得
+      description: |
+        指定したランチャーのバージョンIDのランチャーのバージョンのメタ情報を取得します。
+    patch:
+      tags:
+        - launcherVersion
+      security:
+        - AdminAuth: []
+      operationId: patchLauncherVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchLauncherVersion'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherVersion'
+          description: |
+            ランチャーのバージョンの変更に成功した際に返されます。
+            レスポンスで変更したランチャーのバージョンのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョン情報の変更
+      description: |
+        指定したランチャーのバージョンIDのランチャーのバージョンの情報を変更します。
+    delete:
+      tags:
+        - launcherVersion
+      security:
+        - AdminAuth: []
+      operationId: deleteLauncherVersion
+      responses:
+        "204":
+          description: |
+            ランチャーのバージョンの削除に成功した際に返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョンの削除
+      description: |
+        指定したランチャーのバージョンを削除します。
+  /launchers/versions/{launcherVersionID}/games:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionIDInPath'
+    patch:
+      tags:
+        - launcherVersion
+      security:
+        - AdminAuth: []
+      operationId: postLauncherVersionGame
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchLauncherVersionGameRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LauncherVersionGameResponse'
+          description: |
+            ランチャーのバージョンのゲームの変更に成功した際に返されます。
+            レスポンスで変更後のランチャーのバージョンに紐づいたゲームとゲームバージョン一覧が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーバージョンのゲームの変更
+      description: |
+        ランチャーバージョンにゲームを追加します。
+    get:
+      tags:
+        - launcherVersion
+      security:
+        - TrapMemberAuth: []
+      operationId: getLauncherVersionGames
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LauncherVersionGameResponse'
+          description: |
+            ランチャーのバージョンに紐づくゲームとバージョンの一覧の取得に成功した際に返されます。
+            レスポンスで取得したゲームとバージョンのリストが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョンに紐づくゲームの一覧の取得
+      description: |
+        ランチャーのバージョンに紐づくゲームの一覧を取得します。
+
 components:
   responses:
     TraPUnauthorized:
@@ -1213,6 +1425,30 @@ components:
       description: |
         ゲームバージョンの一覧を取得します。
         ページングのために、limit、offsetを適用する前のゲームバージョンの数もnumで返しています。
+    PatchLauncherVersionGameRequest:
+      type: object
+      properties:
+        gameVersionIDs:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameVersionID'
+      required:
+        - gameVersionIDs
+      description: |
+        ランチャーのバージョンのゲームを変更するためのリクエストです。
+    LauncherVersionGameResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/GameInfo'
+        - type: object
+          properties:
+            version:
+              $ref: '#/components/schemas/GameVersionInfo'
+          required:
+            - version
+      description: |
+        ランチャーのバージョンに紐づけられた
+        ゲームとバージョンの情報です。
 
     # エンティティ
     # ユーザー
@@ -1307,6 +1543,24 @@ components:
         - createdAt
       description: |
         ゲームの情報です。
+    GameInfo:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameID'
+        name:
+          $ref: '#/components/schemas/GameName'
+        description:
+          $ref: '#/components/schemas/GameDescription'
+        createdAt:
+          $ref: '#/components/schemas/GameCreatedAt'
+      required:
+        - id
+        - name
+        - description
+        - createdAt
+      description: |
+        ゲームの情報です。
 
     # ゲーム管理権限
     GameRole:
@@ -1393,6 +1647,30 @@ components:
       description: |
         ゲームのバージョンです。
         url、filesはゲームの種類に応じていずれかが存在します。
+    GameVersionInfo:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameVersionID'
+        name:
+          $ref: '#/components/schemas/GameVersionName'
+        description:
+          $ref: '#/components/schemas/GameVersionDescription'
+        imageID:
+          $ref: '#/components/schemas/GameImageID'
+        videoID:
+          $ref: '#/components/schemas/GameVideoID'
+        createdAt:
+          $ref: '#/components/schemas/GameVersionCreatedAt'
+      required:
+        - id
+        - name
+        - description
+        - imageID
+        - videoID
+        - createdAt
+      description: |
+        ゲームのバージョンについての情報です。
 
     # ゲームファイル
     NewGameFile:
@@ -1489,6 +1767,54 @@ components:
         - createdAt
       description: |
         ゲームの動画のメタ情報です。
+
+    # ランチャーバージョン
+    PatchLauncherVersion:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/LauncherVersionName'
+        questionnaire:
+          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+      required:
+        - name
+        - questionnaire
+      description: |
+        ランチャーバージョンの情報を修正する際に必要な情報です。
+    NewLauncherVersion:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/LauncherVersionName'
+        questionnaire:
+          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+        gameVersions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameVersionID'
+      required:
+        - name
+      description: |
+        ランチャーのバージョンを新しく作成する際に必要な情報です。
+        questionnaireは工大祭などのアンケートが必要な際のみ存在します。
+    LauncherVersion:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/LauncherVersionID'
+        name:
+          $ref: '#/components/schemas/LauncherVersionName'
+        questionnaire:
+          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+        createdAt:
+          $ref: '#/components/schemas/LauncherVersionCreatedAt'
+      required:
+        - id
+        - name
+        - createdAt
+      description: |
+        ランチャーのバージョンです。
+        questionnaireは工大祭などのアンケートが必要な際のみ存在します。
 
     # 値オブジェクト
     # ユーザー
@@ -1657,3 +1983,25 @@ components:
       format: date-time
       description: |
         ゲーム紹介動画の作成時刻です。
+
+    # ランチャーバージョン
+    LauncherVersionID:
+      type: string
+      format: uuid
+      description: |
+        ランチャーのバージョンのIDです。
+    LauncherVersionName:
+      type: string
+      maxLength: 32
+      description: |
+        ランチャーのバージョン名です。
+    LauncherVersionQuestionnaireURL:
+      type: string
+      format: uri
+      description: |
+        ランチャーのバージョンのアンケートのURLです。
+    LauncherVersionCreatedAt:
+      type: string
+      format: date-time
+      description: |
+        ランチャーのバージョンが作成された時刻です。
