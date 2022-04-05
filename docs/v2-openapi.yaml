@@ -648,7 +648,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+            指定したIDのゲームファイルが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲームファイルの作成
@@ -773,7 +773,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+            指定したIDのゲーム画像が存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲーム画像の作成
@@ -860,6 +860,131 @@ paths:
       summary: ゲーム画像のメタ情報の取得
       description: |
         指定したゲーム画像IDのゲーム画像のメタ情報を取得します。
+
+  # gameVideo
+  /games/videos:
+    post:
+      tags:
+        - gameVideo
+      security:
+        - TrapMemberAuth: []
+      operationId: postGameVideo
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewGameVideo'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVideo'
+          description: |
+            ゲーム動画の作成に成功した際に返されます。
+            レスポンスで作成したゲーム動画のメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲーム動画が存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム動画の作成
+      description: |
+        指定したゲームIDのゲームに動画を作成します。
+        作成したゲーム動画は、1日以内にゲームバージョンと紐づけられない場合に自動で削除されます。
+  /games/videos/{gameVideoID}:
+    parameters:
+      - $ref: '#/components/parameters/gameVideoIDInPath'
+    get:
+      tags:
+        - gameVideo
+      security:
+        - TrapMemberAuth: []
+        - LauncherGameVideoAuth: []
+      operationId: getGameVideo
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/GameVideoContent'
+          description: |
+            ゲーム動画の取得に成功した際に返されます。
+            レスポンスで取得したゲーム動画のバイナリが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            動画IDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲーム動画が存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム動画のバイナリの取得
+      description: |
+        指定したゲーム動画IDのゲーム動画を取得します。
+  /games/videos/{gameVideoID}/meta:
+    parameters:
+      - $ref: '#/components/parameters/gameVideoIDInPath'
+    get:
+      tags:
+        - gameVideo
+      security:
+        - TrapMemberAuth: []
+        - LauncherGameVideoAuth: []
+      operationId: getGameVideoMeta
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVideo'
+          description: |
+            ゲーム動画のメタ情報の取得に成功した際に返されます。
+            レスポンスで取得したゲーム動画のメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            動画IDが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲーム動画が存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム動画のメタ情報の取得
+      description: |
+        指定したゲーム動画IDのゲーム動画のメタ情報を取得します。
 
 components:
   responses:
@@ -999,6 +1124,14 @@ components:
         $ref: '#/components/schemas/GameImageID'
       description: |
         ゲームの画像のIDを示すパスパラメータです。
+    gameVideoIDInPath:
+      name: gameVideoID
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/GameVideoID'
+      description: |
+        ゲームの動画のIDを示すパスパラメータです。
     productKeyIDInPath:
       name: productKeyID
       in: path
@@ -1327,6 +1460,35 @@ components:
         - createdAt
       description: |
         ゲームの画像のメタ情報です。
+
+    # ゲーム動画
+    NewGameVideo:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/GameVideoType'
+        content:
+          $ref: '#/components/schemas/GameVideoContent'
+      required:
+        - type
+        - content
+      description: |
+        ゲームの動画を新しく作成する際に必要な情報です。
+    GameVideo:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameVideoID'
+        type:
+          $ref: '#/components/schemas/GameVideoType'
+        createdAt:
+          $ref: '#/components/schemas/GameVideoCreatedAt'
+      required:
+        - id
+        - type
+        - createdAt
+      description: |
+        ゲームの動画のメタ情報です。
 
     # 値オブジェクト
     # ユーザー
