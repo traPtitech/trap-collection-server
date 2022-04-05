@@ -203,7 +203,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameWithLatestVersion'
+                $ref: '#/components/schemas/PostGameResponse'
           description: |
             ゲームの追加に成功した際に返されます。
             レスポンスで新しく追加されたゲームの情報が返されます。
@@ -689,6 +689,18 @@ components:
       enum:
         - win32
         - darwin
+    PostGameResponse:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Game'
+        - type: object
+          properties:
+            version:
+              $ref: '#/components/schemas/GameVersion'
+          required:
+            - latestVersion
+          description: |
+            ゲームと追加されたバージョンの情報です。
     GetGamesResponse:
       type: object
       properties:
@@ -821,19 +833,6 @@ components:
         - createdAt
       description: |
         ゲームの情報です。
-    GameWithLatestVersion:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/Game'
-        - type: object
-          properties:
-            latestVersion:
-              $ref: '#/components/schemas/GameVersion'
-          required:
-            - latestVersion
-          description: |
-            ゲームとその最新バージョンの情報です。
-            ゲームの作成時のレスポンスのみで使用します。
 
     # ゲーム管理権限
     GameRole:
