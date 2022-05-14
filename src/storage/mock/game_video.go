@@ -1,7 +1,6 @@
 package mock
 
 import (
-	"bytes"
 	context "context"
 	io "io"
 	reflect "reflect"
@@ -16,7 +15,7 @@ import (
 type GameVideo struct {
 	ctrl     *gomock.Controller
 	recorder *GameVideoMockRecorder
-	buf      *bytes.Buffer
+	buf      io.Writer
 }
 
 // GameVideoMockRecorder is the mock recorder for MockGameVideo.
@@ -25,7 +24,7 @@ type GameVideoMockRecorder struct {
 }
 
 // NewGameVideo creates a new mock instance.
-func NewGameVideo(ctrl *gomock.Controller, buf *bytes.Buffer) *GameVideo {
+func NewGameVideo(ctrl *gomock.Controller, buf io.Writer) *GameVideo {
 	mock := &GameVideo{ctrl: ctrl}
 	mock.recorder = &GameVideoMockRecorder{mock}
 	mock.buf = buf
