@@ -1,10 +1,8 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -14,12 +12,14 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	pkgio "github.com/traPtitech/trap-collection-server/pkg/io"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
+	"golang.org/x/sync/errgroup"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -106,9 +106,10 @@ func TestSaveGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			buf := bytes.NewBuffer(nil)
+			pr, pw := io.Pipe()
+			defer pr.Close()
 
-			mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, buf)
+			mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, pw)
 
 			gameVideoService := NewGameVideo(
 				mockDB,
@@ -118,37 +119,33 @@ func TestSaveGameVideo(t *testing.T) {
 			)
 
 			var file io.Reader
-			var expectBytes []byte
+			var expectFile io.Reader
 			if testCase.isValidFile {
-				videoBuf := bytes.NewBuffer(nil)
-
 				switch testCase.videoType {
 				case values.GameVideoTypeMp4:
-					err := func() error {
-						f, err := os.Open("../../../testdata/1.mp4")
-						if err != nil {
-							return fmt.Errorf("failed to open file: %w", err)
-						}
-						defer f.Close()
-
-						_, err = io.Copy(videoBuf, f)
-						if err != nil {
-							return fmt.Errorf("failed to copy file: %w", err)
-						}
-
-						return nil
-					}()
+					f, err := os.Open("../../../testdata/1.mp4")
 					if err != nil {
-						t.Fatalf("failed to encode image: %s", err)
+						t.Fatalf("failed to open file: %s", err)
+						return
 					}
+					defer f.Close()
+
+					file = f
+
+					f, err = os.Open("../../../testdata/1.mp4")
+					if err != nil {
+						t.Fatalf("failed to open file: %s", err)
+						return
+					}
+					defer f.Close()
+
+					expectFile = f
 				default:
 					t.Fatalf("invalid video type: %v\n", testCase.videoType)
 				}
-
-				file = videoBuf
-				expectBytes = videoBuf.Bytes()
 			} else {
 				file = strings.NewReader("invalid file")
+				expectFile = strings.NewReader("invalid file")
 			}
 
 			mockGameRepository.
@@ -170,8 +167,25 @@ func TestSaveGameVideo(t *testing.T) {
 					Return(testCase.StorageSaveGameVideoErr)
 			}
 
-			err := gameVideoService.SaveGameVideo(ctx, file, testCase.gameID)
+			eg := errgroup.Group{}
+			eg.Go(func() error {
+				defer pw.Close()
 
+				err := gameVideoService.SaveGameVideo(ctx, file, testCase.gameID)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+
+			isEqual, err := pkgio.ReaderEqual(expectFile, pr)
+			if err != nil {
+				t.Fatalf("failed to compare file: %s", err)
+				return
+			}
+
+			err = eg.Wait()
 			if testCase.isErr {
 				if testCase.err == nil {
 					assert.Error(t, err)
@@ -185,7 +199,7 @@ func TestSaveGameVideo(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, expectBytes, buf.Bytes())
+			assert.True(t, isEqual)
 		})
 	}
 }
