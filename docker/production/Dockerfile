@@ -15,7 +15,7 @@ COPY ./ ./
 RUN go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.15.4
+FROM alpine:3.16.0
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
