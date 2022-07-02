@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -10,5 +11,5 @@ import (
 
 type GameImage interface {
 	SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error
-	GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error
+	GetTmpURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error)
 }

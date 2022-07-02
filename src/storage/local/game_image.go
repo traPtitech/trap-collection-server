@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"path"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -75,4 +77,12 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	}
 
 	return nil
+}
+
+func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
+	tmpURL, err := url.Parse(fmt.Sprintf("file.//%s", path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url: %w", err)
+	}
+	return values.NewGameImageTmpURL(tmpURL), nil
 }

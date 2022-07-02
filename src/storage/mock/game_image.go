@@ -5,10 +5,11 @@ import (
 	context "context"
 	io "io"
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
-	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	values "github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 // GameImage is a mock of GameImage interface.
@@ -36,30 +37,19 @@ func (m *GameImage) EXPECT() *GameImageMockRecorder {
 	return m.recorder
 }
 
-// GetGameImage mocks base method.
-func (m *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
-	ret0 := m.getGameImage(ctx, image)
-
-	_, err := io.Copy(writer, m.buf)
-	if err != nil {
-		m.ctrl.T.Fatalf("unexpected error copying from buffer: %v", err)
-	}
-
-	return ret0
-}
-
-// GetGameImage mocks base method.
-func (m *GameImage) getGameImage(ctx context.Context, image *domain.GameImage) error {
+// GetTempURL mocks base method.
+func (m *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGameImage", ctx, image)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetTempURL", ctx, image, expires)
+	ret0, _ := ret[0].(values.GameImageTmpURL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetGameImage indicates an expected call of GetGameImage.
-func (mr *GameImageMockRecorder) GetGameImage(ctx, image interface{}) *gomock.Call {
+// GetTempURL indicates an expected call of GetTempURL.
+func (mr *GameImageMockRecorder) GetTempURL(ctx, image, expires interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameImage", reflect.TypeOf((*GameImage)(nil).GetGameImage), ctx, image)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTempURL", reflect.TypeOf((*GameImage)(nil).GetTempURL), ctx, image, expires)
 }
 
 // SaveGameImage mocks base method.
