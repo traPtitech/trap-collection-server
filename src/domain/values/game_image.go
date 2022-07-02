@@ -1,10 +1,15 @@
 package values
 
-import "github.com/google/uuid"
+import (
+	"net/url"
+
+	"github.com/google/uuid"
+)
 
 type (
-	GameImageID   uuid.UUID
-	GameImageType int
+	GameImageID     uuid.UUID
+	GameImageType   int
+	GameImageTmpURL *url.URL
 )
 
 func NewGameImageID() GameImageID {
@@ -20,3 +25,7 @@ const (
 	GameImageTypePng
 	GameImageTypeGif
 )
+
+func NewGameImageTmpURL(tmpURL *url.URL) GameImageTmpURL {
+	return GameImageTmpURL(tmpURL)
+}
