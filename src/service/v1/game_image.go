@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -132,7 +131,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID
 	return nil
 }
 
-func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (io.ReadCloser, error) {
+func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (values.GameImageTmpURL, error) {
 	_, err := gi.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID
@@ -149,16 +148,10 @@ func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (io
 		return nil, fmt.Errorf("failed to get game image: %w", err)
 	}
 
-	pr, pw := io.Pipe()
+	tmpURL, err := gi.gameImageStorage.GetTmpURL(ctx, image, time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game image temp url: %W", err)
+	}
 
-	go func() {
-		defer pw.Close()
-
-		err = gi.gameImageStorage.GetGameImage(ctx, pw, image)
-		if err != nil {
-			log.Printf("failed to get game image file: %v\n", err)
-		}
-	}()
-
-	return pr, nil
+	return tmpURL, nil
 }

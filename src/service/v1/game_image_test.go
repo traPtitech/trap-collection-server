@@ -9,6 +9,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -221,36 +222,37 @@ func TestGetGameImage(t *testing.T) {
 		description               string
 		gameID                    values.GameID
 		GetGameErr                error
-		isValidFile               bool
-		imageType                 values.GameImageType
 		executeGetLatestGameImage bool
 		image                     *domain.GameImage
 		GetLatestGameImageErr     error
-		executeGetGameImage       bool
-		GetGameImageErr           error
+		executeGetTempURL         bool
+		imageURL                  values.GameImageTmpURL
+		GetTempURLErr             error
 		isErr                     bool
 		err                       error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
 	}
 
 	testCases := []test{
 		{
 			description:               "特に問題ないのでエラーなし",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypeJpeg,
 			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 				time.Now(),
 			),
-			executeGetGameImage: true,
+			executeGetTempURL: true,
+			imageURL:          values.NewGameImageTmpURL(urlLink),
 		},
 		{
 			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
 			gameID:      values.NewGameID(),
-			isValidFile: true,
-			imageType:   values.GameImageTypeJpeg,
 			GetGameErr:  repository.ErrRecordNotFound,
 			isErr:       true,
 			err:         service.ErrInvalidGameID,
@@ -258,55 +260,34 @@ func TestGetGameImage(t *testing.T) {
 		{
 			description: "GetGameがエラーなのでエラー",
 			gameID:      values.NewGameID(),
-			isValidFile: true,
-			imageType:   values.GameImageTypeJpeg,
 			GetGameErr:  errors.New("error"),
 			isErr:       true,
 		},
 		{
 			description:               "画像がpngでもエラーなし",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypePng,
 			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 				time.Now(),
 			),
-			executeGetGameImage: true,
+			executeGetTempURL: true,
 		},
 		{
 			description:               "画像がgifでもエラーなし",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypeGif,
 			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 				time.Now(),
 			),
-			executeGetGameImage: true,
-		},
-		{
-			// 実際には発生しないが、念のため確認
-			description:               "画像が不正でもエラーなし",
-			gameID:                    values.NewGameID(),
-			isValidFile:               false,
-			executeGetLatestGameImage: true,
-			image: domain.NewGameImage(
-				values.NewGameImageID(),
-				values.GameImageTypeJpeg,
-				time.Now(),
-			),
-			executeGetGameImage: true,
+			executeGetTempURL: true,
 		},
 		{
 			description:               "GetLatestGameImageがErrRecordNotFoundなのでErrNoGameImage",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypeJpeg,
 			executeGetLatestGameImage: true,
 			GetLatestGameImageErr:     repository.ErrRecordNotFound,
 			isErr:                     true,
@@ -315,62 +296,29 @@ func TestGetGameImage(t *testing.T) {
 		{
 			description:               "GetLatestGameImageがエラーなのでエラー",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypeJpeg,
 			executeGetLatestGameImage: true,
 			GetLatestGameImageErr:     errors.New("error"),
 			isErr:                     true,
 		},
 		{
-			description:               "GetGameImageがエラーでもエラーなし",
+			description:               "GetTempURLがエラーでもエラーなし",
 			gameID:                    values.NewGameID(),
-			isValidFile:               true,
-			imageType:                 values.GameImageTypeJpeg,
 			executeGetLatestGameImage: true,
 			image: domain.NewGameImage(
 				values.NewGameImageID(),
 				values.GameImageTypeJpeg,
 				time.Now(),
 			),
-			executeGetGameImage: true,
-			GetGameImageErr:     errors.New("error"),
+			executeGetTempURL: true,
+			imageURL:          values.NewGameImageTmpURL(urlLink),
+			GetTempURLErr:     errors.New("error"),
+			isErr:             true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			var file *bytes.Buffer
-			if testCase.isValidFile {
-				img := image.NewRGBA(image.Rect(0, 0, 100, 100))
-				imgBuf := bytes.NewBuffer(nil)
-
-				switch testCase.imageType {
-				case values.GameImageTypeJpeg:
-					err := jpeg.Encode(imgBuf, img, nil)
-					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
-					}
-				case values.GameImageTypePng:
-					err := png.Encode(imgBuf, img)
-					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
-					}
-				case values.GameImageTypeGif:
-					err := gif.Encode(imgBuf, img, nil)
-					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
-					}
-				default:
-					t.Fatalf("invalid image type: %v\n", testCase.imageType)
-				}
-
-				file = imgBuf
-			} else {
-				file = bytes.NewBufferString("invalid file")
-			}
-			expectBytes := file.Bytes()
-
-			mockGameImageStorage := mockStorage.NewGameImage(ctrl, file)
+			mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
 
 			gameImageService := NewGameImage(
 				mockDB,
@@ -391,14 +339,14 @@ func TestGetGameImage(t *testing.T) {
 					Return(testCase.image, testCase.GetLatestGameImageErr)
 			}
 
-			if testCase.executeGetGameImage {
+			if testCase.executeGetTempURL {
 				mockGameImageStorage.
 					EXPECT().
-					GetGameImage(ctx, testCase.image).
-					Return(testCase.GetGameImageErr)
+					GetTempURL(ctx, testCase.image, time.Minute).
+					Return(testCase.imageURL, testCase.GetTempURLErr)
 			}
 
-			r, err := gameImageService.GetGameImage(ctx, testCase.gameID)
+			tmpURL, err := gameImageService.GetGameImage(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -413,12 +361,7 @@ func TestGetGameImage(t *testing.T) {
 				return
 			}
 
-			data, err := io.ReadAll(r)
-			if err != nil {
-				t.Fatalf("failed to read response body: %v\n", err)
-			}
-
-			assert.Equal(t, expectBytes, data)
+			assert.Equal(t, testCase.imageURL, tmpURL)
 		})
 	}
 }
