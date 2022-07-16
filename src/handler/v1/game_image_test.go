@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -145,6 +145,7 @@ func TestGetImage(t *testing.T) {
 		strGameID           string
 		executeGetGameImage bool
 		gameID              values.GameID
+		tmpURL              values.GameImageTmpURL
 		GetGameImageErr     error
 		isErr               bool
 		err                 error
@@ -156,12 +157,20 @@ func TestGetImage(t *testing.T) {
 	gameID3 := values.NewGameID()
 	gameID4 := values.NewGameID()
 
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
 	testCases := []test{
 		{
-			description:         "特に問題ないのでエラーなし",
+			description:         "特に問題ないので303",
 			strGameID:           uuid.UUID(gameID1).String(),
 			executeGetGameImage: true,
 			gameID:              gameID1,
+			tmpURL:              values.NewGameImageTmpURL(urlLink),
+			isErr:               true,
+			statusCode:          http.StatusSeeOther,
 		},
 		{
 			description: "gameIDが不正なので400",
@@ -205,22 +214,24 @@ func TestGetImage(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			r := io.NopCloser(bytes.NewReader([]byte("a")))
-
 			if testCase.executeGetGameImage {
 				mockGameImageService.
 					EXPECT().
 					GetGameImage(gomock.Any(), testCase.gameID).
-					Return(r, testCase.GetGameImageErr)
+					Return(testCase.tmpURL, testCase.GetGameImageErr)
 			}
 
-			res, err := gameImageHandler.GetImage(c, testCase.strGameID)
+			err := gameImageHandler.GetImage(c, testCase.strGameID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpError *echo.HTTPError
 					if errors.As(err, &httpError) {
 						assert.Equal(t, testCase.statusCode, httpError.Code)
+
+						if testCase.statusCode == http.StatusSeeOther {
+							assert.Equal(t, (*url.URL)(testCase.tmpURL).String(), c.Response().Header().Get(echo.HeaderLocation))
+						}
 					} else {
 						t.Errorf("error is not *echo.HTTPError")
 					}
@@ -232,11 +243,6 @@ func TestGetImage(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, r, res)
 		})
 	}
 }

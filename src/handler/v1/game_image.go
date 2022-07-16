@@ -2,10 +2,11 @@ package v1
 
 import (
 	"errors"
-	"io"
+	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -48,27 +49,29 @@ func (gi *GameImage) PostImage(c echo.Context, strGameID string, image multipart
 	return nil
 }
 
-func (gi *GameImage) GetImage(c echo.Context, strGameID string) (io.ReadCloser, error) {
+func (gi *GameImage) GetImage(c echo.Context, strGameID string) error {
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
 	}
 
 	gameID := values.NewGameIDFromUUID(uuidGameID)
 
-	r, err := gi.gameImageService.GetGameImage(ctx, gameID)
+	tmpURL, err := gi.gameImageService.GetGameImage(ctx, gameID)
 	if errors.Is(err, service.ErrNoGameImage) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "no image")
+		return echo.NewHTTPError(http.StatusNotFound, "no image")
 	}
 	if errors.Is(err, service.ErrInvalidGameID) {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game id")
 	}
 	if err != nil {
 		log.Printf("error: failed to get image: %v\n", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get image")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get image")
 	}
 
-	return r, nil
+	c.Response().Header().Set(echo.HeaderLocation, (*url.URL)(tmpURL).String())
+
+	return echo.NewHTTPError(http.StatusSeeOther, fmt.Sprintf("redirect to %s", (*url.URL)(tmpURL).String()))
 }
