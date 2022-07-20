@@ -11,5 +11,5 @@ import (
 
 type GameImage interface {
 	SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error
-	GetTmpURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error)
+	GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error)
 }

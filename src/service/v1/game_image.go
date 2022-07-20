@@ -148,7 +148,7 @@ func (gi *GameImage) GetGameImage(ctx context.Context, gameID values.GameID) (va
 		return nil, fmt.Errorf("failed to get game image: %w", err)
 	}
 
-	tmpURL, err := gi.gameImageStorage.GetTmpURL(ctx, image, time.Minute)
+	tmpURL, err := gi.gameImageStorage.GetTempURL(ctx, image, time.Minute)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game image temp url: %W", err)
 	}
