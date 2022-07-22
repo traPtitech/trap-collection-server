@@ -61,8 +61,8 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	return nil
 }
 
-func (gi *GameImage) GetTempURL(ctx context.Context, video *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
-	filekey := gi.imageKey(video.GetID())
+func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
+	filekey := gi.imageKey(image.GetID())
 
 	url, err := gi.client.createTempURL(ctx, filekey, expires)
 	if errors.Is(err, ErrNotFound) {
