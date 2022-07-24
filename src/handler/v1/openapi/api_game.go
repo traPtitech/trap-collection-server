@@ -24,7 +24,7 @@ type GameApi interface{
   GetGameURL(c echo.Context, gameID string) (string, error)
   GetGameVersion(c echo.Context, gameID string) ([]*GameVersion, error)
   GetGames(c echo.Context, all string, ) ([]*Game, error)
-  GetImage(c echo.Context, gameID string) (ioReadCloser, error)
+  GetImage(c echo.Context, gameID string) (error)
   GetMaintainer(c echo.Context, gameID string, ) ([]*Maintainer, error)
   GetVideo(c echo.Context, gameID string) ( error)
   PostFile(c echo.Context, gameID string, fileType string, entryPoint string, file multipartFile) (*GameFile, error)
@@ -159,7 +159,7 @@ func GetImageHandler(GameApi GameApi) echo.HandlerFunc {
     var err error
     gameID := c.Param("gameID")
     var res ioReadCloser
-    res, err = GameApi.GetImage(c, gameID)
+    err = GameApi.GetImage(c, gameID)
     if err != nil {
       var httpError *echo.HTTPError
       if errors.As(err, &httpError) {

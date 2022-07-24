@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -58,6 +59,20 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 	}
 
 	return nil
+}
+
+func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
+	filekey := gi.imageKey(image.GetID())
+
+	url, err := gi.client.createTempURL(ctx, filekey, expires)
+	if errors.Is(err, ErrNotFound) {
+		return nil, storage.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get temp url: %w", err)
+	}
+
+	return url, nil
 }
 
 // imageKey 変更時にはオブジェクトストレージのキーを変更する必要があるので要注意
