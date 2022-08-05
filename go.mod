@@ -1,6 +1,6 @@
 module github.com/traPtitech/trap-collection-server
 
-go 1.17
+go 1.19
 
 require (
 	github.com/dgraph-io/ristretto v0.1.0
