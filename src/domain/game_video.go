@@ -6,10 +6,8 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-/*
-	GameVideo
-	ゲームの紹介映像。
-*/
+// GameVideo
+// ゲームの紹介映像。
 type GameVideo struct {
 	id        values.GameVideoID
 	videoType values.GameVideoType

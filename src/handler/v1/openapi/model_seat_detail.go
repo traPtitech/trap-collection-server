@@ -15,7 +15,6 @@ import (
 
 // SeatDetail - 席の詳細
 type SeatDetail struct {
-
 	Id int32 `json:"id"`
 
 	// 席の状態(0で離席、1で着席)

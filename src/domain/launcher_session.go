@@ -6,13 +6,11 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-/*
-	LauncherSession
-	ランチャーのプロダクトキーでの認証後のセッションを表すドメイン。
-	プロダクトキーでの認証から一定時間を過ぎると無効になり、
-	再度認証が必要になる。
-	有効期限の延長は不可能。
-*/
+// LauncherSession
+// ランチャーのプロダクトキーでの認証後のセッションを表すドメイン。
+// プロダクトキーでの認証から一定時間を過ぎると無効になり、
+// 再度認証が必要になる。
+// 有効期限の延長は不可能。
 type LauncherSession struct {
 	id          values.LauncherSessionID
 	accessToken values.LauncherSessionAccessToken

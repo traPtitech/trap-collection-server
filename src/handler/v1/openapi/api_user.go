@@ -10,50 +10,50 @@
 package openapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-  "fmt"
-  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
 
-type UserApi interface{
-  GetMe(c echo.Context, ) (*User, error)
-  GetUsers(c echo.Context, ) ([]*User, error)
+type UserApi interface {
+	GetMe(c echo.Context) (*User, error)
+	GetUsers(c echo.Context) ([]*User, error)
 }
 
 // GetMeHandler - 自分の情報の取得
 func GetMeHandler(UserApi UserApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var res *User
-    res, err = UserApi.GetMe(c, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var res *User
+		res, err = UserApi.GetMe(c)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // GetUsersHandler - traQの全ユーザー取得
 func GetUsersHandler(UserApi UserApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var res []*User
-    res, err = UserApi.GetUsers(c, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var res []*User
+		res, err = UserApi.GetUsers(c)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }

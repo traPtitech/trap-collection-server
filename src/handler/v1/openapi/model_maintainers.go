@@ -11,6 +11,5 @@ package openapi
 
 // Maintainers - 管理者の一覧
 type Maintainers struct {
-
 	Maintainers []string `json:"maintainers"`
 }

@@ -11,7 +11,6 @@ package openapi
 
 // Seat - 席
 type Seat struct {
-
 	SeatVersionId int32 `json:"seatVersionId"`
 
 	SeatId int32 `json:"seatId"`

@@ -6,10 +6,8 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-/*
-	GameImage
-	ゲームの紹介画像。
-*/
+// GameImage
+// ゲームの紹介画像。
 type GameImage struct {
 	id        values.GameImageID
 	imageType values.GameImageType

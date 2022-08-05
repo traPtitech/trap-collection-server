@@ -2,12 +2,10 @@ package domain
 
 import "github.com/traPtitech/trap-collection-server/src/domain/values"
 
-/*
-  LauncherUser
-  ランチャー使用者を表すドメイン。
-	1プロダクトキーでのランチャー起動数に制限がないため、
-	漏れたときにRevoke可能なようにする。
-*/
+// LauncherUser
+// ランチャー使用者を表すドメイン。
+// 1プロダクトキーでのランチャー起動数に制限がないため、
+// 漏れたときにRevoke可能なようにする。
 type LauncherUser struct {
 	id         values.LauncherUserID
 	productKey values.LauncherUserProductKey

@@ -20,17 +20,13 @@ type LauncherVersion interface {
 type CheckListItem struct {
 	*domain.Game
 	LatestVersion *domain.GameVersion
-	/*
-		LatestURL
-		最新のゲームバージョンのURL
-		nullableなことに注意!
-	*/
+	// LatestURL
+	// 最新のゲームバージョンのURL
+	// nullableなことに注意!
 	LatestURL *domain.GameURL
-	/*
-		LatestFile
-		最新のゲームバージョンのファイル
-		nullableなことに注意!
-	*/
+	// LatestFile
+	// 最新のゲームバージョンのファイル
+	// nullableなことに注意!
 	LatestFile *domain.GameFile
 	// LatestImage nullableでない
 	LatestImage *domain.GameImage

@@ -10,56 +10,56 @@
 package openapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-  "fmt"
-  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
 
-type SeatVersionApi interface{
-  DeleteSeatVersion(c echo.Context, seatVersionID string) ( error)
-  PostSeatVersion(c echo.Context, newSeatVersion *NewSeatVersion) (*SeatVersion, error)
+type SeatVersionApi interface {
+	DeleteSeatVersion(c echo.Context, seatVersionID string) error
+	PostSeatVersion(c echo.Context, newSeatVersion *NewSeatVersion) (*SeatVersion, error)
 }
 
 // DeleteSeatVersionHandler - 席のバージョン消去
 func DeleteSeatVersionHandler(SeatVersionApi SeatVersionApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    seatVersionID := c.Param("seatVersionID")
-    
-    err = SeatVersionApi.DeleteSeatVersion(c, seatVersionID)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		seatVersionID := c.Param("seatVersionID")
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.NoContent(http.StatusOK)
-  }
+		err = SeatVersionApi.DeleteSeatVersion(c, seatVersionID)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.NoContent(http.StatusOK)
+	}
 }
 
 // PostSeatVersionHandler - 席のバージョン追加
 func PostSeatVersionHandler(SeatVersionApi SeatVersionApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var newSeatVersion NewSeatVersion
-    err = c.Bind(&newSeatVersion)
-    if err != nil {
-      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
-    }
-    var res *SeatVersion
-    res, err = SeatVersionApi.PostSeatVersion(c, &newSeatVersion)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var newSeatVersion NewSeatVersion
+		err = c.Bind(&newSeatVersion)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w", err))
+		}
+		var res *SeatVersion
+		res, err = SeatVersionApi.PostSeatVersion(c, &newSeatVersion)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }

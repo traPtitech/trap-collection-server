@@ -33,10 +33,8 @@ func NewSession(conf config.HandlerV1) (*Session, error) {
 
 	store := sessions.NewCookieStore([]byte(secret))
 
-	/*
-		gorilla/sessionsの内部で使われているgobが
-		time.Timeのエンコード・デコードをできるようにRegisterする
-	*/
+	// gorilla/sessionsの内部で使われているgobが
+	// time.Timeのエンコード・デコードをできるようにRegisterする
 	gob.Register(time.Time{})
 
 	return &Session{

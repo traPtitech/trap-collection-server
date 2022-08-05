@@ -10,119 +10,119 @@
 package openapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-  "fmt"
-  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
 
-type LauncherAuthApi interface{
-  DeleteProductKey(c echo.Context, productKeyID string) ( error)
-  GetLauncherMe(c echo.Context, ) (*Version, error)
-  GetProductKeys(c echo.Context, launcherVersionID string) ([]*ProductKeyDetail, error)
-  PostKeyGenerate(c echo.Context, productKeyGen *ProductKeyGen) ([]*ProductKey, error)
-  PostLauncherLogin(c echo.Context, productKey *ProductKey) (*LauncherAuthToken, error)
+type LauncherAuthApi interface {
+	DeleteProductKey(c echo.Context, productKeyID string) error
+	GetLauncherMe(c echo.Context) (*Version, error)
+	GetProductKeys(c echo.Context, launcherVersionID string) ([]*ProductKeyDetail, error)
+	PostKeyGenerate(c echo.Context, productKeyGen *ProductKeyGen) ([]*ProductKey, error)
+	PostLauncherLogin(c echo.Context, productKey *ProductKey) (*LauncherAuthToken, error)
 }
 
 // DeleteProductKeyHandler - プロダクトキー失効
 func DeleteProductKeyHandler(LauncherAuthApi LauncherAuthApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    productKeyID := c.Param("productKeyID")
-    
-    err = LauncherAuthApi.DeleteProductKey(c, productKeyID)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		productKeyID := c.Param("productKeyID")
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.NoContent(http.StatusOK)
-  }
+		err = LauncherAuthApi.DeleteProductKey(c, productKeyID)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.NoContent(http.StatusOK)
+	}
 }
 
 // GetLauncherMeHandler - ランチャーが自身の情報を取得
 func GetLauncherMeHandler(LauncherAuthApi LauncherAuthApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var res *Version
-    res, err = LauncherAuthApi.GetLauncherMe(c, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var res *Version
+		res, err = LauncherAuthApi.GetLauncherMe(c)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // GetProductKeysHandler - バージョンのプロダクトキー一覧
 func GetProductKeysHandler(LauncherAuthApi LauncherAuthApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    launcherVersionID := c.Param("launcherVersionID")
-    var res []*ProductKeyDetail
-    res, err = LauncherAuthApi.GetProductKeys(c, launcherVersionID)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		launcherVersionID := c.Param("launcherVersionID")
+		var res []*ProductKeyDetail
+		res, err = LauncherAuthApi.GetProductKeys(c, launcherVersionID)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // PostKeyGenerateHandler - プロダクトキー作成
 func PostKeyGenerateHandler(LauncherAuthApi LauncherAuthApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var productKeyGen ProductKeyGen
-    err = c.Bind(&productKeyGen)
-    if err != nil {
-      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
-    }
-    var res []*ProductKey
-    res, err = LauncherAuthApi.PostKeyGenerate(c, &productKeyGen)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var productKeyGen ProductKeyGen
+		err = c.Bind(&productKeyGen)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w", err))
+		}
+		var res []*ProductKey
+		res, err = LauncherAuthApi.PostKeyGenerate(c, &productKeyGen)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // PostLauncherLoginHandler - ランチャーのログイン
 func PostLauncherLoginHandler(LauncherAuthApi LauncherAuthApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var productKey ProductKey
-    err = c.Bind(&productKey)
-    if err != nil {
-      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
-    }
-    var res *LauncherAuthToken
-    res, err = LauncherAuthApi.PostLauncherLogin(c, &productKey)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var productKey ProductKey
+		err = c.Bind(&productKey)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w", err))
+		}
+		var res *LauncherAuthToken
+		res, err = LauncherAuthApi.PostLauncherLogin(c, &productKey)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }

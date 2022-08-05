@@ -31,11 +31,9 @@ func NewGameManagementRole(db *DB) (*GameManagementRole, error) {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	/*
-		実際の運用では並列で実行されないが、
-		テストで並列に実行されるため、
-		singleflightを使っている
-	*/
+	// 実際の運用では並列で実行されないが、
+	// テストで並列に実行されるため、
+	// singleflightを使っている
 	_, err, _ = gameManagementRoleTypeSetupGroup.Do("setupRoleTypeTable", func() (interface{}, error) {
 		return nil, setupRoleTypeTable(gormDB)
 	})

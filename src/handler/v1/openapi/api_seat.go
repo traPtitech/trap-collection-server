@@ -10,80 +10,80 @@
 package openapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-  "fmt"
-  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
 
-type SeatApi interface{
-  DeleteSeat(c echo.Context, seat *Seat) (*SeatDetail, error)
-  GetSeats(c echo.Context, seatVersionID string) ([]*SeatDetail, error)
-  PostSeat(c echo.Context, seat *Seat) (*SeatDetail, error)
+type SeatApi interface {
+	DeleteSeat(c echo.Context, seat *Seat) (*SeatDetail, error)
+	GetSeats(c echo.Context, seatVersionID string) ([]*SeatDetail, error)
+	PostSeat(c echo.Context, seat *Seat) (*SeatDetail, error)
 }
 
 // DeleteSeatHandler - 離席
 func DeleteSeatHandler(SeatApi SeatApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var seat Seat
-    err = c.Bind(&seat)
-    if err != nil {
-      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
-    }
-    var res *SeatDetail
-    res, err = SeatApi.DeleteSeat(c, &seat)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var seat Seat
+		err = c.Bind(&seat)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w", err))
+		}
+		var res *SeatDetail
+		res, err = SeatApi.DeleteSeat(c, &seat)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // GetSeatsHandler - 席の状態の取得
 func GetSeatsHandler(SeatApi SeatApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    seatVersionID := c.Param("seatVersionID")
-    var res []*SeatDetail
-    res, err = SeatApi.GetSeats(c, seatVersionID)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		seatVersionID := c.Param("seatVersionID")
+		var res []*SeatDetail
+		res, err = SeatApi.GetSeats(c, seatVersionID)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
 
 // PostSeatHandler - 着席
 func PostSeatHandler(SeatApi SeatApi) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    var seat Seat
-    err = c.Bind(&seat)
-    if err != nil {
-      return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w",err))
-    }
-    var res *SeatDetail
-    res, err = SeatApi.PostSeat(c, &seat)
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		var seat Seat
+		err = c.Bind(&seat)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("failed to bind request body:%w", err))
+		}
+		var res *SeatDetail
+		res, err = SeatApi.PostSeat(c, &seat)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.JSON(http.StatusOK, res)
-  }
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.JSON(http.StatusOK, res)
+	}
 }
