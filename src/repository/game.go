@@ -24,16 +24,12 @@ type Game interface {
 type GameInfo struct {
 	*domain.Game
 	LatestVersion *domain.GameVersion
-	/*
-		LatestURL
-		最新のゲームバージョンのURL
-		nullableなことに注意!
-	*/
+	// LatestURL
+	// 最新のゲームバージョンのURL
+	// nullableなことに注意!
 	LatestURL *domain.GameURL
-	/*
-		LatestFiles
-		最新のゲームバージョンのファイル
-	*/
+	// LatestFiles
+	// 最新のゲームバージョンのファイル
 	LatestFiles []*domain.GameFile
 	// LatestImage nullableなことに注意!
 	LatestImage *domain.GameImage

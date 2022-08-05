@@ -10,36 +10,37 @@
 package openapi
 
 import (
-  "io"
-  "mime/multipart"
+	"io"
+	"mime/multipart"
 
-  echo "github.com/labstack/echo/v4"
-  "github.com/labstack/echo-contrib/session"
-  "github.com/gorilla/sessions"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+	echo "github.com/labstack/echo/v4"
 )
 
 type ioReadCloser = io.ReadCloser
 type multipartFile = multipart.File
 type sessionsSession = sessions.Session
+
 var getSession = session.Get
 
 // Api Apiのインターフェイス
 type Api struct {
-  Middleware
-  GameApi
-  LauncherAuthApi
-  Oauth2Api
-  SeatApi
-  SeatVersionApi
-  UserApi
-  VersionApi
+	Middleware
+	GameApi
+	LauncherAuthApi
+	Oauth2Api
+	SeatApi
+	SeatVersionApi
+	UserApi
+	VersionApi
 }
 
 type Middleware interface {
-  TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
-  GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
-  GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
-  AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
-  LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
-  BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	TrapMemberAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	GameMaintainerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	GameOwnerAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	AdminAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	LauncherAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
+	BothAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 }

@@ -16,24 +16,18 @@ type (
 	TraPMemberRole int
 )
 
-/*
-	traQのユーザーステータスより
-	ref: https://apis.trap.jp/?urls.primaryName=traQ%20v3%20API のUserAccountState
-*/
+// traQのユーザーステータスより
+// ref: https://apis.trap.jp/?urls.primaryName=traQ%20v3%20API のUserAccountState
 const (
 	TrapMemberStatusActive TraPMemberStatus = iota
 	TrapMemberStatusDeactivated
 	TrapMemberStatusSuspended
 
-	/*
-		TrapMemberRoleUser
-		通常ユーザー。
-	*/
+	// TrapMemberRoleUser
+	// 通常ユーザー。
 	TrapMemberRoleUser TraPMemberRole = iota
-	/*
-		TrapMemberRoleAdmin
-		管理者。非常時に対応できるように通常さわれないゲームの状態なども触れる。
-	*/
+	// TrapMemberRoleAdmin
+	// 管理者。非常時に対応できるように通常さわれないゲームの状態なども触れる。
 	TrapMemberRoleAdmin
 )
 
@@ -51,10 +45,9 @@ var (
 	ErrTrapMemberNameInvalidRune = errors.New("trap member name contains invalid rune")
 )
 
-/*
-  traQのtraQ IDのバリデーションに基づいて実装
-	ref: https://github.com/traPtitech/traQ/blob/master/utils/validator/rules.go#L31-L35
-*/
+// Validate
+// traQのtraQ IDのバリデーションに基づいて実装
+// ref: https://github.com/traPtitech/traQ/blob/master/utils/validator/rules.go#L31-L35
 func (tmn TraPMemberName) Validate() error {
 	if len(tmn) == 0 {
 		return ErrTrapMemberNameEmpty

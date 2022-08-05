@@ -11,7 +11,6 @@ package openapi
 
 // ProductKeyGen - プロダクトキー生成のリクエスト
 type ProductKeyGen struct {
-
 	Num int32 `json:"num"`
 
 	// バージョンID

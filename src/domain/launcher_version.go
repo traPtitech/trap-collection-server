@@ -7,14 +7,12 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-/*
-	LauncherVersion
-	ランチャーのバージョンを表すドメイン。
-	現在の仕様では、バージョン名、アンケートURLの変更はできないため、
-	SetName、SetQuestionnaireURLは使われない。
-	工大祭などのイベント用ランチャーバージョンではアンケートを持つが、
-	コミケでの販売用ランチャーバージョンではアンケートを持たない。
-*/
+// LauncherVersion
+// ランチャーのバージョンを表すドメイン。
+// 現在の仕様では、バージョン名、アンケートURLの変更はできないため、
+// SetName、SetQuestionnaireURLは使われない。
+// 工大祭などのイベント用ランチャーバージョンではアンケートを持つが、
+// コミケでの販売用ランチャーバージョンではアンケートを持たない。
 type LauncherVersion struct {
 	id                values.LauncherVersionID
 	name              values.LauncherVersionName

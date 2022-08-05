@@ -10,70 +10,70 @@
 package openapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-  "fmt"
-  "errors"
 
 	echo "github.com/labstack/echo/v4"
 )
 
-type Oauth2Api interface{
-  Callback(c echo.Context, code string, ) ( error)
-  GetGeneratedCode(c echo.Context, ) ( error)
-  PostLogout(c echo.Context, ) ( error)
+type Oauth2Api interface {
+	Callback(c echo.Context, code string) error
+	GetGeneratedCode(c echo.Context) error
+	PostLogout(c echo.Context) error
 }
 
 // CallbackHandler - OAuthのコールバック
 func CallbackHandler(Oauth2Api Oauth2Api) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    code := c.QueryParam("code")
-    
-    err = Oauth2Api.Callback(c, code, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
+		code := c.QueryParam("code")
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.NoContent(http.StatusOK)
-  }
+		err = Oauth2Api.Callback(c, code)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.NoContent(http.StatusOK)
+	}
 }
 
 // GetGeneratedCodeHandler - OAuthのcode_challengeとかの取得
 func GetGeneratedCodeHandler(Oauth2Api Oauth2Api) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    
-    err = Oauth2Api.GetGeneratedCode(c, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.NoContent(http.StatusOK)
-  }
+		err = Oauth2Api.GetGeneratedCode(c)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.NoContent(http.StatusOK)
+	}
 }
 
 // PostLogoutHandler - traP Collectionのログアウト
 func PostLogoutHandler(Oauth2Api Oauth2Api) echo.HandlerFunc {
-  return func(c echo.Context) error {
-    var err error
-    
-    err = Oauth2Api.PostLogout(c, )
-    if err != nil {
-      var httpError *echo.HTTPError
-      if errors.As(err, &httpError) {
-        return httpError
-      }
+	return func(c echo.Context) error {
+		var err error
 
-      return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w",err))
-    }
-    return c.NoContent(http.StatusOK)
-  }
+		err = Oauth2Api.PostLogout(c)
+		if err != nil {
+			var httpError *echo.HTTPError
+			if errors.As(err, &httpError) {
+				return httpError
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to make response:%w", err))
+		}
+		return c.NoContent(http.StatusOK)
+	}
 }

@@ -14,17 +14,13 @@ import (
 type (
 	GameFileID   uuid.UUID
 	GameFileType int
-	/*
-		GameFileEntryPoint
-		ファイルのエントリーポイント。
-		ランチャーはFile解凍後にこのパスのファイルを実行する。
-	*/
+	// GameFileEntryPoint
+	// ファイルのエントリーポイント。
+	// ランチャーはFile解凍後にこのパスのファイルを実行する。
 	GameFileEntryPoint string
-	/*
-		GameFileHash
-		ファイルのハッシュ値。
-		ランチャーでファイルが壊れていないかの確認に使用する。
-	*/
+	// GameFileHash
+	// ファイルのハッシュ値。
+	// ランチャーでファイルが壊れていないかの確認に使用する。
 	GameFileHash []byte
 
 	GameFileTmpURL *url.URL

@@ -11,7 +11,6 @@ package openapi
 
 // NewSeatVersion - 新しい席のバージョン
 type NewSeatVersion struct {
-
 	Width int32 `json:"width"`
 
 	Hight int32 `json:"hight,omitempty"`

@@ -15,7 +15,6 @@ import (
 
 // SeatVersion - 席のバージョン
 type SeatVersion struct {
-
 	Id string `json:"id"`
 
 	Width int32 `json:"width"`

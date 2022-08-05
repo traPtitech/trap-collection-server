@@ -15,7 +15,6 @@ import (
 
 // CheckItem - ゲームの更新・破損のチェック用リスト
 type CheckItem struct {
-
 	Id string `json:"id"`
 
 	Md5 string `json:"md5"`

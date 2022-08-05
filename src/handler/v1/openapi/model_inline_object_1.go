@@ -10,6 +10,5 @@
 package openapi
 
 type InlineObject1 struct {
-
 	File *ioReadCloser `json:"file,omitempty"`
 }

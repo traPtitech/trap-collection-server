@@ -2,10 +2,8 @@ package domain
 
 import "github.com/traPtitech/trap-collection-server/src/domain/values"
 
-/*
-	OIDCAuthState
-	OIDCでの認証途中時の状態を表すドメイン。
-*/
+// OIDCAuthState
+// OIDCでの認証途中時の状態を表すドメイン。
 type OIDCAuthState struct {
 	codeChallengeMethod values.OIDCCodeChallengeMethod
 	codeVerifier        values.OIDCCodeVerifier

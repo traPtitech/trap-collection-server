@@ -31,11 +31,9 @@ func NewGameVideo(db *DB) (*GameVideo, error) {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	/*
-		実際の運用では並列で実行されないが、
-		テストで並列に実行されるため、
-		singleflightを使っている
-	*/
+	// 実際の運用では並列で実行されないが、
+	// テストで並列に実行されるため、
+	// singleflightを使っている
 	_, err, _ = videoTypeSetupGroup.Do("setupVideoTypeTable", func() (interface{}, error) {
 		return nil, setupVideoTypeTable(gormDB)
 	})

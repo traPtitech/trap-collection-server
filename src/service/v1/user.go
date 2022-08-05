@@ -30,11 +30,9 @@ func (u *User) GetAllActiveUser(ctx context.Context, session *domain.OIDCSession
 	return u.userUtils.getAllActiveUser(ctx, session)
 }
 
-/*
-	UserUtils
-	traPメンバーの情報取得周り色々。
-	TODO: 名前をもちょっとどうにかしたい。
-*/
+// UserUtils
+// traPメンバーの情報取得周り色々。
+// TODO: 名前をもうちょっとどうにかしたい。
 type UserUtils struct {
 	userAuth  auth.User
 	userCache cache.User

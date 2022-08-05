@@ -11,7 +11,6 @@ package openapi
 
 // LauncherAuthToken - ランチャーのトークン
 type LauncherAuthToken struct {
-
 	AccessToken string `json:"accessToken"`
 
 	// アクセストークンの持続時間(秒)

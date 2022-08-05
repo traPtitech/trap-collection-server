@@ -11,10 +11,8 @@ const (
 	alphaNumericLetterMask = 1<<6 - 1
 )
 
-/*
-	SecureAlphaNumeric
-	暗号的に安全なランダム英数字文字列を生成
-*/
+// SecureAlphaNumeric
+// 暗号的に安全なランダム英数字文字列を生成
 func SecureAlphaNumeric(length int) (string, error) {
 	b := make([]byte, length)
 	_, err := crand.Read(b)
