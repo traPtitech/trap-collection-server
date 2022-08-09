@@ -1,6 +1,7 @@
 .env
 .vscode
 mysql/data
+tmp
 **/mock/*
 !src/storage/mock/*
 !src/repository/mock/db.go

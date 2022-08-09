@@ -1,0 +1,28 @@
+services:
+  collection-server:
+    build:
+      context: ../..
+    environment:
+      DB_USERNAME: root
+      DB_PASSWORD: pass
+      DB_HOSTNAME: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: trap_collection
+    depends_on:
+      mariadb:
+        condition: service_healthy
+  mariadb:
+    image: mariadb:10.6.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: trap_collection
+      TZ: Asia/Tokyo
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    expose:
+      - 3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1", "-ppass"]
+      timeout: 5m
+      interval: 1s
+      retries: 1000

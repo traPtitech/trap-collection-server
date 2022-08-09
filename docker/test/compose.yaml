@@ -1,26 +1,17 @@
 services:
-  app:
+  collection-server:
+    extends:
+      file: ../base/compose.yaml
+      service: collection-server
     build:
-      context: ../../
       dockerfile: ./docker/test/Dockerfile
     environment:
       COLLECTION_ENV: development
-      DB_USERNAME: root
-      DB_PASSWORD: password
-      DB_HOSTNAME: mariadb
-      DB_PORT: 3306
-      DB_DATABASE: trap_collection
     volumes:
       - ../../:/go/src/github.com/traPtitech/trap-collection-server
     working_dir: /go/src/github.com/traPtitech/trap-collection-server
     command: go test ./src/repository/... -v -cover -race
-    depends_on:
-      - mariadb
   mariadb:
-    image: mariadb:10.6.4
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: trap_collection
-    expose:
-      - "3306"
+    extends:
+      file: ../base/compose.yaml
+      service: mariadb
