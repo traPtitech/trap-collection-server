@@ -22,20 +22,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gomod-
       - run: go mod download
-  mockgen:
-    name: MockGen
-    runs-on: ubuntu-latest
-    needs: [mod]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: go.mod
-      - run: go generate ./...
-      - uses: actions/upload-artifact@v3
-        with:
-          name: mockGenerated
-          path: ./
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -64,7 +50,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: [mockgen]
     services:
       mysql:
         image: mariadb:10.6.4
@@ -74,9 +59,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: trap_collection
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: mockGenerated
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
@@ -86,6 +69,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
+      - run: go generate ./...
       - run: go test ./src/... -v -coverprofile=./coverage.txt -race -vet=off
         env:
           COLLECTION_ENV: production
@@ -106,11 +90,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: [mockgen]
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: mockGenerated
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
@@ -120,6 +101,7 @@ jobs:
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
+      - run: go generate ./...
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2.1
         with:
