@@ -1,8 +1,9 @@
-# syntax = docker/dockerfile:1.4.1
+# syntax = docker/dockerfile:1
 
 FROM golang:1.19.0-alpine AS build
 
-RUN apk --update --no-cache add tzdata git build-base && \
+RUN --mount=type=cache,target=/var/cache/apk \
+  apk --update add tzdata git build-base && \
   cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
   apk del tzdata
 
