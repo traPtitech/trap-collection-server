@@ -10,6 +10,8 @@ import (
 	"image/jpeg"
 	"image/png"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -99,7 +101,7 @@ func TestSaveGameImage(t *testing.T) {
 	}
 }
 
-func TestGetGameImage(t *testing.T) {
+func TestImageGetTempURL(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
@@ -199,7 +201,7 @@ func TestGetGameImage(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err := gameImageStorage.GetGameImage(ctx, buf, testCase.image)
+			tmpURL, err := gameImageStorage.GetTempURL(ctx, testCase.image, time.Second)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -212,6 +214,16 @@ func TestGetGameImage(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			res, err := http.Get((*url.URL)(tmpURL).String())
+			if err != nil {
+				t.Fatalf("failed to get file: %v", err)
+			}
+
+			_, err = buf.ReadFrom(res.Body)
+			if err != nil {
+				t.Fatalf("failed to read file: %v", err)
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
