@@ -59,26 +59,6 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoI
 	return nil
 }
 
-func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
-	videoPath := path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())
-
-	f, err := os.Open(videoPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return storage.ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer f.Close()
-
-	_, err = io.Copy(writer, f)
-	if err != nil {
-		return fmt.Errorf("failed to copy: %w", err)
-	}
-
-	return nil
-}
-
 func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
 	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())))
