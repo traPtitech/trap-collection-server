@@ -5,10 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ncw/swift/v2"
@@ -198,7 +201,7 @@ func TestSaveFile(t *testing.T) {
 	}
 }
 
-func TestLoadFile(t *testing.T) {
+func TestCreateTempURL(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
@@ -267,7 +270,7 @@ func TestLoadFile(t *testing.T) {
 
 			buf := bytes.NewBuffer(nil)
 
-			err := client.loadFile(ctx, testCase.name, buf)
+			tmpURL, err := client.createTempURL(ctx, testCase.name, time.Second)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -280,6 +283,16 @@ func TestLoadFile(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			res, err := http.Get((*url.URL)(tmpURL).String())
+			if err != nil {
+				t.Fatalf("failed to get file: %v", err)
+			}
+
+			_, err = buf.ReadFrom(res.Body)
+			if err != nil {
+				t.Fatalf("failed to read file: %v", err)
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
