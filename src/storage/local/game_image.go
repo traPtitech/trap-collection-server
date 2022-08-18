@@ -80,7 +80,8 @@ func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *
 }
 
 func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
-	tmpURL, err := url.Parse(fmt.Sprintf("file.//%s", path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())))
+	// 正しいURLにはならないが、開発環境用のmockのため妥協する
+	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse url: %w", err)
 	}
