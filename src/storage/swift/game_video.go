@@ -43,24 +43,6 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoI
 	return nil
 }
 
-func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *domain.GameVideo) error {
-	videoKey := gv.videoKey(video.GetID())
-
-	err := gv.client.loadFile(
-		ctx,
-		videoKey,
-		writer,
-	)
-	if errors.Is(err, ErrNotFound) {
-		return storage.ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get video: %w", err)
-	}
-
-	return nil
-}
-
 func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
 	fileKey := gv.videoKey(video.GetID())
 

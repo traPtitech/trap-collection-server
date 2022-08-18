@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -114,7 +116,7 @@ func TestSaveGameVideo(t *testing.T) {
 	}
 }
 
-func TestGetGameVideo(t *testing.T) {
+func TestVideoGetTempURL(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
@@ -198,7 +200,7 @@ func TestGetGameVideo(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err := gameVideoStorage.GetGameVideo(ctx, buf, testCase.video)
+			tmpURL, err := gameVideoStorage.GetTempURL(ctx, testCase.video, time.Second)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -211,6 +213,16 @@ func TestGetGameVideo(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			res, err := http.Get((*url.URL)(tmpURL).String())
+			if err != nil {
+				t.Fatalf("failed to get file: %v", err)
+			}
+
+			_, err = buf.ReadFrom(res.Body)
+			if err != nil {
+				t.Fatalf("failed to read file: %v", err)
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
