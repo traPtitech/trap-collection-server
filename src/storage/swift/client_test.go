@@ -286,3 +286,27 @@ func TestLoadFile(t *testing.T) {
 		})
 	}
 }
+
+func (c *Client) loadFile(ctx context.Context, name string, w io.Writer) error {
+	_, _, err := c.connection.Object(ctx, c.containerName, name)
+	if errors.Is(err, swift.ObjectNotFound) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get object: %w", err)
+	}
+
+	_, err = c.connection.ObjectGet(
+		ctx,
+		c.containerName,
+		name,
+		w,
+		true,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get object: %w", err)
+	}
+
+	return nil
+}
