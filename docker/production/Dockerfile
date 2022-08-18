@@ -2,8 +2,7 @@
 
 FROM golang:1.19.0-alpine AS build
 
-RUN --mount=type=cache,target=/var/cache/apk \
-  apk add --update git
+RUN apk add --update --no-cache git
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
@@ -14,7 +13,6 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
 COPY ./ ./
 
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
-  --mount=type=cache,target=/root/.cache/go-build \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
