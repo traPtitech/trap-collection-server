@@ -80,6 +80,7 @@ func (gv *GameVideo) GetGameVideo(ctx context.Context, writer io.Writer, video *
 }
 
 func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
+	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse url: %w", err)
