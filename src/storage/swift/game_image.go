@@ -43,24 +43,6 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageI
 	return nil
 }
 
-func (gi *GameImage) GetGameImage(ctx context.Context, writer io.Writer, image *domain.GameImage) error {
-	imageKey := gi.imageKey(image.GetID())
-
-	err := gi.client.loadFile(
-		ctx,
-		imageKey,
-		writer,
-	)
-	if errors.Is(err, ErrNotFound) {
-		return storage.ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get image: %w", err)
-	}
-
-	return nil
-}
-
 func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
 	filekey := gi.imageKey(image.GetID())
 

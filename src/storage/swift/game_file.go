@@ -45,24 +45,6 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID v
 	return nil
 }
 
-func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *domain.GameFile) error {
-	fileKey := gf.fileKey(file.GetID())
-
-	err := gf.client.loadFile(
-		ctx,
-		fileKey,
-		writer,
-	)
-	if errors.Is(err, ErrNotFound) {
-		return storage.ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get file: %w", err)
-	}
-
-	return nil
-}
-
 func (gf *GameFile) GetTempURL(ctx context.Context, file *domain.GameFile, expires time.Duration) (values.GameFileTmpURL, error) {
 	fileKey := gf.fileKey(file.GetID())
 
