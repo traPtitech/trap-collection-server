@@ -80,6 +80,7 @@ func (gf *GameFile) GetGameFile(ctx context.Context, writer io.Writer, file *dom
 }
 
 func (gf *GameFile) GetTempURL(ctx context.Context, file *domain.GameFile, expires time.Duration) (values.GameFileTmpURL, error) {
+	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gf.fileRootPath, uuid.UUID(file.GetID()).String())))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse url: %w", err)
