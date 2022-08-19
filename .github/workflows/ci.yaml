@@ -64,7 +64,7 @@ jobs:
           cache: true
       - run: go generate ./...
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.1
+        uses: reviewdog/action-golangci-lint@v2.2
         with:
           go-version-file: go.mod
           reporter: github-pr-check
