@@ -70,3 +70,47 @@ func (gu *GameURL) GetGameURL(ctx context.Context, gameVersionID values.GameVers
 		gameURLTable.CreatedAt,
 	), nil
 }
+
+func (gu *GameURL) GetGameURLsByGameVersionIDs(ctx context.Context, gameVersionIDs []values.GameID, lockType repository.LockType) (map[values.GameVersionID]*domain.GameURL, error) {
+	db, err := gu.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gorm DB: %w", err)
+	}
+
+	db, err = gu.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	uuidGameVersionIDs := make([]uuid.UUID, 0, len(gameVersionIDs))
+	for _, gameID := range gameVersionIDs {
+		uuidGameVersionIDs = append(uuidGameVersionIDs, uuid.UUID(gameID))
+	}
+
+	var gameURLTables []GameURLTable
+	err = db.
+		Where("game_version_id in (?)", uuidGameVersionIDs).
+		Find(&gameURLTables).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest game versions: %w", err)
+	}
+
+	gameURLs := make(map[values.GameVersionID]*domain.GameURL, len(gameURLTables))
+	for _, gameURL := range gameURLTables {
+		gameVersionID := values.NewGameVersionIDFromUUID(gameURL.GameVersionID)
+		gameURLID := values.NewGameURLIDFromUUID(gameURL.ID)
+		urlGameURLLink, err := url.Parse(gameURL.URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse game url: %w", err)
+		}
+		gameURLLink := values.NewGameURLLink(urlGameURLLink)
+
+		gameURLs[gameVersionID] = domain.NewGameURL(
+			gameURLID,
+			gameURLLink,
+			gameURL.CreatedAt,
+		)
+	}
+
+	return gameURLs, nil
+}
