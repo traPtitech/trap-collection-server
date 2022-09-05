@@ -58,7 +58,7 @@ paths:
         - oauth2
       operationId: getCallback
       responses:
-        "204":
+        "200":
           description: |
             認証が成功した場合に返されます。
             セッションにユーザー情報が保存され、セッションが切れるまでログイン状態になります。
@@ -112,7 +112,7 @@ paths:
         - TrapMemberAuth: []
       operationId: postLogout
       responses:
-        "204":
+        "200":
           description: |
             ログアウトに成功した場合に返されます。
             セッションが削除されます。
@@ -352,7 +352,7 @@ paths:
         - GameOwnerAuth: []
       operationId: deleteGames
       responses:
-        "204":
+        "200":
           description: |
             ゲームの削除に成功した際に返されます。
         "400":
@@ -1096,7 +1096,7 @@ paths:
         - AdminAuth: []
       operationId: deleteLauncherVersion
       responses:
-        "204":
+        "200":
           description: |
             ランチャーのバージョンの削除に成功した際に返されます。
         "400":
