@@ -320,7 +320,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Game'
+                $ref: '#/components/schemas/GameInfo'
           description: |
             ゲームの情報の修正に成功した際に返されます。
             レスポンスで修正後のゲームの情報が返されます。
@@ -397,10 +397,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameRole'
+                $ref: '#/components/schemas/Game'
           description: |
             ゲームの管理権限の変更に成功した際に返されます。
-            レスポンスで変更後のowner、maintainerの一覧が返されます。
+            レスポンスで変更後のowner、maintainerを含むゲーム情報が返されます。
         "400":
           content:
             application/json:
@@ -456,6 +456,7 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
+            ゲームファイルの種類とwindows,darwin,jarの対応が誤っている場合もこのエラーとなります。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":
@@ -1164,6 +1165,7 @@ paths:
         - launcherVersion
       security:
         - TrapMemberAuth: []
+        - LauncherIDAuth: []
       operationId: getLauncherVersionGames
       responses:
         "200":
@@ -1254,6 +1256,14 @@ components:
         ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンが正しく、有効期限が切れていない場合にのみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
+    LauncherIDAuth:
+      type: http
+      scheme: bearer
+      description: |
+        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンが正しく、有効期限が切れていないかつ、
+        launcherIDを対応するランチャーが一致する場合にのみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
     LauncherGameAuth:
       type: http
       scheme: bearer
@@ -1296,7 +1306,7 @@ components:
       description: |
         OAuth 2.0のAuthorization Codeです。
     operatingSystemInQuery:
-      name: operatingSystem
+      name: os
       in: query
       required: true
       schema:
@@ -1397,7 +1407,7 @@ components:
         games:
           type: array
           items:
-            $ref: '#/components/schemas/Game'
+            $ref: '#/components/schemas/GameInfo'
           description: |
             limit、offsetが適用された後のゲームの一覧です。
       required:
@@ -1443,7 +1453,7 @@ components:
         - type: object
           properties:
             version:
-              $ref: '#/components/schemas/GameVersionInfo'
+              $ref: '#/components/schemas/GameVersion'
           required:
             - version
       description: |
@@ -1597,11 +1607,7 @@ components:
         url:
           $ref: '#/components/schemas/GameURL'
         files:
-          type: array
-          minLength: 1
-          maxLength: 3
-          items:
-            $ref: '#/components/schemas/GameFileID'
+          $ref: '#/components/schemas/GameVersionFiles'
         imageID:
           $ref: '#/components/schemas/GameImageID'
         videoID:
@@ -1626,11 +1632,7 @@ components:
         url:
           $ref: '#/components/schemas/GameURL'
         files:
-          type: array
-          minLength: 1
-          maxLength: 3
-          items:
-            $ref: '#/components/schemas/GameFileID'
+          $ref: '#/components/schemas/GameVersionFiles'
         imageID:
           $ref: '#/components/schemas/GameImageID'
         videoID:
@@ -1647,30 +1649,17 @@ components:
       description: |
         ゲームのバージョンです。
         url、filesはゲームの種類に応じていずれかが存在します。
-    GameVersionInfo:
+    GameVersionFiles:
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/GameVersionID'
-        name:
-          $ref: '#/components/schemas/GameVersionName'
-        description:
-          $ref: '#/components/schemas/GameVersionDescription'
-        imageID:
-          $ref: '#/components/schemas/GameImageID'
-        videoID:
-          $ref: '#/components/schemas/GameVideoID'
-        createdAt:
-          $ref: '#/components/schemas/GameVersionCreatedAt'
-      required:
-        - id
-        - name
-        - description
-        - imageID
-        - videoID
-        - createdAt
+        win32:
+          $ref: '#/components/schemas/GameFileID'
+        darwin:
+          $ref: '#/components/schemas/GameFileID'
+        jar:
+          $ref: '#/components/schemas/GameFileID'
       description: |
-        ゲームのバージョンについての情報です。
+        ゲームバージョンに紐づいたファイルの情報です。
 
     # ゲームファイル
     NewGameFile:
