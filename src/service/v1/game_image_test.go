@@ -139,18 +139,18 @@ func TestSaveGameImage(t *testing.T) {
 				imgBuf := bytes.NewBuffer(nil)
 
 				err := func() error {
-					var f *os.File
-					var err error
+					var path string
 					switch testCase.imageType {
 					case values.GameImageTypeJpeg:
-						f, err = os.Open("../../../testdata/1.jpg")
+						path = "../../../testdata/1.jpg"
 					case values.GameImageTypePng:
-						f, err = os.Open("../../../testdata/1.png")
+						path = "../../../testdata/1.png"
 					case values.GameImageTypeGif:
-						f, err = os.Open("../../../testdata/1.gif")
+						path = "../../../testdata/1.gif"
 					default:
 						t.Fatalf("invalid image type: %v\n", testCase.imageType)
 					}
+					f, err := os.Open(path)
 					if err != nil {
 						return fmt.Errorf("failed to open file: %w", err)
 					}
