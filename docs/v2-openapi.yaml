@@ -944,7 +944,7 @@ paths:
         指定したゲーム動画IDのゲーム動画のメタ情報を取得します。
 
   # launcherVersion
-  /launchers/versions:
+  /launchers:
     post:
       tags:
         - launcherVersion
@@ -1010,7 +1010,7 @@ paths:
       summary: ランチャーのバージョン一覧の取得
       description: |
         ランチャーのバージョンの一覧を取得します。
-  /launchers/versions/{launcherVersionID}:
+  /launchers/{launcherVersionID}:
     parameters:
       - $ref: '#/components/parameters/launcherVersionIDInPath'
     get:
@@ -1121,7 +1121,7 @@ paths:
       summary: ランチャーのバージョンの削除
       description: |
         指定したランチャーのバージョンを削除します。
-  /launchers/versions/{launcherVersionID}/games:
+  /launchers/{launcherVersionID}/games:
     parameters:
       - $ref: '#/components/parameters/launcherVersionIDInPath'
     patch:
