@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
+	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -138,27 +136,35 @@ func TestSaveGameImage(t *testing.T) {
 			var file io.Reader
 			var expectBytes []byte
 			if testCase.isValidFile {
-				img := image.NewRGBA(image.Rect(0, 0, 3000, 3000))
 				imgBuf := bytes.NewBuffer(nil)
 
-				switch testCase.imageType {
-				case values.GameImageTypeJpeg:
-					err := jpeg.Encode(imgBuf, img, nil)
-					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+				err := func() error {
+					var f *os.File
+					var err error
+					switch testCase.imageType {
+					case values.GameImageTypeJpeg:
+						f, err = os.Open("../../../testdata/1.jpg")
+					case values.GameImageTypePng:
+						f, err = os.Open("../../../testdata/1.png")
+					case values.GameImageTypeGif:
+						f, err = os.Open("../../../testdata/1.gif")
+					default:
+						t.Fatalf("invalid image type: %v\n", testCase.imageType)
 					}
-				case values.GameImageTypePng:
-					err := png.Encode(imgBuf, img)
 					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+						return fmt.Errorf("failed to open file: %w", err)
 					}
-				case values.GameImageTypeGif:
-					err := gif.Encode(imgBuf, img, nil)
+					defer f.Close()
+
+					_, err = io.Copy(imgBuf, f)
 					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+						return fmt.Errorf("failed to copy file: %w", err)
 					}
-				default:
-					t.Fatalf("invalid image type: %v\n", testCase.imageType)
+
+					return nil
+				}()
+				if err != nil {
+					t.Fatalf("failed to encode image: %s", err)
 				}
 
 				file = imgBuf
