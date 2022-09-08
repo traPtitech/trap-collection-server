@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -83,7 +84,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 			videoBuf := bytes.NewBuffer(nil)
 			err := func() error {
-				f, err := os.Open("../../../testdata/1.mp4")
+				f, err := testdata.FS.Open("1.mp4")
 				if err != nil {
 					return fmt.Errorf("failed to open file: %w", err)
 				}

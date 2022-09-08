@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +19,7 @@ import (
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -125,7 +125,7 @@ func TestSaveGameVideo(t *testing.T) {
 				switch testCase.videoType {
 				case values.GameVideoTypeMp4:
 					err := func() error {
-						f, err := os.Open("../../../testdata/1.mp4")
+						f, err := testdata.FS.Open("1.mp4")
 						if err != nil {
 							return fmt.Errorf("failed to open file: %w", err)
 						}
