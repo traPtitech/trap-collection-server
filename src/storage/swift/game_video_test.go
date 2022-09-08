@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -71,7 +71,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 			videoBuf := bytes.NewBuffer(nil)
 			err := func() error {
-				f, err := os.Open("../../../testdata/1.mp4")
+				f, err := testdata.FS.Open("1.mp4")
 				if err != nil {
 					return fmt.Errorf("failed to open file: %w", err)
 				}
@@ -164,7 +164,7 @@ func TestVideoGetTempURL(t *testing.T) {
 			switch testCase.video.GetType() {
 			case values.GameVideoTypeMp4:
 				err := func() error {
-					f, err := os.Open("../../../testdata/1.mp4")
+					f, err := testdata.FS.Open("1.mp4")
 					if err != nil {
 						return fmt.Errorf("failed to open file: %w", err)
 					}

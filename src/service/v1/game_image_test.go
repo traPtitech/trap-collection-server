@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +19,7 @@ import (
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameImage(t *testing.T) {
@@ -142,15 +142,15 @@ func TestSaveGameImage(t *testing.T) {
 					var path string
 					switch testCase.imageType {
 					case values.GameImageTypeJpeg:
-						path = "../../../testdata/1.jpg"
+						path = "1.jpg"
 					case values.GameImageTypePng:
-						path = "../../../testdata/1.png"
+						path = "1.png"
 					case values.GameImageTypeGif:
-						path = "../../../testdata/1.gif"
+						path = "1.gif"
 					default:
 						t.Fatalf("invalid image type: %v\n", testCase.imageType)
 					}
-					f, err := os.Open(path)
+					f, err := testdata.FS.Open(path)
 					if err != nil {
 						return fmt.Errorf("failed to open file: %w", err)
 					}
