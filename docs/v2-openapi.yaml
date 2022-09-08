@@ -290,8 +290,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正な値である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0による認証が通過できない、かつ、
+            ランチャーのアクセストークンによるBearer認証も通過できない場合に返されます。
         "404":
           content:
             application/json:
@@ -333,6 +339,13 @@ paths:
             ゲームID、またはリクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのmaintainer、ownerのどちらでもない場合に返されます。
         "404":
           content:
             application/json:
@@ -364,6 +377,13 @@ paths:
             ゲームIDが不正な値である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerでない場合に返されます。
         "404":
           content:
             application/json:
@@ -411,6 +431,13 @@ paths:
             既にmaintainerまたはownerとなっているユーザーが含まれる場合にも返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerでない場合に返されます。
         "404":
           content:
             application/json:
@@ -459,6 +486,13 @@ paths:
             ゲームファイルの種類とwindows,darwin,jarの対応が誤っている場合もこのエラーとなります。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのmaintainer、ownerのどちらでもない場合に返されます。
         "404":
           content:
             application/json:
@@ -638,8 +672,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ファイルIDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -678,8 +718,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ファイルIDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -763,8 +809,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             画像IDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこの画像に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -803,8 +855,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             画像IDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこの画像に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -888,8 +946,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             動画IDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこの動画に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -928,8 +992,14 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             動画IDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できず、かつ、
+            ランチャーの認証を通過できないまたはランチャーにこの動画に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -974,6 +1044,8 @@ paths:
             リクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーのバージョンの作成
@@ -1078,6 +1150,8 @@ paths:
             リクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "404":
           content:
             application/json:
@@ -1109,6 +1183,8 @@ paths:
             リクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "404":
           content:
             application/json:
@@ -1155,6 +1231,8 @@ paths:
             リクエストが不正である場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーバージョンのゲームの変更
@@ -1185,8 +1263,15 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            traQのOAuth 2.0認証を通過できない、かつ、
+            ランチャーのアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するランチャーバージョンとlauncherIDが一致しない場合に返されます。
         "404":
           content:
             application/json:
@@ -1230,8 +1315,10 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "403":
+        "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーのプロダクトキーの生成
@@ -1263,8 +1350,10 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "403":
+        "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーのプロダクトキーの一覧の取得
@@ -1296,8 +1385,10 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "403":
+        "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "404":
           content:
             application/json:
@@ -1336,8 +1427,10 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "403":
+        "401":
           $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/AdminForbidden'
         "404":
           content:
             application/json:
@@ -1377,8 +1470,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/LauncherForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーの認可リクエスト
@@ -1425,6 +1518,13 @@ components:
       description: |
         traQのOAuth 2.0での認証がされていない、
         もしくは認証したが既にセッションが切れている場合に返されます。
+    AdminForbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: |
+        adminでない場合に返されます。
     LauncherForbidden:
       content:
         application/json:
