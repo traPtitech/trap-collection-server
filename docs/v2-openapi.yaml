@@ -1200,6 +1200,221 @@ paths:
       description: |
         ランチャーのバージョンに紐づくゲームの一覧を取得します。
 
+  # launcherAuth
+  /launchers/{launcherVersionID}/keys:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionIDInPath'
+    post:
+      tags:
+        - launcherAuth
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/productKeyNumInQuery'
+      operationId: postProductKey
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductKey'
+          description: |
+            ランチャーのプロダクトキーの発行に成功した際に返されます。
+            レスポンスで発行したランチャーのプロダクトキーのリストが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "403":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのプロダクトキーの生成
+      description: |
+        ランチャーのバージョンに対するプロダクトキーを生成します。
+    get:
+      tags:
+        - launcherAuth
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/productKeyStatusInQuery'
+      operationId: getProductKeys
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductKey'
+          description: |
+            ランチャーのバージョンに紐づくプロダクトキーの取得に成功した際に返されます。
+            レスポンスで取得したプロダクトキーのリストが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "403":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのプロダクトキーの一覧の取得
+      description: |
+        ランチャーのバージョンに対するプロダクトキーの一覧を取得します。
+  /launchers/{launcherVersionID}/keys/{productKeyID}/activate:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/productKeyIDInPath'
+    post:
+      tags:
+        - launcherAuth
+      security:
+        - AdminAuth: []
+      operationId: postActivateProductKey
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductKey'
+          description: |
+            プロダクトキーの再有効化に成功した際に返されます。
+            変更後のプロダクトキーの情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "403":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのプロダクトキーが存在しない、または既に有効な場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのプロダクトキーの再有効化
+      description: |
+        ランチャーのバージョンに対するプロダクトキーを再有効化します。
+  /launchers/{launcherVersionID}/keys/{productKeyID}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/productKeyIDInPath'
+    post:
+      tags:
+        - launcherAuth
+      security:
+        - AdminAuth: []
+      operationId: postRevokeProductKey
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductKey'
+          description: |
+            プロダクトキーの失効に成功した際に返されます。
+            変更後のプロダクトキーの情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "403":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのプロダクトキーが存在しない、または既に失効している場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのプロダクトキーの失効
+      description: |
+        ランチャーのバージョンに対するプロダクトキーを失効(revoke)します。
+  /launchers/authorize:
+    post:
+      tags:
+        - launcherAuth
+      operationId: postLauncherAuthorize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LauncherAuthorizeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherAccessToken'
+          description: |
+            ランチャーの認可に成功した際に返されます。
+            ランチャーのBearer認証に使用するトークンが返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーの認可リクエスト
+      description: |
+        ランチャーの認可リクエストを行います。
+        リクエストに成功すると、ランチャーのアクセストークンが返されます。
+        このアクセストークンを用いたBearer認証で、ランチャー用APIを利用することができます。
+  /launchers/info:
+    get:
+      tags:
+        - launcherAuth
+      operationId: getLauncherInfo
+      security:
+        - LauncherAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LauncherVersion'
+          description: 成功
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "403":
+          $ref: '#/components/responses/LauncherForbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ランチャーのバージョン情報の取得
+      description: |
+        アクセストークンをもとにランチャーのバージョン情報を取得します。
+
 components:
   responses:
     TraPUnauthorized:
@@ -1210,6 +1425,14 @@ components:
       description: |
         traQのOAuth 2.0での認証がされていない、
         もしくは認証したが既にセッションが切れている場合に返されます。
+    LauncherForbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: |
+        Bearer認証のアクセストークンが誤っている、
+        もしくは既に有効期限が切れている場合に返されます。
     InternalServerError:
       content:
         application/json:
@@ -1313,6 +1536,25 @@ components:
         $ref: '#/components/schemas/OperatingSystem'
       description: |
         OSの種類を示すクエリパラメータです。
+    productKeyNumInQuery:
+      name: num
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      description: |
+        生成するプロダクトキーの数を示すクエリパラメータです。
+    productKeyStatusInQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ProductKeyStatus'
+      description: |
+        プロダクトキーのステータスを示すクエリパラメータです。
+        指定がない場合は全てのステータスのプロダクトキーが返されます。
     launcherVersionIDInPath:
       name: launcherVersionID
       in: path
@@ -1459,6 +1701,15 @@ components:
       description: |
         ランチャーのバージョンに紐づけられた
         ゲームとバージョンの情報です。
+    LauncherAuthorizeRequest:
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/ProductKeyValue'
+      required:
+        - key
+      description: |
+        ランチャーの認可のリクエストです。
 
     # エンティティ
     # ユーザー
@@ -1805,6 +2056,31 @@ components:
         ランチャーのバージョンです。
         questionnaireは工大祭などのアンケートが必要な際のみ存在します。
 
+    # ランチャーの認証
+    ProductKey:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ProductKeyID'
+        key:
+          $ref: '#/components/schemas/ProductKeyValue'
+        status:
+          $ref: '#/components/schemas/ProductKeyStatus'
+      required:
+        - id
+        - key
+        - status
+    LauncherAccessToken:
+      type: object
+      properties:
+        accessToken:
+          $ref: '#/components/schemas/LauncherAccessTokenValue'
+        expiresAt:
+          $ref: '#/components/schemas/LauncherAccessTokenExpiresAt'
+      required:
+        - accessToken
+        - expiresAt
+
     # 値オブジェクト
     # ユーザー
     UserID:
@@ -1994,3 +2270,36 @@ components:
       format: date-time
       description: |
         ランチャーのバージョンが作成された時刻です。
+
+    # ランチャーの認証
+    ProductKeyID:
+      type: string
+      format: uuid
+      description: |
+        ランチャーのプロダクトキーのIDです。
+    ProductKeyValue:
+      type: string
+      pattern: '^[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}'
+      example: 12345-ABCDE-67890-FGHIJ-KLMNO
+      description: |
+        ランチャーのプロダクトキーの値です。
+        暗号的にランダムな英数字5文字をハイフン区切りで5つ並べたものです。
+    ProductKeyStatus:
+      type: string
+      enum:
+        - active
+        - revoked
+    LauncherAccessTokenValue:
+      type: string
+      maxLength: 36
+      minLength: 36
+      pattern: '[0-9a-zA-Z]{36}'
+      example: 1234567890abcdef1234567890abcdef1234
+      description: |
+        ランチャーのアクセストークンです。
+        暗号的にランダムな英数字36文字です。
+    LauncherAccessTokenExpiresAt:
+      type: string
+      format: date-time
+      description: |
+        ランチャーのアクセストークンの有効期限です。
