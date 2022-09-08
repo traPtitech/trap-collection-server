@@ -1528,14 +1528,6 @@ components:
         type: string
       description: |
         OAuth 2.0のAuthorization Codeです。
-    operatingSystemInQuery:
-      name: os
-      in: query
-      required: true
-      schema:
-        $ref: '#/components/schemas/OperatingSystem'
-      description: |
-        OSの種類を示すクエリパラメータです。
     productKeyNumInQuery:
       name: num
       in: query
@@ -1622,11 +1614,6 @@ components:
           example: Internal Server Error
       required:
         - message
-    OperatingSystem:
-      type: string
-      enum:
-        - win32
-        - darwin
     PostGameResponse:
       type: object
       allOf:
