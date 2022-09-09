@@ -182,6 +182,75 @@ paths:
       description: |
         traPのアクティブメンバーの一覧を取得します。
 
+  # admin
+  /admins:
+    patch:
+      tags:
+        - admin
+      security:
+        - AdminAuth: []
+      operationId: patchAdmins
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              minLength: 1
+              items:
+                $ref: '#/components/schemas/UserID'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: |
+            traP Collection全体の管理者の変更に成功した際に返されます。
+            レスポンスで変更後のtraP Collection全体の管理者一覧が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストの形式が正しくない、または、
+            ユーザーIDに対応するユーザーが存在しない場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traPの管理者一覧の変更
+      description: |
+        traPの管理者一覧を変更します。
+        リクエストボディには管理者にしたいユーザーのIDを配列で渡してください。
+        このAPIは管理者のみが利用できます。
+    get:
+      tags:
+        - admin
+      security:
+        - TrapMemberAuth: []
+      operationId: getAdmins
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: |
+            traP Collection全体の管理者一覧の取得に成功した際に返されます。
+            レスポンスでtraP Collection全体の管理者の一覧が返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traPの管理者一覧取得
+      description: |
+        traP Collection全体の管理者の一覧を取得します。
+
   # game
   /games:
     post:
