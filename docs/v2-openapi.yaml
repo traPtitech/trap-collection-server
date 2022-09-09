@@ -1577,6 +1577,108 @@ paths:
       description: |
         アクセストークンをもとにランチャーのバージョン情報を取得します。
 
+  #seat
+  /seats:
+    post:
+      tags:
+        - seat
+      operationId: postSeat
+      security:
+        - TrapMemberAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostSeatRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Seat'
+          description: |
+            席数の変更に成功した際に返されます。
+            変更後の席一覧が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: 席数の変更
+      description: |
+        席数を変更します。
+    get:
+      tags:
+        - seat
+      operationId: getSeats
+      security:
+        - TrapMemberAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Seat'
+          description: |
+            座席一覧の取得に成功した際に返されます。
+            座席一覧が返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: 座席一覧の取得
+      description: |
+        座席一覧を取得します。
+  /seats/{seatID}:
+    parameters:
+      - $ref: '#/components/parameters/seatIDInPath'
+    patch:
+      tags:
+        - seat
+      operationId: patchSeatStatus
+      security:
+        - TrapMemberAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchSeatStatusRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Seat'
+          description: |
+            席の変更に成功した際に返されます。
+            変更後の席情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: 席の変更
+      description: |
+        席の変更を行います。
+
 components:
   responses:
     TraPUnauthorized:
@@ -1771,7 +1873,7 @@ components:
       in: path
       required: true
       schema:
-        type: integer
+        $ref: '#/components/schemas/SeatID'
       description: |
         席のIDを示すパスパラメータです。
   schemas:
@@ -1866,6 +1968,27 @@ components:
         - key
       description: |
         ランチャーの認可のリクエストです。
+    PostSeatRequest:
+      type: object
+      properties:
+        num:
+          type: integer
+          minimum: 1
+          description: |
+            席数です。
+      required:
+        - num
+      description: |
+        席数を変更するためのリクエストです。
+    PatchSeatStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SeatStatus'
+      required:
+        - status
+      description: |
+        席の着席状態を変更するためのリクエストです。
 
     # エンティティ
     # ユーザー
@@ -2237,6 +2360,20 @@ components:
         - accessToken
         - expiresAt
 
+    # 席
+    Seat:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/SeatID'
+        status:
+          $ref: '#/components/schemas/SeatStatus'
+      required:
+        - id
+        - status
+      description: |
+        席の情報です。
+
     # 値オブジェクト
     # ユーザー
     UserID:
@@ -2459,3 +2596,18 @@ components:
       format: date-time
       description: |
         ランチャーのアクセストークンの有効期限です。
+
+    # 席
+    SeatID:
+      type: integer
+      minimum: 1
+      description: |
+        席のIDです。
+    SeatStatus:
+      type: string
+      enum:
+        - in-use
+        - empty
+      description: |
+        席の状態です。
+        in-useは使用中、emptyは空席です。
