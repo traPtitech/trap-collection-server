@@ -303,7 +303,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PostGameResponse'
+                $ref: '#/components/schemas/Game'
           description: |
             ゲームの追加に成功した際に返されます。
             レスポンスで新しく追加されたゲームの情報が返されます。
@@ -1988,18 +1988,6 @@ components:
         - id
       description: |
         ユーザーを指定するリクエストです。
-    PostGameResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/Game'
-        - type: object
-          properties:
-            version:
-              $ref: '#/components/schemas/GameVersion'
-          required:
-            - latestVersion
-          description: |
-            ゲームと追加されたバージョンの情報です。
     GetGamesResponse:
       type: object
       properties:
@@ -2145,12 +2133,9 @@ components:
             指定されない場合、空配列として扱われます。
             ゲームの作成を実行したユーザーを含むownerと重複するユーザーが存在した場合、
             400エラーとなります。
-        version:
-          $ref: '#/components/schemas/NewGameVersion'
       required:
         - name
         - description
-        - version
       description: |
         ゲームを新しく作成する際に必要な情報です。
     PatchGame:
