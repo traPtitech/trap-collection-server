@@ -977,13 +977,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのゲーム画像が存在しない、または削除されている場合に返されます。
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲーム画像の作成
       description: |
         指定したゲームIDのゲームに画像を作成します。
         作成したゲーム画像は、1日以内にゲームバージョンと紐づけられない場合に自動で削除されます。
+    get:
+      tags:
+        - gameImage
+      security:
+        - TrapMemberAuth: []
+      operationId: getGameImages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameImage'
+          description: |
+            ゲーム画像一覧の取得に成功した際に返されます。
+            レスポンスで指定したゲームの
+            アップロード済みゲーム画像のメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム画像一覧の取得
+      description: |
+        指定したゲームIDのアップロード済みゲーム画像一覧を返します。
+        ゲームバージョンに紐づけられていないゲーム画像も含まれる点に注意。
   /games/{gameID}/images/{gameImageID}:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
