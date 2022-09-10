@@ -2216,30 +2216,6 @@ components:
       description: |
         ゲームの情報です。
 
-    # ゲーム管理権限
-    GameRole:
-      type: object
-      properties:
-        owners:
-          type: array
-          minLength: 1
-          items:
-            $ref: '#/components/schemas/UserID'
-          description: |
-            ゲームのownerの一覧です。
-        maintainers:
-          type: array
-          minLength: 1
-          items:
-            $ref: '#/components/schemas/UserID'
-          description: |
-            ゲームのmaintainerの一覧です。
-            maintainerがいない場合、このフィールドは存在しません。
-      required:
-        - owners
-      description: |
-        ゲームのownerとmaintainerの一覧です。
-
     # ゲームバージョン
     NewGameVersion:
       type: object
