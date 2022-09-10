@@ -184,20 +184,17 @@ paths:
 
   # admin
   /admins:
-    patch:
+    post:
       tags:
         - admin
       security:
         - AdminAuth: []
-      operationId: patchAdmins
+      operationId: postAdmin
       requestBody:
         content:
           application/json:
             schema:
-              type: array
-              minLength: 1
-              items:
-                $ref: '#/components/schemas/UserID'
+              $ref: '#/components/schemas/UserRequest'
       responses:
         "200":
           content:
@@ -207,7 +204,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
           description: |
-            traP Collection全体の管理者の変更に成功した際に返されます。
+            traP Collection全体の管理者の追加に成功した際に返されます。
             レスポンスで変更後のtraP Collection全体の管理者一覧が返されます。
         "400":
           content:
@@ -221,10 +218,47 @@ paths:
           $ref: '#/components/responses/TraPUnauthorized'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: traPの管理者一覧の変更
+      summary: traP Collection全体の管理者追加
       description: |
-        traPの管理者一覧を変更します。
-        リクエストボディには管理者にしたいユーザーのIDを配列で渡してください。
+        traP Collection全体の管理者を追加します。
+        このAPIは管理者のみが利用できます。
+    delete:
+      tags:
+        - admin
+      security:
+        - AdminAuth: []
+      operationId: deleteAdmin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: |
+            traP Collection全体の管理者の削除に成功した際に返されます。
+            レスポンスで変更後のtraP Collection全体の管理者一覧が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストの形式が正しくない、または、
+            ユーザーIDに対応するユーザーが存在しない場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traP Collection全体の管理者削除
+      description: |
+        traP Collection全体の管理者を削除します。
         このAPIは管理者のみが利用できます。
     get:
       tags:
@@ -1893,6 +1927,15 @@ components:
           example: Internal Server Error
       required:
         - message
+    UserRequest:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UserID'
+      required:
+        - id
+      description: |
+        ユーザーを指定するリクエストです。
     PostGameResponse:
       type: object
       allOf:
