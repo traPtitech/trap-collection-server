@@ -758,7 +758,9 @@ paths:
         指定したゲームIDのゲームの最新バージョンを取得します。
 
   # gameFile
-  /games/files:
+  /games/{gameID}/files:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
     post:
       tags:
         - gameFile
@@ -801,8 +803,9 @@ paths:
       description: |
         指定したゲームIDのゲームにファイルを作成します。
         作成したゲームファイルは、1日以内にゲームバージョンと紐づけられない場合自動で削除されます。
-  /games/files/{gameFileID}:
+  /games/{gameID}/files/{gameFileID}:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameFileIDInPath'
     get:
       tags:
@@ -848,8 +851,9 @@ paths:
       summary: ゲームファイルのバイナリの取得
       description: |
         指定したゲームファイルIDのゲームファイルを取得します。
-  /games/files/{gameFileID}/meta:
+  /games/{gameID}/files/{gameFileID}/meta:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameFileIDInPath'
     get:
       tags:
@@ -897,7 +901,9 @@ paths:
         指定したゲームファイルIDのゲームファイルを取得します。
 
   # gameImage
-  /games/images:
+  /games/{gameID}/images:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
     post:
       tags:
         - gameImage
@@ -940,8 +946,9 @@ paths:
       description: |
         指定したゲームIDのゲームに画像を作成します。
         作成したゲーム画像は、1日以内にゲームバージョンと紐づけられない場合に自動で削除されます。
-  /games/images/{gameImageID}:
+  /games/{gameID}/images/{gameImageID}:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameImageIDInPath'
     get:
       tags:
@@ -987,8 +994,9 @@ paths:
       summary: ゲーム画像のバイナリの取得
       description: |
         指定したゲーム画像IDのゲーム画像を取得します。
-  /games/images/{gameImageID}/meta:
+  /games/{gameID}/images/{gameImageID}/meta:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameImageIDInPath'
     get:
       tags:
@@ -1036,7 +1044,9 @@ paths:
         指定したゲーム画像IDのゲーム画像のメタ情報を取得します。
 
   # gameVideo
-  /games/videos:
+  /games/{gameID}/videos:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
     post:
       tags:
         - gameVideo
@@ -1079,8 +1089,9 @@ paths:
       description: |
         指定したゲームIDのゲームに動画を作成します。
         作成したゲーム動画は、1日以内にゲームバージョンと紐づけられない場合に自動で削除されます。
-  /games/videos/{gameVideoID}:
+  /games/{gameID}/videos/{gameVideoID}:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameVideoIDInPath'
     get:
       tags:
@@ -1126,8 +1137,9 @@ paths:
       summary: ゲーム動画のバイナリの取得
       description: |
         指定したゲーム動画IDのゲーム動画を取得します。
-  /games/videos/{gameVideoID}/meta:
+  /games/{gameID}/videos/{gameVideoID}/meta:
     parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
       - $ref: '#/components/parameters/gameVideoIDInPath'
     get:
       tags:
