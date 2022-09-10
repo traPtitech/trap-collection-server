@@ -553,17 +553,16 @@ paths:
         指定したゲームIDのゲームの管理者を追加します。
         既に指定のユーザーが権限(ownerまたはmaintainer)として登録されている場合は、
         指定された権限で権限を上書きします。
+  /games/{gameID}/roles/{userID}:
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
+      - $ref: '#/components/parameters/userIDInPath'
     delete:
       tags:
         - gameRole
       security:
         - GameOwnerAuth: []
       operationId: deleteGameRole
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GameRoleRequest'
       responses:
         "200":
           content:
