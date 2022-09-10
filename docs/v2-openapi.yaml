@@ -38,12 +38,12 @@ tags:
   - name: gameVideo
     description: |
       ゲームのビデオ関連のAPIです。
-  - name: launcherVersion
+  - name: edition
     description: |
-      ランチャーのバージョン関連のAPIです。
-  - name: launcherAuth
+      エディション(旧ランチャーバージョン)関連のAPIです。
+  - name: editionAuth
     description: |
-      ランチャーの認可関連のAPIです。
+      ランチャーからのエディション情報取得の認可関連のAPIです。
   - name: seat
     description: |
       席管理関連のAPIです。
@@ -341,7 +341,7 @@ paths:
         - game
       security:
         - TrapMemberAuth: []
-        - LauncherGameAuth: []
+        - EditionGameAuth: []
       operationId: getGame
       responses:
         "200":
@@ -366,7 +366,7 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0による認証が通過できない、かつ、
-            ランチャーのアクセストークンによるBearer認証も通過できない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証も通過できない場合に返されます。
         "404":
           content:
             application/json:
@@ -723,7 +723,7 @@ paths:
         - gameFile
       security:
         - TrapMemberAuth: []
-        - LauncherGameFileAuth: []
+        - EditionGameFileAuth: []
       operationId: getGameFile
       responses:
         "200":
@@ -748,7 +748,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するエディションにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -769,7 +770,7 @@ paths:
         - gameFile
       security:
         - TrapMemberAuth: []
-        - LauncherGameFileAuth: []
+        - EditionGameFileAuth: []
       operationId: getGameFileMeta
       responses:
         "200":
@@ -794,7 +795,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するエディションにこのファイルに対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -860,7 +862,7 @@ paths:
         - gameImage
       security:
         - TrapMemberAuth: []
-        - LauncherGameImageAuth: []
+        - EditionGameImageAuth: []
       operationId: getGameImage
       responses:
         "200":
@@ -885,7 +887,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこの画像に対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するエディションにこの画像に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -906,7 +909,7 @@ paths:
         - gameImage
       security:
         - TrapMemberAuth: []
-        - LauncherGameImageAuth: []
+        - EditionGameImageAuth: []
       operationId: getGameImageMeta
       responses:
         "200":
@@ -931,7 +934,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこの画像に対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するエディションにこの画像に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -997,7 +1001,7 @@ paths:
         - gameVideo
       security:
         - TrapMemberAuth: []
-        - LauncherGameVideoAuth: []
+        - EditionGameVideoAuth: []
       operationId: getGameVideo
       responses:
         "200":
@@ -1022,7 +1026,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこの動画に対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            またはアクセストークンに対応するエディションにこの動画に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -1043,7 +1048,7 @@ paths:
         - gameVideo
       security:
         - TrapMemberAuth: []
-        - LauncherGameVideoAuth: []
+        - EditionGameVideoAuth: []
       operationId: getGameVideoMeta
       responses:
         "200":
@@ -1068,7 +1073,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             traQのOAuth 2.0認証を通過できず、かつ、
-            ランチャーの認証を通過できないまたはランチャーにこの動画に対応するゲームバージョンが含まれない場合に返されます。
+            ランチャー用のアクセストークンによるBearer認証を通過できない、
+            または、アクセストークンに対応するエディションにこの動画に対応するゲームバージョンが含まれない場合に返されます。
         "404":
           content:
             application/json:
@@ -1082,28 +1088,28 @@ paths:
       description: |
         指定したゲーム動画IDのゲーム動画のメタ情報を取得します。
 
-  # launcherVersion
-  /launchers:
+  # edition
+  /editions:
     post:
       tags:
-        - launcherVersion
+        - edition
       security:
         - AdminAuth: []
-      operationId: postLauncherVersion
+      operationId: postEdition
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewLauncherVersion'
+              $ref: '#/components/schemas/NewEdition'
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LauncherVersion'
+                $ref: '#/components/schemas/Edition'
           description: |
-            ランチャーのバージョンの作成に成功した際に返されます。
-            レスポンスで作成したランチャーのバージョンのメタ情報が返されます。
+            エディションの作成に成功した際に返されます。
+            レスポンスで作成したエディションのメタ情報が返されます。
         "400":
           content:
             application/json:
@@ -1117,15 +1123,15 @@ paths:
           $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョンの作成
+      summary: エディションの作成
       description: |
-        ランチャーのバージョンを作成します。
+        エディションを作成します。
     get:
       tags:
-        - launcherVersion
+        - edition
       security:
         - TrapMemberAuth: []
-      operationId: getLauncherVersions
+      operationId: getEditions
       responses:
         "200":
           content:
@@ -1133,10 +1139,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LauncherVersion'
+                  $ref: '#/components/schemas/Edition'
           description: |
-            ランチャーのバージョンの取得に成功した際に返されます。
-            レスポンスで取得したランチャーのバージョンのリストが返されます。
+            エディションの取得に成功した際に返されます。
+            レスポンスで取得したエディションのリストが返されます。
         "400":
           content:
             application/json:
@@ -1148,27 +1154,27 @@ paths:
           $ref: '#/components/responses/TraPUnauthorized'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョン一覧の取得
+      summary: エディション一覧の取得
       description: |
-        ランチャーのバージョンの一覧を取得します。
-  /launchers/{launcherVersionID}:
+        エディションの一覧を取得します。
+  /editions/{editionID}:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/editionIDInPath'
     get:
       tags:
-        - launcherVersion
+        - edition
       security:
         - TrapMemberAuth: []
-      operationId: getLauncherVersion
+      operationId: getEdition
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LauncherVersion'
+                $ref: '#/components/schemas/Edition'
           description: |
-            ランチャーのバージョンの取得に成功した際に返されます。
-            レスポンスで取得したランチャーのバージョンのメタ情報が返されます。
+            エディションの取得に成功した際に返されます。
+            レスポンスで取得したエディションのメタ情報が返されます。
         "400":
           content:
             application/json:
@@ -1184,32 +1190,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+            指定したIDのエディションが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョン情報の取得
+      summary: エディション情報の取得
       description: |
-        指定したランチャーのバージョンIDのランチャーのバージョンのメタ情報を取得します。
+        指定したeditionIDのエディションのメタ情報を取得します。
     patch:
       tags:
-        - launcherVersion
+        - edition
       security:
         - AdminAuth: []
-      operationId: patchLauncherVersion
+      operationId: patchEdition
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchLauncherVersion'
+              $ref: '#/components/schemas/PatchEdition'
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LauncherVersion'
+                $ref: '#/components/schemas/Edition'
           description: |
-            ランチャーのバージョンの変更に成功した際に返されます。
-            レスポンスで変更したランチャーのバージョンのメタ情報が返されます。
+            エディションの変更に成功した際に返されます。
+            レスポンスで変更したエディションのメタ情報が返されます。
         "400":
           content:
             application/json:
@@ -1227,22 +1233,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+            指定したIDのエディションが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョン情報の変更
+      summary: エディション情報の変更
       description: |
-        指定したランチャーのバージョンIDのランチャーのバージョンの情報を変更します。
+        指定したeditionIDのエディションの情報を変更します。
     delete:
       tags:
-        - launcherVersion
+        - edition
       security:
         - AdminAuth: []
-      operationId: deleteLauncherVersion
+      operationId: deleteEdition
       responses:
         "200":
           description: |
-            ランチャーのバージョンの削除に成功した際に返されます。
+            エディションの削除に成功した際に返されます。
         "400":
           content:
             application/json:
@@ -1260,26 +1266,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+            指定したIDのエディションが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョンの削除
+      summary: エディションの削除
       description: |
-        指定したランチャーのバージョンを削除します。
-  /launchers/{launcherVersionID}/games:
+        指定したエディションを削除します。
+  /editions/{editionID}/games:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/editionIDInPath'
     patch:
       tags:
-        - launcherVersion
+        - edition
       security:
         - AdminAuth: []
-      operationId: postLauncherVersionGame
+      operationId: postEditionGame
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchLauncherVersionGameRequest'
+              $ref: '#/components/schemas/PatchEditionGameRequest'
       responses:
         "200":
           content:
@@ -1287,10 +1293,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LauncherVersionGameResponse'
+                  $ref: '#/components/schemas/EditionGameResponse'
           description: |
-            ランチャーのバージョンのゲームの変更に成功した際に返されます。
-            レスポンスで変更後のランチャーのバージョンに紐づいたゲームとゲームバージョン一覧が返されます。
+            エディションのゲームの変更に成功した際に返されます。
+            レスポンスで変更後のエディションに紐づいたゲームとゲームバージョン一覧が返されます。
         "400":
           content:
             application/json:
@@ -1304,16 +1310,16 @@ paths:
           $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーバージョンのゲームの変更
+      summary: エディションのゲームの変更
       description: |
-        ランチャーバージョンにゲームを追加します。
+        エディションにゲームを追加します。
     get:
       tags:
-        - launcherVersion
+        - edition
       security:
         - TrapMemberAuth: []
-        - LauncherIDAuth: []
-      operationId: getLauncherVersionGames
+        - EditionIDAuth: []
+      operationId: getEditionGames
       responses:
         "200":
           content:
@@ -1321,9 +1327,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LauncherVersionGameResponse'
+                  $ref: '#/components/schemas/EditionGameResponse'
           description: |
-            ランチャーのバージョンに紐づくゲームとバージョンの一覧の取得に成功した際に返されます。
+            エディションに紐づくゲームとバージョンの一覧の取得に成功した際に返されます。
             レスポンスで取得したゲームとバージョンのリストが返されます。
         "400":
           content:
@@ -1340,27 +1346,27 @@ paths:
           description: |
             traQのOAuth 2.0認証を通過できない、かつ、
             ランチャーのアクセストークンによるBearer認証を通過できない、
-            または、アクセストークンに対応するランチャーバージョンとlauncherIDが一致しない場合に返されます。
+            または、アクセストークンに対応するエディションとeditionIDが一致しない場合に返されます。
         "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのランチャーのバージョンが存在しない、または削除されている場合に返されます。
+            指定したIDのエディションが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョンに紐づくゲームの一覧の取得
+      summary: エディションに紐づくゲームの一覧の取得
       description: |
-        ランチャーのバージョンに紐づくゲームの一覧を取得します。
+        エディションに紐づくゲームの一覧を取得します。
 
-  # launcherAuth
-  /launchers/{launcherVersionID}/keys:
+  # editionAuth
+  /editions/{editionID}/keys:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/editionIDInPath'
     post:
       tags:
-        - launcherAuth
+        - editionAuth
       security:
         - AdminAuth: []
       parameters:
@@ -1375,8 +1381,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProductKey'
           description: |
-            ランチャーのプロダクトキーの発行に成功した際に返されます。
-            レスポンスで発行したランチャーのプロダクトキーのリストが返されます。
+            プロダクトキーの発行に成功した際に返されます。
+            レスポンスで発行したプロダクトキーのリストが返されます。
         "400":
           content:
             application/json:
@@ -1390,12 +1396,12 @@ paths:
           $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのプロダクトキーの生成
+      summary: プロダクトキーの生成
       description: |
-        ランチャーのバージョンに対するプロダクトキーを生成します。
+        ランチャーからのエディション情報取得の認可用プロダクトキーを生成します。
     get:
       tags:
-        - launcherAuth
+        - editionAuth
       security:
         - AdminAuth: []
       parameters:
@@ -1410,7 +1416,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProductKey'
           description: |
-            ランチャーのバージョンに紐づくプロダクトキーの取得に成功した際に返されます。
+            エディションに紐づくプロダクトキーの取得に成功した際に返されます。
             レスポンスで取得したプロダクトキーのリストが返されます。
         "400":
           content:
@@ -1425,16 +1431,16 @@ paths:
           $ref: '#/components/responses/AdminForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのプロダクトキーの一覧の取得
+      summary: プロダクトキーの一覧の取得
       description: |
-        ランチャーのバージョンに対するプロダクトキーの一覧を取得します。
-  /launchers/{launcherVersionID}/keys/{productKeyID}/activate:
+        エディションに対するプロダクトキーの一覧を取得します。
+  /editions/{editionID}/keys/{productKeyID}/activate:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/editionIDInPath'
       - $ref: '#/components/parameters/productKeyIDInPath'
     post:
       tags:
-        - launcherAuth
+        - editionAuth
       security:
         - AdminAuth: []
       operationId: postActivateProductKey
@@ -1467,16 +1473,16 @@ paths:
             指定したIDのプロダクトキーが存在しない、または既に有効な場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのプロダクトキーの再有効化
+      summary: プロダクトキーの再有効化
       description: |
-        ランチャーのバージョンに対するプロダクトキーを再有効化します。
-  /launchers/{launcherVersionID}/keys/{productKeyID}/revoke:
+        エディションに対するプロダクトキーを再有効化します。
+  /editions/{editionID}/keys/{productKeyID}/revoke:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionIDInPath'
+      - $ref: '#/components/parameters/editionIDInPath'
       - $ref: '#/components/parameters/productKeyIDInPath'
     post:
       tags:
-        - launcherAuth
+        - editionAuth
       security:
         - AdminAuth: []
       operationId: postRevokeProductKey
@@ -1509,28 +1515,28 @@ paths:
             指定したIDのプロダクトキーが存在しない、または既に失効している場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのプロダクトキーの失効
+      summary: プロダクトキーの失効
       description: |
-        ランチャーのバージョンに対するプロダクトキーを失効(revoke)します。
-  /launchers/authorize:
+        エディションに対するプロダクトキーを失効(revoke)します。
+  /editions/authorize:
     post:
       tags:
-        - launcherAuth
-      operationId: postLauncherAuthorize
+        - editionAuth
+      operationId: postEditionAuthorize
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LauncherAuthorizeRequest'
+              $ref: '#/components/schemas/EditionAuthorizeRequest'
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LauncherAccessToken'
+                $ref: '#/components/schemas/EditionAccessToken'
           description: |
-            ランチャーの認可に成功した際に返されます。
+            ランチャーのエディション情報取得の認可に成功した際に返されます。
             ランチャーのBearer認証に使用するトークンが返されます。
         "400":
           content:
@@ -1540,28 +1546,30 @@ paths:
           description: |
             リクエストが不正である場合に返されます。
         "403":
-          $ref: '#/components/responses/LauncherForbidden'
+          $ref: '#/components/responses/EditionForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ランチャーの認可リクエスト
       description: |
-        ランチャーの認可リクエストを行います。
-        リクエストに成功すると、ランチャーのアクセストークンが返されます。
-        このアクセストークンを用いたBearer認証で、ランチャー用APIを利用することができます。
-  /launchers/info:
+        ランチャーのエディション情報取得の認可リクエストを行います。
+        リクエストに成功すると、アクセストークンが返されます。
+        このアクセストークンを用いたBearer認証で、エディション情報取得用のAPIを利用することができます。
+  /editions/info:
     get:
       tags:
-        - launcherAuth
-      operationId: getLauncherInfo
+        - editionAuth
+      operationId: getEditionInfo
       security:
-        - LauncherAuth: []
+        - EditionAuth: []
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LauncherVersion'
-          description: 成功
+                $ref: '#/components/schemas/Edition'
+          description: |
+            エディション情報取得に成功した際に返されます。
+            エディション情報が返されます。
         "400":
           content:
             application/json:
@@ -1570,12 +1578,12 @@ paths:
           description: |
             リクエストが不正である場合に返されます。
         "403":
-          $ref: '#/components/responses/LauncherForbidden'
+          $ref: '#/components/responses/EditionForbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      summary: ランチャーのバージョン情報の取得
+      summary: エディション情報の取得
       description: |
-        アクセストークンをもとにランチャーのバージョン情報を取得します。
+        アクセストークンをもとにエディションの情報を取得します。
 
   #seat
   /seats:
@@ -1696,7 +1704,7 @@ components:
             $ref: '#/components/schemas/Error'
       description: |
         adminでない場合に返されます。
-    LauncherForbidden:
+    EditionForbidden:
       content:
         application/json:
           schema:
@@ -1743,51 +1751,51 @@ components:
       description: |
         traP Collectionの管理者である場合のみアクセスできます。
         ユーザーがtraQで凍結された場合、1日以内に反映されます。
-    LauncherAuth:
+    EditionAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンが正しく、有効期限が切れていない場合にのみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
-    LauncherIDAuth:
+    EditionIDAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンが正しく、有効期限が切れていないかつ、
-        launcherIDを対応するランチャーが一致する場合にのみアクセスできます。
+        editionIDを対応するエディションが一致する場合にのみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
-    LauncherGameAuth:
+    EditionGameAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
-        アクセストークンから得られるランチャーのバージョンに、
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
         ゲームIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
-    LauncherGameFileAuth:
+    EditionGameFileAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
-        アクセストークンから得られるランチャーのバージョンに、
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
         ファイルIDで指定されたファイルに対応するゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
-    LauncherGameImageAuth:
+    EditionGameImageAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
-        アクセストークンから得られるランチャーのバージョンに、
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
         画像IDで指定された画像に対応するゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
-    LauncherGameVideoAuth:
+    EditionGameVideoAuth:
       type: http
       scheme: bearer
       description: |
-        ランチャーのプロダクトキーを利用して得られるアクセストークンを利用した認証です。
-        アクセストークンから得られるランチャーのバージョンに、
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
         動画IDで指定された動画に対応するゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
   parameters:
@@ -1818,15 +1826,15 @@ components:
       description: |
         プロダクトキーのステータスを示すクエリパラメータです。
         指定がない場合は全てのステータスのプロダクトキーが返されます。
-    launcherVersionIDInPath:
-      name: launcherVersionID
+    editionIDInPath:
+      name: editionID
       in: path
       required: true
       schema:
         type: string
         format: uuid
       description: |
-        ランチャーのバージョンのIDを示すパスパラメータです。
+        エディションのIDを示すパスパラメータです。
     gameIDInPath:
       name: gameID
       in: path
@@ -1867,7 +1875,7 @@ components:
         type: string
         format: uuid
       description: |
-        ランチャーのプロダクトキーのIDを示すパスパラメータです。
+        プロダクトキーのIDを示すパスパラメータです。
     seatIDInPath:
       name: seatID
       in: path
@@ -1935,7 +1943,7 @@ components:
       description: |
         ゲームバージョンの一覧を取得します。
         ページングのために、limit、offsetを適用する前のゲームバージョンの数もnumで返しています。
-    PatchLauncherVersionGameRequest:
+    PatchEditionGameRequest:
       type: object
       properties:
         gameVersionIDs:
@@ -1945,8 +1953,8 @@ components:
       required:
         - gameVersionIDs
       description: |
-        ランチャーのバージョンのゲームを変更するためのリクエストです。
-    LauncherVersionGameResponse:
+        エディションのゲームを変更するためのリクエストです。
+    EditionGameResponse:
       type: object
       allOf:
         - $ref: '#/components/schemas/GameInfo'
@@ -1957,9 +1965,9 @@ components:
           required:
             - version
       description: |
-        ランチャーのバージョンに紐づけられた
+        エディションに紐づけられた
         ゲームとバージョンの情報です。
-    LauncherAuthorizeRequest:
+    EditionAuthorizeRequest:
       type: object
       properties:
         key:
@@ -1967,7 +1975,7 @@ components:
       required:
         - key
       description: |
-        ランチャーの認可のリクエストです。
+        ランチャーのエディション情報取得認可のリクエストです。
     PostSeatRequest:
       type: object
       properties:
@@ -2287,26 +2295,26 @@ components:
       description: |
         ゲームの動画のメタ情報です。
 
-    # ランチャーバージョン
-    PatchLauncherVersion:
+    # エディション
+    PatchEdition:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/LauncherVersionName'
+          $ref: '#/components/schemas/EditionName'
         questionnaire:
-          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+          $ref: '#/components/schemas/EditionQuestionnaireURL'
       required:
         - name
         - questionnaire
       description: |
-        ランチャーバージョンの情報を修正する際に必要な情報です。
-    NewLauncherVersion:
+        エディションの情報を修正する際に必要な情報です。
+    NewEdition:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/LauncherVersionName'
+          $ref: '#/components/schemas/EditionName'
         questionnaire:
-          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+          $ref: '#/components/schemas/EditionQuestionnaireURL'
         gameVersions:
           type: array
           items:
@@ -2314,28 +2322,28 @@ components:
       required:
         - name
       description: |
-        ランチャーのバージョンを新しく作成する際に必要な情報です。
+        エディションを新しく作成する際に必要な情報です。
         questionnaireは工大祭などのアンケートが必要な際のみ存在します。
-    LauncherVersion:
+    Edition:
       type: object
       properties:
         id:
-          $ref: '#/components/schemas/LauncherVersionID'
+          $ref: '#/components/schemas/EditionID'
         name:
-          $ref: '#/components/schemas/LauncherVersionName'
+          $ref: '#/components/schemas/EditionName'
         questionnaire:
-          $ref: '#/components/schemas/LauncherVersionQuestionnaireURL'
+          $ref: '#/components/schemas/EditionQuestionnaireURL'
         createdAt:
-          $ref: '#/components/schemas/LauncherVersionCreatedAt'
+          $ref: '#/components/schemas/EditionCreatedAt'
       required:
         - id
         - name
         - createdAt
       description: |
-        ランチャーのバージョンです。
+        エディションです。
         questionnaireは工大祭などのアンケートが必要な際のみ存在します。
 
-    # ランチャーの認証
+    # ランチャーのエディション情報取得の認可
     ProductKey:
       type: object
       properties:
@@ -2349,13 +2357,13 @@ components:
         - id
         - key
         - status
-    LauncherAccessToken:
+    EditionAccessToken:
       type: object
       properties:
         accessToken:
-          $ref: '#/components/schemas/LauncherAccessTokenValue'
+          $ref: '#/components/schemas/EditionAccessTokenValue'
         expiresAt:
-          $ref: '#/components/schemas/LauncherAccessTokenExpiresAt'
+          $ref: '#/components/schemas/EditionAccessTokenExpiresAt'
       required:
         - accessToken
         - expiresAt
@@ -2412,7 +2420,7 @@ components:
         コースを3周する時間を競うタイムアタックモードには、オンラインランキングを搭載。
       description: |
         ゲームの説明です。
-        ゲームのランチャーでも表示されます。
+        ランチャーでも表示されます。
     GameCreatedAt:
       type: string
       format: date-time
@@ -2542,60 +2550,60 @@ components:
       description: |
         ゲーム紹介動画の作成時刻です。
 
-    # ランチャーバージョン
-    LauncherVersionID:
+    # エディション
+    EditionID:
       type: string
       format: uuid
       description: |
-        ランチャーのバージョンのIDです。
-    LauncherVersionName:
+        エディションのIDです。
+    EditionName:
       type: string
       maxLength: 32
       description: |
-        ランチャーのバージョン名です。
-    LauncherVersionQuestionnaireURL:
+        エディション名です。
+    EditionQuestionnaireURL:
       type: string
       format: uri
       description: |
-        ランチャーのバージョンのアンケートのURLです。
-    LauncherVersionCreatedAt:
+        エディションのアンケートのURLです。
+    EditionCreatedAt:
       type: string
       format: date-time
       description: |
-        ランチャーのバージョンが作成された時刻です。
+        エディションが作成された時刻です。
 
-    # ランチャーの認証
+    # ランチャーのエディション情報取得の認可
     ProductKeyID:
       type: string
       format: uuid
       description: |
-        ランチャーのプロダクトキーのIDです。
+        プロダクトキーのIDです。
     ProductKeyValue:
       type: string
       pattern: '^[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}-[0-9a-zA-Z]{5}'
       example: 12345-ABCDE-67890-FGHIJ-KLMNO
       description: |
-        ランチャーのプロダクトキーの値です。
+        プロダクトキーの値です。
         暗号的にランダムな英数字5文字をハイフン区切りで5つ並べたものです。
     ProductKeyStatus:
       type: string
       enum:
         - active
         - revoked
-    LauncherAccessTokenValue:
+    EditionAccessTokenValue:
       type: string
       maxLength: 36
       minLength: 36
       pattern: '[0-9a-zA-Z]{36}'
       example: 1234567890abcdef1234567890abcdef1234
       description: |
-        ランチャーのアクセストークンです。
+        アクセストークンです。
         暗号的にランダムな英数字36文字です。
-    LauncherAccessTokenExpiresAt:
+    EditionAccessTokenExpiresAt:
       type: string
       format: date-time
       description: |
-        ランチャーのアクセストークンの有効期限です。
+        アクセストークンの有効期限です。
 
     # 席
     SeatID:
