@@ -509,12 +509,12 @@ paths:
         - gameRole
       security:
         - GameOwnerAuth: []
-      operationId: postGameRole
+      operationId: patchGameRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GameRole'
+              $ref: '#/components/schemas/GameRoleRequest'
       responses:
         "200":
           content:
@@ -552,8 +552,60 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       summary: ゲームの管理権限の変更
       description: |
-        指定したゲームIDのゲームの管理権限を変更します。
-        ownerは1人以上はいる必要があります。
+        指定したゲームIDのゲームの管理者を追加します。
+        既に指定のユーザーが権限(ownerまたはmaintainer)として登録されている場合は、
+        指定された権限で権限を上書きします。
+    delete:
+      tags:
+        - gameRole
+      security:
+        - GameOwnerAuth: []
+      operationId: deleteGameRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameRoleRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+          description: |
+            ゲームの管理権限の変更に成功した際に返されます。
+            レスポンスで変更後のowner、maintainerを含むゲーム情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ゲームID、またはリクエストが不正である場合に返されます。
+            削除によりゲームにownerが存在しなくなる場合にも返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerでない場合に返されます。
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームの管理権限の削除
+      description: |
+        指定したゲームIDのゲームの管理権限を削除します。
+        ownerは1人以上はいる必要があるため、
+        削除によりownerがいなくなる場合はエラーとなります。
 
   # gameVersion
   /games/{gameID}/versions:
@@ -1967,6 +2019,17 @@ components:
       description: |
         ゲームの一覧を取得します。
         ページングのために、limit、offsetを適用する前のゲームの数をnumで返しています。
+    GameRoleRequest:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UserID'
+        type:
+          $ref: '#/components/schemas/GameRoleType'
+      required:
+        - id
+      description: |
+        ゲームのロールを指定するリクエストです。
     GetGameVersionsResponse:
       type: object
       properties:
@@ -2469,6 +2532,17 @@ components:
       format: date-time
       description: |
         ゲームがtraP Collectionに追加された時刻です。
+
+    # ゲームの管理権限
+    GameRoleType:
+      type: string
+      enum:
+        - owner
+        - maintainer
+      description: |
+        ゲームの管理権限の種類です。
+        ownerはゲームの所有者で、ゲーム情報の変更や管理者の変更ができます。
+        maintainerはゲームのメンテナーで、ゲーム情報の変更のみできます。
 
     # ゲームバージョン
     GameVersionID:
