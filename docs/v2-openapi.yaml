@@ -796,13 +796,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            指定したIDのゲームファイルが存在しない、または削除されている場合に返されます。
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲームファイルの作成
       description: |
         指定したゲームIDのゲームにファイルを作成します。
         作成したゲームファイルは、1日以内にゲームバージョンと紐づけられない場合自動で削除されます。
+    get:
+      tags:
+        - gameFile
+      security:
+        - TrapMemberAuth: []
+      operationId: getGameFiles
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameFile'
+          description: |
+            ゲームファイルの取得に成功した際に返されます。
+            レスポンスで指定されたゲームの
+            アップロード済みゲームファイルのメタ情報が返されます。
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストが不正である場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームファイル一覧の取得
+      description: |
+        指定したゲームIDのゲームのアップロード済みファイル一覧を返します。
+        ゲームバージョンと紐づけられていないファイルも含まれる点に注意。
   /games/{gameID}/files/{gameFileID}:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
