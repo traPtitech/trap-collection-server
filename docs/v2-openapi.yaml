@@ -222,17 +222,39 @@ paths:
       description: |
         traP Collection全体の管理者を追加します。
         このAPIは管理者のみが利用できます。
+    get:
+      tags:
+        - admin
+      security:
+        - TrapMemberAuth: []
+      operationId: getAdmins
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: |
+            traP Collection全体の管理者一覧の取得に成功した際に返されます。
+            レスポンスでtraP Collection全体の管理者の一覧が返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: traPの管理者一覧取得
+      description: |
+        traP Collection全体の管理者の一覧を取得します。
+  /admins/{userID}:
+    parameters:
+      - $ref: '#/components/parameters/userIDInPath'
     delete:
       tags:
         - admin
       security:
         - AdminAuth: []
       operationId: deleteAdmin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRequest'
       responses:
         "200":
           content:
@@ -260,30 +282,6 @@ paths:
       description: |
         traP Collection全体の管理者を削除します。
         このAPIは管理者のみが利用できます。
-    get:
-      tags:
-        - admin
-      security:
-        - TrapMemberAuth: []
-      operationId: getAdmins
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-          description: |
-            traP Collection全体の管理者一覧の取得に成功した際に返されます。
-            レスポンスでtraP Collection全体の管理者の一覧が返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      summary: traPの管理者一覧取得
-      description: |
-        traP Collection全体の管理者の一覧を取得します。
 
   # game
   /games:
@@ -2038,6 +2036,14 @@ components:
       description: |
         プロダクトキーのステータスを示すクエリパラメータです。
         指定がない場合は全てのステータスのプロダクトキーが返されます。
+    userIDInPath:
+      name: userID
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserID'
+      description: |
+        ユーザーIDを示すパスパラメータです。
     editionIDInPath:
       name: editionID
       in: path
