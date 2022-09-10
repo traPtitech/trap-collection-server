@@ -2435,10 +2435,13 @@ components:
           $ref: '#/components/schemas/ProductKeyValue'
         status:
           $ref: '#/components/schemas/ProductKeyStatus'
+        createdAt:
+          $ref: '#/components/schemas/ProductKeyCreatedAt'
       required:
         - id
         - key
         - status
+        - createdAt
     EditionAccessToken:
       type: object
       properties:
@@ -2683,6 +2686,11 @@ components:
       enum:
         - active
         - revoked
+    ProductKeyCreatedAt:
+      type: string
+      format: date-time
+      description: |
+        プロダクトキーが作成された時刻です。
     EditionAccessTokenValue:
       type: string
       maxLength: 36
