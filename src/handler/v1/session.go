@@ -20,7 +20,7 @@ type Session struct {
 	store  sessions.Store
 }
 
-func NewSession(conf config.HandlerV1) (*Session, error) {
+func NewSession(conf config.Handler) (*Session, error) {
 	secret, err := conf.SessionSecret()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session secret: %w", err)

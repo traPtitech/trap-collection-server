@@ -38,7 +38,7 @@ type API struct {
 }
 
 func NewAPI(
-	conf config.HandlerV1,
+	conf config.Handler,
 	middleware *Middleware,
 	user *User,
 	game *Game,

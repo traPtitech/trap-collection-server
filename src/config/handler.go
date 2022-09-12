@@ -4,7 +4,7 @@ import "net/url"
 
 //go:generate go run github.com/golang/mock/mockgen@latest -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
-type HandlerV1 interface {
+type Handler interface {
 	Addr() (string, error)
 	SessionKey() (string, error)
 	SessionSecret() (string, error)
