@@ -3,73 +3,39 @@ package v1
 import (
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 )
 
 type Session struct {
-	key    string
-	secret string
-	store  sessions.Store
+	*common.Session
 }
 
-func NewSession(conf config.Handler) (*Session, error) {
-	secret, err := conf.SessionSecret()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session secret: %w", err)
-	}
-
-	key, err := conf.SessionKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session key: %w", err)
-	}
-
-	store := sessions.NewCookieStore([]byte(secret))
-
+func NewSession(session *common.Session) (*Session, error) {
 	// gorilla/sessionsの内部で使われているgobが
 	// time.Timeのエンコード・デコードをできるようにRegisterする
 	gob.Register(time.Time{})
 
 	return &Session{
-		key:    key,
-		secret: secret,
-		store:  store,
+		Session: session,
 	}, nil
 }
 
-func (s *Session) Use(e *echo.Echo) {
-	e.Use(session.Middleware(s.store))
-}
-
 func (s *Session) getSession(c echo.Context) (*sessions.Session, error) {
-	session, err := s.store.Get(c.Request(), s.key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-
-	c.Set(sessionContextKey, session)
-
-	return session, nil
+	return s.Session.GetSession(c)
 }
 
 func (s *Session) save(c echo.Context, session *sessions.Session) error {
-	err := s.store.Save(c.Request(), c.Response(), session)
-	if err != nil {
-		return fmt.Errorf("failed to save session: %w", err)
-	}
-
-	return nil
+	return s.Session.Save(c, session)
 }
 
 func (s *Session) revoke(session *sessions.Session) {
-	session.Options.MaxAge = -1
+	s.Session.Revoke(session)
 }
 
 var (
