@@ -14,6 +14,7 @@ import (
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
 )
@@ -31,7 +32,7 @@ func TestCallback(t *testing.T) {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
 
-	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		TraqBaseURL().
@@ -44,8 +45,12 @@ func TestCallback(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -134,7 +139,7 @@ func TestCallback(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -204,7 +209,7 @@ func TestGetGeneratedCode(t *testing.T) {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
 
-	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		TraqBaseURL().
@@ -217,10 +222,15 @@ func TestGetGeneratedCode(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
 	}
 
 	oauth, err := NewOAuth2(mockConf, session, mockOIDCService)
@@ -325,7 +335,7 @@ func TestGetGeneratedCode(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -405,7 +415,7 @@ func TestPostLogout(t *testing.T) {
 		t.Errorf("Error parsing base URL: %v", err)
 	}
 
-	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		TraqBaseURL().
@@ -418,7 +428,12 @@ func TestPostLogout(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -485,7 +500,7 @@ func TestPostLogout(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -502,7 +517,7 @@ func TestPostLogout(t *testing.T) {
 
 				setCookieHeader(c)
 
-				sess, err = session.store.Get(req, session.key)
+				sess, err = session.Get(req)
 				if err != nil {
 					t.Fatal(err)
 				}
