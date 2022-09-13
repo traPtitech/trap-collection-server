@@ -4,16 +4,16 @@ package wire
 
 import (
 	"github.com/google/wire"
-	v1Handler "github.com/traPtitech/trap-collection-server/src/handler/v1"
+	"github.com/traPtitech/trap-collection-server/src/handler"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 )
 
 type App struct {
-	*v1Handler.API
+	*handler.API
 	repository.DB
 }
 
-func newApp(api *v1Handler.API, db repository.DB) *App {
+func newApp(api *handler.API, db repository.DB) *App {
 	return &App{
 		API: api,
 		DB:  db,
