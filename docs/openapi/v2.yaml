@@ -416,7 +416,7 @@ paths:
         - game
       security:
         - GameMaintainerAuth: []
-      operationId: putGame
+      operationId: patchGame
       requestBody:
         content:
           application/json:
@@ -464,7 +464,7 @@ paths:
         - game
       security:
         - GameOwnerAuth: []
-      operationId: deleteGames
+      operationId: deleteGame
       responses:
         "200":
           description: |
