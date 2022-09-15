@@ -7,7 +7,7 @@
 traPのゲームランチャーtraP Collectionのサーバーサイドです。
 
 ### 開発環境の起動
-`.env`ファイルに
+`docker/dev/.env`ファイルに
 ```
 CLIENT_ID={{traQのClientのClientID}}
 CLIENT_SECRET={{traQのClientのClientSecret}}
