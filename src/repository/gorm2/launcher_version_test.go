@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +30,7 @@ func TestCreateLauncherVersion(t *testing.T) {
 
 	type test struct {
 		description            string
-		beforeLauncherVersions []*LauncherVersionTable
+		beforeLauncherVersions []*migrate.LauncherVersionTable
 		launcherVersion        *domain.LauncherVersion
 		isErr                  bool
 		err                    error
@@ -62,7 +63,7 @@ func TestCreateLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "別のLauncherVersionが存在してもエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(values.NewLauncherVersionID()),
 					Name: "test1",
@@ -82,7 +83,7 @@ func TestCreateLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "別のLauncherVersionが存在してもエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(values.NewLauncherVersionID()),
 					Name: "test",
@@ -111,7 +112,7 @@ func TestCreateLauncherVersion(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&LauncherVersionTable{}).Error
+					Delete(&migrate.LauncherVersionTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete table: %v", err)
 				}
@@ -151,7 +152,7 @@ func TestGetLauncherVersions(t *testing.T) {
 
 	type test struct {
 		description            string
-		beforeLauncherVersions []*LauncherVersionTable
+		beforeLauncherVersions []*migrate.LauncherVersionTable
 		launcherVersions       []*domain.LauncherVersion
 		isErr                  bool
 		err                    error
@@ -172,7 +173,7 @@ func TestGetLauncherVersions(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID1),
 					Name: "test",
@@ -194,7 +195,7 @@ func TestGetLauncherVersions(t *testing.T) {
 		},
 		{
 			description: "Questionnaireなしでもエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{
 				{
 					ID:        uuid.UUID(launcherVersionID2),
 					Name:      "test",
@@ -211,12 +212,12 @@ func TestGetLauncherVersions(t *testing.T) {
 		},
 		{
 			description:            "launcherVersionが存在しなくてもエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{},
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{},
 			launcherVersions:       []*domain.LauncherVersion{},
 		},
 		{
 			description: "launcherVersionが複数でもエラーなし",
-			beforeLauncherVersions: []*LauncherVersionTable{
+			beforeLauncherVersions: []*migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID3),
 					Name: "test1",
@@ -261,7 +262,7 @@ func TestGetLauncherVersions(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&LauncherVersionTable{}).Error
+					Delete(&migrate.LauncherVersionTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete table: %v", err)
 				}
@@ -382,7 +383,7 @@ func TestGetLauncherVersion(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.launcherVersion != nil {
-				dbLauncherVersion := LauncherVersionTable{
+				dbLauncherVersion := migrate.LauncherVersionTable{
 					ID:        uuid.UUID(testCase.launcherVersion.GetID()),
 					Name:      string(testCase.launcherVersion.GetName()),
 					CreatedAt: testCase.launcherVersion.GetCreatedAt(),
@@ -451,7 +452,7 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 
 	type test struct {
 		description     string
-		dbLauncherUsers []LauncherUserTable
+		dbLauncherUsers []migrate.LauncherUserTable
 		launcherUsers   []*domain.LauncherUser
 		isErr           bool
 		err             error
@@ -479,7 +480,7 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 	testCases := []test{
 		{
 			description: "ユーザーが存在するのでエラーなし",
-			dbLauncherUsers: []LauncherUserTable{
+			dbLauncherUsers: []migrate.LauncherUserTable{
 				{
 					ID:         uuid.UUID(launcherUserID1),
 					ProductKey: string(productKey1),
@@ -495,12 +496,12 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 		},
 		{
 			description:     "ユーザーが存在しなくてもエラーなし",
-			dbLauncherUsers: []LauncherUserTable{},
+			dbLauncherUsers: []migrate.LauncherUserTable{},
 			launcherUsers:   []*domain.LauncherUser{},
 		},
 		{
 			description: "ユーザーが複数人でもエラーなし",
-			dbLauncherUsers: []LauncherUserTable{
+			dbLauncherUsers: []migrate.LauncherUserTable{
 				{
 					ID:         uuid.UUID(launcherUserID2),
 					ProductKey: string(productKey2),
@@ -525,7 +526,7 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 		},
 		{
 			description: "削除されたユーザーは含まれない",
-			dbLauncherUsers: []LauncherUserTable{
+			dbLauncherUsers: []migrate.LauncherUserTable{
 				{
 					ID:         uuid.UUID(launcherUserID1),
 					ProductKey: string(productKey1),
@@ -544,7 +545,7 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
 			launcherVersionID := values.NewLauncherVersionID()
-			dbLauncherVersion := LauncherVersionTable{
+			dbLauncherVersion := migrate.LauncherVersionTable{
 				ID:            uuid.UUID(launcherVersionID),
 				Name:          fmt.Sprintf("TestCreateLauncherUsers%d", i),
 				CreatedAt:     time.Now(),
@@ -564,7 +565,7 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 			if len(deletedLauncherUserIDs) > 0 {
 				err = db.
 					Where("id IN ?", deletedLauncherUserIDs).
-					Delete(&LauncherUserTable{}).Error
+					Delete(&migrate.LauncherUserTable{}).Error
 				if err != nil {
 					t.Errorf("failed to delete launcher user: %v", err)
 				}
@@ -658,7 +659,7 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 
 	type test struct {
 		description       string
-		dbLauncherVersion LauncherVersionTable
+		dbLauncherVersion migrate.LauncherVersionTable
 		accessToken       values.LauncherSessionAccessToken
 		launcherVersion   *domain.LauncherVersion
 		launcherUser      *domain.LauncherUser
@@ -694,16 +695,16 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		{
 			description: "通常の状態なので問題なし",
 			accessToken: accessToken1,
-			dbLauncherVersion: LauncherVersionTable{
+			dbLauncherVersion: migrate.LauncherVersionTable{
 				ID:        uuid.UUID(launcherVersionID1),
 				Name:      "TestGetVersion,User,Session1",
 				CreatedAt: now,
-				LauncherUsers: []LauncherUserTable{
+				LauncherUsers: []migrate.LauncherUserTable{
 					{
 						ID:         uuid.UUID(launcherUserID1),
 						ProductKey: string(productKey1),
 						CreatedAt:  now,
-						LauncherSessions: []LauncherSessionTable{
+						LauncherSessions: []migrate.LauncherSessionTable{
 							{
 								ID:          uuid.UUID(launcherSessionID1),
 								AccessToken: string(accessToken1),
@@ -732,7 +733,7 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		{
 			description: "questionnaireURLが存在しても問題なし",
 			accessToken: accessToken5,
-			dbLauncherVersion: LauncherVersionTable{
+			dbLauncherVersion: migrate.LauncherVersionTable{
 				ID:   uuid.UUID(launcherVersionID5),
 				Name: "TestGetVersion,User,Session5",
 				QuestionnaireURL: sql.NullString{
@@ -740,12 +741,12 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 					Valid:  true,
 				},
 				CreatedAt: now,
-				LauncherUsers: []LauncherUserTable{
+				LauncherUsers: []migrate.LauncherUserTable{
 					{
 						ID:         uuid.UUID(launcherUserID5),
 						ProductKey: string(productKey5),
 						CreatedAt:  now,
-						LauncherSessions: []LauncherSessionTable{
+						LauncherSessions: []migrate.LauncherSessionTable{
 							{
 								ID:          uuid.UUID(launcherSessionID5),
 								AccessToken: string(accessToken5),
@@ -775,7 +776,7 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		{
 			description: "バージョンが削除されているのでエラー",
 			accessToken: accessToken2,
-			dbLauncherVersion: LauncherVersionTable{
+			dbLauncherVersion: migrate.LauncherVersionTable{
 				ID:        uuid.UUID(launcherVersionID2),
 				Name:      "TestGetVersion,User,Session2",
 				CreatedAt: now,
@@ -783,12 +784,12 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 					Time:  now,
 					Valid: true,
 				},
-				LauncherUsers: []LauncherUserTable{
+				LauncherUsers: []migrate.LauncherUserTable{
 					{
 						ID:         uuid.UUID(launcherUserID2),
 						ProductKey: string(productKey2),
 						CreatedAt:  now,
-						LauncherSessions: []LauncherSessionTable{
+						LauncherSessions: []migrate.LauncherSessionTable{
 							{
 								ID:          uuid.UUID(launcherSessionID2),
 								AccessToken: string(accessToken2),
@@ -805,11 +806,11 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		{
 			description: "ユーザーが削除されているのでエラー",
 			accessToken: accessToken3,
-			dbLauncherVersion: LauncherVersionTable{
+			dbLauncherVersion: migrate.LauncherVersionTable{
 				ID:        uuid.UUID(launcherVersionID3),
 				Name:      "TestGetVersion,User,Session3",
 				CreatedAt: now,
-				LauncherUsers: []LauncherUserTable{
+				LauncherUsers: []migrate.LauncherUserTable{
 					{
 						ID:         uuid.UUID(launcherUserID3),
 						ProductKey: string(productKey3),
@@ -818,7 +819,7 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 							Time:  now,
 							Valid: true,
 						},
-						LauncherSessions: []LauncherSessionTable{
+						LauncherSessions: []migrate.LauncherSessionTable{
 							{
 								ID:          uuid.UUID(launcherSessionID3),
 								AccessToken: string(accessToken3),
@@ -835,7 +836,7 @@ func TestGetLauncherVersionAndUserAndSessionByAccessToken(t *testing.T) {
 		{
 			description: "アクセストークンが存在しないのでエラー",
 			accessToken: accessToken4,
-			dbLauncherVersion: LauncherVersionTable{
+			dbLauncherVersion: migrate.LauncherVersionTable{
 				ID:        uuid.UUID(launcherVersionID4),
 				Name:      "TestGetVersion,User,Session4",
 				CreatedAt: now,
@@ -923,11 +924,11 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 
 	type test struct {
 		description            string
-		beforeLauncherVersions []LauncherVersionTable
-		beforeGames            []GameTable
+		beforeLauncherVersions []migrate.LauncherVersionTable
+		beforeGames            []migrate.GameTable
 		launcherVersionID      values.LauncherVersionID
 		gameIDs                []values.GameID
-		afterGames             []GameTable
+		afterGames             []migrate.GameTable
 		isErr                  bool
 		err                    error
 	}
@@ -949,14 +950,14 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:        uuid.UUID(launcherVersionID1),
 					Name:      "TestAddGamesToLauncherVersion1",
 					CreatedAt: now,
 				},
 			},
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "TestAddGamesToLauncherVersion1",
@@ -968,7 +969,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 			gameIDs: []values.GameID{
 				gameID1,
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "TestAddGamesToLauncherVersion1",
@@ -979,12 +980,12 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "既にゲームが存在してもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:        uuid.UUID(launcherVersionID2),
 					Name:      "TestAddGamesToLauncherVersion3",
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID2),
 							Name:        "TestAddGamesToLauncherVersion3",
@@ -994,7 +995,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 					},
 				},
 			},
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "TestAddGamesToLauncherVersion4",
@@ -1006,7 +1007,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 			gameIDs: []values.GameID{
 				gameID3,
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "TestAddGamesToLauncherVersion3",
@@ -1023,8 +1024,8 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 		},
 		{
 			description:            "ランチャーが存在しないのでエラー",
-			beforeLauncherVersions: []LauncherVersionTable{},
-			beforeGames: []GameTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{},
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "TestAddGamesToLauncherVersion5",
@@ -1036,7 +1037,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 			gameIDs: []values.GameID{
 				gameID4,
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "TestAddGamesToLauncherVersion5",
@@ -1048,14 +1049,14 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "追加するゲームが複数でもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:        uuid.UUID(launcherVersionID4),
 					Name:      "TestAddGamesToLauncherVersion5",
 					CreatedAt: now,
 				},
 			},
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "TestAddGamesToLauncherVersion6",
@@ -1074,7 +1075,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				gameID5,
 				gameID6,
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "TestAddGamesToLauncherVersion6",
@@ -1122,7 +1123,7 @@ func TestAddGamesToLauncherVersion(t *testing.T) {
 				return
 			}
 
-			var actualLauncherVersion LauncherVersionTable
+			var actualLauncherVersion migrate.LauncherVersionTable
 			err = db.
 				Where("id = ?", uuid.UUID(testCase.launcherVersionID)).
 				Preload("Games", func(db *gorm.DB) *gorm.DB {

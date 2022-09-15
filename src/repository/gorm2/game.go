@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +32,7 @@ func (g *Game) SaveGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameTable := GameTable{
+	gameTable := migrate.GameTable{
 		ID:          uuid.UUID(game.GetID()),
 		Name:        string(game.GetName()),
 		Description: string(game.GetDescription()),
@@ -52,7 +53,7 @@ func (g *Game) UpdateGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameTable := GameTable{
+	gameTable := migrate.GameTable{
 		Name:        string(game.GetName()),
 		Description: string(game.GetDescription()),
 	}
@@ -80,7 +81,7 @@ func (g *Game) RemoveGame(ctx context.Context, gameID values.GameID) error {
 
 	result := db.
 		Where("id = ?", uuid.UUID(gameID)).
-		Delete(&GameTable{})
+		Delete(&migrate.GameTable{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to remove game: %w", err)
@@ -104,7 +105,7 @@ func (g *Game) GetGame(ctx context.Context, gameID values.GameID, lockType repos
 		return nil, fmt.Errorf("failed to set lock type: %w", err)
 	}
 
-	var game GameTable
+	var game migrate.GameTable
 	err = db.
 		Where("id = ?", uuid.UUID(gameID)).
 		Take(&game).Error
@@ -129,7 +130,7 @@ func (g *Game) GetGames(ctx context.Context) ([]*domain.Game, error) {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []GameTable
+	var games []migrate.GameTable
 	err = db.
 		Order("created_at DESC").
 		Find(&games).Error
@@ -156,7 +157,7 @@ func (g *Game) GetGamesByUser(ctx context.Context, userID values.TraPMemberID) (
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []GameTable
+	var games []migrate.GameTable
 	err = db.
 		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
 		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
@@ -195,7 +196,7 @@ func (g *Game) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockT
 		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
 	}
 
-	var games []GameTable
+	var games []migrate.GameTable
 	err = db.
 		Where("id IN ?", uuidGameIDs).
 		Find(&games).Error
@@ -222,7 +223,7 @@ func (g *Game) GetGamesByLauncherVersion(ctx context.Context, launcherVersionID 
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var launcherVersion LauncherVersionTable
+	var launcherVersion migrate.LauncherVersionTable
 	err = db.
 		Where("id = ?", uuid.UUID(launcherVersionID)).
 		Preload("Games", func(db *gorm.DB) *gorm.DB {
@@ -256,17 +257,17 @@ func (g *Game) GetGameInfosByLauncherVersion(ctx context.Context, launcherVersio
 	for _, fileType := range fileTypes {
 		switch fileType {
 		case values.GameFileTypeJar:
-			strFileTypes = append(strFileTypes, gameFileTypeJar)
+			strFileTypes = append(strFileTypes, migrate.GameFileTypeJar)
 		case values.GameFileTypeWindows:
-			strFileTypes = append(strFileTypes, gameFileTypeWindows)
+			strFileTypes = append(strFileTypes, migrate.GameFileTypeWindows)
 		case values.GameFileTypeMac:
-			strFileTypes = append(strFileTypes, gameFileTypeMac)
+			strFileTypes = append(strFileTypes, migrate.GameFileTypeMac)
 		default:
 			return nil, fmt.Errorf("invalid file type: %d", fileType)
 		}
 	}
 
-	var launcherVersion LauncherVersionTable
+	var launcherVersion migrate.LauncherVersionTable
 	err = db.
 		Where("id = ?", uuid.UUID(launcherVersionID)).
 		Preload("Games", func(db *gorm.DB) *gorm.DB {
@@ -381,11 +382,11 @@ func (g *Game) GetGameInfosByLauncherVersion(ctx context.Context, launcherVersio
 			for _, gameFile := range game.GameVersions[0].GameFiles {
 				var fileType values.GameFileType
 				switch gameFile.GameFileType.Name {
-				case gameFileTypeJar:
+				case migrate.GameFileTypeJar:
 					fileType = values.GameFileTypeJar
-				case gameFileTypeWindows:
+				case migrate.GameFileTypeWindows:
 					fileType = values.GameFileTypeWindows
-				case gameFileTypeMac:
+				case migrate.GameFileTypeMac:
 					fileType = values.GameFileTypeMac
 				default:
 					// ゲームのファイルの種類の1つが誤っているだけでランチャーを動かなくしたくないのでエラーにしない

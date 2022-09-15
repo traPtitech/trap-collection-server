@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"golang.org/x/sync/singleflight"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -17,58 +17,14 @@ const (
 	gameManagementRoleTypeCollaborator  = "collaborator"
 )
 
-var gameManagementRoleTypeSetupGroup = &singleflight.Group{}
-
 type GameManagementRole struct {
 	db *DB
 }
 
-func NewGameManagementRole(db *DB) (*GameManagementRole, error) {
-	ctx := context.Background()
-
-	gormDB, err := db.getDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get db: %w", err)
-	}
-
-	// 実際の運用では並列で実行されないが、
-	// テストで並列に実行されるため、
-	// singleflightを使っている
-	_, err, _ = gameManagementRoleTypeSetupGroup.Do("setupRoleTypeTable", func() (interface{}, error) {
-		return nil, setupRoleTypeTable(gormDB)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup role type table: %w", err)
-	}
-
+func NewGameManagementRole(db *DB) *GameManagementRole {
 	return &GameManagementRole{
 		db: db,
-	}, nil
-}
-
-func setupRoleTypeTable(db *gorm.DB) error {
-	roleTypes := []GameManagementRoleTypeTable{
-		{
-			Name:   gameManagementRoleTypeAdministrator,
-			Active: true,
-		},
-		{
-			Name:   gameManagementRoleTypeCollaborator,
-			Active: true,
-		},
 	}
-
-	for _, roleType := range roleTypes {
-		err := db.
-			Session(&gorm.Session{}).
-			Where("name = ?", roleType.Name).
-			FirstOrCreate(&roleType).Error
-		if err != nil {
-			return fmt.Errorf("failed to create role type: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameID values.GameID, userIDs []values.TraPMemberID, role values.GameManagementRole) error {
@@ -91,7 +47,7 @@ func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameI
 		return errors.New("invalid role")
 	}
 
-	var roleType GameManagementRoleTypeTable
+	var roleType migrate.GameManagementRoleTypeTable
 	err = gormDB.
 		Where("name = ?", roleTypeName).
 		Select("id").
@@ -101,9 +57,9 @@ func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameI
 	}
 	roleTypeID := roleType.ID
 
-	gameManagementRoles := make([]*GameManagementRoleTable, 0, len(userIDs))
+	gameManagementRoles := make([]*migrate.GameManagementRoleTable, 0, len(userIDs))
 	for _, userID := range userIDs {
-		gameManagementRoles = append(gameManagementRoles, &GameManagementRoleTable{
+		gameManagementRoles = append(gameManagementRoles, &migrate.GameManagementRoleTable{
 			GameID:     uuid.UUID(gameID),
 			UserID:     uuid.UUID(userID),
 			RoleTypeID: roleTypeID,
@@ -134,7 +90,7 @@ func (gmr *GameManagementRole) UpdateGameManagementRole(ctx context.Context, gam
 		return errors.New("invalid role")
 	}
 
-	var roleType GameManagementRoleTypeTable
+	var roleType migrate.GameManagementRoleTypeTable
 	err = gormDB.
 		Session(&gorm.Session{}).
 		Where("name = ?", roleTypeName).
@@ -145,7 +101,7 @@ func (gmr *GameManagementRole) UpdateGameManagementRole(ctx context.Context, gam
 	}
 	roleTypeID := roleType.ID
 
-	gameManagementRole := GameManagementRoleTable{
+	gameManagementRole := migrate.GameManagementRoleTable{
 		GameID:     uuid.UUID(gameID),
 		UserID:     uuid.UUID(userID),
 		RoleTypeID: roleTypeID,
@@ -176,7 +132,7 @@ func (gmr *GameManagementRole) RemoveGameManagementRole(ctx context.Context, gam
 
 	result := gormDB.
 		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).
-		Delete(&GameManagementRoleTable{})
+		Delete(&migrate.GameManagementRoleTable{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete game management role: %w", err)
@@ -195,7 +151,7 @@ func (gmr *GameManagementRole) GetGameManagersByGameID(ctx context.Context, game
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var gameManagementRoles []GameManagementRoleTable
+	var gameManagementRoles []migrate.GameManagementRoleTable
 	err = gormDB.
 		Joins("RoleTypeTable").
 		Where("game_id = ?", uuid.UUID(gameID)).
@@ -236,7 +192,7 @@ func (gmr *GameManagementRole) GetGameManagementRole(ctx context.Context, gameID
 		return 0, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameManagementRole GameManagementRoleTable
+	var gameManagementRole migrate.GameManagementRoleTable
 	err = gormDB.
 		Joins("RoleTypeTable").
 		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).

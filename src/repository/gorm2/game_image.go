@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"golang.org/x/sync/singleflight"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -23,58 +23,10 @@ type GameImage struct {
 	db *DB
 }
 
-var imageTypeSetupGroup = &singleflight.Group{}
-
-func NewGameImage(db *DB) (*GameImage, error) {
-	ctx := context.Background()
-
-	gormDB, err := db.getDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get db: %w", err)
-	}
-
-	// 実際の運用では並列で実行されないが、
-	// テストで並列に実行されるため、
-	// singleflightを使っている
-	_, err, _ = imageTypeSetupGroup.Do("setupImageTypeTable", func() (interface{}, error) {
-		return nil, setupImageTypeTable(gormDB)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup image type table: %w", err)
-	}
-
+func NewGameImage(db *DB) *GameImage {
 	return &GameImage{
 		db: db,
-	}, nil
-}
-
-func setupImageTypeTable(db *gorm.DB) error {
-	imageTypes := []GameImageTypeTable{
-		{
-			Name:   gameImageTypeJpeg,
-			Active: true,
-		},
-		{
-			Name:   gameImageTypePng,
-			Active: true,
-		},
-		{
-			Name:   gameImageTypeGif,
-			Active: true,
-		},
 	}
-
-	for _, imageType := range imageTypes {
-		err := db.
-			Session(&gorm.Session{}).
-			Where("name = ?", imageType.Name).
-			FirstOrCreate(&imageType).Error
-		if err != nil {
-			return fmt.Errorf("failed to create role type: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, image *domain.GameImage) error {
@@ -95,7 +47,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, im
 		return fmt.Errorf("invalid image type: %d", image.GetType())
 	}
 
-	var imageType GameImageTypeTable
+	var imageType migrate.GameImageTypeTable
 	err = gormDB.
 		Where("name = ?", imageTypeName).
 		Select("id").
@@ -105,7 +57,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, gameID values.GameID, im
 	}
 	imageTypeID := imageType.ID
 
-	err = gormDB.Create(&GameImageTable{
+	err = gormDB.Create(&migrate.GameImageTable{
 		ID:          uuid.UUID(image.GetID()),
 		GameID:      uuid.UUID(gameID),
 		ImageTypeID: imageTypeID,
@@ -129,7 +81,7 @@ func (gi *GameImage) GetLatestGameImage(ctx context.Context, gameID values.GameI
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var image GameImageTable
+	var image migrate.GameImageTable
 	err = gormDB.
 		Joins("GameImageType").
 		Where("game_id = ?", uuid.UUID(gameID)).

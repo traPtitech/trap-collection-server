@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -42,7 +43,7 @@ func (lv *LauncherVersion) CreateLauncherVersion(ctx context.Context, launcherVe
 		dbQuestionnaireURL.String = (*url.URL)(questionnaireURL).String()
 	}
 
-	err = db.Create(&LauncherVersionTable{
+	err = db.Create(&migrate.LauncherVersionTable{
 		ID:               uuid.UUID(launcherVersion.GetID()),
 		Name:             string(launcherVersion.GetName()),
 		QuestionnaireURL: dbQuestionnaireURL,
@@ -61,7 +62,7 @@ func (lv *LauncherVersion) GetLauncherVersions(ctx context.Context) ([]*domain.L
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var dbLauncherVersions []*LauncherVersionTable
+	var dbLauncherVersions []*migrate.LauncherVersionTable
 	err = db.
 		Order("created_at desc").
 		Find(&dbLauncherVersions).Error
@@ -106,7 +107,7 @@ func (lv *LauncherVersion) GetLauncherVersion(ctx context.Context, launcherVersi
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbLauncherVersion LauncherVersionTable
+	var dbLauncherVersion migrate.LauncherVersionTable
 	err = db.
 		Where("id = ?", uuid.UUID(launcherVersionID)).
 		Take(&dbLauncherVersion).Error
@@ -147,7 +148,7 @@ func (lv *LauncherVersion) GetLauncherUsersByLauncherVersionID(ctx context.Conte
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var dbLauncherUsers []*LauncherUserTable
+	var dbLauncherUsers []*migrate.LauncherUserTable
 	err = db.
 		Where("launcher_version_id = ?", uuid.UUID(launcherVersionID)).
 		Find(&dbLauncherUsers).Error
@@ -181,8 +182,8 @@ func (lv *LauncherVersion) GetLauncherVersionAndUserAndSessionByAccessToken(ctx 
 			CreatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 			DeletedAt        gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
 		} `gorm:"embedded;embeddedPrefix:launcher_versions_"`
-		LauncherUser    LauncherUserTable    `gorm:"embedded;embeddedPrefix:launcher_users_"`
-		LauncherSession LauncherSessionTable `gorm:"embedded;embeddedPrefix:launcher_sessions_"`
+		LauncherUser    migrate.LauncherUserTable    `gorm:"embedded;embeddedPrefix:launcher_users_"`
+		LauncherSession migrate.LauncherSessionTable `gorm:"embedded;embeddedPrefix:launcher_sessions_"`
 	}
 
 	var scanStruct LauncherVersion
@@ -245,15 +246,15 @@ func (lv *LauncherVersion) AddGamesToLauncherVersion(ctx context.Context, launch
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameTables := make([]*GameTable, 0, len(gameIDs))
+	gameTables := make([]*migrate.GameTable, 0, len(gameIDs))
 	for _, gameID := range gameIDs {
-		gameTables = append(gameTables, &GameTable{
+		gameTables = append(gameTables, &migrate.GameTable{
 			ID: uuid.UUID(gameID),
 		})
 	}
 
 	err = db.
-		Model(&LauncherVersionTable{
+		Model(&migrate.LauncherVersionTable{
 			ID: uuid.UUID(launcherVersionID),
 		}).
 		Association("Games").
