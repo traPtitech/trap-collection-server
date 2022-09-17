@@ -25,6 +25,14 @@ type StorageSwift interface {
 	TmpURLKey() (string, error)
 }
 
+type StorageS3 interface {
+	AccessKeyID() (string, error)
+	SecretAccessKey() (string, error)
+	Region() (string, error)
+	Bucket() (string, error)
+	Endpoint() (string, error)
+}
+
 type StorageLocal interface {
 	Path() (string, error)
 }

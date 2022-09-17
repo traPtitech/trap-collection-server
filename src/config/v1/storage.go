@@ -105,6 +105,57 @@ func (*StorageSwift) TmpURLKey() (string, error) {
 	return swiftTmpURLKey, nil
 }
 
+type StorageS3 struct{}
+
+func NewStorageS3() *StorageS3 {
+	return &StorageS3{}
+}
+
+func (*StorageS3) AccessKeyID() (string, error) {
+	s3AccessKeyID, ok := os.LookupEnv(envKeyS3AccessKeyID)
+	if !ok {
+		return "", errors.New("S3_ACCESS_KEY_ID is not set")
+	}
+
+	return s3AccessKeyID, nil
+}
+
+func (*StorageS3) SecretAccessKey() (string, error) {
+	s3SecretAccessKey, ok := os.LookupEnv(envKeyS3SecretAccessKey)
+	if !ok {
+		return "", errors.New("S3_SECRET_ACCESS_KEY is not set")
+	}
+
+	return s3SecretAccessKey, nil
+}
+
+func (*StorageS3) Region() (string, error) {
+	s3Region, ok := os.LookupEnv(envKeyS3Region)
+	if !ok {
+		return "", errors.New("S3_REGION is not set")
+	}
+
+	return s3Region, nil
+}
+
+func (*StorageS3) Bucket() (string, error) {
+	s3Bucket, ok := os.LookupEnv(envKeyS3Bucket)
+	if !ok {
+		return "", errors.New("S3_BUCKET is not set")
+	}
+
+	return s3Bucket, nil
+}
+
+func (*StorageS3) Endpoint() (string, error) {
+	s3Endpoint, ok := os.LookupEnv(envKeyS3Endpoint)
+	if !ok {
+		return "", errors.New("S3_ENDPOINT is not set")
+	}
+
+	return s3Endpoint, nil
+}
+
 type StorageLocal struct{}
 
 func NewStorageLocal() *StorageLocal {
