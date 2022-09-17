@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
+	"github.com/traPtitech/trap-collection-server/src/storage/s3"
 	"github.com/traPtitech/trap-collection-server/src/storage/swift"
 )
 
@@ -44,6 +45,7 @@ func storageSwitch(
 	conf config.Storage,
 	swiftConf config.StorageSwift,
 	localConf config.StorageLocal,
+	s3Conf config.StorageS3,
 ) (*Storage, error) {
 	storageType, err := conf.Type()
 	if err != nil {
@@ -55,6 +57,8 @@ func storageSwitch(
 		return injectSwiftStorage(swiftConf)
 	case config.StorageTypeLocal:
 		return injectLocalStorage(localConf)
+	case config.StorageTypeS3:
+		return injectS3Storage(s3Conf)
 	}
 
 	return nil, fmt.Errorf("unknown storage type: %d", storageType)
@@ -87,6 +91,23 @@ func injectLocalStorage(conf config.StorageLocal) (*Storage, error) {
 		local.NewGameImage,
 		local.NewGameVideo,
 		local.NewGameFile,
+
+		newStorage,
+	)
+
+	return nil, nil
+}
+
+func injectS3Storage(conf config.StorageS3) (*Storage, error) {
+	wire.Build(
+		wire.Bind(new(storage.GameImage), new(*s3.GameImage)),
+		wire.Bind(new(storage.GameVideo), new(*s3.GameVideo)),
+		wire.Bind(new(storage.GameFile), new(*s3.GameFile)),
+
+		s3.NewClient,
+		s3.NewGameImage,
+		s3.NewGameVideo,
+		s3.NewGameFile,
 
 		newStorage,
 	)

@@ -9,6 +9,7 @@ type StorageType int8
 const (
 	StorageTypeSwift StorageType = iota + 1
 	StorageTypeLocal
+	StorageTypeS3
 )
 
 type Storage interface {

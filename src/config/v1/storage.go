@@ -26,6 +26,8 @@ func (*Storage) Type() (config.StorageType, error) {
 		return config.StorageTypeSwift, nil
 	case "local":
 		return config.StorageTypeLocal, nil
+	case "s3":
+		return config.StorageTypeS3, nil
 	}
 
 	return 0, errors.New("invalid storage")
