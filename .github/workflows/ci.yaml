@@ -20,14 +20,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mariadb:10.6.4
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: trap_collection
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -35,23 +27,16 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: go generate ./...
-      - run: go test ./src/... -v -coverprofile=./coverage.txt -race -vet=off
-        env:
-          COLLECTION_ENV: production
-          DB_USERNAME: root
-          DB_PASSWORD: password
-          DB_HOSTNAME: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: trap_collection
+      - run: docker compose -f docker/test/compose.yaml up --abort-on-container-exit
       - name: Upload coverage data
         uses: codecov/codecov-action@v3.1.0
         with:
-          file: ./coverage.txt
+          file: ./tmp/coverage/coverage.txt
           yml: ./codecov.yml
       - uses: actions/upload-artifact@v3
         with:
           name: coverage.txt
-          path: coverage.txt
+          path: ./tmp/coverage/coverage.txt
   lint:
     name: Lint
     runs-on: ubuntu-latest
