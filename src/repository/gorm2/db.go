@@ -77,7 +77,7 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	err = migrate.Migrate(db)
+	err = migrate.Migrate(db, appConf.FeatureV2())
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate: %w", err)
 	}

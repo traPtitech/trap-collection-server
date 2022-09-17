@@ -14,7 +14,7 @@ var (
 	}
 )
 
-func Migrate(db *gorm.DB) error {
+func Migrate(db *gorm.DB, featureV2 bool) error {
 	m := gormigrate.New(db.Session(&gorm.Session{}), &gormigrate.Options{
 		TableName:                 "migrations",
 		IDColumnName:              "id",
@@ -52,9 +52,16 @@ func Migrate(db *gorm.DB) error {
 		return nil
 	})
 
-	err := m.Migrate()
-	if err != nil {
-		return fmt.Errorf("failed to migrate: %w", err)
+	if featureV2 {
+		err := m.Migrate()
+		if err != nil {
+			return fmt.Errorf("failed to migrate: %w", err)
+		}
+	} else {
+		err := m.MigrateTo("1")
+		if err != nil {
+			return fmt.Errorf("failed to migrate to v1: %w", err)
+		}
 	}
 
 	return nil
