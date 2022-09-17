@@ -11,4 +11,5 @@ const (
 
 type App interface {
 	Status() (AppStatus, error)
+	FeatureV2() bool
 }

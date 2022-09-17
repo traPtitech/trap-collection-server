@@ -4,6 +4,7 @@ type envKey = string
 
 const (
 	envKeyCollectionEnv envKey = "COLLECTION_ENV"
+	envKeyFeatureV2     envKey = "FEATURE_V2"
 
 	envKeyStorage envKey = "STORAGE"
 
