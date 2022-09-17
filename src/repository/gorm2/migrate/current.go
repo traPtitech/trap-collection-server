@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	tables = []any{
+	v1Tables = []any{
 		&GameTable{},
 		&GameVersionTable{},
 		&GameURLTable{},
@@ -167,3 +167,15 @@ func setupGameManagementRoleTypeTable(db *gorm.DB) error {
 
 	return nil
 }
+
+// アプリケーションのv2
+type (
+	GameTable2        = GameTable2V2 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameVersionTable2 = GameVersionTable2V2
+	GameFileTable2    = GameFileTable2V2
+	GameImageTable2   = GameImageTable2V2
+	GameVideoTable2   = GameVideoTable2V2
+	EditionTable2     = EditionTableV2
+	ProductKeyTable2  = ProductKeyTableV2
+	AccessTokenTable2 = AccessTokenTableV2
+)

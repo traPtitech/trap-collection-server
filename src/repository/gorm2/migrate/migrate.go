@@ -10,11 +10,12 @@ import (
 var (
 	migrations = []*gormigrate.Migration{
 		v1(), // アプリケーションのv1時へのマイグレーション
+		v2(), // アプリケーションのv2用テーブルの追加
 	}
 )
 
 func Migrate(db *gorm.DB) error {
-	m := gormigrate.New(db, &gormigrate.Options{
+	m := gormigrate.New(db.Session(&gorm.Session{}), &gormigrate.Options{
 		TableName:                 "migrations",
 		IDColumnName:              "id",
 		IDColumnSize:              190,
