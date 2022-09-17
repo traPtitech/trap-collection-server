@@ -121,10 +121,7 @@ func InjectApp() (*App, error) {
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_3.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	game := gorm2.NewGame(db)
-	gameManagementRole, err := gorm2.NewGameManagementRole(db)
-	if err != nil {
-		return nil, err
-	}
+	gameManagementRole := gorm2.NewGameManagementRole(db)
 	gameAuth := v1_3.NewGameAuth(db, game, gameManagementRole, userUtils)
 	oidc, err := traq.NewOIDC(authTraQ)
 	if err != nil {
@@ -141,10 +138,7 @@ func InjectApp() (*App, error) {
 	v1Game := v1_3.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
 	game2 := v1_2.NewGame(v1Session, v1Game)
 	gameRole := v1_2.NewGameRole(v1Session, gameAuth)
-	gameImage, err := gorm2.NewGameImage(db)
-	if err != nil {
-		return nil, err
-	}
+	gameImage := gorm2.NewGameImage(db)
 	storage := v1.NewStorage()
 	storageSwift := v1.NewStorageSwift()
 	storageLocal := v1.NewStorageLocal()
@@ -156,19 +150,13 @@ func InjectApp() (*App, error) {
 	storageGameImage := wireStorage.GameImage
 	v1GameImage := v1_3.NewGameImage(db, game, gameImage, storageGameImage)
 	gameImage2 := v1_2.NewGameImage(v1GameImage)
-	gameVideo, err := gorm2.NewGameVideo(db)
-	if err != nil {
-		return nil, err
-	}
+	gameVideo := gorm2.NewGameVideo(db)
 	storageGameVideo := wireStorage.GameVideo
 	v1GameVideo := v1_3.NewGameVideo(db, game, gameVideo, storageGameVideo)
 	gameVideo2 := v1_2.NewGameVideo(v1GameVideo)
 	v1GameVersion := v1_3.NewGameVersion(db, game, gameVersion)
 	gameVersion2 := v1_2.NewGameVersion(v1GameVersion)
-	gameFile, err := gorm2.NewGameFile(db)
-	if err != nil {
-		return nil, err
-	}
+	gameFile := gorm2.NewGameFile(db)
 	storageGameFile := wireStorage.GameFile
 	v1GameFile := v1_3.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
 	gameFile2 := v1_2.NewGameFile(v1GameFile)
