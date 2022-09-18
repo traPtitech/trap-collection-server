@@ -23,35 +23,6 @@ func Migrate(db *gorm.DB, featureV2 bool) error {
 		ValidateUnknownMigrations: true,
 	}, migrations)
 
-	m.InitSchema(func(db *gorm.DB) error {
-		err := db.AutoMigrate(v1Tables...)
-		if err != nil {
-			return fmt.Errorf("failed to init schema: %w", err)
-		}
-
-		err = setupGameFileTypeTable(db)
-		if err != nil {
-			return fmt.Errorf("failed to setup game file type table: %w", err)
-		}
-
-		err = setupGameImageTypeTable(db)
-		if err != nil {
-			return fmt.Errorf("failed to setup game image type table: %w", err)
-		}
-
-		err = setupGameVideoTypeTable(db)
-		if err != nil {
-			return fmt.Errorf("failed to setup game video type table: %w", err)
-		}
-
-		err = setupGameManagementRoleTypeTable(db)
-		if err != nil {
-			return fmt.Errorf("failed to setup game management role type table: %w", err)
-		}
-
-		return nil
-	})
-
 	if featureV2 {
 		err := m.Migrate()
 		if err != nil {
