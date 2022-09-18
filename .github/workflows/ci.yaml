@@ -16,6 +16,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - run: go generate ./src/handler/v2/api.go
       - run: go build -o collection
   test:
     name: Test
