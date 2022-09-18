@@ -52,16 +52,18 @@ func (*GameTable2V2) TableName() string {
 }
 
 type GameVersionTable2V2 struct {
-	ID          uuid.UUID          `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID      uuid.UUID          `gorm:"type:varchar(36);not null"`
-	GameImageID uuid.UUID          `gorm:"type:varchar(36);not null"`
-	GameVideoID uuid.UUID          `gorm:"type:varchar(36);not null"`
-	Name        string             `gorm:"type:varchar(32);size:32;not null"`
-	Description string             `gorm:"type:text;not null"`
-	CreatedAt   time.Time          `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	GameFiles   []GameFileTable2V2 `gorm:"many2many:game_version_game_file_relations"`
-	GameImage   GameImageTable2V2  `gorm:"foreignKey:GameImageID"`
-	GameVideo   GameVideoTable2V2  `gorm:"foreignKey:GameVideoID"`
+	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID      uuid.UUID `gorm:"type:varchar(36);not null"`
+	GameImageID uuid.UUID `gorm:"type:varchar(36);not null"`
+	GameVideoID uuid.UUID `gorm:"type:varchar(36);not null"`
+	Name        string    `gorm:"type:varchar(32);size:32;not null"`
+	Description string    `gorm:"type:text;not null"`
+	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	// migrationのv2以降でも不自然でないように、
+	// joinForeignKey、joinReferencesを指定している
+	GameFiles []GameFileTable2V2 `gorm:"many2many:game_version_game_file_relations;joinForeignKey:GameVersionID;joinReferences:GameFileID"`
+	GameImage GameImageTable2V2  `gorm:"foreignKey:GameImageID"`
+	GameVideo GameVideoTable2V2  `gorm:"foreignKey:GameVideoID"`
 }
 
 func (*GameVersionTable2V2) TableName() string {
@@ -113,7 +115,7 @@ type EditionTableV2 struct {
 	CreatedAt        time.Time             `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt        gorm.DeletedAt        `gorm:"type:DATETIME NULL;default:NULL"`
 	ProductKeys      []ProductKeyTableV2   `gorm:"foreignKey:EditionID"`
-	Games            []GameVersionTable2V2 `gorm:"many2many:launcher_version_game_relations;"`
+	GameVersions     []GameVersionTable2V2 `gorm:"many2many:edition_game_version_relations;joinForeignKey:EditionID;joinReferences:GameVersionID"`
 }
 
 func (*EditionTableV2) TableName() string {

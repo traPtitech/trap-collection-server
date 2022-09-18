@@ -328,7 +328,9 @@ type launcherVersionTableV1 struct {
 	CreatedAt        time.Time             `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt        gorm.DeletedAt        `gorm:"type:DATETIME NULL;default:NULL"`
 	LauncherUsers    []launcherUserTableV1 `gorm:"foreignKey:LauncherVersionID"`
-	Games            []gameTableV1         `gorm:"many2many:launcher_version_game_relations;"`
+	// gormigrateを使用していなかったv1との互換性のため、
+	// joinForeignKey、joinReferencesを指定している
+	Games []gameTableV1 `gorm:"many2many:launcher_version_game_relations;joinForeignKey:LauncherVersionTableID;joinReferences:GameTableID"`
 }
 
 func (*launcherVersionTableV1) TableName() string {
