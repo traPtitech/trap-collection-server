@@ -44,3 +44,8 @@ services:
       MINIO_DOMAIN: s3
       MINIO_SITE_REGION: us-east-1
     command: server /data --console-address :9001
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck.sh"]
+      timeout: 5m
+      interval: 1s
+      retries: 1000
