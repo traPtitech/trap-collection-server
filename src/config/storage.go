@@ -9,6 +9,7 @@ type StorageType int8
 const (
 	StorageTypeSwift StorageType = iota + 1
 	StorageTypeLocal
+	StorageTypeS3
 )
 
 type Storage interface {
@@ -23,6 +24,14 @@ type StorageSwift interface {
 	TenantName() (string, error)
 	Container() (string, error)
 	TmpURLKey() (string, error)
+}
+
+type StorageS3 interface {
+	AccessKeyID() (string, error)
+	SecretAccessKey() (string, error)
+	Region() (string, error)
+	Bucket() (string, error)
+	Endpoint() (string, error)
 }
 
 type StorageLocal interface {

@@ -9,9 +9,14 @@ services:
       COLLECTION_ENV: development
     volumes:
       - ../../:/go/src/github.com/traPtitech/trap-collection-server
+      - ../../tmp/coverage:/tmp/coverage
     working_dir: /go/src/github.com/traPtitech/trap-collection-server
-    command: go test ./src/repository/... -v -cover -race
+    command: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
   mariadb:
     extends:
       file: ../base/compose.yaml
       service: mariadb
+  s3:
+    extends:
+      file: ../base/compose.yaml
+      service: s3
