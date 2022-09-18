@@ -1,0 +1,34 @@
+services:
+  collection-server:
+    extends:
+      file: ../base/compose.yaml
+      service: collection-server
+    build:
+      dockerfile: ./docker/production/Dockerfile
+    restart: always
+    environment:
+      COLLECTION_ENV: development
+      FEATURE_V2: true
+      STORAGE: local
+      ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
+      FILE_PATH: ./cache
+      CLIENT_ID: "" # tblsの生成では使わないので空文字列
+      CLIENT_SECRET: "" # tblsの生成では使わないので空文字列
+      SESSION_SECRET: secret
+  mariadb:
+    extends:
+      file: ../base/compose.yaml
+      service: mariadb
+  tbls:
+    image: k1low/tbls:v1.56.2
+    environment:
+      TBLS_DSN: mariadb://root:pass@mariadb:3306/trap_collection
+    volumes:
+      - ../../:/work
+    working_dir: /work
+    command: doc
+    depends_on:
+      collection-server:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
