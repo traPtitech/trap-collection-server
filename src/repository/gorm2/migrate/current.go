@@ -2,20 +2,20 @@ package migrate
 
 // アプリケーションのv1
 type (
-	GameTable                   = gameTableV1
-	GameVersionTable            = gameVersionTableV1
-	GameURLTable                = gameURLTableV1
-	GameFileTable               = gameFileTableV1
-	GameFileTypeTable           = gameFileTypeTableV1
-	GameImageTable              = gameImageTableV1
-	GameImageTypeTable          = gameImageTypeTableV1
-	GameVideoTable              = gameVideoTableV1
-	GameVideoTypeTable          = gameVideoTypeTableV1
-	GameManagementRoleTable     = gameManagementRoleTableV1
-	GameManagementRoleTypeTable = gameManagementRoleTypeTableV1
-	LauncherVersionTable        = launcherVersionTableV1
-	LauncherUserTable           = launcherUserTableV1
-	LauncherSessionTable        = launcherSessionTableV1
+	GameTable                   = gameTable
+	GameVersionTable            = gameVersionTable
+	GameURLTable                = gameURLTable
+	GameFileTable               = gameFileTable
+	GameFileTypeTable           = gameFileTypeTable
+	GameImageTable              = gameImageTable
+	GameImageTypeTable          = gameImageTypeTable
+	GameVideoTable              = gameVideoTable
+	GameVideoTypeTable          = gameVideoTypeTable
+	GameManagementRoleTable     = gameManagementRoleTable
+	GameManagementRoleTypeTable = gameManagementRoleTypeTable
+	LauncherVersionTable        = launcherVersionTable
+	LauncherUserTable           = launcherUserTable
+	LauncherSessionTable        = launcherSessionTable
 )
 
 const (
@@ -41,12 +41,12 @@ const (
 
 // アプリケーションのv2
 type (
-	GameTable2        = GameTable2V2 // 実際に使用されるテーブルはv1のGameTableと同一
-	GameVersionTable2 = GameVersionTable2V2
-	GameFileTable2    = GameFileTable2V2
-	GameImageTable2   = GameImageTable2V2
-	GameVideoTable2   = GameVideoTable2V2
-	EditionTable2     = EditionTableV2
-	ProductKeyTable2  = ProductKeyTableV2
-	AccessTokenTable2 = AccessTokenTableV2
+	GameTable2        = gameTable2V2 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameVersionTable2 = gameVersionTable2V2
+	GameFileTable2    = gameFileTable2V2
+	GameImageTable2   = gameImageTable2V2
+	GameVideoTable2   = gameVideoTable2V2
+	EditionTable2     = editionTableV2
+	ProductKeyTable2  = productKeyTableV2
+	AccessTokenTable2 = accessTokenTableV2
 )

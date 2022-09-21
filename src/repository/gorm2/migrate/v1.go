@@ -1,5 +1,9 @@
 package migrate
 
+// 注意:
+// 以前のマイグレーションとの互換性を保つために、
+// 他のバージョンとは違いテーブル名にV1のようなバージョンをつけない
+
 import (
 	"database/sql"
 	"fmt"
@@ -14,20 +18,20 @@ import (
 // アプリケーションのv1時のマイグレーション
 func v1() *gormigrate.Migration {
 	tables := []any{
-		&gameTableV1{},
-		&gameVersionTableV1{},
-		&gameURLTableV1{},
-		&gameFileTableV1{},
-		&gameFileTypeTableV1{},
-		&gameImageTableV1{},
-		&gameImageTypeTableV1{},
-		&gameVideoTableV1{},
-		&gameVideoTypeTableV1{},
-		&gameManagementRoleTableV1{},
-		&gameManagementRoleTypeTableV1{},
-		&launcherVersionTableV1{},
-		&launcherUserTableV1{},
-		&launcherSessionTableV1{},
+		&gameTable{},
+		&gameVersionTable{},
+		&gameURLTable{},
+		&gameFileTable{},
+		&gameFileTypeTable{},
+		&gameImageTable{},
+		&gameImageTypeTable{},
+		&gameVideoTable{},
+		&gameVideoTypeTable{},
+		&gameManagementRoleTable{},
+		&gameManagementRoleTypeTable{},
+		&launcherVersionTable{},
+		&launcherUserTable{},
+		&launcherSessionTable{},
 	}
 
 	return &gormigrate.Migration{
@@ -66,58 +70,58 @@ func v1() *gormigrate.Migration {
 	}
 }
 
-type gameTableV1 struct {
-	ID                  uuid.UUID                   `gorm:"type:varchar(36);not null;primaryKey"`
-	Name                string                      `gorm:"type:varchar(256);size:256;not null"`
-	Description         string                      `gorm:"type:text;not null"`
-	CreatedAt           time.Time                   `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt           gorm.DeletedAt              `gorm:"type:DATETIME NULL;default:NULL"`
-	GameVersions        []gameVersionTableV1        `gorm:"foreignkey:GameID"`
-	GameManagementRoles []gameManagementRoleTableV1 `gorm:"foreignKey:GameID"`
-	GameImages          []gameImageTableV1          `gorm:"foreignKey:GameID"`
-	GameVideos          []gameVideoTableV1          `gorm:"foreignKey:GameID"`
+type gameTable struct {
+	ID                  uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
+	Name                string                    `gorm:"type:varchar(256);size:256;not null"`
+	Description         string                    `gorm:"type:text;not null"`
+	CreatedAt           time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt           gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
+	GameVersions        []gameVersionTable        `gorm:"foreignkey:GameID"`
+	GameManagementRoles []gameManagementRoleTable `gorm:"foreignKey:GameID"`
+	GameImages          []gameImageTable          `gorm:"foreignKey:GameID"`
+	GameVideos          []gameVideoTable          `gorm:"foreignKey:GameID"`
 }
 
-func (*gameTableV1) TableName() string {
+func (*gameTable) TableName() string {
 	return "games"
 }
 
-type gameVersionTableV1 struct {
-	ID          uuid.UUID         `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID      uuid.UUID         `gorm:"type:varchar(36);not null"`
-	Name        string            `gorm:"type:varchar(32);size:32;not null"`
-	Description string            `gorm:"type:text;not null"`
-	CreatedAt   time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	GameFiles   []gameFileTableV1 `gorm:"foreignKey:GameVersionID"`
-	GameURL     gameURLTableV1    `gorm:"foreignKey:GameVersionID"`
+type gameVersionTable struct {
+	ID          uuid.UUID       `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID      uuid.UUID       `gorm:"type:varchar(36);not null"`
+	Name        string          `gorm:"type:varchar(32);size:32;not null"`
+	Description string          `gorm:"type:text;not null"`
+	CreatedAt   time.Time       `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameFiles   []gameFileTable `gorm:"foreignKey:GameVersionID"`
+	GameURL     gameURLTable    `gorm:"foreignKey:GameVersionID"`
 }
 
-func (*gameVersionTableV1) TableName() string {
+func (*gameVersionTable) TableName() string {
 	return "game_versions"
 }
 
-type gameURLTableV1 struct {
+type gameURLTable struct {
 	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
 	GameVersionID uuid.UUID `gorm:"type:varchar(36);not null;unique"`
 	URL           string    `gorm:"type:text;not null"`
 	CreatedAt     time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 }
 
-func (*gameURLTableV1) TableName() string {
+func (*gameURLTable) TableName() string {
 	return "game_urls"
 }
 
-type gameFileTableV1 struct {
-	ID            uuid.UUID           `gorm:"type:varchar(36);not null;primaryKey"`
-	GameVersionID uuid.UUID           `gorm:"type:varchar(36);not null;index:idx_game_file_unique,unique"`
-	FileTypeID    int                 `gorm:"type:tinyint;not null;index:idx_game_file_unique,unique"`
-	Hash          string              `gorm:"type:char(32);size:32;not null"`
-	EntryPoint    string              `gorm:"type:text;not null"`
-	CreatedAt     time.Time           `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	GameFileType  gameFileTypeTableV1 `gorm:"foreignKey:FileTypeID"`
+type gameFileTable struct {
+	ID            uuid.UUID         `gorm:"type:varchar(36);not null;primaryKey"`
+	GameVersionID uuid.UUID         `gorm:"type:varchar(36);not null;index:idx_game_file_unique,unique"`
+	FileTypeID    int               `gorm:"type:tinyint;not null;index:idx_game_file_unique,unique"`
+	Hash          string            `gorm:"type:char(32);size:32;not null"`
+	EntryPoint    string            `gorm:"type:text;not null"`
+	CreatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameFileType  gameFileTypeTable `gorm:"foreignKey:FileTypeID"`
 }
 
-func (*gameFileTableV1) TableName() string {
+func (*gameFileTable) TableName() string {
 	return "game_files"
 }
 
@@ -127,18 +131,18 @@ const (
 	gameFileTypeMacV1     = "mac"
 )
 
-type gameFileTypeTableV1 struct {
+type gameFileTypeTable struct {
 	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
 	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
 	Active bool   `gorm:"type:boolean;default:true"`
 }
 
-func (*gameFileTypeTableV1) TableName() string {
+func (*gameFileTypeTable) TableName() string {
 	return "game_file_types"
 }
 
 func setupGameFileTypeTableV1(db *gorm.DB) error {
-	fileTypes := []gameFileTypeTableV1{
+	fileTypes := []gameFileTypeTable{
 		{
 			Name:   gameFileTypeJarV1,
 			Active: true,
@@ -166,15 +170,15 @@ func setupGameFileTypeTableV1(db *gorm.DB) error {
 	return nil
 }
 
-type gameImageTableV1 struct {
-	ID            uuid.UUID            `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID        uuid.UUID            `gorm:"type:varchar(36);not null"`
-	ImageTypeID   int                  `gorm:"type:tinyint;not null"`
-	CreatedAt     time.Time            `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	GameImageType gameImageTypeTableV1 `gorm:"foreignKey:ImageTypeID"`
+type gameImageTable struct {
+	ID            uuid.UUID          `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID          `gorm:"type:varchar(36);not null"`
+	ImageTypeID   int                `gorm:"type:tinyint;not null"`
+	CreatedAt     time.Time          `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameImageType gameImageTypeTable `gorm:"foreignKey:ImageTypeID"`
 }
 
-func (*gameImageTableV1) TableName() string {
+func (*gameImageTable) TableName() string {
 	return "game_images"
 }
 
@@ -184,18 +188,18 @@ const (
 	gameImageTypeGifV1  = "gif"
 )
 
-type gameImageTypeTableV1 struct {
+type gameImageTypeTable struct {
 	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
 	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
 	Active bool   `gorm:"type:boolean;default:true"`
 }
 
-func (*gameImageTypeTableV1) TableName() string {
+func (*gameImageTypeTable) TableName() string {
 	return "game_image_types"
 }
 
 func setupGameImageTypeTableV1(db *gorm.DB) error {
-	imageTypes := []gameImageTypeTableV1{
+	imageTypes := []gameImageTypeTable{
 		{
 			Name:   gameImageTypeJpegV1,
 			Active: true,
@@ -223,15 +227,15 @@ func setupGameImageTypeTableV1(db *gorm.DB) error {
 	return nil
 }
 
-type gameVideoTableV1 struct {
-	ID            uuid.UUID            `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID        uuid.UUID            `gorm:"type:varchar(36);not null"`
-	VideoTypeID   int                  `gorm:"type:tinyint;not null"`
-	CreatedAt     time.Time            `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	GameVideoType gameVideoTypeTableV1 `gorm:"foreignKey:VideoTypeID"`
+type gameVideoTable struct {
+	ID            uuid.UUID          `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID          `gorm:"type:varchar(36);not null"`
+	VideoTypeID   int                `gorm:"type:tinyint;not null"`
+	CreatedAt     time.Time          `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameVideoType gameVideoTypeTable `gorm:"foreignKey:VideoTypeID"`
 }
 
-func (*gameVideoTableV1) TableName() string {
+func (*gameVideoTable) TableName() string {
 	return "game_videos"
 }
 
@@ -239,18 +243,18 @@ const (
 	gameVideoTypeMp4V1 = "mp4"
 )
 
-type gameVideoTypeTableV1 struct {
+type gameVideoTypeTable struct {
 	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
 	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
 	Active bool   `gorm:"type:boolean;default:true"`
 }
 
-func (*gameVideoTypeTableV1) TableName() string {
+func (*gameVideoTypeTable) TableName() string {
 	return "game_video_types"
 }
 
 func setupGameVideoTypeTableV1(db *gorm.DB) error {
-	videoTypes := []gameVideoTypeTableV1{
+	videoTypes := []gameVideoTypeTable{
 		{
 			Name:   gameVideoTypeMp4V1,
 			Active: true,
@@ -270,14 +274,14 @@ func setupGameVideoTypeTableV1(db *gorm.DB) error {
 	return nil
 }
 
-type gameManagementRoleTableV1 struct {
-	GameID        uuid.UUID                     `gorm:"type:varchar(36);not null;primaryKey"`
-	UserID        uuid.UUID                     `gorm:"type:varchar(36);not null;primaryKey"`
-	RoleTypeID    int                           `gorm:"type:tinyint;not null"`
-	RoleTypeTable gameManagementRoleTypeTableV1 `gorm:"foreignKey:RoleTypeID"`
+type gameManagementRoleTable struct {
+	GameID        uuid.UUID                   `gorm:"type:varchar(36);not null;primaryKey"`
+	UserID        uuid.UUID                   `gorm:"type:varchar(36);not null;primaryKey"`
+	RoleTypeID    int                         `gorm:"type:tinyint;not null"`
+	RoleTypeTable gameManagementRoleTypeTable `gorm:"foreignKey:RoleTypeID"`
 }
 
-func (*gameManagementRoleTableV1) TableName() string {
+func (*gameManagementRoleTable) TableName() string {
 	return "game_management_roles"
 }
 
@@ -286,18 +290,18 @@ const (
 	gameManagementRoleTypeCollaboratorV1  = "collaborator"
 )
 
-type gameManagementRoleTypeTableV1 struct {
+type gameManagementRoleTypeTable struct {
 	ID     int    `gorm:"type:TINYINT AUTO_INCREMENT;not null;primaryKey"`
 	Name   string `gorm:"type:varchar(32);size:32;not null;unique"`
 	Active bool   `gorm:"type:boolean;default:true"`
 }
 
-func (*gameManagementRoleTypeTableV1) TableName() string {
+func (*gameManagementRoleTypeTable) TableName() string {
 	return "game_management_role_types"
 }
 
 func setupGameManagementRoleTypeTableV1(db *gorm.DB) error {
-	roleTypes := []gameManagementRoleTypeTableV1{
+	roleTypes := []gameManagementRoleTypeTable{
 		{
 			Name:   gameManagementRoleTypeAdministratorV1,
 			Active: true,
@@ -321,36 +325,36 @@ func setupGameManagementRoleTypeTableV1(db *gorm.DB) error {
 	return nil
 }
 
-type launcherVersionTableV1 struct {
-	ID               uuid.UUID             `gorm:"type:varchar(36);not null;primaryKey"`
-	Name             string                `gorm:"type:varchar(32);not null;unique"`
-	QuestionnaireURL sql.NullString        `gorm:"type:text;default:NULL"`
-	CreatedAt        time.Time             `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt        gorm.DeletedAt        `gorm:"type:DATETIME NULL;default:NULL"`
-	LauncherUsers    []launcherUserTableV1 `gorm:"foreignKey:LauncherVersionID"`
+type launcherVersionTable struct {
+	ID               uuid.UUID           `gorm:"type:varchar(36);not null;primaryKey"`
+	Name             string              `gorm:"type:varchar(32);not null;unique"`
+	QuestionnaireURL sql.NullString      `gorm:"type:text;default:NULL"`
+	CreatedAt        time.Time           `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt        gorm.DeletedAt      `gorm:"type:DATETIME NULL;default:NULL"`
+	LauncherUsers    []launcherUserTable `gorm:"foreignKey:LauncherVersionID"`
 	// gormigrateを使用していなかったv1との互換性のため、
 	// joinForeignKey、joinReferencesを指定している
-	Games []gameTableV1 `gorm:"many2many:launcher_version_game_relations;joinForeignKey:LauncherVersionTableID;joinReferences:GameTableID"`
+	Games []gameTable `gorm:"many2many:launcher_version_game_relations"`
 }
 
-func (*launcherVersionTableV1) TableName() string {
+func (*launcherVersionTable) TableName() string {
 	return "launcher_versions"
 }
 
-type launcherUserTableV1 struct {
-	ID                uuid.UUID                `gorm:"type:varchar(36);not null;primaryKey"`
-	LauncherVersionID uuid.UUID                `gorm:"type:varchar(36);not null"`
-	ProductKey        string                   `gorm:"type:varchar(29);not null;unique"`
-	CreatedAt         time.Time                `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt         gorm.DeletedAt           `gorm:"type:DATETIME NULL;default:NULL"`
-	LauncherSessions  []launcherSessionTableV1 `gorm:"foreignKey:LauncherUserID"`
+type launcherUserTable struct {
+	ID                uuid.UUID              `gorm:"type:varchar(36);not null;primaryKey"`
+	LauncherVersionID uuid.UUID              `gorm:"type:varchar(36);not null"`
+	ProductKey        string                 `gorm:"type:varchar(29);not null;unique"`
+	CreatedAt         time.Time              `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt         gorm.DeletedAt         `gorm:"type:DATETIME NULL;default:NULL"`
+	LauncherSessions  []launcherSessionTable `gorm:"foreignKey:LauncherUserID"`
 }
 
-func (*launcherUserTableV1) TableName() string {
+func (*launcherUserTable) TableName() string {
 	return "launcher_users"
 }
 
-type launcherSessionTableV1 struct {
+type launcherSessionTable struct {
 	ID             uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
 	LauncherUserID uuid.UUID      `gorm:"type:varchar(36);not null"`
 	AccessToken    string         `gorm:"type:varchar(64);not null;unique"`
@@ -359,6 +363,6 @@ type launcherSessionTableV1 struct {
 	DeletedAt      gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
 }
 
-func (lst *launcherSessionTableV1) TableName() string {
+func (lst *launcherSessionTable) TableName() string {
 	return "launcher_sessions"
 }
