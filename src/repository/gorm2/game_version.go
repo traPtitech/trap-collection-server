@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -28,7 +29,7 @@ func (gv *GameVersion) CreateGameVersion(ctx context.Context, gameID values.Game
 		return fmt.Errorf("failed to get gorm DB: %w", err)
 	}
 
-	gameVersion := GameVersionTable{
+	gameVersion := migrate.GameVersionTable{
 		ID:          uuid.UUID(version.GetID()),
 		GameID:      uuid.UUID(gameID),
 		Name:        string(version.GetName()),
@@ -50,7 +51,7 @@ func (gv *GameVersion) GetGameVersions(ctx context.Context, gameID values.GameID
 		return nil, fmt.Errorf("failed to get gorm DB: %w", err)
 	}
 
-	var gameVersions []GameVersionTable
+	var gameVersions []migrate.GameVersionTable
 	err = gormDB.
 		Where("game_id = ?", uuid.UUID(gameID)).
 		Order("created_at desc").
@@ -87,7 +88,7 @@ func (gv *GameVersion) GetLatestGameVersion(ctx context.Context, gameID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersion GameVersionTable
+	var gameVersion migrate.GameVersionTable
 	err = gormDB.
 		Where("game_id = ?", uuid.UUID(gameID)).
 		Order("created_at desc").
@@ -124,19 +125,19 @@ func (gv *GameVersion) GetLatestGameVersionsByGameIDs(ctx context.Context, gameI
 		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
 	}
 
-	var gameVersionTables []GameVersionTable
+	var GameVersionTables []migrate.GameVersionTable
 	err = db.
 		Where("game_versions.game_id in (?)", uuidGameIDs).
 		Joins("JOIN (" +
 			"SELECT game_id, MAX(created_at) AS created_at FROM game_versions GROUP BY game_id" +
 			") as max_versions ON game_versions.game_id = max_versions.game_id AND game_versions.created_at = max_versions.created_at").
-		Find(&gameVersionTables).Error
+		Find(&GameVersionTables).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest game versions: %w", err)
 	}
 
-	gameVersions := make(map[values.GameID]*domain.GameVersion, len(gameVersionTables))
-	for _, gameVersion := range gameVersionTables {
+	gameVersions := make(map[values.GameID]*domain.GameVersion, len(GameVersionTables))
+	for _, gameVersion := range GameVersionTables {
 		gameID := values.NewGameIDFromUUID(gameVersion.GameID)
 		gameVersionID := values.NewGameVersionIDFromUUID(gameVersion.ID)
 		gameVersionName := values.NewGameVersionName(gameVersion.Name)

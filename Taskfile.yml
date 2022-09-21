@@ -1,0 +1,74 @@
+version: '3'
+
+includes:
+  os:
+    taskfile: ./task/Taskfile_{{OS}}.yml
+    internal: true
+
+tasks:
+  default:
+    cmds:
+      - task: download
+      - task: generate
+
+  download:
+    cmds:
+      - task: os:download
+
+  wire:
+    cmds:
+      - task: os:wire
+
+  openapi:
+    cmds:
+      - task: os:openapi
+
+  generate:
+    cmds:
+      - task: os:generate
+
+  dev:
+    cmds:
+      - task: dev:v2
+
+  dev:v2:
+    cmds:
+      - task: os:dev:v2
+    deps:
+      - wire
+      - openapi
+
+  dev:v1:
+    cmds:
+      - task: os:dev:v1
+    deps:
+      - wire
+      - openapi
+
+  dev:down:
+    cmds:
+      - task: os:dev:down
+
+  test:
+    cmds:
+      - task: test:down
+      - task: os:test
+      - task: test:down
+    deps:
+      - generate
+
+  test:down:
+    cmds:
+      - task: os:test:down
+
+  tbls:
+    cmds:
+      - task: os:tbls
+    deps:
+      - wire
+      - openapi
+
+  clean:db:
+    cmds:
+      - task: os:clean:db
+

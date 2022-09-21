@@ -1,0 +1,72 @@
+version: '3'
+
+tasks:
+  download:
+    dir: ../
+    cmds:
+      - go mod download
+
+  wire:
+    dir: ../
+    cmds:
+      - go generate ./src/wire/...
+    sources:
+      - src/wire/*.go
+    generates:
+      - src/wire/wire_gen.go
+
+  openapi:
+    dir: ../
+    cmds:
+      - go generate ./src/handler/v2/api.go
+    sources:
+      - docs/openapi/v2.yaml
+    generates:
+      - src/handler/v2/openapi/openapi.gen.go
+
+  generate:
+    dir: ../
+    cmds:
+      - go generate ./...
+    sources:
+      - "**/*.go"
+
+  dev:v2:
+    dir: ../
+    cmds:
+      - docker compose -f docker/dev/compose.yaml -f docker/dev/v2.yaml up --build
+
+  dev:v1:
+    dir: ../
+    cmds:
+      - docker compose -f docker/dev/compose.yaml up --build
+
+  dev:down:
+    dir: ../
+    cmds:
+      - docker compose -f docker/dev/compose.yaml down
+
+  test:
+    dir: ../
+    cmds:
+      - docker compose -f docker/test/compose.yaml up --build --abort-on-container-exit
+
+  test:down:
+    dir: ../
+    cmds:
+      - docker compose -f docker/test/compose.yaml down
+
+  tbls:
+    dir: ../
+    cmds:
+      - rm -rf docs/db_schema/*
+      - docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
+    sources:
+      - src/repository/gorm2/migrate/*.go
+    generates:
+      - docs/db_schema/*
+
+  clean:db:
+    dir: ../
+    cmds:
+      - rm -rf mysql/data

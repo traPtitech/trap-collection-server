@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 )
 
 func TestCreateLauncherSession(t *testing.T) {
@@ -41,11 +42,11 @@ func TestCreateLauncherSession(t *testing.T) {
 
 	launcherVersionID := values.NewLauncherVersionID()
 	launcherUserID := values.NewLauncherUserID()
-	dbLauncherVersion := LauncherVersionTable{
+	dbLauncherVersion := migrate.LauncherVersionTable{
 		ID:        uuid.UUID(launcherVersionID),
 		Name:      "TestCreateLauncherSession",
 		CreatedAt: time.Now(),
-		LauncherUsers: []LauncherUserTable{
+		LauncherUsers: []migrate.LauncherUserTable{
 			{
 				ID:         uuid.UUID(launcherUserID),
 				ProductKey: string(productKey),
@@ -118,7 +119,7 @@ func TestCreateLauncherSession(t *testing.T) {
 
 			assert.Equal(t, testCase.launcherSession, launcherSession)
 
-			var dbLauncherSession LauncherSessionTable
+			var dbLauncherSession migrate.LauncherSessionTable
 			err = db.
 				Where("id = ?", uuid.UUID(testCase.launcherSession.GetID())).
 				Take(&dbLauncherSession).Error

@@ -13,7 +13,10 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/cache/ristretto"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/config/v1"
+	"github.com/traPtitech/trap-collection-server/src/handler"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	v1_2 "github.com/traPtitech/trap-collection-server/src/handler/v1"
+	"github.com/traPtitech/trap-collection-server/src/handler/v2"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 	v1_3 "github.com/traPtitech/trap-collection-server/src/service/v1"
@@ -82,8 +85,13 @@ func injectS3Storage(conf config.StorageS3) (*Storage, error) {
 // Injectors from wire.go:
 
 func InjectApp() (*App, error) {
-	handlerV1 := v1.NewHandlerV1()
-	session, err := v1_2.NewSession(handlerV1)
+	app := v1.NewApp()
+	v1Handler := v1.NewHandler()
+	session, err := common.NewSession(v1Handler)
+	if err != nil {
+		return nil, err
+	}
+	v1Session, err := v1_2.NewSession(session)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +111,6 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	app := v1.NewApp()
 	repositoryGorm2 := v1.NewRepositoryGorm2()
 	db, err := gorm2.NewDB(app, repositoryGorm2)
 	if err != nil {
@@ -114,10 +121,7 @@ func InjectApp() (*App, error) {
 	launcherSession := gorm2.NewLauncherSession(db)
 	launcherAuth := v1_3.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
 	game := gorm2.NewGame(db)
-	gameManagementRole, err := gorm2.NewGameManagementRole(db)
-	if err != nil {
-		return nil, err
-	}
+	gameManagementRole := gorm2.NewGameManagementRole(db)
 	gameAuth := v1_3.NewGameAuth(db, game, gameManagementRole, userUtils)
 	oidc, err := traq.NewOIDC(authTraQ)
 	if err != nil {
@@ -127,17 +131,14 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	middleware := v1_2.NewMiddleware(session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
+	middleware := v1_2.NewMiddleware(v1Session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
 	v1User := v1_3.NewUser(userUtils)
-	user2 := v1_2.NewUser(session, v1User)
+	user2 := v1_2.NewUser(v1Session, v1User)
 	gameVersion := gorm2.NewGameVersion(db)
 	v1Game := v1_3.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
-	game2 := v1_2.NewGame(session, v1Game)
-	gameRole := v1_2.NewGameRole(session, gameAuth)
-	gameImage, err := gorm2.NewGameImage(db)
-	if err != nil {
-		return nil, err
-	}
+	game2 := v1_2.NewGame(v1Session, v1Game)
+	gameRole := v1_2.NewGameRole(v1Session, gameAuth)
+	gameImage := gorm2.NewGameImage(db)
 	storage := v1.NewStorage()
 	storageSwift := v1.NewStorageSwift()
 	storageLocal := v1.NewStorageLocal()
@@ -149,19 +150,13 @@ func InjectApp() (*App, error) {
 	storageGameImage := wireStorage.GameImage
 	v1GameImage := v1_3.NewGameImage(db, game, gameImage, storageGameImage)
 	gameImage2 := v1_2.NewGameImage(v1GameImage)
-	gameVideo, err := gorm2.NewGameVideo(db)
-	if err != nil {
-		return nil, err
-	}
+	gameVideo := gorm2.NewGameVideo(db)
 	storageGameVideo := wireStorage.GameVideo
 	v1GameVideo := v1_3.NewGameVideo(db, game, gameVideo, storageGameVideo)
 	gameVideo2 := v1_2.NewGameVideo(v1GameVideo)
 	v1GameVersion := v1_3.NewGameVersion(db, game, gameVersion)
 	gameVersion2 := v1_2.NewGameVersion(v1GameVersion)
-	gameFile, err := gorm2.NewGameFile(db)
-	if err != nil {
-		return nil, err
-	}
+	gameFile := gorm2.NewGameFile(db)
 	storageGameFile := wireStorage.GameFile
 	v1GameFile := v1_3.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
 	gameFile2 := v1_2.NewGameFile(v1GameFile)
@@ -171,15 +166,37 @@ func InjectApp() (*App, error) {
 	v1LauncherAuth := v1_2.NewLauncherAuth(launcherAuth)
 	v1LauncherVersion := v1_3.NewLauncherVersion(db, launcherVersion, game)
 	launcherVersion2 := v1_2.NewLauncherVersion(v1LauncherVersion)
-	oAuth2, err := v1_2.NewOAuth2(handlerV1, session, v1OIDC)
+	oAuth2, err := v1_2.NewOAuth2(v1Handler, v1Session, v1OIDC)
 	if err != nil {
 		return nil, err
 	}
-	api, err := v1_2.NewAPI(handlerV1, middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, session)
+	api, err := v1_2.NewAPI(v1Handler, middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, v1Session)
 	if err != nil {
 		return nil, err
 	}
-	wireApp := newApp(api, db)
+	checker := v2.NewChecker()
+	v2Session, err := v2.NewSession(session)
+	if err != nil {
+		return nil, err
+	}
+	v2OAuth2 := v2.NewOAuth2()
+	v2User := v2.NewUser()
+	admin := v2.NewAdmin()
+	v2Game := v2.NewGame()
+	v2GameRole := v2.NewGameRole()
+	v2GameVersion := v2.NewGameVersion()
+	v2GameFile := v2.NewGameFile()
+	v2GameImage := v2.NewGameImage()
+	v2GameVideo := v2.NewGameVideo()
+	edition := v2.NewEdition()
+	editionAuth := v2.NewEditionAuth()
+	seat := v2.NewSeat()
+	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, v2User, admin, v2Game, v2GameRole, v2GameVersion, v2GameFile, v2GameImage, v2GameVideo, edition, editionAuth, seat)
+	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
+	if err != nil {
+		return nil, err
+	}
+	wireApp := newApp(handlerAPI, db)
 	return wireApp, nil
 }
 
@@ -233,11 +250,11 @@ func storageSwitch(
 // wire.go:
 
 type App struct {
-	*v1_2.API
+	*handler.API
 	repository.DB
 }
 
-func newApp(api *v1_2.API, db repository.DB) *App {
+func newApp(api *handler.API, db repository.DB) *App {
 	return &App{
 		API: api,
 		DB:  db,

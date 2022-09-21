@@ -9,6 +9,7 @@ import (
 	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -76,9 +77,9 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	err = db.AutoMigrate(tables...)
+	err = migrate.Migrate(db, appConf.FeatureV2())
 	if err != nil {
-		return nil, fmt.Errorf("failed to auto migrate: %w", err)
+		return nil, fmt.Errorf("failed to migrate: %w", err)
 	}
 
 	err = db.Use(prometheus.New(prometheus.Config{

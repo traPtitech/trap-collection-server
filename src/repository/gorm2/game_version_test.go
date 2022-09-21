@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -32,8 +33,8 @@ func TestCreateGameVersion(t *testing.T) {
 		isGameDeleted      bool
 		gameID             values.GameID
 		version            *domain.GameVersion
-		beforeGameVersions []GameVersionTable
-		expectGameVersions []GameVersionTable
+		beforeGameVersions []migrate.GameVersionTable
+		expectGameVersions []migrate.GameVersionTable
 		isErr              bool
 		err                error
 	}
@@ -75,8 +76,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					GameID:      uuid.UUID(gameID1),
@@ -96,7 +97,7 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID2),
@@ -105,7 +106,7 @@ func TestCreateGameVersion(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			expectGameVersions: []GameVersionTable{
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					GameID:      uuid.UUID(gameID2),
@@ -133,7 +134,7 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
@@ -142,7 +143,7 @@ func TestCreateGameVersion(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			expectGameVersions: []GameVersionTable{
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
@@ -163,7 +164,7 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("アップデート"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
@@ -172,7 +173,7 @@ func TestCreateGameVersion(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			expectGameVersions: []GameVersionTable{
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID5),
 					GameID:      uuid.UUID(gameID4),
@@ -199,8 +200,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID7),
 					GameID:      uuid.UUID(gameID5),
@@ -220,8 +221,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{},
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{},
 			isErr:              true,
 		},
 		{
@@ -234,8 +235,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{},
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{},
 			isErr:              true,
 		},
 		{
@@ -248,8 +249,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{},
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{},
 			isErr:              true,
 		},
 		{
@@ -263,8 +264,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription("リリース"),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID11),
 					GameID:      uuid.UUID(gameID9),
@@ -284,8 +285,8 @@ func TestCreateGameVersion(t *testing.T) {
 				values.NewGameVersionDescription(""),
 				now,
 			),
-			beforeGameVersions: []GameVersionTable{},
-			expectGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{},
+			expectGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID12),
 					GameID:      uuid.UUID(gameID10),
@@ -302,7 +303,7 @@ func TestCreateGameVersion(t *testing.T) {
 			if testCase.isGameExist {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&GameTable{
+					Create(&migrate.GameTable{
 						ID:           uuid.UUID(testCase.gameID),
 						Name:         "test",
 						Description:  "test",
@@ -317,7 +318,7 @@ func TestCreateGameVersion(t *testing.T) {
 					err := db.
 						Session(&gorm.Session{}).
 						Where("id = ?", uuid.UUID(testCase.gameID)).
-						Delete(&GameTable{}).Error
+						Delete(&migrate.GameTable{}).Error
 					if err != nil {
 						t.Fatalf("failed to delete game table: %+v\n", err)
 					}
@@ -336,7 +337,7 @@ func TestCreateGameVersion(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var gameVersions []GameVersionTable
+			var gameVersions []migrate.GameVersionTable
 			err = db.
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
 				Find(&gameVersions).Error
@@ -346,7 +347,7 @@ func TestCreateGameVersion(t *testing.T) {
 
 			assert.Len(t, gameVersions, len(testCase.expectGameVersions))
 
-			versionMap := make(map[uuid.UUID]GameVersionTable, len(gameVersions))
+			versionMap := make(map[uuid.UUID]migrate.GameVersionTable, len(gameVersions))
 			for _, version := range gameVersions {
 				versionMap[version.ID] = version
 			}
@@ -383,7 +384,7 @@ func TestGetGameVersions(t *testing.T) {
 	type test struct {
 		description string
 		gameID      values.GameID
-		games       []GameTable
+		games       []migrate.GameTable
 		expect      []*domain.GameVersion
 		isErr       bool
 		err         error
@@ -408,13 +409,13 @@ func TestGetGameVersions(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							Name:        "v1.0.0",
@@ -437,14 +438,14 @@ func TestGetGameVersions(t *testing.T) {
 			// 実際には発生しないが、念のため確認
 			description: "ゲームが存在しなくてもエラーなし",
 			gameID:      gameID2,
-			games:       []GameTable{},
+			games:       []migrate.GameTable{},
 			expect:      []*domain.GameVersion{},
 		},
 		{
 			// 実際には発生しないが、念のため確認
 			description: "ゲームが削除されていてもエラーなし",
 			gameID:      gameID3,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -454,7 +455,7 @@ func TestGetGameVersions(t *testing.T) {
 						Time:  time.Now(),
 						Valid: true,
 					},
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							Name:        "v1.0.0",
@@ -469,13 +470,13 @@ func TestGetGameVersions(t *testing.T) {
 		{
 			description: "バージョンが複数あってもエラーなし",
 			gameID:      gameID4,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID3),
 							Name:        "v1.1.0",
@@ -509,7 +510,7 @@ func TestGetGameVersions(t *testing.T) {
 		{
 			description: "バージョンが存在しなくてもエラーなし",
 			gameID:      gameID5,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -522,13 +523,13 @@ func TestGetGameVersions(t *testing.T) {
 		{
 			description: "別のゲームのバージョンが混ざることはない",
 			gameID:      gameID6,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							Name:        "v1.0.0",
@@ -542,7 +543,7 @@ func TestGetGameVersions(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							Name:        "v1.0.0",
@@ -624,7 +625,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		games       []GameTable
+		games       []migrate.GameTable
 		expect      *domain.GameVersion
 		isErr       bool
 		err         error
@@ -652,13 +653,13 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							Name:        "v1.0.0",
@@ -680,7 +681,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "ゲームが存在しないのでErrRecordNotFound",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeNone,
-			games:       []GameTable{},
+			games:       []migrate.GameTable{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -689,7 +690,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "ゲームが削除されていてもエラーなし",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -699,7 +700,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 						Time:  time.Now(),
 						Valid: true,
 					},
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							Name:        "v1.0.0",
@@ -720,13 +721,13 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "バージョンが複数あってもエラーなし",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID3),
 							Name:        "v1.1.0",
@@ -753,7 +754,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "バージョンが存在しないのでErrRecordNotFound",
 			gameID:      gameID5,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -768,13 +769,13 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "別のゲームのバージョンが混ざることはない",
 			gameID:      gameID6,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							Name:        "v1.0.0",
@@ -788,7 +789,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							Name:        "v1.0.0",
@@ -809,13 +810,13 @@ func TestGetLatestGameVersion(t *testing.T) {
 			description: "lockTypeがRecordでもエラーなし",
 			gameID:      gameID8,
 			lockType:    repository.LockTypeRecord,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							Name:        "v1.0.0",
@@ -892,7 +893,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 		description string
 		gameIDs     []values.GameID
 		lockType    repository.LockType
-		games       []GameTable
+		games       []migrate.GameTable
 		expect      map[values.GameID]*domain.GameVersion
 		isErr       bool
 		err         error
@@ -924,13 +925,13 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameIDs:     []values.GameID{gameID1},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							Name:        "v1.0.0",
@@ -954,7 +955,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "ゲームが存在しなくてもエラーなし",
 			gameIDs:     []values.GameID{gameID2},
 			lockType:    repository.LockTypeNone,
-			games:       []GameTable{},
+			games:       []migrate.GameTable{},
 			expect:      map[values.GameID]*domain.GameVersion{},
 		},
 		{
@@ -962,7 +963,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "ゲームが削除されていてもエラーなし",
 			gameIDs:     []values.GameID{gameID3},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -972,7 +973,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 						Time:  time.Now(),
 						Valid: true,
 					},
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							Name:        "v1.0.0",
@@ -995,13 +996,13 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "バージョンが複数あってもエラーなし",
 			gameIDs:     []values.GameID{gameID4},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID3),
 							Name:        "v1.1.0",
@@ -1030,7 +1031,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "バージョンが存在しなくてもエラーなし",
 			gameIDs:     []values.GameID{gameID5},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -1044,13 +1045,13 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "別のゲームのバージョンが混ざることはない",
 			gameIDs:     []values.GameID{gameID6},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							Name:        "v1.0.0",
@@ -1064,7 +1065,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							Name:        "v1.0.0",
@@ -1087,13 +1088,13 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "lockTypeがRecordでもエラーなし",
 			gameIDs:     []values.GameID{gameID8},
 			lockType:    repository.LockTypeRecord,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							Name:        "v1.0.0",
@@ -1116,13 +1117,13 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 			description: "ゲームが複数でもエラーなし",
 			gameIDs:     []values.GameID{gameID9, gameID10},
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID9),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID8),
 							Name:        "v1.0.0",
@@ -1136,7 +1137,7 @@ func TestGetLatestGameVersionsByGameIDs(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []GameVersionTable{
+					GameVersions: []migrate.GameVersionTable{
 						{
 							ID:          uuid.UUID(gameVersionID9),
 							Name:        "v1.0.0",

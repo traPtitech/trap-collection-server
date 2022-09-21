@@ -20,7 +20,7 @@ type OAuth2 struct {
 	oidcService service.OIDC
 }
 
-func NewOAuth2(conf config.HandlerV1, session *Session, oidcService service.OIDC) (*OAuth2, error) {
+func NewOAuth2(conf config.Handler, session *Session, oidcService service.OIDC) (*OAuth2, error) {
 	baseURL, err := conf.TraqBaseURL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get traq base url: %v", err)

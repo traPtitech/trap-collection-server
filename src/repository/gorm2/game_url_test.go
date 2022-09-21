@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +32,8 @@ func TestSaveGameURL(t *testing.T) {
 		description        string
 		gameVersionID      values.GameVersionID
 		gameURL            *domain.GameURL
-		beforeGameVersions []GameVersionTable
-		afterGameURLs      []GameURLTable
+		beforeGameVersions []migrate.GameVersionTable
+		afterGameURLs      []migrate.GameURLTable
 		isErr              bool
 		err                error
 	}
@@ -66,7 +67,7 @@ func TestSaveGameURL(t *testing.T) {
 			description:   "特に問題ないのでエラーなし",
 			gameVersionID: gameVersionID1,
 			gameURL:       domain.NewGameURL(gameURLID1, link, time.Now()),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					Name:        "test",
@@ -74,7 +75,7 @@ func TestSaveGameURL(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			afterGameURLs: []GameURLTable{
+			afterGameURLs: []migrate.GameURLTable{
 				{
 					ID:            uuid.UUID(gameURLID1),
 					GameVersionID: uuid.UUID(gameVersionID1),
@@ -86,7 +87,7 @@ func TestSaveGameURL(t *testing.T) {
 			description:   "空のURLでもエラーなし",
 			gameVersionID: gameVersionID2,
 			gameURL:       domain.NewGameURL(gameURLID2, &emptyLink, time.Now()),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					Name:        "test",
@@ -94,7 +95,7 @@ func TestSaveGameURL(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			afterGameURLs: []GameURLTable{
+			afterGameURLs: []migrate.GameURLTable{
 				{
 					ID:            uuid.UUID(gameURLID2),
 					GameVersionID: uuid.UUID(gameVersionID2),
@@ -106,19 +107,19 @@ func TestSaveGameURL(t *testing.T) {
 			description:   "URLが既に存在するのでエラー",
 			gameVersionID: gameVersionID3,
 			gameURL:       domain.NewGameURL(gameURLID3, link, time.Now()),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:  uuid.UUID(gameURLID5),
 						URL: urlLink.String(),
 					},
 				},
 			},
-			afterGameURLs: []GameURLTable{
+			afterGameURLs: []migrate.GameURLTable{
 				{
 					ID:            uuid.UUID(gameURLID5),
 					GameVersionID: uuid.UUID(gameVersionID3),
@@ -131,7 +132,7 @@ func TestSaveGameURL(t *testing.T) {
 			description:   "他のゲームバージョンが存在してもエラーなし",
 			gameVersionID: gameVersionID4,
 			gameURL:       domain.NewGameURL(gameURLID4, link, time.Now()),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					Name:        "test",
@@ -145,7 +146,7 @@ func TestSaveGameURL(t *testing.T) {
 					CreatedAt:   time.Now().Add(-time.Hour),
 				},
 			},
-			afterGameURLs: []GameURLTable{
+			afterGameURLs: []migrate.GameURLTable{
 				{
 					ID:            uuid.UUID(gameURLID4),
 					GameVersionID: uuid.UUID(gameVersionID4),
@@ -157,7 +158,7 @@ func TestSaveGameURL(t *testing.T) {
 			description:   "他のゲームバージョンにURLが存在してもエラーなし",
 			gameVersionID: gameVersionID6,
 			gameURL:       domain.NewGameURL(gameURLID7, link, time.Now()),
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					Name:        "test",
@@ -169,13 +170,13 @@ func TestSaveGameURL(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now().Add(-time.Hour),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:  uuid.UUID(gameURLID6),
 						URL: urlLink.String(),
 					},
 				},
 			},
-			afterGameURLs: []GameURLTable{
+			afterGameURLs: []migrate.GameURLTable{
 				{
 					ID:            uuid.UUID(gameURLID7),
 					GameVersionID: uuid.UUID(gameVersionID6),
@@ -187,7 +188,7 @@ func TestSaveGameURL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:           uuid.UUID(values.NewGameID()),
 				Name:         "test",
 				Description:  "test",
@@ -210,7 +211,7 @@ func TestSaveGameURL(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var urls []GameURLTable
+			var urls []migrate.GameURLTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_version_id = ?", uuid.UUID(testCase.gameVersionID)).
@@ -221,7 +222,7 @@ func TestSaveGameURL(t *testing.T) {
 
 			assert.Len(t, urls, len(testCase.afterGameURLs))
 
-			urlMap := make(map[uuid.UUID]GameURLTable)
+			urlMap := make(map[uuid.UUID]migrate.GameURLTable)
 			for _, url := range urls {
 				urlMap[url.ID] = url
 			}
@@ -254,7 +255,7 @@ func TestGetGameURL(t *testing.T) {
 	type test struct {
 		description        string
 		gameVersionID      values.GameVersionID
-		beforeGameVersions []GameVersionTable
+		beforeGameVersions []migrate.GameVersionTable
 		gameURL            *domain.GameURL
 		isErr              bool
 		err                error
@@ -289,13 +290,13 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "特に問題ないのでエラーなし",
 			gameVersionID: gameVersionID1,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:            uuid.UUID(gameURLID1),
 						GameVersionID: uuid.UUID(gameVersionID1),
 						URL:           urlLink.String(),
@@ -307,13 +308,13 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "空のURLでもエラーなし",
 			gameVersionID: gameVersionID2,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:            uuid.UUID(gameURLID2),
 						GameVersionID: uuid.UUID(gameVersionID2),
 						URL:           emptyLink.String(),
@@ -325,7 +326,7 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "URLが存在しないのでErrRecordNotFound",
 			gameVersionID: gameVersionID3,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					Name:        "test",
@@ -345,13 +346,13 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "他のゲームバージョンが存在してもエラーなし",
 			gameVersionID: gameVersionID5,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:            uuid.UUID(gameURLID3),
 						GameVersionID: uuid.UUID(gameVersionID5),
 						URL:           urlLink.String(),
@@ -369,13 +370,13 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "他のゲームバージョンにURLが存在してもエラーなし",
 			gameVersionID: gameVersionID7,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID7),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:            uuid.UUID(gameURLID5),
 						GameVersionID: uuid.UUID(gameVersionID7),
 						URL:           urlLink.String(),
@@ -386,7 +387,7 @@ func TestGetGameURL(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now().Add(-time.Hour),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:  uuid.UUID(gameURLID4),
 						URL: urlLink.String(),
 					},
@@ -397,13 +398,13 @@ func TestGetGameURL(t *testing.T) {
 		{
 			description:   "誤った形式のURLがDBに入っていた場合、エラー",
 			gameVersionID: gameVersionID9,
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID9),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameURL: GameURLTable{
+					GameURL: migrate.GameURLTable{
 						ID:            uuid.UUID(gameURLID6),
 						GameVersionID: uuid.UUID(gameVersionID9),
 						URL:           " http://foo.com",
@@ -416,7 +417,7 @@ func TestGetGameURL(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:           uuid.UUID(values.NewGameID()),
 				Name:         "test",
 				Description:  "test",

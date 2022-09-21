@@ -18,8 +18,8 @@ var configSet = wire.NewSet(
 	wire.Bind(new(config.CacheRistretto), new(*v1.CacheRistretto)),
 	v1.NewCacheRistretto,
 
-	wire.Bind(new(config.HandlerV1), new(*v1.HandlerV1)),
-	v1.NewHandlerV1,
+	wire.Bind(new(config.Handler), new(*v1.Handler)),
+	v1.NewHandler,
 
 	wire.Bind(new(config.RepositoryGorm2), new(*v1.RepositoryGorm2)),
 	v1.NewRepositoryGorm2,

@@ -11,6 +11,9 @@ services:
       - ../../:/go/src/github.com/traPtitech/trap-collection-server
       - ../../tmp/coverage:/tmp/coverage
     working_dir: /go/src/github.com/traPtitech/trap-collection-server
+    depends_on:
+      s3:
+        condition: service_healthy
     command: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
   mariadb:
     extends:

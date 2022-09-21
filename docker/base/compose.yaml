@@ -13,9 +13,16 @@ services:
       S3_REGION: us-east-1
       S3_BUCKET: trap-collection
       S3_ENDPOINT: http://s3:9000
+      PORT: :3000
     depends_on:
       mariadb:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/metrics"]
+      timeout: 5m
+      interval: 1s
+      retries: 1000
+
   mariadb:
     image: mariadb:10.6.4
     restart: always
@@ -45,7 +52,7 @@ services:
       MINIO_SITE_REGION: us-east-1
     command: server /data --console-address :9001
     healthcheck:
-      test: ["CMD", "/usr/bin/healthcheck.sh"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       timeout: 5m
       interval: 1s
       retries: 1000

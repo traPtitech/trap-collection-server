@@ -11,115 +11,9 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
-
-func TestSetupImageTypeTable(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := testDB.getDB(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type test struct {
-		description      string
-		beforeImageTypes []string
-		isErr            bool
-		err              error
-	}
-
-	testCases := []test{
-		{
-			description:      "何も存在しない場合問題なし",
-			beforeImageTypes: []string{},
-		},
-		{
-			description: "1つのみ存在する場合問題なし",
-			beforeImageTypes: []string{
-				gameImageTypeJpeg,
-			},
-		},
-		{
-			description: "2つ存在する場合問題なし",
-			beforeImageTypes: []string{
-				gameImageTypeJpeg,
-				gameImageTypePng,
-			},
-		},
-		{
-			description: "全て存在する場合問題なし",
-			beforeImageTypes: []string{
-				gameImageTypeJpeg,
-				gameImageTypePng,
-				gameImageTypeGif,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				err := db.
-					Session(&gorm.Session{
-						AllowGlobalUpdate: true,
-					}).
-					Delete(&GameImageTypeTable{}).Error
-				if err != nil {
-					t.Fatalf("failed to delete role type table: %+v\n", err)
-				}
-			}()
-
-			if len(testCase.beforeImageTypes) != 0 {
-				imageTypes := make([]*GameImageTypeTable, 0, len(testCase.beforeImageTypes))
-				for _, imageType := range testCase.beforeImageTypes {
-					imageTypes = append(imageTypes, &GameImageTypeTable{
-						Name: imageType,
-					})
-				}
-
-				err := db.Create(imageTypes).Error
-				if err != nil {
-					t.Fatalf("failed to setup role type table: %+v\n", err)
-				}
-			}
-
-			err := setupImageTypeTable(db)
-
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-
-			var imageTypes []*GameImageTypeTable
-			err = db.
-				Select("name").
-				Find(&imageTypes).Error
-			if err != nil {
-				t.Fatalf("failed to get role type table: %+v\n", err)
-			}
-
-			imageTypeNames := make([]string, 0, len(imageTypes))
-			for _, imageType := range imageTypes {
-				imageTypeNames = append(imageTypeNames, imageType.Name)
-			}
-
-			assert.ElementsMatch(t, []string{
-				gameImageTypeJpeg,
-				gameImageTypePng,
-				gameImageTypeGif,
-			}, imageTypeNames)
-		})
-	}
-}
 
 func TestSaveGameImage(t *testing.T) {
 	t.Parallel()
@@ -131,17 +25,14 @@ func TestSaveGameImage(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameImageRepository, err := NewGameImage(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameImageRepository := NewGameImage(testDB)
 
 	type test struct {
 		description  string
 		gameID       values.GameID
 		image        *domain.GameImage
-		beforeImages []GameImageTable
-		expectImages []GameImageTable
+		beforeImages []migrate.GameImageTable
+		expectImages []migrate.GameImageTable
 		isErr        bool
 		err          error
 	}
@@ -162,7 +53,7 @@ func TestSaveGameImage(t *testing.T) {
 	imageID7 := values.NewGameImageID()
 	imageID8 := values.NewGameImageID()
 
-	var imageTypes []*GameImageTypeTable
+	var imageTypes []*migrate.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&imageTypes).Error
@@ -186,8 +77,8 @@ func TestSaveGameImage(t *testing.T) {
 				values.GameImageTypeJpeg,
 				now,
 			),
-			beforeImages: []GameImageTable{},
-			expectImages: []GameImageTable{
+			beforeImages: []migrate.GameImageTable{},
+			expectImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
@@ -204,8 +95,8 @@ func TestSaveGameImage(t *testing.T) {
 				values.GameImageTypePng,
 				now,
 			),
-			beforeImages: []GameImageTable{},
-			expectImages: []GameImageTable{
+			beforeImages: []migrate.GameImageTable{},
+			expectImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
@@ -222,8 +113,8 @@ func TestSaveGameImage(t *testing.T) {
 				values.GameImageTypeGif,
 				now,
 			),
-			beforeImages: []GameImageTable{},
-			expectImages: []GameImageTable{
+			beforeImages: []migrate.GameImageTable{},
+			expectImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
@@ -240,8 +131,8 @@ func TestSaveGameImage(t *testing.T) {
 				100,
 				now,
 			),
-			beforeImages: []GameImageTable{},
-			expectImages: []GameImageTable{},
+			beforeImages: []migrate.GameImageTable{},
+			expectImages: []migrate.GameImageTable{},
 			isErr:        true,
 		},
 		{
@@ -252,7 +143,7 @@ func TestSaveGameImage(t *testing.T) {
 				values.GameImageTypeJpeg,
 				now,
 			),
-			beforeImages: []GameImageTable{
+			beforeImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
@@ -260,7 +151,7 @@ func TestSaveGameImage(t *testing.T) {
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectImages: []GameImageTable{
+			expectImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
@@ -283,7 +174,7 @@ func TestSaveGameImage(t *testing.T) {
 				100,
 				now,
 			),
-			beforeImages: []GameImageTable{
+			beforeImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
@@ -291,7 +182,7 @@ func TestSaveGameImage(t *testing.T) {
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectImages: []GameImageTable{
+			expectImages: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
@@ -305,7 +196,7 @@ func TestSaveGameImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(testCase.gameID),
 				Name:        "test",
 				Description: "test",
@@ -328,7 +219,7 @@ func TestSaveGameImage(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var images []GameImageTable
+			var images []migrate.GameImageTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
@@ -339,7 +230,7 @@ func TestSaveGameImage(t *testing.T) {
 
 			assert.Len(t, images, len(testCase.expectImages))
 
-			imageMap := make(map[uuid.UUID]GameImageTable)
+			imageMap := make(map[uuid.UUID]migrate.GameImageTable)
 			for _, image := range images {
 				imageMap[image.ID] = image
 			}
@@ -368,16 +259,13 @@ func TestGetLatestGameImage(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameImageRepository, err := NewGameImage(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameImageRepository := NewGameImage(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		images      []GameImageTable
+		images      []migrate.GameImageTable
 		expectImage *domain.GameImage
 		isErr       bool
 		err         error
@@ -397,7 +285,7 @@ func TestGetLatestGameImage(t *testing.T) {
 	imageID5 := values.NewGameImageID()
 	imageID6 := values.NewGameImageID()
 
-	var imageTypes []*GameImageTypeTable
+	var imageTypes []*migrate.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&imageTypes).Error
@@ -417,7 +305,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			images: []GameImageTable{
+			images: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
@@ -435,7 +323,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "pngでもエラーなし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeNone,
-			images: []GameImageTable{
+			images: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
@@ -453,7 +341,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "gifでもエラーなし",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			images: []GameImageTable{
+			images: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
@@ -471,7 +359,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "画像がないのでエラー",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			images:      []GameImageTable{},
+			images:      []migrate.GameImageTable{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -479,7 +367,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "複数でも正しい画像が返る",
 			gameID:      gameID5,
 			lockType:    repository.LockTypeNone,
-			images: []GameImageTable{
+			images: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID5),
@@ -503,7 +391,7 @@ func TestGetLatestGameImage(t *testing.T) {
 			description: "行ロックをとっても問題なし",
 			gameID:      gameID6,
 			lockType:    repository.LockTypeRecord,
-			images: []GameImageTable{
+			images: []migrate.GameImageTable{
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID6),
@@ -521,7 +409,7 @@ func TestGetLatestGameImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(testCase.gameID),
 				Name:        "test",
 				Description: "test",

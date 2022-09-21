@@ -17,7 +17,6 @@ services:
       CLIENT_ID:
       CLIENT_SECRET:
       SESSION_SECRET: secret
-      PORT: :3000
     command:
       - -c
       - /etc/trap-collection/.air.toml

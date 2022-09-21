@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
@@ -25,7 +26,7 @@ func TestGetMe(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserService := mock.NewMockUser(ctrl)
-	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		SessionKey().
@@ -34,7 +35,12 @@ func TestGetMe(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -113,7 +119,7 @@ func TestGetMe(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -130,7 +136,7 @@ func TestGetMe(t *testing.T) {
 
 				setCookieHeader(c)
 
-				sess, err = session.store.Get(req, session.key)
+				sess, err = session.Get(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -179,7 +185,7 @@ func TestGetUsers(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserService := mock.NewMockUser(ctrl)
-	mockConf := mockConfig.NewMockHandlerV1(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		SessionKey().
@@ -188,7 +194,12 @@ func TestGetUsers(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -302,7 +313,7 @@ func TestGetUsers(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -319,7 +330,7 @@ func TestGetUsers(t *testing.T) {
 
 				setCookieHeader(c)
 
-				sess, err = session.store.Get(req, session.key)
+				sess, err = session.Get(req)
 				if err != nil {
 					t.Fatal(err)
 				}
