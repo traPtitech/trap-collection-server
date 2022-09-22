@@ -11,6 +11,7 @@ var (
 	migrations = []*gormigrate.Migration{
 		v1(), // アプリケーションのv1時へのマイグレーション
 		v2(), // アプリケーションのv2用テーブルの追加
+		v3(), // v2でmigrationし忘れていたgameTable2のmigration
 	}
 )
 
