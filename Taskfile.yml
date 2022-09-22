@@ -68,6 +68,16 @@ tasks:
       - wire
       - openapi
 
+  tbls:down:
+    cmds:
+      - task: os:tbls:down
+
+  down:
+    cmds:
+      - task: dev:down
+      - task: test:down
+      - task: tbls:down
+
   clean:db:
     cmds:
       - task: os:clean:db
