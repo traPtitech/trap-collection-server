@@ -92,14 +92,18 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	if err != nil {
 		return fmt.Errorf("failed to get openapi: %w", err)
 	}
-	apiGroup := e.Group("/api/v2")
+
+	// oapiMiddleware.OapiRequestValidatorの設定されるパスが"/"でないと正常に動作しないが、
+	// 他のrouteにはoapiMiddleware.OapiRequestValidatorを設定したくないため、
+	// 空のpathのgroupを作成し、oapiMiddleware.OapiRequestValidatorを設定する
+	apiGroup := e.Group("")
 	apiGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
 		Options: openapi3filter.Options{
 			MultiError:         true,
 			AuthenticationFunc: api.Checker.check,
 		},
 	}))
-	openapi.RegisterHandlers(apiGroup, api)
+	openapi.RegisterHandlersWithBaseURL(apiGroup, api, "/api/v2")
 
 	return nil
 }
