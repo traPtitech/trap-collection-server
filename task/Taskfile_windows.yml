@@ -66,6 +66,11 @@ tasks:
     generates:
       - .\docs\db_schema\*
 
+  tbls:down:
+    dir: ..\
+    cmds:
+      - docker compose -f .\docker\tbls\compose.yaml down
+
   clean:db:
     dir: ..\
     cmds:

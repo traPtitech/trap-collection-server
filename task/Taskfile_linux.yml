@@ -46,6 +46,10 @@ tasks:
     cmds:
       - task: unix:tbls
 
+  tbls:down:
+    cmds:
+      - task: unix:tbls:down
+
   clean:db:
     cmds:
       - task: unix:clean:db

@@ -12,9 +12,9 @@ CREATE TABLE `launcher_version_game_relations` (
   `launcher_version_table_id` varchar(36) NOT NULL,
   `game_table_id` varchar(36) NOT NULL,
   PRIMARY KEY (`launcher_version_table_id`,`game_table_id`),
-  KEY `fk_launcher_version_game_relations_game_table_v1` (`game_table_id`),
-  CONSTRAINT `fk_launcher_version_game_relations_game_table_v1` FOREIGN KEY (`game_table_id`) REFERENCES `games` (`id`),
-  CONSTRAINT `fk_launcher_version_game_relations_launcher_version_table_v1` FOREIGN KEY (`launcher_version_table_id`) REFERENCES `launcher_versions` (`id`)
+  KEY `fk_launcher_version_game_relations_game_table` (`game_table_id`),
+  CONSTRAINT `fk_launcher_version_game_relations_game_table` FOREIGN KEY (`game_table_id`) REFERENCES `games` (`id`),
+  CONSTRAINT `fk_launcher_version_game_relations_launcher_version_table` FOREIGN KEY (`launcher_version_table_id`) REFERENCES `launcher_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `launcher_version_game_relations` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_launcher_version_game_relations_game_table_v1 | FOREIGN KEY | FOREIGN KEY (game_table_id) REFERENCES games (id) |
-| fk_launcher_version_game_relations_launcher_version_table_v1 | FOREIGN KEY | FOREIGN KEY (launcher_version_table_id) REFERENCES launcher_versions (id) |
+| fk_launcher_version_game_relations_game_table | FOREIGN KEY | FOREIGN KEY (game_table_id) REFERENCES games (id) |
+| fk_launcher_version_game_relations_launcher_version_table | FOREIGN KEY | FOREIGN KEY (launcher_version_table_id) REFERENCES launcher_versions (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (launcher_version_table_id, game_table_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| fk_launcher_version_game_relations_game_table_v1 | KEY fk_launcher_version_game_relations_game_table_v1 (game_table_id) USING BTREE |
+| fk_launcher_version_game_relations_game_table | KEY fk_launcher_version_game_relations_game_table (game_table_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (launcher_version_table_id, game_table_id) USING BTREE |
 
 ## Relations

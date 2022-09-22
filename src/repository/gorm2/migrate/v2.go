@@ -34,6 +34,7 @@ func v2() *gormigrate.Migration {
 	}
 }
 
+//nolint:unused
 type gameTable2V2 struct {
 	ID                  uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
 	Name                string                    `gorm:"type:varchar(256);size:256;not null"`
@@ -47,6 +48,7 @@ type gameTable2V2 struct {
 	GameVideos          []gameVideoTable2V2       `gorm:"foreignKey:GameID"`
 }
 
+//nolint:unused
 func (*gameTable2V2) TableName() string {
 	return "games"
 }
