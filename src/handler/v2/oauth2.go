@@ -1,16 +1,32 @@
 package v2
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/config"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type OAuth2 struct {
 	oauth2Unimplemented
+	baseURL     *url.URL
+	session     *Session
+	oidcService service.OIDCV2
 }
 
-func NewOAuth2() *OAuth2 {
-	return &OAuth2{}
+func NewOAuth2(conf config.Handler, session *Session, oidcService service.OIDCV2) (*OAuth2, error) {
+	baseURL, err := conf.TraqBaseURL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get traq base url: %v", err)
+	}
+
+	return &OAuth2{
+		baseURL:     baseURL,
+		session:     session,
+		oidcService: oidcService,
+	}, nil
 }
 
 // oauth2Unimplemented
