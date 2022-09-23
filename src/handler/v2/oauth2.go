@@ -16,7 +16,6 @@ import (
 )
 
 type OAuth2 struct {
-	oauth2Unimplemented
 	baseURL     *url.URL
 	session     *Session
 	oidcService service.OIDCV2
@@ -33,12 +32,6 @@ func NewOAuth2(conf config.Handler, session *Session, oidcService service.OIDCV2
 		session:     session,
 		oidcService: oidcService,
 	}, nil
-}
-
-// oauth2Unimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type oauth2Unimplemented interface {
 }
 
 // traQのOAuth 2.0のコールバック
