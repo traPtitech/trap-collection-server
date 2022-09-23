@@ -100,6 +100,8 @@ type getUsersResponse struct {
 	State int       `json:"state"`
 }
 
+// GetAllActiveUsers
+// deprecated: v1 API廃止時に削除
 func (u *User) GetAllActiveUsers(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
 	path := *u.baseURL
 	path.Path += "/users"
