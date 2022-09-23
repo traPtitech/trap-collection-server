@@ -39,9 +39,6 @@ func NewOAuth2(conf config.Handler, session *Session, oidcService service.OIDCV2
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type oauth2Unimplemented interface {
-	// OAuth 2.0のCode Verifierなどのセッションへの設定とtraQへのリダイレクト
-	// (GET /oauth2/code)
-	GetCode(ctx echo.Context) error
 	// traP Collectionの管理画面からのログアウト
 	// (POST /oauth2/logout)
 	PostLogout(ctx echo.Context) error
@@ -91,4 +88,55 @@ func (oauth2 *OAuth2) GetCallback(c echo.Context, params openapi.GetCallbackPara
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// OAuth 2.0のCode Verifierなどのセッションへの設定とtraQへのリダイレクト
+// (GET /oauth2/code)
+func (oauth2 *OAuth2) GetCode(c echo.Context) error {
+	client, authState, err := oauth2.oidcService.GenerateAuthState(c.Request().Context())
+	if err != nil {
+		log.Printf("error: failed to generate code: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate code")
+	}
+
+	codeChallenge, err := authState.GetCodeVerifier().GetCodeChallenge(authState.GetCodeChallengeMethod())
+	if err != nil {
+		log.Printf("error: failed to get code challenge: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get code challenge")
+	}
+
+	var strCodeChallengeMethod string
+	switch authState.GetCodeChallengeMethod() {
+	case values.OIDCCodeChallengeMethodSha256:
+		strCodeChallengeMethod = "S256"
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get code challenge method")
+	}
+
+	session, err := oauth2.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	oauth2.session.setCodeVerifier(session, string(authState.GetCodeVerifier()))
+
+	err = oauth2.session.save(c, session)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save session")
+	}
+
+	redirectURL := *oauth2.baseURL
+	redirectURL.Path += "/oauth2/authorize"
+	q := redirectURL.Query()
+	q.Set("code_challenge", string(codeChallenge))
+	q.Set("code_challenge_method", strCodeChallengeMethod)
+	q.Set("client_id", string(client.GetClientID()))
+	q.Set("response_type", "code")
+	redirectURL.RawQuery = q.Encode()
+
+	c.Response().Header().Set("Location", redirectURL.String())
+
+	return echo.NewHTTPError(http.StatusSeeOther, fmt.Sprintf("redirect to %s", redirectURL.String()))
 }
