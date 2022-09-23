@@ -30,7 +30,7 @@ jobs:
       - run: go generate ./...
       - run: docker compose -f docker/test/compose.yaml up --abort-on-container-exit
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
           file: ./tmp/coverage/coverage.txt
           yml: ./codecov.yml
