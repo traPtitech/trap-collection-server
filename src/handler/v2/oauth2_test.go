@@ -404,3 +404,167 @@ func TestGetCode(t *testing.T) {
 		})
 	}
 }
+
+func TestPostLogout(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
+
+	baseURL, err := url.Parse("https://q.trap.jp/api/v3")
+	if err != nil {
+		t.Errorf("Error parsing base URL: %v", err)
+	}
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		TraqBaseURL().
+		Return(baseURL, nil)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	oauth, err := NewOAuth2(mockConf, session, mockOIDCService)
+	if err != nil {
+		t.Fatalf("failed to create oauth: %v", err)
+	}
+
+	type test struct {
+		description      string
+		sessionExist     bool
+		authSessionExist bool
+		accessToken      string
+		expiresAt        time.Time
+		executeLogout    bool
+		LogoutErr        error
+		isErr            bool
+		err              error
+		statusCode       int
+	}
+
+	testCases := []test{
+		{
+			description:      "特に問題ないのでエラーなし",
+			sessionExist:     true,
+			authSessionExist: true,
+			accessToken:      "accessToken",
+			expiresAt:        time.Now(),
+			executeLogout:    true,
+		},
+		{
+			// middlewareで弾かれるので、この状況にはならないはずだが、念のためテスト
+			description:  "sessionが存在しないので400",
+			sessionExist: false,
+			isErr:        true,
+			statusCode:   http.StatusBadRequest,
+		},
+		{
+			description:      "authSessionが存在しないので400",
+			sessionExist:     true,
+			authSessionExist: false,
+			isErr:            true,
+			statusCode:       http.StatusBadRequest,
+		},
+		{
+			description:      "Logoutがエラーなので500",
+			sessionExist:     true,
+			authSessionExist: true,
+			accessToken:      "accessToken",
+			expiresAt:        time.Now(),
+			executeLogout:    true,
+			LogoutErr:        errors.New("error"),
+			isErr:            true,
+			statusCode:       http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/oauth2/logout", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.New(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSessionExist {
+					sess.Values[accessTokenSessionKey] = testCase.accessToken
+					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.Get(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set(sessionContextKey, sess)
+			}
+
+			if testCase.executeLogout {
+				mockOIDCService.
+					EXPECT().
+					Logout(gomock.Any(), gomock.Any()).
+					Return(testCase.LogoutErr)
+			}
+
+			err := oauth.PostLogout(c)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			setCookieHeader(c)
+
+			sess, err := session.get(c)
+			if err != nil {
+				t.Fatalf("failed to get session: %v", err)
+			}
+			assert.Less(t, sess.Options.MaxAge, 0)
+		})
+	}
+}
