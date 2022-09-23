@@ -39,9 +39,6 @@ func NewOAuth2(conf config.Handler, session *Session, oidcService service.OIDCV2
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type oauth2Unimplemented interface {
-	// traP Collectionの管理画面からのログアウト
-	// (POST /oauth2/logout)
-	PostLogout(ctx echo.Context) error
 }
 
 // traQのOAuth 2.0のコールバック
@@ -139,4 +136,39 @@ func (oauth2 *OAuth2) GetCode(c echo.Context) error {
 	c.Response().Header().Set("Location", redirectURL.String())
 
 	return echo.NewHTTPError(http.StatusSeeOther, fmt.Sprintf("redirect to %s", redirectURL.String()))
+}
+
+// traP Collectionの管理画面からのログアウト
+// (POST /oauth2/logout)
+func (oauth2 *OAuth2) PostLogout(c echo.Context) error {
+	session, err := oauth2.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	authSession, err := oauth2.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusBadRequest, "no auth session")
+	}
+	if err != nil {
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+	}
+
+	err = oauth2.oidcService.Logout(c.Request().Context(), authSession)
+	if err != nil {
+		log.Printf("error: failed to logout: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to logout")
+	}
+
+	oauth2.session.revoke(session)
+
+	err = oauth2.session.save(c, session)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save session")
+	}
+
+	return nil
 }
