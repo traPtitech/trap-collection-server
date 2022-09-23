@@ -27,6 +27,9 @@ var configSet = wire.NewSet(
 	wire.Bind(new(config.ServiceV1), new(*v1.ServiceV1)),
 	v1.NewServiceV1,
 
+	wire.Bind(new(config.ServiceV2), new(*v1.ServiceV2)),
+	v1.NewServiceV2,
+
 	wire.Bind(new(config.Storage), new(*v1.Storage)),
 	v1.NewStorage,
 
