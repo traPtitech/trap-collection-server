@@ -2,22 +2,34 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
+	"net/http"
 
+	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-type Checker struct{}
+type Checker struct {
+	session     *Session
+	oidcService service.OIDCV2
+}
 
-func NewChecker() *Checker {
-	return &Checker{}
+func NewChecker(session *Session, oidcService service.OIDCV2) *Checker {
+	return &Checker{
+		session:     session,
+		oidcService: oidcService,
+	}
 }
 
 func (m *Checker) check(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
-		openapi.TrapMemberAuthScopes:       m.noAuthChecker, // TODO: TrapMemberAuthChecker
+		openapi.TrapMemberAuthScopes:       m.TrapMemberAuthChecker,
 		openapi.AdminAuthScopes:            m.noAuthChecker, // TODO: AdminAuthChecker
 		openapi.GameOwnerAuthScopes:        m.noAuthChecker, // TODO: GameOwnerAuthChecker
 		openapi.GameMaintainerAuthScopes:   m.noAuthChecker, // TODO: GameMaintainerAuthChecker
@@ -42,4 +54,52 @@ func (m *Checker) check(ctx context.Context, input *openapi3filter.Authenticatio
 // TODO: noAuthChecker削除
 func (m *Checker) noAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 	return nil
+}
+
+// TrapMemberAuthChecker
+// traPのメンバーかどうかをチェックするチェッカー
+func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		return errors.New("echo context is not set")
+	}
+
+	ok, message, err := checker.checkTrapMemberAuth(c)
+	if err != nil {
+		log.Printf("error: failed to check launcher auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	return nil
+}
+
+func (m *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error) {
+	session, err := m.session.get(c)
+	if err != nil {
+		return false, "", fmt.Errorf("failed to get session: %w", err)
+	}
+
+	authSession, err := m.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return false, "no access token", nil
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("failed to get auth session: %w", err)
+	}
+
+	err = m.oidcService.Authenticate(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return false, "access token is expired", nil
+	}
+	if err != nil {
+		return false, "", fmt.Errorf("failed to check traP auth: %w", err)
+	}
+
+	return true, "", nil
 }
