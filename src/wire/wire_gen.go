@@ -20,6 +20,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
 	v1_3 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	v2_2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
 	"github.com/traPtitech/trap-collection-server/src/storage/s3"
@@ -174,13 +175,22 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	checker := v2.NewChecker()
 	v2Session, err := v2.NewSession(session)
 	if err != nil {
 		return nil, err
 	}
-	v2OAuth2 := v2.NewOAuth2()
-	v2User := v2.NewUser()
+	serviceV2 := v1.NewServiceV2()
+	v2User := v2_2.NewUser(user, ristrettoUser)
+	v2OIDC, err := v2_2.NewOIDC(serviceV2, v2User, oidc)
+	if err != nil {
+		return nil, err
+	}
+	checker := v2.NewChecker(v2Session, v2OIDC)
+	v2OAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
+	if err != nil {
+		return nil, err
+	}
+	user3 := v2.NewUser()
 	admin := v2.NewAdmin()
 	v2Game := v2.NewGame()
 	v2GameRole := v2.NewGameRole()
@@ -191,7 +201,7 @@ func InjectApp() (*App, error) {
 	edition := v2.NewEdition()
 	editionAuth := v2.NewEditionAuth()
 	seat := v2.NewSeat()
-	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, v2User, admin, v2Game, v2GameRole, v2GameVersion, v2GameFile, v2GameImage, v2GameVideo, edition, editionAuth, seat)
+	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, v2Game, v2GameRole, v2GameVersion, v2GameFile, v2GameImage, v2GameVideo, edition, editionAuth, seat)
 	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
 	if err != nil {
 		return nil, err
