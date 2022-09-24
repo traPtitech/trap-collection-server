@@ -133,3 +133,20 @@ func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader,
 
 	return nil
 }
+
+func (gameImage *GameImage) GetGameImages(ctx context.Context, gameID values.GameID) ([]*domain.GameImage, error) {
+	_, err := gameImage.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	images, err := gameImage.gameImageRepository.GetGameImages(ctx, gameID, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game images: %w", err)
+	}
+
+	return images, nil
+}
