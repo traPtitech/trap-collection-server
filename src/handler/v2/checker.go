@@ -10,7 +10,6 @@ import (
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
@@ -29,20 +28,21 @@ func NewChecker(session *Session, oidcService service.OIDCV2) *Checker {
 func (m *Checker) check(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
-		openapi.TrapMemberAuthScopes:       m.TrapMemberAuthChecker,
-		openapi.AdminAuthScopes:            m.noAuthChecker, // TODO: AdminAuthChecker
-		openapi.GameOwnerAuthScopes:        m.noAuthChecker, // TODO: GameOwnerAuthChecker
-		openapi.GameMaintainerAuthScopes:   m.noAuthChecker, // TODO: GameMaintainerAuthChecker
-		openapi.EditionAuthScopes:          m.noAuthChecker, // TODO: EditionAuthChecker
-		openapi.EditionGameAuthScopes:      m.noAuthChecker, // TODO: EditionGameAuthChecker
-		openapi.EditionGameFileAuthScopes:  m.noAuthChecker, // TODO: EditionGameFileAuthChecker
-		openapi.EditionGameImageAuthScopes: m.noAuthChecker, // TODO: EditionGameImageAuthChecker
-		openapi.EditionGameVideoAuthScopes: m.noAuthChecker, // TODO: EditionGameVideoAuthChecker
-		openapi.EditionIDAuthScopes:        m.noAuthChecker, // TODO: EditionIDAuthChecker
+		"TrapMemberAuth":       m.TrapMemberAuthChecker,
+		"AdminAuth":            m.noAuthChecker, // TODO: AdminAuthChecker
+		"GameOwnerAuth":        m.noAuthChecker, // TODO: GameOwnerAuthChecker
+		"GameMaintainerAuth":   m.noAuthChecker, // TODO: GameMaintainerAuthChecker
+		"EditionAuth":          m.noAuthChecker, // TODO: EditionAuthChecker
+		"EditionGameAuth":      m.noAuthChecker, // TODO: EditionGameAuthChecker
+		"EditionGameFileAuth":  m.noAuthChecker, // TODO: EditionGameFileAuthChecker
+		"EditionGameImageAuth": m.noAuthChecker, // TODO: EditionGameImageAuthChecker
+		"EditionGameVideoAuth": m.noAuthChecker, // TODO: EditionGameVideoAuthChecker
+		"EditionIDAuth":        m.noAuthChecker, // TODO: EditionIDAuthChecker
 	}
 
 	checker, ok := checkerMap[input.SecuritySchemeName]
 	if !ok {
+		log.Printf("error: unknown security scheme: %s\n", input.SecuritySchemeName)
 		return fmt.Errorf("unknown security scheme: %s", input.SecuritySchemeName)
 	}
 
@@ -63,6 +63,7 @@ func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, ai *openapi3f
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
+		log.Printf("error: failed to get echo context\n")
 		return errors.New("echo context is not set")
 	}
 
