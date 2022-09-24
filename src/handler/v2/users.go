@@ -48,24 +48,24 @@ func (u *User) GetMe(c echo.Context) error {
 	})
 }
 
-func (u *User) GetUsers(c echo.Context) ([]*openapi.User, error) {
+func (u *User) GetUsers(c echo.Context) error {
 	session, err := u.session.get(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	authSession, err := u.session.getAuthSession(session)
 	if err != nil {
 		// middlewareでログイン済みなことは確認しているので、ここではエラーになりえないはず
 		log.Printf("error: failed to get auth session: %v\n", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession)
 	if err != nil {
 		log.Printf("error: failed to get user info: %v\n", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	users := make([]*openapi.User, 0, len(userInfos))
@@ -76,5 +76,5 @@ func (u *User) GetUsers(c echo.Context) ([]*openapi.User, error) {
 		})
 	}
 
-	return users, nil
+	return c.JSON(http.StatusOK, users)
 }
