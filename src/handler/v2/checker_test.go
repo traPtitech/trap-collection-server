@@ -19,6 +19,7 @@ import (
 )
 
 func setEchoContext(ctx context.Context, c echo.Context) context.Context {
+	// nolint:staticcheck
 	return context.WithValue(ctx, oapiMiddleware.EchoContextKey, c)
 }
 
