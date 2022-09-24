@@ -8,9 +8,11 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
@@ -205,6 +207,151 @@ func TestSaveGameImage(t *testing.T) {
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())
+		})
+	}
+}
+
+func TestGetGameImages(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
+	mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
+
+	gameImageService := NewGameImage(
+		mockDB,
+		mockGameRepository,
+		mockGameImageRepository,
+		mockGameImageStorage,
+	)
+
+	type test struct {
+		description          string
+		gameID               values.GameID
+		getGameErr           error
+		executeGetGameImages bool
+		getGameImagesErr     error
+		isErr                bool
+		gameImages           []*domain.GameImage
+		err                  error
+	}
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description:          "特に問題ないのでエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:          "画像がpngでもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+			gameImages: []*domain.GameImage{
+				domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypePng,
+					now,
+				),
+			},
+		},
+		{
+			description:          "画像がgifでもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+			gameImages: []*domain.GameImage{
+				domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypeGif,
+					now,
+				),
+			},
+		},
+		{
+			description:          "画像がなくてもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+			gameImages:           []*domain.GameImage{},
+		},
+		{
+			description:          "画像が複数でもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+			gameImages: []*domain.GameImage{
+				domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypePng,
+					now,
+				),
+				domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypeGif,
+					now.Add(-time.Second),
+				),
+			},
+		},
+		{
+			description:          "GetGameImagesがエラーなのでエラー",
+			gameID:               values.NewGameID(),
+			executeGetGameImages: true,
+			getGameImagesErr:     errors.New("error"),
+			isErr:                true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetGameImages {
+				mockGameImageRepository.
+					EXPECT().
+					GetGameImages(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+					Return(testCase.gameImages, testCase.getGameImagesErr)
+			}
+
+			gameImages, err := gameImageService.GetGameImages(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			for i, gameImage := range gameImages {
+				assert.Equal(t, testCase.gameImages[i].GetID(), gameImage.GetID())
+				assert.Equal(t, testCase.gameImages[i].GetType(), gameImage.GetType())
+				assert.Equal(t, testCase.gameImages[i].GetCreatedAt(), gameImage.GetCreatedAt())
+			}
 		})
 	}
 }
