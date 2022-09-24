@@ -93,6 +93,8 @@ func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *ser
 	return nil
 }
 
+// GetAllActiveUsers
+// deprecated: v1 API廃止時に削除する
 func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
 	iUsers, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
@@ -107,7 +109,38 @@ func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, erro
 	return users, nil
 }
 
+// SetAllActiveUsers
+// deprecated: v1 API廃止時に削除する
 func (u *User) SetAllActiveUsers(ctx context.Context, users []*service.UserInfo) error {
+	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
+	ok := u.activeUsers.SetWithTTL(
+		activeUsersKey,
+		users,
+		1,
+		u.activeUsersTTL,
+	)
+	if !ok {
+		return errors.New("failed to set activeUsers")
+	}
+
+	return nil
+}
+
+func (u *User) GetActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
+	iUsers, ok := u.activeUsers.Get(activeUsersKey)
+	if !ok {
+		return nil, cache.ErrCacheMiss
+	}
+
+	users, ok := iUsers.([]*service.UserInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast activeUsers: %v", iUsers)
+	}
+
+	return users, nil
+}
+
+func (u *User) SetActiveUsers(ctx context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := u.activeUsers.SetWithTTL(
 		activeUsersKey,

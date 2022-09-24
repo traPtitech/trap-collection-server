@@ -40,3 +40,27 @@ func (*ServiceV1) ClientSecret() (string, error) {
 
 	return clientSecret, nil
 }
+
+type ServiceV2 struct{}
+
+func NewServiceV2() *ServiceV2 {
+	return &ServiceV2{}
+}
+
+func (*ServiceV2) ClientID() (string, error) {
+	clientID, ok := os.LookupEnv(envKeyClientID)
+	if !ok {
+		return "", errors.New("ENV CLIENT_ID IS NULL")
+	}
+
+	return clientID, nil
+}
+
+func (*ServiceV2) ClientSecret() (string, error) {
+	clientSecret, ok := os.LookupEnv(envKeyClientSecret)
+	if !ok {
+		return "", errors.New("ENV CLIENT_SECRET IS NULL")
+	}
+
+	return clientSecret, nil
+}
