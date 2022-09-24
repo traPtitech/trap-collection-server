@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -149,4 +150,44 @@ func (gameImage *GameImage) GetGameImages(ctx context.Context, gameID values.Gam
 	}
 
 	return images, nil
+}
+
+func (gameImage *GameImage) GetGameImage(ctx context.Context, gameID values.GameID, imageID values.GameImageID) (values.GameImageTmpURL, error) {
+	_, err := gameImage.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	var url *url.URL
+	err = gameImage.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		image, err := gameImage.gameImageRepository.GetGameImage(ctx, imageID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameImageID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game image file: %w", err)
+		}
+
+		if image.GameID != gameID {
+			// gameIdに対応したゲームにゲーム画像が紐づいていない場合も、
+			// 念の為閲覧権限がないゲームに紐づいた画像IDを知ることができないようにするため、
+			// 画像が存在しない場合と同じErrInvalidGameImageIDを返す
+			return service.ErrInvalidGameImageID
+		}
+
+		url, err = gameImage.gameImageStorage.GetTempURL(ctx, image.GameImage, time.Minute)
+		if err != nil {
+			return fmt.Errorf("failed to get game image: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return url, nil
 }
