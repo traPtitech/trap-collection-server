@@ -190,7 +190,7 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	user3 := v2.NewUser()
+	user3 := v2.NewUser(v2Session, v1User)
 	admin := v2.NewAdmin()
 	v2Game := v2.NewGame()
 	v2GameRole := v2.NewGameRole()
