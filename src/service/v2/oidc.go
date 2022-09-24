@@ -29,8 +29,7 @@ func NewOIDC(conf config.ServiceV2, user *User, oidc auth.OIDC) (*OIDC, error) {
 		return nil, fmt.Errorf("failed to get client ID: %w", err)
 	}
 
-	clientID := values.NewOIDCClientID(string(strClientID))
-
+	clientID := values.NewOIDCClientID(strClientID)
 	client := domain.NewOIDCClient(clientID)
 
 	return &OIDC{
