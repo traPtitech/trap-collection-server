@@ -22,7 +22,8 @@ type GameImageV2 interface {
 	// GetGameImage
 	// ゲーム画像の一時的(1分間)に有効なurlを返す。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
-	// ゲーム画像IDに対応するゲーム画像が存在しない場合、ErrInvalidGameImageIDを返す。
+	// ゲーム画像IDに対応するゲーム画像が存在しない、
+	// もしくは存在しても紐づくゲームのゲームIDが異なる場合、ErrInvalidGameImageIDを返す。
 	GetGameImage(ctx context.Context, gameID values.GameID, imageID values.GameImageID) (values.GameImageTmpURL, error)
 	// GetGameImageMeta
 	// ゲーム画像のメタデータの取得。
