@@ -88,9 +88,7 @@ func setupS3(
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	client := s3.NewFromConfig(cfg, func(option *s3.Options) {
-		option.UsePathStyle = true
-	})
+	client := s3.NewFromConfig(cfg)
 
 	return client, nil
 }
