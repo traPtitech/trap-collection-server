@@ -548,3 +548,160 @@ func TestGetGameImage(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameImageMeta(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
+	mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
+
+	gameImageService := NewGameImage(
+		mockDB,
+		mockGameRepository,
+		mockGameImageRepository,
+		mockGameImageStorage,
+	)
+
+	type test struct {
+		description         string
+		gameID              values.GameID
+		gameImageID         values.GameImageID
+		getGameErr          error
+		executeGetGameImage bool
+		image               *repository.GameImageInfo
+		getGameImageErr     error
+		isErr               bool
+		err                 error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:         "特に問題ないのでエラーなし",
+			gameID:              gameID1,
+			executeGetGameImage: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypeJpeg,
+					time.Now(),
+				),
+				GameID: gameID1,
+			},
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:         "画像がpngでもエラーなし",
+			gameID:              gameID2,
+			executeGetGameImage: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypePng,
+					time.Now(),
+				),
+				GameID: gameID2,
+			},
+		},
+		{
+			description:         "画像がgifでもエラーなし",
+			gameID:              gameID3,
+			executeGetGameImage: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypeGif,
+					time.Now(),
+				),
+				GameID: gameID3,
+			},
+		},
+		{
+			description:         "GetGameImageがErrRecordNotFoundなのでErrInvalidGameImageID",
+			gameID:              values.NewGameID(),
+			executeGetGameImage: true,
+			getGameImageErr:     repository.ErrRecordNotFound,
+			isErr:               true,
+			err:                 service.ErrInvalidGameImageID,
+		},
+		{
+			description:         "ゲーム画像に紐づくゲームIDが違うのでErrInvalidGameImageID",
+			gameID:              values.NewGameID(),
+			executeGetGameImage: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					values.NewGameImageID(),
+					values.GameImageTypeGif,
+					time.Now(),
+				),
+				GameID: values.NewGameID(),
+			},
+			isErr: true,
+			err:   service.ErrInvalidGameImageID,
+		},
+		{
+			description:         "GetGameImageがエラーなのでエラー",
+			gameID:              values.NewGameID(),
+			executeGetGameImage: true,
+			getGameImageErr:     errors.New("error"),
+			isErr:               true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(ctx, testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetGameImage {
+				mockGameImageRepository.
+					EXPECT().
+					GetGameImage(ctx, testCase.gameImageID, repository.LockTypeNone).
+					Return(testCase.image, testCase.getGameImageErr)
+			}
+
+			gameImage, err := gameImageService.GetGameImageMeta(ctx, testCase.gameID, testCase.gameImageID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.image.GameImage.GetID(), gameImage.GetID())
+			assert.Equal(t, testCase.image.GameImage.GetType(), gameImage.GetType())
+			assert.Equal(t, testCase.image.GameImage.GetCreatedAt(), gameImage.GetCreatedAt())
+		})
+	}
+}
