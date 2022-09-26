@@ -56,3 +56,7 @@ services:
       timeout: 5m
       interval: 1s
       retries: 1000
+    networks:
+      default:
+        aliases:
+          - trap-collection.s3
