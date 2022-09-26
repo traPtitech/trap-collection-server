@@ -992,11 +992,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameImage'
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameImage'
           description: |
             ゲーム画像一覧の取得に成功した際に返されます。
-            レスポンスで指定したゲームの
-            アップロード済みゲーム画像のメタ情報が返されます。
+            アップロード済みゲーム画像のメタ情報一覧が作成時刻の降順で返されます。
         "400":
           content:
             application/json:
