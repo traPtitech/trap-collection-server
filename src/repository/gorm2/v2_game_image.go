@@ -109,3 +109,48 @@ func (gameImage *GameImageV2) GetGameImage(ctx context.Context, gameImageID valu
 		GameID: values.NewGameIDFromUUID(image.GameID),
 	}, nil
 }
+
+func (gameImage *GameImageV2) GetGameImages(ctx context.Context, gameID values.GameID, lockType repository.LockType) ([]*domain.GameImage, error) {
+	db, err := gameImage.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = gameImage.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var images []migrate.GameImageTable2
+	err = db.
+		Joins("GameImageType").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		Find(&images).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game images: %w", err)
+	}
+
+	gameImages := make([]*domain.GameImage, 0, len(images))
+	for _, image := range images {
+		var imageType values.GameImageType
+		switch image.GameImageType.Name {
+		case migrate.GameImageTypeJpeg:
+			imageType = values.GameImageTypeJpeg
+		case migrate.GameImageTypePng:
+			imageType = values.GameImageTypePng
+		case migrate.GameImageTypeGif:
+			imageType = values.GameImageTypeGif
+		default:
+			return nil, fmt.Errorf("invalid image type: %s", image.GameImageType.Name)
+		}
+
+		gameImages = append(gameImages, domain.NewGameImage(
+			values.GameImageIDFromUUID(image.ID),
+			imageType,
+			image.CreatedAt,
+		))
+	}
+
+	return gameImages, nil
+}
