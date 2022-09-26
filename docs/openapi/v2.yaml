@@ -811,11 +811,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameFile'
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameFile'
           description: |
             ゲームファイルの取得に成功した際に返されます。
-            レスポンスで指定されたゲームの
-            アップロード済みゲームファイルのメタ情報が返されます。
+            アップロード済みゲームファイルのメタ情報一覧が降順で返されます。
         "400":
           content:
             application/json:
