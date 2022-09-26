@@ -811,11 +811,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameFile'
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameFile'
           description: |
             ゲームファイルの取得に成功した際に返されます。
-            レスポンスで指定されたゲームの
-            アップロード済みゲームファイルのメタ情報が返されます。
+            アップロード済みゲームファイルのメタ情報一覧が降順で返されます。
         "400":
           content:
             application/json:
@@ -992,11 +993,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameImage'
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameImage'
           description: |
             ゲーム画像一覧の取得に成功した際に返されます。
-            レスポンスで指定したゲームの
-            アップロード済みゲーム画像のメタ情報が返されます。
+            アップロード済みゲーム画像のメタ情報一覧が作成時刻の降順で返されます。
         "400":
           content:
             application/json:
@@ -1173,11 +1175,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GameVideo'
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameVideo'
           description: |
             ゲーム動画の一覧取得に成功した際に返されます。
-            レスポンスで指定したゲームの
-            アップロード済みゲーム動画のメタ情報が返されます。
+            アップロード済みゲーム動画のメタ情報一覧が作成時刻の降順で返されます。
         "400":
           content:
             application/json:
