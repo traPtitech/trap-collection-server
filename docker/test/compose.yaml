@@ -7,6 +7,7 @@ services:
       dockerfile: ./docker/test/Dockerfile
     environment:
       COLLECTION_ENV: development
+      FEATURE_V2: true
     volumes:
       - ../../:/go/src/github.com/traPtitech/trap-collection-server
       - ../../tmp/coverage:/tmp/coverage
