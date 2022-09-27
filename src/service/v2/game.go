@@ -69,11 +69,18 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 
 		var ownersID []values.TraPMemberID
 		for _, owner := range owners {
-			ownersID = append(ownersID, activeUsersMap[owner])
+			if owner != user.GetName() {
+				ownersID = append(ownersID, activeUsersMap[owner])
+			}
 		}
 
 		var maintainersID []values.TraPMemberID
 		for _, maintainer := range maintainers {
+			for _, owner := range owners {
+				if owner == maintainer {//ownerになってる人はmaintainerになれない
+					return fmt.Errorf("maintainers cannot include owner")
+				}
+			}
 			maintainersID = append(maintainersID, activeUsersMap[maintainer])
 		}
 
