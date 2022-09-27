@@ -276,7 +276,6 @@ func TestGetGameImage(t *testing.T) {
 	gameID3 := values.NewGameID()
 	gameID4 := values.NewGameID()
 	gameID5 := values.NewGameID()
-	gameID6 := values.NewGameID()
 
 	imageID1 := values.NewGameImageID()
 	imageID2 := values.NewGameImageID()
@@ -470,6 +469,230 @@ func TestGetGameImage(t *testing.T) {
 			assert.Equal(t, testCase.expectImage.GameImage.GetType(), image.GameImage.GetType())
 			assert.WithinDuration(t, testCase.expectImage.GameImage.GetCreatedAt(), image.GameImage.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectImage.GameID, image.GameID)
+		})
+	}
+}
+
+func TestGetGameImages(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameImageRepository := NewGameImageV2(testDB)
+
+	type test struct {
+		description  string
+		gameID       values.GameID
+		lockType     repository.LockType
+		images       []migrate.GameImageTable2
+		expectImages []*domain.GameImage
+		isErr        bool
+		err          error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+
+	imageID1 := values.NewGameImageID()
+	imageID2 := values.NewGameImageID()
+	imageID3 := values.NewGameImageID()
+	imageID4 := values.NewGameImageID()
+	imageID5 := values.NewGameImageID()
+	imageID6 := values.NewGameImageID()
+
+	var imageTypes []*migrate.GameImageTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&imageTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	imageTypeMap := make(map[string]int, len(imageTypes))
+	for _, imageType := range imageTypes {
+		imageTypeMap[imageType.Name] = imageType.ID
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			gameID:      gameID1,
+			lockType:    repository.LockTypeNone,
+			images: []migrate.GameImageTable2{
+				{
+					ID:          uuid.UUID(imageID1),
+					GameID:      uuid.UUID(gameID1),
+					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					CreatedAt:   now,
+				},
+			},
+			expectImages: []*domain.GameImage{
+				domain.NewGameImage(
+					imageID1,
+					values.GameImageTypeJpeg,
+					now,
+				),
+			},
+		},
+		{
+			description: "pngでも問題なし",
+			gameID:      gameID2,
+			lockType:    repository.LockTypeNone,
+			images: []migrate.GameImageTable2{
+				{
+					ID:          uuid.UUID(imageID2),
+					GameID:      uuid.UUID(gameID2),
+					ImageTypeID: imageTypeMap[gameImageTypePng],
+					CreatedAt:   now,
+				},
+			},
+			expectImages: []*domain.GameImage{
+				domain.NewGameImage(
+					imageID2,
+					values.GameImageTypePng,
+					now,
+				),
+			},
+		},
+		{
+			description: "gifでも問題なし",
+			gameID:      gameID3,
+			lockType:    repository.LockTypeNone,
+			images: []migrate.GameImageTable2{
+				{
+					ID:          uuid.UUID(imageID3),
+					GameID:      uuid.UUID(gameID3),
+					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					CreatedAt:   now,
+				},
+			},
+			expectImages: []*domain.GameImage{
+				domain.NewGameImage(
+					imageID3,
+					values.GameImageTypeGif,
+					now,
+				),
+			},
+		},
+		{
+			description: "lockTypeがRecordでも問題なし",
+			gameID:      gameID4,
+			lockType:    repository.LockTypeRecord,
+			images: []migrate.GameImageTable2{
+				{
+					ID:          uuid.UUID(imageID4),
+					GameID:      uuid.UUID(gameID4),
+					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					CreatedAt:   now,
+				},
+			},
+			expectImages: []*domain.GameImage{
+				domain.NewGameImage(
+					imageID4,
+					values.GameImageTypeJpeg,
+					now,
+				),
+			},
+		},
+		{
+			description: "複数の画像があっても問題なし",
+			gameID:      gameID5,
+			images: []migrate.GameImageTable2{
+				{
+					ID:          uuid.UUID(imageID5),
+					GameID:      uuid.UUID(gameID5),
+					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(imageID6),
+					GameID:      uuid.UUID(gameID5),
+					ImageTypeID: imageTypeMap[gameImageTypePng],
+					CreatedAt:   now.Add(-10 * time.Hour),
+				},
+			},
+			expectImages: []*domain.GameImage{
+				domain.NewGameImage(
+					imageID5,
+					values.GameImageTypeJpeg,
+					now,
+				),
+				domain.NewGameImage(
+					imageID6,
+					values.GameImageTypePng,
+					now.Add(-10*time.Hour),
+				),
+			},
+		},
+		{
+			description:  "画像が存在しなくても問題なし",
+			gameID:       gameID6,
+			lockType:     repository.LockTypeNone,
+			images:       []migrate.GameImageTable2{},
+			expectImages: []*domain.GameImage{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			for _, image := range testCase.images {
+				if game, ok := gameIDMap[image.GameID]; ok {
+					game.GameImage2s = append(game.GameImage2s, image)
+				} else {
+					gameIDMap[image.GameID] = &migrate.GameTable2{
+						ID:          image.GameID,
+						Name:        "test",
+						Description: "test",
+						CreatedAt:   now,
+						GameImage2s: []migrate.GameImageTable2{image},
+					}
+				}
+			}
+
+			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			for _, game := range gameIDMap {
+				games = append(games, *game)
+			}
+
+			if len(games) > 0 {
+				err := db.Create(games).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+			}
+
+			images, err := gameImageRepository.GetGameImages(ctx, testCase.gameID, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			for i, expectImage := range testCase.expectImages {
+				assert.Equal(t, expectImage.GetID(), images[i].GetID())
+				assert.Equal(t, expectImage.GetType(), images[i].GetType())
+				assert.WithinDuration(t, expectImage.GetCreatedAt(), images[i].GetCreatedAt(), time.Second)
+			}
 		})
 	}
 }
