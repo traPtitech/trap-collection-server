@@ -27,9 +27,6 @@ func NewGameImage(gameImageService service.GameImageV2) *GameImage {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type gameImageUnimplemented interface {
-	// ゲーム画像のメタ情報の取得
-	// (GET /games/{gameID}/images/{gameImageID}/meta)
-	GetGameImageMeta(ctx echo.Context, gameID openapi.GameIDInPath, gameImageID openapi.GameImageIDInPath) error
 }
 
 // ゲーム画像一覧の取得
@@ -128,4 +125,39 @@ func (gameImage *GameImage) GetGameImage(c echo.Context, gameID openapi.GameIDIn
 	}
 
 	return c.Redirect(http.StatusSeeOther, (*url.URL)(tmpURL).String())
+}
+
+// ゲーム画像のメタ情報の取得
+// (GET /games/{gameID}/images/{gameImageID}/meta)
+func (gameImage *GameImage) GetGameImageMeta(ctx echo.Context, gameID openapi.GameIDInPath, gameImageID openapi.GameImageIDInPath) error {
+	image, err := gameImage.gameImageService.GetGameImageMeta(ctx.Request().Context(), values.NewGameIDFromUUID(gameID), values.GameImageIDFromUUID(gameImageID))
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrInvalidGameImageID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameImageID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game image meta: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game image meta")
+	}
+
+	var mime openapi.GameImageMime
+	switch image.GetType() {
+	case values.GameImageTypeJpeg:
+		mime = openapi.Imagejpeg
+	case values.GameImageTypePng:
+		mime = openapi.Imagepng
+	case values.GameImageTypeGif:
+		mime = openapi.Imagegif
+	default:
+		log.Printf("error: unknown game image type: %v\n", image.GetType())
+		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game image type")
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.GameImage{
+		Id:        openapi.GameImageID(image.GetID()),
+		Mime:      mime,
+		CreatedAt: image.GetCreatedAt(),
+	})
 }
