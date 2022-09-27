@@ -20,12 +20,12 @@ type GameV2 interface {
 	//GetGames
 	//ゲームにいろいろ制限をかけて取得。limitは取得上限、offsetは取得開始位置。上限なしで取得する場合limit=-1。
 	//返り値のintは制限をかけない場合のゲーム数
-	GetGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*GameInfoV2, error)
+	GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error)
 
 	//GetMyGames
 	//ログイン中のユーザーが作ったゲームを制限をかけて取得。limitは取得上限、offsetは取得開始位置。上限なしで取得する場合limit=-1。
 	//返り値のintは制限をかけない場合のゲーム数
-	GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*GameInfoV2, error)
+	GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error)
 
 	//UpdateGame
 	//ゲームのidを指定して情報（名前、説明）を修正する。

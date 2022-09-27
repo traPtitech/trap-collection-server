@@ -125,9 +125,14 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		return nil, fmt.Errorf("failed to get game management role: %w", err)
 	}
 
-	activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
+	activeUsers, err := g.userUtils.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
+	}
+
+	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+	for _, activeUser := range activeUsers {
+		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
 	}
 
 	for _, admadministrator := range administrators {
@@ -147,7 +152,7 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 	return gameInfo, nil
 }
 
-func (g *Game) GetGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*service.GameInfoV2, error) {
+func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
 	allGames, err := g.gameRepository.GetGames(ctx)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
@@ -155,11 +160,11 @@ func (g *Game) GetGames(ctx context.Context, session *domain.OIDCSession, limit 
 
 	gameNumber := len(allGames)
 	if gameNumber == 0 {
-		return 0, []*service.GameInfoV2{}, nil
+		return 0, []*domain.Game{}, nil
 	}
 
 	if offset >= gameNumber {
-		return 0, nil, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
+		return 0, []*domain.Game{}, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
 	}
 
 	var games []*domain.Game
@@ -172,44 +177,10 @@ func (g *Game) GetGames(ctx context.Context, session *domain.OIDCSession, limit 
 		games = allGames[offset : offset+limit]
 	}
 
-	var gameInfos []*service.GameInfoV2
-
-	for _, game := range games { //管理者たちを取得
-		gameID := game.GetID()
-
-		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
-		if err != nil {
-			return 0, nil, fmt.Errorf("failed to get game management role: %w", err)
-		}
-
-		activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
-		if err != nil {
-			return 0, nil, fmt.Errorf("failed to get active users: %w", err)
-		}
-
-		var owners []values.TraPMemberName
-		var maintainers []values.TraPMemberName
-		for _, admadministrator := range administrators {
-			if admadministrator.Role == values.GameManagementRoleAdministrator {
-				owners = append(owners, activeUsersMap[admadministrator.UserID])
-			} else if admadministrator.Role == values.GameManagementRoleCollaborator {
-				maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
-			}
-		}
-
-		gameInfo := *&service.GameInfoV2{
-			Game:        game,
-			Owners:      owners,
-			Maintainers: maintainers,
-		}
-
-		gameInfos = append(gameInfos, &gameInfo)
-	}
-
-	return gameNumber, gameInfos, nil
+	return gameNumber, games, nil
 }
 
-func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*service.GameInfoV2, error) {
+func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
 	user, err := g.userUtils.getMe(ctx, session)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
@@ -221,11 +192,11 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 	}
 
 	if len(myAllGames) == 0 {
-		return 0, []*service.GameInfoV2{}, nil
+		return 0, []*domain.Game{}, nil
 	}
 
 	if offset >= len(myAllGames) {
-		return 0, nil, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
+		return 0, []*domain.Game{}, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
 	}
 
 	var games []*domain.Game
@@ -238,50 +209,12 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 		games = myAllGames[offset : offset+limit]
 	}
 
-	gameIDs := make([]values.GameID, 0, len(games))
-	for _, game := range games {
-		gameIDs = append(gameIDs, game.GetID())
-	}
-
-	var gameInfos []*service.GameInfoV2
-	for _, game := range games { //管理者たちを取得
-		gameID := game.GetID()
-
-		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
-		if err != nil {
-			return 0, nil, fmt.Errorf("failed to get game management role: %w", err)
-		}
-
-		activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
-		if err != nil {
-			return 0, nil, fmt.Errorf("failed to get active users: %w", err)
-		}
-
-		var owners []values.TraPMemberName
-		var maintainers []values.TraPMemberName
-		for _, admadministrator := range administrators {
-			if admadministrator.Role == values.GameManagementRoleAdministrator {
-				owners = append(owners, activeUsersMap[admadministrator.UserID])
-			} else if admadministrator.Role == values.GameManagementRoleCollaborator {
-				maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
-			}
-		}
-
-		gameInfo := *&service.GameInfoV2{
-			Game:        game,
-			Owners:      owners,
-			Maintainers: maintainers,
-		}
-
-		gameInfos = append(gameInfos, &gameInfo)
-	}
-
 	allGames, err := g.gameRepository.GetGames(ctx)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get all games: %w", err)
 	}
 
-	return len(allGames), gameInfos, nil
+	return len(allGames), games, nil
 }
 
 func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
@@ -328,18 +261,4 @@ func (g *Game) DeleteGame(ctx context.Context, gameID values.GameID) error { //V
 	}
 
 	return nil
-}
-
-//uuid=>ユーザー名のmapを作る関数
-func createUsersMap(user *User, ctx context.Context, session *domain.OIDCSession) (map[values.TraPMemberID]values.TraPMemberName, error) {
-	activeUsers, err := user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
-	if err != nil {
-		return nil, fmt.Errorf("failed to get active users: %w", err)
-	}
-
-	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
-	for _, activeUser := range activeUsers {
-		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
-	}
-	return activeUsersMap, nil
 }
