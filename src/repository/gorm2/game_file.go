@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"net/file"
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
