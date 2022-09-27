@@ -13,7 +13,6 @@ import (
 )
 
 type GameImage struct {
-	gameImageUnimplemented
 	gameImageService service.GameImageV2
 }
 
@@ -21,12 +20,6 @@ func NewGameImage(gameImageService service.GameImageV2) *GameImage {
 	return &GameImage{
 		gameImageService: gameImageService,
 	}
-}
-
-// gameImageUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type gameImageUnimplemented interface {
 }
 
 // ゲーム画像一覧の取得
