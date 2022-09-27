@@ -88,7 +88,7 @@ func (gu *GameURL) GetGameURLsByGameVersionIDs(ctx context.Context, gameVersionI
 		uuidGameVersionIDs = append(uuidGameVersionIDs, uuid.UUID(gameID))
 	}
 
-	var gameURLTables []GameURLTable
+	var gameURLTables []migrate.gameURLTable
 	err = db.
 		Where("game_version_id in (?)", uuidGameVersionIDs).
 		Find(&gameURLTables).Error
