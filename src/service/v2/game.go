@@ -1,0 +1,345 @@
+package v2
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/service"
+)
+
+type Game struct {
+	db                 repository.DB
+	gameRepository     repository.Game
+	gameManagementRole repository.GameManagementRole
+	userUtils          *User
+}
+
+func NewGame(
+	db repository.DB,
+	gameRepository repository.Game,
+	gameManagementRole repository.GameManagementRole,
+	userUtils *User,
+) *Game {
+	return &Game{
+		db:                 db,
+		gameRepository:     gameRepository,
+		gameManagementRole: gameManagementRole,
+		userUtils:          userUtils,
+	}
+}
+
+func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*service.GameInfoV2, error) {
+	user, err := g.userUtils.getMe(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	game := domain.NewGame(values.NewGameID(), name, description, time.Now())
+
+	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		err := g.gameRepository.SaveGame(ctx, game)
+		if err != nil {
+			return fmt.Errorf("failed to save game: %w", err)
+		}
+
+		err = g.gameManagementRole.AddGameManagementRoles(
+			ctx,
+			game.GetID(),
+			[]values.TraPMemberID{user.GetID()},
+			values.GameManagementRoleAdministrator,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to add YOUR game management role 'owner': %w", err)
+		}
+
+		activeUsers, err := g.userUtils.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+		if err != nil {
+			return fmt.Errorf("failed to get active users: %w", err)
+		}
+
+		activeUsersMap := make(map[values.TraPMemberName]values.TraPMemberID, len(activeUsers))
+		for _, activeUser := range activeUsers {
+			activeUsersMap[activeUser.GetName()] = activeUser.GetID()
+		}
+
+		var ownersID []values.TraPMemberID
+		for _, owner := range owners {
+			ownersID = append(ownersID, activeUsersMap[owner])
+		}
+
+		var maintainersID []values.TraPMemberID
+		for _, maintainer := range maintainers {
+			maintainersID = append(maintainersID, activeUsersMap[maintainer])
+		}
+
+		err = g.gameManagementRole.AddGameManagementRoles(
+			ctx,
+			game.GetID(),
+			ownersID,
+			values.GameManagementRoleAdministrator)
+		if err != nil {
+			return fmt.Errorf("failed to add management role 'owner': %w", err)
+		}
+
+		err = g.gameManagementRole.AddGameManagementRoles(
+			ctx,
+			game.GetID(),
+			maintainersID,
+			values.GameManagementRoleCollaborator)
+		if err != nil {
+			return fmt.Errorf("failed to add management role 'maintainer': %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	gameInfo := &service.GameInfoV2{
+		Game:        game,
+		Owners:      owners,
+		Maintainers: maintainers,
+	}
+	return gameInfo, nil
+}
+
+func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*service.GameInfoV2, error) {
+	game, err := g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGame
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	//管理者たちを取得
+	var owners []values.TraPMemberName
+	var maintainers []values.TraPMemberName
+	administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game management role: %w", err)
+	}
+
+	activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active users: %w", err)
+	}
+
+	for _, admadministrator := range administrators {
+		if admadministrator.Role == values.GameManagementRoleAdministrator {
+			owners = append(owners, activeUsersMap[admadministrator.UserID])
+		} else if admadministrator.Role == values.GameManagementRoleCollaborator {
+			maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
+		}
+	}
+
+	gameInfo := &service.GameInfoV2{
+		Game:        game,
+		Owners:      owners,
+		Maintainers: maintainers,
+	}
+
+	return gameInfo, nil
+}
+
+func (g *Game) GetGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*service.GameInfoV2, error) {
+	allGames, err := g.gameRepository.GetGames(ctx)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gameNumber := len(allGames)
+	if gameNumber == 0 {
+		return 0, []*service.GameInfoV2{}, nil
+	}
+
+	if offset >= gameNumber {
+		return 0, nil, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
+	}
+
+	var games []*domain.Game
+
+	if limit == -1 { //上限なしで取得
+		games = allGames[offset:]
+	} else if offset+limit >= len(allGames) { //開始位置+上限がゲーム全部の数より大きい
+		games = allGames[offset:]
+	} else {
+		games = allGames[offset : offset+limit]
+	}
+
+	var gameInfos []*service.GameInfoV2
+
+	for _, game := range games { //管理者たちを取得
+		gameID := game.GetID()
+
+		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
+		if err != nil {
+			return 0, nil, fmt.Errorf("failed to get game management role: %w", err)
+		}
+
+		activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
+		if err != nil {
+			return 0, nil, fmt.Errorf("failed to get active users: %w", err)
+		}
+
+		var owners []values.TraPMemberName
+		var maintainers []values.TraPMemberName
+		for _, admadministrator := range administrators {
+			if admadministrator.Role == values.GameManagementRoleAdministrator {
+				owners = append(owners, activeUsersMap[admadministrator.UserID])
+			} else if admadministrator.Role == values.GameManagementRoleCollaborator {
+				maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
+			}
+		}
+
+		gameInfo := *&service.GameInfoV2{
+			Game:        game,
+			Owners:      owners,
+			Maintainers: maintainers,
+		}
+
+		gameInfos = append(gameInfos, &gameInfo)
+	}
+
+	return gameNumber, gameInfos, nil
+}
+
+func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*service.GameInfoV2, error) {
+	user, err := g.userUtils.getMe(ctx, session)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	myAllGames, err := g.gameRepository.GetGamesByUser(ctx, user.GetID())
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to get game ids: %w", err)
+	}
+
+	if len(myAllGames) == 0 {
+		return 0, []*service.GameInfoV2{}, nil
+	}
+
+	if offset >= len(myAllGames) {
+		return 0, nil, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
+	}
+
+	var games []*domain.Game
+
+	if limit == -1 { //上限なしで取得
+		games = myAllGames[offset:]
+	} else if offset+limit >= len(myAllGames) { //開始位置+上限がゲーム全部の数より大きい
+		games = myAllGames[offset:]
+	} else {
+		games = myAllGames[offset : offset+limit]
+	}
+
+	gameIDs := make([]values.GameID, 0, len(games))
+	for _, game := range games {
+		gameIDs = append(gameIDs, game.GetID())
+	}
+
+	var gameInfos []*service.GameInfoV2
+	for _, game := range games { //管理者たちを取得
+		gameID := game.GetID()
+
+		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
+		if err != nil {
+			return 0, nil, fmt.Errorf("failed to get game management role: %w", err)
+		}
+
+		activeUsersMap, err := createUsersMap(g.userUtils, ctx, session)
+		if err != nil {
+			return 0, nil, fmt.Errorf("failed to get active users: %w", err)
+		}
+
+		var owners []values.TraPMemberName
+		var maintainers []values.TraPMemberName
+		for _, admadministrator := range administrators {
+			if admadministrator.Role == values.GameManagementRoleAdministrator {
+				owners = append(owners, activeUsersMap[admadministrator.UserID])
+			} else if admadministrator.Role == values.GameManagementRoleCollaborator {
+				maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
+			}
+		}
+
+		gameInfo := *&service.GameInfoV2{
+			Game:        game,
+			Owners:      owners,
+			Maintainers: maintainers,
+		}
+
+		gameInfos = append(gameInfos, &gameInfo)
+	}
+
+	allGames, err := g.gameRepository.GetGames(ctx)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to get all games: %w", err)
+	}
+
+	return len(allGames), gameInfos, nil
+}
+
+func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
+	var game *domain.Game
+	err := g.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		var err error
+		game, err = g.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGame
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		// 変更がなければ何もしない
+		if game.GetName() == name && game.GetDescription() == description {
+			return nil
+		}
+
+		game.SetName(name)
+		game.SetDescription(description)
+
+		err = g.gameRepository.UpdateGame(ctx, game)
+		if err != nil {
+			return fmt.Errorf("failed to save game: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return game, nil
+}
+
+func (g *Game) DeleteGame(ctx context.Context, gameID values.GameID) error { //V1と変わらない
+	err := g.gameRepository.RemoveGame(ctx, gameID)
+	if errors.Is(err, repository.ErrNoRecordDeleted) {
+		return service.ErrNoGame
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete game: %w", err)
+	}
+
+	return nil
+}
+
+//uuid=>ユーザー名のmapを作る関数
+func createUsersMap(user *User, ctx context.Context, session *domain.OIDCSession) (map[values.TraPMemberID]values.TraPMemberName, error) {
+	activeUsers, err := user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active users: %w", err)
+	}
+
+	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+	for _, activeUser := range activeUsers {
+		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+	}
+	return activeUsersMap, nil
+}
