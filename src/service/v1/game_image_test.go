@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
+	"fmt"
 	"io"
 	"net/url"
 	"strings"
@@ -22,6 +19,7 @@ import (
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameImage(t *testing.T) {
@@ -138,27 +136,35 @@ func TestSaveGameImage(t *testing.T) {
 			var file io.Reader
 			var expectBytes []byte
 			if testCase.isValidFile {
-				img := image.NewRGBA(image.Rect(0, 0, 3000, 3000))
 				imgBuf := bytes.NewBuffer(nil)
 
-				switch testCase.imageType {
-				case values.GameImageTypeJpeg:
-					err := jpeg.Encode(imgBuf, img, nil)
-					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+				err := func() error {
+					var path string
+					switch testCase.imageType {
+					case values.GameImageTypeJpeg:
+						path = "1.jpg"
+					case values.GameImageTypePng:
+						path = "1.png"
+					case values.GameImageTypeGif:
+						path = "1.gif"
+					default:
+						t.Fatalf("invalid image type: %v\n", testCase.imageType)
 					}
-				case values.GameImageTypePng:
-					err := png.Encode(imgBuf, img)
+					f, err := testdata.FS.Open(path)
 					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+						return fmt.Errorf("failed to open file: %w", err)
 					}
-				case values.GameImageTypeGif:
-					err := gif.Encode(imgBuf, img, nil)
+					defer f.Close()
+
+					_, err = io.Copy(imgBuf, f)
 					if err != nil {
-						t.Fatalf("failed to encode image: %v\n", err)
+						return fmt.Errorf("failed to copy file: %w", err)
 					}
-				default:
-					t.Fatalf("invalid image type: %v\n", testCase.imageType)
+
+					return nil
+				}()
+				if err != nil {
+					t.Fatalf("failed to encode image: %s", err)
 				}
 
 				file = imgBuf

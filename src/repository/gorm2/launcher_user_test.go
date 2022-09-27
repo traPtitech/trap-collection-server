@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 )
 
 func TestCreateLauncherUsers(t *testing.T) {
@@ -51,7 +52,7 @@ func TestCreateLauncherUsers(t *testing.T) {
 	}
 
 	launcherVersionID := values.NewLauncherVersionID()
-	dbLauncherVersion := LauncherVersionTable{
+	dbLauncherVersion := migrate.LauncherVersionTable{
 		ID:        uuid.UUID(launcherVersionID),
 		Name:      "TestCreateLauncherUsers",
 		CreatedAt: time.Now(),
@@ -163,7 +164,7 @@ func TestDeleteLauncherUser(t *testing.T) {
 	}
 
 	launcherVersionID := values.NewLauncherVersionID()
-	dbLauncherVersion := LauncherVersionTable{
+	dbLauncherVersion := migrate.LauncherVersionTable{
 		ID:        uuid.UUID(launcherVersionID),
 		Name:      "TestDeleteLauncherUser",
 		CreatedAt: time.Now(),
@@ -203,7 +204,7 @@ func TestDeleteLauncherUser(t *testing.T) {
 					t.Errorf("failed to create product key: %v", err)
 				}
 
-				dbLauncherUser := LauncherUserTable{
+				dbLauncherUser := migrate.LauncherUserTable{
 					ID:                uuid.UUID(launcherUserID),
 					ProductKey:        string(productKey),
 					LauncherVersionID: uuid.UUID(launcherVersionID),
@@ -257,11 +258,11 @@ func TestGetLauncherUserByProductKey(t *testing.T) {
 		launcherUserID,
 		productKey1,
 	)
-	dbLauncherVersion := LauncherVersionTable{
+	dbLauncherVersion := migrate.LauncherVersionTable{
 		ID:        uuid.UUID(launcherVersionID),
 		Name:      "TestGetLauncherUserByProductKey",
 		CreatedAt: time.Now(),
-		LauncherUsers: []LauncherUserTable{
+		LauncherUsers: []migrate.LauncherUserTable{
 			{
 				ID:         uuid.UUID(launcherUserID),
 				ProductKey: string(productKey1),

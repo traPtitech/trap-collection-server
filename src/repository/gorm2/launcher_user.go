@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -33,9 +34,9 @@ func (lu *LauncherUser) CreateLauncherUsers(ctx context.Context, launcherVersion
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	dbLauncherUsers := make([]*LauncherUserTable, 0, len(launcherUsers))
+	dbLauncherUsers := make([]*migrate.LauncherUserTable, 0, len(launcherUsers))
 	for _, launcherUser := range launcherUsers {
-		dbLauncherUsers = append(dbLauncherUsers, &LauncherUserTable{
+		dbLauncherUsers = append(dbLauncherUsers, &migrate.LauncherUserTable{
 			ID:                uuid.UUID(launcherUser.GetID()),
 			LauncherVersionID: uuid.UUID(launcherVersionID),
 			ProductKey:        string(launcherUser.GetProductKey()),
@@ -57,7 +58,7 @@ func (lu *LauncherUser) DeleteLauncherUser(ctx context.Context, launcherUserID v
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	result := db.Delete(&LauncherUserTable{ID: uuid.UUID(launcherUserID)})
+	result := db.Delete(&migrate.LauncherUserTable{ID: uuid.UUID(launcherUserID)})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete launcher user: %w", err)
@@ -76,7 +77,7 @@ func (lu *LauncherUser) GetLauncherUserByProductKey(ctx context.Context, product
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var dbLauncherUser LauncherUserTable
+	var dbLauncherUser migrate.LauncherUserTable
 	err = db.
 		Where("product_key = ?", string(productKey)).
 		Take(&dbLauncherUser).Error

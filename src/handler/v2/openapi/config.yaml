@@ -1,0 +1,5 @@
+package: openapi
+generate:
+  echo-server: true
+  models: true
+  embedded-spec: true

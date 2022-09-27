@@ -9,73 +9,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/repository"
-	"golang.org/x/sync/singleflight"
-	"gorm.io/gorm"
-)
-
-const (
-	gameFileTypeJar     = "jar"
-	gameFileTypeWindows = "windows"
-	gameFileTypeMac     = "mac"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 )
 
 type GameFile struct {
 	db *DB
 }
 
-var fileTypeSetupGroup = &singleflight.Group{}
-
-func NewGameFile(db *DB) (*GameFile, error) {
-	ctx := context.Background()
-
-	gormDB, err := db.getDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get db: %w", err)
-	}
-
-	// 実際の運用では並列で実行されないが、
-	// テストで並列に実行されるため、
-	// singleflightを使っている
-	_, err, _ = fileTypeSetupGroup.Do("setupFileTypeTable", func() (interface{}, error) {
-		return nil, setupFileTypeTable(gormDB)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup file type table: %w", err)
-	}
-
+func NewGameFile(db *DB) *GameFile {
 	return &GameFile{
 		db: db,
-	}, nil
-}
-
-func setupFileTypeTable(db *gorm.DB) error {
-	fileTypes := []GameFileTypeTable{
-		{
-			Name:   gameFileTypeJar,
-			Active: true,
-		},
-		{
-			Name:   gameFileTypeWindows,
-			Active: true,
-		},
-		{
-			Name:   gameFileTypeMac,
-			Active: true,
-		},
 	}
-
-	for _, fileType := range fileTypes {
-		err := db.
-			Session(&gorm.Session{}).
-			Where("name = ?", fileType.Name).
-			FirstOrCreate(&fileType).Error
-		if err != nil {
-			return fmt.Errorf("failed to create role type: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameVersionID, gameFile *domain.GameFile) error {
@@ -87,16 +31,16 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameV
 	var fileTypeName string
 	switch gameFile.GetFileType() {
 	case values.GameFileTypeJar:
-		fileTypeName = gameFileTypeJar
+		fileTypeName = migrate.GameFileTypeJar
 	case values.GameFileTypeWindows:
-		fileTypeName = gameFileTypeWindows
+		fileTypeName = migrate.GameFileTypeWindows
 	case values.GameFileTypeMac:
-		fileTypeName = gameFileTypeMac
+		fileTypeName = migrate.GameFileTypeMac
 	default:
 		return fmt.Errorf("invalid file type: %d", gameFile.GetFileType())
 	}
 
-	var fileType GameFileTypeTable
+	var fileType migrate.GameFileTypeTable
 	err = gormDB.
 		Where("name = ?", fileTypeName).
 		Where("active").
@@ -107,7 +51,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, gameVersionID values.GameV
 	}
 	fileTypeID := fileType.ID
 
-	err = gormDB.Create(&GameFileTable{
+	err = gormDB.Create(&migrate.GameFileTable{
 		ID:            uuid.UUID(gameFile.GetID()),
 		GameVersionID: uuid.UUID(gameVersionID),
 		FileTypeID:    fileTypeID,
@@ -136,17 +80,17 @@ func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameV
 	for _, fileType := range fileTypes {
 		switch fileType {
 		case values.GameFileTypeJar:
-			fileTypeNames = append(fileTypeNames, gameFileTypeJar)
+			fileTypeNames = append(fileTypeNames, migrate.GameFileTypeJar)
 		case values.GameFileTypeWindows:
-			fileTypeNames = append(fileTypeNames, gameFileTypeWindows)
+			fileTypeNames = append(fileTypeNames, migrate.GameFileTypeWindows)
 		case values.GameFileTypeMac:
-			fileTypeNames = append(fileTypeNames, gameFileTypeMac)
+			fileTypeNames = append(fileTypeNames, migrate.GameFileTypeMac)
 		default:
 			return nil, fmt.Errorf("invalid file type: %d", fileType)
 		}
 	}
 
-	var dbGameFiles []GameFileTable
+	var dbGameFiles []migrate.GameFileTable
 	err = gormDB.
 		Joins("GameFileType").
 		Where("game_version_id = ?", uuid.UUID(gameVersionID)).
@@ -162,11 +106,11 @@ func (gf *GameFile) GetGameFiles(ctx context.Context, gameVersionID values.GameV
 	for _, gameFile := range dbGameFiles {
 		var fileType values.GameFileType
 		switch gameFile.GameFileType.Name {
-		case gameFileTypeJar:
+		case migrate.GameFileTypeJar:
 			fileType = values.GameFileTypeJar
-		case gameFileTypeWindows:
+		case migrate.GameFileTypeWindows:
 			fileType = values.GameFileTypeWindows
-		case gameFileTypeMac:
+		case migrate.GameFileTypeMac:
 			fileType = values.GameFileTypeMac
 		default:
 			return nil, fmt.Errorf("invalid file type: %s", gameFile.GameFileType.Name)

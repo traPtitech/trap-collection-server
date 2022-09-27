@@ -10,115 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
-
-func TestSetupFileTypeTable(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := testDB.getDB(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type test struct {
-		description     string
-		beforeFileTypes []string
-		isErr           bool
-		err             error
-	}
-
-	testCases := []test{
-		{
-			description:     "何も存在しない場合問題なし",
-			beforeFileTypes: []string{},
-		},
-		{
-			description: "1つのみ存在する場合問題なし",
-			beforeFileTypes: []string{
-				gameFileTypeJar,
-			},
-		},
-		{
-			description: "2つ存在する場合問題なし",
-			beforeFileTypes: []string{
-				gameFileTypeJar,
-				gameFileTypeWindows,
-			},
-		},
-		{
-			description: "全て存在する場合問題なし",
-			beforeFileTypes: []string{
-				gameFileTypeJar,
-				gameFileTypeWindows,
-				gameFileTypeMac,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				err := db.
-					Session(&gorm.Session{
-						AllowGlobalUpdate: true,
-					}).
-					Delete(&GameFileTypeTable{}).Error
-				if err != nil {
-					t.Fatalf("failed to delete role type table: %+v\n", err)
-				}
-			}()
-
-			if len(testCase.beforeFileTypes) != 0 {
-				fileTypes := make([]*GameFileTypeTable, 0, len(testCase.beforeFileTypes))
-				for _, fileType := range testCase.beforeFileTypes {
-					fileTypes = append(fileTypes, &GameFileTypeTable{
-						Name: fileType,
-					})
-				}
-
-				err := db.Create(fileTypes).Error
-				if err != nil {
-					t.Fatalf("failed to setup role type table: %+v\n", err)
-				}
-			}
-
-			err := setupFileTypeTable(db)
-
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-
-			var fileTypes []*GameFileTypeTable
-			err = db.
-				Select("name").
-				Find(&fileTypes).Error
-			if err != nil {
-				t.Fatalf("failed to get role type table: %+v\n", err)
-			}
-
-			fileTypeNames := make([]string, 0, len(fileTypes))
-			for _, fileType := range fileTypes {
-				fileTypeNames = append(fileTypeNames, fileType.Name)
-			}
-
-			assert.ElementsMatch(t, []string{
-				gameFileTypeJar,
-				gameFileTypeWindows,
-				gameFileTypeMac,
-			}, fileTypeNames)
-		})
-	}
-}
 
 func TestSaveGameFile(t *testing.T) {
 	t.Parallel()
@@ -130,17 +24,14 @@ func TestSaveGameFile(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameFileRepository, err := NewGameFile(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameFileRepository := NewGameFile(testDB)
 
 	type test struct {
 		description   string
 		gameVersionID values.GameVersionID
 		gameFile      *domain.GameFile
-		beforeFiles   []GameFileTable
-		expectFiles   []GameFileTable
+		beforeFiles   []migrate.GameFileTable
+		expectFiles   []migrate.GameFileTable
 		isErr         bool
 		err           error
 	}
@@ -164,7 +55,7 @@ func TestSaveGameFile(t *testing.T) {
 	fileID9 := values.NewGameFileID()
 	fileID10 := values.NewGameFileID()
 
-	var fileTypes []*GameFileTypeTable
+	var fileTypes []*migrate.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -190,12 +81,12 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{},
-			expectFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{},
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID1),
 					GameVersionID: uuid.UUID(gameVersionID1),
-					FileTypeID:    fileTypeMap[gameFileTypeJar],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.jar",
 					CreatedAt:     now,
@@ -212,12 +103,12 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{},
-			expectFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{},
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID2),
 					GameVersionID: uuid.UUID(gameVersionID2),
-					FileTypeID:    fileTypeMap[gameFileTypeWindows],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
 					CreatedAt:     now,
@@ -234,12 +125,12 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{},
-			expectFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{},
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID3),
 					GameVersionID: uuid.UUID(gameVersionID3),
-					FileTypeID:    fileTypeMap[gameFileTypeMac],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeMac],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.app",
 					CreatedAt:     now,
@@ -256,8 +147,8 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{},
-			expectFiles: []GameFileTable{},
+			beforeFiles: []migrate.GameFileTable{},
+			expectFiles: []migrate.GameFileTable{},
 			isErr:       true,
 		},
 		{
@@ -270,21 +161,21 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID6),
 					GameVersionID: uuid.UUID(gameVersionID5),
-					FileTypeID:    fileTypeMap[gameFileTypeWindows],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
 					CreatedAt:     now,
 				},
 			},
-			expectFiles: []GameFileTable{
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID6),
 					GameVersionID: uuid.UUID(gameVersionID5),
-					FileTypeID:    fileTypeMap[gameFileTypeWindows],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
 					CreatedAt:     now,
@@ -292,7 +183,7 @@ func TestSaveGameFile(t *testing.T) {
 				{
 					ID:            uuid.UUID(fileID5),
 					GameVersionID: uuid.UUID(gameVersionID5),
-					FileTypeID:    fileTypeMap[gameFileTypeJar],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.jar",
 					CreatedAt:     now,
@@ -310,21 +201,21 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID10),
 					GameVersionID: uuid.UUID(gameVersionID7),
-					FileTypeID:    fileTypeMap[gameFileTypeJar],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game2.jar",
 					CreatedAt:     now,
 				},
 			},
-			expectFiles: []GameFileTable{
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID10),
 					GameVersionID: uuid.UUID(gameVersionID7),
-					FileTypeID:    fileTypeMap[gameFileTypeJar],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeJar],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game2.jar",
 					CreatedAt:     now,
@@ -342,21 +233,21 @@ func TestSaveGameFile(t *testing.T) {
 				[]byte("hash"),
 				now,
 			),
-			beforeFiles: []GameFileTable{
+			beforeFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID8),
 					GameVersionID: uuid.UUID(gameVersionID6),
-					FileTypeID:    fileTypeMap[gameFileTypeWindows],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
 					CreatedAt:     now,
 				},
 			},
-			expectFiles: []GameFileTable{
+			expectFiles: []migrate.GameFileTable{
 				{
 					ID:            uuid.UUID(fileID8),
 					GameVersionID: uuid.UUID(gameVersionID6),
-					FileTypeID:    fileTypeMap[gameFileTypeWindows],
+					FileTypeID:    fileTypeMap[migrate.GameFileTypeWindows],
 					Hash:          "68617368",
 					EntryPoint:    "/path/to/game.exe",
 					CreatedAt:     now,
@@ -368,12 +259,12 @@ func TestSaveGameFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(values.NewGameID()),
 				Name:        "test",
 				Description: "test",
 				CreatedAt:   time.Now(),
-				GameVersions: []GameVersionTable{
+				GameVersions: []migrate.GameVersionTable{
 					{
 						ID:          uuid.UUID(testCase.gameVersionID),
 						GameID:      uuid.UUID(values.NewGameID()),
@@ -400,7 +291,7 @@ func TestSaveGameFile(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var files []GameFileTable
+			var files []migrate.GameFileTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_version_id = ?", uuid.UUID(testCase.gameVersionID)).
@@ -411,7 +302,7 @@ func TestSaveGameFile(t *testing.T) {
 
 			assert.Len(t, files, len(testCase.expectFiles))
 
-			fileMap := make(map[uuid.UUID]GameFileTable)
+			fileMap := make(map[uuid.UUID]migrate.GameFileTable)
 			for _, file := range files {
 				fileMap[file.ID] = file
 			}
@@ -442,16 +333,13 @@ func TestGetGameFiles(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameFileRepository, err := NewGameFile(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameFileRepository := NewGameFile(testDB)
 
 	type test struct {
 		description        string
 		gameVersionID      values.GameVersionID
 		fileTypes          []values.GameFileType
-		beforeGameVersions []GameVersionTable
+		beforeGameVersions []migrate.GameVersionTable
 		gameFiles          []*domain.GameFile
 		isErr              bool
 		err                error
@@ -485,7 +373,7 @@ func TestGetGameFiles(t *testing.T) {
 
 	now := time.Now()
 
-	var fileTypes []*GameFileTypeTable
+	var fileTypes []*migrate.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -505,16 +393,16 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeJar,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID1),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -538,16 +426,16 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeWindows,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID2),
-							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
 							CreatedAt:  now,
@@ -571,16 +459,16 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeMac,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID3),
-							FileTypeID: fileTypeMap[gameFileTypeMac],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.app",
 							CreatedAt:  now,
@@ -604,23 +492,23 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeJar,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID4),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
 						},
 						{
 							ID:         uuid.UUID(gameFileID5),
-							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
 							CreatedAt:  now,
@@ -645,23 +533,23 @@ func TestGetGameFiles(t *testing.T) {
 				values.GameFileTypeJar,
 				values.GameFileTypeWindows,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID6),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
 						},
 						{
 							ID:         uuid.UUID(gameFileID7),
-							FileTypeID: fileTypeMap[gameFileTypeWindows],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
 							CreatedAt:  now,
@@ -692,13 +580,13 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeJar,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles:   []GameFileTable{},
+					GameFiles:   []migrate.GameFileTable{},
 				},
 			},
 			gameFiles: []*domain.GameFile{},
@@ -710,7 +598,7 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeJar,
 			},
-			beforeGameVersions: []GameVersionTable{},
+			beforeGameVersions: []migrate.GameVersionTable{},
 			gameFiles:          []*domain.GameFile{},
 		},
 		{
@@ -718,16 +606,16 @@ func TestGetGameFiles(t *testing.T) {
 			description:   "fileTypesがなくてもエラーなし",
 			gameVersionID: gameVersionID8,
 			fileTypes:     []values.GameFileType{},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID8),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID8),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -743,16 +631,16 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				values.GameFileTypeJar,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID9),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID9),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -764,10 +652,10 @@ func TestGetGameFiles(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID10),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -791,16 +679,16 @@ func TestGetGameFiles(t *testing.T) {
 			fileTypes: []values.GameFileType{
 				100,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID11),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID11),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -817,16 +705,16 @@ func TestGetGameFiles(t *testing.T) {
 				values.GameFileTypeJar,
 				values.GameFileTypeWindows,
 			},
-			beforeGameVersions: []GameVersionTable{
+			beforeGameVersions: []migrate.GameVersionTable{
 				{
 					ID:          uuid.UUID(gameVersionID12),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameFiles: []GameFileTable{
+					GameFiles: []migrate.GameFileTable{
 						{
 							ID:         uuid.UUID(gameFileID12),
-							FileTypeID: fileTypeMap[gameFileTypeJar],
+							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -849,7 +737,7 @@ func TestGetGameFiles(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if len(testCase.beforeGameVersions) != 0 {
-				err := db.Create(&GameTable{
+				err := db.Create(&migrate.GameTable{
 					ID:           uuid.UUID(values.NewGameID()),
 					Name:         "test",
 					Description:  "test",

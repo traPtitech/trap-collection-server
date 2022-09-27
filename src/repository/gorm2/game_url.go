@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +30,7 @@ func (gu *GameURL) SaveGameURL(ctx context.Context, gameVersionID values.GameVer
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	err = db.Create(&GameURLTable{
+	err = db.Create(&migrate.GameURLTable{
 		ID:            uuid.UUID(gameURL.GetID()),
 		GameVersionID: uuid.UUID(gameVersionID),
 		URL:           (*url.URL)(gameURL.GetLink()).String(),
@@ -48,7 +49,7 @@ func (gu *GameURL) GetGameURL(ctx context.Context, gameVersionID values.GameVers
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var gameURLTable GameURLTable
+	var gameURLTable migrate.GameURLTable
 	err = db.
 		Where("game_version_id = ?", uuid.UUID(gameVersionID)).
 		Take(&gameURLTable).Error

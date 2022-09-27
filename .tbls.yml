@@ -1,0 +1,194 @@
+docPath: docs/db_schema
+er:
+  format: svg
+
+lint:
+  requireTableComment:
+    enabled: true
+  requireColumnComment:
+    enabled: true
+    exclude:
+      - id
+      - created_at
+      - updated_at
+      - deleted_at
+
+comments:
+  - table: access_tokens
+    tableComment: アクセストークンテーブル(v2)
+    columnComments:
+      id: アクセストークンUUID
+      product_key_id: プロダクトキーUUID
+      access_token: アクセストークンの値
+      expires_at: 有効期限
+      created_at: 作成日時
+      deleted_at: revokeされた日時
+  - table: editions
+    tableComment: エディションテーブル(v2)
+    columnComments:
+      id: エディションUUID
+      name: エディション名
+      questionnaire_url: アンケートURL
+      created_at: 作成日時
+      deleted_at: 削除日時
+  - table: edition_game_version_relations
+    tableComment: エディションとゲームバージョンの関係テーブル(v2)
+    columnComments:
+      edition_id: エディションUUID
+      game_version_id: ゲームバージョンUUID
+  - table: games
+    tableComment: ゲームテーブル
+    columnComments:
+      id: ゲームUUID
+      name: ゲーム名
+      description: ゲームの説明
+      created_at: 作成日時
+      deleted_at: 削除日時
+  - table: game_files
+    tableComment: ゲームファイルテーブル(v1)
+    columnComments:
+      id: ゲームファイルUUID
+      game_version_id: ゲームバージョンUUID
+      file_type_id: ファイルの種類のUUID
+      hash: ファイルのmd5ハッシュ
+      entry_point: ファイル実行時のエントリーポイント
+      created_at: 作成日時
+  - table: game_file_types
+    tableComment: ゲームファイルの種類のテーブル
+    columnComments:
+      id: ゲームファイルの種類のUUID
+      name: ゲームファイルの種類の名前
+      active: 有効かどうか
+  - table: game_images
+    tableComment: ゲーム画像テーブル(v1)
+    columnComments:
+      id: ゲーム画像UUID
+      game_id: ゲームUUID
+      image_type_id: 画像の種類のUUID
+      created_at: 作成日時
+  - table: game_image_types
+    tableComment: ゲーム画像の種類のテーブル
+    columnComments:
+      id: ゲーム画像の種類のUUID
+      name: ゲーム画像の種類の名前
+      active: 有効かどうか
+  - table: game_management_roles
+    tableComment: ゲーム管理者の権限のテーブル
+    columnComments:
+      game_id: ゲームUUID
+      user_id: ユーザーUUID
+      role_type_id: 権限の種類のUUID
+  - table: game_management_role_types
+    tableComment: ゲーム管理者の権限の種類のテーブル
+    columnComments:
+      id: 権限の種類のUUID
+      name: 権限の種類の名前
+      active: 有効かどうか
+  - table: game_urls
+    tableComment: ゲームURLテーブル(v1)
+    columnComments:
+      id: ゲームURLのUUID
+      game_version_id: ゲームバージョンUUID
+      url: URL
+      created_at: 作成日時
+  - table: game_versions
+    tableComment: ゲームバージョンテーブル(v1)
+    columnComments:
+      id: ゲームバージョンUUID
+      game_id: ゲームUUID
+      name: ゲームバージョン名
+      description: ゲームバージョンの説明
+      created_at: 作成日時
+  - table: game_version_game_file_relations
+    tableComment: ゲームバージョンとゲームファイルの関係テーブル(v2)
+    columnComments:
+      game_version_id: ゲームバージョンUUID
+      game_file_id: ゲームファイルUUID
+  - table: game_videos
+    tableComment: ゲーム動画テーブル(v1)
+    columnComments:
+      id: ゲーム動画UUID
+      game_id: ゲームUUID
+      video_type_id: 動画の種類のUUID
+      created_at: 作成日時
+  - table: game_video_types
+    tableComment: ゲーム動画の種類のテーブル
+    columnComments:
+      id: ゲーム動画の種類のUUID
+      name: ゲーム動画の種類の名前
+      active: 有効かどうか
+  - table: launcher_sessions
+    tableComment: ランチャーセッションテーブル(v1)
+    columnComments:
+      id: ランチャーセッションUUID
+      launcher_user_id: ランチャーユーザーUUID
+      access_token: アクセストークンの値
+      expires_at: 有効期限
+      created_at: 作成日時
+      deleted_at: revokeされた日時
+  - table: launcher_users
+    tableComment: ランチャーユーザーテーブル(v1)
+    columnComments:
+      id: ランチャーユーザーUUID
+      launcher_version_id: ランチャーバージョンUUID
+      product_key: プロダクトキーの値
+      created_at: 作成日時
+      deleted_at: revokeされた日時
+  - table: launcher_versions
+    tableComment: ランチャーバージョンテーブル(v1)
+    columnComments:
+      id: ランチャーバージョンUUID
+      name: ランチャーバージョン名
+      questionnaire_url: アンケートURL
+      created_at: 作成日時
+      deleted_at: 削除日時
+  - table: launcher_version_game_relations
+    tableComment: ランチャーバージョンとゲームの関係テーブル(v1)
+    columnComments:
+      launcher_version_table_id: ランチャーバージョンUUID
+      game_table_id: ゲームUUID
+  - table: migrations
+    tableComment: マイグレーションテーブル(gormigrate)
+    columnComments:
+      id: マイグレーションID
+  - table: product_keys
+    tableComment: プロダクトキーテーブル(v2)
+    columnComments:
+      id: プロダクトキーUUID
+      edition_id: エディションUUID
+      product_key: プロダクトキーの値
+      created_at: 作成日時
+      deleted_at: revokeされた日時
+  - table: v2_game_files
+    tableComment: ゲームファイルテーブル(v2)
+    columnComments:
+      id: ゲームファイルUUID
+      game_id: ゲームUUID
+      file_type_id: ゲームファイルの種類のUUID
+      hash: ファイルのmd5ハッシュ
+      entry_point: 実行時のエントリーポイント
+      created_at: 作成日時
+  - table: v2_game_images
+    tableComment: ゲーム画像テーブル(v2)
+    columnComments:
+      id: ゲーム画像UUID
+      game_id: ゲームUUID
+      image_type_id: ゲーム画像の種類のUUID
+      created_at: 作成日時
+  - table: v2_game_versions
+    tableComment: ゲームバージョンテーブル(v2)
+    columnComments:
+      id: ゲームバージョンUUID
+      game_id: ゲームUUID
+      game_image_id: ゲーム画像UUID
+      game_video_id: ゲーム動画UUID
+      name: ゲームバージョン名
+      description: ゲームバージョンの説明
+      created_at: 作成日時
+  - table: v2_game_videos
+    tableComment: ゲーム動画テーブル(v2)
+    columnComments:
+      id: ゲーム動画UUID
+      game_id: ゲームUUID
+      video_type_id: 動画の種類のUUID
+      created_at: 作成日時

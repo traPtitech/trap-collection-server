@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -69,7 +71,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 			videoBuf := bytes.NewBuffer(nil)
 			err := func() error {
-				f, err := os.Open("../../../testdata/1.mp4")
+				f, err := testdata.FS.Open("1.mp4")
 				if err != nil {
 					return fmt.Errorf("failed to open file: %w", err)
 				}
@@ -114,7 +116,7 @@ func TestSaveGameVideo(t *testing.T) {
 	}
 }
 
-func TestGetGameVideo(t *testing.T) {
+func TestVideoGetTempURL(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
@@ -162,7 +164,7 @@ func TestGetGameVideo(t *testing.T) {
 			switch testCase.video.GetType() {
 			case values.GameVideoTypeMp4:
 				err := func() error {
-					f, err := os.Open("../../../testdata/1.mp4")
+					f, err := testdata.FS.Open("1.mp4")
 					if err != nil {
 						return fmt.Errorf("failed to open file: %w", err)
 					}
@@ -198,7 +200,7 @@ func TestGetGameVideo(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err := gameVideoStorage.GetGameVideo(ctx, buf, testCase.video)
+			tmpURL, err := gameVideoStorage.GetTempURL(ctx, testCase.video, time.Second)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -211,6 +213,16 @@ func TestGetGameVideo(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			res, err := http.Get((*url.URL)(tmpURL).String())
+			if err != nil {
+				t.Fatalf("failed to get file: %v", err)
+			}
+
+			_, err = buf.ReadFrom(res.Body)
+			if err != nil {
+				t.Fatalf("failed to read file: %v", err)
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())

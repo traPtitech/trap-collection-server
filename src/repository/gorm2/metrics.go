@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 	gormPrometheus "gorm.io/plugin/prometheus"
 )
@@ -146,7 +147,7 @@ func (mc *MetricsCollector) collectAccessTokenMetrics(ctx context.Context, p *go
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&LauncherSessionTable{}).
+		Model(&migrate.LauncherSessionTable{}).
 		Select("deleted_at IS NOT NULL OR expires_at < ? AS is_deleted, count(*) as count", time.Now()).
 		Group("is_deleted").
 		Find(&accessTokenCounts).Error
@@ -180,7 +181,7 @@ func (mc *MetricsCollector) collectGameMetrics(ctx context.Context, p *gormProme
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&GameTable{}).
+		Model(&migrate.GameTable{}).
 		Select("deleted_at IS NOT NULL AS is_deleted, count(*) as count").
 		Group("is_deleted").
 		Find(&gameCounts).Error
@@ -214,7 +215,7 @@ func (mc *MetricsCollector) collectGameFileMetrics(ctx context.Context, p *gormP
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&GameFileTable{}).
+		Model(&migrate.GameFileTable{}).
 		Joins("JOIN game_file_types ON game_files.file_type_id = game_file_types.id AND game_file_types.active").
 		Select("game_file_types.name AS type, count(*) as count").
 		Group("type").
@@ -239,7 +240,7 @@ func (mc *MetricsCollector) collectGameURLMetrics(ctx context.Context, p *gormPr
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&GameURLTable{}).
+		Model(&migrate.GameURLTable{}).
 		Count(&gameURLCount).Error
 	if err != nil {
 		return fmt.Errorf("failed to get game url counts: %w", err)
@@ -259,7 +260,7 @@ func (mc *MetricsCollector) collectGameImageMetrics(ctx context.Context, p *gorm
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&GameImageTable{}).
+		Model(&migrate.GameImageTable{}).
 		Joins("JOIN game_image_types ON game_images.image_type_id = game_image_types.id AND game_image_types.active").
 		Select("game_image_types.name AS type, count(*) as count").
 		Group("type").
@@ -287,7 +288,7 @@ func (mc *MetricsCollector) collectGameVideoMetrics(ctx context.Context, p *gorm
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&GameVideoTable{}).
+		Model(&migrate.GameVideoTable{}).
 		Joins("JOIN game_video_types ON game_videos.video_type_id = game_video_types.id AND game_video_types.active").
 		Select("game_video_types.name AS type, count(*) as count").
 		Group("type").

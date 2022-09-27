@@ -9,15 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
-	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameVideo(t *testing.T) {
@@ -85,7 +84,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 			videoBuf := bytes.NewBuffer(nil)
 			err := func() error {
-				f, err := os.Open("../../../testdata/1.mp4")
+				f, err := testdata.FS.Open("1.mp4")
 				if err != nil {
 					return fmt.Errorf("failed to open file: %w", err)
 				}
@@ -131,133 +130,6 @@ func TestSaveGameVideo(t *testing.T) {
 			}
 
 			assert.Equal(t, expectBytes, actualBytes)
-		})
-	}
-}
-
-func TestGetGameVideo(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-	ctrl := gomock.NewController(t)
-
-	rootPath := "./get_game_video_test"
-	mockConf := mock.NewMockStorageLocal(ctrl)
-	mockConf.
-		EXPECT().
-		Path().
-		Return(rootPath, nil)
-	directoryManager, err := NewDirectoryManager(mockConf)
-	if err != nil {
-		t.Fatalf("failed to create directory manager: %v", err)
-		return
-	}
-	defer func() {
-		err := os.RemoveAll(rootPath)
-		if err != nil {
-			t.Fatalf("failed to remove directory: %v", err)
-		}
-	}()
-
-	gameVideo, err := NewGameVideo(directoryManager)
-	if err != nil {
-		t.Fatalf("failed to create game image: %v", err)
-	}
-
-	videoRootPath := filepath.Join(string(rootPath), "videos")
-
-	type test struct {
-		description string
-		video       *domain.GameVideo
-		isFileExist bool
-		isErr       bool
-		err         error
-	}
-
-	testCases := []test{
-		{
-			description: "ファイルが存在するので読み込める",
-			video: domain.NewGameVideo(
-				values.NewGameVideoID(),
-				values.GameVideoTypeMp4,
-				time.Now(),
-			),
-			isFileExist: true,
-		},
-		{
-			description: "ファイルが存在しないので読み込めない",
-			video: domain.NewGameVideo(
-				values.NewGameVideoID(),
-				values.GameVideoTypeMp4,
-				time.Now(),
-			),
-			isErr: true,
-			err:   storage.ErrNotFound,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			var expectBytes []byte
-			if testCase.isFileExist {
-				videoBuf := bytes.NewBuffer(nil)
-
-				switch testCase.video.GetType() {
-				case values.GameVideoTypeMp4:
-					err := func() error {
-						f, err := os.Open("../../../testdata/1.mp4")
-						if err != nil {
-							return fmt.Errorf("failed to open file: %w", err)
-						}
-						defer f.Close()
-
-						_, err = io.Copy(videoBuf, f)
-						if err != nil {
-							return fmt.Errorf("failed to copy file: %w", err)
-						}
-
-						return nil
-					}()
-					if err != nil {
-						t.Fatalf("failed to encode image: %s", err)
-					}
-				default:
-					t.Fatalf("invalid video type: %v\n", testCase.video.GetType())
-				}
-				expectBytes = videoBuf.Bytes()
-
-				func() {
-					f, err := os.Create(filepath.Join(videoRootPath, uuid.UUID(testCase.video.GetID()).String()))
-					if err != nil {
-						t.Fatalf("failed to write file: %v", err)
-					}
-					defer f.Close()
-
-					_, err = io.Copy(f, videoBuf)
-					if err != nil {
-						t.Fatalf("failed to write file: %v", err)
-					}
-				}()
-			}
-
-			buf := bytes.NewBuffer(nil)
-
-			err := gameVideo.GetGameVideo(ctx, buf, testCase.video)
-
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-
-			assert.Equal(t, expectBytes, buf.Bytes())
 		})
 	}
 }

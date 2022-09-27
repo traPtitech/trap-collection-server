@@ -1,0 +1,55 @@
+version: '3'
+
+includes:
+  unix:
+    taskfile: ./Taskfile_unix.yml
+    internal: true
+
+tasks:
+  download:
+    cmds:
+      - task: unix:download
+
+  wire:
+    cmds:
+      - task: unix:wire
+
+  openapi:
+    cmds:
+      - task: unix:openapi
+
+  generate:
+    cmds:
+      - task: unix:generate
+
+  dev:v2:
+    cmds:
+      - task: unix:dev:v2
+
+  dev:v1:
+    cmds:
+      - task: unix:dev:v1
+
+  dev:down:
+    cmds:
+      - task: unix:dev:down
+
+  test:
+    cmds:
+      - task: unix:test
+
+  test:down:
+    cmds:
+      - task: unix:test:down
+
+  tbls:
+    cmds:
+      - task: unix:tbls
+
+  tbls:down:
+    cmds:
+      - task: unix:tbls:down
+
+  clean:db:
+    cmds:
+      - task: unix:clean:db

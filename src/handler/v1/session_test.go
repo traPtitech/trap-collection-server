@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 )
 
 // テスト用のレスポンスのSet-CookieヘッダーをCookieヘッダーに移す関数
@@ -24,7 +25,7 @@ func TestGetSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockConf := mock.NewMockHandlerV1(ctrl)
+	mockConf := mock.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
 		SessionKey().
@@ -33,7 +34,12 @@ func TestGetSession(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	session, err := NewSession(mockConf)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -65,7 +71,7 @@ func TestGetSession(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
-				sess, err := session.store.New(req, session.key)
+				sess, err := session.New(req)
 				if err != nil {
 					t.Fatal(err)
 				}

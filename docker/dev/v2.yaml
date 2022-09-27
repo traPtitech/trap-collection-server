@@ -1,0 +1,4 @@
+services:
+  collection-server:
+    environment:
+      FEATURE_V2: true

@@ -1,6 +1,6 @@
 package config
 
-//go:generate go run github.com/golang/mock/mockgen@latest -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 import "net/url"
 
@@ -9,6 +9,7 @@ type StorageType int8
 const (
 	StorageTypeSwift StorageType = iota + 1
 	StorageTypeLocal
+	StorageTypeS3
 )
 
 type Storage interface {
@@ -23,6 +24,14 @@ type StorageSwift interface {
 	TenantName() (string, error)
 	Container() (string, error)
 	TmpURLKey() (string, error)
+}
+
+type StorageS3 interface {
+	AccessKeyID() (string, error)
+	SecretAccessKey() (string, error)
+	Region() (string, error)
+	Bucket() (string, error)
+	Endpoint() (string, error)
 }
 
 type StorageLocal interface {

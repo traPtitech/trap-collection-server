@@ -5,11 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
+	"io"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +19,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
 
 func TestSaveGameImage(t *testing.T) {
@@ -99,7 +99,7 @@ func TestSaveGameImage(t *testing.T) {
 	}
 }
 
-func TestGetGameImage(t *testing.T) {
+func TestImageGetTempURL(t *testing.T) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 
@@ -160,30 +160,38 @@ func TestGetGameImage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			var expectBytes []byte
-			img := image.NewRGBA(image.Rect(0, 0, 3000, 3000))
 			imgBuf := bytes.NewBuffer(nil)
 
-			switch testCase.image.GetType() {
-			case values.GameImageTypeJpeg:
-				err := jpeg.Encode(imgBuf, img, nil)
-				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
+			err := func() error {
+				var path string
+				switch testCase.image.GetType() {
+				case values.GameImageTypeJpeg:
+					path = "1.jpg"
+				case values.GameImageTypePng:
+					path = "1.png"
+				case values.GameImageTypeGif:
+					path = "1.gif"
+				default:
+					return fmt.Errorf("invalid image type: %d", testCase.image.GetType())
 				}
-			case values.GameImageTypePng:
-				err := png.Encode(imgBuf, img)
+				f, err := testdata.FS.Open(path)
 				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
+					return fmt.Errorf("failed to open testdata: %w", err)
 				}
-			case values.GameImageTypeGif:
-				err := gif.Encode(imgBuf, img, nil)
+				defer f.Close()
+
+				_, err = io.Copy(imgBuf, f)
 				if err != nil {
-					t.Fatalf("failed to encode image: %v\n", err)
+					return fmt.Errorf("failed to copy testdata: %w", err)
 				}
-			default:
-				imgBuf = bytes.NewBufferString("hoge")
+
+				return nil
+			}()
+			if err != nil {
+				t.Fatalf("failed to prepare testdata: %v", err)
 			}
-			expectBytes = imgBuf.Bytes()
+
+			expectBytes := imgBuf.Bytes()
 
 			if testCase.isFileExist {
 				err := client.saveFile(
@@ -199,7 +207,7 @@ func TestGetGameImage(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			err := gameImageStorage.GetGameImage(ctx, buf, testCase.image)
+			tmpURL, err := gameImageStorage.GetTempURL(ctx, testCase.image, time.Second)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -212,6 +220,16 @@ func TestGetGameImage(t *testing.T) {
 			}
 			if err != nil {
 				return
+			}
+
+			res, err := http.Get((*url.URL)(tmpURL).String())
+			if err != nil {
+				t.Fatalf("failed to get file: %v", err)
+			}
+
+			_, err = buf.ReadFrom(res.Body)
+			if err != nil {
+				t.Fatalf("failed to read file: %v", err)
 			}
 
 			assert.Equal(t, expectBytes, buf.Bytes())

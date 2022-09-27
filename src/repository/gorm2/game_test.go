@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -32,7 +33,7 @@ func TestSaveGame(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []GameTable
+		beforeGames []migrate.GameTable
 		isErr       bool
 		err         error
 	}
@@ -62,7 +63,7 @@ func TestSaveGame(t *testing.T) {
 				"test",
 				now,
 			),
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -79,7 +80,7 @@ func TestSaveGame(t *testing.T) {
 				"test",
 				now,
 			),
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -117,7 +118,7 @@ func TestSaveGame(t *testing.T) {
 				return
 			}
 
-			var game GameTable
+			var game migrate.GameTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("id = ?", uuid.UUID(testCase.game.GetID())).
@@ -147,8 +148,8 @@ func TestUpdateGame(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []GameTable
-		afterGames  []GameTable
+		beforeGames []migrate.GameTable
+		afterGames  []migrate.GameTable
 		isErr       bool
 		err         error
 	}
@@ -167,7 +168,7 @@ func TestUpdateGame(t *testing.T) {
 				"test2",
 				now,
 			),
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -175,7 +176,7 @@ func TestUpdateGame(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test2",
@@ -192,7 +193,7 @@ func TestUpdateGame(t *testing.T) {
 				"test3",
 				now,
 			),
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -206,7 +207,7 @@ func TestUpdateGame(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test3",
@@ -229,8 +230,8 @@ func TestUpdateGame(t *testing.T) {
 				"test2",
 				now,
 			),
-			beforeGames: []GameTable{},
-			afterGames:  []GameTable{},
+			beforeGames: []migrate.GameTable{},
+			afterGames:  []migrate.GameTable{},
 			isErr:       true,
 			err:         repository.ErrNoRecordUpdated,
 		},
@@ -244,7 +245,7 @@ func TestUpdateGame(t *testing.T) {
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
 					}).
-					Delete(&GameTable{}).Error
+					Delete(&migrate.GameTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -276,7 +277,7 @@ func TestUpdateGame(t *testing.T) {
 				return
 			}
 
-			var games []GameTable
+			var games []migrate.GameTable
 			err = db.
 				Session(&gorm.Session{}).
 				Order("created_at desc").
@@ -310,8 +311,8 @@ func TestRemoveGame(t *testing.T) {
 	type test struct {
 		description string
 		gameID      values.GameID
-		beforeGames []GameTable
-		afterGames  []GameTable
+		beforeGames []migrate.GameTable
+		afterGames  []migrate.GameTable
 		isErr       bool
 		err         error
 	}
@@ -325,7 +326,7 @@ func TestRemoveGame(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -333,7 +334,7 @@ func TestRemoveGame(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -349,7 +350,7 @@ func TestRemoveGame(t *testing.T) {
 		{
 			description: "別のゲームが存在してもエラーなし",
 			gameID:      gameID1,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -363,7 +364,7 @@ func TestRemoveGame(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			afterGames: []GameTable{
+			afterGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -385,8 +386,8 @@ func TestRemoveGame(t *testing.T) {
 		{
 			description: "ゲームが存在しないのでErrNoRecordDeleted",
 			gameID:      gameID1,
-			beforeGames: []GameTable{},
-			afterGames:  []GameTable{},
+			beforeGames: []migrate.GameTable{},
+			afterGames:  []migrate.GameTable{},
 			isErr:       true,
 			err:         repository.ErrNoRecordDeleted,
 		},
@@ -400,7 +401,7 @@ func TestRemoveGame(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&GameTable{}).Error
+					Delete(&migrate.GameTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -432,7 +433,7 @@ func TestRemoveGame(t *testing.T) {
 				return
 			}
 
-			var games []GameTable
+			var games []migrate.GameTable
 			err = db.
 				Unscoped().
 				Session(&gorm.Session{}).
@@ -472,7 +473,7 @@ func TestGetGame(t *testing.T) {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		gameTable   []GameTable
+		GameTable   []migrate.GameTable
 		game        *domain.Game
 		isErr       bool
 		err         error
@@ -491,7 +492,7 @@ func TestGetGame(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			gameTable: []GameTable{
+			GameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -510,7 +511,7 @@ func TestGetGame(t *testing.T) {
 			description: "行ロックでもエラーなし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeRecord,
-			gameTable: []GameTable{
+			GameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -529,7 +530,7 @@ func TestGetGame(t *testing.T) {
 			description: "ロックの種類が不正なのでエラー",
 			gameID:      gameID5,
 			lockType:    100,
-			gameTable: []GameTable{
+			GameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -549,7 +550,7 @@ func TestGetGame(t *testing.T) {
 			description: "ゲームが存在しないのでErrRecordNotFound",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			gameTable:   []GameTable{},
+			GameTable:   []migrate.GameTable{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -557,7 +558,7 @@ func TestGetGame(t *testing.T) {
 			description: "ゲームが削除済みなのでErrRecordNotFound",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			gameTable: []GameTable{
+			GameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -576,13 +577,13 @@ func TestGetGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			if len(testCase.gameTable) != 0 {
-				err := db.Create(&testCase.gameTable).Error
+			if len(testCase.GameTable) != 0 {
+				err := db.Create(&testCase.GameTable).Error
 				if err != nil {
 					t.Fatalf("failed to create test data: %+v\n", err)
 				}
 
-				for _, game := range testCase.gameTable {
+				for _, game := range testCase.GameTable {
 					if game.DeletedAt.Valid {
 						err = db.Delete(&game).Error
 						if err != nil {
@@ -627,7 +628,7 @@ func TestGetGames(t *testing.T) {
 
 	type test struct {
 		description string
-		beforeGames []GameTable
+		beforeGames []migrate.GameTable
 		games       []*domain.Game
 		isErr       bool
 		err         error
@@ -641,7 +642,7 @@ func TestGetGames(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -660,12 +661,12 @@ func TestGetGames(t *testing.T) {
 		},
 		{
 			description: "ゲームが存在しなくてもエラーなし",
-			beforeGames: []GameTable{},
+			beforeGames: []migrate.GameTable{},
 			games:       []*domain.Game{},
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -704,7 +705,7 @@ func TestGetGames(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&GameTable{}).Error
+					Delete(&migrate.GameTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -759,7 +760,7 @@ func TestGetGamesByUser(t *testing.T) {
 	type test struct {
 		description string
 		userID      values.TraPMemberID
-		beforeGames []GameTable
+		beforeGames []migrate.GameTable
 		games       []*domain.Game
 		isErr       bool
 		err         error
@@ -782,14 +783,7 @@ func TestGetGamesByUser(t *testing.T) {
 
 	now := time.Now()
 
-	_, err, _ = gameManagementRoleTypeSetupGroup.Do("setupRoleTypeTable", func() (interface{}, error) {
-		return nil, setupRoleTypeTable(db)
-	})
-	if err != nil {
-		t.Fatalf("failed to setup role type table: %+v\n", err)
-	}
-
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -806,13 +800,13 @@ func TestGetGamesByUser(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			userID:      userID1,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
 					Description: "test1",
 					CreatedAt:   now,
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID1),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -832,19 +826,19 @@ func TestGetGamesByUser(t *testing.T) {
 		{
 			description: "ゲームが存在しなくてもエラーなし",
 			userID:      userID2,
-			beforeGames: []GameTable{},
+			beforeGames: []migrate.GameTable{},
 			games:       []*domain.Game{},
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
 			userID:      userID3,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test2",
 					Description: "test2",
 					CreatedAt:   now,
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID3),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -856,7 +850,7 @@ func TestGetGamesByUser(t *testing.T) {
 					Name:        "test3",
 					Description: "test3",
 					CreatedAt:   now.Add(-time.Hour),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID3),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -882,13 +876,13 @@ func TestGetGamesByUser(t *testing.T) {
 		{
 			description: "他のユーザーのゲームは取得しない",
 			userID:      userID4,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test4",
 					Description: "test4",
 					CreatedAt:   now,
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID5),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -901,13 +895,13 @@ func TestGetGamesByUser(t *testing.T) {
 		{
 			description: "collaboratorでもゲームを取得できる",
 			userID:      userID6,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test5",
 					Description: "test5",
 					CreatedAt:   now,
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID6),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -927,7 +921,7 @@ func TestGetGamesByUser(t *testing.T) {
 		{
 			description: "削除されたゲームは取得しない",
 			userID:      userID7,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test6",
@@ -937,7 +931,7 @@ func TestGetGamesByUser(t *testing.T) {
 						Valid: true,
 						Time:  now,
 					},
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID7),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -999,7 +993,7 @@ func TestGetGamesByIDs(t *testing.T) {
 
 	type test struct {
 		description     string
-		beforeGameTable []GameTable
+		beforeGameTable []migrate.GameTable
 		gameIDs         []values.GameID
 		lockType        repository.LockType
 		games           []*domain.Game
@@ -1020,7 +1014,7 @@ func TestGetGamesByIDs(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeGameTable: []GameTable{
+			beforeGameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -1041,14 +1035,14 @@ func TestGetGamesByIDs(t *testing.T) {
 		},
 		{
 			description:     "ゲームが存在しないので含まない",
-			beforeGameTable: []GameTable{},
+			beforeGameTable: []migrate.GameTable{},
 			gameIDs:         []values.GameID{gameID2},
 			lockType:        repository.LockTypeNone,
 			games:           []*domain.Game{},
 		},
 		{
 			description: "ゲームが削除済みなので含まない",
-			beforeGameTable: []GameTable{
+			beforeGameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -1066,7 +1060,7 @@ func TestGetGamesByIDs(t *testing.T) {
 		},
 		{
 			description: "ゲームが複数でも問題なし",
-			beforeGameTable: []GameTable{
+			beforeGameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -1099,7 +1093,7 @@ func TestGetGamesByIDs(t *testing.T) {
 		},
 		{
 			description: "含まないゲームが存在してもエラーなし",
-			beforeGameTable: []GameTable{
+			beforeGameTable: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
@@ -1184,7 +1178,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 
 	type test struct {
 		description            string
-		beforeLauncherVersions []LauncherVersionTable
+		beforeLauncherVersions []migrate.LauncherVersionTable
 		launcherVersionID      values.LauncherVersionID
 		games                  []*domain.Game
 		isErr                  bool
@@ -1211,7 +1205,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID1),
 					Name: "TestGetGamesByLauncherVersion1",
@@ -1220,7 +1214,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID1),
 							Name:        "test1",
@@ -1242,13 +1236,13 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 		},
 		{
 			description:            "存在しないランチャーバージョンIDを指定した場合空配列を返す",
-			beforeLauncherVersions: []LauncherVersionTable{},
+			beforeLauncherVersions: []migrate.LauncherVersionTable{},
 			launcherVersionID:      launcherVersionID2,
 			games:                  []*domain.Game{},
 		},
 		{
 			description: "ゲームが存在しなくてもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID3),
 					Name: "TestGetGamesByLauncherVersion3",
@@ -1257,7 +1251,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games:     []GameTable{},
+					Games:     []migrate.GameTable{},
 				},
 			},
 			launcherVersionID: launcherVersionID3,
@@ -1265,7 +1259,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID4),
 					Name: "TestGetGamesByLauncherVersion4",
@@ -1274,7 +1268,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID2),
 							Name:        "test2",
@@ -1308,7 +1302,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "他のランチャーバージョンのゲームは含まない",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID5),
 					Name: "TestGetGamesByLauncherVersion5",
@@ -1317,7 +1311,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID4),
 							Name:        "test4",
@@ -1334,7 +1328,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID5),
 							Name:        "test5",
@@ -1356,7 +1350,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "削除されたゲームは含まない",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID7),
 					Name: "TestGetGamesByLauncherVersion7",
@@ -1365,7 +1359,7 @@ func TestGetGamesByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID6),
 							Name:        "test1",
@@ -1436,7 +1430,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 
 	type test struct {
 		description            string
-		beforeLauncherVersions []LauncherVersionTable
+		beforeLauncherVersions []migrate.LauncherVersionTable
 		launcherVersionID      values.LauncherVersionID
 		fileTypes              []values.GameFileType
 		gameInfos              []*repository.GameInfo
@@ -1529,14 +1523,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 	gameFileID19 := values.NewGameFileID()
 	gameFileID20 := values.NewGameFileID()
 
-	_, err, _ = fileTypeSetupGroup.Do("setupFileTypeTable", func() (interface{}, error) {
-		return nil, setupFileTypeTable(db)
-	})
-	if err != nil {
-		t.Fatalf("failed to setup file type table: %+v\n", err)
-	}
-
-	var fileTypes []*GameFileTypeTable
+	var fileTypes []*migrate.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -1595,14 +1582,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 	gameImageID19 := values.NewGameImageID()
 	gameImageID20 := values.NewGameImageID()
 
-	_, err, _ = imageTypeSetupGroup.Do("setupImageTypeTable", func() (interface{}, error) {
-		return nil, setupImageTypeTable(db)
-	})
-	if err != nil {
-		t.Fatalf("failed to setup image type table: %v\n", err)
-	}
-
-	var imageTypes []*GameImageTypeTable
+	var imageTypes []*migrate.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&imageTypes).Error
@@ -1636,14 +1616,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 	gameVideoID19 := values.NewGameVideoID()
 	gameVideoID20 := values.NewGameVideoID()
 
-	_, err, _ = videoTypeSetupGroup.Do("setupVideoTypeTable", func() (interface{}, error) {
-		return nil, setupVideoTypeTable(db)
-	})
-	if err != nil {
-		t.Fatalf("failed to setup video type table: %v\n", err)
-	}
-
-	var videoTypes []*GameVideoTypeTable
+	var videoTypes []*migrate.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -1661,7 +1634,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID1),
 					Name: "Tggiblv1",
@@ -1670,42 +1643,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID1),
 							Name:        "test1",
 							Description: "test1",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID1),
 									Name:        "test1",
 									Description: "test1",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID1),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID1),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID1),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID1),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -1761,7 +1734,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description:            "ランチャーバージョンが存在しないのでRecordNotFound",
-			beforeLauncherVersions: []LauncherVersionTable{},
+			beforeLauncherVersions: []migrate.LauncherVersionTable{},
 			launcherVersionID:      launcherVersionID2,
 			fileTypes:              []values.GameFileType{values.GameFileTypeJar, values.GameFileTypeWindows, values.GameFileTypeMac},
 			isErr:                  true,
@@ -1769,7 +1742,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲームが存在しなくてもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID3),
 					Name: "Tggiblv3",
@@ -1778,7 +1751,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games:     []GameTable{},
+					Games:     []migrate.GameTable{},
 				},
 			},
 			launcherVersionID: launcherVersionID3,
@@ -1787,7 +1760,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "バージョンが存在しないゲームは除外する",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID4),
 					Name: "Tggiblv4",
@@ -1796,21 +1769,21 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:           uuid.UUID(gameID2),
 							Name:         "test2",
 							Description:  "test2",
 							CreatedAt:    now,
-							GameVersions: []GameVersionTable{},
-							GameImages: []GameImageTable{
+							GameVersions: []migrate.GameVersionTable{},
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID2),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID2),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -1827,7 +1800,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲームファイルが存在しなくてもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID5),
 					Name: "Tggiblv5",
@@ -1836,34 +1809,34 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID3),
 							Name:        "test3",
 							Description: "test3",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID2),
 									Name:        "test2",
 									Description: "test2",
 									CreatedAt:   now,
-									GameFiles:   []GameFileTable{},
-									GameURL: GameURLTable{
+									GameFiles:   []migrate.GameFileTable{},
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID2),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID3),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID3),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -1911,7 +1884,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "URLが存在しなくてもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID6),
 					Name: "Tggiblv6",
@@ -1920,22 +1893,22 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID4),
 							Name:        "test4",
 							Description: "test4",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID3),
 									Name:        "test3",
 									Description: "test3",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID2),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
@@ -1943,14 +1916,14 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID4),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID4),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2001,7 +1974,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "Imageが存在しない場合除外",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID7),
 					Name: "Tggiblv7",
@@ -2010,36 +1983,36 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID5),
 							Name:        "test5",
 							Description: "test5",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID4),
 									Name:        "test4",
 									Description: "test4",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID3),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID3),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{},
-							GameVideos: []GameVideoTable{
+							GameImages: []migrate.GameImageTable{},
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID5),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2056,7 +2029,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲーム紹介動画が存在しなくてもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID8),
 					Name: "Tggiblv8",
@@ -2065,42 +2038,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID6),
 							Name:        "test6",
 							Description: "test6",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID5),
 									Name:        "test5",
 									Description: "test5",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID4),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID4),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID5),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{},
+							GameVideos: []migrate.GameVideoTable{},
 						},
 					},
 				},
@@ -2145,7 +2118,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "他のランチャーバージョンが存在してもエラーなし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID9),
 					Name: "Tggiblv9",
@@ -2154,42 +2127,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID7),
 							Name:        "test7",
 							Description: "test7",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID6),
 									Name:        "test6",
 									Description: "test6",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID5),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID5),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID6),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID6),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2207,42 +2180,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID8),
 							Name:        "test1",
 							Description: "test1",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID7),
 									Name:        "test7",
 									Description: "test7",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID6),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID6),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID7),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID7),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2298,7 +2271,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲームが複数存在しても問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID11),
 					Name: "Tggiblv11",
@@ -2307,42 +2280,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID9),
 							Name:        "test9",
 							Description: "test9",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID8),
 									Name:        "test8",
 									Description: "test8",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID7),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID7),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID8),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID8),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2355,36 +2328,36 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 							Name:        "test10",
 							Description: "test10",
 							CreatedAt:   now.Add(-time.Hour),
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID9),
 									Name:        "test9",
 									Description: "test9",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID8),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID8),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID9),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID9),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2478,7 +2451,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲームバージョンが複数の場合、最新のものを使用する",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID12),
 					Name: "Tggiblv12",
@@ -2487,28 +2460,28 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID11),
 							Name:        "test11",
 							Description: "test11",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID10),
 									Name:        "test10",
 									Description: "test10",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID9),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID9),
 										URL:       "https://example.com",
 										CreatedAt: now,
@@ -2519,30 +2492,30 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 									Name:        "test11",
 									Description: "test11",
 									CreatedAt:   now.Add(-time.Hour),
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID10),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID10),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID10),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID10),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2598,7 +2571,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ファイルが複数存在する場合、すべて含む",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID13),
 					Name: "Tggiblv13",
@@ -2607,49 +2580,49 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID12),
 							Name:        "test12",
 							Description: "test12",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID12),
 									Name:        "test12",
 									Description: "test12",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID11),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 										{
 											ID:         uuid.UUID(gameFileID12),
-											FileTypeID: fileTypeMap[gameFileTypeWindows],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
 											Hash:       "68617368",
 											EntryPoint: "main.exe",
 											CreatedAt:  now.Add(-time.Hour),
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID11),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID11),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID11),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2712,7 +2685,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "imageが複数の場合、最新のもののみ取得される",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID14),
 					Name: "Tggiblv14",
@@ -2721,35 +2694,35 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID13),
 							Name:        "test13",
 							Description: "test13",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID13),
 									Name:        "test13",
 									Description: "test13",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID13),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID12),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID12),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
@@ -2761,7 +2734,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 									CreatedAt:   now.Add(-time.Hour),
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID12),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2817,7 +2790,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ゲーム紹介動画が複数の場合、最新のもののみ取得される",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID15),
 					Name: "Tggiblv15",
@@ -2826,42 +2799,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID14),
 							Name:        "test14",
 							Description: "test14",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID14),
 									Name:        "test14",
 									Description: "test14",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID14),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID13),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID14),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID13),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -2922,7 +2895,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ファイルがwindows用でも問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID16),
 					Name: "Tggiblv16",
@@ -2931,42 +2904,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID15),
 							Name:        "test15",
 							Description: "test15",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID15),
 									Name:        "test15",
 									Description: "test15",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID15),
-											FileTypeID: fileTypeMap[gameFileTypeWindows],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
 											Hash:       "68617368",
 											EntryPoint: "main.exe",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID14),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID15),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID15),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -3022,7 +2995,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "ファイルがmac用でも問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID17),
 					Name: "Tggiblv17",
@@ -3031,42 +3004,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID16),
 							Name:        "test16",
 							Description: "test16",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID16),
 									Name:        "test16",
 									Description: "test16",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID16),
-											FileTypeID: fileTypeMap[gameFileTypeMac],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
 											Hash:       "68617368",
 											EntryPoint: "main.app",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID15),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID16),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID16),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -3122,7 +3095,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "画像がjpegでも問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID18),
 					Name: "Tggiblv18",
@@ -3131,42 +3104,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID17),
 							Name:        "test17",
 							Description: "test17",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID17),
 									Name:        "test17",
 									Description: "test17",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID17),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID16),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID17),
 									ImageTypeID: imageTypeMap[gameImageTypeJpeg],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID17),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -3222,7 +3195,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "画像がgifでも問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID19),
 					Name: "Tggiblv19",
@@ -3231,42 +3204,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID18),
 							Name:        "test18",
 							Description: "test18",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID18),
 									Name:        "test18",
 									Description: "test18",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID18),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID17),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID18),
 									ImageTypeID: imageTypeMap[gameImageTypeGif],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID18),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -3322,7 +3295,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "fileTypeで絞り込みを入れても問題なし",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID20),
 					Name: "Tggiblv20",
@@ -3331,42 +3304,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID19),
 							Name:        "test19",
 							Description: "test19",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID19),
 									Name:        "test19",
 									Description: "test19",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID19),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID18),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID19),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID19),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],
@@ -3414,7 +3387,7 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 		},
 		{
 			description: "誤ったfileTypeなのでエラー",
-			beforeLauncherVersions: []LauncherVersionTable{
+			beforeLauncherVersions: []migrate.LauncherVersionTable{
 				{
 					ID:   uuid.UUID(launcherVersionID21),
 					Name: "Tggiblv21",
@@ -3423,42 +3396,42 @@ func TestGetGameInfosByLauncherVersion(t *testing.T) {
 						String: "https://example.com",
 					},
 					CreatedAt: now,
-					Games: []GameTable{
+					Games: []migrate.GameTable{
 						{
 							ID:          uuid.UUID(gameID20),
 							Name:        "test20",
 							Description: "test20",
 							CreatedAt:   now,
-							GameVersions: []GameVersionTable{
+							GameVersions: []migrate.GameVersionTable{
 								{
 									ID:          uuid.UUID(gameVersionID20),
 									Name:        "test20",
 									Description: "test20",
 									CreatedAt:   now,
-									GameFiles: []GameFileTable{
+									GameFiles: []migrate.GameFileTable{
 										{
 											ID:         uuid.UUID(gameFileID20),
-											FileTypeID: fileTypeMap[gameFileTypeJar],
+											FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
 											Hash:       "68617368",
 											EntryPoint: "main.jar",
 											CreatedAt:  now,
 										},
 									},
-									GameURL: GameURLTable{
+									GameURL: migrate.GameURLTable{
 										ID:        uuid.UUID(gameURLID19),
 										URL:       "https://example.com",
 										CreatedAt: now,
 									},
 								},
 							},
-							GameImages: []GameImageTable{
+							GameImages: []migrate.GameImageTable{
 								{
 									ID:          uuid.UUID(gameImageID20),
 									ImageTypeID: imageTypeMap[gameImageTypePng],
 									CreatedAt:   now,
 								},
 							},
-							GameVideos: []GameVideoTable{
+							GameVideos: []migrate.GameVideoTable{
 								{
 									ID:          uuid.UUID(gameVideoID20),
 									VideoTypeID: videoTypeMap[gameVideoTypeMp4],

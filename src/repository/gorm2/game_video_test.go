@@ -11,98 +11,9 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
-
-func TestSetupVideoTypeTable(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := testDB.getDB(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type test struct {
-		description      string
-		beforeVideoTypes []string
-		isErr            bool
-		err              error
-	}
-
-	testCases := []test{
-		{
-			description:      "何も存在しない場合問題なし",
-			beforeVideoTypes: []string{},
-		},
-		{
-			description: "全て存在する場合問題なし",
-			beforeVideoTypes: []string{
-				gameVideoTypeMp4,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				err := db.
-					Session(&gorm.Session{
-						AllowGlobalUpdate: true,
-					}).
-					Delete(&GameVideoTypeTable{}).Error
-				if err != nil {
-					t.Fatalf("failed to delete role type table: %+v\n", err)
-				}
-			}()
-
-			if len(testCase.beforeVideoTypes) != 0 {
-				videoTypes := make([]*GameVideoTypeTable, 0, len(testCase.beforeVideoTypes))
-				for _, videoType := range testCase.beforeVideoTypes {
-					videoTypes = append(videoTypes, &GameVideoTypeTable{
-						Name: videoType,
-					})
-				}
-
-				err := db.Create(videoTypes).Error
-				if err != nil {
-					t.Fatalf("failed to setup role type table: %+v\n", err)
-				}
-			}
-
-			err := setupVideoTypeTable(db)
-
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-
-			var videoTypes []*GameVideoTypeTable
-			err = db.
-				Select("name").
-				Find(&videoTypes).Error
-			if err != nil {
-				t.Fatalf("failed to get role type table: %+v\n", err)
-			}
-
-			videoTypeNames := make([]string, 0, len(videoTypes))
-			for _, videoType := range videoTypes {
-				videoTypeNames = append(videoTypeNames, videoType.Name)
-			}
-
-			assert.ElementsMatch(t, []string{
-				gameVideoTypeMp4,
-			}, videoTypeNames)
-		})
-	}
-}
 
 func TestSaveGameVideo(t *testing.T) {
 	t.Parallel()
@@ -114,17 +25,14 @@ func TestSaveGameVideo(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameVideoRepository, err := NewGameVideo(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game video repository: %+v\n", err)
-	}
+	gameVideoRepository := NewGameVideo(testDB)
 
 	type test struct {
 		description  string
 		gameID       values.GameID
 		video        *domain.GameVideo
-		beforeVideos []GameVideoTable
-		expectVideos []GameVideoTable
+		beforeVideos []migrate.GameVideoTable
+		expectVideos []migrate.GameVideoTable
 		isErr        bool
 		err          error
 	}
@@ -141,7 +49,7 @@ func TestSaveGameVideo(t *testing.T) {
 	videoID5 := values.NewGameVideoID()
 	videoID6 := values.NewGameVideoID()
 
-	var videoTypes []*GameVideoTypeTable
+	var videoTypes []*migrate.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -165,8 +73,8 @@ func TestSaveGameVideo(t *testing.T) {
 				values.GameVideoTypeMp4,
 				now,
 			),
-			beforeVideos: []GameVideoTable{},
-			expectVideos: []GameVideoTable{
+			beforeVideos: []migrate.GameVideoTable{},
+			expectVideos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
@@ -183,8 +91,8 @@ func TestSaveGameVideo(t *testing.T) {
 				100,
 				now,
 			),
-			beforeVideos: []GameVideoTable{},
-			expectVideos: []GameVideoTable{},
+			beforeVideos: []migrate.GameVideoTable{},
+			expectVideos: []migrate.GameVideoTable{},
 			isErr:        true,
 		},
 		{
@@ -195,7 +103,7 @@ func TestSaveGameVideo(t *testing.T) {
 				values.GameVideoTypeMp4,
 				now,
 			),
-			beforeVideos: []GameVideoTable{
+			beforeVideos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
@@ -203,7 +111,7 @@ func TestSaveGameVideo(t *testing.T) {
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectVideos: []GameVideoTable{
+			expectVideos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
@@ -226,7 +134,7 @@ func TestSaveGameVideo(t *testing.T) {
 				100,
 				now,
 			),
-			beforeVideos: []GameVideoTable{
+			beforeVideos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
@@ -234,7 +142,7 @@ func TestSaveGameVideo(t *testing.T) {
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectVideos: []GameVideoTable{
+			expectVideos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
@@ -248,7 +156,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(testCase.gameID),
 				Name:        "test",
 				Description: "test",
@@ -271,7 +179,7 @@ func TestSaveGameVideo(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var videos []GameVideoTable
+			var videos []migrate.GameVideoTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
@@ -282,7 +190,7 @@ func TestSaveGameVideo(t *testing.T) {
 
 			assert.Len(t, videos, len(testCase.expectVideos))
 
-			videoMap := make(map[uuid.UUID]GameVideoTable)
+			videoMap := make(map[uuid.UUID]migrate.GameVideoTable)
 			for _, video := range videos {
 				videoMap[video.ID] = video
 			}
@@ -311,16 +219,13 @@ func TestGetLatestGameVideo(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameVideoRepository, err := NewGameVideo(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameVideoRepository := NewGameVideo(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		videos      []GameVideoTable
+		videos      []migrate.GameVideoTable
 		expectVideo *domain.GameVideo
 		isErr       bool
 		err         error
@@ -336,7 +241,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 	videoID5 := values.NewGameVideoID()
 	videoID6 := values.NewGameVideoID()
 
-	var videoTypes []*GameVideoTypeTable
+	var videoTypes []*migrate.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -356,7 +261,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			videos: []GameVideoTable{
+			videos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
@@ -374,7 +279,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 			description: "画像がないのでエラー",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			videos:      []GameVideoTable{},
+			videos:      []migrate.GameVideoTable{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -382,7 +287,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 			description: "複数でも正しい画像が返る",
 			gameID:      gameID5,
 			lockType:    repository.LockTypeNone,
-			videos: []GameVideoTable{
+			videos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID5),
@@ -406,7 +311,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 			description: "行ロックをとっても問題なし",
 			gameID:      gameID6,
 			lockType:    repository.LockTypeRecord,
-			videos: []GameVideoTable{
+			videos: []migrate.GameVideoTable{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID6),
@@ -424,7 +329,7 @@ func TestGetLatestGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(testCase.gameID),
 				Name:        "test",
 				Description: "test",

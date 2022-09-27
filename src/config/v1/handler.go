@@ -7,13 +7,13 @@ import (
 	"os"
 )
 
-type HandlerV1 struct{}
+type Handler struct{}
 
-func NewHandlerV1() *HandlerV1 {
-	return &HandlerV1{}
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
-func (*HandlerV1) Addr() (string, error) {
+func (*Handler) Addr() (string, error) {
 	port, ok := os.LookupEnv(envKeyPort)
 	if !ok {
 		return "", errors.New("PORT is not set")
@@ -22,11 +22,11 @@ func (*HandlerV1) Addr() (string, error) {
 	return port, nil
 }
 
-func (*HandlerV1) SessionKey() (string, error) {
+func (*Handler) SessionKey() (string, error) {
 	return "sessions", nil
 }
 
-func (*HandlerV1) SessionSecret() (string, error) {
+func (*Handler) SessionSecret() (string, error) {
 	secret, ok := os.LookupEnv(envKeySessionSecret)
 	if !ok {
 		return "", errors.New("SESSION_SECRET is not set")
@@ -35,7 +35,7 @@ func (*HandlerV1) SessionSecret() (string, error) {
 	return secret, nil
 }
 
-func (*HandlerV1) TraqBaseURL() (*url.URL, error) {
+func (*Handler) TraqBaseURL() (*url.URL, error) {
 	traQBaseURL, err := url.Parse("https://q.trap.jp/api/v3")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse traQBaseURL: %w", err)

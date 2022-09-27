@@ -1,6 +1,6 @@
 package config
 
-//go:generate go run github.com/golang/mock/mockgen@latest -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 type RepositoryGorm2 interface {
 	User() (string, error)

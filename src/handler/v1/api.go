@@ -38,7 +38,7 @@ type API struct {
 }
 
 func NewAPI(
-	conf config.HandlerV1,
+	conf config.Handler,
 	middleware *Middleware,
 	user *User,
 	game *Game,
@@ -76,7 +76,29 @@ func NewAPI(
 	}, nil
 }
 
+func (api *API) SetRoutes(e *echo.Echo) error {
+	return api.setRoutes(e)
+}
+
 func (api *API) Start() error {
+	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+
+	p := prometheus.NewPrometheus("echo", nil)
+	p.MetricsPath = "/api/metrics"
+	p.Use(e)
+
+	api.Session.Use(e)
+	err := api.setRoutes(e)
+	if err != nil {
+		return fmt.Errorf("failed to set routes: %w", err)
+	}
+
+	return e.Start(api.addr)
+}
+
+func (api *API) setRoutes(e *echo.Echo) error {
 	openapiAPI := &openapi.Api{
 		Middleware: api.Middleware,
 		GameApi: GameAPI{
@@ -94,17 +116,7 @@ func (api *API) Start() error {
 		VersionApi:      api.LauncherVersion,
 	}
 
-	e := echo.New()
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-
-	p := prometheus.NewPrometheus("echo", nil)
-	p.MetricsPath = "/api/metrics"
-	p.Use(e)
-
-	api.Session.Use(e)
-
 	openapi.SetupRouting(e, openapiAPI)
 
-	return e.Start(api.addr)
+	return nil
 }

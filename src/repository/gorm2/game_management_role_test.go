@@ -10,112 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
-
-func TestSetupRoleTypeTable(t *testing.T) {
-	ctx := context.Background()
-
-	db, err := testDB.getDB(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type test struct {
-		description     string
-		beforeRoleTypes []string
-		isErr           bool
-		err             error
-	}
-
-	testCases := []test{
-		{
-			description:     "何も存在しない場合問題なし",
-			beforeRoleTypes: []string{},
-		},
-		{
-			description: "administratorのみ存在する場合問題なし",
-			beforeRoleTypes: []string{
-				gameManagementRoleTypeAdministrator,
-			},
-		},
-		{
-			description: "collaboratorのみ存在する場合問題なし",
-			beforeRoleTypes: []string{
-				gameManagementRoleTypeCollaborator,
-			},
-		},
-		{
-			description: "administratorとcollaboratorが共に存在する場合問題なし",
-			beforeRoleTypes: []string{
-				gameManagementRoleTypeAdministrator,
-				gameManagementRoleTypeCollaborator,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
-				err := db.
-					Session(&gorm.Session{
-						AllowGlobalUpdate: true,
-					}).
-					Delete(&GameManagementRoleTypeTable{}).Error
-				if err != nil {
-					t.Fatalf("failed to delete role type table: %+v\n", err)
-				}
-			}()
-
-			if len(testCase.beforeRoleTypes) != 0 {
-				roleTypes := make([]*GameManagementRoleTypeTable, 0, len(testCase.beforeRoleTypes))
-				for _, roleType := range testCase.beforeRoleTypes {
-					roleTypes = append(roleTypes, &GameManagementRoleTypeTable{
-						Name: roleType,
-					})
-				}
-
-				err := db.Create(roleTypes).Error
-				if err != nil {
-					t.Fatalf("failed to setup role type table: %+v\n", err)
-				}
-			}
-
-			err := setupRoleTypeTable(db)
-
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else if !errors.Is(err, testCase.err) {
-					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-			if err != nil {
-				return
-			}
-
-			var roleTypes []*GameManagementRoleTypeTable
-			err = db.
-				Select("name").
-				Find(&roleTypes).Error
-			if err != nil {
-				t.Fatalf("failed to get role type table: %+v\n", err)
-			}
-
-			roleTypeNames := make([]string, 0, len(roleTypes))
-			for _, roleType := range roleTypes {
-				roleTypeNames = append(roleTypeNames, roleType.Name)
-			}
-
-			assert.ElementsMatch(t, []string{
-				gameManagementRoleTypeAdministrator,
-				gameManagementRoleTypeCollaborator,
-			}, roleTypeNames)
-		})
-	}
-}
 
 func TestAddGameManagementRoles(t *testing.T) {
 	t.Parallel()
@@ -127,17 +24,14 @@ func TestAddGameManagementRoles(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameManagementRoleRepository := NewGameManagementRole(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		userIDs     []values.TraPMemberID
 		role        values.GameManagementRole
-		expectRoles []GameManagementRoleTable
+		expectRoles []migrate.GameManagementRoleTable
 		isErr       bool
 		err         error
 	}
@@ -154,7 +48,7 @@ func TestAddGameManagementRoles(t *testing.T) {
 	userID4 := values.NewTrapMemberID(uuid.New())
 	userID5 := values.NewTrapMemberID(uuid.New())
 
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -175,7 +69,7 @@ func TestAddGameManagementRoles(t *testing.T) {
 				userID1,
 			},
 			role: values.GameManagementRoleAdministrator,
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID1),
 					UserID:     uuid.UUID(userID1),
@@ -190,7 +84,7 @@ func TestAddGameManagementRoles(t *testing.T) {
 				userID2,
 			},
 			role: values.GameManagementRoleCollaborator,
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID2),
 					UserID:     uuid.UUID(userID2),
@@ -215,7 +109,7 @@ func TestAddGameManagementRoles(t *testing.T) {
 				userID5,
 			},
 			role: values.GameManagementRoleAdministrator,
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID4),
 					UserID:     uuid.UUID(userID4),
@@ -233,13 +127,13 @@ func TestAddGameManagementRoles(t *testing.T) {
 			gameID:      gameID5,
 			userIDs:     []values.TraPMemberID{},
 			role:        values.GameManagementRoleAdministrator,
-			expectRoles: []GameManagementRoleTable{},
+			expectRoles: []migrate.GameManagementRoleTable{},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&GameTable{
+			err := db.Create(&migrate.GameTable{
 				ID:          uuid.UUID(testCase.gameID),
 				Name:        "test",
 				Description: "test",
@@ -264,7 +158,7 @@ func TestAddGameManagementRoles(t *testing.T) {
 				return
 			}
 
-			var roles []GameManagementRoleTable
+			var roles []migrate.GameManagementRoleTable
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
@@ -288,19 +182,16 @@ func TestUpdateGameManagementRole(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameManagementRoleRepository := NewGameManagementRole(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		userID      values.TraPMemberID
 		role        values.GameManagementRole
-		beforeGames []GameTable
-		beforeRoles []GameManagementRoleTable
-		expectRoles []GameManagementRoleTable
+		beforeGames []migrate.GameTable
+		beforeRoles []migrate.GameManagementRoleTable
+		expectRoles []migrate.GameManagementRoleTable
 		isErr       bool
 		err         error
 	}
@@ -323,7 +214,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 	userID7 := values.NewTrapMemberID(uuid.New())
 	userID8 := values.NewTrapMemberID(uuid.New())
 
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -342,7 +233,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID1,
 			userID:      userID1,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -350,14 +241,14 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID1),
 					UserID:     uuid.UUID(userID1),
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID1),
 					UserID:     uuid.UUID(userID1),
@@ -370,7 +261,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID2,
 			userID:      userID2,
 			role:        values.GameManagementRoleCollaborator,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -378,14 +269,14 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID2),
 					UserID:     uuid.UUID(userID2),
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID2),
 					UserID:     uuid.UUID(userID2),
@@ -397,7 +288,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			description: "roleがAdministratorでもCollaboratorでもないのでエラー",
 			gameID:      gameID3,
 			userID:      userID3,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -405,7 +296,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID3),
 					UserID:     uuid.UUID(userID3),
@@ -420,7 +311,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID4,
 			userID:      userID4,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -428,7 +319,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID4),
 					UserID:     uuid.UUID(userID4),
@@ -440,7 +331,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID4),
 					UserID:     uuid.UUID(userID4),
@@ -458,7 +349,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID5,
 			userID:      userID6,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -472,7 +363,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID5),
 					UserID:     uuid.UUID(userID6),
@@ -484,7 +375,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID5),
 					UserID:     uuid.UUID(userID6),
@@ -502,8 +393,8 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID7,
 			userID:      userID7,
 			role:        values.GameManagementRoleAdministrator,
-			beforeRoles: []GameManagementRoleTable{},
-			expectRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{},
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID7),
 					UserID:     uuid.UUID(userID7),
@@ -519,7 +410,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID8,
 			userID:      userID8,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test",
@@ -527,14 +418,14 @@ func TestUpdateGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID8),
 					UserID:     uuid.UUID(userID8),
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID8),
 					UserID:     uuid.UUID(userID8),
@@ -578,7 +469,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			}
 
 			for _, expectRole := range testCase.expectRoles {
-				var actualRole GameManagementRoleTable
+				var actualRole migrate.GameManagementRoleTable
 				err = db.
 					Where("game_id = ? and user_id = ?", expectRole.GameID, expectRole.UserID).
 					First(&actualRole).Error
@@ -602,18 +493,15 @@ func TestRemoveGameManagementRole(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameManagementRoleRepository := NewGameManagementRole(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		userID      values.TraPMemberID
-		beforeGames []GameTable
-		beforeRoles []GameManagementRoleTable
-		expectRoles []GameManagementRoleTable
+		beforeGames []migrate.GameTable
+		beforeRoles []migrate.GameManagementRoleTable
+		expectRoles []migrate.GameManagementRoleTable
 		isErr       bool
 		err         error
 	}
@@ -630,7 +518,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 	userID4 := values.NewTrapMemberID(uuid.New())
 	userID5 := values.NewTrapMemberID(uuid.New())
 
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -648,7 +536,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			userID:      userID1,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -656,20 +544,20 @@ func TestRemoveGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID1),
 					UserID:     uuid.UUID(userID1),
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{},
+			expectRoles: []migrate.GameManagementRoleTable{},
 		},
 		{
 			description: "削除対象以外のユーザーのroleが存在しても問題なし",
 			gameID:      gameID2,
 			userID:      userID2,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -677,7 +565,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID2),
 					UserID:     uuid.UUID(userID2),
@@ -689,7 +577,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID2),
 					UserID:     uuid.UUID(userID3),
@@ -701,7 +589,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			description: "削除対象以外のゲームのroleが存在しても問題なし",
 			gameID:      gameID3,
 			userID:      userID4,
-			beforeGames: []GameTable{
+			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -715,7 +603,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 					CreatedAt:   time.Now(),
 				},
 			},
-			beforeRoles: []GameManagementRoleTable{
+			beforeRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID3),
 					UserID:     uuid.UUID(userID4),
@@ -727,7 +615,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 					RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 				},
 			},
-			expectRoles: []GameManagementRoleTable{
+			expectRoles: []migrate.GameManagementRoleTable{
 				{
 					GameID:     uuid.UUID(gameID4),
 					UserID:     uuid.UUID(userID4),
@@ -739,8 +627,8 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			description: "roleが事前に存在していないのでエラー",
 			gameID:      gameID5,
 			userID:      userID5,
-			beforeRoles: []GameManagementRoleTable{},
-			expectRoles: []GameManagementRoleTable{},
+			beforeRoles: []migrate.GameManagementRoleTable{},
+			expectRoles: []migrate.GameManagementRoleTable{},
 			isErr:       true,
 			err:         repository.ErrNoRecordDeleted,
 		},
@@ -778,7 +666,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			}
 
 			for _, expectRole := range testCase.expectRoles {
-				var actualRole GameManagementRoleTable
+				var actualRole migrate.GameManagementRoleTable
 				err = db.
 					Where("game_id = ? and user_id = ?", expectRole.GameID, expectRole.UserID).
 					First(&actualRole).Error
@@ -802,15 +690,12 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameManagementRoleRepository := NewGameManagementRole(testDB)
 
 	type test struct {
 		description        string
 		gameID             values.GameID
-		games              []GameTable
+		games              []migrate.GameTable
 		expectUserAndRoles []*repository.UserIDAndManagementRole
 		isErr              bool
 		err                error
@@ -831,7 +716,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 	userID5 := values.NewTrapMemberID(uuid.New())
 	userID6 := values.NewTrapMemberID(uuid.New())
 
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -848,13 +733,13 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID1),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -872,13 +757,13 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "roleがcollaboratorでも問題なし",
 			gameID:      gameID7,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID6),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -896,7 +781,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "roleが存在しなくても問題なし",
 			gameID:      gameID2,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -910,19 +795,19 @@ func TestGetGameManagersByGameID(t *testing.T) {
 			// 実際にはあり得ないが念のため確認
 			description:        "gameが存在しなくても問題なし",
 			gameID:             gameID3,
-			games:              []GameTable{},
+			games:              []migrate.GameTable{},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{},
 		},
 		{
 			description: "roleが複数でも問題なし",
 			gameID:      gameID4,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID2),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -948,13 +833,13 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "他のgameにroleがあっても問題なし",
 			gameID:      gameID5,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID4),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -966,7 +851,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID5),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -1035,17 +920,14 @@ func TestGetGameManagementRole(t *testing.T) {
 		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
-	gameManagementRoleRepository, err := NewGameManagementRole(testDB)
-	if err != nil {
-		t.Fatalf("failed to create game management role repository: %+v\n", err)
-	}
+	gameManagementRoleRepository := NewGameManagementRole(testDB)
 
 	type test struct {
 		description string
 		gameID      values.GameID
 		userID      values.TraPMemberID
 		lockType    repository.LockType
-		games       []GameTable
+		games       []migrate.GameTable
 		role        values.GameManagementRole
 		isErr       bool
 		err         error
@@ -1077,7 +959,7 @@ func TestGetGameManagementRole(t *testing.T) {
 	userID11 := values.NewTrapMemberID(uuid.New())
 	userID12 := values.NewTrapMemberID(uuid.New())
 
-	var roleTypes []*GameManagementRoleTypeTable
+	var roleTypes []*migrate.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -1096,13 +978,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID1,
 			userID:      userID1,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID1),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -1117,13 +999,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID2,
 			userID:      userID2,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID2),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -1138,7 +1020,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID3,
 			userID:      userID3,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -1163,13 +1045,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID5,
 			userID:      userID5,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID5),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -1188,13 +1070,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID6,
 			userID:      userID7,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID8),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -1210,13 +1092,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID7,
 			userID:      userID9,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID9),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -1228,7 +1110,7 @@ func TestGetGameManagementRole(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID9),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -1243,7 +1125,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID9,
 			userID:      userID10,
 			lockType:    repository.LockTypeNone,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID9),
 					Name:        "test",
@@ -1255,7 +1137,7 @@ func TestGetGameManagementRole(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID10),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
@@ -1271,13 +1153,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID11,
 			userID:      userID11,
 			lockType:    repository.LockTypeRecord,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID11),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID11),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
@@ -1293,13 +1175,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID12,
 			userID:      userID12,
 			lockType:    100,
-			games: []GameTable{
+			games: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID12),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameManagementRoles: []GameManagementRoleTable{
+					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID12),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
