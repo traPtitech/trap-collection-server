@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -26,9 +27,6 @@ func NewGameImage(gameImageService service.GameImageV2) *GameImage {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type gameImageUnimplemented interface {
-	// ゲーム画像のバイナリの取得
-	// (GET /games/{gameID}/images/{gameImageID})
-	GetGameImage(ctx echo.Context, gameID openapi.GameIDInPath, gameImageID openapi.GameImageIDInPath) error
 	// ゲーム画像のメタ情報の取得
 	// (GET /games/{gameID}/images/{gameImageID}/meta)
 	GetGameImageMeta(ctx echo.Context, gameID openapi.GameIDInPath, gameImageID openapi.GameImageIDInPath) error
@@ -112,4 +110,22 @@ func (gameImage *GameImage) PostGameImage(c echo.Context, gameID openapi.GameIDI
 		Mime:      mime,
 		CreatedAt: image.GetCreatedAt(),
 	})
+}
+
+// ゲーム画像のバイナリの取得
+// (GET /games/{gameID}/images/{gameImageID})
+func (gameImage *GameImage) GetGameImage(c echo.Context, gameID openapi.GameIDInPath, gameImageID openapi.GameImageIDInPath) error {
+	tmpURL, err := gameImage.gameImageService.GetGameImage(c.Request().Context(), values.NewGameIDFromUUID(gameID), values.GameImageIDFromUUID(gameImageID))
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrInvalidGameImageID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameImageID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game image: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game image")
+	}
+
+	return c.Redirect(http.StatusSeeOther, (*url.URL)(tmpURL).String())
 }
