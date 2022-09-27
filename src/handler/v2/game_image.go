@@ -3,14 +3,18 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameImage struct {
 	gameImageUnimplemented
+	gameImageService service.GameImageV2
 }
 
-func NewGameImage() *GameImage {
-	return &GameImage{}
+func NewGameImage(gameImageService service.GameImageV2) *GameImage {
+	return &GameImage{
+		gameImageService: gameImageService,
+	}
 }
 
 // gameImageUnimplemented
