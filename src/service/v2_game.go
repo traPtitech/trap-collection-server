@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-//GameV2
+// GameV2
 type GameV2 interface {
 	//CreateGame
 	//ゲームの追加。
