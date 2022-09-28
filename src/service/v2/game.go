@@ -16,7 +16,7 @@ type Game struct {
 	db                 repository.DB
 	gameRepository     repository.Game
 	gameManagementRole repository.GameManagementRole
-	userUtils          *User
+	user               *User
 }
 
 func NewGame(
@@ -29,17 +29,20 @@ func NewGame(
 		db:                 db,
 		gameRepository:     gameRepository,
 		gameManagementRole: gameManagementRole,
-		userUtils:          userUtils,
+		user:               userUtils,
 	}
 }
 
 func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*service.GameInfoV2, error) {
-	user, err := g.userUtils.getMe(ctx, session)
+	user, err := g.user.getMe(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	game := domain.NewGame(values.NewGameID(), name, description, time.Now())
+
+	var ownersInfo []*service.UserInfo
+	var maintainersInfo []*service.UserInfo
 
 	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		err := g.gameRepository.SaveGame(ctx, game)
@@ -47,17 +50,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			return fmt.Errorf("failed to save game: %w", err)
 		}
 
-		err = g.gameManagementRole.AddGameManagementRoles(
-			ctx,
-			game.GetID(),
-			[]values.TraPMemberID{user.GetID()},
-			values.GameManagementRoleAdministrator,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to add YOUR game management role 'owner': %w", err)
-		}
-
-		activeUsers, err := g.userUtils.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+		activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
 		if err != nil {
 			return fmt.Errorf("failed to get active users: %w", err)
 		}
@@ -67,21 +60,47 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			activeUsersMap[activeUser.GetName()] = activeUser.GetID()
 		}
 
+		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
 		var ownersID []values.TraPMemberID
 		for _, owner := range owners {
 			if owner != user.GetName() {
-				ownersID = append(ownersID, activeUsersMap[owner])
+				if ownerID, ok := activeUsersMap[owner]; ok { //ユーザーが存在するか確認
+					ownersID = append(ownersID, ownerID)
+
+					ownerInfo := service.NewUserInfo(
+						activeUsersMap[owner],
+						owner,
+						values.TrapMemberStatusActive,
+					)
+					ownersInfo = append(ownersInfo, ownerInfo)
+				}
+			} else {
+				//もしかしたら書く
 			}
+		}
+
+		ownersMap := make(map[values.TraPMemberName]struct{})
+		for _, owner := range owners {
+			ownersMap[owner] = struct{}{}
 		}
 
 		var maintainersID []values.TraPMemberID
 		for _, maintainer := range maintainers {
-			for _, owner := range owners {
-				if owner == maintainer { //ownerになってる人はmaintainerになれない
-					return fmt.Errorf("maintainers cannot include owner")
-				}
+			if _, ok := ownersMap[maintainer]; !ok { //ownerとmaintainerは重複しない
+				return service.ErrOverlapBetweenOwnersAndMaintainers
 			}
-			maintainersID = append(maintainersID, activeUsersMap[maintainer])
+
+			if maintainerID, ok := activeUsersMap[maintainer]; ok { //ユーザーが存在するか確認
+				maintainersID = append(maintainersID, maintainerID)
+
+				maintainerInfo := service.NewUserInfo(
+					activeUsersMap[maintainer],
+					maintainer,
+					values.TrapMemberStatusActive,
+				)
+				maintainersInfo = append(maintainersInfo, maintainerInfo)
+			}
+
 		}
 
 		err = g.gameManagementRole.AddGameManagementRoles(
@@ -109,8 +128,8 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 
 	gameInfo := &service.GameInfoV2{
 		Game:        game,
-		Owners:      owners,
-		Maintainers: maintainers,
+		Owners:      ownersInfo,
+		Maintainers: maintainersInfo,
 	}
 	return gameInfo, nil
 }
@@ -132,7 +151,7 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		return nil, fmt.Errorf("failed to get game management role: %w", err)
 	}
 
-	activeUsers, err := g.userUtils.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+	activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
 	}
@@ -142,18 +161,32 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
 	}
 
+	var ownersInfo []*service.UserInfo
+	var maintainersInfo []*service.UserInfo
 	for _, admadministrator := range administrators {
 		if admadministrator.Role == values.GameManagementRoleAdministrator {
 			owners = append(owners, activeUsersMap[admadministrator.UserID])
+			ownerInfo := service.NewUserInfo(
+				admadministrator.UserID,
+				activeUsersMap[admadministrator.UserID],
+				values.TrapMemberStatusActive,
+			)
+			ownersInfo = append(ownersInfo, ownerInfo)
 		} else if admadministrator.Role == values.GameManagementRoleCollaborator {
 			maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
+			maintainerInfo := service.NewUserInfo(
+				admadministrator.UserID,
+				activeUsersMap[admadministrator.UserID],
+				values.TrapMemberStatusActive,
+			)
+			maintainersInfo = append(maintainersInfo, maintainerInfo)
 		}
 	}
 
 	gameInfo := &service.GameInfoV2{
 		Game:        game,
-		Owners:      owners,
-		Maintainers: maintainers,
+		Owners:      ownersInfo,
+		Maintainers: maintainersInfo,
 	}
 
 	return gameInfo, nil
@@ -188,7 +221,7 @@ func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*dom
 }
 
 func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
-	user, err := g.userUtils.getMe(ctx, session)
+	user, err := g.user.getMe(ctx, session)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}

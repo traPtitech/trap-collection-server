@@ -40,6 +40,6 @@ type GameV2 interface {
 // V2になってゲームバージョンを返さなくなり、オーナーとメンテナーを返すようになったので追加。
 type GameInfoV2 struct {
 	Game        *domain.Game
-	Owners      []values.TraPMemberName
-	Maintainers []values.TraPMemberName
+	Owners      []*UserInfo
+	Maintainers []*UserInfo
 }
