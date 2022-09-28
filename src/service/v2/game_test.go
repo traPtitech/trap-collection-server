@@ -411,7 +411,7 @@ func TestGetGame(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				GetGame(gomock.Any(), testCase.gameID).
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
 				Return(testCase.game, testCase.GetGameErr)
 
 			if testCase.executeGetGameManagersByGameID {
@@ -510,7 +510,7 @@ func TestGetGames(t *testing.T) {
 			games:       []*domain.Game{},
 			limit:       -1,
 			offset:      0,
-			n: 0,
+			n:           0,
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
@@ -612,19 +612,19 @@ func TestGetMyGames(t *testing.T) {
 	)
 
 	type test struct {
-		description string
-		authSession *domain.OIDCSession
-		user *service.UserInfo
-		isGetMeErr bool
+		description           string
+		authSession           *domain.OIDCSession
+		user                  *service.UserInfo
+		isGetMeErr            bool
 		executeGetGamesByUser bool
-		GetGamesByUserErr error
-		limit       int
-		offset      int
-		n           int
-		games       []*domain.Game
-		GetGamesErr error
-		isErr       bool
-		err         error
+		GetGamesByUserErr     error
+		limit                 int
+		offset                int
+		n                     int
+		games                 []*domain.Game
+		GetGamesErr           error
+		isErr                 bool
+		err                   error
 	}
 
 	gameID1 := values.NewGameID()
@@ -667,10 +667,10 @@ func TestGetMyGames(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			executeGetGamesByUser: true,
-			games:       []*domain.Game{},
-			limit:       -1,
-			offset:      0,
-			n: 0,
+			games:                 []*domain.Game{},
+			limit:                 -1,
+			offset:                0,
+			n:                     0,
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
@@ -733,7 +733,7 @@ func TestGetMyGames(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			isGetMeErr: true,
-			isErr: true,
+			isErr:      true,
 		},
 		{
 			description: "GetGamesByUserがエラーなのでエラー",
@@ -747,8 +747,8 @@ func TestGetMyGames(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			executeGetGamesByUser: true,
-			GetGamesErr: errors.New("error"),
-			isErr:       true,
+			GetGamesErr:           errors.New("error"),
+			isErr:                 true,
 		},
 	}
 
@@ -763,7 +763,7 @@ func TestGetMyGames(t *testing.T) {
 					EXPECT().
 					GetMe(gomock.Any(), testCase.authSession).
 					Return(nil, errors.New("error"))
-			}else {
+			} else {
 				mockUserCache.
 					EXPECT().
 					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
