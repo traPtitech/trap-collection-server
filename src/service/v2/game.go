@@ -163,23 +163,30 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 
 	var ownersInfo []*service.UserInfo
 	var maintainersInfo []*service.UserInfo
-	for _, admadministrator := range administrators {
-		if admadministrator.Role == values.GameManagementRoleAdministrator {
-			owners = append(owners, activeUsersMap[admadministrator.UserID])
-			ownerInfo := service.NewUserInfo(
-				admadministrator.UserID,
-				activeUsersMap[admadministrator.UserID],
-				values.TrapMemberStatusActive,
-			)
-			ownersInfo = append(ownersInfo, ownerInfo)
-		} else if admadministrator.Role == values.GameManagementRoleCollaborator {
-			maintainers = append(maintainers, activeUsersMap[admadministrator.UserID])
-			maintainerInfo := service.NewUserInfo(
-				admadministrator.UserID,
-				activeUsersMap[admadministrator.UserID],
-				values.TrapMemberStatusActive,
-			)
-			maintainersInfo = append(maintainersInfo, maintainerInfo)
+	for _, administrator := range administrators {
+		switch administrator.Role {
+		case values.GameManagementRoleAdministrator:
+			if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
+				owners = append(owners, ownerName)
+				ownerInfo := service.NewUserInfo(
+					administrator.UserID,
+					activeUsersMap[administrator.UserID],
+					values.TrapMemberStatusActive,
+				)
+				ownersInfo = append(ownersInfo, ownerInfo)
+			}
+		case values.GameManagementRoleCollaborator:
+			if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
+				maintainers = append(maintainers, maintainerName)
+				maintainerInfo := service.NewUserInfo(
+					administrator.UserID,
+					activeUsersMap[administrator.UserID],
+					values.TrapMemberStatusActive,
+				)
+				maintainersInfo = append(maintainersInfo, maintainerInfo)
+			}
+		default:
+			fmt.Println("invalid administrator role")
 		}
 	}
 
