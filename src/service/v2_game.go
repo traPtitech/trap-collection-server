@@ -11,10 +11,12 @@ import (
 type GameV2 interface {
 	// CreateGame
 	// ゲームの追加。
+	// ownersとmaintainersに重複がある場合、ErrOverlapBetweenOwnersAndMaintainersを返す
 	CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*GameInfoV2, error)
 
 	// GetGame
 	// ゲームのidを指定してゲーム（id、名前、説明、オーナー、メンテナー）を取得する。
+	// idが一致するゲームが存在しなかった場合、ErrNoGameを返す。
 	GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*GameInfoV2, error)
 
 	// GetGames
@@ -29,10 +31,12 @@ type GameV2 interface {
 
 	// UpdateGame
 	// ゲームのidを指定して情報（名前、説明）を修正する。
+	// idが一致するゲームが存在しなかった場合、ErrNoGameを返す。
 	UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error)
 
 	// DeleteGame
 	// ゲームのidを指定してゲームを削除する。
+	// idが一致するゲームが存在しなかった場合、ErrNoGameを返す。
 	DeleteGame(ctx context.Context, gameID values.GameID) error
 }
 
