@@ -56,6 +56,7 @@ func TestCreateGame(t *testing.T) {
 		SaveGameErr                   error
 		executeAddGameManagementRoles bool
 		AddGameManagementRolesErr     error
+		rolesFailedToAdd              string
 		isErr                         bool
 		err                           error
 	}
@@ -251,7 +252,7 @@ func TestCreateGame(t *testing.T) {
 			isErr:           true,
 		},
 		{
-			description: "AddGameManagementRolesがエラーなのでエラー",
+			description: "AddGameManagementRolesがownerの追加でエラーなのでエラー",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
@@ -268,6 +269,28 @@ func TestCreateGame(t *testing.T) {
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 			AddGameManagementRolesErr:     errors.New("test"),
+			rolesFailedToAdd:              "owner",
+			isErr:                         true,
+		},
+		{
+			description: "AddGameManagementRolesがmaintainerの追加でエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			AddGameManagementRolesErr:     errors.New("test"),
+			rolesFailedToAdd:              "maintainer",
 			isErr:                         true,
 		},
 	}
@@ -298,10 +321,18 @@ func TestCreateGame(t *testing.T) {
 			}
 
 			if testCase.executeAddGameManagementRoles {
-				mockGameManagementRoleRepository.
-					EXPECT().
-					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
-					Return(testCase.AddGameManagementRolesErr)
+				if testCase.rolesFailedToAdd == "owner" {
+					mockGameManagementRoleRepository.
+						EXPECT().
+						AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
+						Return(testCase.AddGameManagementRolesErr)
+				} else if testCase.rolesFailedToAdd == "maintainer" {
+					mockGameManagementRoleRepository.
+						EXPECT().
+						AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleCollaborator).
+						Return(testCase.AddGameManagementRolesErr)
+				}
+
 			}
 
 			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, testCase.owners, testCase.maintainers)
@@ -547,6 +578,20 @@ func TestGetGames(t *testing.T) {
 			n:      1,
 		},
 		{
+			description: "offsetが設定されてもエラーなし",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			limit:  -1,
+			offset: 1,
+			n:      1,
+		},
+		{
 			description: "GetGamesがエラーなのでエラー",
 			GetGamesErr: errors.New("error"),
 			isErr:       true,
@@ -557,8 +602,8 @@ func TestGetGames(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				GetGames(gomock.Any()).
-				Return(testCase.games, testCase.GetGamesErr)
+				GetGames(gomock.Any(), testCase.limit, testCase.offset).
+				Return(testCase.games, testCase.n, testCase.GetGamesErr)
 
 			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset)
 
@@ -727,6 +772,20 @@ func TestGetMyGames(t *testing.T) {
 			n:      1,
 		},
 		{
+			description: "offsetが設定されてもエラーなし",
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"game name",
+					"game description",
+					time.Now(),
+				),
+			},
+			limit:  -1,
+			offset: 1,
+			n:      1,
+		},
+		{
 			description: "getMeがエラーなのでエラー",
 			authSession: domain.NewOIDCSession(
 				"access token",
@@ -773,8 +832,8 @@ func TestGetMyGames(t *testing.T) {
 			if testCase.executeGetGamesByUser {
 				mockGameRepository.
 					EXPECT().
-					GetGamesByUser(gomock.Any(), testCase.user.GetID()).
-					Return(testCase.games, testCase.GetGamesByUserErr)
+					GetGamesByUser(gomock.Any(), testCase.user.GetID(), testCase.limit, testCase.offset).
+					Return(testCase.games, testCase.n, testCase.GetGamesByUserErr)
 			}
 
 			n, games, err := gameService.GetMyGames(ctx, testCase.authSession, testCase.limit, testCase.offset)
@@ -911,6 +970,22 @@ func TestUpdateGame(t *testing.T) {
 			gameDescription: values.GameDescription("after"),
 			GetGameErr:      errors.New("error"),
 			isErr:           true,
+		},
+		{
+			description:     "UpdateGameがErrNoRecordUpdatedなのでエラー",
+			gameID:          gameID,
+			name:            values.GameName("after"),
+			gameDescription: values.GameDescription("after"),
+			game: domain.NewGame(
+				gameID,
+				values.GameName("before"),
+				values.GameDescription("before"),
+				time.Now(),
+			),
+			executeUpdateGame: true,
+			UpdateGameErr:     repository.ErrNoRecordUpdated,
+			isErr:             true,
+			err:               service.ErrNoGame,
 		},
 		{
 			description:     "UpdateGameがエラーなのでエラー",
