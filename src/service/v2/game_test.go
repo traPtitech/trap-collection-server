@@ -28,7 +28,7 @@ func TestCreateGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
@@ -337,7 +337,7 @@ func TestGetGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
@@ -461,7 +461,7 @@ func TestGetGames(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
@@ -596,7 +596,7 @@ func TestGetMyGames(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
@@ -813,7 +813,7 @@ func TestUpdateGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
@@ -977,7 +977,7 @@ func TestDeleteGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
