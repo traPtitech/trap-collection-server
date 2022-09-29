@@ -14,14 +14,14 @@ import (
 
 type Game struct {
 	db                 repository.DB
-	gameRepository     repository.Game
+	gameRepository     repository.GameV2
 	gameManagementRole repository.GameManagementRole
 	user               *User
 }
 
 func NewGame(
 	db repository.DB,
-	gameRepository repository.Game,
+	gameRepository repository.GameV2,
 	gameManagementRole repository.GameManagementRole,
 	userUtils *User,
 ) *Game {
@@ -200,30 +200,13 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 }
 
 func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
-	allGames, err := g.gameRepository.GetGames(ctx)
+	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
 	}
-
-	gameNumber := len(allGames)
-	if gameNumber == 0 {
+	if len(games) == 0 {
 		return 0, []*domain.Game{}, nil
 	}
-
-	if offset >= gameNumber {
-		return 0, []*domain.Game{}, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
-	}
-
-	var games []*domain.Game
-
-	if limit == -1 { //上限なしで取得
-		games = allGames[offset:]
-	} else if offset+limit >= len(allGames) { //開始位置+上限がゲーム全部の数より大きい
-		games = allGames[offset:]
-	} else {
-		games = allGames[offset : offset+limit]
-	}
-
 	return gameNumber, games, nil
 }
 
@@ -233,35 +216,16 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	myAllGames, err := g.gameRepository.GetGamesByUser(ctx, user.GetID())
+	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to get game ids: %w", err)
+		return 0, nil, fmt.Errorf("failed to get game IDs: %w", err)
 	}
 
-	if len(myAllGames) == 0 {
+	if len(myGames) == 0 {
 		return 0, []*domain.Game{}, nil
 	}
 
-	if offset >= len(myAllGames) {
-		return 0, []*domain.Game{}, fmt.Errorf("offset is too large") //offsetがゲームの数以上になったら取得できない
-	}
-
-	var games []*domain.Game
-
-	if limit == -1 { //上限なしで取得
-		games = myAllGames[offset:]
-	} else if offset+limit >= len(myAllGames) { //開始位置+上限がゲーム全部の数より大きい
-		games = myAllGames[offset:]
-	} else {
-		games = myAllGames[offset : offset+limit]
-	}
-
-	allGames, err := g.gameRepository.GetGames(ctx)
-	if err != nil {
-		return 0, nil, fmt.Errorf("failed to get all games: %w", err)
-	}
-
-	return len(allGames), games, nil
+	return gameNumber, myGames, nil
 }
 
 func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
