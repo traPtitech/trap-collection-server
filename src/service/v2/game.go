@@ -75,7 +75,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 					ownersInfo = append(ownersInfo, ownerInfo)
 				}
 			} else {
-				//もしかしたら書く
+				return fmt.Errorf("failed to add management role: %w", service.ErrOverlapBetweenUserAndOwners)
 			}
 		}
 
@@ -87,7 +87,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		var maintainersID []values.TraPMemberID
 		for _, maintainer := range maintainers {
 			if _, ok := ownersMap[maintainer]; !ok { //ownerとmaintainerは重複しない
-				return service.ErrOverlapBetweenOwnersAndMaintainers
+				return fmt.Errorf("failed to add management role: %w", service.ErrOverlapBetweenOwnersAndMaintainers)
 			}
 
 			if maintainerID, ok := activeUsersMap[maintainer]; ok { //ユーザーが存在するか確認
