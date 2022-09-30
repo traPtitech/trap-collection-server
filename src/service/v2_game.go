@@ -12,6 +12,7 @@ type GameV2 interface {
 	// CreateGame
 	// ゲームの追加。
 	// ownersとmaintainersに重複がある場合、ErrOverlapBetweenOwnersAndMaintainersを返す
+	// ログイン中のユーザーがownersに含まれている場合、ErrOverlapBetweenUserAndOwnerを返す
 	CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*GameInfoV2, error)
 
 	// GetGame

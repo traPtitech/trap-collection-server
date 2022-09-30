@@ -195,7 +195,7 @@ func TestCreateGame(t *testing.T) {
 			executeAddGameManagementRoles: true,
 		},
 		{
-			description: "ownerとユーザーが同じでもエラーなし",
+			description: "ownerとユーザーが同じなのでエラー",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
@@ -211,6 +211,8 @@ func TestCreateGame(t *testing.T) {
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			AddGameManagementRolesErr:     errors.New("test:owners include user"),
+			isErr:                         true,
 		},
 		{
 			description: "ownersとmaintainersに同じ人がいるのでエラー",
