@@ -144,8 +144,6 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 	}
 
 	//管理者たちを取得
-	var owners []values.TraPMemberName
-	var maintainers []values.TraPMemberName
 	administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game management role: %w", err)
@@ -167,20 +165,18 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		switch administrator.Role {
 		case values.GameManagementRoleAdministrator:
 			if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
-				owners = append(owners, ownerName)
 				ownerInfo := service.NewUserInfo(
 					administrator.UserID,
-					activeUsersMap[administrator.UserID],
+					ownerName,
 					values.TrapMemberStatusActive,
 				)
 				ownersInfo = append(ownersInfo, ownerInfo)
 			}
 		case values.GameManagementRoleCollaborator:
 			if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
-				maintainers = append(maintainers, maintainerName)
 				maintainerInfo := service.NewUserInfo(
 					administrator.UserID,
-					activeUsersMap[administrator.UserID],
+					maintainerName,
 					values.TrapMemberStatusActive,
 				)
 				maintainersInfo = append(maintainersInfo, maintainerInfo)
