@@ -134,7 +134,7 @@ func TestCreateGame(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
+			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean", "JichouP"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
@@ -152,7 +152,7 @@ func TestCreateGame(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
+			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
@@ -170,7 +170,7 @@ func TestCreateGame(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
+			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu", "JichouP"},
 			executeSaveGame:               true,
@@ -206,7 +206,7 @@ func TestCreateGame(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
+			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"ikura-hamu"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
@@ -335,6 +335,16 @@ func TestCreateGame(t *testing.T) {
 						Return(testCase.AddGameManagementRolesErr)
 				}
 
+				//ユーザーが自動的にownersに追加されるので、テストでも追加する。
+				userInOwner := false
+				for _, owner := range testCase.owners {
+					if owner == testCase.user.GetName() {
+						userInOwner = true
+					}
+				}
+				if !userInOwner {
+					testCase.owners = append(testCase.owners, testCase.user.GetName())
+				}
 			}
 
 			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, testCase.owners, testCase.maintainers)
@@ -354,8 +364,12 @@ func TestCreateGame(t *testing.T) {
 
 			assert.Equal(t, testCase.name, game.Game.GetName())
 			assert.Equal(t, testCase.gameDescription, game.Game.GetDescription())
-			assert.Equal(t, testCase.owners, game.Owners)
-			assert.Equal(t, testCase.maintainers, game.Maintainers)
+			for i := 0; i < len(game.Owners); i++ {
+				assert.Equal(t, testCase.owners[i], game.Owners[i].GetName())
+			}
+			for i := 0; i < len(game.Maintainers); i++ {
+				assert.Equal(t, testCase.maintainers[i], game.Maintainers[i].GetName())
+			}
 			assert.WithinDuration(t, time.Now(), game.Game.GetCreatedAt(), time.Second)
 		})
 	}
@@ -477,7 +491,9 @@ func TestGetGame(t *testing.T) {
 			assert.WithinDuration(t, testCase.game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
 
 			if testCase.administrators != nil {
-				assert.Equal(t, testCase.administrators, gameInfo.Maintainers)
+				for i := 0; i < len(testCase.administrators); i++ {
+					assert.Equal(t, testCase.administrators[i].UserID, gameInfo.Owners[i].GetID())
+				}
 			} else {
 				assert.Nil(t, gameInfo.Maintainers)
 			}
@@ -775,6 +791,16 @@ func TestGetMyGames(t *testing.T) {
 		},
 		{
 			description: "offsetが設定されてもエラーなし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			executeGetGamesByUser: true,
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -987,7 +1013,7 @@ func TestUpdateGame(t *testing.T) {
 			executeUpdateGame: true,
 			UpdateGameErr:     repository.ErrNoRecordUpdated,
 			isErr:             true,
-			err:               service.ErrNoGame,
+			err:               errors.New("error"),
 		},
 		{
 			description:     "UpdateGameがエラーなのでエラー",
