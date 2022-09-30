@@ -16,27 +16,27 @@ type User interface {
 
 // UserInfo 簡易的なtraP部員の情報
 type UserInfo struct {
-	ID     values.TraPMemberID
-	Name   values.TraPMemberName
-	Status values.TraPMemberStatus
+	id     values.TraPMemberID
+	name   values.TraPMemberName
+	status values.TraPMemberStatus
 }
 
 func NewUserInfo(id values.TraPMemberID, name values.TraPMemberName, status values.TraPMemberStatus) *UserInfo {
 	return &UserInfo{
-		ID:     id,
-		Name:   name,
-		Status: status,
+		id:     id,
+		name:   name,
+		status: status,
 	}
 }
 
 func (ui *UserInfo) GetID() values.TraPMemberID {
-	return ui.ID
+	return ui.id
 }
 
 func (ui *UserInfo) GetName() values.TraPMemberName {
-	return ui.Name
+	return ui.name
 }
 
 func (ui *UserInfo) GetStatus() values.TraPMemberStatus {
-	return ui.Status
+	return ui.status
 }
