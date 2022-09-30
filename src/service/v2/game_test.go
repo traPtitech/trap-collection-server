@@ -416,7 +416,6 @@ func TestGetGame(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-
 			gameID: gameID,
 			game: domain.NewGame(
 				gameID,
@@ -834,7 +833,7 @@ func TestGetMyGames(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			executeGetGamesByUser: true,
-			GetGamesErr:           errors.New("error"),
+			GetGamesByUserErr:     errors.New("error"),
 			isErr:                 true,
 		},
 	}
@@ -1013,7 +1012,6 @@ func TestUpdateGame(t *testing.T) {
 			executeUpdateGame: true,
 			UpdateGameErr:     repository.ErrNoRecordUpdated,
 			isErr:             true,
-			err:               errors.New("error"),
 		},
 		{
 			description:     "UpdateGameがエラーなのでエラー",
