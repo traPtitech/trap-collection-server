@@ -41,7 +41,8 @@ func NewGameImage(
 	}
 }
 
-func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) error {
+func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) (*domain.GameImage, error) {
+	var image *domain.GameImage
 	err := gameImage.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		// TODO: v2のgameRepositoryに変更
 		_, err := gameImage.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
@@ -83,7 +84,7 @@ func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader,
 				return service.ErrInvalidFormat
 			}
 
-			image := domain.NewGameImage(
+			image = domain.NewGameImage(
 				imageID,
 				imageType,
 				time.Now(),
@@ -129,10 +130,10 @@ func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader,
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed in transaction: %w", err)
+		return nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 
-	return nil
+	return image, nil
 }
 
 func (gameImage *GameImage) GetGameImages(ctx context.Context, gameID values.GameID) ([]*domain.GameImage, error) {
