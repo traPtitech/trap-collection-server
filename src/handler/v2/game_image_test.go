@@ -1,9 +1,12 @@
 package v2
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -212,6 +215,198 @@ func TestGetGameImages(t *testing.T) {
 				assert.Equal(t, testCase.resImages[i].Mime, resImage.Mime)
 				assert.WithinDuration(t, testCase.resImages[i].CreatedAt, resImage.CreatedAt, time.Second)
 			}
+		})
+	}
+}
+
+func TestPostGameImage(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameImageService := mock.NewMockGameImageV2(ctrl)
+
+	gameImage := NewGameImage(mockGameImageService)
+
+	type test struct {
+		description          string
+		gameID               openapi.GameIDInPath
+		reader               *bytes.Reader
+		executeSaveGameImage bool
+		image                *domain.GameImage
+		saveGameImageErr     error
+		resImage             openapi.GameImage
+		isErr                bool
+		err                  error
+		statusCode           int
+	}
+
+	gameImageID1 := values.NewGameImageID()
+	gameImageID2 := values.NewGameImageID()
+	gameImageID3 := values.NewGameImageID()
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description:          "特に問題ないのでエラーなし",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			image: domain.NewGameImage(
+				gameImageID1,
+				values.GameImageTypeJpeg,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID1),
+				Mime:      openapi.Imagejpeg,
+				CreatedAt: now,
+			},
+		},
+		{
+			description:          "pngでもエラーなし",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			image: domain.NewGameImage(
+				gameImageID2,
+				values.GameImageTypePng,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID2),
+				Mime:      openapi.Imagepng,
+				CreatedAt: now,
+			},
+		},
+		{
+			description:          "gifでもエラーなし",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			image: domain.NewGameImage(
+				gameImageID3,
+				values.GameImageTypeGif,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID3),
+				Mime:      openapi.Imagegif,
+				CreatedAt: now,
+			},
+		},
+		{
+			// serviceが正しく動作していればあり得ないが、念のため確認
+			description:          "jpeg,png,gifのいずれでもないので500",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			image: domain.NewGameImage(
+				values.NewGameImageID(),
+				values.GameImageType(100),
+				now,
+			),
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			description:          "SaveGameImageがErrInvalidGameIDなので404",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			saveGameImageErr:     service.ErrInvalidGameID,
+			isErr:                true,
+			statusCode:           http.StatusNotFound,
+		},
+		{
+			description:          "SaveGameImageがエラーなので500",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameImage: true,
+			saveGameImageErr:     errors.New("error"),
+			isErr:                true,
+			statusCode:           http.StatusInternalServerError,
+		},
+		{
+			description: "contentがrequest bodyにないので400",
+			gameID:      uuid.UUID(values.NewGameID()),
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+
+			reqBody := bytes.NewBuffer(nil)
+			var boundary string
+			func() {
+				mw := multipart.NewWriter(reqBody)
+				defer mw.Close()
+
+				if testCase.reader != nil {
+					w, err := mw.CreateFormFile("content", "content")
+					if err != nil {
+						t.Fatalf("failed to create form field: %v", err)
+						return
+					}
+
+					_, err = io.Copy(w, testCase.reader)
+					if err != nil {
+						t.Fatalf("failed to copy: %v", err)
+						return
+					}
+				}
+
+				boundary = mw.Boundary()
+			}()
+
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/games/%s/images", testCase.gameID), reqBody)
+			req.Header.Set(echo.HeaderContentType, fmt.Sprintf("multipart/form-data; boundary=%s", boundary))
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.executeSaveGameImage {
+				mockGameImageService.
+					EXPECT().
+					SaveGameImage(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(testCase.image, testCase.saveGameImageErr)
+			}
+
+			err := gameImage.PostGameImage(c, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, http.StatusCreated, rec.Code)
+
+			var resImage openapi.GameImage
+			err = json.NewDecoder(rec.Body).Decode(&resImage)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			assert.Equal(t, testCase.resImage.Id, resImage.Id)
+			assert.Equal(t, testCase.resImage.Mime, resImage.Mime)
+			assert.WithinDuration(t, testCase.resImage.CreatedAt, resImage.CreatedAt, time.Second)
 		})
 	}
 }
