@@ -2474,13 +2474,13 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameImageID'
-        type:
-          $ref: '#/components/schemas/GameImageType'
+        mime:
+          $ref: '#/components/schemas/GameImageMime'
         createdAt:
           $ref: '#/components/schemas/GameImageCreatedAt'
       required:
         - id
-        - type
+        - mime
         - createdAt
       additionalProperties: false
       description: |
@@ -2502,13 +2502,13 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameVideoID'
-        type:
-          $ref: '#/components/schemas/GameVideoType'
+        mime:
+          $ref: '#/components/schemas/GameVideoMime'
         createdAt:
           $ref: '#/components/schemas/GameVideoCreatedAt'
       required:
         - id
-        - type
+        - mime
         - createdAt
       additionalProperties: false
       description: |
@@ -2748,14 +2748,14 @@ components:
       format: uuid
       description: |
         ゲーム画像のIDです。
-    GameImageType:
+    GameImageMime:
       type: string
       enum:
-        - jpeg
-        - png
-        - gif
+        - image/jpeg
+        - image/png
+        - image/gif
       description: |
-        ゲーム画像の種類です。
+        ゲーム画像のmimeです。
     GameImageContent:
       type: string
       format: binary
@@ -2773,12 +2773,12 @@ components:
       format: uuid
       description: |
         ゲーム紹介動画のIDです。
-    GameVideoType:
+    GameVideoMime:
       type: string
       enum:
-        - mp4
+        - video/mp4
       description: |
-        ゲーム紹介動画の種類です。
+        ゲーム紹介動画のmimeです。
     GameVideoContent:
       type: string
       format: binary
