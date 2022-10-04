@@ -60,24 +60,22 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			activeUsersMap[activeUser.GetName()] = activeUser.GetID()
 		}
 
-		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
 		var ownersID []values.TraPMemberID
 		for _, owner := range owners {
-			if owner != user.GetName() {
-				if ownerID, ok := activeUsersMap[owner]; ok { //ユーザーが存在するか確認
-					ownersID = append(ownersID, ownerID)
-
-					ownerInfo := service.NewUserInfo(
-						activeUsersMap[owner],
-						owner,
-						values.TrapMemberStatusActive,
-					)
-					ownersInfo = append(ownersInfo, ownerInfo)
-				}
-			} else {
-				return fmt.Errorf("failed to add management role: %w", service.ErrOverlapBetweenUserAndOwners)
+			if owner == user.GetName() { //ログイン中のユーザーがownersに含まれていたらエラー
+				return service.ErrOverlapBetweenUserAndOwners
 			}
+			if ownerID, ok := activeUsersMap[owner]; ok { //ownerが存在するユーザーが確かめる
+				ownersID = append(ownersID, ownerID)
+			}
+			ownerInfo := service.NewUserInfo(
+				activeUsersMap[owner],
+				owner,
+				values.TrapMemberStatusActive,
+			)
+			ownersInfo = append(ownersInfo, ownerInfo)
 		}
+		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
 
 		ownersMap := make(map[values.TraPMemberName]struct{})
 		for _, owner := range owners {
@@ -87,7 +85,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		var maintainersID []values.TraPMemberID
 		for _, maintainer := range maintainers {
 			if _, ok := ownersMap[maintainer]; !ok { //ownerとmaintainerは重複しない
-				return fmt.Errorf("failed to add management role: %w", service.ErrOverlapBetweenOwnersAndMaintainers)
+				return service.ErrOverlapBetweenOwnersAndMaintainers
 			}
 
 			if maintainerID, ok := activeUsersMap[maintainer]; ok { //ユーザーが存在するか確認

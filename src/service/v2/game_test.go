@@ -34,31 +34,31 @@ func TestCreateGame(t *testing.T) {
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
 
-	userUtils := NewUser(mockUserAuth, mockUserCache)
+	user := NewUser(mockUserAuth, mockUserCache)
 
 	gameService := NewGame(
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
-		userUtils,
+		user,
 	)
 
 	type test struct {
-		description                   string
-		authSession                   *domain.OIDCSession
-		user                          *service.UserInfo
-		isGetMeErr                    bool
-		name                          values.GameName
-		gameDescription               values.GameDescription
-		owners                        []values.TraPMemberName
-		maintainers                   []values.TraPMemberName
-		executeSaveGame               bool
-		SaveGameErr                   error
-		executeAddGameManagementRoles bool
-		AddGameManagementRolesErr     error
-		rolesFailedToAdd              string
-		isErr                         bool
-		err                           error
+		description                    string
+		authSession                    *domain.OIDCSession
+		user                           *service.UserInfo
+		isGetMeErr                     bool
+		name                           values.GameName
+		gameDescription                values.GameDescription
+		owners                         []values.TraPMemberName
+		maintainers                    []values.TraPMemberName
+		executeSaveGame                bool
+		SaveGameErr                    error
+		executeAddGameManagementRoles  bool
+		AddGameManagementRoleAdminErr  error
+		AddGameManagementRoleCollabErr error
+		isErr                          bool
+		err                            error
 	}
 
 	testCases := []test{
@@ -211,8 +211,8 @@ func TestCreateGame(t *testing.T) {
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
-			AddGameManagementRolesErr:     errors.New("test:owners include user"),
 			isErr:                         true,
+			err:                           service.ErrOverlapBetweenUserAndOwners,
 		},
 		{
 			description: "ownersとmaintainersに同じ人がいるのでエラー",
@@ -231,8 +231,8 @@ func TestCreateGame(t *testing.T) {
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
-			AddGameManagementRolesErr:     errors.New("test:maintainers include owner"),
 			isErr:                         true,
+			err:                           service.ErrOverlapBetweenOwnersAndMaintainers,
 		},
 		{
 			description: "SaveGameがエラーなのでエラー",
@@ -270,8 +270,7 @@ func TestCreateGame(t *testing.T) {
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
-			AddGameManagementRolesErr:     errors.New("test"),
-			rolesFailedToAdd:              "owner",
+			AddGameManagementRoleAdminErr: errors.New("test"),
 			isErr:                         true,
 		},
 		{
@@ -285,15 +284,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			AddGameManagementRolesErr:     errors.New("test"),
-			rolesFailedToAdd:              "maintainer",
-			isErr:                         true,
+			name:                           values.GameName("test"),
+			gameDescription:                values.GameDescription("test"),
+			owners:                         []values.TraPMemberName{"mazrean"},
+			maintainers:                    []values.TraPMemberName{"pikachu"},
+			executeSaveGame:                true,
+			executeAddGameManagementRoles:  true,
+			AddGameManagementRoleCollabErr: errors.New("test"),
+			isErr:                          true,
 		},
 	}
 
@@ -323,28 +321,14 @@ func TestCreateGame(t *testing.T) {
 			}
 
 			if testCase.executeAddGameManagementRoles {
-				if testCase.rolesFailedToAdd == "owner" {
-					mockGameManagementRoleRepository.
-						EXPECT().
-						AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
-						Return(testCase.AddGameManagementRolesErr)
-				} else if testCase.rolesFailedToAdd == "maintainer" {
-					mockGameManagementRoleRepository.
-						EXPECT().
-						AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleCollaborator).
-						Return(testCase.AddGameManagementRolesErr)
-				}
-
-				//ユーザーが自動的にownersに追加されるので、テストでも追加する。
-				userInOwner := false
-				for _, owner := range testCase.owners {
-					if owner == testCase.user.GetName() {
-						userInOwner = true
-					}
-				}
-				if !userInOwner {
-					testCase.owners = append(testCase.owners, testCase.user.GetName())
-				}
+				mockGameManagementRoleRepository.
+					EXPECT().
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
+					Return(testCase.AddGameManagementRoleAdminErr)
+				mockGameManagementRoleRepository.
+					EXPECT().
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleCollaborator).
+					Return(testCase.AddGameManagementRoleCollabErr)
 			}
 
 			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, testCase.owners, testCase.maintainers)
@@ -416,7 +400,7 @@ func TestGetGame(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			gameID: gameID,
+			gameID:      gameID,
 			game: domain.NewGame(
 				gameID,
 				"game name",
