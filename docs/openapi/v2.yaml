@@ -2267,8 +2267,8 @@ components:
             ゲームのownerの一覧です。
             指定されない場合、空配列として扱われます。
             ゲームの作成を実行したユーザーは、このリストに含まれていなくてもownerとなります。
-            また、このリストにゲームの作成を実行したユーザーが含まれていた場合も、
-            エラーにはならず、ゲームの作成を実行したユーザーが含まれない場合と同様の挙動をします。
+            また、このリストにゲームの作成を実行したユーザーが含まれていた場合、
+            400エラーになります。
         maintainers:
           type: array
           items:
@@ -2462,12 +2462,9 @@ components:
     NewGameImage:
       type: object
       properties:
-        type:
-          $ref: '#/components/schemas/GameImageType'
         content:
           $ref: '#/components/schemas/GameImageContent'
       required:
-        - type
         - content
       additionalProperties: false
       description: |
@@ -2477,13 +2474,13 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameImageID'
-        type:
-          $ref: '#/components/schemas/GameImageType'
+        mime:
+          $ref: '#/components/schemas/GameImageMime'
         createdAt:
           $ref: '#/components/schemas/GameImageCreatedAt'
       required:
         - id
-        - type
+        - mime
         - createdAt
       additionalProperties: false
       description: |
@@ -2493,12 +2490,9 @@ components:
     NewGameVideo:
       type: object
       properties:
-        type:
-          $ref: '#/components/schemas/GameVideoType'
         content:
           $ref: '#/components/schemas/GameVideoContent'
       required:
-        - type
         - content
       additionalProperties: false
       description: |
@@ -2508,13 +2502,13 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameVideoID'
-        type:
-          $ref: '#/components/schemas/GameVideoType'
+        mime:
+          $ref: '#/components/schemas/GameVideoMime'
         createdAt:
           $ref: '#/components/schemas/GameVideoCreatedAt'
       required:
         - id
-        - type
+        - mime
         - createdAt
       additionalProperties: false
       description: |
@@ -2754,14 +2748,14 @@ components:
       format: uuid
       description: |
         ゲーム画像のIDです。
-    GameImageType:
+    GameImageMime:
       type: string
       enum:
-        - jpeg
-        - png
-        - gif
+        - image/jpeg
+        - image/png
+        - image/gif
       description: |
-        ゲーム画像の種類です。
+        ゲーム画像のmimeです。
     GameImageContent:
       type: string
       format: binary
@@ -2779,12 +2773,12 @@ components:
       format: uuid
       description: |
         ゲーム紹介動画のIDです。
-    GameVideoType:
+    GameVideoMime:
       type: string
       enum:
-        - mp4
+        - video/mp4
       description: |
-        ゲーム紹介動画の種類です。
+        ゲーム紹介動画のmimeです。
     GameVideoContent:
       type: string
       format: binary
