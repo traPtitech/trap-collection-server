@@ -513,3 +513,155 @@ func TestGetGameImage(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameImageMeta(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameImageService := mock.NewMockGameImageV2(ctrl)
+
+	gameImage := NewGameImage(mockGameImageService)
+
+	type test struct {
+		description         string
+		gameID              openapi.GameIDInPath
+		gameImageID         openapi.GameImageIDInPath
+		image               *domain.GameImage
+		getGameImageMetaErr error
+		resImage            openapi.GameImage
+		isErr               bool
+		err                 error
+		statusCode          int
+	}
+
+	gameImageID1 := values.NewGameImageID()
+	gameImageID2 := values.NewGameImageID()
+	gameImageID3 := values.NewGameImageID()
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			image: domain.NewGameImage(
+				gameImageID1,
+				values.GameImageTypeJpeg,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID1),
+				Mime:      openapi.Imagejpeg,
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "pngでもエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			image: domain.NewGameImage(
+				gameImageID2,
+				values.GameImageTypePng,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID2),
+				Mime:      openapi.Imagepng,
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "gifでもエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			image: domain.NewGameImage(
+				gameImageID3,
+				values.GameImageTypeGif,
+				now,
+			),
+			resImage: openapi.GameImage{
+				Id:        uuid.UUID(gameImageID3),
+				Mime:      openapi.Imagegif,
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "jpeg,png,gifのいずれでもないので500",
+			gameID:      uuid.UUID(values.NewGameID()),
+			image: domain.NewGameImage(
+				values.NewGameImageID(),
+				values.GameImageType(100),
+				now,
+			),
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			description:         "GetGameImageMetaがErrInvalidGameIDなので404",
+			gameID:              uuid.UUID(values.NewGameID()),
+			getGameImageMetaErr: service.ErrInvalidGameID,
+			isErr:               true,
+			statusCode:          http.StatusNotFound,
+		},
+		{
+			description:         "GetGameImageMetaがErrInvalidGameImageIDなので404",
+			gameID:              uuid.UUID(values.NewGameID()),
+			getGameImageMetaErr: service.ErrInvalidGameImageID,
+			isErr:               true,
+			statusCode:          http.StatusNotFound,
+		},
+		{
+			description:         "GetGameImagesがエラーなので500",
+			gameID:              uuid.UUID(values.NewGameID()),
+			getGameImageMetaErr: errors.New("error"),
+			isErr:               true,
+			statusCode:          http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/images", testCase.gameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			mockGameImageService.
+				EXPECT().
+				GetGameImageMeta(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(testCase.image, testCase.getGameImageMetaErr)
+
+			err := gameImage.GetGameImageMeta(c, testCase.gameID, testCase.gameImageID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			var resImage openapi.GameImage
+			err = json.NewDecoder(rec.Body).Decode(&resImage)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			assert.Equal(t, testCase.resImage.Id, resImage.Id)
+			assert.Equal(t, testCase.resImage.Mime, resImage.Mime)
+			assert.WithinDuration(t, testCase.resImage.CreatedAt, resImage.CreatedAt, time.Second)
+		})
+	}
+}
