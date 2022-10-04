@@ -101,6 +101,11 @@ func (api *API) setRoutes(e *echo.Echo) error {
 		Options: openapi3filter.Options{
 			MultiError:         true,
 			AuthenticationFunc: api.Checker.check,
+			// validate時にデータがメモリに乗るため、
+			// 画像・動画・ファイルのような大きなデータのアップロード時にメモリ不足にならないように、
+			// ExcludeRequestBody、ExcludeResponseBodyをtrueにする
+			ExcludeRequestBody:  true,
+			ExcludeResponseBody: true,
 		},
 	}))
 	openapi.RegisterHandlersWithBaseURL(apiGroup, api, "/api/v2")
