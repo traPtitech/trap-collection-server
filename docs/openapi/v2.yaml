@@ -2462,12 +2462,9 @@ components:
     NewGameImage:
       type: object
       properties:
-        type:
-          $ref: '#/components/schemas/GameImageType'
         content:
           $ref: '#/components/schemas/GameImageContent'
       required:
-        - type
         - content
       additionalProperties: false
       description: |
@@ -2493,12 +2490,9 @@ components:
     NewGameVideo:
       type: object
       properties:
-        type:
-          $ref: '#/components/schemas/GameVideoType'
         content:
           $ref: '#/components/schemas/GameVideoContent'
       required:
-        - type
         - content
       additionalProperties: false
       description: |
