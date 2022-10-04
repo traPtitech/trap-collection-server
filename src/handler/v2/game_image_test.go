@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -407,6 +408,108 @@ func TestPostGameImage(t *testing.T) {
 			assert.Equal(t, testCase.resImage.Id, resImage.Id)
 			assert.Equal(t, testCase.resImage.Mime, resImage.Mime)
 			assert.WithinDuration(t, testCase.resImage.CreatedAt, resImage.CreatedAt, time.Second)
+		})
+	}
+}
+
+func TestGetGameImage(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameImageService := mock.NewMockGameImageV2(ctrl)
+
+	gameImage := NewGameImage(mockGameImageService)
+
+	type test struct {
+		description     string
+		gameID          openapi.GameIDInPath
+		gameImageID     openapi.GameImageIDInPath
+		tmpURL          values.GameImageTmpURL
+		getGameImageErr error
+		resLocation     string
+		isErr           bool
+		err             error
+		statusCode      int
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			gameImageID: uuid.UUID(values.NewGameImageID()),
+			tmpURL:      values.NewGameImageTmpURL(urlLink),
+			resLocation: "https://example.com",
+		},
+		{
+			description:     "GetGameImageがErrInvalidGameIDなので404",
+			gameID:          uuid.UUID(values.NewGameID()),
+			gameImageID:     uuid.UUID(values.NewGameImageID()),
+			getGameImageErr: service.ErrInvalidGameID,
+			isErr:           true,
+			statusCode:      http.StatusNotFound,
+		},
+		{
+			description:     "GetGameImageがErrInvalidGameImageIDなので404",
+			gameID:          uuid.UUID(values.NewGameID()),
+			gameImageID:     uuid.UUID(values.NewGameImageID()),
+			getGameImageErr: service.ErrInvalidGameImageID,
+			isErr:           true,
+			statusCode:      http.StatusNotFound,
+		},
+		{
+			description:     "GetGameImageがエラーなので500",
+			gameID:          uuid.UUID(values.NewGameID()),
+			gameImageID:     uuid.UUID(values.NewGameImageID()),
+			getGameImageErr: errors.New("error"),
+			isErr:           true,
+			statusCode:      http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/images", testCase.gameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			mockGameImageService.
+				EXPECT().
+				GetGameImage(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(testCase.tmpURL, testCase.getGameImageErr)
+
+			err := gameImage.GetGameImage(c, testCase.gameID, testCase.gameImageID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, http.StatusSeeOther, rec.Code)
+
+			assert.Equal(t, testCase.resLocation, rec.Header().Get("Location"))
 		})
 	}
 }
