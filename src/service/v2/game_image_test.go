@@ -192,7 +192,7 @@ func TestSaveGameImage(t *testing.T) {
 					Return(testCase.StorageSaveGameImageErr)
 			}
 
-			err := gameImageService.SaveGameImage(ctx, file, testCase.gameID)
+			image, err := gameImageService.SaveGameImage(ctx, file, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -206,6 +206,9 @@ func TestSaveGameImage(t *testing.T) {
 			if err != nil || testCase.isErr {
 				return
 			}
+
+			assert.Equal(t, testCase.imageType, image.GetType())
+			assert.WithinDuration(t, time.Now(), image.GetCreatedAt(), time.Second)
 
 			assert.Equal(t, expectBytes, buf.Bytes())
 		})

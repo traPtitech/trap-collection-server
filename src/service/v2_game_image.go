@@ -14,7 +14,7 @@ type GameImageV2 interface {
 	// SaveGameImage
 	// ゲーム画像の保存。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
-	SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) error
+	SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) (*domain.GameImage, error)
 	// GetGameImage
 	// ゲーム画像一覧の取得。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
