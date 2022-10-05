@@ -60,28 +60,31 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			activeUsersMap[activeUser.GetName()] = activeUser.GetID()
 		}
 
+		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
 		ownersID := make([]values.TraPMemberID, 0, len(owners))
 		ownersMap := make(map[values.TraPMemberName]struct{}, len(owners))
 		for _, owner := range owners {
-			if owner == user.GetName() { //ログイン中のユーザーがownersに含まれていたらエラー
-				return service.ErrOverlapBetweenUserAndOwners
+			if _, ok := activeUsersMap[owner]; !ok { //ownerが存在するか確かめる
+				fmt.Printf("User '%s' is not an active user.", owner)
+				continue
 			}
-			if ownerID, ok := activeUsersMap[owner]; ok { //ownerが存在するか確かめる
-				if _, ok2 := ownersMap[owner]; !ok2 { //owners内の重複を除く
-					ownersID = append(ownersID, ownerID)
+			if _, ok := ownersMap[owner]; !ok { //owners内の重複を除く。ここでユーザーとownersの重複も除かれる
+				ownersID = append(ownersID, activeUsersMap[owner])
 
-					ownerInfo := service.NewUserInfo(
-						activeUsersMap[owner],
-						owner,
-						values.TrapMemberStatusActive,
-					)
-					ownersInfo = append(ownersInfo, ownerInfo)
+				ownerInfo := service.NewUserInfo(
+					activeUsersMap[owner],
+					owner,
+					values.TrapMemberStatusActive,
+				)
+				ownersInfo = append(ownersInfo, ownerInfo)
 
-					ownersMap[owner] = struct{}{}
-				}
+				ownersMap[owner] = struct{}{}
+			} else {
+				return service.ErrOverlapInOwners
 			}
+
 		}
-		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
+
 		ownersMap[user.GetName()] = struct{}{}
 
 		maintainersID := make([]values.TraPMemberID, 0, len(maintainers))
@@ -91,20 +94,25 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 				return service.ErrOverlapBetweenOwnersAndMaintainers
 			}
 
-			if maintainerID, ok := activeUsersMap[maintainer]; ok { //maintainerが存在するか確認
-				if _, ok2 := maintainersMap[maintainer]; !ok2 {
-					maintainersID = append(maintainersID, maintainerID)
-
-					maintainerInfo := service.NewUserInfo(
-						activeUsersMap[maintainer],
-						maintainer,
-						values.TrapMemberStatusActive,
-					)
-					maintainersInfo = append(maintainersInfo, maintainerInfo)
-
-					maintainersMap[maintainer] = struct{}{}
-				}
+			if _, ok := activeUsersMap[maintainer]; !ok { //maintainerが存在するか確認
+				fmt.Printf("User '%s' is not an active user.", maintainer)
+				continue
 			}
+			if _, ok := maintainersMap[maintainer]; !ok {
+				maintainersID = append(maintainersID, activeUsersMap[maintainer])
+
+				maintainerInfo := service.NewUserInfo(
+					activeUsersMap[maintainer],
+					maintainer,
+					values.TrapMemberStatusActive,
+				)
+				maintainersInfo = append(maintainersInfo, maintainerInfo)
+
+				maintainersMap[maintainer] = struct{}{}
+			} else {
+				return service.ErrOverlapInMaintainers
+			}
+
 		}
 
 		err = g.gameManagementRole.AddGameManagementRoles(
