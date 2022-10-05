@@ -82,6 +82,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			}
 		}
 		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
+		ownersMap[user.GetName()] = struct{}{}
 
 		maintainersID := make([]values.TraPMemberID,0,len(maintainers))
 		maintainersMap := make(map[values.TraPMemberName]struct{}, len(maintainers))
