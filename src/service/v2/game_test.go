@@ -339,7 +339,7 @@ func TestCreateGame(t *testing.T) {
 					EXPECT().
 					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
 					Return(testCase.user, nil)
-				
+
 				mockUserCache.
 					EXPECT().
 					GetActiveUsers(gomock.Any()).
@@ -358,7 +358,7 @@ func TestCreateGame(t *testing.T) {
 					EXPECT().
 					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(func(ctx interface{}, gameID interface{}, userIDs interface{}, role values.GameManagementRole) error {
-						switch role{
+						switch role {
 						case values.GameManagementRoleAdministrator:
 							return testCase.AddGameManagementRoleAdminErr
 						case values.GameManagementRoleCollaborator:
@@ -392,6 +392,7 @@ func TestCreateGame(t *testing.T) {
 				assert.Equal(t, testCase.maintainers[i], game.Maintainers[i].GetName())
 			}
 			assert.WithinDuration(t, time.Now(), game.Game.GetCreatedAt(), time.Second)
+
 		})
 	}
 }
@@ -424,6 +425,7 @@ func TestGetGame(t *testing.T) {
 		description                    string
 		gameID                         values.GameID
 		game                           *domain.Game
+		executeGetActiveUsers          bool
 		GetGameErr                     error
 		executeGetGameManagersByGameID bool
 		administrators                 []*repository.UserIDAndManagementRole
@@ -433,6 +435,16 @@ func TestGetGame(t *testing.T) {
 	}
 
 	gameID := values.NewGameID()
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+
+	activeUsers := []*service.UserInfo{
+		service.NewUserInfo(
+			userID1,
+			"ikura-hamu",
+			values.TrapMemberStatusActive,
+		),
+	}
 
 	testCases := []test{
 		{
@@ -444,10 +456,11 @@ func TestGetGame(t *testing.T) {
 				"game description",
 				time.Now(),
 			),
+			executeGetActiveUsers:          true,
 			executeGetGameManagersByGameID: true,
 			administrators: []*repository.UserIDAndManagementRole{
 				{
-					UserID: values.TraPMemberID(uuid.New()),
+					UserID: userID1,
 					Role:   values.GameManagementRoleAdministrator,
 				},
 			},
@@ -481,6 +494,12 @@ func TestGetGame(t *testing.T) {
 				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
 				Return(testCase.game, testCase.GetGameErr)
 
+			if testCase.executeGetActiveUsers {
+				mockUserCache.
+					EXPECT().
+					GetActiveUsers(gomock.Any()).
+					Return(activeUsers, nil)
+			}
 			if testCase.executeGetGameManagersByGameID {
 				mockGameManagementRoleRepository.
 					EXPECT().
