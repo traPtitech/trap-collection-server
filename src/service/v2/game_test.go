@@ -57,6 +57,7 @@ func TestCreateGame(t *testing.T) {
 		executeAddGameManagementRoles  bool
 		AddGameManagementRoleAdminErr  error
 		AddGameManagementRoleCollabErr error
+		expectedOwners                 []values.TraPMemberName
 		isErr                          bool
 		err                            error
 	}
@@ -111,6 +112,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test description"),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -129,6 +131,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -147,6 +150,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription(""),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -165,6 +169,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean", "JichouP"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "JichouP", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -183,6 +188,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -201,6 +207,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu", "JichouP"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -219,6 +226,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription(""),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -337,6 +345,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"s9"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -355,6 +364,7 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"s9"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 		},
@@ -482,7 +492,7 @@ func TestCreateGame(t *testing.T) {
 			assert.Equal(t, testCase.name, game.Game.GetName())
 			assert.Equal(t, testCase.gameDescription, game.Game.GetDescription())
 			for i := 0; i < len(game.Owners); i++ {
-				assert.Equal(t, testCase.owners[i], game.Owners[i].GetName())
+				assert.Equal(t, testCase.expectedOwners[i], game.Owners[i].GetName())
 			}
 			for i := 0; i < len(game.Maintainers); i++ {
 				assert.Equal(t, testCase.maintainers[i], game.Maintainers[i].GetName())
