@@ -82,7 +82,6 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			} else {
 				return service.ErrOverlapInOwners
 			}
-
 		}
 
 		ownersMap[user.GetName()] = struct{}{}
@@ -112,7 +111,6 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			} else {
 				return service.ErrOverlapInMaintainers
 			}
-
 		}
 
 		err = g.gameManagementRole.AddGameManagementRoles(
