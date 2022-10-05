@@ -263,6 +263,46 @@ func TestCreateGame(t *testing.T) {
 			err:                           service.ErrOverlapBetweenOwnersAndMaintainers,
 		},
 		{
+			description: "ownersに同じ人が含まれているのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test"),
+			owners:                        []values.TraPMemberName{"mazrean", "mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			isErr:                         true,
+			err:                           service.ErrOverlapInOwners,
+		},
+		{
+			description: "maintainersに同じ人が含まれているのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu", "pikachu"},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			isErr:                         true,
+			err:                           service.ErrOverlapInMaintainers,
+		},
+		{
 			description: "ownersとmaintainersに同じ人がいるのでエラー",
 			authSession: domain.NewOIDCSession(
 				"access token",
