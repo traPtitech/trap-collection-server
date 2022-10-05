@@ -23,13 +23,13 @@ func NewGame(
 	db repository.DB,
 	gameRepository repository.GameV2,
 	gameManagementRole repository.GameManagementRole,
-	userUtils *User,
+	user *User,
 ) *Game {
 	return &Game{
 		db:                 db,
 		gameRepository:     gameRepository,
 		gameManagementRole: gameManagementRole,
-		user:               userUtils,
+		user:               user,
 	}
 }
 
@@ -88,7 +88,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 				return service.ErrOverlapBetweenOwnersAndMaintainers
 			}
 
-			if maintainerID, ok := activeUsersMap[maintainer]; ok { //ユーザーが存在するか確認
+			if maintainerID, ok := activeUsersMap[maintainer]; ok { //maintainerが存在するか確認
 				maintainersID = append(maintainersID, maintainerID)
 
 				maintainerInfo := service.NewUserInfo(
