@@ -240,7 +240,7 @@ func TestCreateGame(t *testing.T) {
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
 			isErr:                         true,
-			err:                           service.ErrOverlapBetweenUserAndOwners,
+			err:                           service.ErrOverlapInOwners,
 		},
 		{
 			description: "maintainerとユーザーが同じなのでエラー",
