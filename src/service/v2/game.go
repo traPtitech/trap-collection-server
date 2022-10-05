@@ -41,8 +41,8 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 
 	game := domain.NewGame(values.NewGameID(), name, description, time.Now())
 
-	ownersInfo := make([]*service.UserInfo,0,len(owners))
-	maintainersInfo := make([]*service.UserInfo,0,len(maintainers))
+	ownersInfo := make([]*service.UserInfo, 0, len(owners))
+	maintainersInfo := make([]*service.UserInfo, 0, len(maintainers))
 
 	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		err := g.gameRepository.SaveGame(ctx, game)
@@ -60,8 +60,8 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			activeUsersMap[activeUser.GetName()] = activeUser.GetID()
 		}
 
-		ownersID := make([]values.TraPMemberID,0,len(owners))
-		ownersMap := make(map[values.TraPMemberName]struct{},len(owners))
+		ownersID := make([]values.TraPMemberID, 0, len(owners))
+		ownersMap := make(map[values.TraPMemberName]struct{}, len(owners))
 		for _, owner := range owners {
 			if owner == user.GetName() { //ログイン中のユーザーがownersに含まれていたらエラー
 				return service.ErrOverlapBetweenUserAndOwners
@@ -84,7 +84,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		owners = append(owners, user.GetName()) //ログイン中のユーザーをownersに追加
 		ownersMap[user.GetName()] = struct{}{}
 
-		maintainersID := make([]values.TraPMemberID,0,len(maintainers))
+		maintainersID := make([]values.TraPMemberID, 0, len(maintainers))
 		maintainersMap := make(map[values.TraPMemberName]struct{}, len(maintainers))
 		for _, maintainer := range maintainers {
 			if _, ok := ownersMap[maintainer]; ok { //ownerとmaintainerは重複しない
@@ -163,8 +163,8 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
 	}
 
-	ownersInfo := make([]*service.UserInfo,0,len(administrators))
-	maintainersInfo := make([]*service.UserInfo,0,len(administrators))
+	ownersInfo := make([]*service.UserInfo, 0, len(administrators))
+	maintainersInfo := make([]*service.UserInfo, 0, len(administrators))
 	for _, administrator := range administrators {
 		switch administrator.Role {
 		case values.GameManagementRoleAdministrator:
