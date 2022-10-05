@@ -61,6 +61,34 @@ func TestCreateGame(t *testing.T) {
 		err                            error
 	}
 
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+	userID3 := values.NewTrapMemberID(uuid.New())
+	userID4 := values.NewTrapMemberID(uuid.New())
+
+	activeUsers := []*service.UserInfo{
+		service.NewUserInfo(
+			userID1,
+			"ikura-hamu",
+			values.TrapMemberStatusActive,
+		),
+		service.NewUserInfo(
+			userID2,
+			"mazrean",
+			values.TrapMemberStatusActive,
+		),
+		service.NewUserInfo(
+			userID3,
+			"pikachu",
+			values.TrapMemberStatusActive,
+		),
+		service.NewUserInfo(
+			userID4,
+			"JichouP",
+			values.TrapMemberStatusActive,
+		),
+	}
+
 	testCases := []test{
 		{
 			description: "ユーザー情報の取得に失敗したのでエラー",
@@ -75,7 +103,7 @@ func TestCreateGame(t *testing.T) {
 				time.Now().Add(time.Hour),
 			),
 			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
+				userID1,
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
@@ -311,6 +339,11 @@ func TestCreateGame(t *testing.T) {
 					EXPECT().
 					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
 					Return(testCase.user, nil)
+				
+				mockUserCache.
+					EXPECT().
+					GetActiveUsers(gomock.Any()).
+					Return(activeUsers, nil).AnyTimes()
 			}
 
 			if testCase.executeSaveGame {
@@ -323,12 +356,16 @@ func TestCreateGame(t *testing.T) {
 			if testCase.executeAddGameManagementRoles {
 				mockGameManagementRoleRepository.
 					EXPECT().
-					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
-					Return(testCase.AddGameManagementRoleAdminErr)
-				mockGameManagementRoleRepository.
-					EXPECT().
-					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleCollaborator).
-					Return(testCase.AddGameManagementRoleCollabErr)
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(ctx interface{}, gameID interface{}, userIDs interface{}, role values.GameManagementRole) error {
+						switch role{
+						case values.GameManagementRoleAdministrator:
+							return testCase.AddGameManagementRoleAdminErr
+						case values.GameManagementRoleCollaborator:
+							return testCase.AddGameManagementRoleCollabErr
+						}
+						return nil
+					}).AnyTimes()
 			}
 
 			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, testCase.owners, testCase.maintainers)

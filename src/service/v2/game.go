@@ -84,7 +84,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 
 		var maintainersID []values.TraPMemberID
 		for _, maintainer := range maintainers {
-			if _, ok := ownersMap[maintainer]; !ok { //ownerとmaintainerは重複しない
+			if _, ok := ownersMap[maintainer]; ok { //ownerとmaintainerは重複しない
 				return service.ErrOverlapBetweenOwnersAndMaintainers
 			}
 
