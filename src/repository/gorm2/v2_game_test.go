@@ -10,8 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func TestSaveGameV2(t *testing.T) {
@@ -127,6 +129,169 @@ func TestSaveGameV2(t *testing.T) {
 			assert.Equal(t, string(testCase.game.GetName()), game.Name)
 			assert.Equal(t, string(testCase.game.GetDescription()), game.Description)
 			assert.WithinDuration(t, testCase.game.GetCreatedAt(), game.CreatedAt, time.Second)
+		})
+	}
+}
+
+func TestUpdateGameV2(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGameV2(testDB)
+
+	type test struct {
+		description string
+		game        *domain.Game
+		beforeGames []migrate.GameTable
+		afterGames  []migrate.GameTable
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			game: domain.NewGame(
+				gameID1,
+				"test2",
+				"test2",
+				now,
+			),
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			afterGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+				},
+			},
+		},
+		{
+			description: "別のゲームが存在してもエラーなし",
+			game: domain.NewGame(
+				gameID1,
+				"test3",
+				"test3",
+				now,
+			),
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			afterGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test3",
+					Description: "test3",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+		},
+		{
+			description: "ゲームが存在しないのでErrNoRecordUpdated",
+			game: domain.NewGame(
+				gameID1,
+				"test2",
+				"test2",
+				now,
+			),
+			beforeGames: []migrate.GameTable{},
+			afterGames:  []migrate.GameTable{},
+			isErr:       true,
+			err:         repository.ErrNoRecordUpdated,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Unscoped().
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Delete(&migrate.GameTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
+			}()
+
+			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Info),
+					}).
+					Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %+v\n", err)
+				}
+			}
+
+			err := gameRepository.UpdateGameV2(ctx, testCase.game)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var games []migrate.GameTable
+			err = db.
+				Session(&gorm.Session{}).
+				Order("created_at desc").
+				Find(&games).Error
+			if err != nil {
+				t.Fatalf("failed to get game: %+v\n", err)
+			}
+
+			assert.Len(t, games, len(testCase.afterGames))
+
+			for i, game := range testCase.afterGames {
+				assert.Equal(t, game.ID, games[i].ID)
+				assert.Equal(t, game.Name, games[i].Name)
+				assert.Equal(t, game.Description, games[i].Description)
+				assert.WithinDuration(t, game.CreatedAt, games[i].CreatedAt, time.Second)
+			}
 		})
 	}
 }

@@ -16,12 +16,12 @@ type GameV2 interface {
 
 	//UpdateGame
 	//ゲームの情報（名前や説明など）を書き換える。
-	//dbの変更がされなかったとき、ErrNoRecordUpdatedを返す。
+	//ゲームが存在しなかったとき、ErrNoRecordUpdatedを返す。
 	UpdateGameV2(ctx context.Context, game *domain.Game) error
 
 	//RemoveGame
 	//指定されたidのゲームを削除する
-	//ゲームが削除されなかったとき、ErrNoRecordDeletedを返す。
+	//ゲームが存在しなかったとき、ErrNoRecordDeletedを返す。
 	RemoveGameV2(ctx context.Context, gameID values.GameID) error
 
 	//GetGame
