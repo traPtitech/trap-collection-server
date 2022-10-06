@@ -156,3 +156,43 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 
 	return gamesDomain, len(games), nil
 }
+
+func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []migrate.GameTable
+	if limit == -1 {
+		err = db.
+			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+			Order("created_at DESC").
+			Offset(offset).
+			Find(&games).Error
+	} else {
+		err = db.
+			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+			Order("created_at DESC").
+			Limit(limit).
+			Offset(offset).
+			Find(&games).Error
+	}
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gamesDomain := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		gamesDomain = append(gamesDomain, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomain, len(games), nil
+}
