@@ -25,7 +25,8 @@ type GameV2 interface {
 	RemoveGame(ctx context.Context, gameID values.GameID) error
 
 	//GetGame
-	//指定されたidのゲームを取得する
+	//指定されたidのゲームを取得する。
+	//ゲームが見つからなかったとき、ErrRecordNotFoundを返す。
 	GetGame(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.Game, error)
 
 	//GetGames
