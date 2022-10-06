@@ -15,7 +15,8 @@ type GameV2 interface {
 	SaveGame(ctx context.Context, game *domain.Game) error
 
 	//UpdateGame
-	//ゲームの情報（名前や説明など）を書き換える
+	//ゲームの情報（名前や説明など）を書き換える。
+	//dbの変更がされなかったとき、ErrNoRecordUpdatedを返す。
 	UpdateGame(ctx context.Context, game *domain.Game) error
 
 	//RemoveGame
