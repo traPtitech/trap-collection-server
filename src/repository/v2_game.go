@@ -21,6 +21,7 @@ type GameV2 interface {
 
 	//RemoveGame
 	//指定されたidのゲームを削除する
+	//ゲームが削除されなかったとき、ErrNoRecordDeletedを返す。
 	RemoveGame(ctx context.Context, gameID values.GameID) error
 
 	//GetGame
