@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.19.1-alpine AS build
+FROM golang:1.19.2-alpine AS build
 
 RUN apk add --update --no-cache git
 
