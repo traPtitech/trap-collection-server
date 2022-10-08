@@ -135,8 +135,7 @@ func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*doma
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
-	games := make([]migrate.GameTable2, 0, len(allGames))
-
+	var games []migrate.GameTable2
 	if limit == -1 {
 		games = allGames[offset:]
 	} else if limit < -1 {
@@ -175,7 +174,7 @@ func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberI
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
-	games := make([]migrate.GameTable2, 0, len(allUserGames))
+	var games []migrate.GameTable2
 	if limit == -1 {
 		games = allUserGames[offset:]
 	} else if limit < -1 {
