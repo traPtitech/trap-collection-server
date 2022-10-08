@@ -29,7 +29,7 @@ func (g *GameV2) SaveGameV2(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameTable := migrate.GameTable{
+	gameTable := migrate.GameTable2{
 		ID:          uuid.UUID(game.GetID()),
 		Name:        string(game.GetName()),
 		Description: string(game.GetDescription()),
@@ -50,7 +50,7 @@ func (g *GameV2) UpdateGameV2(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameTable := migrate.GameTable{
+	gameTable := migrate.GameTable2{
 		Name:        string(game.GetName()),
 		Description: string(game.GetDescription()),
 	}
@@ -78,7 +78,7 @@ func (g *GameV2) RemoveGameV2(ctx context.Context, gameID values.GameID) error {
 
 	result := db.
 		Where("id = ?", uuid.UUID(gameID)).
-		Delete(&migrate.GameTable{})
+		Delete(&migrate.GameTable2{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to remove game: %w", err)
@@ -102,7 +102,7 @@ func (g *GameV2) GetGameV2(ctx context.Context, gameID values.GameID, lockType r
 		return nil, fmt.Errorf("failed to set lock type: %w", err)
 	}
 
-	var game migrate.GameTable
+	var game migrate.GameTable2
 	err = db.
 		Where("id = ?", uuid.UUID(gameID)).
 		Take(&game).Error
@@ -127,22 +127,22 @@ func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*doma
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var allGames []migrate.GameTable
-		err = db.
-			Order("created_at DESC").
-			Find(&allGames).Error
+	var allGames []migrate.GameTable2
+	err = db.
+		Order("created_at DESC").
+		Find(&allGames).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
-	games := make([]migrate.GameTable, 0, len(allGames))
+	games := make([]migrate.GameTable2, 0, len(allGames))
 
 	if limit == -1 {
 		games = allGames[offset:]
-	} else if limit < -1{
+	} else if limit < -1 {
 		return nil, 0, repository.ErrNegativeLimit
 	} else {
-		games = allGames[offset:offset+limit]
+		games = allGames[offset : offset+limit]
 	}
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
@@ -164,24 +164,24 @@ func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberI
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var allUserGames []migrate.GameTable
-		err = db.
-			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-			Order("created_at DESC").
-			Find(&allUserGames).Error
+	var allUserGames []migrate.GameTable2
+	err = db.
+		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+		Order("created_at DESC").
+		Find(&allUserGames).Error
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
-	games := make([]migrate.GameTable,0,len(allUserGames))
+	games := make([]migrate.GameTable2, 0, len(allUserGames))
 	if limit == -1 {
 		games = allUserGames[offset:]
-	} else if limit < -1{
+	} else if limit < -1 {
 		return nil, 0, repository.ErrNegativeLimit
 	} else {
-		games = allUserGames[offset:offset+limit]
+		games = allUserGames[offset : offset+limit]
 	}
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
