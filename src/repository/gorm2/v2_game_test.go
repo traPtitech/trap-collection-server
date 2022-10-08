@@ -912,8 +912,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			userID:      userID1,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
@@ -941,16 +941,16 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "ゲームが存在しなくてもエラーなし",
 			userID:      userID2,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{},
 			games:       []*domain.Game{},
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
 			userID:      userID3,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
@@ -996,8 +996,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "他のユーザーのゲームは取得しない",
 			userID:      userID4,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID4),
@@ -1013,13 +1013,13 @@ func TestGetGamesByUserV2(t *testing.T) {
 				},
 			},
 			expectedGameNumber: 0,
-			games: []*domain.Game{},
+			games:              []*domain.Game{},
 		},
 		{
 			description: "collaboratorでもゲームを取得できる",
 			userID:      userID6,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID5),
@@ -1047,8 +1047,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "削除されたゲームは取得しない",
 			userID:      userID7,
-			limit: -1,
-			offset: 0,
+			limit:       -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID6),
@@ -1068,13 +1068,13 @@ func TestGetGamesByUserV2(t *testing.T) {
 				},
 			},
 			expectedGameNumber: 0,
-			games: []*domain.Game{},
+			games:              []*domain.Game{},
 		},
 		{
 			description: "limitが-1より小さいのでエラー",
 			userID:      userID1,
-			limit: -2,
-			offset: 0,
+			limit:       -2,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID1),
@@ -1090,13 +1090,13 @@ func TestGetGamesByUserV2(t *testing.T) {
 				},
 			},
 			isErr: true,
-			err: repository.ErrNegativeLimit,
+			err:   repository.ErrNegativeLimit,
 		},
 		{
 			description: "limitを設定してもエラーなし",
 			userID:      userID3,
-			limit: 1,
-			offset: 0,
+			limit:       1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
@@ -1136,8 +1136,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "offsetが設定されてもエラーなし",
 			userID:      userID3,
-			limit: -1,
-			offset: 1,
+			limit:       -1,
+			offset:      1,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
@@ -1177,8 +1177,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "limitとoffset両方設定してもエラーなし",
 			userID:      userID3,
-			limit: 1,
-			offset: 1,
+			limit:       1,
+			offset:      1,
 			beforeGames: []migrate.GameTable{
 				{
 					ID:          uuid.UUID(gameID2),
