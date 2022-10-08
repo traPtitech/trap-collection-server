@@ -884,6 +884,14 @@ func TestGetGamesByUserV2(t *testing.T) {
 	gameID4 := values.NewGameID()
 	gameID5 := values.NewGameID()
 	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+	gameID8 := values.NewGameID()
+	gameID9 := values.NewGameID()
+	gameID10 := values.NewGameID()
+	gameID11 := values.NewGameID()
+	gameID12 := values.NewGameID()
+	gameID13 := values.NewGameID()
+	gameID14 := values.NewGameID()
 
 	userID1 := values.NewTrapMemberID(uuid.New())
 	userID2 := values.NewTrapMemberID(uuid.New())
@@ -892,6 +900,10 @@ func TestGetGamesByUserV2(t *testing.T) {
 	userID5 := values.NewTrapMemberID(uuid.New())
 	userID6 := values.NewTrapMemberID(uuid.New())
 	userID7 := values.NewTrapMemberID(uuid.New())
+	userID8 := values.NewTrapMemberID(uuid.New())
+	userID9 := values.NewTrapMemberID(uuid.New())
+	userID10 := values.NewTrapMemberID(uuid.New())
+	userID11 := values.NewTrapMemberID(uuid.New())
 
 	now := time.Now()
 
@@ -1072,18 +1084,18 @@ func TestGetGamesByUserV2(t *testing.T) {
 		},
 		{
 			description: "limitが-1より小さいのでエラー",
-			userID:      userID1,
+			userID:      userID8,
 			limit:       -2,
 			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
-					ID:          uuid.UUID(gameID1),
-					Name:        "test1",
-					Description: "test1",
+					ID:          uuid.UUID(gameID7),
+					Name:        "test7",
+					Description: "test7",
 					CreatedAt:   now,
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID1),
+							UserID:     uuid.UUID(userID8),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
@@ -1094,30 +1106,30 @@ func TestGetGamesByUserV2(t *testing.T) {
 		},
 		{
 			description: "limitを設定してもエラーなし",
-			userID:      userID3,
+			userID:      userID9,
 			limit:       1,
 			offset:      0,
 			beforeGames: []migrate.GameTable{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test2",
-					Description: "test2",
+					ID:          uuid.UUID(gameID8),
+					Name:        "test8",
+					Description: "test8",
 					CreatedAt:   now,
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID9),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
 				},
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test3",
-					Description: "test3",
+					ID:          uuid.UUID(gameID9),
+					Name:        "test9",
+					Description: "test9",
 					CreatedAt:   now.Add(-time.Hour),
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID9),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
@@ -1126,39 +1138,39 @@ func TestGetGamesByUserV2(t *testing.T) {
 			expectedGameNumber: 2,
 			games: []*domain.Game{
 				domain.NewGame(
-					gameID2,
-					"test2",
-					"test2",
+					gameID8,
+					"test8",
+					"test8",
 					now,
 				),
 			},
 		},
 		{
 			description: "offsetが設定されてもエラーなし",
-			userID:      userID3,
+			userID:      userID10,
 			limit:       -1,
 			offset:      1,
 			beforeGames: []migrate.GameTable{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test2",
-					Description: "test2",
+					ID:          uuid.UUID(gameID10),
+					Name:        "test10",
+					Description: "test10",
 					CreatedAt:   now,
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID10),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
 				},
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test3",
-					Description: "test3",
+					ID:          uuid.UUID(gameID11),
+					Name:        "test11",
+					Description: "test11",
 					CreatedAt:   now.Add(-time.Hour),
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID10),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
@@ -1167,51 +1179,51 @@ func TestGetGamesByUserV2(t *testing.T) {
 			expectedGameNumber: 2,
 			games: []*domain.Game{
 				domain.NewGame(
-					gameID3,
-					"test3",
-					"test3",
+					gameID11,
+					"test11",
+					"test11",
 					now.Add(-time.Hour),
 				),
 			},
 		},
 		{
 			description: "limitとoffset両方設定してもエラーなし",
-			userID:      userID3,
+			userID:      userID11,
 			limit:       1,
 			offset:      1,
 			beforeGames: []migrate.GameTable{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test2",
-					Description: "test2",
+					ID:          uuid.UUID(gameID12),
+					Name:        "test12",
+					Description: "test12",
 					CreatedAt:   now,
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID11),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
 				},
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test3",
-					Description: "test3",
+					ID:          uuid.UUID(gameID13),
+					Name:        "test13",
+					Description: "test13",
 					CreatedAt:   now.Add(-time.Hour),
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID3),
+							UserID:     uuid.UUID(userID11),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
 				},
 				{
-					ID:          uuid.UUID(gameID4),
-					Name:        "test4",
-					Description: "test4",
+					ID:          uuid.UUID(gameID14),
+					Name:        "test14",
+					Description: "test14",
 					CreatedAt:   now.Add(-time.Hour),
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
-							UserID:     uuid.UUID(userID4),
+							UserID:     uuid.UUID(userID11),
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
@@ -1220,9 +1232,9 @@ func TestGetGamesByUserV2(t *testing.T) {
 			expectedGameNumber: 3,
 			games: []*domain.Game{
 				domain.NewGame(
-					gameID3,
-					"test3",
-					"test3",
+					gameID13,
+					"test13",
+					"test13",
 					now.Add(-time.Hour),
 				),
 			},
