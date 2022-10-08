@@ -31,7 +31,7 @@ func TestSaveGameV2(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []migrate.GameTable
+		beforeGames []migrate.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -61,7 +61,7 @@ func TestSaveGameV2(t *testing.T) {
 				"test",
 				now,
 			),
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
@@ -78,7 +78,7 @@ func TestSaveGameV2(t *testing.T) {
 				"test",
 				now,
 			),
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -116,7 +116,7 @@ func TestSaveGameV2(t *testing.T) {
 				return
 			}
 
-			var game migrate.GameTable
+			var game migrate.GameTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Where("id = ?", uuid.UUID(testCase.game.GetID())).
@@ -146,8 +146,8 @@ func TestUpdateGameV2(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []migrate.GameTable
-		afterGames  []migrate.GameTable
+		beforeGames []migrate.GameTable2
+		afterGames  []migrate.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -166,7 +166,7 @@ func TestUpdateGameV2(t *testing.T) {
 				"test2",
 				now,
 			),
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -174,7 +174,7 @@ func TestUpdateGameV2(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			afterGames: []migrate.GameTable{
+			afterGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test2",
@@ -191,7 +191,7 @@ func TestUpdateGameV2(t *testing.T) {
 				"test3",
 				now,
 			),
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -205,7 +205,7 @@ func TestUpdateGameV2(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			afterGames: []migrate.GameTable{
+			afterGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test3",
@@ -228,8 +228,8 @@ func TestUpdateGameV2(t *testing.T) {
 				"test2",
 				now,
 			),
-			beforeGames: []migrate.GameTable{},
-			afterGames:  []migrate.GameTable{},
+			beforeGames: []migrate.GameTable2{},
+			afterGames:  []migrate.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrNoRecordUpdated,
 		},
@@ -243,7 +243,7 @@ func TestUpdateGameV2(t *testing.T) {
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
 					}).
-					Delete(&migrate.GameTable{}).Error
+					Delete(&migrate.GameTable2{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -275,7 +275,7 @@ func TestUpdateGameV2(t *testing.T) {
 				return
 			}
 
-			var games []migrate.GameTable
+			var games []migrate.GameTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Order("created_at desc").
@@ -309,8 +309,8 @@ func TestRemoveGameV2(t *testing.T) {
 	type test struct {
 		description string
 		gameID      values.GameID
-		beforeGames []migrate.GameTable
-		afterGames  []migrate.GameTable
+		beforeGames []migrate.GameTable2
+		afterGames  []migrate.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -324,7 +324,7 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -332,7 +332,7 @@ func TestRemoveGameV2(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			afterGames: []migrate.GameTable{
+			afterGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -348,7 +348,7 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "別のゲームが存在してもエラーなし",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -362,7 +362,7 @@ func TestRemoveGameV2(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			afterGames: []migrate.GameTable{
+			afterGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -384,8 +384,8 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "ゲームが存在しないのでErrNoRecordDeleted",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable{},
-			afterGames:  []migrate.GameTable{},
+			beforeGames: []migrate.GameTable2{},
+			afterGames:  []migrate.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrNoRecordDeleted,
 		},
@@ -399,7 +399,7 @@ func TestRemoveGameV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.GameTable{}).Error
+					Delete(&migrate.GameTable2{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -431,7 +431,7 @@ func TestRemoveGameV2(t *testing.T) {
 				return
 			}
 
-			var games []migrate.GameTable
+			var games []migrate.GameTable2
 			err = db.
 				Unscoped().
 				Session(&gorm.Session{}).
@@ -471,7 +471,7 @@ func TestGetGameV2(t *testing.T) {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		GameTable   []migrate.GameTable
+		GameTable   []migrate.GameTable2
 		game        *domain.Game
 		isErr       bool
 		err         error
@@ -490,7 +490,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			GameTable: []migrate.GameTable{
+			GameTable: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -509,7 +509,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "行ロックでもエラーなし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeRecord,
-			GameTable: []migrate.GameTable{
+			GameTable: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -528,7 +528,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ロックの種類が不正なのでエラー",
 			gameID:      gameID5,
 			lockType:    100,
-			GameTable: []migrate.GameTable{
+			GameTable: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -548,7 +548,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ゲームが存在しないのでErrRecordNotFound",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			GameTable:   []migrate.GameTable{},
+			GameTable:   []migrate.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -556,7 +556,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ゲームが削除済みなのでErrRecordNotFound",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			GameTable: []migrate.GameTable{
+			GameTable: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -628,7 +628,7 @@ func TestGetGamesV2(t *testing.T) {
 		description string
 		limit       int
 		offset      int
-		beforeGames []migrate.GameTable
+		beforeGames []migrate.GameTable2
 		games       []*domain.Game
 		isErr       bool
 		err         error
@@ -644,7 +644,7 @@ func TestGetGamesV2(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -665,14 +665,14 @@ func TestGetGamesV2(t *testing.T) {
 			description: "ゲームが存在しなくてもエラーなし",
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{},
+			beforeGames: []migrate.GameTable2{},
 			games:       []*domain.Game{},
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -705,7 +705,7 @@ func TestGetGamesV2(t *testing.T) {
 			description: "limitが設定されてもエラーなし",
 			limit:       1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -732,7 +732,7 @@ func TestGetGamesV2(t *testing.T) {
 			description: "offsetが設定されてもエラーなし",
 			limit:       -1,
 			offset:      1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -759,7 +759,7 @@ func TestGetGamesV2(t *testing.T) {
 			description: "limitとoffset両方が設定されてもエラーなし",
 			limit:       1,
 			offset:      1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -786,7 +786,7 @@ func TestGetGamesV2(t *testing.T) {
 			description: "limitが-1より小さいのでエラー",
 			limit:       -2,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -813,7 +813,7 @@ func TestGetGamesV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.GameTable{}).Error
+					Delete(&migrate.GameTable2{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -871,7 +871,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 		userID             values.TraPMemberID
 		limit              int
 		offset             int
-		beforeGames        []migrate.GameTable
+		beforeGames        []migrate.GameTable2
 		expectedGameNumber int
 		games              []*domain.Game
 		isErr              bool
@@ -926,7 +926,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID1,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -955,7 +955,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID2,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{},
+			beforeGames: []migrate.GameTable2{},
 			games:       []*domain.Game{},
 		},
 		{
@@ -963,7 +963,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID3,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test2",
@@ -1010,7 +1010,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID4,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test4",
@@ -1032,7 +1032,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID6,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test5",
@@ -1061,7 +1061,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID7,
 			limit:       -1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test6",
@@ -1087,7 +1087,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID8,
 			limit:       -2,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test7",
@@ -1109,7 +1109,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID9,
 			limit:       1,
 			offset:      0,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test8",
@@ -1150,7 +1150,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID10,
 			limit:       -1,
 			offset:      1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID10),
 					Name:        "test10",
@@ -1191,7 +1191,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			userID:      userID11,
 			limit:       1,
 			offset:      1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID12),
 					Name:        "test12",
