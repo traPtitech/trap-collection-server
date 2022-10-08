@@ -1220,7 +1220,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 					ID:          uuid.UUID(gameID14),
 					Name:        "test14",
 					Description: "test14",
-					CreatedAt:   now.Add(-time.Hour),
+					CreatedAt:   now.Add(-time.Hour * 2),
 					GameManagementRoles: []migrate.GameManagementRoleTable{
 						{
 							UserID:     uuid.UUID(userID11),
