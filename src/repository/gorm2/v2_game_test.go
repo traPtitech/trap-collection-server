@@ -664,7 +664,7 @@ func TestGetGamesV2(t *testing.T) {
 		{
 			description: "ゲームが存在しなくてもエラーなし",
 			limit:       -1,
-			offset:      -1,
+			offset:      0,
 			beforeGames: []migrate.GameTable{},
 			games:       []*domain.Game{},
 		},
