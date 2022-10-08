@@ -613,3 +613,243 @@ func TestGetGameV2(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGamesV2(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGameV2(testDB)
+
+	type test struct {
+		description string
+		limit       int
+		offset      int
+		beforeGames []migrate.GameTable
+		games       []*domain.Game
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			limit:       -1,
+			offset:      0,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   now,
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test",
+					"test",
+					now,
+				),
+			},
+		},
+		{
+			description: "ゲームが存在しなくてもエラーなし",
+			limit:       -1,
+			offset:      -1,
+			beforeGames: []migrate.GameTable{},
+			games:       []*domain.Game{},
+		},
+		{
+			description: "ゲームが複数でもエラーなし",
+			limit:       -1,
+			offset:      0,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test1",
+					"test1",
+					now,
+				),
+				domain.NewGame(
+					gameID2,
+					"test2",
+					"test2",
+					now.Add(-time.Hour),
+				),
+			},
+		},
+		{
+			description: "limitが設定されてもエラーなし",
+			limit:       1,
+			offset:      0,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					"test1",
+					"test1",
+					now,
+				),
+			},
+		},
+		{
+			description: "offsetが設定されてもエラーなし",
+			limit:       -1,
+			offset:      1,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID2,
+					"test2",
+					"test2",
+					now.Add(-time.Hour),
+				),
+			},
+		},
+		{
+			description: "limitとoffset両方が設定されてもエラーなし",
+			limit:       1,
+			offset:      1,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID2,
+					"test2",
+					"test2",
+					now.Add(-time.Hour),
+				),
+			},
+		},
+		{
+			description: "limitが-1より小さいのでエラー",
+			limit:       -2,
+			offset:      0,
+			beforeGames: []migrate.GameTable{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			isErr: true,
+			err:   repository.ErrNegativeLimit,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&migrate.GameTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
+			}()
+
+			if len(testCase.beforeGames) != 0 {
+				err := db.Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			games, n, err := gameRepository.GetGamesV2(ctx, testCase.limit, testCase.offset)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, games, len(testCase.games))
+			assert.Len(t, testCase.beforeGames, n)
+
+			for i, game := range testCase.games {
+				assert.Equal(t, game.GetID(), games[i].GetID())
+				assert.Equal(t, game.GetName(), games[i].GetName())
+				assert.Equal(t, game.GetDescription(), games[i].GetDescription())
+				assert.WithinDuration(t, game.GetCreatedAt(), games[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
