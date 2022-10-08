@@ -127,21 +127,22 @@ func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*doma
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []migrate.GameTable
-	if limit == -1 {
+	var allGames []migrate.GameTable
 		err = db.
 			Order("created_at DESC").
-			Offset(offset).
-			Find(&games).Error
-	} else {
-		err = db.
-			Order("created_at DESC").
-			Limit(limit).
-			Offset(offset).
-			Find(&games).Error
-	}
+			Find(&allGames).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	games := make([]migrate.GameTable, 0, len(allGames))
+
+	if limit == -1 {
+		games = allGames[offset:]
+	} else if limit < -1{
+		return nil, 0, repository.ErrNegativeLimit
+	} else {
+		games = allGames[offset:offset+limit]
 	}
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
@@ -154,7 +155,7 @@ func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*doma
 		))
 	}
 
-	return gamesDomain, len(games), nil
+	return gamesDomain, len(allGames), nil
 }
 
 func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
@@ -163,25 +164,24 @@ func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberI
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []migrate.GameTable
-	if limit == -1 {
+	var allUserGames []migrate.GameTable
 		err = db.
 			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
 			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
 			Order("created_at DESC").
-			Offset(offset).
-			Find(&games).Error
-	} else {
-		err = db.
-			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-			Order("created_at DESC").
-			Limit(limit).
-			Offset(offset).
-			Find(&games).Error
-	}
+			Find(&allUserGames).Error
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	games := make([]migrate.GameTable,0,len(allUserGames))
+	if limit == -1 {
+		games = allUserGames[offset:]
+	} else if limit < -1{
+		return nil, 0, repository.ErrNegativeLimit
+	} else {
+		games = allUserGames[offset:offset+limit]
 	}
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
@@ -194,5 +194,5 @@ func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberI
 		))
 	}
 
-	return gamesDomain, len(games), nil
+	return gamesDomain, len(allUserGames), nil
 }
