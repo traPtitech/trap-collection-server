@@ -1085,7 +1085,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 		{
 			description: "limitが0より小さいのでエラー",
 			userID:      userID8,
-			limit:       0,
+			limit:       -2,
 			offset:      0,
 			beforeGames: []migrate.GameTable2{
 				{
