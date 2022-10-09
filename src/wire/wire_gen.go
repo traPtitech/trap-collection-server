@@ -190,7 +190,7 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	user3 := v2.NewUser()
+	user3 := v2.NewUser(v2Session, v1User)
 	admin := v2.NewAdmin()
 	gameV2 := gorm2.NewGameV2(db)
 	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, v2User)
