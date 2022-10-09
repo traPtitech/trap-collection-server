@@ -1,7 +1,12 @@
 package v2
 
 import (
+	"log"
+	"net/http"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -37,4 +42,45 @@ type gameUnimplemented interface {
 	// ゲームの情報の変更
 	// (PATCH /games/{gameID})
 	PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error
+}
+
+// ゲーム一覧の取得
+// (GET /games)
+func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) (int, []*openapi.GameInfo, error) {
+	isAll := bool(*params.All)
+
+	var limit int
+	var offset int
+	if params.Limit != nil {
+		limit = int(*params.Limit)
+	}
+	if params.Offset != nil {
+		offset = int(*params.Offset)
+	}
+
+	var games []*domain.Game
+	var gameNumber int
+	var err error
+	if isAll {
+		gameNumber, games, err = g.gameService.GetGames(ctx.Request().Context(), limit, offset)
+		if err != nil {
+			log.Printf("error: failed to get games: %v\n", err)
+			return 0, nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
+		}
+	} else {
+		//TODO:ここにGetMyGamesを使って書く
+	}
+
+	responseGames := make([]*openapi.GameInfo, 0, len(games))
+	for _, game := range games {
+		responseGame := &openapi.GameInfo{
+			Name:        string(game.GetName()),
+			Id:          uuid.UUID(game.GetID()),
+			Description: string(game.GetDescription()),
+			CreatedAt:   game.GetCreatedAt(),
+		}
+		responseGames = append(responseGames, responseGame)
+	}
+
+	return gameNumber, responseGames, nil
 }
