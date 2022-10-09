@@ -136,9 +136,9 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	}
 
 	var games []migrate.GameTable2
-	if limit == -1 {
+	if limit == 0 {
 		games = allGames[offset:]
-	} else if limit < -1 {
+	} else if limit < 0 {
 		return nil, 0, repository.ErrNegativeLimit
 	} else {
 		games = allGames[offset : offset+limit]
@@ -175,9 +175,9 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 	}
 
 	var games []migrate.GameTable2
-	if limit == -1 {
+	if limit == 0 {
 		games = allUserGames[offset:]
-	} else if limit < -1 {
+	} else if limit < 0 {
 		return nil, 0, repository.ErrNegativeLimit
 	} else {
 		games = allUserGames[offset : offset+limit]
