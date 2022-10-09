@@ -455,7 +455,7 @@ func TestCreateGame(t *testing.T) {
 			if testCase.executeSaveGame {
 				mockGameRepository.
 					EXPECT().
-					SaveGameV2(gomock.Any(), gomock.Any()).
+					SaveGame(gomock.Any(), gomock.Any()).
 					Return(testCase.SaveGameErr)
 			}
 
@@ -597,7 +597,7 @@ func TestGetGame(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				GetGameV2(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
 				Return(testCase.game, testCase.GetGameErr)
 
 			if testCase.executeGetActiveUsers {
@@ -765,7 +765,7 @@ func TestGetGames(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				GetGamesV2(gomock.Any(), testCase.limit, testCase.offset).
+				GetGames(gomock.Any(), testCase.limit, testCase.offset).
 				Return(testCase.games, testCase.n, testCase.GetGamesErr)
 
 			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset)
@@ -1005,7 +1005,7 @@ func TestGetMyGames(t *testing.T) {
 			if testCase.executeGetGamesByUser {
 				mockGameRepository.
 					EXPECT().
-					GetGamesByUserV2(gomock.Any(), testCase.user.GetID(), testCase.limit, testCase.offset).
+					GetGamesByUser(gomock.Any(), testCase.user.GetID(), testCase.limit, testCase.offset).
 					Return(testCase.games, testCase.n, testCase.GetGamesByUserErr)
 			}
 
@@ -1180,13 +1180,13 @@ func TestUpdateGame(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				GetGameV2(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
 				Return(testCase.game, testCase.GetGameErr)
 
 			if testCase.executeUpdateGame {
 				mockGameRepository.
 					EXPECT().
-					UpdateGameV2(gomock.Any(), testCase.game).
+					UpdateGame(gomock.Any(), testCase.game).
 					Return(testCase.UpdateGameErr)
 			}
 
@@ -1271,7 +1271,7 @@ func TestDeleteGame(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
-				RemoveGameV2(gomock.Any(), testCase.gameID).
+				RemoveGame(gomock.Any(), testCase.gameID).
 				Return(testCase.RemoveGameErr)
 
 			err := gameVersionService.DeleteGame(ctx, testCase.gameID)

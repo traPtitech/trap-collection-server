@@ -101,7 +101,7 @@ func TestSaveGameV2(t *testing.T) {
 				}
 			}
 
-			err := gameRepository.SaveGameV2(ctx, testCase.game)
+			err := gameRepository.SaveGame(ctx, testCase.game)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -260,7 +260,7 @@ func TestUpdateGameV2(t *testing.T) {
 				}
 			}
 
-			err := gameRepository.UpdateGameV2(ctx, testCase.game)
+			err := gameRepository.UpdateGame(ctx, testCase.game)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -416,7 +416,7 @@ func TestRemoveGameV2(t *testing.T) {
 				}
 			}
 
-			err := gameRepository.RemoveGameV2(ctx, testCase.gameID)
+			err := gameRepository.RemoveGame(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -591,7 +591,7 @@ func TestGetGameV2(t *testing.T) {
 				}
 			}
 
-			game, err := gameRepository.GetGameV2(ctx, testCase.gameID, testCase.lockType)
+			game, err := gameRepository.GetGame(ctx, testCase.gameID, testCase.lockType)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -826,7 +826,7 @@ func TestGetGamesV2(t *testing.T) {
 				}
 			}
 
-			games, n, err := gameRepository.GetGamesV2(ctx, testCase.limit, testCase.offset)
+			games, n, err := gameRepository.GetGames(ctx, testCase.limit, testCase.offset)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -1250,7 +1250,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 				}
 			}
 
-			games, n, err := gameRepository.GetGamesByUserV2(ctx, testCase.userID, testCase.limit, testCase.offset)
+			games, n, err := gameRepository.GetGamesByUser(ctx, testCase.userID, testCase.limit, testCase.offset)
 
 			if testCase.isErr {
 				if testCase.err == nil {

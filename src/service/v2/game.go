@@ -45,7 +45,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 	maintainersInfo := make([]*service.UserInfo, 0, len(maintainers))
 
 	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		err := g.gameRepository.SaveGameV2(ctx, game)
+		err := g.gameRepository.SaveGame(ctx, game)
 		if err != nil {
 			return fmt.Errorf("failed to save game: %w", err)
 		}
@@ -145,7 +145,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 }
 
 func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*service.GameInfoV2, error) {
-	game, err := g.gameRepository.GetGameV2(ctx, gameID, repository.LockTypeNone)
+	game, err := g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrNoGame
 	}
@@ -206,7 +206,7 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 }
 
 func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
-	games, gameNumber, err := g.gameRepository.GetGamesV2(ctx, limit, offset)
+	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
 	}
@@ -222,7 +222,7 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	myGames, gameNumber, err := g.gameRepository.GetGamesByUserV2(ctx, user.GetID(), limit, offset)
+	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get game IDs: %w", err)
 	}
@@ -238,7 +238,7 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 	var game *domain.Game
 	err := g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		var err error
-		game, err = g.gameRepository.GetGameV2(ctx, gameID, repository.LockTypeRecord)
+		game, err = g.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrNoGame
 		}
@@ -254,7 +254,7 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 		game.SetName(name)
 		game.SetDescription(description)
 
-		err = g.gameRepository.UpdateGameV2(ctx, game)
+		err = g.gameRepository.UpdateGame(ctx, game)
 		if err != nil {
 			return fmt.Errorf("failed to save game: %w", err)
 		}
@@ -269,7 +269,7 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 }
 
 func (g *Game) DeleteGame(ctx context.Context, gameID values.GameID) error { //V1と変わらない
-	err := g.gameRepository.RemoveGameV2(ctx, gameID)
+	err := g.gameRepository.RemoveGame(ctx, gameID)
 	if errors.Is(err, repository.ErrNoRecordDeleted) {
 		return service.ErrNoGame
 	}

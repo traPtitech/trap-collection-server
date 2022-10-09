@@ -23,7 +23,7 @@ func NewGameV2(db *DB) *GameV2 {
 	}
 }
 
-func (g *GameV2) SaveGameV2(ctx context.Context, game *domain.Game) error {
+func (g *GameV2) SaveGame(ctx context.Context, game *domain.Game) error {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -44,7 +44,7 @@ func (g *GameV2) SaveGameV2(ctx context.Context, game *domain.Game) error {
 	return nil
 }
 
-func (g *GameV2) UpdateGameV2(ctx context.Context, game *domain.Game) error {
+func (g *GameV2) UpdateGame(ctx context.Context, game *domain.Game) error {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -70,7 +70,7 @@ func (g *GameV2) UpdateGameV2(ctx context.Context, game *domain.Game) error {
 	return nil
 }
 
-func (g *GameV2) RemoveGameV2(ctx context.Context, gameID values.GameID) error {
+func (g *GameV2) RemoveGame(ctx context.Context, gameID values.GameID) error {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -91,7 +91,7 @@ func (g *GameV2) RemoveGameV2(ctx context.Context, gameID values.GameID) error {
 	return nil
 }
 
-func (g *GameV2) GetGameV2(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
+func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType repository.LockType) (*domain.Game, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -121,7 +121,7 @@ func (g *GameV2) GetGameV2(ctx context.Context, gameID values.GameID, lockType r
 	), nil
 }
 
-func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*domain.Game, int, error) {
+func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain.Game, int, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
@@ -157,7 +157,7 @@ func (g *GameV2) GetGamesV2(ctx context.Context, limit int, offset int) ([]*doma
 	return gamesDomain, len(allGames), nil
 }
 
-func (g *GameV2) GetGamesByUserV2(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
+func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
