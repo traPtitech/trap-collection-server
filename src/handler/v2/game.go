@@ -46,7 +46,7 @@ type gameUnimplemented interface {
 
 // ゲーム一覧の取得
 // (GET /games)
-func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) (int, []*openapi.GameInfo, error) {
+func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 	isAll := bool(*params.All)
 
 	var limit int
@@ -65,15 +65,15 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) (int, [
 		gameNumber, games, err = g.gameService.GetGames(ctx.Request().Context(), limit, offset)
 		if err != nil {
 			log.Printf("error: failed to get games: %v\n", err)
-			return 0, nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
 	} else {
 		//TODO:ここにGetMyGamesを使って書く
 	}
 
-	responseGames := make([]*openapi.GameInfo, 0, len(games))
+	responseGames := make([]openapi.GameInfo, 0, len(games))
 	for _, game := range games {
-		responseGame := &openapi.GameInfo{
+		responseGame := openapi.GameInfo{
 			Name:        string(game.GetName()),
 			Id:          uuid.UUID(game.GetID()),
 			Description: string(game.GetDescription()),
@@ -82,5 +82,10 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) (int, [
 		responseGames = append(responseGames, responseGame)
 	}
 
-	return gameNumber, responseGames, nil
+	res := *&openapi.GetGamesResponse{
+		Games: responseGames,
+		Num:   gameNumber,
+	}
+
+	return ctx.JSON(http.StatusOK, res)
 }
