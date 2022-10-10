@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -167,4 +169,103 @@ func (gameVersion *GameVersion) CreateGameVersion(
 		ImageID:     imageID,
 		VideoID:     videoID,
 	}, nil
+}
+
+func (gameVersion *GameVersion) GetGameVersions(ctx context.Context, gameID values.GameID, params *service.GetGameVersionsParams) (uint, []*service.GameVersionInfo, error) {
+	var (
+		limit  uint
+		offset uint
+	)
+	if params == nil {
+		limit = 0
+		offset = 0
+	} else {
+		if params.Limit == 0 {
+			return 0, nil, service.ErrInvalidLimit
+		}
+
+		limit = params.Limit
+		offset = params.Offset
+	}
+
+	num, gameVersions, err := gameVersion.gameVersionRepository.GetGameVersions(ctx, gameID, limit, offset, repository.LockTypeNone)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to get game versions: %w", err)
+	}
+
+	fileIDMap := make(map[values.GameFileID]struct{}, len(gameVersions))
+	fileIDs := make([]values.GameFileID, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		for _, fileID := range gameVersion.FileIDs {
+			if _, ok := fileIDMap[fileID]; ok {
+				continue
+			}
+
+			fileIDs = append(fileIDs, fileID)
+
+			fileIDMap[fileID] = struct{}{}
+		}
+	}
+
+	gameFileMap := make(map[values.GameFileID]*domain.GameFile, len(fileIDs))
+	if len(fileIDs) > 0 {
+		gameFiles, err := gameVersion.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeNone)
+		if err != nil {
+			return 0, nil, fmt.Errorf("failed to get game files: %w", err)
+		}
+
+		for _, gameFile := range gameFiles {
+			gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+		}
+	}
+
+	gameVersionInfos := make([]*service.GameVersionInfo, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		assets := &service.Assets{
+			URL: gameVersion.URL,
+		}
+		for _, id := range gameVersion.FileIDs {
+			gameFile, ok := gameFileMap[id]
+			if !ok {
+				log.Printf("error: game file not found(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
+				continue
+			}
+
+			switch gameFile.GetFileType() {
+			case values.GameFileTypeWindows:
+				if _, ok := assets.Windows.Value(); ok {
+					log.Printf("error: duplicate file type windows(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Windows = types.NewOption(gameFile.GetID())
+			case values.GameFileTypeMac:
+				if _, ok := assets.Mac.Value(); ok {
+					log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Mac = types.NewOption(gameFile.GetID())
+			case values.GameFileTypeJar:
+				if _, ok := assets.Jar.Value(); ok {
+					log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Jar = types.NewOption(gameFile.GetID())
+			default:
+				log.Printf("invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameID, gameVersion.GetID(), id, gameFile.GetFileType())
+				continue
+			}
+		}
+
+		gameVersionInfos = append(gameVersionInfos, &service.GameVersionInfo{
+			GameVersion: gameVersion.GameVersion,
+			Assets:      assets,
+			ImageID:     gameVersion.ImageID,
+			VideoID:     gameVersion.VideoID,
+		})
+	}
+
+	return num, gameVersionInfos, nil
 }
