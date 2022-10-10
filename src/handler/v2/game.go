@@ -1,12 +1,14 @@
 package v2
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -96,10 +98,78 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 		responseGames = append(responseGames, responseGame)
 	}
 
-	res := *&openapi.GetGamesResponse{
+	res := openapi.GetGamesResponse{
 		Games: responseGames,
 		Num:   gameNumber,
 	}
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// ゲームの追加
+// (POST /games)
+func (g *Game) PostGame(ctx echo.Context) error {
+	session, err := g.session.get(ctx)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+	}
+	authSession, err := g.session.getAuthSession(session)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+	}
+
+	req := openapi.NewGame{}
+	err = ctx.Bind(req)
+
+	owners := make([]values.TraPMemberName, 0, len(*req.Owners))
+	for _, reqOwner := range *req.Owners {
+		owners = append(owners, values.NewTrapMemberName(reqOwner))
+	}
+
+	maintainers := make([]values.TraPMemberName, 0, len(*req.Maintainers))
+	for _, reqMaintainer := range *req.Maintainers {
+		maintainers = append(maintainers, values.NewTrapMemberName(reqMaintainer))
+	}
+
+	gameInfo, err := g.gameService.CreateGame(
+		ctx.Request().Context(),
+		authSession, values.GameName(req.Name),
+		values.GameDescription(req.Description),
+		owners,
+		maintainers)
+
+	if errors.Is(err, service.ErrOverlapInOwners) {
+		log.Printf("failed to add roles: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
+	} else if errors.Is(err, service.ErrOverlapInMaintainers) {
+		log.Printf("failed to add roles: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to add maintainers")
+	} else if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
+		log.Printf("failed to add roles: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners and maintainers")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create game")
+	}
+
+	resOwners := make([]string, 0, len(gameInfo.Owners))
+	for _, owner := range gameInfo.Owners {
+		resOwners = append(resOwners, string(owner.GetName()))
+	}
+
+	resMaintainers := make([]string, 0, len(gameInfo.Maintainers))
+	for _, maintainer := range gameInfo.Maintainers {
+		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
+	}
+
+	res := openapi.Game{
+		Name: string(gameInfo.Game.GetName()),
+		Id: uuid.UUID(gameInfo.Game.GetID()),
+		Description: string(gameInfo.Game.GetDescription()),
+		CreatedAt: gameInfo.Game.GetCreatedAt(),
+		Owners: resOwners,
+		Maintainers: &resOwners,
+	}
+
+	return ctx.JSON(http.StatusCreated, res)
 }
