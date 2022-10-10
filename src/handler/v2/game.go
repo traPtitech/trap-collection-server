@@ -123,6 +123,9 @@ func (g *Game) PostGame(ctx echo.Context) error {
 
 	req := openapi.PostGameJSONRequestBody{}
 	err = ctx.Bind(req)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
+	}
 
 	owners := make([]values.TraPMemberName, 0, len(*req.Owners))
 	for _, reqOwner := range *req.Owners {
@@ -190,6 +193,10 @@ func (g *Game) DeleteGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 
 	userInfo, err := g.user.GetMe(ctx.Request().Context(), authSession)
+	if err != nil {
+		log.Printf("error: failed to get user: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
+	}
 	userName := userInfo.GetName()
 
 	game, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.NewGameID())
@@ -284,6 +291,10 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 
 	userInfo, err := g.user.GetMe(ctx.Request().Context(), authSession)
+	if err != nil {
+		log.Printf("error: failed to get user: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
+	}
 	userName := userInfo.GetName()
 
 	usersWithRolesMap := make(map[values.TraPMemberName]struct{}, len(gameInfo.Owners)+len(gameInfo.Maintainers))
