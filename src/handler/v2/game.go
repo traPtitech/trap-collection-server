@@ -68,7 +68,21 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
 	} else {
-		//TODO:ここにGetMyGamesを使って書く
+		session, err := g.session.get(ctx)
+		if err != nil {
+			log.Printf("error: failed to save session: %v\n", err)
+			return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+		}
+		authSession, err := g.session.getAuthSession(session)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+		}
+
+		gameNumber, games, err = g.gameService.GetMyGames(ctx.Request().Context(), authSession, limit, offset)
+		if err != nil {
+			log.Printf("error: failed to get games: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
 	}
 
 	responseGames := make([]openapi.GameInfo, 0, len(games))
