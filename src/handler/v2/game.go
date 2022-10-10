@@ -121,7 +121,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
 	}
 
-	req := openapi.PostGameJSONBody{}
+	req := openapi.PostGameJSONRequestBody{}
 	err = ctx.Bind(req)
 
 	owners := make([]values.TraPMemberName, 0, len(*req.Owners))
@@ -170,7 +170,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		Description: string(gameInfo.Game.GetDescription()),
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
-		Maintainers: &resOwners,
+		Maintainers: &resMaintainers,
 	}
 
 	return ctx.JSON(http.StatusCreated, res)
@@ -297,7 +297,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusForbidden, "Internal Server Error")
 	}
 
-	req := openapi.PatchGameJSONBody{}
+	req := openapi.PatchGameJSONRequestBody{}
 	err = ctx.Bind(req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
