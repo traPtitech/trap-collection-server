@@ -16,12 +16,14 @@ import (
 type Game struct {
 	session     *Session
 	gameService service.GameV2
+	user        service.User
 }
 
-func NewGame(session *Session, gameService service.GameV2) *Game {
+func NewGame(session *Session, gameService service.GameV2, user service.User) *Game {
 	return &Game{
 		session:     session,
 		gameService: gameService,
+		user:        user,
 	}
 }
 
@@ -163,13 +165,57 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	}
 
 	res := openapi.Game{
-		Name: string(gameInfo.Game.GetName()),
-		Id: uuid.UUID(gameInfo.Game.GetID()),
+		Name:        string(gameInfo.Game.GetName()),
+		Id:          uuid.UUID(gameInfo.Game.GetID()),
 		Description: string(gameInfo.Game.GetDescription()),
-		CreatedAt: gameInfo.Game.GetCreatedAt(),
-		Owners: resOwners,
+		CreatedAt:   gameInfo.Game.GetCreatedAt(),
+		Owners:      resOwners,
 		Maintainers: &resOwners,
 	}
 
 	return ctx.JSON(http.StatusCreated, res)
+}
+
+// ゲームの削除
+// (DELETE /games/{gameID})
+func (g *Game) DeleteGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
+	session, err := g.session.get(ctx)
+	if err != nil {
+		log.Printf("error: failed to save session: %v\n", err)
+		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+	}
+	authSession, err := g.session.getAuthSession(session)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+	}
+
+	userInfo, err := g.user.GetMe(ctx.Request().Context(), authSession)
+	userName := userInfo.GetName()
+
+	game, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.NewGameID())
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
+	} else if err != nil {
+		log.Printf("failed to get game: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	ownersMap := make(map[values.TraPMemberName]struct{}, len(game.Owners))
+	for _, ownerInfo := range game.Owners {
+		ownersMap[ownerInfo.GetName()] = struct{}{}
+	}
+	if _, ok := ownersMap[userName]; !ok {
+		return echo.NewHTTPError(http.StatusForbidden, "Internal Server Error")
+	}
+
+	err = g.gameService.DeleteGame(ctx.Request().Context(), values.GameID(gameID))
+	if errors.Is(err, service.ErrNoGame) {
+		//上のGetGameでやってるから起きなさそう
+		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
+	} else if err != nil {
+		log.Printf("failed to get game: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
