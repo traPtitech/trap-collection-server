@@ -1877,3 +1877,578 @@ func TestGetGameVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLatestGameVersion(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
+	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
+	mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
+	mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+	gameVersionService := NewGameVersion(
+		mockDB,
+		mockGameRepository,
+		mockGameImageRepository,
+		mockGameVideoRepository,
+		mockGameFileRepository,
+		mockGameVersionRepository,
+	)
+
+	type test struct {
+		description                 string
+		gameID                      values.GameID
+		getGameErr                  error
+		executeGetLatestGameVersion bool
+		version                     *repository.GameVersionInfo
+		getLatestGameVersionErr     error
+		executeGetGameFiles         bool
+		files                       []*repository.GameFileInfo
+		getGameFilesErr             error
+		gameVersionInfo             *service.GameVersionInfo
+		isErr                       bool
+		err                         error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	versionID1 := values.NewGameVersionID()
+	versionID2 := values.NewGameVersionID()
+	versionID3 := values.NewGameVersionID()
+	versionID4 := values.NewGameVersionID()
+	versionID5 := values.NewGameVersionID()
+	versionID6 := values.NewGameVersionID()
+	versionID7 := values.NewGameVersionID()
+	versionID8 := values.NewGameVersionID()
+	versionID9 := values.NewGameVersionID()
+	versionID10 := values.NewGameVersionID()
+
+	imageID1 := values.NewGameImageID()
+	imageID2 := values.NewGameImageID()
+	imageID3 := values.NewGameImageID()
+	imageID4 := values.NewGameImageID()
+	imageID5 := values.NewGameImageID()
+	imageID6 := values.NewGameImageID()
+	imageID7 := values.NewGameImageID()
+	imageID8 := values.NewGameImageID()
+	imageID9 := values.NewGameImageID()
+	imageID10 := values.NewGameImageID()
+
+	videoID1 := values.NewGameVideoID()
+	videoID2 := values.NewGameVideoID()
+	videoID3 := values.NewGameVideoID()
+	videoID4 := values.NewGameVideoID()
+	videoID5 := values.NewGameVideoID()
+	videoID6 := values.NewGameVideoID()
+	videoID7 := values.NewGameVideoID()
+	videoID8 := values.NewGameVideoID()
+	videoID9 := values.NewGameVideoID()
+	videoID10 := values.NewGameVideoID()
+
+	fileID1 := values.NewGameFileID()
+	fileID2 := values.NewGameFileID()
+	fileID3 := values.NewGameFileID()
+	fileID4 := values.NewGameFileID()
+	fileID5 := values.NewGameFileID()
+	fileID6 := values.NewGameFileID()
+	fileID7 := values.NewGameFileID()
+	fileID8 := values.NewGameFileID()
+	fileID9 := values.NewGameFileID()
+	fileID10 := values.NewGameFileID()
+	fileID11 := values.NewGameFileID()
+	fileID12 := values.NewGameFileID()
+	fileID13 := values.NewGameFileID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description:                 "特に問題ないのでエラーなし",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID1,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID1,
+				VideoID: videoID1,
+				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID1,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				},
+				ImageID: imageID1,
+				VideoID: videoID1,
+			},
+		},
+		{
+			description:                 "versionがないのでErrNoGameVersion",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			getLatestGameVersionErr:     repository.ErrRecordNotFound,
+			isErr:                       true,
+			err:                         service.ErrNoGameVersion,
+		},
+		{
+			description:                 "ファイルがwindowsでもエラーなし",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID2,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID2,
+				VideoID: videoID2,
+				FileIDs: []values.GameFileID{fileID1},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID1,
+						values.GameFileTypeWindows,
+						"/path/to/game.exe",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID2,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Windows: types.NewOption(fileID1),
+				},
+				ImageID: imageID2,
+				VideoID: videoID2,
+			},
+		},
+		{
+			description:                 "ファイルがmacでもエラーなし",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID3,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID3,
+				VideoID: videoID3,
+				FileIDs: []values.GameFileID{fileID2},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID2,
+						values.GameFileTypeMac,
+						"/path/to/game.app",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID3,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Mac: types.NewOption(fileID2),
+				},
+				ImageID: imageID3,
+				VideoID: videoID3,
+			},
+		},
+		{
+			description:                 "ファイルがjarでもエラーなし",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID4,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID4,
+				VideoID: videoID4,
+				FileIDs: []values.GameFileID{fileID3},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID3,
+						values.GameFileTypeJar,
+						"/path/to/game.jar",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID4,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Jar: types.NewOption(fileID3),
+				},
+				ImageID: imageID4,
+				VideoID: videoID4,
+			},
+		},
+		{
+			description:                 "windowsのファイルが重複していた場合、fileIDが先のものが優先される",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID5,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID5,
+				VideoID: videoID5,
+				FileIDs: []values.GameFileID{fileID4, fileID5},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID4,
+						values.GameFileTypeWindows,
+						"/path/to/game.exe",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+				{
+					GameFile: domain.NewGameFile(
+						fileID5,
+						values.GameFileTypeWindows,
+						"/path/to/game.exe",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now.Add(-time.Hour),
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID5,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Windows: types.NewOption(fileID4),
+				},
+				ImageID: imageID5,
+				VideoID: videoID5,
+			},
+		},
+		{
+			description:                 "macのファイルが重複していた場合、fileIDが先のものが優先される",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID6,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID6,
+				VideoID: videoID6,
+				FileIDs: []values.GameFileID{fileID6, fileID7},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID6,
+						values.GameFileTypeMac,
+						"/path/to/game.app",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+				{
+					GameFile: domain.NewGameFile(
+						fileID7,
+						values.GameFileTypeMac,
+						"/path/to/game.app",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now.Add(-time.Hour),
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID6,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Mac: types.NewOption(fileID6),
+				},
+				ImageID: imageID6,
+				VideoID: videoID6,
+			},
+		},
+		{
+			description:                 "jarのファイルが重複していた場合、fileIDが先のものが優先される",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID7,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID7,
+				VideoID: videoID7,
+				FileIDs: []values.GameFileID{fileID8, fileID9},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID8,
+						values.GameFileTypeJar,
+						"/path/to/game.jar",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+				{
+					GameFile: domain.NewGameFile(
+						fileID9,
+						values.GameFileTypeJar,
+						"/path/to/game.jar",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now.Add(-time.Hour),
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID7,
+					"version",
+					"version description",
+					now,
+				),
+				Assets: &service.Assets{
+					Jar: types.NewOption(fileID8),
+				},
+				ImageID: imageID7,
+				VideoID: videoID7,
+			},
+		},
+		{
+			description:                 "ファイルが存在しない場合、無視",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID8,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID8,
+				VideoID: videoID8,
+				FileIDs: []values.GameFileID{fileID10},
+			},
+			executeGetGameFiles: true,
+			files:               []*repository.GameFileInfo{},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID8,
+					"version",
+					"version description",
+					now,
+				),
+				Assets:  &service.Assets{},
+				ImageID: imageID8,
+				VideoID: videoID8,
+			},
+		},
+		{
+			description:                 "GetLatestGameVersionがエラーなのでエラー",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			getLatestGameVersionErr:     errors.New("error"),
+			isErr:                       true,
+		},
+		{
+			description:                 "GetGameFilesがエラーなのでエラー",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID9,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID9,
+				VideoID: videoID9,
+				FileIDs: []values.GameFileID{fileID11, fileID12},
+			},
+			executeGetGameFiles: true,
+			getGameFilesErr:     errors.New("error"),
+			isErr:               true,
+		},
+		{
+			description:                 "ファイルがwindows,mac,jarのいずれでもないファイルは無視される",
+			gameID:                      values.NewGameID(),
+			executeGetLatestGameVersion: true,
+			version: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID10,
+					"version",
+					"version description",
+					now,
+				),
+				ImageID: imageID10,
+				VideoID: videoID10,
+				FileIDs: []values.GameFileID{fileID13},
+			},
+			executeGetGameFiles: true,
+			files: []*repository.GameFileInfo{
+				{
+					GameFile: domain.NewGameFile(
+						fileID13,
+						values.GameFileType(100),
+						"/path/to/game.exe",
+						values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+						now,
+					),
+					GameID: values.NewGameID(),
+				},
+			},
+			gameVersionInfo: &service.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					versionID10,
+					"version",
+					"version description",
+					now,
+				),
+				Assets:  &service.Assets{},
+				ImageID: imageID10,
+				VideoID: videoID10,
+			},
+		},
+		{
+			description: "ゲームが存在しないのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetLatestGameVersion {
+				mockGameVersionRepository.
+					EXPECT().
+					GetLatestGameVersion(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+					Return(testCase.version, testCase.getLatestGameVersionErr)
+			}
+
+			if testCase.executeGetGameFiles {
+				mockGameFileRepository.
+					EXPECT().
+					GetGameFiles(gomock.Any(), testCase.version.FileIDs, repository.LockTypeNone).
+					Return(testCase.files, testCase.getGameFilesErr)
+			}
+
+			gameVersion, err := gameVersionService.GetLatestGameVersion(
+				ctx,
+				testCase.gameID,
+			)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, testCase.gameVersionInfo.GetID(), gameVersion.GetID())
+			assert.Equal(t, testCase.gameVersionInfo.GetName(), gameVersion.GetName())
+			assert.Equal(t, testCase.gameVersionInfo.GetDescription(), gameVersion.GetDescription())
+			assert.WithinDuration(t, testCase.gameVersionInfo.GetCreatedAt(), gameVersion.GetCreatedAt(), 2*time.Second)
+			assert.Equal(t, testCase.gameVersionInfo.ImageID, gameVersion.ImageID)
+			assert.Equal(t, testCase.gameVersionInfo.VideoID, gameVersion.VideoID)
+			if assert.NotNil(t, gameVersion.Assets) {
+				assert.Equal(t, testCase.gameVersionInfo.Assets, gameVersion.Assets)
+			}
+		})
+	}
+}
