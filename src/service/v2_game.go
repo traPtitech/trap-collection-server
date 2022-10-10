@@ -11,8 +11,9 @@ import (
 type GameV2 interface {
 	// CreateGame
 	// ゲームの追加。
-	// ownersとmaintainersに重複がある場合、ErrOverlapBetweenOwnersAndMaintainersを返す
-	// ログイン中のユーザーがownersに含まれている場合、ErrOverlapBetweenUserAndOwnerを返す
+	// owners内に重複がある場合、ErrOverlapInOwnersを返す。
+	// maintainers内に重複がある場合、ErrOverlapInMaintainersを返す。
+	// ownersとmaintainersに重複がある場合、また、ログイン中のユーザーがmaintainersに含まれる場合、ErrOverlapBetweenOwnersAndMaintainersを返す。
 	CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*GameInfoV2, error)
 
 	// GetGame
