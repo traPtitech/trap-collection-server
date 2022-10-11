@@ -16,14 +16,12 @@ import (
 type Game struct {
 	session     *Session
 	gameService service.GameV2
-	user        service.User
 }
 
-func NewGame(session *Session, gameService service.GameV2, user service.User) *Game {
+func NewGame(session *Session, gameService service.GameV2) *Game {
 	return &Game{
 		session:     session,
 		gameService: gameService,
-		user:        user,
 	}
 }
 
@@ -161,42 +159,8 @@ func (g *Game) PostGame(ctx echo.Context) error {
 // ゲームの削除
 // (DELETE /games/{gameID})
 func (g *Game) DeleteGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
-	session, err := g.session.get(ctx)
-	if err != nil {
-		log.Printf("error: failed to save session: %v\n", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
-	}
-	authSession, err := g.session.getAuthSession(session)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
-	}
-
-	userInfo, err := g.user.GetMe(ctx.Request().Context(), authSession)
-	if err != nil {
-		log.Printf("error: failed to get user: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
-	}
-	userName := userInfo.GetName()
-
-	game, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.NewGameID())
+	err := g.gameService.DeleteGame(ctx.Request().Context(), values.GameID(gameID))
 	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
-	} else if err != nil {
-		log.Printf("error: failed to get game: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	ownersMap := make(map[values.TraPMemberName]struct{}, len(game.Owners))
-	for _, ownerInfo := range game.Owners {
-		ownersMap[ownerInfo.GetName()] = struct{}{}
-	}
-	if _, ok := ownersMap[userName]; !ok {
-		return echo.NewHTTPError(http.StatusForbidden, "Internal Server Error")
-	}
-
-	err = g.gameService.DeleteGame(ctx.Request().Context(), values.GameID(gameID))
-	if errors.Is(err, service.ErrNoGame) {
-		//上のGetGameでやってるから起きなさそう
 		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
 	} else if err != nil {
 		log.Printf("error: failed to delete game: %v\n", err)
@@ -250,45 +214,8 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 // ゲームの情報の変更
 // (PATCH /games/{gameID})
 func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
-	session, err := g.session.get(ctx)
-	if err != nil {
-		log.Printf("error: failed to save session: %v\n", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
-	}
-	authSession, err := g.session.getAuthSession(session)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
-	}
-
-	//ユーザーがownersかmaintainersに含まれるかを調べる
-	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.NewGameID())
-	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
-	} else if err != nil {
-		log.Printf("error: failed to get game: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	userInfo, err := g.user.GetMe(ctx.Request().Context(), authSession)
-	if err != nil {
-		log.Printf("error: failed to get user: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
-	}
-	userName := userInfo.GetName()
-
-	usersWithRolesMap := make(map[values.TraPMemberName]struct{}, len(gameInfo.Owners)+len(gameInfo.Maintainers))
-	for _, ownerInfo := range gameInfo.Owners {
-		usersWithRolesMap[ownerInfo.GetName()] = struct{}{}
-	}
-	for _, maintainerInfo := range gameInfo.Maintainers {
-		usersWithRolesMap[maintainerInfo.GetName()] = struct{}{}
-	}
-	if _, ok := usersWithRolesMap[userName]; !ok {
-		return echo.NewHTTPError(http.StatusForbidden, "Internal Server Error")
-	}
-
 	req := openapi.PatchGameJSONRequestBody{}
-	err = ctx.Bind(req)
+	err := ctx.Bind(req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
 	}
@@ -299,7 +226,6 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		values.GameDescription(req.Description),
 	)
 	if errors.Is(err, service.ErrNoGame) {
-		// 上のGetGameでやってるからエラー出なそう
 		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
 	} else if err != nil {
 		log.Printf("error: failed to update game: %v\n", err)
