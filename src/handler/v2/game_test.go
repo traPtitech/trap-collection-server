@@ -1,0 +1,558 @@
+package v2
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service/mock"
+)
+
+func TestGetGames(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	mockGameService := mock.NewMockGameV2(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		params            openapi.GetGamesParams
+		executeGetGames   bool
+		GetGamesErr       error
+		sessionExist      bool
+		authSession       *domain.OIDCSession
+		executeGetMyGames bool
+		GetMyGamesErr     error
+		games             []*domain.Game
+		apiGames          []*openapi.GameInfo
+		gamesNumber       int
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+
+	poTrue := true
+	poFalse := false
+	po0 := 0
+	po1 := 1
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			executeGetGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 1,
+		},
+		{
+			description: "GetGamesがエラーなので500",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			executeGetGames: true,
+			GetGamesErr:     errors.New("test"),
+			isErr:           true,
+			statusCode:      http.StatusInternalServerError,
+		},
+		{
+			description: "allがfalseなので問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{domain.NewGame(
+				gameID1,
+				values.NewGameName("test1"),
+				values.NewGameDescription("test1"),
+				now,
+			),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 1,
+		},
+		{
+			description: "sessionが存在しないので500",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: false,
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description: "authSessionが存在しないので500",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+		{
+			description: "GetMyGamesがエラーなので500",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			GetMyGamesErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+		{
+			description: "ゲームが存在しなくても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			executeGetGames: true,
+			games:           []*domain.Game{},
+			apiGames:        []*openapi.GameInfo{},
+		},
+		{
+			description: "ゲームが複数でも問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			executeGetGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+				domain.NewGame(
+					gameID2,
+					values.NewGameName("test2"),
+					values.NewGameDescription("test2"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					Id:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "falseかつゲームが存在しなくても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games:             []*domain.Game{},
+			apiGames:          []*openapi.GameInfo{},
+		},
+		{
+			description: "falseかつゲームが複数でも問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+				domain.NewGame(
+					gameID2,
+					values.NewGameName("test2"),
+					values.NewGameDescription("test2"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+				{
+					Id:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "Limitが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po1,
+				Offset: &po0,
+			},
+			executeGetGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "Offsetが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po0,
+				Offset: &po1,
+			},
+			executeGetGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "LimitとOffsetが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poTrue,
+				Limit:  &po1,
+				Offset: &po1,
+			},
+			executeGetGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "allがfalseでLimitが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po1,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "allがfalseでOffsetが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po0,
+				Offset: &po1,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+		{
+			description: "allがfalseでLimitとOffsetが設定されても問題なし",
+			params: openapi.GetGamesParams{
+				All:    &poFalse,
+				Limit:  &po1,
+				Offset: &po1,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{
+				domain.NewGame(
+					gameID1,
+					values.NewGameName("test1"),
+					values.NewGameDescription("test1"),
+					now,
+				),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 2,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/games", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.New(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.Get(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set("session", sess)
+			}
+
+			if testCase.executeGetGames {
+				mockGameService.
+					EXPECT().
+					GetGames(gomock.Any(), int(*testCase.params.Limit), int(*testCase.params.Offset)).
+					Return(testCase.gamesNumber, testCase.games, testCase.GetGamesErr)
+			}
+
+			if testCase.executeGetMyGames {
+				mockGameService.
+					EXPECT().
+					GetMyGames(gomock.Any(), gomock.Any(), int(*testCase.params.Limit), int(*testCase.params.Offset)).
+					Return(testCase.gamesNumber, testCase.games, testCase.GetMyGamesErr)
+			}
+
+			err := gameHandler.GetGames(c, testCase.params)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var response openapi.GetGamesResponse
+			err = json.NewDecoder(rec.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			gamesNumber := response.Num
+			games := response.Games
+
+			assert.Equal(t, testCase.gamesNumber, gamesNumber)
+			assert.Equal(t, len(testCase.apiGames), len(games))
+
+			for i, game := range games {
+				assert.Equal(t, testCase.apiGames[i].Id, game.Id)
+				assert.Equal(t, testCase.apiGames[i].Name, game.Name)
+				assert.Equal(t, testCase.apiGames[i].Description, game.Description)
+				assert.WithinDuration(t, testCase.apiGames[i].CreatedAt, game.CreatedAt, time.Second)
+			}
+		})
+	}
+}
