@@ -104,6 +104,19 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
 	}
 
+	gameName := values.NewGameName(req.Name)
+	err = gameName.Validate()
+	if errors.Is(err, values.ErrGameNameEmpty) {
+		return echo.NewHTTPError(http.StatusBadRequest, "game name is empty")
+	}
+	if errors.Is(err, values.ErrGameNameTooLong) {
+		return echo.NewHTTPError(http.StatusBadRequest, "game name is too long")
+	}
+	if err != nil {
+		log.Printf("error: failed to validate game name: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
+	}
+
 	owners := make([]values.TraPMemberName, 0, len(*req.Owners))
 	for _, reqOwner := range *req.Owners {
 		owners = append(owners, values.NewTrapMemberName(reqOwner))
@@ -116,7 +129,8 @@ func (g *Game) PostGame(ctx echo.Context) error {
 
 	gameInfo, err := g.gameService.CreateGame(
 		ctx.Request().Context(),
-		authSession, values.GameName(req.Name),
+		authSession, 
+		gameName,
 		values.GameDescription(req.Description),
 		owners,
 		maintainers)
