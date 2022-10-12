@@ -1062,3 +1062,257 @@ func TestDeleteGame(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGame(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	mockGameService := mock.NewMockGameV2(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description    string
+		sessionExist   bool
+		authSession    *domain.OIDCSession
+		gameIDInPath   openapi.GameIDInPath
+		gameID         values.GameID
+		executeGetGame bool
+		game           *service.GameInfoV2
+		GetGameErr     error
+		apiGame        openapi.Game
+		isErr          bool
+		err            error
+		statusCode     int
+	}
+
+	gameID := values.NewGameID()
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description:  "特に問題ないのでエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						userID2,
+						values.NewTrapMemberName("pikachu"),
+						values.TrapMemberStatusActive,
+					),
+				},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+			},
+		},
+		{
+			description:  "Maintainersが空でもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{},
+			},
+		},
+		{
+			description:  "ゲームが存在しないので404",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			GetGameErr:     service.ErrNoGame,
+			isErr:          true,
+			statusCode:     http.StatusNotFound,
+		},
+		{
+			description:  "GetGameがエラーなので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			GetGameErr:     errors.New("error"),
+			isErr:          true,
+			statusCode:     http.StatusInternalServerError,
+		},
+		{
+			description:  "セッションが存在しないので500",
+			sessionExist: false,
+			gameIDInPath: openapi.GameID(gameID),
+			gameID:       gameID,
+			GetGameErr:   errors.New("error"),
+			isErr:        true,
+			statusCode:   http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.New(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.Get(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set("session", sess)
+			}
+
+			if testCase.executeGetGame {
+				mockGameService.
+					EXPECT().
+					GetGame(gomock.Any(), gomock.Any(), testCase.gameID).
+					Return(testCase.game, testCase.GetGameErr)
+			}
+
+			err := gameHandler.GetGame(c, testCase.gameIDInPath)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var responseGame openapi.Game
+			err = json.NewDecoder(rec.Body).Decode(&responseGame)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			assert.Equal(t, testCase.apiGame.Name, responseGame.Name)
+			assert.Equal(t, testCase.apiGame.Id, responseGame.Id)
+			assert.Equal(t, testCase.apiGame.Description, responseGame.Description)
+			assert.WithinDuration(t, testCase.apiGame.CreatedAt, responseGame.CreatedAt, time.Second)
+
+			assert.Len(t, testCase.apiGame.Owners, len(responseGame.Owners))
+			for i, apiOwner := range testCase.apiGame.Owners {
+				assert.Equal(t, apiOwner, responseGame.Owners[i])
+			}
+
+			if len(*responseGame.Maintainers) != 0 {
+				assert.Len(t, *testCase.apiGame.Maintainers, len(*responseGame.Maintainers))
+				for i, apiMaintainer := range *testCase.apiGame.Maintainers {
+					assert.Equal(t, apiMaintainer, []string(*responseGame.Maintainers)[i])
+				}
+			}
+		})
+	}
+}
