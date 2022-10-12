@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -952,6 +953,111 @@ func TestPostGame(t *testing.T) {
 			}
 			for i, resMaintainer := range *responseGame.Maintainers {
 				assert.Equal(t, (*testCase.apiGame.Maintainers)[i], resMaintainer)
+			}
+		})
+	}
+}
+
+func TestDeleteGame(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	mockGameService := mock.NewMockGameV2(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		executeDeleteGame bool
+		gameIDInPath      openapi.GameIDInPath
+		gameID            values.GameID
+		DeleteGameErr     error
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID := openapi.GameIDInPath(uuid.New())
+
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラーなし",
+			executeDeleteGame: true,
+			gameIDInPath:      gameID,
+			gameID:            values.GameID(gameID),
+		},
+		{
+			description:       "ゲームが存在しないので400",
+			executeDeleteGame: true,
+			gameIDInPath:      gameID,
+			gameID:            values.GameID(gameID),
+			DeleteGameErr:     service.ErrNoGame,
+			isErr:             true,
+			statusCode:        http.StatusNotFound,
+		},
+		{
+			description:       "DeleteGameがエラーなので500",
+			executeDeleteGame: true,
+			gameIDInPath:      gameID,
+			gameID:            values.GameID(gameID),
+			DeleteGameErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.executeDeleteGame {
+				mockGameService.
+					EXPECT().
+					DeleteGame(gomock.Any(), testCase.gameID).
+					Return(testCase.DeleteGameErr)
+			}
+
+			err := gameHandler.DeleteGame(c, testCase.gameIDInPath)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
