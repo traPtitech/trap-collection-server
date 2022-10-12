@@ -232,14 +232,28 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 // (PATCH /games/{gameID})
 func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	req := openapi.PatchGameJSONRequestBody{}
-	err := ctx.Bind(req)
+	err := ctx.Bind(&req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
 	}
+
+	gameName := values.NewGameName(req.Name)
+	err = gameName.Validate()
+	if errors.Is(err, values.ErrGameNameEmpty) {
+		return echo.NewHTTPError(http.StatusBadRequest, "game name is empty")
+	}
+	if errors.Is(err, values.ErrGameNameTooLong) {
+		return echo.NewHTTPError(http.StatusBadRequest, "game name is too long")
+	}
+	if err != nil {
+		log.Printf("error: failed to validate game name: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
+	}
+
 	game, err := g.gameService.UpdateGame(
 		ctx.Request().Context(),
-		values.NewGameID(),
-		values.GameName(req.Name),
+		values.GameID(gameID),
+		gameName,
 		values.GameDescription(req.Description),
 	)
 	if errors.Is(err, service.ErrNoGame) {
