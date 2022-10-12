@@ -200,7 +200,7 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
 	}
 
-	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.NewGameID())
+	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
 	if errors.Is(err, service.ErrNoGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
 	} else if err != nil {
