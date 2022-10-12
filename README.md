@@ -17,7 +17,7 @@ traPのゲームランチャーtraP Collectionのサーバーサイドです。
 [Task](https://taskfile.dev/)をタスクランナーとして使用しているので、
 Goをinstallした上で以下のコマンドを実行してinstallしてください。
 ```bash
-go install github.com/go-task/task/v3/cmd/task@latest
+go install github.com/go-task/task/v3/cmd/task
 ```
 
 次に以下のコマンドを実行することで環境構築が完了します。
