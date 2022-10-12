@@ -98,7 +98,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
 	}
 
-	req := openapi.PostGameJSONRequestBody{}
+	req := &openapi.PostGameJSONRequestBody{}
 	err = ctx.Bind(req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
@@ -129,7 +129,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 
 	gameInfo, err := g.gameService.CreateGame(
 		ctx.Request().Context(),
-		authSession, 
+		authSession,
 		gameName,
 		values.GameDescription(req.Description),
 		owners,
@@ -138,13 +138,16 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	if errors.Is(err, service.ErrOverlapInOwners) {
 		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
-	} else if errors.Is(err, service.ErrOverlapInMaintainers) {
+	}
+	if errors.Is(err, service.ErrOverlapInMaintainers) {
 		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add maintainers")
-	} else if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
+	}
+	if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
 		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners and maintainers")
-	} else if err != nil {
+	}
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create game")
 	}
 
