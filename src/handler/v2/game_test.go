@@ -1008,7 +1008,7 @@ func TestDeleteGame(t *testing.T) {
 			gameID:            values.GameID(gameID),
 		},
 		{
-			description:       "ゲームが存在しないので400",
+			description:       "ゲームが存在しないので404",
 			executeDeleteGame: true,
 			gameIDInPath:      gameID,
 			gameID:            values.GameID(gameID),
@@ -1313,6 +1313,200 @@ func TestGetGame(t *testing.T) {
 					assert.Equal(t, apiMaintainer, []string(*responseGame.Maintainers)[i])
 				}
 			}
+		})
+	}
+}
+
+func TestPatchGame(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	mockGameService := mock.NewMockGameV2(ctrl)
+
+	gameHandler := NewGame(session, mockGameService)
+
+	type test struct {
+		description       string
+		gameID            values.GameID
+		newGame           *openapi.PatchGameJSONRequestBody
+		executeUpdateGame bool
+		game              *domain.Game
+		UpdateGameErr     error
+		apiGame           openapi.GameInfo
+		isErr             bool
+		err               error
+		statusCode        int
+	}
+
+	gameID := values.NewGameID()
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			game: domain.NewGame(
+				gameID,
+				values.NewGameName("test"),
+				values.NewGameDescription("test"),
+				now,
+			),
+			apiGame: openapi.GameInfo{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+			},
+		},
+		{
+			description: "名前が空なので400",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "",
+				Description: "test",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "名前が長すぎるので400",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "012345678901234567890123456789012",
+				Description: "test",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "説明が空文字でもエラーなし",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "test",
+				Description: "",
+			},
+			executeUpdateGame: true,
+			game: domain.NewGame(
+				gameID,
+				values.NewGameName("test"),
+				values.NewGameDescription(""),
+				now,
+			),
+			apiGame: openapi.GameInfo{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "",
+				CreatedAt:   now,
+			},
+		},
+		{
+			description: "ゲームが存在しないので404",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			UpdateGameErr:     service.ErrNoGame,
+			isErr:             true,
+			statusCode:        http.StatusNotFound,
+		},
+		{
+			description: "UpdateGameがエラーなので500",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			UpdateGameErr:     errors.New("test"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+
+			reqBody := new(bytes.Buffer)
+			err = json.NewEncoder(reqBody).Encode(testCase.newGame)
+			if err != nil {
+				log.Printf("failed to create request body")
+				t.Fatal(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/game/%s", uuid.UUID(gameID)), reqBody)
+			req.Header.Set(echo.HeaderContentType, "application/json")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.executeUpdateGame {
+				mockGameService.
+					EXPECT().
+					UpdateGame(gomock.Any(), gomock.Any(), values.NewGameName(testCase.newGame.Name), values.NewGameDescription(testCase.newGame.Description)).
+					Return(testCase.game, testCase.UpdateGameErr)
+			}
+
+			err := gameHandler.PatchGame(c, openapi.GameID(gameID))
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var responseGame openapi.GameInfo
+			err = json.NewDecoder(rec.Body).Decode(&responseGame)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+
+			assert.Equal(t, testCase.apiGame.Name, responseGame.Name)
+			assert.Equal(t, testCase.apiGame.Id, responseGame.Id)
+			assert.Equal(t, testCase.apiGame.Description, responseGame.Description)
+			assert.WithinDuration(t, testCase.apiGame.CreatedAt, responseGame.CreatedAt, time.Second)
 		})
 	}
 }
