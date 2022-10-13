@@ -49,23 +49,22 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 		gameNumber, games, err = g.gameService.GetGames(ctx.Request().Context(), limit, offset)
 		if err != nil {
 			log.Printf("error: failed to get games: %v\n", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
 		}
 	} else {
 		session, err := g.session.get(ctx)
 		if err != nil {
-			log.Printf("error: failed to save session: %v\n", err)
 			return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
 		}
 		authSession, err := g.session.getAuthSession(session)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+			return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
 		}
 
 		gameNumber, games, err = g.gameService.GetMyGames(ctx.Request().Context(), authSession, limit, offset)
 		if err != nil {
 			log.Printf("error: failed to get games: %v\n", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get my games")
 		}
 	}
 
@@ -93,18 +92,17 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 func (g *Game) PostGame(ctx echo.Context) error {
 	session, err := g.session.get(ctx)
 	if err != nil {
-		log.Printf("error: failed to save session: %v\n", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
 	}
 
 	req := &openapi.PostGameJSONRequestBody{}
 	err = ctx.Bind(req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
 	}
 
 	gameName := values.NewGameName(req.Name)
@@ -139,18 +137,16 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		maintainers)
 
 	if errors.Is(err, service.ErrOverlapInOwners) {
-		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
 	}
 	if errors.Is(err, service.ErrOverlapInMaintainers) {
-		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add maintainers")
 	}
 	if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
-		log.Printf("error: failed to add roles: %v\n", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners and maintainers")
 	}
 	if err != nil {
+		log.Printf("error: failed to create game: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create game")
 	}
 
@@ -181,7 +177,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 func (g *Game) DeleteGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	err := g.gameService.DeleteGame(ctx.Request().Context(), values.GameID(gameID))
 	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	} else if err != nil {
 		log.Printf("error: failed to delete game: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
@@ -200,15 +196,15 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get auth session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
 	}
 
 	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
 	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	} else if err != nil {
 		log.Printf("error: failed to get game: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game")
 	}
 
 	resOwners := make([]string, 0, len(gameInfo.Owners))
@@ -237,7 +233,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	req := openapi.PatchGameJSONRequestBody{}
 	err := ctx.Bind(&req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
 	}
 
 	gameName := values.NewGameName(req.Name)
@@ -260,7 +256,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		values.GameDescription(req.Description),
 	)
 	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	} else if err != nil {
 		log.Printf("error: failed to update game: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game")
