@@ -944,7 +944,7 @@ func TestGetMyGames(t *testing.T) {
 			n:      1,
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "limitとoffsetが両方設定されてもエラーなし",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
@@ -963,9 +963,16 @@ func TestGetMyGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
+			limit:  1,
 			offset: 1,
 			n:      1,
+		},
+		{
+			description: "offsetだけが設定されているのでエラー",
+			limit:       0,
+			offset:      1,
+			isErr:       true,
+			err:         service.ErrOffsetWithoutLimit,
 		},
 		{
 			description: "getMeがエラーなのでエラー",
@@ -1033,7 +1040,8 @@ func TestGetMyGames(t *testing.T) {
 				return
 			}
 
-			assert.Len(t, games, n)
+			assert.Len(t, games, len(testCase.games))
+			assert.Equal(t, testCase.n, n)
 
 			for i, game := range games {
 				assert.Equal(t, testCase.games[i].GetID(), game.GetID())
