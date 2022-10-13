@@ -969,10 +969,19 @@ func TestGetMyGames(t *testing.T) {
 		},
 		{
 			description: "offsetだけが設定されているのでエラー",
-			limit:       0,
-			offset:      1,
-			isErr:       true,
-			err:         service.ErrOffsetWithoutLimit,
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			limit:  0,
+			offset: 1,
+			isErr:  true,
+			err:    service.ErrOffsetWithoutLimit,
 		},
 		{
 			description: "getMeがエラーなのでエラー",
