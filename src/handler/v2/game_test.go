@@ -151,6 +151,36 @@ func TestGetGames(t *testing.T) {
 			gamesNumber: 1,
 		},
 		{
+			description: "allがnilでも問題なし",
+			params: openapi.GetGamesParams{
+				All:    nil,
+				Limit:  &po0,
+				Offset: &po0,
+			},
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMyGames: true,
+			games: []*domain.Game{domain.NewGame(
+				gameID1,
+				values.NewGameName("test1"),
+				values.NewGameDescription("test1"),
+				now,
+			),
+			},
+			apiGames: []*openapi.GameInfo{
+				{
+					Id:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			gamesNumber: 1,
+		},
+		{
 			description: "sessionが存在しないので500",
 			params: openapi.GetGamesParams{
 				All:    &poFalse,

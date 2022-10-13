@@ -28,15 +28,18 @@ func NewGame(session *Session, gameService service.GameV2) *Game {
 // ゲーム一覧の取得
 // (GET /games)
 func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
-	isAll := bool(*params.All)
+	var isAll bool
+	if params.All != nil {
+		isAll = *params.All
+	}
 
 	var limit int
 	var offset int
 	if params.Limit != nil {
-		limit = int(*params.Limit)
+		limit = *params.Limit
 	}
 	if params.Offset != nil {
-		offset = int(*params.Offset)
+		offset = *params.Offset
 	}
 
 	var games []*domain.Game
