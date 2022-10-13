@@ -127,21 +127,28 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var allGames []migrate.GameTable2
-	err = db.
-		Order("created_at DESC").
-		Find(&allGames).Error
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get games: %w", err)
-	}
-
 	var games []migrate.GameTable2
-	if limit == 0 {
-		games = allGames[offset:]
+
+	if limit == 0 && offset == 0 { //offsetだけを設定するのはserviceで止めているが、ここでも一応
+		err = db.
+			Order("created_at DESC").
+			Find(&games).Error
+	} else if limit > 0 {
+		err = db.
+			Order("created_at DESC").
+			Limit(limit).
+			Offset(offset).
+			Find(&games).Error
+	} else if limit == 0 && offset > 0 {
+		return nil, 0, repository.ErrOffsetWithoutLimit
 	} else if limit < 0 {
 		return nil, 0, repository.ErrNegativeLimit
 	} else {
-		games = allGames[offset : offset+limit]
+		return nil, 0, repository.ErrBadLimitAndOffset
+	}
+
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
@@ -154,7 +161,13 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 		))
 	}
 
-	return gamesDomain, len(allGames), nil
+	var gamesNumber int64
+	err = db.Table("games").Count(&gamesNumber).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get games number: %w", err)
+	}
+
+	return gamesDomain, int(gamesNumber), nil
 }
 
 func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
