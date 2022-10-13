@@ -741,7 +741,7 @@ func TestGetGames(t *testing.T) {
 			n:      1,
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "limitとoffsetが両方設定されてもエラーなし",
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -750,10 +750,18 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
+			limit:  1,
 			offset: 1,
-			n:      1,
+			n:      2,
 		},
+		{
+			description: "offsetだけ設定されているのでエラー",
+			limit:       0,
+			offset:      1,
+			isErr:       true,
+			err:         service.ErrOffsetWithoutLimit,
+		},
+
 		{
 			description: "GetGamesがエラーなのでエラー",
 			GetGamesErr: errors.New("error"),
@@ -783,7 +791,8 @@ func TestGetGames(t *testing.T) {
 				return
 			}
 
-			assert.Len(t, games, n)
+			assert.Equal(t, testCase.n, n)
+			assert.Len(t, games, len(testCase.games))
 
 			for i, game := range games {
 				assert.Equal(t, testCase.games[i].GetID(), game.GetID())
