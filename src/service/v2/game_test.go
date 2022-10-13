@@ -671,14 +671,15 @@ func TestGetGames(t *testing.T) {
 	)
 
 	type test struct {
-		description string
-		limit       int
-		offset      int
-		n           int
-		games       []*domain.Game
-		GetGamesErr error
-		isErr       bool
-		err         error
+		description     string
+		limit           int
+		offset          int
+		n               int
+		executeGetGames bool
+		games           []*domain.Game
+		GetGamesErr     error
+		isErr           bool
+		err             error
 	}
 
 	gameID1 := values.NewGameID()
@@ -695,16 +696,18 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
-			offset: 0,
-			n:      1,
+			executeGetGames: true,
+			limit:           0,
+			offset:          0,
+			n:               1,
 		},
 		{
-			description: "ゲームが存在しなくてもエラーなし",
-			games:       []*domain.Game{},
-			limit:       0,
-			offset:      0,
-			n:           0,
+			description:     "ゲームが存在しなくてもエラーなし",
+			games:           []*domain.Game{},
+			limit:           0,
+			offset:          0,
+			n:               0,
+			executeGetGames: true,
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
@@ -722,9 +725,10 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
-			offset: 0,
-			n:      2,
+			limit:           0,
+			offset:          0,
+			n:               2,
+			executeGetGames: true,
 		},
 		{
 			description: "limitが設定されてもエラーなし",
@@ -736,9 +740,10 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  1,
-			offset: 0,
-			n:      1,
+			limit:           1,
+			offset:          0,
+			n:               1,
+			executeGetGames: true,
 		},
 		{
 			description: "limitとoffsetが両方設定されてもエラーなし",
@@ -750,9 +755,10 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  1,
-			offset: 1,
-			n:      2,
+			limit:           1,
+			offset:          1,
+			n:               2,
+			executeGetGames: true,
 		},
 		{
 			description: "offsetだけ設定されているのでエラー",
@@ -763,18 +769,21 @@ func TestGetGames(t *testing.T) {
 		},
 
 		{
-			description: "GetGamesがエラーなのでエラー",
-			GetGamesErr: errors.New("error"),
-			isErr:       true,
+			description:     "GetGamesがエラーなのでエラー",
+			GetGamesErr:     errors.New("error"),
+			isErr:           true,
+			executeGetGames: true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			mockGameRepository.
-				EXPECT().
-				GetGames(gomock.Any(), testCase.limit, testCase.offset).
-				Return(testCase.games, testCase.n, testCase.GetGamesErr)
+			if testCase.executeGetGames {
+				mockGameRepository.
+					EXPECT().
+					GetGames(gomock.Any(), testCase.limit, testCase.offset).
+					Return(testCase.games, testCase.n, testCase.GetGamesErr)
+			}
 
 			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset)
 
