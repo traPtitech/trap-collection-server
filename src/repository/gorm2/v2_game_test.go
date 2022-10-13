@@ -729,7 +729,7 @@ func TestGetGamesV2(t *testing.T) {
 			},
 		},
 		{
-			description: "offsetだけなのでエラー",
+			description: "offsetだけなのでエラー", //これはserviceで除かれるはず
 			limit:       0,
 			offset:      1,
 			beforeGames: []migrate.GameTable2{
@@ -1060,7 +1060,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 					ID:          uuid.UUID(gameID6),
 					Name:        "test6",
 					Description: "test6",
-					CreatedAt:   now,
+					CreatedAt:   now.Add(-time.Hour),
 					DeletedAt: gorm.DeletedAt{
 						Valid: true,
 						Time:  now,
@@ -1140,7 +1140,7 @@ func TestGetGamesByUserV2(t *testing.T) {
 			},
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "offsetだけなのでエラー", //これはserviceで除かれるはず
 			userID:      userID10,
 			limit:       0,
 			offset:      1,
@@ -1170,15 +1170,8 @@ func TestGetGamesByUserV2(t *testing.T) {
 					},
 				},
 			},
-			expectedGameNumber: 2,
-			games: []*domain.Game{
-				domain.NewGame(
-					gameID11,
-					"test11",
-					"test11",
-					now.Add(-time.Hour),
-				),
-			},
+			isErr: true,
+			err:   repository.ErrOffsetWithoutLimit,
 		},
 		{
 			description: "limitとoffset両方設定してもエラーなし",
