@@ -622,6 +622,7 @@ func TestPostGame(t *testing.T) {
 	type test struct {
 		description       string
 		sessionExist      bool
+		isBadRequestBody  bool
 		authSession       *domain.OIDCSession
 		newGame           *openapi.PostGameJSONRequestBody
 		executeCreateGame bool
@@ -699,6 +700,17 @@ func TestPostGame(t *testing.T) {
 			sessionExist: true,
 			isErr:        true,
 			statusCode:   http.StatusUnauthorized,
+		},
+		{
+			description:      "リクエストボディが正しくないので400",
+			sessionExist:     true,
+			isBadRequestBody: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
 		{
 			description:  "名前が空なので400",
@@ -879,10 +891,14 @@ func TestPostGame(t *testing.T) {
 			e := echo.New()
 
 			reqBody := new(bytes.Buffer)
-			err = json.NewEncoder(reqBody).Encode(testCase.newGame)
-			if err != nil {
-				log.Printf("failed to create request body")
-				t.Fatal(err)
+			if !testCase.isBadRequestBody {
+				err = json.NewEncoder(reqBody).Encode(testCase.newGame)
+				if err != nil {
+					log.Printf("failed to create request body")
+					t.Fatal(err)
+				}
+			} else {
+				reqBody = bytes.NewBufferString("bad requset body")
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/api/game", reqBody)
@@ -1387,6 +1403,7 @@ func TestPatchGame(t *testing.T) {
 
 	type test struct {
 		description       string
+		isBadRequestBody  bool
 		gameID            values.GameID
 		newGame           *openapi.PatchGameJSONRequestBody
 		executeUpdateGame bool
@@ -1423,6 +1440,12 @@ func TestPatchGame(t *testing.T) {
 				Description: "test",
 				CreatedAt:   now,
 			},
+		},
+		{
+			description:      "リクエストボディが正しくないので400",
+			isBadRequestBody: true,
+			isErr:            true,
+			statusCode:       http.StatusBadRequest,
 		},
 		{
 			description: "名前が空なので400",
@@ -1496,6 +1519,16 @@ func TestPatchGame(t *testing.T) {
 			e := echo.New()
 
 			reqBody := new(bytes.Buffer)
+			if !testCase.isBadRequestBody {
+				err = json.NewEncoder(reqBody).Encode(testCase.newGame)
+				if err != nil {
+					log.Printf("failed to create request body")
+					t.Fatal(err)
+				}
+			} else {
+				reqBody = bytes.NewBufferString("bad request body")
+			}
+
 			err = json.NewEncoder(reqBody).Encode(testCase.newGame)
 			if err != nil {
 				log.Printf("failed to create request body")
