@@ -162,7 +162,9 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	}
 
 	var gamesNumber int64
-	err = db.Table("games").Count(&gamesNumber).Error
+	err = db.Table("games").
+		Where("deleted_at IS NULL").
+		Count(&gamesNumber).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games number: %w", err)
 	}
