@@ -729,7 +729,7 @@ func TestGetGamesV2(t *testing.T) {
 			},
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "offsetだけなのでエラー",
 			limit:       0,
 			offset:      1,
 			beforeGames: []migrate.GameTable2{
@@ -746,14 +746,8 @@ func TestGetGamesV2(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
-			games: []*domain.Game{
-				domain.NewGame(
-					gameID2,
-					"test2",
-					"test2",
-					now.Add(-time.Hour),
-				),
-			},
+			isErr: true,
+			err:   repository.ErrOffsetWithoutLimit,
 		},
 		{
 			description: "limitとoffset両方が設定されてもエラーなし",

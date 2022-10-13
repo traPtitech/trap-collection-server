@@ -128,7 +128,8 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	}
 
 	var games []migrate.GameTable2
-	if limit == 0 && offset != 0 { //制限なし。limit=0,offset>0はserviceで止めるが、一応ここでもifを入れる。
+
+	if limit == 0 && offset == 0 { //offsetだけを設定するのはserviceで止めているが、ここでも一応
 		err = db.
 			Order("created_at DESC").
 			Find(&games).Error
@@ -155,13 +156,13 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 		))
 	}
 
-	var allGamesNumber int64
-	err = db.Table("games").Count(&allGamesNumber).Error
+	var gamesNumber int64
+	err = db.Table("games").Count(&gamesNumber).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games number: %w", err)
 	}
 
-	return gamesDomain, int(allGamesNumber), nil
+	return gamesDomain, int(gamesNumber), nil
 }
 
 func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {

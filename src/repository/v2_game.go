@@ -31,7 +31,8 @@ type GameV2 interface {
 
 	//GetGames
 	//取得する個数の上限(limit)と開始位置(offset)を指定してゲームを取得する。
-	//上限なしはlimit=0。返り値のintは制限をかけないときのゲーム数で、エラーのときは0
+	//上限なしはlimit=0。返り値のintは制限をかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
+	//limitが負のとき、ErrNegativeLimitを返す。
 	GetGames(ctx context.Context, limit int, offset int) ([]*domain.Game, int, error)
 
 	//GetGamesByUser
