@@ -181,7 +181,7 @@ func TestGetGames(t *testing.T) {
 			gamesNumber: 1,
 		},
 		{
-			description: "sessionが存在しないので500",
+			description: "sessionが存在しないので401",
 			params: openapi.GetGamesParams{
 				All:    &poFalse,
 				Limit:  &po0,
@@ -189,10 +189,10 @@ func TestGetGames(t *testing.T) {
 			},
 			sessionExist: false,
 			isErr:        true,
-			statusCode:   http.StatusInternalServerError,
+			statusCode:   http.StatusUnauthorized,
 		},
 		{
-			description: "authSessionが存在しないので500",
+			description: "authSessionが存在しないので401",
 			params: openapi.GetGamesParams{
 				All:    &poFalse,
 				Limit:  &po0,
@@ -200,7 +200,7 @@ func TestGetGames(t *testing.T) {
 			},
 			sessionExist: true,
 			isErr:        true,
-			statusCode:   http.StatusInternalServerError,
+			statusCode:   http.StatusUnauthorized,
 		},
 		{
 			description: "GetMyGamesがエラーなので500",
@@ -689,16 +689,16 @@ func TestPostGame(t *testing.T) {
 			},
 		},
 		{
-			description:  "セッションがないので500",
+			description:  "セッションがないので401",
 			sessionExist: false,
 			isErr:        true,
-			statusCode:   http.StatusInternalServerError,
+			statusCode:   http.StatusUnauthorized,
 		},
 		{
-			description:  "authSessionがないので500",
+			description:  "authSessionがないので401",
 			sessionExist: true,
 			isErr:        true,
-			statusCode:   http.StatusInternalServerError,
+			statusCode:   http.StatusUnauthorized,
 		},
 		{
 			description:  "名前が空なので400",
@@ -1250,13 +1250,22 @@ func TestGetGame(t *testing.T) {
 			statusCode:     http.StatusInternalServerError,
 		},
 		{
-			description:  "セッションが存在しないので500",
+			description:  "セッションが存在しないので401",
 			sessionExist: false,
 			gameIDInPath: openapi.GameID(gameID),
 			gameID:       gameID,
 			GetGameErr:   errors.New("error"),
 			isErr:        true,
-			statusCode:   http.StatusInternalServerError,
+			statusCode:   http.StatusUnauthorized,
+		},
+		{
+			description:  "authSessionが存在しないので401",
+			sessionExist: true,
+			gameIDInPath: openapi.GameID(gameID),
+			gameID:       gameID,
+			GetGameErr:   errors.New("error"),
+			isErr:        true,
+			statusCode:   http.StatusUnauthorized,
 		},
 	}
 
