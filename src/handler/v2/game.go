@@ -54,11 +54,11 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 	} else {
 		session, err := g.session.get(ctx)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
 		}
 		authSession, err := g.session.getAuthSession(session)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
+			return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
 		}
 
 		gameNumber, games, err = g.gameService.GetMyGames(ctx.Request().Context(), authSession, limit, offset)
@@ -92,11 +92,11 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 func (g *Game) PostGame(ctx echo.Context) error {
 	session, err := g.session.get(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
 	}
 
 	req := &openapi.PostGameJSONRequestBody{}
@@ -192,11 +192,11 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	session, err := g.session.get(ctx)
 	if err != nil {
 		log.Printf("error: failed to save session: %v\n", err)
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed to get auth session")
+		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
 	}
 
 	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
