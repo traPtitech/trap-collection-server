@@ -747,7 +747,6 @@ func TestGetGamesV2(t *testing.T) {
 				},
 			},
 			isErr: true,
-			err:   repository.ErrBadLimitAndOffset,
 		},
 		{
 			description: "limitとoffset両方が設定されてもエラーなし",
@@ -1171,7 +1170,6 @@ func TestGetGamesByUserV2(t *testing.T) {
 				},
 			},
 			isErr: true,
-			err:   repository.ErrBadLimitAndOffset,
 		},
 		{
 			description: "limitとoffset両方設定してもエラーなし",

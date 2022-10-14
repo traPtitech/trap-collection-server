@@ -142,7 +142,7 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	case limit < 0:
 		return nil, 0, repository.ErrNegativeLimit
 	default:
-		return nil, 0, repository.ErrBadLimitAndOffset
+		return nil, 0, errors.New("bad limit and offset")
 	}
 
 	err = db.
@@ -197,7 +197,7 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 	case limit < 0:
 		return nil, 0, repository.ErrNegativeLimit
 	default:
-		return nil, 0, repository.ErrBadLimitAndOffset
+		return nil, 0, errors.New("bad limit and offset")
 	}
 
 	err = db.
