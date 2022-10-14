@@ -175,27 +175,29 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 
 	var games []migrate.GameTable2
 
-	if limit == 0 && offset == 0 { //offsetだけを設定するのはserviceで止めているが、ここでも一応
-		err = db.
-			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-			Order("created_at DESC").
-			Find(&games).Error
-	} else if limit > 0 {
-		err = db.
-			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-			Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-			Order("created_at DESC").
-			Limit(limit).
-			Offset(offset).
-			Find(&games).Error
-	} else if limit == 0 && offset > 0 {
-		return nil, 0, repository.ErrOffsetWithoutLimit
-	} else if limit < 0 {
+	var lim int
+	var off int
+
+	switch {
+	case limit == 0 && offset == 0:
+		lim = -1
+		off = 0
+	case limit > 0 && offset >= 0:
+		lim = limit
+		off = offset
+	case limit < 0:
 		return nil, 0, repository.ErrNegativeLimit
-	} else {
+	default:
 		return nil, 0, repository.ErrBadLimitAndOffset
 	}
+
+	err = db.
+		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+		Order("created_at DESC").
+		Limit(lim).
+		Offset(off).
+		Find(&games).Error
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
