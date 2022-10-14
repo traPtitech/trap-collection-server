@@ -127,28 +127,25 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []migrate.GameTable2
-
-	var lim int
-	var off int
-
-	switch {
-	case limit == 0 && offset == 0:
-		lim = -1
-		off = 0
-	case limit > 0 && offset >= 0:
-		lim = limit
-		off = offset
-	case limit < 0:
+	if limit < 0 {
 		return nil, 0, repository.ErrNegativeLimit
-	default:
+	}
+	if limit == 0 && offset != 0 {
 		return nil, 0, errors.New("bad limit and offset")
 	}
 
-	err = db.
-		Order("created_at DESC").
-		Limit(lim).
-		Offset(off).
+	var games []migrate.GameTable2
+
+	query := db.Order("created_at DESC")
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if limit > 0 && offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	err = query.
 		Find(&games).Error
 
 	if err != nil {
@@ -182,30 +179,27 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []migrate.GameTable2
-
-	var lim int
-	var off int
-
-	switch {
-	case limit == 0 && offset == 0:
-		lim = -1
-		off = 0
-	case limit > 0 && offset >= 0:
-		lim = limit
-		off = offset
-	case limit < 0:
+	if limit < 0 {
 		return nil, 0, repository.ErrNegativeLimit
-	default:
+	}
+	if limit == 0 && offset != 0 {
 		return nil, 0, errors.New("bad limit and offset")
 	}
 
-	err = db.
-		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+	var games []migrate.GameTable2
+
+	query := db.Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
 		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-		Order("created_at DESC").
-		Limit(lim).
-		Offset(off).
+		Order("created_at DESC")
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if limit > 0 && offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	err = query.
 		Find(&games).Error
 
 	if err != nil {
