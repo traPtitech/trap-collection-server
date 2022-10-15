@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -159,4 +160,58 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 	}
 
 	return uint(count), gameVersionInfos, nil
+}
+
+func (gameVersion *GameVersionV2) GetLatestGameVersion(
+	ctx context.Context,
+	gameID values.GameID,
+	lockType repository.LockType,
+) (*repository.GameVersionInfo, error) {
+	db, err := gameVersion.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var gameVersionTable migrate.GameVersionTable2
+	err = db.
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id")
+		}).
+		First(&gameVersionTable).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to find game version: %w", err)
+	}
+
+	var optionURL types.Option[values.GameURLLink]
+	if len(gameVersionTable.URL) != 0 {
+		url, err := url.Parse(gameVersionTable.URL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse game version url: %w", err)
+		}
+
+		optionURL = types.NewOption(values.NewGameURLLink(url))
+	}
+
+	fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))
+	for _, file := range gameVersionTable.GameFiles {
+		fileIDs = append(fileIDs, values.NewGameFileIDFromUUID(file.ID))
+	}
+
+	return &repository.GameVersionInfo{
+		GameVersion: domain.NewGameVersion(
+			values.NewGameVersionIDFromUUID(gameVersionTable.ID),
+			values.NewGameVersionName(gameVersionTable.Name),
+			values.NewGameVersionDescription(gameVersionTable.Description),
+			gameVersionTable.CreatedAt,
+		),
+		ImageID: values.GameImageIDFromUUID(gameVersionTable.GameImageID),
+		VideoID: values.NewGameVideoIDFromUUID(gameVersionTable.GameVideoID),
+		URL:     optionURL,
+		FileIDs: fileIDs,
+	}, nil
 }
