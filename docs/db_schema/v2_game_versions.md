@@ -16,6 +16,7 @@ CREATE TABLE `v2_game_versions` (
   `name` varchar(32) NOT NULL,
   `description` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `url` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_v2_game_versions_game_image` (`game_image_id`),
   KEY `fk_v2_game_versions_game_video` (`game_video_id`),
@@ -37,6 +38,7 @@ CREATE TABLE `v2_game_versions` (
 | name | varchar(32) |  | false |  |  | ゲームバージョン名 |
 | description | text |  | false |  |  | ゲームバージョンの説明 |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
+| url | text | NULL | true |  |  |  |
 
 ## Constraints
 
