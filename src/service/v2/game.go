@@ -206,6 +206,9 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 }
 
 func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
+	if limit == 0 && offset != 0 {
+		return 0, nil, service.ErrOffsetWithoutLimit
+	}
 	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
@@ -217,6 +220,9 @@ func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*dom
 }
 
 func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
+	if limit == 0 && offset != 0 {
+		return 0, nil, service.ErrOffsetWithoutLimit
+	}
 	user, err := g.user.getMe(ctx, session)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)

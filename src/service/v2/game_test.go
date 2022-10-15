@@ -671,14 +671,15 @@ func TestGetGames(t *testing.T) {
 	)
 
 	type test struct {
-		description string
-		limit       int
-		offset      int
-		n           int
-		games       []*domain.Game
-		GetGamesErr error
-		isErr       bool
-		err         error
+		description     string
+		limit           int
+		offset          int
+		n               int
+		executeGetGames bool
+		games           []*domain.Game
+		GetGamesErr     error
+		isErr           bool
+		err             error
 	}
 
 	gameID1 := values.NewGameID()
@@ -695,16 +696,18 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
-			offset: 0,
-			n:      1,
+			executeGetGames: true,
+			limit:           0,
+			offset:          0,
+			n:               1,
 		},
 		{
-			description: "ゲームが存在しなくてもエラーなし",
-			games:       []*domain.Game{},
-			limit:       0,
-			offset:      0,
-			n:           0,
+			description:     "ゲームが存在しなくてもエラーなし",
+			games:           []*domain.Game{},
+			limit:           0,
+			offset:          0,
+			n:               0,
+			executeGetGames: true,
 		},
 		{
 			description: "ゲームが複数でもエラーなし",
@@ -722,9 +725,10 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
-			offset: 0,
-			n:      2,
+			limit:           0,
+			offset:          0,
+			n:               2,
+			executeGetGames: true,
 		},
 		{
 			description: "limitが設定されてもエラーなし",
@@ -736,12 +740,13 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  1,
-			offset: 0,
-			n:      1,
+			limit:           1,
+			offset:          0,
+			n:               1,
+			executeGetGames: true,
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "limitとoffsetが両方設定されてもエラーなし",
 			games: []*domain.Game{
 				domain.NewGame(
 					gameID1,
@@ -750,23 +755,35 @@ func TestGetGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
-			offset: 1,
-			n:      1,
+			limit:           1,
+			offset:          1,
+			n:               2,
+			executeGetGames: true,
 		},
 		{
-			description: "GetGamesがエラーなのでエラー",
-			GetGamesErr: errors.New("error"),
+			description: "offsetだけ設定されているのでエラー",
+			limit:       0,
+			offset:      1,
 			isErr:       true,
+			err:         service.ErrOffsetWithoutLimit,
+		},
+
+		{
+			description:     "GetGamesがエラーなのでエラー",
+			GetGamesErr:     errors.New("error"),
+			isErr:           true,
+			executeGetGames: true,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			mockGameRepository.
-				EXPECT().
-				GetGames(gomock.Any(), testCase.limit, testCase.offset).
-				Return(testCase.games, testCase.n, testCase.GetGamesErr)
+			if testCase.executeGetGames {
+				mockGameRepository.
+					EXPECT().
+					GetGames(gomock.Any(), testCase.limit, testCase.offset).
+					Return(testCase.games, testCase.n, testCase.GetGamesErr)
+			}
 
 			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset)
 
@@ -783,7 +800,8 @@ func TestGetGames(t *testing.T) {
 				return
 			}
 
-			assert.Len(t, games, n)
+			assert.Equal(t, testCase.n, n)
+			assert.Len(t, games, len(testCase.games))
 
 			for i, game := range games {
 				assert.Equal(t, testCase.games[i].GetID(), game.GetID())
@@ -935,7 +953,7 @@ func TestGetMyGames(t *testing.T) {
 			n:      1,
 		},
 		{
-			description: "offsetが設定されてもエラーなし",
+			description: "limitとoffsetが両方設定されてもエラーなし",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
@@ -954,9 +972,25 @@ func TestGetMyGames(t *testing.T) {
 					time.Now(),
 				),
 			},
-			limit:  0,
+			limit:  1,
 			offset: 1,
 			n:      1,
+		},
+		{
+			description: "offsetだけが設定されているのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				values.NewTrapMemberID(uuid.New()),
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			limit:  0,
+			offset: 1,
+			isErr:  true,
+			err:    service.ErrOffsetWithoutLimit,
 		},
 		{
 			description: "getMeがエラーなのでエラー",
@@ -1024,7 +1058,8 @@ func TestGetMyGames(t *testing.T) {
 				return
 			}
 
-			assert.Len(t, games, n)
+			assert.Len(t, games, len(testCase.games))
+			assert.Equal(t, testCase.n, n)
 
 			for i, game := range games {
 				assert.Equal(t, testCase.games[i].GetID(), game.GetID())
