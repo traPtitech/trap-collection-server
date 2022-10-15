@@ -188,8 +188,11 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 
 	var games []migrate.GameTable2
 
-	query := db.Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+	tx := db.Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
 		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
+		Session(&gorm.Session{})
+
+	query := tx.
 		Order("created_at DESC")
 
 	if limit > 0 {
@@ -217,10 +220,9 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 	}
 
 	var gameNumber int64
-	err = db.
+
+	err = tx.
 		Table("games").
-		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
 		Where("deleted_at IS NULL").
 		Count(&gameNumber).Error
 	if err != nil {
