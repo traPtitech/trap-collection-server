@@ -12,5 +12,7 @@ WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 COPY go.mod go.sum ./
 RUN go mod download
 
+ENV GOFLAGS -buildvcs=false
+
 ENTRYPOINT ["go", "run", "github.com/cosmtrek/air"]
 CMD ["-c", ".air.toml"]
