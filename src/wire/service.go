@@ -57,6 +57,9 @@ var (
 		wire.Bind(new(service.OIDCV2), new(*v2.OIDC)),
 		v2.NewOIDC,
 
+		wire.Bind(new(service.GameV2), new(*v2.Game)),
+		v2.NewGame,
+
 		v2.NewUser,
 	)
 )
