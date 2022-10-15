@@ -27,7 +27,7 @@
 | [product_keys](product_keys.md) | 5 | プロダクトキーテーブル(v2) | BASE TABLE |
 | [v2_game_files](v2_game_files.md) | 6 | ゲームファイルテーブル(v2) | BASE TABLE |
 | [v2_game_images](v2_game_images.md) | 4 | ゲーム画像テーブル(v2) | BASE TABLE |
-| [v2_game_versions](v2_game_versions.md) | 7 | ゲームバージョンテーブル(v2) | BASE TABLE |
+| [v2_game_versions](v2_game_versions.md) | 8 | ゲームバージョンテーブル(v2) | BASE TABLE |
 | [v2_game_videos](v2_game_videos.md) | 4 | ゲーム動画テーブル(v2) | BASE TABLE |
 
 ## Relations
