@@ -60,6 +60,9 @@ var (
 		wire.Bind(new(service.GameImageV2), new(*v2.GameImage)),
 		v2.NewGameImage,
 
+		wire.Bind(new(service.GameV2), new(*v2.Game)),
+		v2.NewGame,
+
 		v2.NewUser,
 	)
 )
