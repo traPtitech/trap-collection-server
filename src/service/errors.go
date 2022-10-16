@@ -15,6 +15,7 @@ var (
 	ErrInvalidRole                       = errors.New("invalid role")
 	ErrInvalidGameID                     = errors.New("invalid game id")
 	ErrInvalidGameImageID                = errors.New("invalid game image id")
+	ErrInvalidGameVideoID                = errors.New("invalid game video id")
 	ErrInvalidUserID                     = errors.New("invalid user id")
 	ErrForbidden                         = errors.New("forbidden")
 	ErrInvalidFormat                     = errors.New("invalid format")
