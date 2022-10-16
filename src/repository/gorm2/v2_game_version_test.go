@@ -1729,3 +1729,540 @@ func TestGetGameVersionsV2(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLatestGameVersionV2(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %v", err)
+	}
+
+	gameVersionRepository := NewGameVersionV2(testDB)
+
+	type test struct {
+		description           string
+		gameID                values.GameID
+		lockType              repository.LockType
+		games                 []migrate.GameTable2
+		expectGameVersionInfo *repository.GameVersionInfo
+		isErr                 bool
+		err                   error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+	gameID8 := values.NewGameID()
+	gameID9 := values.NewGameID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	gameVersionID3 := values.NewGameVersionID()
+	gameVersionID4 := values.NewGameVersionID()
+	gameVersionID5 := values.NewGameVersionID()
+	gameVersionID6 := values.NewGameVersionID()
+	gameVersionID7 := values.NewGameVersionID()
+	gameVersionID8 := values.NewGameVersionID()
+
+	imageID1 := values.NewGameImageID()
+	imageID2 := values.NewGameImageID()
+	imageID3 := values.NewGameImageID()
+	imageID4 := values.NewGameImageID()
+	imageID5 := values.NewGameImageID()
+	imageID6 := values.NewGameImageID()
+	imageID7 := values.NewGameImageID()
+	imageID8 := values.NewGameImageID()
+
+	videoID1 := values.NewGameVideoID()
+	videoID2 := values.NewGameVideoID()
+	videoID3 := values.NewGameVideoID()
+	videoID4 := values.NewGameVideoID()
+	videoID5 := values.NewGameVideoID()
+	videoID6 := values.NewGameVideoID()
+	videoID7 := values.NewGameVideoID()
+	videoID8 := values.NewGameVideoID()
+
+	fileID1 := values.NewGameFileID()
+	fileID2 := values.NewGameFileID()
+	fileID3 := values.NewGameFileID()
+
+	var imageType migrate.GameImageTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameImageTypeJpeg).
+		Select("id").
+		Take(&imageType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	var videoType migrate.GameVideoTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameVideoTypeMp4).
+		Select("id").
+		Take(&videoType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	var fileType migrate.GameFileTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameFileTypeJar).
+		Select("id").
+		Take(&fileType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      gameID1,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID1),
+							GameID:      uuid.UUID(gameID1),
+							GameImageID: uuid.UUID(imageID1),
+							GameVideoID: uuid.UUID(videoID1),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID1),
+								GameID:      uuid.UUID(gameID1),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID1),
+								GameID:      uuid.UUID(gameID1),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID1,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					time.Now(),
+				),
+				ImageID: imageID1,
+				VideoID: videoID1,
+				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+		},
+		{
+			// 実際には発生しないが、念のため確認
+			description: "ゲームが存在しないのでRecordNotFound",
+			gameID:      gameID2,
+			games:       []migrate.GameTable2{},
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
+		},
+		{
+			description: "バージョンが複数あっても最新のものを取得",
+			gameID:      gameID3,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID2),
+							GameID:      uuid.UUID(gameID3),
+							GameImageID: uuid.UUID(imageID2),
+							GameVideoID: uuid.UUID(videoID2),
+							Name:        "v1.1.0",
+							Description: "アップデート",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID2),
+								GameID:      uuid.UUID(gameID3),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID2),
+								GameID:      uuid.UUID(gameID3),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+						{
+							ID:          uuid.UUID(gameVersionID3),
+							GameID:      uuid.UUID(gameID3),
+							GameImageID: uuid.UUID(imageID3),
+							GameVideoID: uuid.UUID(videoID3),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now().Add(-time.Hour),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID3),
+								GameID:      uuid.UUID(gameID3),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID3),
+								GameID:      uuid.UUID(gameID3),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID2,
+					values.NewGameVersionName("v1.1.0"),
+					values.NewGameVersionDescription("アップデート"),
+					time.Now(),
+				),
+				ImageID: imageID2,
+				VideoID: videoID2,
+				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+		},
+		{
+			description: "バージョンが存在しないのでRecordNotFound",
+			gameID:      gameID4,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+				},
+			},
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
+		},
+		{
+			description: "別のゲームのバージョンが混ざることはない",
+			gameID:      gameID5,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID4),
+							GameID:      uuid.UUID(gameID5),
+							GameImageID: uuid.UUID(imageID4),
+							GameVideoID: uuid.UUID(videoID4),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID4),
+								GameID:      uuid.UUID(gameID5),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID4),
+								GameID:      uuid.UUID(gameID5),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+					},
+				},
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID5),
+							GameID:      uuid.UUID(gameID6),
+							GameImageID: uuid.UUID(imageID5),
+							GameVideoID: uuid.UUID(videoID5),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID5),
+								GameID:      uuid.UUID(gameID6),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID5),
+								GameID:      uuid.UUID(gameID6),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID4,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					time.Now(),
+				),
+				ImageID: imageID4,
+				VideoID: videoID4,
+				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+		},
+		{
+			description: "ファイルが存在してもエラーなし",
+			gameID:      gameID7,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID7),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID6),
+							GameID:      uuid.UUID(gameID7),
+							GameImageID: uuid.UUID(imageID6),
+							GameVideoID: uuid.UUID(videoID6),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID6),
+								GameID:      uuid.UUID(gameID7),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID6),
+								GameID:      uuid.UUID(gameID7),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+							GameFiles: []migrate.GameFileTable2{
+								{
+									ID:         uuid.UUID(fileID1),
+									GameID:     uuid.UUID(gameID7),
+									FileTypeID: fileType.ID,
+									Hash:       "hash",
+									EntryPoint: "/path/to/game.exe",
+									CreatedAt:  now,
+								},
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID6,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					time.Now(),
+				),
+				ImageID: imageID6,
+				VideoID: videoID6,
+				FileIDs: []values.GameFileID{fileID1},
+			},
+		},
+		{
+			description: "ファイルが複数でもエラーなし",
+			gameID:      gameID8,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID8),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID7),
+							GameID:      uuid.UUID(gameID8),
+							GameImageID: uuid.UUID(imageID7),
+							GameVideoID: uuid.UUID(videoID7),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID7),
+								GameID:      uuid.UUID(gameID8),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID7),
+								GameID:      uuid.UUID(gameID8),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+							GameFiles: []migrate.GameFileTable2{
+								{
+									ID:         uuid.UUID(fileID2),
+									GameID:     uuid.UUID(gameID8),
+									FileTypeID: fileType.ID,
+									Hash:       "hash",
+									EntryPoint: "/path/to/game.exe",
+									CreatedAt:  now,
+								},
+								{
+									ID:         uuid.UUID(fileID3),
+									GameID:     uuid.UUID(gameID8),
+									FileTypeID: fileType.ID,
+									Hash:       "hash",
+									EntryPoint: "/path/to/game.exe",
+									CreatedAt:  now,
+								},
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID7,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					time.Now(),
+				),
+				ImageID: imageID7,
+				VideoID: videoID7,
+				FileIDs: []values.GameFileID{fileID2, fileID3},
+			},
+		},
+		{
+			description: "lockありでもエラーなし",
+			gameID:      gameID9,
+			games: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID9),
+					Name:        "test",
+					Description: "test",
+					CreatedAt:   time.Now(),
+					GameVersions: []migrate.GameVersionTable2{
+						{
+							ID:          uuid.UUID(gameVersionID8),
+							GameID:      uuid.UUID(gameID9),
+							GameImageID: uuid.UUID(imageID8),
+							GameVideoID: uuid.UUID(videoID8),
+							Name:        "v1.0.0",
+							Description: "リリース",
+							URL:         "https://example.com",
+							CreatedAt:   time.Now(),
+							GameImage: migrate.GameImageTable2{
+								ID:          uuid.UUID(imageID8),
+								GameID:      uuid.UUID(gameID9),
+								ImageTypeID: imageType.ID,
+								CreatedAt:   now,
+							},
+							GameVideo: migrate.GameVideoTable2{
+								ID:          uuid.UUID(videoID8),
+								GameID:      uuid.UUID(gameID9),
+								VideoTypeID: videoType.ID,
+								CreatedAt:   now,
+							},
+						},
+					},
+				},
+			},
+			expectGameVersionInfo: &repository.GameVersionInfo{
+				GameVersion: domain.NewGameVersion(
+					gameVersionID8,
+					values.NewGameVersionName("v1.0.0"),
+					values.NewGameVersionDescription("リリース"),
+					time.Now(),
+				),
+				ImageID: imageID8,
+				VideoID: videoID8,
+				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.games) != 0 {
+				err := db.Create(&testCase.games).Error
+				if err != nil {
+					t.Fatalf("failed to create games: %v", err)
+				}
+			}
+
+			actualVersion, err := gameVersionRepository.GetLatestGameVersion(
+				ctx,
+				testCase.gameID,
+				testCase.lockType,
+			)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			expectVersion := testCase.expectGameVersionInfo
+			assert.Equal(t, expectVersion.GameVersion.GetID(), actualVersion.GameVersion.GetID())
+			assert.Equal(t, expectVersion.GameVersion.GetName(), actualVersion.GameVersion.GetName())
+			assert.Equal(t, expectVersion.GameVersion.GetDescription(), actualVersion.GameVersion.GetDescription())
+			assert.WithinDuration(t, expectVersion.GameVersion.GetCreatedAt(), actualVersion.GameVersion.GetCreatedAt(), 2*time.Second)
+			assert.Equal(t, expectVersion.ImageID, actualVersion.ImageID)
+			assert.Equal(t, expectVersion.VideoID, actualVersion.VideoID)
+			assert.Equal(t, expectVersion.URL, actualVersion.URL)
+
+			assert.Len(t, actualVersion.FileIDs, len(expectVersion.FileIDs))
+
+			fileIDMap := make(map[values.GameFileID]struct{}, len(actualVersion.FileIDs))
+			for _, fileID := range actualVersion.FileIDs {
+				fileIDMap[fileID] = struct{}{}
+			}
+
+			for _, expectFileID := range expectVersion.FileIDs {
+				_, ok := fileIDMap[expectFileID]
+				assert.True(t, ok)
+			}
+		})
+	}
+}
