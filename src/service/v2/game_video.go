@@ -2,27 +2,33 @@ package v2
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
+	"time"
 
+	"github.com/h2non/filetype"
+	"github.com/h2non/filetype/matchers"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 var _ service.GameVideoV2 = &GameVideo{}
 
 type GameVideo struct {
 	db                  repository.DB
-	gameRepository      repository.Game
+	gameRepository      repository.GameV2
 	gameVideoRepository repository.GameVideoV2
 	gameVideoStorage    storage.GameVideo
 }
 
 func NewGameVideo(
 	db repository.DB,
-	gameRepository repository.Game,
+	gameRepository repository.GameV2,
 	gameVideoRepository repository.GameVideoV2,
 	gameVideoStorage storage.GameVideo,
 ) *GameVideo {
@@ -34,7 +40,94 @@ func NewGameVideo(
 	}
 }
 
-func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID values.GameID) error
+func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, gameID values.GameID) (*domain.GameVideo, error) {
+	var video *domain.GameVideo
+	err := gameVideo.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gameVideo.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		videoID := values.NewGameVideoID()
+
+		eg, ctx := errgroup.WithContext(ctx)
+		fileTypePr, fileTypePw := io.Pipe()
+		filePr, filePw := io.Pipe()
+
+		eg.Go(func() error {
+			defer fileTypePr.Close()
+
+			fType, err := filetype.MatchReader(fileTypePr)
+			if err != nil {
+				return fmt.Errorf("failed to get file type: %w", err)
+			}
+
+			_, err = io.ReadAll(fileTypePr)
+			if err != nil {
+				return fmt.Errorf("failed to read file type: %w", err)
+			}
+
+			var videoType values.GameVideoType
+			if fType.Extension == matchers.TypeMp4.Extension {
+				videoType = values.GameVideoTypeMp4
+			} else {
+				return service.ErrInvalidFormat
+			}
+
+			video = domain.NewGameVideo(
+				videoID,
+				videoType,
+				time.Now(),
+			)
+
+			err = gameVideo.gameVideoRepository.SaveGameVideo(ctx, gameID, video)
+			if err != nil {
+				return fmt.Errorf("failed to save game video: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePr.Close()
+
+			err = gameVideo.gameVideoStorage.SaveGameVideo(ctx, filePr, videoID)
+			if err != nil {
+				return fmt.Errorf("failed to save game video file: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePw.Close()
+			defer fileTypePw.Close()
+
+			mw := io.MultiWriter(fileTypePw, filePw)
+			_, err = io.Copy(mw, reader)
+			if err != nil {
+				return fmt.Errorf("failed to copy video: %w", err)
+			}
+
+			return nil
+		})
+
+		err = eg.Wait()
+		if err != nil {
+			return fmt.Errorf("failed to save game video: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return video, nil
+}
 
 func (gameVideo *GameVideo) GetGameVideos(ctx context.Context, gameID values.GameID) ([]*domain.GameVideo, error)
 

@@ -14,7 +14,7 @@ type GameVideoV2 interface {
 	// SaveGameVideo
 	// ゲーム動画の保存。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
-	SaveGameVideo(ctx context.Context, reader io.Reader, gameID values.GameID) error
+	SaveGameVideo(ctx context.Context, reader io.Reader, gameID values.GameID) (*domain.GameVideo ,error)
 	// GetGameVideos
 	// ゲーム動画一覧の取得。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
