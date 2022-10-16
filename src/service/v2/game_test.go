@@ -856,18 +856,29 @@ func TestGetMyGames(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
+	user := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		"ikura-hamu",
+		values.TrapMemberStatusActive,
+	)
+
 	testCases := []test{
+		{
+			description: "getMeがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			isGetMeErr: true,
+			isErr:      true,
+		},
 		{
 			description: "特に問題ないのでエラーなし",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			games: []*domain.Game{
 				domain.NewGame(
@@ -887,11 +898,7 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			games:                 []*domain.Game{},
 			limit:                 0,
@@ -904,11 +911,7 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			games: []*domain.Game{
 				domain.NewGame(
@@ -934,11 +937,7 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			games: []*domain.Game{
 				domain.NewGame(
@@ -958,11 +957,7 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			games: []*domain.Game{
 				domain.NewGame(
@@ -982,24 +977,11 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:   user,
 			limit:  0,
 			offset: 1,
 			isErr:  true,
 			err:    service.ErrOffsetWithoutLimit,
-		},
-		{
-			description: "getMeがエラーなのでエラー",
-			authSession: domain.NewOIDCSession(
-				"access token",
-				time.Now().Add(time.Hour),
-			),
-			isGetMeErr: true,
-			isErr:      true,
 		},
 		{
 			description: "GetGamesByUserがエラーなのでエラー",
@@ -1007,11 +989,7 @@ func TestGetMyGames(t *testing.T) {
 				"access token",
 				time.Now().Add(time.Hour),
 			),
-			user: service.NewUserInfo(
-				values.NewTrapMemberID(uuid.New()),
-				"ikura-hamu",
-				values.TrapMemberStatusActive,
-			),
+			user:                  user,
 			executeGetGamesByUser: true,
 			GetGamesByUserErr:     errors.New("error"),
 			isErr:                 true,
@@ -1033,7 +1011,8 @@ func TestGetMyGames(t *testing.T) {
 				mockUserCache.
 					EXPECT().
 					GetMe(gomock.Any(), testCase.authSession.GetAccessToken()).
-					Return(testCase.user, nil)
+					Return(testCase.user, nil).
+					AnyTimes()
 			}
 
 			if testCase.executeGetGamesByUser {
