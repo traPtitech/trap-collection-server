@@ -130,7 +130,20 @@ func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader,
 }
 
 func (gameVideo *GameVideo) GetGameVideos(ctx context.Context, gameID values.GameID) ([]*domain.GameVideo, error) {
-	return nil, nil
+	_, err := gameVideo.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	videos, err := gameVideo.gameVideoRepository.GetGameVideos(ctx, gameID, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game videos: %w", err)
+	}
+
+	return videos, nil
 }
 
 func (gameVideo *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (values.GameVideoTmpURL, error) {
