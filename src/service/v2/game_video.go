@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/h2non/filetype"
@@ -147,7 +148,43 @@ func (gameVideo *GameVideo) GetGameVideos(ctx context.Context, gameID values.Gam
 }
 
 func (gameVideo *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (values.GameVideoTmpURL, error) {
-	return nil, nil
+	_, err := gameVideo.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	var url *url.URL
+	err = gameVideo.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		video, err := gameVideo.gameVideoRepository.GetGameVideo(ctx, videoID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameVideoID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game video file: %w", err)
+		}
+
+		if video.GameID != gameID {
+			// gameIdに対応したゲームにゲーム動画が紐づいていない場合も、
+			// 念の為閲覧権限がないゲームに紐づいた動画IDを知ることができないようにするため、
+			// 動画が存在しない場合と同じErrInvalidGameVideoIDを返す
+			return service.ErrInvalidGameVideoID
+		}
+
+		url, err = gameVideo.gameVideoStorage.GetTempURL(ctx, video.GameVideo, time.Minute)
+		if err != nil {
+			return fmt.Errorf("failed to get game video: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return url, nil
 }
 
 func (gameVideo *GameVideo) GetGameVideoMeta(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (*domain.GameVideo, error) {
