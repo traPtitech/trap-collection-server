@@ -129,8 +129,14 @@ func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader,
 	return video, nil
 }
 
-func (gameVideo *GameVideo) GetGameVideos(ctx context.Context, gameID values.GameID) ([]*domain.GameVideo, error)
+func (gameVideo *GameVideo) GetGameVideos(ctx context.Context, gameID values.GameID) ([]*domain.GameVideo, error) {
+	return nil, nil
+}
 
-func (gameVideo *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (values.GameVideoTmpURL, error)
+func (gameVideo *GameVideo) GetGameVideo(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (values.GameVideoTmpURL, error) {
+	return nil, nil
+}
 
-func (gameVideo *GameVideo) GetGameVideoMeta(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (*domain.GameVideo, error)
+func (gameVideo *GameVideo) GetGameVideoMeta(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (*domain.GameVideo, error) {
+	return nil, nil
+}
