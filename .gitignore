@@ -8,3 +8,4 @@ tmp
 !src/repository/mock/db.go
 cache/*
 src/handler/v2/openapi/openapi.gen.go
+.idea
