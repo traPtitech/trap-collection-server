@@ -30,9 +30,6 @@ func NewGameVersion(gameVersionService service.GameVersionV2) *GameVersion {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type gameVersionUnimplemented interface {
-	// ゲームの最新バージョンの取得
-	// (GET /games/{gameID}/versions/latest)
-	GetLatestGameVersion(ctx echo.Context, gameID openapi.GameIDInPath) error
 }
 
 // ゲームバージョン一覧の取得
@@ -224,6 +221,66 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameVersion{
+		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
+		Name:        string(gameVersionInfo.GameVersion.GetName()),
+		Description: string(gameVersionInfo.GameVersion.GetDescription()),
+		CreatedAt:   gameVersionInfo.GetCreatedAt(),
+		ImageID:     openapi.GameImageID(gameVersionInfo.ImageID),
+		VideoID:     openapi.GameVideoID(gameVersionInfo.VideoID),
+		Url:         resURL,
+		Files:       resFiles,
+	})
+}
+
+// ゲームの最新バージョンの取得
+// (GET /games/{gameID}/versions/latest)
+func (gameVersion *GameVersion) GetLatestGameVersion(ctx echo.Context, gameID openapi.GameIDInPath) error {
+	gameVersionInfo, err := gameVersion.gameVersionService.GetLatestGameVersion(
+		ctx.Request().Context(),
+		values.NewGameIDFromUUID(gameID),
+	)
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrNoGameVersion) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game version")
+	}
+	if err != nil {
+		log.Printf("failed to get latest game version: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get latest game version")
+	}
+
+	var resURL *openapi.GameURL
+	urlValue, ok := gameVersionInfo.Assets.URL.Value()
+	if ok {
+		v := (*url.URL)(urlValue).String()
+		resURL = &v
+	}
+
+	var resFiles *openapi.GameVersionFiles
+	windows, windowsOk := gameVersionInfo.Assets.Windows.Value()
+	mac, macOk := gameVersionInfo.Assets.Mac.Value()
+	jar, jarOk := gameVersionInfo.Assets.Jar.Value()
+	if windowsOk || macOk || jarOk {
+		resFiles = &openapi.GameVersionFiles{}
+
+		if windowsOk {
+			v := (uuid.UUID)(windows)
+			resFiles.Win32 = &v
+		}
+
+		if macOk {
+			v := (uuid.UUID)(mac)
+			resFiles.Darwin = &v
+		}
+
+		if jarOk {
+			v := (uuid.UUID)(jar)
+			resFiles.Jar = &v
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.GameVersion{
 		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
 		Name:        string(gameVersionInfo.GameVersion.GetName()),
 		Description: string(gameVersionInfo.GameVersion.GetDescription()),
