@@ -17,19 +17,12 @@ import (
 
 type GameVersion struct {
 	gameVersionService service.GameVersionV2
-	gameVersionUnimplemented
 }
 
 func NewGameVersion(gameVersionService service.GameVersionV2) *GameVersion {
 	return &GameVersion{
 		gameVersionService: gameVersionService,
 	}
-}
-
-// gameVersionUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type gameVersionUnimplemented interface {
 }
 
 // ゲームバージョン一覧の取得
