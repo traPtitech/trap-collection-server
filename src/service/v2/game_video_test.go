@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
@@ -189,6 +190,134 @@ func TestSaveGameVideo(t *testing.T) {
 			assert.WithinDuration(t, time.Now(), video.GetCreatedAt(), time.Second)
 
 			assert.Equal(t, expectBytes, buf.Bytes())
+		})
+	}
+}
+
+func TestGetGameVideos(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
+	mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, nil)
+
+	gameVideoService := NewGameVideo(
+		mockDB,
+		mockGameRepository,
+		mockGameVideoRepository,
+		mockGameVideoStorage,
+	)
+
+	type test struct {
+		description          string
+		gameID               values.GameID
+		getGameErr           error
+		executeGetGameVideos bool
+		getGameVideosErr     error
+		isErr                bool
+		gameVideos           []*domain.GameVideo
+		err                  error
+	}
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description:          "特に問題ないのでエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameVideos: true,
+			gameVideos: []*domain.GameVideo{
+				domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					now,
+				),
+			},
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:          "動画がなくてもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameVideos: true,
+			gameVideos:           []*domain.GameVideo{},
+		},
+		{
+			description:          "動画が複数でもエラーなし",
+			gameID:               values.NewGameID(),
+			executeGetGameVideos: true,
+			gameVideos: []*domain.GameVideo{
+				domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					now,
+				),
+				domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					now.Add(-time.Second),
+				),
+			},
+		},
+		{
+			description:          "GetGameVideosがエラーなのでエラー",
+			gameID:               values.NewGameID(),
+			executeGetGameVideos: true,
+			getGameVideosErr:     errors.New("error"),
+			isErr:                true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetGameVideos {
+				mockGameVideoRepository.
+					EXPECT().
+					GetGameVideos(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+					Return(testCase.gameVideos, testCase.getGameVideosErr)
+			}
+
+			gameVideos, err := gameVideoService.GetGameVideos(ctx, testCase.gameID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			for i, gameVideo := range gameVideos {
+				assert.Equal(t, testCase.gameVideos[i].GetID(), gameVideo.GetID())
+				assert.Equal(t, testCase.gameVideos[i].GetType(), gameVideo.GetType())
+				assert.Equal(t, testCase.gameVideos[i].GetCreatedAt(), gameVideo.GetCreatedAt())
+			}
 		})
 	}
 }
