@@ -3,14 +3,17 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameVideo struct {
-	gameVideoUnimplemented
+	gameVideoService service.GameVideoV2
 }
 
-func NewGameVideo() *GameVideo {
-	return &GameVideo{}
+func NewGameVideo(gameVideoService service.GameVideoV2) *GameVideo {
+	return &GameVideo{
+		gameVideoService: gameVideoService,
+	}
 }
 
 // gameVideoUnimplemented
