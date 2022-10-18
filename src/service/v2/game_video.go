@@ -188,5 +188,28 @@ func (gameVideo *GameVideo) GetGameVideo(ctx context.Context, gameID values.Game
 }
 
 func (gameVideo *GameVideo) GetGameVideoMeta(ctx context.Context, gameID values.GameID, videoID values.GameVideoID) (*domain.GameVideo, error) {
-	return nil, nil
+	_, err := gameVideo.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	video, err := gameVideo.gameVideoRepository.GetGameVideo(ctx, videoID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameVideoID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game video file: %w", err)
+	}
+
+	if video.GameID != gameID {
+		// gameIdに対応したゲームにゲーム動画が紐づいていない場合も、
+		// 念の為閲覧権限がないゲームに紐づいた動画IDを知ることができないようにするため、
+		// 動画が存在しない場合と同じErrInvalidGameVideoIDを返す
+		return nil, service.ErrInvalidGameVideoID
+	}
+
+	return video.GameVideo, nil
 }
