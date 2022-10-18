@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -318,6 +319,168 @@ func TestGetGameVideos(t *testing.T) {
 				assert.Equal(t, testCase.gameVideos[i].GetType(), gameVideo.GetType())
 				assert.Equal(t, testCase.gameVideos[i].GetCreatedAt(), gameVideo.GetCreatedAt())
 			}
+		})
+	}
+}
+
+func TestGetGameVideo(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
+	mockGameVideoStorage := mockStorage.NewGameVideo(ctrl, nil)
+
+	gameVideoService := NewGameVideo(
+		mockDB,
+		mockGameRepository,
+		mockGameVideoRepository,
+		mockGameVideoStorage,
+	)
+
+	type test struct {
+		description         string
+		gameID              values.GameID
+		gameVideoID         values.GameVideoID
+		getGameErr          error
+		executeGetGameVideo bool
+		video               *repository.GameVideoInfo
+		getGameVideoErr     error
+		executeGetTempURL   bool
+		videoURL            values.GameVideoTmpURL
+		getTempURLErr       error
+		isErr               bool
+		err                 error
+	}
+
+	urlLink, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode image: %v", err)
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	testCases := []test{
+		{
+			description:         "特に問題ないのでエラーなし",
+			gameID:              gameID1,
+			executeGetGameVideo: true,
+			video: &repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					time.Now(),
+				),
+				GameID: gameID1,
+			},
+			executeGetTempURL: true,
+			videoURL:          values.NewGameVideoTmpURL(urlLink),
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:         "GetGameVideoがErrRecordNotFoundなのでErrInvalidGameVideoID",
+			gameID:              values.NewGameID(),
+			executeGetGameVideo: true,
+			getGameVideoErr:     repository.ErrRecordNotFound,
+			isErr:               true,
+			err:                 service.ErrInvalidGameVideoID,
+		},
+		{
+			description:         "ゲーム動画に紐づくゲームIDが違うのでErrInvalidGameVideoID",
+			gameID:              values.NewGameID(),
+			executeGetGameVideo: true,
+			video: &repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					time.Now(),
+				),
+				GameID: values.NewGameID(),
+			},
+			isErr: true,
+			err:   service.ErrInvalidGameVideoID,
+		},
+		{
+			description:         "GetGameVideoがエラーなのでエラー",
+			gameID:              values.NewGameID(),
+			executeGetGameVideo: true,
+			getGameVideoErr:     errors.New("error"),
+			isErr:               true,
+		},
+		{
+			description:         "GetTempURLがエラーなのでエラー",
+			gameID:              gameID2,
+			executeGetGameVideo: true,
+			video: &repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					values.NewGameVideoID(),
+					values.GameVideoTypeMp4,
+					time.Now(),
+				),
+				GameID: gameID2,
+			},
+			executeGetTempURL: true,
+			videoURL:          values.NewGameVideoTmpURL(urlLink),
+			getTempURLErr:     errors.New("error"),
+			isErr:             true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(ctx, testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetGameVideo {
+				mockGameVideoRepository.
+					EXPECT().
+					GetGameVideo(ctx, testCase.gameVideoID, repository.LockTypeRecord).
+					Return(testCase.video, testCase.getGameVideoErr)
+			}
+
+			if testCase.executeGetTempURL {
+				mockGameVideoStorage.
+					EXPECT().
+					GetTempURL(ctx, testCase.video.GameVideo, time.Minute).
+					Return(testCase.videoURL, testCase.getTempURLErr)
+			}
+
+			tmpURL, err := gameVideoService.GetGameVideo(ctx, testCase.gameID, testCase.gameVideoID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.videoURL, tmpURL)
 		})
 	}
 }
