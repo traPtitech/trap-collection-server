@@ -37,9 +37,7 @@ type GameV2 interface {
 
 	//GetGamesByUser
 	//ユーザーのuuidと取得する個数の上限(limit)と開始位置(offset)を指定して、その人が作成したゲームを取得する。
-	//上限なしはlimit=0。返り値のintは制限をかけないときのその人が作ったゲーム数で、エラーのときは0また、offsetのみを指定することはできない。
+	//上限なしはlimit=0。返り値のintは制限をかけないときのその人が作ったゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
 	//limitが負のとき、ErrNegativeLimitを返す。
-	//offsetを指定してlimitを設定しなかったとき、ErrOffsetWithoutLimitを返すが、これはserviceで止める。
-	//それ以外limitとoffsetがまずかった場合、ErrBadLimitAndOffsetを返す。
 	GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error)
 }
