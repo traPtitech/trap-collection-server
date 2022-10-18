@@ -99,3 +99,43 @@ func (gameVideo *GameVideoV2) GetGameVideo(ctx context.Context, gameVideoID valu
 		GameID: values.NewGameIDFromUUID(video.GameID),
 	}, nil
 }
+
+func (gameVideo *GameVideoV2) GetGameVideos(ctx context.Context, gameID values.GameID, lockType repository.LockType) ([]*domain.GameVideo, error) {
+	db, err := gameVideo.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = gameVideo.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var videos []migrate.GameVideoTable2
+	err = db.
+		Joins("GameVideoType").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		Find(&videos).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game videos: %w", err)
+	}
+
+	gameVideos := make([]*domain.GameVideo, 0, len(videos))
+	for _, video := range videos {
+		var videoType values.GameVideoType
+		if video.GameVideoType.Name == migrate.GameVideoTypeMp4 {
+			videoType = values.GameVideoTypeMp4
+		} else {
+			return nil, fmt.Errorf("invalid video type: %s", video.GameVideoType.Name)
+		}
+
+		gameVideos = append(gameVideos, domain.NewGameVideo(
+			values.NewGameVideoIDFromUUID(video.ID),
+			videoType,
+			video.CreatedAt,
+		))
+	}
+
+	return gameVideos, nil
+}
