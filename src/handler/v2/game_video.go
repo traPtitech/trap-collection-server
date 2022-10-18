@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -107,4 +108,22 @@ func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDI
 		Mime:      mime,
 		CreatedAt: video.GetCreatedAt(),
 	})
+}
+
+// ゲーム動画のバイナリの取得
+// (GET /games/{gameID}/videos/{gameVideoID})
+func (gameVideo *GameVideo) GetGameVideo(c echo.Context, gameID openapi.GameIDInPath, gameVideoID openapi.GameVideoIDInPath) error {
+	tmpURL, err := gameVideo.gameVideoService.GetGameVideo(c.Request().Context(), values.NewGameIDFromUUID(gameID), values.NewGameVideoIDFromUUID(gameVideoID))
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrInvalidGameVideoID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameVideoID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game video: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game video")
+	}
+
+	return c.Redirect(http.StatusSeeOther, (*url.URL)(tmpURL).String())
 }
