@@ -74,7 +74,7 @@ func (gameVideo *GameVideoV2) GetGameVideo(ctx context.Context, gameVideoID valu
 	var video migrate.GameVideoTable2
 	err = db.
 		Joins("GameVideoType").
-		Where("v2_game_video.id = ?", uuid.UUID(gameVideoID)).
+		Where("v2_game_videos.id = ?", uuid.UUID(gameVideoID)).
 		Take(&video).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, repository.ErrRecordNotFound
