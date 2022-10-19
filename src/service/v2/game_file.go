@@ -156,8 +156,21 @@ func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID,
 	return url, nil
 }
 
-func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID) ([]*domain.GameFile, error) {
-	return nil, nil
+func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) ([]*domain.GameFile, error) {
+	_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	gameFiles, err := gameFile.gameFileRepository.GetGameFiles(ctx, gameID, repository.LockTypeNone, environment.AcceptGameFileTypes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game files: %w", err)
+	}
+
+	return gameFiles, nil
 }
 
 func (gameFile *GameFile) GetGameFileMeta(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (*domain.GameFile, error) {
