@@ -114,3 +114,15 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 
 	return file, nil
 }
+
+func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (values.GameFileTmpURL, error) {
+	return nil, nil
+}
+
+func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID) ([]*domain.GameFile, error) {
+	return nil, nil
+}
+
+func (gameFile *GameFile) GetGameFileMeta(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (*domain.GameFile, error) {
+	return nil, nil
+}
