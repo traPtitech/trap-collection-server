@@ -74,3 +74,12 @@ func (edition *Edition) CreateEdition(
 
 	return newEdition, nil
 }
+
+func (edition *Edition) GetEditions(ctx context.Context) ([]*domain.LauncherVersion, error) {
+	editions, err := edition.editionRepository.GetEditions(ctx, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get editions: %w", err)
+	}
+
+	return editions, nil
+}
