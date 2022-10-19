@@ -135,12 +135,12 @@ func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID,
 			return fmt.Errorf("failed to get game file: %w", err)
 		}
 
-			if file.GameID != gameID {
-				// gameIdに対応したゲームにゲームファイルが紐づいていない場合も、
-				// 念の為閲覧権限がないゲームに紐づいたファイルIDを知ることができないようにするため、
-				// ファイルが存在しない場合と同じErrInvalidGameFileIDを返す
-				return service.ErrInvalidGameFileID
-			}
+		if file.GameID != gameID {
+			// gameIdに対応したゲームにゲームファイルが紐づいていない場合も、
+			// 念の為閲覧権限がないゲームに紐づいたファイルIDを知ることができないようにするため、
+			// ファイルが存在しない場合と同じErrInvalidGameFileIDを返す
+			return service.ErrInvalidGameFileID
+		}
 
 		url, err = gameFile.gameFileStorage.GetTempURL(ctx, file.GameFile, time.Minute)
 		if err != nil {
