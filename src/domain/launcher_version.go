@@ -78,6 +78,11 @@ func (lv *LauncherVersion) SetQuestionnaireURL(questionnaireURL values.LauncherV
 	lv.haveQuestionnaire = true
 }
 
+func (lv *LauncherVersion) UnsetQuestionnaireURL() {
+	lv.questionnaireURL = nil
+	lv.haveQuestionnaire = false
+}
+
 func (lv *LauncherVersion) GetCreatedAt() time.Time {
 	return lv.createdAt
 }
