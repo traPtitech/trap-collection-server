@@ -3,6 +3,7 @@ servers:
   - url: https://collection.trap.jp/api/v2
   - url: https://collection-dev.trapti.tech/api/v2
   - url: http://localhost:3000/api/v2
+  - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
   version: '2.0.0'
