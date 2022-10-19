@@ -48,6 +48,12 @@ var repositorySet = wire.NewSet(
 	wire.Bind(new(repository.GameV2), new(*gorm2.GameV2)),
 	gorm2.NewGameV2,
 
+	wire.Bind(new(repository.GameVersionV2), new(*gorm2.GameVersionV2)),
+	gorm2.NewGameVersionV2,
+
 	wire.Bind(new(repository.GameVideoV2), new(*gorm2.GameVideoV2)),
 	gorm2.NewGameVideoV2,
+
+	wire.Bind(new(repository.GameFileV2), new(*gorm2.GameFileV2)),
+	gorm2.NewGameFileV2,
 )
