@@ -306,3 +306,103 @@ func (edition *Edition) UpdateEditionGameVersions(
 
 	return gameVersions, nil
 }
+
+func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID values.LauncherVersionID) ([]*service.GameVersionWithGame, error) {
+	_, err := edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidEditionID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition: %w", err)
+	}
+
+	gameVersions, err := edition.editionRepository.GetEditionGameVersions(ctx, editionID, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game versions: %w", err)
+	}
+
+	fileIDs := []values.GameFileID{}
+	gameIDs := make([]values.GameID, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		gameIDs = append(gameIDs, gameVersion.GameID)
+		fileIDs = append(fileIDs, gameVersion.FileIDs...)
+	}
+
+	games, err := edition.gameRepository.GetGamesByIDs(ctx, gameIDs, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game versions: %w", err)
+	}
+
+	gameMap := make(map[values.GameID]*domain.Game, len(games))
+	for _, game := range games {
+		gameMap[game.GetID()] = game
+	}
+
+	files, err := edition.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeNone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game files: %w", err)
+	}
+
+	fileMap := make(map[values.GameFileID]*domain.GameFile, len(files))
+	for _, file := range files {
+		fileMap[file.GetID()] = file.GameFile
+	}
+
+	gameVersionInfos := make([]*service.GameVersionWithGame, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		game, ok := gameMap[gameVersion.GameID]
+		if !ok {
+			return nil, errors.New("game not found")
+		}
+
+		assets := &service.Assets{
+			URL: gameVersion.URL,
+		}
+		for _, id := range gameVersion.FileIDs {
+			file, ok := fileMap[id]
+			if !ok {
+				log.Printf("error: game file not found(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
+				continue
+			}
+
+			switch file.GetFileType() {
+			case values.GameFileTypeWindows:
+				if _, ok := assets.Windows.Value(); ok {
+					log.Printf("error: duplicate file type windows(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Windows = types.NewOption(file.GetID())
+			case values.GameFileTypeMac:
+				if _, ok := assets.Mac.Value(); ok {
+					log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Mac = types.NewOption(file.GetID())
+			case values.GameFileTypeJar:
+				if _, ok := assets.Jar.Value(); ok {
+					log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
+					continue
+				}
+
+				assets.Jar = types.NewOption(file.GetID())
+			default:
+				log.Printf("error: invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameVersion.GameID, gameVersion.GetID(), id, file.GetFileType())
+				continue
+			}
+		}
+
+		gameVersionInfos = append(gameVersionInfos, &service.GameVersionWithGame{
+			GameVersion: service.GameVersionInfo{
+				GameVersion: gameVersion.GameVersion,
+				ImageID:     gameVersion.ImageID,
+				VideoID:     gameVersion.VideoID,
+				Assets:      assets,
+			},
+			Game: game,
+		})
+	}
+
+	return gameVersionInfos, nil
+}
