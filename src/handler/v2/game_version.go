@@ -38,13 +38,18 @@ func (gameVersion *GameVersion) GetGameVersion(c echo.Context, gameID openapi.Ga
 		offset = uint(*params.Offset)
 	}
 
+	var param *service.GetGameVersionsParams
+	if limit != 0 || offset != 0 {
+		param = &service.GetGameVersionsParams{
+			Limit:  limit,
+			Offset: offset,
+		}
+	}
+
 	num, versions, err := gameVersion.gameVersionService.GetGameVersions(
 		c.Request().Context(),
 		values.NewGameIDFromUUID(gameID),
-		&service.GetGameVersionsParams{
-			Limit:  limit,
-			Offset: offset,
-		},
+		param,
 	)
 	if errors.Is(err, service.ErrInvalidGameID) {
 		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
