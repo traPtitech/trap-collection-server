@@ -37,6 +37,14 @@ type GameVersionV2 interface {
 		offset uint,
 		lockType LockType,
 	) (uint, []*GameVersionInfo, error)
+	// GetGameVersionsByIDs
+	// ゲームバージョンIDの一覧からゲームバージョンの一覧を取得。
+	// 並び順は引数の順番。
+	GetGameVersionsByIDs(
+		ctx context.Context,
+		gameVersionIDs []values.GameVersionID,
+		lockType LockType,
+	) ([]*GameVersionInfoWithGameID, error)
 	// GetLatestGameVersion
 	// ゲームに対応する最新のゲームバージョンの取得。
 	GetLatestGameVersion(
@@ -48,6 +56,15 @@ type GameVersionV2 interface {
 
 type GameVersionInfo struct {
 	*domain.GameVersion
+	ImageID values.GameImageID
+	VideoID values.GameVideoID
+	URL     OptionURLLink
+	FileIDs []values.GameFileID
+}
+
+type GameVersionInfoWithGameID struct {
+	*domain.GameVersion
+	GameID  values.GameID
 	ImageID values.GameImageID
 	VideoID values.GameVideoID
 	URL     OptionURLLink
