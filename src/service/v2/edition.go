@@ -96,3 +96,42 @@ func (edition *Edition) GetEdition(ctx context.Context, editionID values.Launche
 
 	return editionValue, nil
 }
+
+func (edition *Edition) UpdateEdition(
+	ctx context.Context,
+	editionID values.LauncherVersionID,
+	name values.LauncherVersionName,
+	questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL],
+) (*domain.LauncherVersion, error) {
+	var editionValue *domain.LauncherVersion
+	err := edition.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		var err error
+		editionValue, err = edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidEditionID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get edition: %w", err)
+		}
+
+		editionValue.SetName(name)
+
+		if url, ok := questionnaireURL.Value(); ok {
+			editionValue.SetQuestionnaireURL(url)
+		} else {
+			editionValue.UnsetQuestionnaireURL()
+		}
+
+		err = edition.editionRepository.UpdateEdition(ctx, editionValue)
+		if err != nil {
+			return fmt.Errorf("failed to save edition: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return editionValue, nil
+}
