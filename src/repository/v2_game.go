@@ -40,4 +40,8 @@ type GameV2 interface {
 	//上限なしはlimit=0。返り値のintは制限をかけないときのその人が作ったゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
 	//limitが負のとき、ErrNegativeLimitを返す。
 	GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error)
+
+	//GetGamesByIDs
+	//指定されたidのゲームを取得する。
+	GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType LockType) ([]*domain.Game, error)
 }
