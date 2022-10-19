@@ -66,6 +66,9 @@ var (
 		wire.Bind(new(service.GameVideoV2), new(*v2.GameVideo)),
 		v2.NewGameVideo,
 
+		wire.Bind(new(service.GameVersionV2), new(*v2.GameVersion)),
+		v2.NewGameVersion,
+
 		v2.NewUser,
 	)
 )

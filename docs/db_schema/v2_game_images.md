@@ -15,6 +15,8 @@ CREATE TABLE `v2_game_images` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `fk_v2_game_images_game_image_type` (`image_type_id`),
+  KEY `fk_games_game_image2s` (`game_id`),
+  CONSTRAINT `fk_games_game_image2s` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
   CONSTRAINT `fk_v2_game_images_game_image_type` FOREIGN KEY (`image_type_id`) REFERENCES `game_image_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -26,7 +28,7 @@ CREATE TABLE `v2_game_images` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | varchar(36) |  | false | [v2_game_versions](v2_game_versions.md) |  | ゲーム画像UUID |
-| game_id | varchar(36) |  | false |  |  | ゲームUUID |
+| game_id | varchar(36) |  | false |  | [games](games.md) | ゲームUUID |
 | image_type_id | tinyint(4) |  | false |  | [game_image_types](game_image_types.md) | ゲーム画像の種類のUUID |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
 
@@ -34,6 +36,7 @@ CREATE TABLE `v2_game_images` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| fk_games_game_image2s | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
 | fk_v2_game_images_game_image_type | FOREIGN KEY | FOREIGN KEY (image_type_id) REFERENCES game_image_types (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
@@ -41,6 +44,7 @@ CREATE TABLE `v2_game_images` (
 
 | Name | Definition |
 | ---- | ---------- |
+| fk_games_game_image2s | KEY fk_games_game_image2s (game_id) USING BTREE |
 | fk_v2_game_images_game_image_type | KEY fk_v2_game_images_game_image_type (image_type_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 

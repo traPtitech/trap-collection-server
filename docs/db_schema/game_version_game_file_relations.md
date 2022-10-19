@@ -14,7 +14,8 @@ CREATE TABLE `game_version_game_file_relations` (
   PRIMARY KEY (`game_version_id`,`game_file_id`),
   KEY `fk_game_version_game_file_relations_game_file_table2_v2` (`game_file_id`),
   CONSTRAINT `fk_game_version_game_file_relations_game_file_table2_v2` FOREIGN KEY (`game_file_id`) REFERENCES `v2_game_files` (`id`),
-  CONSTRAINT `fk_game_version_game_file_relations_game_version_table2_v2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
+  CONSTRAINT `fk_game_version_game_file_relations_game_version_table2_v2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`),
+  CONSTRAINT `fk_game_version_game_file_relations_game_version_table2_v4` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -33,6 +34,7 @@ CREATE TABLE `game_version_game_file_relations` (
 | ---- | ---- | ---------- |
 | fk_game_version_game_file_relations_game_file_table2_v2 | FOREIGN KEY | FOREIGN KEY (game_file_id) REFERENCES v2_game_files (id) |
 | fk_game_version_game_file_relations_game_version_table2_v2 | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id) |
+| fk_game_version_game_file_relations_game_version_table2_v4 | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (game_version_id, game_file_id) |
 
 ## Indexes
