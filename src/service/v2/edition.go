@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -82,4 +83,16 @@ func (edition *Edition) GetEditions(ctx context.Context) ([]*domain.LauncherVers
 	}
 
 	return editions, nil
+}
+
+func (edition *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
+	editionValue, err := edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidEditionID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition: %w", err)
+	}
+
+	return editionValue, nil
 }
