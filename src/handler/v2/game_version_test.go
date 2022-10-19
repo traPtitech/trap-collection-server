@@ -38,8 +38,7 @@ func TestGetGameVersion(t *testing.T) {
 		gameID             values.GameID
 		limit              *int
 		offset             *int
-		expectLimit        uint
-		expectOffset       uint
+		expectParams       *service.GetGameVersionsParams
 		num                uint
 		gameVersions       []*service.GameVersionInfo
 		GetGameVersionErr  error
@@ -380,8 +379,10 @@ func TestGetGameVersion(t *testing.T) {
 			description: "limitが存在しても問題なし",
 			gameID:      gameID,
 			limit:       &one,
-			expectLimit: 1,
-			num:         2,
+			expectParams: &service.GetGameVersionsParams{
+				Limit: 1,
+			},
+			num: 2,
 			gameVersions: []*service.GameVersionInfo{
 				{
 					GameVersion: domain.NewGameVersion(
@@ -413,13 +414,15 @@ func TestGetGameVersion(t *testing.T) {
 			},
 		},
 		{
-			description:  "offsetが存在しても問題なし",
-			gameID:       gameID,
-			limit:        &one,
-			offset:       &one,
-			expectLimit:  1,
-			expectOffset: 1,
-			num:          2,
+			description: "offsetが存在しても問題なし",
+			gameID:      gameID,
+			limit:       &one,
+			offset:      &one,
+			expectParams: &service.GetGameVersionsParams{
+				Limit:  1,
+				Offset: 1,
+			},
+			num: 2,
 			gameVersions: []*service.GameVersionInfo{
 				{
 					GameVersion: domain.NewGameVersion(
@@ -461,10 +464,7 @@ func TestGetGameVersion(t *testing.T) {
 
 			mockGameVersionService.
 				EXPECT().
-				GetGameVersions(gomock.Any(), testCase.gameID, &service.GetGameVersionsParams{
-					Limit:  testCase.expectLimit,
-					Offset: testCase.expectOffset,
-				}).
+				GetGameVersions(gomock.Any(), testCase.gameID, testCase.expectParams).
 				Return(testCase.num, testCase.gameVersions, testCase.GetGameVersionErr)
 
 			err := gameVersionHandler.GetGameVersion(c, uuid.UUID(testCase.gameID), openapi.GetGameVersionParams{
