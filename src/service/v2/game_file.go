@@ -1,8 +1,18 @@
 package v2
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"time"
+
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+	"golang.org/x/sync/errgroup"
 )
 
 type GameFile struct {
@@ -24,4 +34,83 @@ func NewGameFile(
 		gameFileRepository: gameFileRepository,
 		gameFileStorage:    gameFileStorage,
 	}
+}
+
+func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID values.GameID, fileType values.GameFileType, entryPoint values.GameFileEntryPoint) (*domain.GameFile, error) {
+	var file *domain.GameFile
+	err := gameFile.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
+
+		fileID := values.NewGameFileID()
+
+		eg, ctx := errgroup.WithContext(ctx)
+		hashPr, hashPw := io.Pipe()
+		filePr, filePw := io.Pipe()
+
+		eg.Go(func() error {
+			defer hashPr.Close()
+
+			hash, err := values.NewGameFileHash(hashPr)
+			if err != nil {
+				return fmt.Errorf("failed to get hash: %w", err)
+			}
+
+			file = domain.NewGameFile(
+				fileID,
+				fileType,
+				entryPoint,
+				hash,
+				time.Now(),
+			)
+
+			err = gameFile.gameFileRepository.SaveGameFile(ctx, gameID, file)
+			if err != nil {
+				return fmt.Errorf("failed to save game file: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer filePr.Close()
+
+			err = gameFile.gameFileStorage.SaveGameFile(ctx, filePr, fileID)
+			if err != nil {
+				return fmt.Errorf("failed to save game file: %w", err)
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
+			defer hashPw.Close()
+			defer filePw.Close()
+
+			mw := io.MultiWriter(hashPw, filePw)
+			_, err = io.Copy(mw, reader)
+			if err != nil {
+				return fmt.Errorf("failed to copy file: %w", err)
+			}
+
+			return nil
+		})
+
+		err = eg.Wait()
+		if err != nil {
+			return fmt.Errorf("failed to save game file: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return file, nil
 }
