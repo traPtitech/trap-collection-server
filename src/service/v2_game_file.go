@@ -14,7 +14,7 @@ type GameFileV2 interface {
 	// SaveGameFile
 	// ゲームファイルの保存。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
-	SaveGameFiel(ctx context.Context, reader io.Reader, gameID values.GameID, fileType values.GameFileType, entryPoint values.GameFileEntryPoint) (*domain.GameFile, error)
+	SaveGameFile(ctx context.Context, reader io.Reader, gameID values.GameID, fileType values.GameFileType, entryPoint values.GameFileEntryPoint) (*domain.GameFile, error)
 	// GetGameFile
 	// ゲームファイル一覧の取得。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。

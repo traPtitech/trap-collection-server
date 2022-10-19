@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -116,7 +117,43 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 }
 
 func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (values.GameFileTmpURL, error) {
-	return nil, nil
+	_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	var url *url.URL
+	err = gameFile.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		file, err := gameFile.gameFileRepository.GetGameFile(ctx, fileID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameFileID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game file: %w", err)
+		}
+
+			if file.GameID != gameID {
+				// gameIdに対応したゲームにゲームファイルが紐づいていない場合も、
+				// 念の為閲覧権限がないゲームに紐づいたファイルIDを知ることができないようにするため、
+				// ファイルが存在しない場合と同じErrInvalidGameFileIDを返す
+				return service.ErrInvalidGameFileID
+			}
+
+		url, err = gameFile.gameFileStorage.GetTempURL(ctx, file.GameFile, time.Minute)
+		if err != nil {
+			return fmt.Errorf("failed to get game file: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return url, nil
 }
 
 func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID) ([]*domain.GameFile, error) {
