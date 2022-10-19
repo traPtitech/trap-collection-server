@@ -116,7 +116,7 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 	return file, nil
 }
 
-func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (values.GameFileTmpURL, error) {
+func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID, fileID values.GameFileID, environment *values.LauncherEnvironment) (values.GameFileTmpURL, error) {
 	_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID
@@ -127,7 +127,7 @@ func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID,
 
 	var url *url.URL
 	err = gameFile.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		file, err := gameFile.gameFileRepository.GetGameFile(ctx, fileID, repository.LockTypeRecord)
+		file, err := gameFile.gameFileRepository.GetGameFile(ctx, fileID, repository.LockTypeRecord, environment.AcceptGameFileTypes())
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrInvalidGameFileID
 		}

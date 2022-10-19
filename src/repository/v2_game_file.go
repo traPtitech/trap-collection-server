@@ -20,12 +20,12 @@ type GameFileV2 interface {
 	// GetGameFile
 	// ゲームファイルのメタデータの取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
-	GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType LockType) (*GameFileInfo, error)
+	GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType LockType, fileTypes []values.GameFileType) (*GameFileInfo, error)
 	// GetGameFiles
 	// ゲームに対応するゲームファイルのメタデータ一覧の取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
 	// ファイルの並び順はCreateAtの降順。
-	GetGameFiles(ctx context.Context, gameID values.GameID, lockType LockType) ([]*domain.GameFile, error)
+	GetGameFiles(ctx context.Context, gameID values.GameID, lockType LockType, fileTypes []values.GameFileType) ([]*domain.GameFile, error)
 }
 
 type GameFileInfo struct {
