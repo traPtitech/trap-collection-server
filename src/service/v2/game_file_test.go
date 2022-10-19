@@ -224,6 +224,7 @@ func TestGetGameFile(t *testing.T) {
 		description        string
 		gameID             values.GameID
 		gameFileID         values.GameFileID
+		environment        values.LauncherEnvironment
 		getGameErr         error
 		executeGetGameFile bool
 		file               *repository.GameFileInfo
@@ -257,6 +258,7 @@ func TestGetGameFile(t *testing.T) {
 			description:        "特に問題ないのでエラーなし",
 			gameID:             gameID1,
 			gameFileID:         gameFileID1,
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -288,6 +290,7 @@ func TestGetGameFile(t *testing.T) {
 			description:        "ファイルがwindowsでもエラーなし",
 			gameID:             gameID2,
 			gameFileID:         gameFileID2,
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -305,6 +308,7 @@ func TestGetGameFile(t *testing.T) {
 			description:        "ファイルがmacでもエラーなし",
 			gameID:             gameID3,
 			gameFileID:         gameFileID3,
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSMac),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -321,6 +325,7 @@ func TestGetGameFile(t *testing.T) {
 		{
 			description:        "GetGameFileがErrRecordNotFoundなのでErrInvalidGameFileID",
 			gameID:             values.NewGameID(),
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			getGameFileErr:     repository.ErrRecordNotFound,
 			isErr:              true,
@@ -329,6 +334,7 @@ func TestGetGameFile(t *testing.T) {
 		{
 			description:        "ゲームファイルに紐づくゲームIDが違うのでErrInvalidGameFileID",
 			gameID:             values.NewGameID(),
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -346,6 +352,7 @@ func TestGetGameFile(t *testing.T) {
 		{
 			description:        "GetGameFileがエラーなのでエラー",
 			gameID:             values.NewGameID(),
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			getGameFileErr:     errors.New("error"),
 			isErr:              true,
@@ -354,6 +361,7 @@ func TestGetGameFile(t *testing.T) {
 			description:        "GetTempURLがエラーなのでエラー",
 			gameID:             gameID4,
 			gameFileID:         gameFileID4,
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -374,6 +382,7 @@ func TestGetGameFile(t *testing.T) {
 			description:        "ファイルが大きくてもエラーなし",
 			gameID:             gameID5,
 			gameFileID:         gameFileID5,
+			environment:        *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
 			executeGetGameFile: true,
 			file: &repository.GameFileInfo{
 				GameFile: domain.NewGameFile(
@@ -400,7 +409,7 @@ func TestGetGameFile(t *testing.T) {
 			if testCase.executeGetGameFile {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeRecord).
+					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeRecord, gomock.Any()).
 					Return(testCase.file, testCase.getGameFileErr)
 			}
 
@@ -411,7 +420,7 @@ func TestGetGameFile(t *testing.T) {
 					Return(testCase.fileURL, testCase.getTempURLErr)
 			}
 
-			tmpURL, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.gameFileID)
+			tmpURL, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.gameFileID, &testCase.environment)
 
 			if testCase.isErr {
 				if testCase.err == nil {
