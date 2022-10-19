@@ -135,3 +135,15 @@ func (edition *Edition) UpdateEdition(
 
 	return editionValue, nil
 }
+
+func (edition *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVersionID) error {
+	err := edition.editionRepository.DeleteEdition(ctx, editionID)
+	if errors.Is(err, repository.ErrNoRecordDeleted) {
+		return service.ErrInvalidEditionID
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete edition: %w", err)
+	}
+
+	return nil
+}
