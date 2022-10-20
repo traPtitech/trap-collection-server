@@ -1,7 +1,14 @@
 package v2
 
 import (
+	"errors"
+	"log"
+	"net/http"
+	"net/url"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -21,9 +28,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディション一覧の取得
-	// (GET /editions)
-	GetEditions(ctx echo.Context) error
 	// エディションの作成
 	// (POST /editions)
 	PostEdition(ctx echo.Context) error
@@ -42,4 +46,38 @@ type editionUnimplemented interface {
 	// エディションのゲームの変更
 	// (PATCH /editions/{editionID}/games)
 	PostEditionGame(ctx echo.Context, editionID openapi.EditionIDInPath) error
+}
+
+// エディション一覧の取得
+// (GET /editions)
+func (edition *Edition) GetEditions(c echo.Context) error {
+	editions, err := edition.editionService.GetEditions(c.Request().Context())
+	if err != nil {
+		log.Printf("error: failed to get editions: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get editions")
+	}
+
+	res := make([]openapi.Edition, 0, len(editions))
+	for _, edition := range editions {
+		questionnaireURL, err := edition.GetQuestionnaireURL()
+		if err != nil && !errors.Is(err, domain.ErrNoQuestionnaire) {
+			log.Printf("error: failed to get questionnaire url: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+		}
+
+		var strQuestionnaireURL *string
+		if !errors.Is(err, domain.ErrNoQuestionnaire) {
+			v := (*url.URL)(questionnaireURL).String()
+			strQuestionnaireURL = &v
+		}
+
+		res = append(res, openapi.Edition{
+			Id:            uuid.UUID(edition.GetID()),
+			Name:          string(edition.GetName()),
+			Questionnaire: strQuestionnaireURL,
+			CreatedAt:     edition.GetCreatedAt(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
