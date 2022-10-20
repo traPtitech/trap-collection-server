@@ -31,9 +31,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディション情報の取得
-	// (GET /editions/{editionID})
-	GetEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
 	// エディション情報の変更
 	// (PATCH /editions/{editionID})
 	PatchEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
@@ -160,4 +157,36 @@ func (edition *Edition) DeleteEdition(ctx echo.Context, editionID openapi.Editio
 	}
 
 	return ctx.NoContent(http.StatusOK)
+}
+
+// エディション情報の取得
+// (GET /editions/{editionID})
+func (edition *Edition) GetEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error {
+	domainEdition, err := edition.editionService.GetEdition(ctx.Request().Context(), values.NewLauncherVersionIDFromUUID(editionID))
+	if errors.Is(err, service.ErrInvalidEditionID) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
+	}
+	if err != nil {
+		log.Printf("error: failed to get edition: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get edition")
+	}
+
+	questionnaireURL, err := domainEdition.GetQuestionnaireURL()
+	if err != nil && !errors.Is(err, domain.ErrNoQuestionnaire) {
+		log.Printf("error: failed to get questionnaire url: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+	}
+
+	var strQuestionnaireURL *string
+	if !errors.Is(err, domain.ErrNoQuestionnaire) {
+		v := (*url.URL)(questionnaireURL).String()
+		strQuestionnaireURL = &v
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.Edition{
+		Id:            uuid.UUID(domainEdition.GetID()),
+		Name:          string(domainEdition.GetName()),
+		Questionnaire: strQuestionnaireURL,
+		CreatedAt:     domainEdition.GetCreatedAt(),
+	})
 }
