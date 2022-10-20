@@ -243,9 +243,14 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 		return nil, fmt.Errorf("failed to set lock type: %w", err)
 	}
 
+	uuidGameIDs := make([]uuid.UUID, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
+	}
+
 	var games []migrate.GameTable2
 	err = db.
-		Where("id IN ?", gameIDs).
+		Where("id IN ?", uuidGameIDs).
 		Find(&games).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get games: %w", err)

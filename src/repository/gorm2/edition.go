@@ -258,8 +258,7 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 		Model(&migrate.EditionTable2{
 			ID: uuid.UUID(editionID),
 		}).
-		Where("game_versions.deleted_at IS NULL").
-		Preload("GameVersions.GameFiles", func(db *gorm.DB) *gorm.DB {
+		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id")
 		}).
 		Association("GameVersions").

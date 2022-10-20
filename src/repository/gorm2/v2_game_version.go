@@ -231,9 +231,14 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
+	uuidGameVersionIDs := make([]uuid.UUID, 0, len(gameVersionIDs))
+	for _, gameVersionID := range gameVersionIDs {
+		uuidGameVersionIDs = append(uuidGameVersionIDs, uuid.UUID(gameVersionID))
+	}
+
 	var gameVersionTables []*migrate.GameVersionTable2
 	err = db.
-		Where("id IN ?", gameVersionIDs).
+		Where("id IN ?", uuidGameVersionIDs).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id")
 		}).
