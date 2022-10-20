@@ -82,8 +82,7 @@ func (edition *Edition) PostEdition(c echo.Context) error {
 	var req openapi.NewEdition
 	err := c.Bind(&req)
 	if err != nil {
-		log.Printf("error: failed to bind request: %v\n", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
 	name := values.NewLauncherVersionName(req.Name)
