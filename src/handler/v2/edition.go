@@ -31,9 +31,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディションのゲームの変更
-	// (PATCH /editions/{editionID}/games)
-	PostEditionGame(ctx echo.Context, editionID openapi.EditionIDInPath) error
 }
 
 // エディション一覧の取得
@@ -305,4 +302,88 @@ func (edition *Edition) GetEditionGames(ctx echo.Context, editionID openapi.Edit
 	}
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// エディションのゲームの変更
+// (PATCH /editions/{editionID}/games)
+func (edition *Edition) PostEditionGame(c echo.Context, editionID openapi.EditionIDInPath) error {
+	var req openapi.PatchEditionGameRequest
+	err := c.Bind(&req)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
+	}
+
+	gameVersionIDs := make([]values.GameVersionID, 0, len(req.GameVersionIDs))
+	for _, gameVersionID := range req.GameVersionIDs {
+		gameVersionIDs = append(gameVersionIDs, values.NewGameVersionIDFromUUID(gameVersionID))
+	}
+
+	gameVersions, err := edition.editionService.UpdateEditionGameVersions(
+		c.Request().Context(),
+		values.NewLauncherVersionIDFromUUID(editionID),
+		gameVersionIDs,
+	)
+	switch {
+	case errors.Is(err, service.ErrInvalidEditionID):
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
+	case errors.Is(err, service.ErrDuplicateGameVersion):
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game version")
+	case errors.Is(err, service.ErrDuplicateGame):
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game")
+	case err != nil:
+		log.Printf("error: failed to update edition games: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update edition games")
+	}
+
+	res := make([]openapi.EditionGameResponse, 0, len(gameVersions))
+	for _, gameVersion := range gameVersions {
+		var resURL *openapi.GameURL
+		urlValue, ok := gameVersion.GameVersion.Assets.URL.Value()
+		if ok {
+			v := (*url.URL)(urlValue).String()
+			resURL = &v
+		}
+
+		var resFiles *openapi.GameVersionFiles
+		windows, windowsOk := gameVersion.GameVersion.Assets.Windows.Value()
+		mac, macOk := gameVersion.GameVersion.Assets.Mac.Value()
+		jar, jarOk := gameVersion.GameVersion.Assets.Jar.Value()
+		if windowsOk || macOk || jarOk {
+			resFiles = &openapi.GameVersionFiles{}
+
+			if windowsOk {
+				v := (uuid.UUID)(windows)
+				resFiles.Win32 = &v
+			}
+
+			if macOk {
+				v := (uuid.UUID)(mac)
+				resFiles.Darwin = &v
+			}
+
+			if jarOk {
+				v := (uuid.UUID)(jar)
+				resFiles.Jar = &v
+			}
+		}
+
+		res = append(res, openapi.EditionGameResponse{
+			Id:          uuid.UUID(gameVersion.Game.GetID()),
+			Name:        string(gameVersion.Game.GetName()),
+			Description: string(gameVersion.Game.GetDescription()),
+			CreatedAt:   gameVersion.Game.GetCreatedAt(),
+			Version: openapi.GameVersion{
+				Id:          uuid.UUID(gameVersion.GameVersion.GetID()),
+				Name:        string(gameVersion.GameVersion.GetName()),
+				Description: string(gameVersion.GameVersion.GetDescription()),
+				CreatedAt:   gameVersion.GameVersion.GetCreatedAt(),
+				ImageID:     uuid.UUID(gameVersion.GameVersion.ImageID),
+				VideoID:     uuid.UUID(gameVersion.GameVersion.VideoID),
+				Url:         resURL,
+				Files:       resFiles,
+			},
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
