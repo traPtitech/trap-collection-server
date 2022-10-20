@@ -209,3 +209,33 @@ func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersi
 
 	return domainEdition, nil
 }
+
+func (e *Edition) UpdateEditionGameVersions(
+	ctx context.Context,
+	editionID values.LauncherVersionID,
+	gameVersionIDs []values.GameVersionID,
+) error {
+	db, err := e.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	gameVersions := make([]migrate.GameVersionTable2, 0, len(gameVersionIDs))
+	for _, gameVersionID := range gameVersionIDs {
+		gameVersions = append(gameVersions, migrate.GameVersionTable2{
+			ID: uuid.UUID(gameVersionID),
+		})
+	}
+
+	err = db.
+		Model(&migrate.EditionTable2{
+			ID: uuid.UUID(editionID),
+		}).
+		Association("GameVersions").
+		Replace(gameVersions)
+	if err != nil {
+		return fmt.Errorf("failed to update edition game versions: %w", err)
+	}
+
+	return nil
+}
