@@ -31,9 +31,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディション情報の変更
-	// (PATCH /editions/{editionID})
-	PatchEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
 	// エディションに紐づくゲームの一覧の取得
 	// (GET /editions/{editionID}/games)
 	GetEditionGames(ctx echo.Context, editionID openapi.EditionIDInPath) error
@@ -168,6 +165,64 @@ func (edition *Edition) GetEdition(ctx echo.Context, editionID openapi.EditionID
 	if err != nil {
 		log.Printf("error: failed to get edition: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get edition")
+	}
+
+	questionnaireURL, err := domainEdition.GetQuestionnaireURL()
+	if err != nil && !errors.Is(err, domain.ErrNoQuestionnaire) {
+		log.Printf("error: failed to get questionnaire url: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+	}
+
+	var strQuestionnaireURL *string
+	if !errors.Is(err, domain.ErrNoQuestionnaire) {
+		v := (*url.URL)(questionnaireURL).String()
+		strQuestionnaireURL = &v
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.Edition{
+		Id:            uuid.UUID(domainEdition.GetID()),
+		Name:          string(domainEdition.GetName()),
+		Questionnaire: strQuestionnaireURL,
+		CreatedAt:     domainEdition.GetCreatedAt(),
+	})
+}
+
+// エディション情報の変更
+// (PATCH /editions/{editionID})
+func (edition *Edition) PatchEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error {
+	var req openapi.PatchEdition
+	err := ctx.Bind(&req)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
+	}
+
+	name := values.NewLauncherVersionName(req.Name)
+	if err := name.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
+	}
+
+	var optionQuestionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+	if req.Questionnaire != nil {
+		urlValue, err := url.Parse(*req.Questionnaire)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
+		}
+
+		optionQuestionnaireURL = types.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+	}
+
+	domainEdition, err := edition.editionService.UpdateEdition(
+		ctx.Request().Context(),
+		values.NewLauncherVersionIDFromUUID(editionID),
+		name,
+		optionQuestionnaireURL,
+	)
+	if errors.Is(err, service.ErrInvalidEditionID) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
+	}
+	if err != nil {
+		log.Printf("error: failed to update edition: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update edition")
 	}
 
 	questionnaireURL, err := domainEdition.GetQuestionnaireURL()
