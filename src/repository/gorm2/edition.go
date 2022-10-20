@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -238,4 +239,66 @@ func (e *Edition) UpdateEditionGameVersions(
 	}
 
 	return nil
+}
+
+func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.LauncherVersionID, lockType repository.LockType) ([]*repository.GameVersionInfoWithGameID, error) {
+	db, err := e.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = e.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersions []*migrate.GameVersionTable2
+	err = db.
+		Session(&gorm.Session{}).
+		Model(&migrate.EditionTable2{
+			ID: uuid.UUID(editionID),
+		}).
+		Where("game_versions.deleted_at IS NULL").
+		Preload("GameVersions.GameFiles", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id")
+		}).
+		Association("GameVersions").
+		Find(&gameVersions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game versions: %w", err)
+	}
+
+	var result []*repository.GameVersionInfoWithGameID
+	for _, gameVersion := range gameVersions {
+		var optionURL types.Option[values.GameURLLink]
+		if len(gameVersion.URL) != 0 {
+			url, err := url.Parse(gameVersion.URL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse game version url: %w", err)
+			}
+
+			optionURL = types.NewOption(values.NewGameURLLink(url))
+		}
+
+		fileIDs := make([]values.GameFileID, 0, len(gameVersion.GameFiles))
+		for _, file := range gameVersion.GameFiles {
+			fileIDs = append(fileIDs, values.NewGameFileIDFromUUID(file.ID))
+		}
+
+		result = append(result, &repository.GameVersionInfoWithGameID{
+			GameVersion: domain.NewGameVersion(
+				values.NewGameVersionIDFromUUID(gameVersion.ID),
+				values.NewGameVersionName(gameVersion.Name),
+				values.NewGameVersionDescription(gameVersion.Description),
+				gameVersion.CreatedAt,
+			),
+			GameID:  values.NewGameIDFromUUID(gameVersion.GameID),
+			ImageID: values.GameImageIDFromUUID(gameVersion.GameImageID),
+			VideoID: values.NewGameVideoIDFromUUID(gameVersion.GameVideoID),
+			URL:     optionURL,
+			FileIDs: fileIDs,
+		})
+	}
+
+	return result, nil
 }
