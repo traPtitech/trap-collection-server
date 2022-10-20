@@ -2,13 +2,16 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
@@ -28,9 +31,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディションの作成
-	// (POST /editions)
-	PostEdition(ctx echo.Context) error
 	// エディションの削除
 	// (DELETE /editions/{editionID})
 	DeleteEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
@@ -80,4 +80,72 @@ func (edition *Edition) GetEditions(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// エディションの作成
+// (POST /editions)
+func (edition *Edition) PostEdition(c echo.Context) error {
+	var req openapi.NewEdition
+	err := c.Bind(&req)
+	if err != nil {
+		log.Printf("error: failed to bind request: %v\n", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request")
+	}
+
+	name := values.NewLauncherVersionName(req.Name)
+	if err := name.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
+	}
+
+	var optionQuestionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+	if req.Questionnaire != nil {
+		urlValue, err := url.Parse(*req.Questionnaire)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
+		}
+
+		optionQuestionnaireURL = types.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+	}
+
+	gameVersionIDs := make([]values.GameVersionID, 0, len(req.GameVersions))
+	for _, gameVersionID := range req.GameVersions {
+		gameVersionIDs = append(gameVersionIDs, values.NewGameVersionIDFromUUID(gameVersionID))
+	}
+
+	domainEdition, err := edition.editionService.CreateEdition(
+		c.Request().Context(),
+		name,
+		optionQuestionnaireURL,
+		gameVersionIDs,
+	)
+	switch {
+	case errors.Is(err, service.ErrInvalidGameVersionID):
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game version id")
+	case errors.Is(err, service.ErrDuplicateGameVersion):
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game version")
+	case errors.Is(err, service.ErrDuplicateGame):
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game")
+	case err != nil:
+		log.Printf("error: failed to create edition: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create edition")
+	}
+
+	questionnaireURL, err := domainEdition.GetQuestionnaireURL()
+	if err != nil && !errors.Is(err, domain.ErrNoQuestionnaire) {
+		log.Printf("error: failed to get questionnaire url: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get questionnaire url")
+	}
+
+	var strQuestionnaireURL *string
+	if !errors.Is(err, domain.ErrNoQuestionnaire) {
+		v := (*url.URL)(questionnaireURL).String()
+		strQuestionnaireURL = &v
+	}
+
+	return c.JSON(http.StatusCreated, openapi.Edition{
+		Id:            uuid.UUID(domainEdition.GetID()),
+		Name:          string(domainEdition.GetName()),
+		Questionnaire: strQuestionnaireURL,
+		CreatedAt:     domainEdition.GetCreatedAt(),
+	})
 }
