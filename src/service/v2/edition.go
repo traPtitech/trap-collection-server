@@ -199,7 +199,7 @@ func (edition *Edition) UpdateEditionGameVersions(
 			return fmt.Errorf("failed to get game versions: %w", err)
 		}
 
-		if len(gameVersions) != len(gameVersionIDs) {
+		if len(gameVersionInfos) != len(gameVersionIDs) {
 			return service.ErrInvalidGameVersionID
 		}
 
