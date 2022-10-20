@@ -2525,7 +2525,6 @@ components:
           $ref: '#/components/schemas/EditionQuestionnaireURL'
       required:
         - name
-        - questionnaire
       additionalProperties: false
       description: |
         エディションの情報を修正する際に必要な情報です。
