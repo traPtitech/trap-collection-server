@@ -10,6 +10,14 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
+// mockgenがgenericsに対応するまでの暫定対応
+// interface内にgenericsの構文が出なければ問題ないのを利用している
+// ref: https://github.com/golang/mock/pull/640
+// TODO: mockgenのv1.7.0がリリースされ次第削除する
+type (
+	OptionQuestionnaireURL = types.Option[values.LauncherVersionQuestionnaireURL]
+)
+
 type Edition interface {
 	// CreateEdition
 	// エディションの作成。
@@ -19,7 +27,7 @@ type Edition interface {
 	CreateEdition(
 		ctx context.Context,
 		name values.LauncherVersionName,
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL],
+		questionnaireURL OptionQuestionnaireURL,
 		gameVersionIDs []values.GameVersionID,
 	) (*domain.LauncherVersion, error)
 	// GetEditions
@@ -38,7 +46,7 @@ type Edition interface {
 		ctx context.Context,
 		editionID values.LauncherVersionID,
 		name values.LauncherVersionName,
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL],
+		questionnaireURL OptionQuestionnaireURL,
 	) (*domain.LauncherVersion, error)
 	// DeleteEdition
 	// エディションの削除。
