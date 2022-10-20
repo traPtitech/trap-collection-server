@@ -18,19 +18,12 @@ import (
 
 type Edition struct {
 	editionService service.Edition
-	editionUnimplemented
 }
 
 func NewEdition(editionService service.Edition) *Edition {
 	return &Edition{
 		editionService: editionService,
 	}
-}
-
-// editionUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type editionUnimplemented interface {
 }
 
 // エディション一覧の取得
