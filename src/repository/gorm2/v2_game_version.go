@@ -215,3 +215,64 @@ func (gameVersion *GameVersionV2) GetLatestGameVersion(
 		FileIDs: fileIDs,
 	}, nil
 }
+
+func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
+	ctx context.Context,
+	gameVersionIDs []values.GameVersionID,
+	lockType repository.LockType,
+) ([]*repository.GameVersionInfoWithGameID, error) {
+	db, err := gameVersion.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = gameVersion.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersionTables []*migrate.GameVersionTable2
+	err = db.
+		Where("id IN ?", gameVersionIDs).
+		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id")
+		}).
+		Find(&gameVersionTables).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to find game versions: %w", err)
+	}
+
+	gameVersionInfos := make([]*repository.GameVersionInfoWithGameID, 0, len(gameVersionTables))
+	for _, gameVersionTable := range gameVersionTables {
+		var optionURL types.Option[values.GameURLLink]
+		if len(gameVersionTable.URL) != 0 {
+			url, err := url.Parse(gameVersionTable.URL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse game version url: %w", err)
+			}
+
+			optionURL = types.NewOption(values.NewGameURLLink(url))
+		}
+
+		fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))
+		for _, file := range gameVersionTable.GameFiles {
+			fileIDs = append(fileIDs, values.NewGameFileIDFromUUID(file.ID))
+		}
+
+		gameVersionInfos = append(gameVersionInfos, &repository.GameVersionInfoWithGameID{
+			GameVersion: domain.NewGameVersion(
+				values.NewGameVersionIDFromUUID(gameVersionTable.ID),
+				values.NewGameVersionName(gameVersionTable.Name),
+				values.NewGameVersionDescription(gameVersionTable.Description),
+				gameVersionTable.CreatedAt,
+			),
+			GameID:  values.NewGameIDFromUUID(gameVersionTable.GameID),
+			ImageID: values.GameImageIDFromUUID(gameVersionTable.GameImageID),
+			VideoID: values.NewGameVideoIDFromUUID(gameVersionTable.GameVideoID),
+			URL:     optionURL,
+			FileIDs: fileIDs,
+		})
+	}
+
+	return gameVersionInfos, nil
+}
