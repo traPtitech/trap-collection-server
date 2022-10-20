@@ -173,6 +173,29 @@ func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID
 	return gameFiles, nil
 }
 
-func (gameFile *GameFile) GetGameFileMeta(ctx context.Context, gameID values.GameID, fileID values.GameFileID) (*domain.GameFile, error) {
-	return nil, nil
+func (gameFile *GameFile) GetGameFileMeta(ctx context.Context, gameID values.GameID, fileID values.GameFileID, environment *values.LauncherEnvironment) (*domain.GameFile, error) {
+	_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game: %w", err)
+	}
+
+	file, err := gameFile.gameFileRepository.GetGameFile(ctx, fileID, repository.LockTypeNone, environment.AcceptGameFileTypes())
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameFileID
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game file: %w", err)
+	}
+
+	if file.GameID != gameID {
+		// gameIdに対応したゲームにゲームファイルが紐づいていない場合も、
+		// 念の為閲覧権限がないゲームに紐づいたファイルIDを知ることができないようにするため、
+		// ファイルが存在しない場合と同じErrInvalidGameFileIDを返す
+		return nil, service.ErrInvalidGameFileID
+	}
+
+	return file.GameFile, nil
 }
