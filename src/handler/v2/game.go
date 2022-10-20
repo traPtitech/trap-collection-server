@@ -120,7 +120,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 
 	var owners []values.TraPMemberName
 	if req.Owners != nil {
-		owners := make([]values.TraPMemberName, 0, len(*req.Owners))
+		owners = make([]values.TraPMemberName, 0, len(*req.Owners))
 		for _, reqOwner := range *req.Owners {
 			owners = append(owners, values.NewTrapMemberName(reqOwner))
 		}
@@ -128,7 +128,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 
 	var maintainers []values.TraPMemberName
 	if req.Maintainers != nil {
-		maintainers := make([]values.TraPMemberName, 0, len(*req.Maintainers))
+		maintainers = make([]values.TraPMemberName, 0, len(*req.Maintainers))
 		for _, reqMaintainer := range *req.Maintainers {
 			maintainers = append(maintainers, values.NewTrapMemberName(reqMaintainer))
 		}
