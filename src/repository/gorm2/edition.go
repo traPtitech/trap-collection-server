@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 )
@@ -95,6 +96,26 @@ func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.LauncherVer
 
 	if result.RowsAffected == 0 {
 		return repository.ErrNoRecordUpdated
+	}
+
+	return nil
+}
+
+func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVersionID) error {
+	db, err := e.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.
+		Where("id = ?", uuid.UUID(editionID)).
+		Delete(&migrate.EditionTable2{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete edition: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
 	}
 
 	return nil
