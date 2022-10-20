@@ -238,7 +238,7 @@ func TestGetGameFile(t *testing.T) {
 
 	urlLink, err := url.Parse("https://example.com")
 	if err != nil {
-		t.Fatalf("failed to encode image: %v", err)
+		t.Fatalf("failed to encode file: %v", err)
 	}
 
 	gameID1 := values.NewGameID()
@@ -436,6 +436,176 @@ func TestGetGameFile(t *testing.T) {
 			}
 
 			assert.Equal(t, testCase.fileURL, tmpURL)
+		})
+	}
+}
+
+func TestGetGameFiles(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+	mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
+	mockGameFileStorage := mockStorage.NewGameFile(ctrl, nil)
+
+	gameFileService := NewGameFile(
+		mockDB,
+		mockGameRepository,
+		mockGameFileRepository,
+		mockGameFileStorage,
+	)
+
+	type test struct {
+		description         string
+		gameID              values.GameID
+		environment         values.LauncherEnvironment
+		getGameErr          error
+		executeGetGameFiles bool
+		getGameFilesErr     error
+		isErr               bool
+		gameFiles           []*domain.GameFile
+		err                 error
+	}
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description:         "特に問題ないのでエラーなし",
+			gameID:              values.NewGameID(),
+			environment:         *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			executeGetGameFiles: true,
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeWindows,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
+				),
+			},
+		},
+		{
+			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:      values.NewGameID(),
+			getGameErr:  repository.ErrRecordNotFound,
+			isErr:       true,
+			err:         service.ErrInvalidGameID,
+		},
+		{
+			description: "GetGameがエラーなのでエラー",
+			gameID:      values.NewGameID(),
+			getGameErr:  errors.New("error"),
+			isErr:       true,
+		},
+		{
+			description:         "ファイルが無くてもエラーなし",
+			gameID:              values.NewGameID(),
+			environment:         *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			executeGetGameFiles: true,
+			gameFiles:           []*domain.GameFile{},
+		},
+		{
+			description:         "ファイルが複数でもエラーなし",
+			gameID:              values.NewGameID(),
+			executeGetGameFiles: true,
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeWindows,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
+				),
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
+				),
+			},
+		},
+		{
+			description:         "ファイルがjarでもエラーなし",
+			gameID:              values.NewGameID(),
+			environment:         *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			executeGetGameFiles: true,
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
+				),
+			},
+		},
+		{
+			description:         "ファイルがmacでもエラーなし",
+			gameID:              values.NewGameID(),
+			environment:         *values.NewLauncherEnvironment(values.LauncherEnvironmentOSMac),
+			executeGetGameFiles: true,
+			gameFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					values.NewGameFileID(),
+					values.GameFileTypeMac,
+					values.NewGameFileEntryPoint("/path/to/file"),
+					values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+					now,
+				),
+			},
+		},
+		{
+			description:         "GetGameFilesがエラーなのでエラー",
+			gameID:              values.NewGameID(),
+			environment:         *values.NewLauncherEnvironment(values.LauncherEnvironmentOSWindows),
+			executeGetGameFiles: true,
+			getGameFilesErr:     errors.New("error"),
+			isErr:               true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockGameRepository.
+				EXPECT().
+				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
+				Return(nil, testCase.getGameErr)
+
+			if testCase.executeGetGameFiles {
+				mockGameFileRepository.
+					EXPECT().
+					GetGameFiles(gomock.Any(), testCase.gameID, repository.LockTypeNone, gomock.Any()).
+					Return(testCase.gameFiles, testCase.getGameFilesErr)
+			}
+
+			gameFiles, err := gameFileService.GetGameFiles(ctx, testCase.gameID, &testCase.environment)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			for i, gameFile := range gameFiles {
+				assert.Equal(t, testCase.gameFiles[i].GetID(), gameFile.GetID())
+				assert.Equal(t, testCase.gameFiles[i].GetFileType(), gameFile.GetFileType())
+				assert.Equal(t, testCase.gameFiles[i].GetEntryPoint(), gameFile.GetEntryPoint())
+				assert.Equal(t, testCase.gameFiles[i].GetHash(), gameFile.GetHash())
+				assert.Equal(t, testCase.gameFiles[i].GetCreatedAt(), gameFile.GetCreatedAt())
+			}
 		})
 	}
 }
