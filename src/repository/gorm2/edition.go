@@ -120,3 +120,45 @@ func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVe
 
 	return nil
 }
+
+func (e *Edition) GetEditions(ctx context.Context, lockType repository.LockType) ([]*domain.LauncherVersion, error) {
+	db, err := e.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var editions []*migrate.EditionTable2
+	err = db.
+		Find(&editions).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get editions: %w", err)
+	}
+
+	var result []*domain.LauncherVersion
+	for _, edition := range editions {
+		var domainEdition *domain.LauncherVersion
+		if edition.QuestionnaireURL.Valid {
+			questionnaireURL, err := url.Parse(edition.QuestionnaireURL.String)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse questionnaire url: %w", err)
+			}
+
+			domainEdition = domain.NewLauncherVersionWithQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(edition.ID),
+				values.NewLauncherVersionName(edition.Name),
+				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				edition.CreatedAt,
+			)
+		} else {
+			domainEdition = domain.NewLauncherVersionWithoutQuestionnaire(
+				values.NewLauncherVersionIDFromUUID(edition.ID),
+				values.NewLauncherVersionName(edition.Name),
+				edition.CreatedAt,
+			)
+		}
+
+		result = append(result, domainEdition)
+	}
+
+	return result, nil
+}
