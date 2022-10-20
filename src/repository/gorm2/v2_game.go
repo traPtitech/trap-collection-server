@@ -231,3 +231,40 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 
 	return gamesDomain, int(gameNumber), nil
 }
+
+func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType repository.LockType) ([]*domain.Game, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = g.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock type: %w", err)
+	}
+
+	uuidGameIDs := make([]uuid.UUID, 0, len(gameIDs))
+	for _, gameID := range gameIDs {
+		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
+	}
+
+	var games []migrate.GameTable2
+	err = db.
+		Where("id IN ?", uuidGameIDs).
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %w", err)
+	}
+
+	gamesDomains := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		gamesDomains = append(gamesDomains, domain.NewGame(
+			values.NewGameIDFromUUID(game.ID),
+			values.NewGameName(game.Name),
+			values.NewGameDescription(game.Description),
+			game.CreatedAt,
+		))
+	}
+
+	return gamesDomains, nil
+}

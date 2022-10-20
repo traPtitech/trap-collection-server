@@ -56,4 +56,7 @@ var repositorySet = wire.NewSet(
 
 	wire.Bind(new(repository.GameFileV2), new(*gorm2.GameFileV2)),
 	gorm2.NewGameFileV2,
+
+	wire.Bind(new(repository.Edition), new(*gorm2.Edition)),
+	gorm2.NewEdition,
 )

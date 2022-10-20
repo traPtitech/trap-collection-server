@@ -2525,7 +2525,6 @@ components:
           $ref: '#/components/schemas/EditionQuestionnaireURL'
       required:
         - name
-        - questionnaire
       additionalProperties: false
       description: |
         エディションの情報を修正する際に必要な情報です。
@@ -2538,10 +2537,12 @@ components:
           $ref: '#/components/schemas/EditionQuestionnaireURL'
         gameVersions:
           type: array
+          minLength: 1
           items:
             $ref: '#/components/schemas/GameVersionID'
       required:
         - name
+        - gameVersions
       additionalProperties: false
       description: |
         エディションを新しく作成する際に必要な情報です。
