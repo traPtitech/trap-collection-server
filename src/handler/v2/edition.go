@@ -31,9 +31,6 @@ func NewEdition(editionService service.Edition) *Edition {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type editionUnimplemented interface {
-	// エディションの削除
-	// (DELETE /editions/{editionID})
-	DeleteEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
 	// エディション情報の取得
 	// (GET /editions/{editionID})
 	GetEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error
@@ -148,4 +145,19 @@ func (edition *Edition) PostEdition(c echo.Context) error {
 		Questionnaire: strQuestionnaireURL,
 		CreatedAt:     domainEdition.GetCreatedAt(),
 	})
+}
+
+// エディションの削除
+// (DELETE /editions/{editionID})
+func (edition *Edition) DeleteEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error {
+	err := edition.editionService.DeleteEdition(ctx.Request().Context(), values.NewLauncherVersionIDFromUUID(editionID))
+	if errors.Is(err, service.ErrInvalidEditionID) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
+	}
+	if err != nil {
+		log.Printf("error: failed to delete edition: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete edition")
+	}
+
+	return ctx.NoContent(http.StatusOK)
 }
