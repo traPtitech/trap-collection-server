@@ -3,14 +3,18 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type Edition struct {
+	editionService service.Edition
 	editionUnimplemented
 }
 
-func NewEdition() *Edition {
-	return &Edition{}
+func NewEdition(editionService service.Edition) *Edition {
+	return &Edition{
+		editionService: editionService,
+	}
 }
 
 // editionUnimplemented
