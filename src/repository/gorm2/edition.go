@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"gorm.io/gorm"
 )
 
 type Edition struct {
@@ -161,4 +162,50 @@ func (e *Edition) GetEditions(ctx context.Context, lockType repository.LockType)
 	}
 
 	return result, nil
+}
+
+func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersionID, lockType repository.LockType) (*domain.LauncherVersion, error) {
+	db, err := e.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = e.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var edition migrate.EditionTable2
+	err = db.
+		Where("id = ?", uuid.UUID(editionID)).
+		Take(&edition).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition: %w", err)
+	}
+
+	var domainEdition *domain.LauncherVersion
+	if edition.QuestionnaireURL.Valid {
+		questionnaireURL, err := url.Parse(edition.QuestionnaireURL.String)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse questionnaire url: %w", err)
+		}
+
+		domainEdition = domain.NewLauncherVersionWithQuestionnaire(
+			values.NewLauncherVersionIDFromUUID(edition.ID),
+			values.NewLauncherVersionName(edition.Name),
+			values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+			edition.CreatedAt,
+		)
+	} else {
+		domainEdition = domain.NewLauncherVersionWithoutQuestionnaire(
+			values.NewLauncherVersionIDFromUUID(edition.ID),
+			values.NewLauncherVersionName(edition.Name),
+			edition.CreatedAt,
+		)
+	}
+
+	return domainEdition, nil
 }
