@@ -124,7 +124,7 @@ func (gameVersion *GameVersion) CreateGameVersion(
 		}
 
 		if len(fileIDs) != 0 {
-			gameFiles, err := gameVersion.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeRecord)
+			gameFiles, err := gameVersion.gameFileRepository.GetGameFilesWithoutTypes(ctx, fileIDs, repository.LockTypeRecord)
 			if err != nil {
 				return fmt.Errorf("failed to get game files: %w", err)
 			}
@@ -209,7 +209,7 @@ func (gameVersion *GameVersion) GetGameVersions(ctx context.Context, gameID valu
 
 	gameFileMap := make(map[values.GameFileID]*domain.GameFile, len(fileIDs))
 	if len(fileIDs) > 0 {
-		gameFiles, err := gameVersion.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeNone)
+		gameFiles, err := gameVersion.gameFileRepository.GetGameFilesWithoutTypes(ctx, fileIDs, repository.LockTypeNone)
 		if err != nil {
 			return 0, nil, fmt.Errorf("failed to get game files: %w", err)
 		}
@@ -289,7 +289,7 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx context.Context, gameID
 
 	gameFileMap := make(map[values.GameFileID]*domain.GameFile, len(version.FileIDs))
 	if len(version.FileIDs) != 0 {
-		gameFiles, err := gameVersion.gameFileRepository.GetGameFiles(ctx, version.FileIDs, repository.LockTypeNone)
+		gameFiles, err := gameVersion.gameFileRepository.GetGameFilesWithoutTypes(ctx, version.FileIDs, repository.LockTypeNone)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get game files: %w", err)
 		}

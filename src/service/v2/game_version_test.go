@@ -815,7 +815,7 @@ func TestCreateGameVersion(t *testing.T) {
 			if testCase.executeGetGameFile {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFiles(gomock.Any(), testCase.fileIDs, repository.LockTypeRecord).
+					GetGameFilesWithoutTypes(gomock.Any(), testCase.fileIDs, repository.LockTypeRecord).
 					Return(testCase.files, testCase.getGameFilesErr)
 			}
 
@@ -1840,7 +1840,7 @@ func TestGetGameVersions(t *testing.T) {
 			if testCase.executeGetGameFiles {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFiles(gomock.Any(), testCase.fileIDs, repository.LockTypeNone).
+					GetGameFilesWithoutTypes(gomock.Any(), testCase.fileIDs, repository.LockTypeNone).
 					Return(testCase.files, testCase.getGameFilesErr)
 			}
 
@@ -2418,7 +2418,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 			if testCase.executeGetGameFiles {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFiles(gomock.Any(), testCase.version.FileIDs, repository.LockTypeNone).
+					GetGameFilesWithoutTypes(gomock.Any(), testCase.version.FileIDs, repository.LockTypeNone).
 					Return(testCase.files, testCase.getGameFilesErr)
 			}
 

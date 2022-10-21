@@ -20,7 +20,7 @@ type GameFileV2 interface {
 	// GetGameFile
 	// ゲームファイルのメタデータの取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
-	GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType LockType, fileTypes []values.GameFileType) (*GameFileInfo, error)
+	GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType LockType) (*GameFileInfo, error)
 	// GetGameFiles
 	// ゲームに対応するゲームファイルのメタデータ一覧の取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
