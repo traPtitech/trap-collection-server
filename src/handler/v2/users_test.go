@@ -141,7 +141,7 @@ func TestGetMe(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				c.Set(sessionContextKey, sess)
+				setCookieHeader(c)
 			}
 
 			if testCase.executeGetMe {
@@ -151,7 +151,7 @@ func TestGetMe(t *testing.T) {
 					Return(testCase.userInfo, testCase.GetMeErr)
 			}
 
-			user, err := userHandler.GetMe(c)
+			user := userHandler.GetMe(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -173,7 +173,7 @@ func TestGetMe(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, *testCase.user, *user)
+			assert.Equal(t, *testCase.user, user)
 		})
 	}
 }
@@ -335,7 +335,7 @@ func TestGetUsers(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				c.Set(sessionContextKey, sess)
+				setCookieHeader(c)
 			}
 
 			if testCase.executeGetAllActiveUser {
@@ -345,7 +345,7 @@ func TestGetUsers(t *testing.T) {
 					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
 			}
 
-			users, err := userHandler.GetUsers(c)
+			users := userHandler.GetUsers(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
