@@ -14,7 +14,7 @@ import (
 // product_keyテーブルからdeleted_atを削除し、statusを追加
 func v6() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "5",
+		ID: "6",
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.Migrator().DropColumn(&productKeyTableV2{}, "deleted_at")
 			if err != nil {
@@ -58,7 +58,7 @@ type productKeyTableV6 struct {
 	ID           uuid.UUID               `gorm:"type:varchar(36);not null;primaryKey"`
 	EditionID    uuid.UUID               `gorm:"type:varchar(36);not null"`
 	ProductKey   string                  `gorm:"type:varchar(29);not null;unique"`
-	StatusID     int                     `gorm:"type:varchar(16);not null;default:'unused'"`
+	StatusID     int                     `gorm:"type:tinyint;not null"`
 	CreatedAt    time.Time               `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	Status       productKeyStatusTableV6 `gorm:"foreignKey:StatusID"`
 	AccessTokens []accessTokenTableV2    `gorm:"foreignKey:ProductKeyID"`
