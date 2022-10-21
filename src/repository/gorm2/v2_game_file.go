@@ -116,7 +116,7 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 	}, nil
 }
 
-func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.GameID, lockType repository.LockType, fileTypes []values.GameFileType) ([]*domain.GameFile, error) {
+func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.GameID, lockType repository.LockType) ([]*domain.GameFile, error) {
 	db, err := gameFile.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -137,11 +137,6 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 		return nil, fmt.Errorf("failed to get game files: %w", err)
 	}
 
-	fileTypesMap := make(map[values.GameFileType]struct{})
-	for _, fileType := range fileTypes {
-		fileTypesMap[fileType] = struct{}{}
-	}
-
 	gameFiles := make([]*domain.GameFile, 0, len(files))
 	for _, file := range files {
 		var fileType values.GameFileType
@@ -155,9 +150,6 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 		default:
 			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
 			log.Printf("error: unknown game file type: %s\n", file.GameFileType.Name)
-			continue
-		}
-		if _, ok := fileTypesMap[fileType]; !ok {
 			continue
 		}
 

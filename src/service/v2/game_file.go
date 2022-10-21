@@ -156,7 +156,7 @@ func (gameFile *GameFile) GetGameFile(ctx context.Context, gameID values.GameID,
 	return url, nil
 }
 
-func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) ([]*domain.GameFile, error) {
+func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID) ([]*domain.GameFile, error) {
 	_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID
@@ -165,7 +165,7 @@ func (gameFile *GameFile) GetGameFiles(ctx context.Context, gameID values.GameID
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	gameFiles, err := gameFile.gameFileRepository.GetGameFiles(ctx, gameID, repository.LockTypeNone, environment.AcceptGameFileTypes())
+	gameFiles, err := gameFile.gameFileRepository.GetGameFiles(ctx, gameID, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game files: %w", err)
 	}

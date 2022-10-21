@@ -18,7 +18,7 @@ type GameFileV2 interface {
 	// GetGameFile
 	// ゲームファイル一覧の取得。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。
-	GetGameFiles(ctx context.Context, gameID values.GameID, environment *values.LauncherEnvironment) ([]*domain.GameFile, error)
+	GetGameFiles(ctx context.Context, gameID values.GameID) ([]*domain.GameFile, error)
 	// GetGameFile
 	// ゲームファイルの一時的(1分間)に有効なurlを返す。
 	// ゲームIDに対応するゲームが存在しない場合、ErrInvalidGameIDを返す。

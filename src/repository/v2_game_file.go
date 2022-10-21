@@ -25,7 +25,7 @@ type GameFileV2 interface {
 	// ゲームに対応するゲームファイルのメタデータ一覧の取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
 	// ファイルの並び順はCreateAtの降順。
-	GetGameFiles(ctx context.Context, gameID values.GameID, lockType LockType, fileTypes []values.GameFileType) ([]*domain.GameFile, error)
+	GetGameFiles(ctx context.Context, gameID values.GameID, lockType LockType) ([]*domain.GameFile, error)
 	// GetGameFilesWithoutTypes
 	// ゲームファイルのメタデータ一覧の取得。
 	// 既にストレージに保存済みのファイルのみが取得できる。
