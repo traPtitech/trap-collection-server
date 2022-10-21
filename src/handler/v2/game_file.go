@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -113,8 +114,8 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
 	}
 	if err != nil {
-		log.Printf("error: failed to save game image: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game image")
+		log.Printf("error: failed to save game file: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game file")
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameFile{
@@ -124,4 +125,22 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		Md5:        openapi.GameFileMd5(savedFile.GetHash()),
 		CreatedAt:  savedFile.GetCreatedAt(),
 	})
+}
+
+// ゲームファイルのバイナリの取得
+// (GET /games/{gameID}/files/{gameFileID})
+func (gameFile GameFile) GetGameFile(c echo.Context, gameID openapi.GameIDInPath, gameFileID openapi.GameFileIDInPath) error {
+	tmpURL, err := gameFile.gameFileService.GetGameFile(c.Request().Context(), values.NewGameIDFromUUID(gameID), values.NewGameFileIDFromUUID(gameFileID))
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrInvalidGameFileID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameFileID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game file: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game file")
+	}
+
+	return c.Redirect(http.StatusSeeOther, (*url.URL)(tmpURL).String())
 }
