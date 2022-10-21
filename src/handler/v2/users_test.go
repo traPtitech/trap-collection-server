@@ -367,8 +367,9 @@ func TestGetUsers(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, len(testCase.users), len(users))
-			for i, user := range users {
+			var resUser openapi.User
+			assert.Equal(t, len(testCase.users), len(resUser))
+			for i, user := range resUser {
 				assert.Equal(t, *testCase.users[i], *user)
 			}
 		})
