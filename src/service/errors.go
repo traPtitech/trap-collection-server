@@ -26,6 +26,7 @@ var (
 	ErrInvalidAccessToken                = errors.New("invalid access token")
 	ErrKeyAlreadyActivated               = errors.New("key already activated")
 	ErrKeyAlreadyRevoked                 = errors.New("key already revoked")
+	ErrExpiredAccessToken                = errors.New("expired access token")
 	ErrForbidden                         = errors.New("forbidden")
 	ErrInvalidFormat                     = errors.New("invalid format")
 	ErrNoGame                            = errors.New("no game")
