@@ -14,6 +14,7 @@ var (
 		v3(), // v2でmigrationし忘れていたgameTable2のmigration
 		v4(), // v2_game_versionsにurlカラムを追加
 		v5(), // v2_game_filesのunique制約を解除
+		v6(), // v2_product_keysのstatusカラムを追加
 	}
 )
 
