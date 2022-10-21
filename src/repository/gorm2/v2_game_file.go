@@ -3,6 +3,7 @@ package gorm2
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"gorm.io/gorm"
 )
 
 type GameFileV2 struct {
@@ -65,6 +67,53 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 	}
 
 	return nil
+}
+
+func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType repository.LockType, fileTypes []values.GameFileType) (*repository.GameFileInfo, error) {
+	db, err := gameFile.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = gameFile.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var file migrate.GameFileTable2
+	err = db.
+		Joins("GameFileType").
+		Where("v2_game_files.id = ?", uuid.UUID(gameFileID)).
+		Take(&file).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game file: %w", err)
+	}
+
+	var fileType values.GameFileType
+	switch file.GameFileType.Name {
+	case migrate.GameFileTypeJar:
+		fileType = values.GameFileTypeJar
+	case migrate.GameFileTypeWindows:
+		fileType = values.GameFileTypeWindows
+	case migrate.GameFileTypeMac:
+		fileType = values.GameFileTypeMac
+	default:
+		return nil, fmt.Errorf("invalid file type: %s", file.GameFileType.Name)
+	}
+
+	return &repository.GameFileInfo{
+		GameFile: domain.NewGameFile(
+			values.NewGameFileIDFromUUID(file.ID),
+			fileType,
+			values.GameFileEntryPoint(file.EntryPoint),
+			values.GameFileHash(file.Hash),
+			file.CreatedAt,
+		),
+		GameID: values.NewGameIDFromUUID(file.GameID),
+	}, nil
 }
 
 func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileIDs []values.GameFileID, lockType repository.LockType) ([]*repository.GameFileInfo, error) {
