@@ -23,6 +23,50 @@ func NewGameFileV2(db *DB) *GameFileV2 {
 	}
 }
 
+func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.GameID, file *domain.GameFile) error {
+	db, err := gameFile.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var fileTypeName string
+	switch file.GetFileType() {
+	case values.GameFileTypeJar:
+		fileTypeName = migrate.GameFileTypeJar
+	case values.GameFileTypeWindows:
+		fileTypeName = migrate.GameFileTypeWindows
+	case values.GameFileTypeMac:
+		fileTypeName = migrate.GameFileTypeMac
+	default:
+		return fmt.Errorf("invalid file type: %d", file.GetFileType())
+	}
+
+	var fileType migrate.GameFileTypeTable
+	err = db.
+		Where("name = ?", fileTypeName).
+		Select("id").
+		Take(&fileType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get role type: %w", err)
+	}
+	fileTypeID := fileType.ID
+
+	err = db.
+		Create(&migrate.GameFileTable2{
+			ID:         uuid.UUID(file.GetID()),
+			GameID:     uuid.UUID(gameID),
+			EntryPoint: string(file.GetEntryPoint()),
+			Hash:       file.GetHash().String(),
+			FileTypeID: fileTypeID,
+			CreatedAt:  file.GetCreatedAt(),
+		}).Error
+	if err != nil {
+		return fmt.Errorf("failed to create game file: %w", err)
+	}
+
+	return nil
+}
+
 func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileIDs []values.GameFileID, lockType repository.LockType) ([]*repository.GameFileInfo, error) {
 	if len(fileIDs) == 0 {
 		return []*repository.GameFileInfo{}, nil
