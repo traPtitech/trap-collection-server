@@ -36,5 +36,6 @@ type EditionAuth interface {
 	// EditionAuth
 	// エディション情報へのアクセストークンを検証します。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
+	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	EditionAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error)
 }
