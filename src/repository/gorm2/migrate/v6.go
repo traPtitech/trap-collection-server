@@ -75,7 +75,7 @@ type productKeyStatusTableV6 struct {
 }
 
 func (*productKeyStatusTableV6) TableName() string {
-	return "product_key_status_types"
+	return "product_key_statuses"
 }
 
 const (

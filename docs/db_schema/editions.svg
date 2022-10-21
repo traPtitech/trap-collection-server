@@ -77,8 +77,8 @@
 <text text-anchor="start" x="519.5" y="-396.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
 <text text-anchor="start" x="589.528" y="-396.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
 <polygon fill="none" stroke="#000000" points="512.5,-355.5 512.5,-385.5 730.5,-385.5 730.5,-355.5 512.5,-355.5"/>
-<text text-anchor="start" x="519.5" y="-366.9" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
-<text text-anchor="start" x="588.7566" y="-366.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
+<text text-anchor="start" x="519.5" y="-366.9" font-family="Arial" font-size="14.00" fill="#000000">status_id </text>
+<text text-anchor="start" x="579.4088" y="-366.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
 </g>
 <!-- product_keys&#45;&gt;editions -->
 <g id="edge2" class="edge">
