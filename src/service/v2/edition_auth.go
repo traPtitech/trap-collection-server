@@ -143,6 +143,10 @@ func (editionAuth *EditionAuth) AuthorizeEdition(ctx context.Context, key values
 		return nil, fmt.Errorf("failed to get launcher user: %w", err)
 	}
 
+	if productKey.GetStatus() != values.LauncherUserStatusActive {
+		return nil, service.ErrInvalidProductKey
+	}
+
 	token, err := values.NewLauncherSessionAccessToken()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create access token: %w", err)
@@ -173,6 +177,10 @@ func (editionAuth *EditionAuth) EditionAuth(ctx context.Context, token values.La
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if accessTokenInfo.ProductKey.GetStatus() == values.LauncherUserStatusInactive {
+		return nil, nil, service.ErrInvalidAccessToken
 	}
 
 	if accessTokenInfo.AccessToken.IsExpired() {
