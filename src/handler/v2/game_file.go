@@ -3,14 +3,17 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameFile struct {
-	gameFileUnimplemented
+	gameFileService service.GameFileV2
 }
 
-func NewGameFile() *GameFile {
-	return &GameFile{}
+func NewGameFile(gameFileService service.GameFileV2) *GameFile {
+	return &GameFile{
+		gameFileService: gameFileService,
+	}
 }
 
 // gameFileUnimplemented
