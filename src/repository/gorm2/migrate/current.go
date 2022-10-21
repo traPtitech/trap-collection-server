@@ -41,12 +41,18 @@ const (
 
 // アプリケーションのv2
 type (
-	GameTable2        = gameTable2V5 // 実際に使用されるテーブルはv1のGameTableと同一
-	GameVersionTable2 = gameVersionTable2V5
-	GameFileTable2    = gameFileTable2V5
-	GameImageTable2   = gameImageTable2V2
-	GameVideoTable2   = gameVideoTable2V2
-	EditionTable2     = editionTableV5
-	ProductKeyTable2  = productKeyTableV2
-	AccessTokenTable2 = accessTokenTableV2
+	GameTable2             = gameTable2V5 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameVersionTable2      = gameVersionTable2V5
+	GameFileTable2         = gameFileTable2V5
+	GameImageTable2        = gameImageTable2V2
+	GameVideoTable2        = gameVideoTable2V2
+	EditionTable2          = editionTableV6
+	ProductKeyTable2       = productKeyTableV6
+	ProductKeyStatusTable2 = productKeyStatusTableV6
+	AccessTokenTable2      = accessTokenTableV2
+)
+
+var (
+	ProductKeyStatusActive   = productKeyStatusActiveV6
+	ProductKeyStatusInactive = productKeyStatusInactiveV6
 )
