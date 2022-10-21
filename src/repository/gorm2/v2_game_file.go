@@ -23,7 +23,7 @@ func NewGameFileV2(db *DB) *GameFileV2 {
 	}
 }
 
-func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, fileIDs []values.GameFileID, lockType repository.LockType) ([]*repository.GameFileInfo, error) {
+func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileIDs []values.GameFileID, lockType repository.LockType) ([]*repository.GameFileInfo, error) {
 	if len(fileIDs) == 0 {
 		return []*repository.GameFileInfo{}, nil
 	}
