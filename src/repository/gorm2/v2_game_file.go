@@ -116,6 +116,63 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 	}, nil
 }
 
+func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.GameID, lockType repository.LockType, fileTypes []values.GameFileType) ([]*domain.GameFile, error) {
+	db, err := gameFile.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = gameFile.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var files []migrate.GameFileTable2
+	err = db.
+		Joins("GameFileType").
+		Where("game_id = ?", uuid.UUID(gameID)).
+		Order("created_at DESC").
+		Find(&files).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game files: %w", err)
+	}
+
+	fileTypesMap := make(map[values.GameFileType]struct{})
+	for _, fileType := range fileTypes {
+		fileTypesMap[fileType] = struct{}{}
+	}
+
+	gameFiles := make([]*domain.GameFile, 0, len(files))
+	for _, file := range files {
+		var fileType values.GameFileType
+		switch file.GameFileType.Name {
+		case migrate.GameFileTypeJar:
+			fileType = values.GameFileTypeJar
+		case migrate.GameFileTypeWindows:
+			fileType = values.GameFileTypeWindows
+		case migrate.GameFileTypeMac:
+			fileType = values.GameFileTypeMac
+		default:
+			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
+			log.Printf("error: unknown game file type: %s\n", file.GameFileType.Name)
+			continue
+		}
+		if _, ok := fileTypesMap[fileType]; !ok {
+			continue
+		}
+
+		gameFiles = append(gameFiles, domain.NewGameFile(
+			values.NewGameFileIDFromUUID(file.ID),
+			fileType,
+			values.GameFileEntryPoint(file.EntryPoint),
+			values.GameFileHash(file.Hash),
+			file.CreatedAt,
+		))
+	}
+
+	return gameFiles, nil
+}
+
 func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileIDs []values.GameFileID, lockType repository.LockType) ([]*repository.GameFileInfo, error) {
 	if len(fileIDs) == 0 {
 		return []*repository.GameFileInfo{}, nil
