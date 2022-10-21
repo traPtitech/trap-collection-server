@@ -144,3 +144,40 @@ func (gameFile GameFile) GetGameFile(c echo.Context, gameID openapi.GameIDInPath
 
 	return c.Redirect(http.StatusSeeOther, (*url.URL)(tmpURL).String())
 }
+
+// ゲームファイルのメタ情報の取得
+// (GET /games/{gameID}/files/{gameFileID}/meta)
+func (gameFile GameFile) GetGameFileMeta(ctx echo.Context, gameID openapi.GameIDInPath, gameFileID openapi.GameFileIDInPath) error {
+	file, err := gameFile.gameFileService.GetGameFileMeta(ctx.Request().Context(), values.NewGameIDFromUUID(gameID), values.NewGameFileIDFromUUID(gameFileID))
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	}
+	if errors.Is(err, service.ErrInvalidGameFileID) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid gameFileID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game file meta: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game file meta")
+	}
+
+	var fileType openapi.GameFileType
+	switch file.GetFileType() {
+	case values.GameFileTypeJar:
+		fileType = openapi.GameFileType("jar")
+	case values.GameFileTypeWindows:
+		fileType = openapi.GameFileType("windows")
+	case values.GameFileTypeMac:
+		fileType = openapi.GameFileType("darwin")
+	default:
+		log.Printf("error: unknown game file type: %v\n", file.GetFileType())
+		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game file type")
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.GameFile{
+		Id:         openapi.GameFileID(file.GetID()),
+		Type:       fileType,
+		EntryPoint: openapi.GameFileEntryPoint(file.GetEntryPoint()),
+		Md5:        openapi.GameFileMd5(file.GetHash()),
+		CreatedAt:  file.GetCreatedAt(),
+	})
+}
