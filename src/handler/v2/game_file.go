@@ -69,7 +69,14 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid file")
 	}
 	headerEntryPoint := c.FormValue("entryPoint")
-	headerFileType := c.FormValue("fileType")
+	headerFileType := c.FormValue("type")
+
+	if headerEntryPoint == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "entry point is empty")
+	}
+	if headerFileType == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "file type is empty")
+	}
 
 	file, err := headerFile.Open()
 	if err != nil {
