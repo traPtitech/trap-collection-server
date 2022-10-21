@@ -409,7 +409,7 @@ func TestGetGameFile(t *testing.T) {
 			if testCase.executeGetGameFile {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeRecord, gomock.Any()).
+					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeRecord).
 					Return(testCase.file, testCase.getGameFileErr)
 			}
 
@@ -420,7 +420,7 @@ func TestGetGameFile(t *testing.T) {
 					Return(testCase.fileURL, testCase.getTempURLErr)
 			}
 
-			tmpURL, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.gameFileID, &testCase.environment)
+			tmpURL, err := gameFileService.GetGameFile(ctx, testCase.gameID, testCase.gameFileID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -754,11 +754,11 @@ func TestGetGameFileMeta(t *testing.T) {
 			if testCase.executeGetGameFile {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeNone, testCase.environment.AcceptGameFileTypes()).
+					GetGameFile(ctx, testCase.gameFileID, repository.LockTypeNone).
 					Return(testCase.file, testCase.getGameFileErr)
 			}
 
-			gameFile, err := gameFileService.GetGameFileMeta(ctx, testCase.gameID, testCase.gameFileID, testCase.environment)
+			gameFile, err := gameFileService.GetGameFileMeta(ctx, testCase.gameID, testCase.gameFileID)
 
 			if testCase.isErr {
 				if testCase.err == nil {

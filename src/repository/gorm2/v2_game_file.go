@@ -69,7 +69,7 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 	return nil
 }
 
-func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType repository.LockType, fileTypes []values.GameFileType) (*repository.GameFileInfo, error) {
+func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.GameFileID, lockType repository.LockType) (*repository.GameFileInfo, error) {
 	db, err := gameFile.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
