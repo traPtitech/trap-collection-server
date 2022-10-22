@@ -304,13 +304,13 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 	return result, nil
 }
 
-func (edition *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
-	db, err := edition.db.getDB(ctx)
+func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	db, err = edition.db.setLock(db, lockType)
+	db, err = e.db.setLock(db, lockType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
@@ -335,13 +335,13 @@ func (edition *Edition) GetEditionGameVersionByGameID(ctx context.Context, editi
 	), nil
 }
 
-func (edition *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
-	db, err := edition.db.getDB(ctx)
+func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	db, err = edition.db.setLock(db, lockType)
+	db, err = e.db.setLock(db, lockType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
@@ -365,13 +365,13 @@ func (edition *Edition) GetEditionGameVersionByImageID(ctx context.Context, edit
 	), nil
 }
 
-func (edition *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
-	db, err := edition.db.getDB(ctx)
+func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	db, err = edition.db.setLock(db, lockType)
+	db, err = e.db.setLock(db, lockType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
@@ -395,13 +395,13 @@ func (edition *Edition) GetEditionGameVersionByVideoID(ctx context.Context, edit
 	), nil
 }
 
-func (edition *Edition) GetEditionGameVersionByFileID(ctx context.Context, editionID values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
-	db, err := edition.db.getDB(ctx)
+func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, editionID values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	db, err = edition.db.setLock(db, lockType)
+	db, err = e.db.setLock(db, lockType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
