@@ -151,7 +151,7 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 	err = db.
 		Joins("Status").
 		Where("edition_id = ?", uuid.UUID(editionID)).
-		Where("product_key_statuses.name IN ?", dbStatuses).
+		Where("Status.name IN ?", dbStatuses).
 		Find(&dbProductKeys).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product keys: %w", err)
@@ -196,7 +196,7 @@ func (productKey *ProductKey) GetProductKey(ctx context.Context, productKeyID va
 	var dbProductKey migrate.ProductKeyTable2
 	err = db.
 		Joins("Status").
-		Where("id = ?", uuid.UUID(productKeyID)).
+		Where("product_keys.id = ?", uuid.UUID(productKeyID)).
 		Take(&dbProductKey).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, repository.ErrRecordNotFound
