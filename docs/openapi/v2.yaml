@@ -531,6 +531,7 @@ paths:
           description: |
             ゲームID、またはリクエストが不正である場合に返されます。
             既にmaintainerまたはownerとなっているユーザーが含まれる場合にも返されます。
+            一人しかいないownerがmaintainerに変更されようとしている場合にも返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "403":
