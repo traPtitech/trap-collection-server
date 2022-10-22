@@ -49,10 +49,10 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		"GameOwnerAuth":        checker.noAuthChecker, // TODO: GameOwnerAuthChecker
 		"GameMaintainerAuth":   checker.noAuthChecker, // TODO: GameMaintainerAuthChecker
 		"EditionAuth":          checker.EditionAuthChecker,
-		"EditionGameAuth":      checker.noAuthChecker, // TODO: EditionGameAuthChecker
-		"EditionGameFileAuth":  checker.noAuthChecker, // TODO: EditionGameFileAuthChecker
-		"EditionGameImageAuth": checker.noAuthChecker, // TODO: EditionGameImageAuthChecker
-		"EditionGameVideoAuth": checker.noAuthChecker, // TODO: EditionGameVideoAuthChecker
+		"EditionGameAuth":      checker.EditionGameAuthChecker,
+		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
+		"EditionGameImageAuth": checker.EditionGameImageAuthChecker,
+		"EditionGameVideoAuth": checker.EditionGameVideoAuthChecker,
 		"EditionIDAuth":        checker.EditionIDAuthChecker,
 	}
 
@@ -62,7 +62,12 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		return fmt.Errorf("unknown security scheme: %s", input.SecuritySchemeName)
 	}
 
-	return checkerFunc(ctx, input)
+	err := checkerFunc(ctx, input)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return err
 }
 
 // noAuthChecker
@@ -143,6 +148,174 @@ func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filt
 	return nil
 }
 
+func (checker *Checker) EditionGameAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	accessToken, ok, message := checker.getAccessToken(ai)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	strGameID := c.Param("gameID")
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid editionID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	productKey, edition, err := checker.editionAuthService.EditionGameAuth(ctx, accessToken, gameID)
+	if errors.Is(err, service.ErrInvalidAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid access token")
+	}
+	if errors.Is(err, service.ErrExpiredAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "expired access token")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+	}
+	if err != nil {
+		log.Printf("error: failed to check edition game auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check edition game auth")
+	}
+
+	checker.context.SetProductKey(c, productKey)
+	checker.context.SetEdition(c, edition)
+
+	return nil
+}
+
+func (checker *Checker) EditionGameFileAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	accessToken, ok, message := checker.getAccessToken(ai)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	strFileID := c.Param("gameFileID")
+	uuidFileID, err := uuid.Parse(strFileID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid fileID")
+	}
+	fileID := values.NewGameFileIDFromUUID(uuidFileID)
+
+	productKey, edition, err := checker.editionAuthService.EditionFileAuth(ctx, accessToken, fileID)
+	if errors.Is(err, service.ErrInvalidAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid access token")
+	}
+	if errors.Is(err, service.ErrExpiredAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "expired access token")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+	}
+	if err != nil {
+		log.Printf("error: failed to check edition game file auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check edition game file auth")
+	}
+
+	checker.context.SetProductKey(c, productKey)
+	checker.context.SetEdition(c, edition)
+
+	return nil
+}
+
+func (checker *Checker) EditionGameImageAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	accessToken, ok, message := checker.getAccessToken(ai)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	strImageID := c.Param("gameImageID")
+	uuidImageID, err := uuid.Parse(strImageID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid imageID")
+	}
+	imageID := values.GameImageIDFromUUID(uuidImageID)
+
+	productKey, edition, err := checker.editionAuthService.EditionImageAuth(ctx, accessToken, imageID)
+	if errors.Is(err, service.ErrInvalidAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid access token")
+	}
+	if errors.Is(err, service.ErrExpiredAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "expired access token")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+	}
+	if err != nil {
+		log.Printf("error: failed to check edition game image auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check edition game image auth")
+	}
+
+	checker.context.SetProductKey(c, productKey)
+	checker.context.SetEdition(c, edition)
+
+	return nil
+}
+
+func (checker *Checker) EditionGameVideoAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	accessToken, ok, message := checker.getAccessToken(ai)
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	strVideoID := c.Param("gameVideoID")
+	uuidVideoID, err := uuid.Parse(strVideoID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid videoID")
+	}
+	videoID := values.NewGameVideoIDFromUUID(uuidVideoID)
+
+	productKey, edition, err := checker.editionAuthService.EditionVideoAuth(ctx, accessToken, videoID)
+	if errors.Is(err, service.ErrInvalidAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "invalid access token")
+	}
+	if errors.Is(err, service.ErrExpiredAccessToken) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "expired access token")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusForbidden, "forbidden")
+	}
+	if err != nil {
+		log.Printf("error: failed to check edition game video auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check edition game video auth")
+	}
+
+	checker.context.SetProductKey(c, productKey)
+	checker.context.SetEdition(c, edition)
+
+	return nil
+}
+
 func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
@@ -177,16 +350,9 @@ func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3fi
 }
 
 func (checker *Checker) checkEditionAuth(c echo.Context, ai *openapi3filter.AuthenticationInput) (*domain.LauncherUser, *domain.LauncherVersion, bool, string, error) {
-	authorizationHeader := ai.RequestValidationInput.Request.Header.Get(echo.HeaderAuthorization)
-
-	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
-		return nil, nil, false, "invalid authorization header", nil
-	}
-
-	strAccessToken := strings.TrimPrefix(authorizationHeader, "Bearer ")
-	accessToken := values.NewLauncherSessionAccessTokenFromString(strAccessToken)
-	if err := accessToken.Validate(); err != nil {
-		return nil, nil, false, "invalid access token", nil
+	accessToken, ok, message := checker.getAccessToken(ai)
+	if !ok {
+		return nil, nil, false, message, nil
 	}
 
 	productKey, edition, err := checker.editionAuthService.EditionAuth(c.Request().Context(), accessToken)
@@ -204,4 +370,20 @@ func (checker *Checker) checkEditionAuth(c echo.Context, ai *openapi3filter.Auth
 	checker.context.SetEdition(c, edition)
 
 	return productKey, edition, true, "", nil
+}
+
+func (checker *Checker) getAccessToken(ai *openapi3filter.AuthenticationInput) (values.LauncherSessionAccessToken, bool, string) {
+	authorizationHeader := ai.RequestValidationInput.Request.Header.Get(echo.HeaderAuthorization)
+
+	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
+		return "", false, "invalid authorization header"
+	}
+
+	strAccessToken := strings.TrimPrefix(authorizationHeader, "Bearer ")
+	accessToken := values.NewLauncherSessionAccessTokenFromString(strAccessToken)
+	if err := accessToken.Validate(); err != nil {
+		return "", false, "invalid access token"
+	}
+
+	return accessToken, true, ""
 }
