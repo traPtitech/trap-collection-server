@@ -75,6 +75,9 @@ var (
 		wire.Bind(new(service.Edition), new(*v2.Edition)),
 		v2.NewEdition,
 
+		wire.Bind(new(service.GameRoleV2), new(*v2.GameRole)),
+		v2.NewGameRole,
+
 		v2.NewUser,
 	)
 )

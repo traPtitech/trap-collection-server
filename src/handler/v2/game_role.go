@@ -61,7 +61,7 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 		return echo.NewHTTPError(http.StatusNotFound, "no game")
 	}
 	if errors.Is(err, service.ErrInvalidUserID) {
-		return echo.NewHTTPError(http.StatusBadRequest, "userID is invalud or no user")
+		return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
 	}
 	if err != nil {
 		log.Printf("error: failed to edit game management role: %v\n", err)
