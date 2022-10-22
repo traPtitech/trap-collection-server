@@ -63,6 +63,9 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 	if errors.Is(err, service.ErrInvalidUserID) {
 		return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
 	}
+	if errors.Is(err, service.ErrCannotEditOwners) {
+		return echo.NewHTTPError(http.StatusBadRequest, "you cannot change the user role beause there is only 1 owner")
+	}
 	if err != nil {
 		log.Printf("error: failed to edit game management role: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to edit game management role")
@@ -114,7 +117,7 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 
 	err = gameRole.gameRoleService.RemoveGameManagementRole(ctx.Request().Context(), values.GameID(gameID), values.TraPMemberID(userID))
 	if errors.Is(err, service.ErrInvalidRole) {
-		return echo.NewHTTPError(http.StatusNotFound, "the user do not has any role")
+		return echo.NewHTTPError(http.StatusNotFound, "the user does not has any role")
 	}
 	if errors.Is(err, service.ErrCannotDeleteOwner) {
 		return echo.NewHTTPError(http.StatusBadRequest, "you cannot delete owner because there is only 1 owner")
