@@ -6,22 +6,38 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/domain"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type Checker struct {
-	session     *Session
-	oidcService service.OIDCV2
+	context            *Context
+	session            *Session
+	oidcService        service.OIDCV2
+	editionService     service.Edition
+	editionAuthService service.EditionAuth
 }
 
-func NewChecker(session *Session, oidcService service.OIDCV2) *Checker {
+func NewChecker(
+	context *Context,
+	session *Session,
+	oidcService service.OIDCV2,
+	editionService service.Edition,
+	editionAuthService service.EditionAuth,
+) *Checker {
 	return &Checker{
-		session:     session,
-		oidcService: oidcService,
+		context:            context,
+		session:            session,
+		oidcService:        oidcService,
+		editionService:     editionService,
+		editionAuthService: editionAuthService,
 	}
 }
 
@@ -32,12 +48,12 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		"AdminAuth":            checker.noAuthChecker, // TODO: AdminAuthChecker
 		"GameOwnerAuth":        checker.noAuthChecker, // TODO: GameOwnerAuthChecker
 		"GameMaintainerAuth":   checker.noAuthChecker, // TODO: GameMaintainerAuthChecker
-		"EditionAuth":          checker.noAuthChecker, // TODO: EditionAuthChecker
+		"EditionAuth":          checker.EditionAuthChecker,
 		"EditionGameAuth":      checker.noAuthChecker, // TODO: EditionGameAuthChecker
 		"EditionGameFileAuth":  checker.noAuthChecker, // TODO: EditionGameFileAuthChecker
 		"EditionGameImageAuth": checker.noAuthChecker, // TODO: EditionGameImageAuthChecker
 		"EditionGameVideoAuth": checker.noAuthChecker, // TODO: EditionGameVideoAuthChecker
-		"EditionIDAuth":        checker.noAuthChecker, // TODO: EditionIDAuthChecker
+		"EditionIDAuth":        checker.EditionIDAuthChecker,
 	}
 
 	checkerFunc, ok := checkerMap[input.SecuritySchemeName]
@@ -103,4 +119,89 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	}
 
 	return true, "", nil
+}
+
+func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	_, _, ok, message, err := checker.checkEditionAuth(c, ai)
+	if err != nil {
+		log.Printf("error: failed to check edition auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	return nil
+}
+
+func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	_, edition, ok, message, err := checker.checkEditionAuth(c, ai)
+	if err != nil {
+		log.Printf("error: failed to check edition auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	if !ok {
+		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	strEditionID := c.Param("editionID")
+	uuidEditionID, err := uuid.Parse(strEditionID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid editionID")
+	}
+	editionID := values.NewLauncherVersionIDFromUUID(uuidEditionID)
+
+	if editionID != edition.GetID() {
+		return echo.NewHTTPError(http.StatusUnauthorized, "editionID is not matched")
+	}
+
+	return nil
+}
+
+func (checker *Checker) checkEditionAuth(c echo.Context, ai *openapi3filter.AuthenticationInput) (*domain.LauncherUser, *domain.LauncherVersion, bool, string, error) {
+	authorizationHeader := ai.RequestValidationInput.Request.Header.Get(echo.HeaderAuthorization)
+
+	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
+		return nil, nil, false, "invalid authorization header", nil
+	}
+
+	strAccessToken := strings.TrimPrefix(authorizationHeader, "Bearer ")
+	accessToken := values.NewLauncherSessionAccessTokenFromString(strAccessToken)
+	if err := accessToken.Validate(); err != nil {
+		return nil, nil, false, "invalid access token", nil
+	}
+
+	productKey, edition, err := checker.editionAuthService.EditionAuth(c.Request().Context(), accessToken)
+	if errors.Is(err, service.ErrInvalidAccessToken) {
+		return nil, nil, false, "invalid access token", nil
+	}
+	if errors.Is(err, service.ErrExpiredAccessToken) {
+		return nil, nil, false, "expired access token", nil
+	}
+	if err != nil {
+		return nil, nil, false, "", fmt.Errorf("failed to check edition auth: %w", err)
+	}
+
+	checker.context.SetProductKey(c, productKey)
+	checker.context.SetEdition(c, edition)
+
+	return productKey, edition, true, "", nil
 }

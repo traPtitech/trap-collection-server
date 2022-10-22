@@ -13,11 +13,13 @@ CREATE TABLE `product_keys` (
   `edition_id` varchar(36) NOT NULL,
   `product_key` varchar(29) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `deleted_at` datetime DEFAULT NULL,
+  `status_id` tinyint(4) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `product_key` (`product_key`),
   KEY `fk_editions_product_keys` (`edition_id`),
-  CONSTRAINT `fk_editions_product_keys` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`)
+  KEY `fk_product_keys_status` (`status_id`),
+  CONSTRAINT `fk_editions_product_keys` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
+  CONSTRAINT `fk_product_keys_status` FOREIGN KEY (`status_id`) REFERENCES `product_key_statuses` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,13 +33,14 @@ CREATE TABLE `product_keys` (
 | edition_id | varchar(36) |  | false |  | [editions](editions.md) | エディションUUID |
 | product_key | varchar(29) |  | false |  |  | プロダクトキーの値 |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
-| deleted_at | datetime | NULL | true |  |  | revokeされた日時 |
+| status_id | tinyint(4) |  | false |  | [product_key_statuses](product_key_statuses.md) | ステータスのID |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | fk_editions_product_keys | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
+| fk_product_keys_status | FOREIGN KEY | FOREIGN KEY (status_id) REFERENCES product_key_statuses (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 | product_key | UNIQUE | UNIQUE KEY product_key (product_key) |
 
@@ -46,6 +49,7 @@ CREATE TABLE `product_keys` (
 | Name | Definition |
 | ---- | ---------- |
 | fk_editions_product_keys | KEY fk_editions_product_keys (edition_id) USING BTREE |
+| fk_product_keys_status | KEY fk_product_keys_status (status_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | product_key | UNIQUE KEY product_key (product_key) USING BTREE |
 

@@ -1,6 +1,10 @@
 package domain
 
-import "github.com/traPtitech/trap-collection-server/src/domain/values"
+import (
+	"time"
+
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
+)
 
 // LauncherUser
 // ランチャー使用者を表すドメイン。
@@ -10,6 +14,7 @@ type LauncherUser struct {
 	id         values.LauncherUserID
 	productKey values.LauncherUserProductKey
 	status     values.LauncherUserStatus
+	createdAt  time.Time
 }
 
 func NewLauncherUser(
@@ -20,6 +25,20 @@ func NewLauncherUser(
 		id:         id,
 		productKey: productKey,
 		status:     values.LauncherUserStatusActive,
+	}
+}
+
+func NewProductKey(
+	id values.LauncherUserID,
+	productKey values.LauncherUserProductKey,
+	status values.LauncherUserStatus,
+	createdAt time.Time,
+) *LauncherUser {
+	return &LauncherUser{
+		id:         id,
+		productKey: productKey,
+		status:     status,
+		createdAt:  createdAt,
 	}
 }
 
@@ -37,4 +56,8 @@ func (lu *LauncherUser) GetStatus() values.LauncherUserStatus {
 
 func (lu *LauncherUser) SetStatus(status values.LauncherUserStatus) {
 	lu.status = status
+}
+
+func (lu *LauncherUser) GetCreatedAt() time.Time {
+	return lu.createdAt
 }

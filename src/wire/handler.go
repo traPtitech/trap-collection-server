@@ -36,6 +36,7 @@ var (
 	handlerV2Set = wire.NewSet(
 		v2.NewAPI,
 		v2.NewChecker,
+		v2.NewContext,
 		v2.NewSession,
 		v2.NewOAuth2,
 		v2.NewUser,

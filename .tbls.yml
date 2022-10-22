@@ -157,8 +157,14 @@ comments:
       id: プロダクトキーUUID
       edition_id: エディションUUID
       product_key: プロダクトキーの値
+      status_id: ステータスのID
       created_at: 作成日時
-      deleted_at: revokeされた日時
+  - table: product_key_statuses
+    tableComment: プロダクトキーのステータスのテーブル
+    columnComments:
+      id: ステータスのID
+      name: ステータスの名前
+      active: 有効かどうか
   - table: v2_game_files
     tableComment: ゲームファイルテーブル(v2)
     columnComments:
