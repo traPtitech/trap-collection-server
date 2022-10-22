@@ -89,3 +89,43 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 	}
 	return nil
 }
+
+func (gameRole *GameRole) RemoveGameManagementRole(ctx context.Context, gameID values.GameID, userID values.TraPMemberID) error {
+	err := gameRole.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		managers, err := gameRole.gameManagementRoleRepository.GetGameManagersByGameID(
+			ctx,
+			gameID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to get game managers by gameID: %w", err)
+		}
+
+		managersMap := make(map[values.TraPMemberID]values.GameManagementRole, len(managers))
+		ownersNumber := 0
+		for _, manager := range managers {
+			managersMap[manager.UserID] = manager.Role
+			if manager.Role == values.GameManagementRoleAdministrator {
+				ownersNumber++
+			}
+		}
+
+		if _, ok := managersMap[userID]; !ok {
+			return service.ErrInvalidRole
+		}
+		if managersMap[userID] == values.GameManagementRoleAdministrator && ownersNumber == 1 {
+			return service.ErrCannotDeleteOwner
+		}
+
+		err = gameRole.gameManagementRoleRepository.RemoveGameManagementRole(ctx, gameID, userID)
+		if err != nil {
+			return fmt.Errorf("failed to remove game management role: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
