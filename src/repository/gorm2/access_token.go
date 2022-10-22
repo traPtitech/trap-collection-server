@@ -79,16 +79,19 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 	}
 	dbProductKey := edition.ProductKeys[0]
 
-	key := domain.NewLauncherUser(
-		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
-		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
-	)
+	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
 	case migrate.ProductKeyStatusInactive:
-		key.SetStatus(values.LauncherUserStatusInactive)
+		status = values.LauncherUserStatusInactive
 	case migrate.ProductKeyStatusActive:
-		key.SetStatus(values.LauncherUserStatusActive)
+		status = values.LauncherUserStatusActive
 	}
+	key := domain.NewProductKey(
+		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
+		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
+		status,
+		dbProductKey.CreatedAt,
+	)
 
 	if len(dbProductKey.AccessTokens) == 0 {
 		return nil, repository.ErrRecordNotFound

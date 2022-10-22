@@ -19,7 +19,7 @@ type ProductKey interface {
 	// GetProductKeys
 	// プロダクトキー一覧の取得。
 	// ステータスに関わらず取得可能。
-	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, lockType LockType) ([]*domain.LauncherUser, error)
+	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, statuses []values.LauncherUserStatus, lockType LockType) ([]*domain.LauncherUser, error)
 	// GetProductKey
 	// プロダクトキーの取得。
 	// ステータスに関わらず取得可能。

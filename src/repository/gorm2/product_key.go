@@ -124,7 +124,7 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 	return nil
 }
 
-func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, lockType repository.LockType) ([]*domain.LauncherUser, error) {
+func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, statuses []values.LauncherUserStatus, lockType repository.LockType) ([]*domain.LauncherUser, error) {
 	db, err := productKey.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -135,10 +135,23 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
+	var dbStatuses []string
+	for _, status := range statuses {
+		switch status {
+		case values.LauncherUserStatusInactive:
+			dbStatuses = append(dbStatuses, migrate.ProductKeyStatusInactive)
+		case values.LauncherUserStatusActive:
+			dbStatuses = append(dbStatuses, migrate.ProductKeyStatusActive)
+		default:
+			return nil, fmt.Errorf("invalid product key status: %d", status)
+		}
+	}
+
 	var dbProductKeys []migrate.ProductKeyTable2
 	err = db.
 		Joins("Status").
 		Where("edition_id = ?", uuid.UUID(editionID)).
+		Where("product_key_statuses.name IN ?", dbStatuses).
 		Find(&dbProductKeys).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get product keys: %w", err)
@@ -146,19 +159,22 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 
 	productKeys := make([]*domain.LauncherUser, 0, len(dbProductKeys))
 	for _, dbProductKey := range dbProductKeys {
-		keyValue := domain.NewLauncherUser(
-			values.NewLauncherUserIDFromUUID(dbProductKey.ID),
-			values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
-		)
+		var status values.LauncherUserStatus
 		switch dbProductKey.Status.Name {
 		case migrate.ProductKeyStatusInactive:
-			keyValue.SetStatus(values.LauncherUserStatusInactive)
+			status = values.LauncherUserStatusInactive
 		case migrate.ProductKeyStatusActive:
-			keyValue.SetStatus(values.LauncherUserStatusActive)
+			status = values.LauncherUserStatusActive
 		default:
 			log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)
 			continue
 		}
+		keyValue := domain.NewProductKey(
+			values.NewLauncherUserIDFromUUID(dbProductKey.ID),
+			values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
+			status,
+			dbProductKey.CreatedAt,
+		)
 
 		productKeys = append(productKeys, keyValue)
 	}
@@ -189,18 +205,22 @@ func (productKey *ProductKey) GetProductKey(ctx context.Context, productKeyID va
 		return nil, fmt.Errorf("failed to get product key: %w", err)
 	}
 
-	keyValue := domain.NewLauncherUser(
-		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
-		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
-	)
+	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
 	case migrate.ProductKeyStatusInactive:
-		keyValue.SetStatus(values.LauncherUserStatusInactive)
+		status = values.LauncherUserStatusInactive
 	case migrate.ProductKeyStatusActive:
-		keyValue.SetStatus(values.LauncherUserStatusActive)
+		status = values.LauncherUserStatusActive
 	default:
 		log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)
 	}
+
+	keyValue := domain.NewProductKey(
+		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
+		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
+		status,
+		dbProductKey.CreatedAt,
+	)
 
 	return keyValue, nil
 }
@@ -228,18 +248,21 @@ func (productKey *ProductKey) GetProductKeyByKey(ctx context.Context, productKey
 		return nil, fmt.Errorf("failed to get launcher user: %w", err)
 	}
 
-	keyValue := domain.NewLauncherUser(
-		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
-		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
-	)
+	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
 	case migrate.ProductKeyStatusInactive:
-		keyValue.SetStatus(values.LauncherUserStatusInactive)
+		status = values.LauncherUserStatusInactive
 	case migrate.ProductKeyStatusActive:
-		keyValue.SetStatus(values.LauncherUserStatusActive)
+		status = values.LauncherUserStatusActive
 	default:
 		log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)
 	}
+	keyValue := domain.NewProductKey(
+		values.NewLauncherUserIDFromUUID(dbProductKey.ID),
+		values.NewLauncherUserProductKeyFromString(dbProductKey.ProductKey),
+		status,
+		dbProductKey.CreatedAt,
+	)
 
 	return keyValue, nil
 }
