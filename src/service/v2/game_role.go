@@ -15,7 +15,7 @@ type GameRole struct {
 	db                           repository.DB
 	gameRepository               repository.GameV2
 	gameManagementRoleRepository repository.GameManagementRole
-	userUtils                    *User
+	user                         *User
 }
 
 func NewGameRole(
@@ -28,7 +28,7 @@ func NewGameRole(
 		db:                           db,
 		gameRepository:               gameRepository,
 		gameManagementRoleRepository: gameManagementRoleRepository,
-		userUtils:                    userUtils,
+		user:                         userUtils,
 	}
 }
 
@@ -42,7 +42,7 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 			return fmt.Errorf("failed to get game: %w", err)
 		}
 
-		activeUsers, err := gameRole.userUtils.getActiveUsers(ctx, session)
+		activeUsers, err := gameRole.user.getActiveUsers(ctx, session)
 		if err != nil {
 			return fmt.Errorf("failed to get active users: %v", err)
 		}
@@ -125,6 +125,35 @@ func (gameRole *GameRole) RemoveGameManagementRole(ctx context.Context, gameID v
 	})
 	if err != nil {
 		return fmt.Errorf("failed in transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (gameRole *GameRole) UpdateGameAuth(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) error {
+	myInfo, err := gameRole.user.getMe(ctx, session)
+	if err != nil {
+		return fmt.Errorf("failed to get me: %w", err)
+	}
+
+	_, err = gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return service.ErrInvalidGameID
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get game: %w", err)
+	}
+
+	role, err := gameRole.gameManagementRoleRepository.GetGameManagementRole(ctx, gameID, myInfo.GetID(), repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return service.ErrForbidden
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get game management role: %w", err)
+	}
+
+	if !role.HaveGameUpdatePermission() {
+		return service.ErrForbidden
 	}
 
 	return nil
