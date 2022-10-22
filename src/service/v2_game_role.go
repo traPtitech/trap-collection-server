@@ -14,6 +14,7 @@ type GameRoleV2 interface {
 	//指定されたユーザーを指定されたゲームの管理者に指定したり変更したりする。
 	//管理者でない場合は、roleが追加される。
 	//既に管理者の場合は、指定されたroleが現状と異なれば変更し、現状と同じ場合はErrNoGameManagementRoleUpdatedを返す。
+	//そのユーザーのroleを変えるとowners(administraitors)がいなくなってしまう場合は、ErrCannotEditOwnersを返す。
 	//ゲームIDに当てはまるゲームが存在しないとき、ErrNoGameを返す。
 	//ユーザーが存在しない、またはアクティブではない場合、ErrInvalidUserIDを返す。
 	EditGameManagementRole(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, userID values.TraPMemberID, role values.GameManagementRole) error
