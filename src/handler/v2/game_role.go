@@ -26,18 +26,6 @@ func NewGameRole(gameRoleService service.GameRoleV2, gameService service.GameV2,
 	}
 }
 
-// gameRoleUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type gameRoleUnimplemented interface {
-	// ゲームの管理権限の変更
-	// (PATCH /games/{gameID}/roles)
-	PatchGameRole(ctx echo.Context, gameID openapi.GameIDInPath) error
-	// ゲームの管理権限の削除
-	// (DELETE /games/{gameID}/roles/{userID})
-	DeleteGameRole(ctx echo.Context, gameID openapi.GameIDInPath, userID openapi.UserIDInPath) error
-}
-
 func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	session, err := gameRole.session.get(ctx)
 	if err != nil {
