@@ -92,6 +92,13 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 
 func (gameRole *GameRole) RemoveGameManagementRole(ctx context.Context, gameID values.GameID, userID values.TraPMemberID) error {
 	err := gameRole.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game: %w", err)
+		}
 		managers, err := gameRole.gameManagementRoleRepository.GetGameManagersByGameID(
 			ctx,
 			gameID,
