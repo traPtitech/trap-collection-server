@@ -580,11 +580,11 @@ func TestGetGameFiles(t *testing.T) {
 			if testCase.executeGetGameFiles {
 				mockGameFileRepository.
 					EXPECT().
-					GetGameFiles(gomock.Any(), testCase.gameID, repository.LockTypeNone, gomock.Any()).
+					GetGameFiles(gomock.Any(), testCase.gameID, repository.LockTypeNone).
 					Return(testCase.gameFiles, testCase.getGameFilesErr)
 			}
 
-			gameFiles, err := gameFileService.GetGameFiles(ctx, testCase.gameID, &testCase.environment)
+			gameFiles, err := gameFileService.GetGameFiles(ctx, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {

@@ -69,6 +69,9 @@ var (
 		wire.Bind(new(service.GameVersionV2), new(*v2.GameVersion)),
 		v2.NewGameVersion,
 
+		wire.Bind(new(service.GameFileV2), new(*v2.GameFile)),
+		v2.NewGameFile,
+
 		wire.Bind(new(service.Edition), new(*v2.Edition)),
 		v2.NewEdition,
 
