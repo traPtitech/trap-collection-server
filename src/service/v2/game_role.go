@@ -60,12 +60,19 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 			return fmt.Errorf("error: failed to get game managers by gameID: %w", err)
 		}
 		gameManagersMap := make(map[values.TraPMemberID]values.GameManagementRole, len(gameManagers))
+		ownersNumber := 0
 		for _, managerAndRole := range gameManagers {
 			gameManagersMap[managerAndRole.UserID] = managerAndRole.Role
+			if managerAndRole.Role == values.GameManagementRoleAdministrator {
+				ownersNumber++
+			}
 		}
 
 		if role, ok := gameManagersMap[userID]; ok {
 			if role != newRole { //既にあるroleと違うので、Update
+				if role == values.GameManagementRoleAdministrator && ownersNumber == 1 { //ownersが一人の場合にそのownerをmaintainerに変えるのを止める。
+					return service.ErrCannotEditOwners
+				}
 				err = gameRole.gameManagementRoleRepository.UpdateGameManagementRole(ctx, gameID, userID, newRole)
 				if errors.Is(repository.ErrNoRecordUpdated, err) {
 					return service.ErrNoGameManagementRoleUpdated
