@@ -39,6 +39,34 @@ type EditionAuth interface {
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	EditionAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	// EditionGameAuth
+	// エディション情報へのアクセストークンを検証し、
+	// ゲーム情報にアクセスできるかどうかチェックします。
+	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
+	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
+	// ゲーム情報にアクセスできない、もしくはゲームが存在しない場合、ErrForbiddenを返します。
+	EditionGameAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	// EditionImageAuth
+	// エディション情報へのアクセストークンを検証し、
+	// イメージ情報にアクセスできるかどうかチェックします。
+	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
+	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
+	// イメージ情報にアクセスできない、もしくはイメージが存在しない場合、ErrForbiddenを返します。
+	EditionImageAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	// EditionVideoAuth
+	// エディション情報へのアクセストークンを検証し、
+	// 動画情報にアクセスできるかどうかチェックします。
+	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
+	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
+	// 動画情報にアクセスできない、もしくは動画が存在しない場合、ErrForbiddenを返します。
+	EditionVideoAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	// EditionFileAuth
+	// エディション情報へのアクセストークンを検証し、
+	// ファイル情報にアクセスできるかどうかチェックします。
+	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
+	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
+	// ファイル情報にアクセスできない、もしくはファイルが存在しない場合、ErrForbiddenを返します。
+	EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.LauncherVersion, error)
 }
 
 type GetProductKeysParams struct {

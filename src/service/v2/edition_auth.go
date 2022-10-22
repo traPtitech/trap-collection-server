@@ -203,3 +203,115 @@ func (editionAuth *EditionAuth) EditionAuth(ctx context.Context, token values.La
 
 	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
 }
+
+func (editionAuth *EditionAuth) EditionGameAuth(ctx context.Context, token values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if accessTokenInfo.ProductKey.GetStatus() == values.LauncherUserStatusInactive {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+
+	if accessTokenInfo.AccessToken.IsExpired() {
+		return nil, nil, service.ErrExpiredAccessToken
+	}
+
+	_, err = editionAuth.editionRepository.GetEditionGameVersionByGameID(ctx, accessTokenInfo.Edition.GetID(), gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrForbidden
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
+}
+
+func (editionAuth *EditionAuth) EditionImageAuth(ctx context.Context, token values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if accessTokenInfo.ProductKey.GetStatus() == values.LauncherUserStatusInactive {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+
+	if accessTokenInfo.AccessToken.IsExpired() {
+		return nil, nil, service.ErrExpiredAccessToken
+	}
+
+	_, err = editionAuth.editionRepository.GetEditionGameVersionByImageID(ctx, accessTokenInfo.Edition.GetID(), imageID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrForbidden
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
+}
+
+func (editionAuth *EditionAuth) EditionVideoAuth(ctx context.Context, token values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if accessTokenInfo.ProductKey.GetStatus() == values.LauncherUserStatusInactive {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+
+	if accessTokenInfo.AccessToken.IsExpired() {
+		return nil, nil, service.ErrExpiredAccessToken
+	}
+
+	_, err = editionAuth.editionRepository.GetEditionGameVersionByVideoID(ctx, accessTokenInfo.Edition.GetID(), videoID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrForbidden
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
+}
+
+func (editionAuth *EditionAuth) EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, accessToken, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	if accessTokenInfo.ProductKey.GetStatus() == values.LauncherUserStatusInactive {
+		return nil, nil, service.ErrInvalidAccessToken
+	}
+
+	if accessTokenInfo.AccessToken.IsExpired() {
+		return nil, nil, service.ErrExpiredAccessToken
+	}
+
+	_, err = editionAuth.editionRepository.GetEditionGameVersionByFileID(ctx, accessTokenInfo.Edition.GetID(), fileID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrForbidden
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get launcher version and user and session: %w", err)
+	}
+
+	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
+}
