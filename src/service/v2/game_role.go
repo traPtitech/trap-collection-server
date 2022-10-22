@@ -36,7 +36,7 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 	err := gameRole.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		_, err := gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidGameID
+			return service.ErrInvalidGameID //TODO:ErrNoGame
 		}
 		if err != nil {
 			return fmt.Errorf("failed to get game: %w", err)
