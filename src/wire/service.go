@@ -77,6 +77,9 @@ var (
 
 		wire.Bind(new(service.EditionAuth), new(*v2.EditionAuth)),
 		v2.NewEditionAuth,
+		
+		wire.Bind(new(service.GameRoleV2), new(*v2.GameRole)),
+		v2.NewGameRole,
 
 		v2.NewUser,
 	)
