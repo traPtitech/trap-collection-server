@@ -75,6 +75,9 @@ var (
 		wire.Bind(new(service.Edition), new(*v2.Edition)),
 		v2.NewEdition,
 
+		wire.Bind(new(service.EditionAuth), new(*v2.EditionAuth)),
+		v2.NewEditionAuth,
+
 		v2.NewUser,
 	)
 )

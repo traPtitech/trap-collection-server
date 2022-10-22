@@ -59,4 +59,10 @@ var repositorySet = wire.NewSet(
 
 	wire.Bind(new(repository.Edition), new(*gorm2.Edition)),
 	gorm2.NewEdition,
+
+	wire.Bind(new(repository.ProductKey), new(*gorm2.ProductKey)),
+	gorm2.NewProductKey,
+
+	wire.Bind(new(repository.AccessToken), new(*gorm2.AccessToken)),
+	gorm2.NewAccessToken,
 )

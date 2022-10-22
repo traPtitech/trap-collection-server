@@ -175,6 +175,7 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	context := v2.NewContext()
 	v2Session, err := v2.NewSession(session)
 	if err != nil {
 		return nil, err
@@ -185,21 +186,26 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	checker := v2.NewChecker(v2Session, v2OIDC)
+	edition := gorm2.NewEdition(db)
+	gameV2 := gorm2.NewGameV2(db)
+	gameVersionV2 := gorm2.NewGameVersionV2(db)
+	gameFileV2 := gorm2.NewGameFileV2(db)
+	v2Edition := v2_2.NewEdition(db, edition, gameV2, gameVersionV2, gameFileV2)
+	productKey := gorm2.NewProductKey(db)
+	accessToken := gorm2.NewAccessToken(db)
+	editionAuth := v2_2.NewEditionAuth(db, edition, productKey, accessToken)
+	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth)
 	v2OAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
 	if err != nil {
 		return nil, err
 	}
 	user3 := v2.NewUser(v2Session, v1User)
 	admin := v2.NewAdmin()
-	gameV2 := gorm2.NewGameV2(db)
 	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, v2User)
 	game3 := v2.NewGame(v2Session, v2Game)
 	v2GameRole := v2.NewGameRole()
 	gameImageV2 := gorm2.NewGameImageV2(db)
 	gameVideoV2 := gorm2.NewGameVideoV2(db)
-	gameFileV2 := gorm2.NewGameFileV2(db)
-	gameVersionV2 := gorm2.NewGameVersionV2(db)
 	v2GameVersion := v2_2.NewGameVersion(db, game, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)
 	gameVersion3 := v2.NewGameVersion(v2GameVersion)
 	v2GameFile := v2_2.NewGameFile(db, gameV2, gameFileV2, storageGameFile)
@@ -208,12 +214,10 @@ func InjectApp() (*App, error) {
 	gameImage3 := v2.NewGameImage(v2GameImage)
 	v2GameVideo := v2_2.NewGameVideo(db, gameV2, gameVideoV2, storageGameVideo)
 	gameVideo3 := v2.NewGameVideo(v2GameVideo)
-	edition := gorm2.NewEdition(db)
-	v2Edition := v2_2.NewEdition(db, edition, gameV2, gameVersionV2, gameFileV2)
 	edition2 := v2.NewEdition(v2Edition)
-	editionAuth := v2.NewEditionAuth()
+	v2EditionAuth := v2.NewEditionAuth(context, editionAuth)
 	seat := v2.NewSeat()
-	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, v2GameRole, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, editionAuth, seat)
+	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, v2GameRole, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, v2EditionAuth, seat)
 	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
 	if err != nil {
 		return nil, err
