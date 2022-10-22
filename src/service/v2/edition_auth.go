@@ -50,6 +50,7 @@ func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionI
 		return nil, fmt.Errorf("failed to get launcher version: %w", err)
 	}
 
+	now := time.Now()
 	productKeys := make([]*domain.LauncherUser, 0, num)
 	for i := uint(0); i < num; i++ {
 		productKey, err := values.NewLauncherUserProductKey()
@@ -57,9 +58,11 @@ func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionI
 			return nil, fmt.Errorf("failed to create product key: %w", err)
 		}
 
-		productKeys = append(productKeys, domain.NewLauncherUser(
+		productKeys = append(productKeys, domain.NewProductKey(
 			values.NewLauncherUserID(),
 			productKey,
+			values.LauncherUserStatusActive,
+			now,
 		))
 	}
 
@@ -71,7 +74,7 @@ func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionI
 	return productKeys, nil
 }
 
-func (editionAuth *EditionAuth) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID) ([]*domain.LauncherUser, error) {
+func (editionAuth *EditionAuth) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, params service.GetProductKeysParams) ([]*domain.LauncherUser, error) {
 	_, err := editionAuth.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidLauncherVersion
@@ -80,7 +83,18 @@ func (editionAuth *EditionAuth) GetProductKeys(ctx context.Context, editionID va
 		return nil, fmt.Errorf("failed to get launcher version: %w", err)
 	}
 
-	productKeys, err := editionAuth.productKeyRepository.GetProductKeys(ctx, editionID, repository.LockTypeNone)
+	var statuses []values.LauncherUserStatus
+	status, ok := params.Status.Value()
+	if ok {
+		statuses = []values.LauncherUserStatus{status}
+	} else {
+		statuses = []values.LauncherUserStatus{
+			values.LauncherUserStatusActive,
+			values.LauncherUserStatusInactive,
+		}
+	}
+
+	productKeys, err := editionAuth.productKeyRepository.GetProductKeys(ctx, editionID, statuses, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get launcher users: %w", err)
 	}

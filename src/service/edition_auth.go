@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -18,7 +19,7 @@ type EditionAuth interface {
 	// GetProductKeys
 	// 指定したエディションのプロダクトキーを取得します。
 	// エディションが存在しない場合、ErrInvalidEditionIDを返します。
-	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID) ([]*domain.LauncherUser, error)
+	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, params GetProductKeysParams) ([]*domain.LauncherUser, error)
 	// ActivateProductKey
 	// 指定したプロダクトキーを有効化します。
 	// 存在しないプロダクトキーの場合、ErrInvalidProductKeyを返します。
@@ -38,4 +39,11 @@ type EditionAuth interface {
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	EditionAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error)
+}
+
+type GetProductKeysParams struct {
+	// Status
+	// プロダクトキーのステータス。
+	// 指定しない場合は、全てのステータスのプロダクトキーを取得します。
+	Status types.Option[values.LauncherUserStatus]
 }
