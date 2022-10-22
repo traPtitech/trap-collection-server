@@ -3,14 +3,19 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameRole struct {
-	gameRoleUnimplemented
+	gameRoleService service.GameRoleV2
+	session *Session
 }
 
-func NewGameRole() *GameRole {
-	return &GameRole{}
+func NewGameRole(gameRoleService service.GameRoleV2, session *Session) *GameRole {
+	return &GameRole{
+		gameRoleService: gameRoleService,
+		session: session,
+	}
 }
 
 // gameRoleUnimplemented
