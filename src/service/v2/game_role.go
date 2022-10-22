@@ -36,7 +36,7 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 	err := gameRole.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		_, err := gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidGameID
+			return service.ErrNoGame
 		}
 		if err != nil {
 			return fmt.Errorf("failed to get game: %w", err)
@@ -60,12 +60,19 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 			return fmt.Errorf("error: failed to get game managers by gameID: %w", err)
 		}
 		gameManagersMap := make(map[values.TraPMemberID]values.GameManagementRole, len(gameManagers))
+		ownersNumber := 0
 		for _, managerAndRole := range gameManagers {
 			gameManagersMap[managerAndRole.UserID] = managerAndRole.Role
+			if managerAndRole.Role == values.GameManagementRoleAdministrator {
+				ownersNumber++
+			}
 		}
 
 		if role, ok := gameManagersMap[userID]; ok {
 			if role != newRole { //既にあるroleと違うので、Update
+				if role == values.GameManagementRoleAdministrator && ownersNumber == 1 { //ownersが一人の場合にそのownerをmaintainerに変えるのを止める。
+					return service.ErrCannotEditOwners
+				}
 				err = gameRole.gameManagementRoleRepository.UpdateGameManagementRole(ctx, gameID, userID, newRole)
 				if errors.Is(repository.ErrNoRecordUpdated, err) {
 					return service.ErrNoGameManagementRoleUpdated
@@ -94,7 +101,7 @@ func (gameRole *GameRole) RemoveGameManagementRole(ctx context.Context, gameID v
 	err := gameRole.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		_, err := gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidGameID
+			return service.ErrNoGame
 		}
 		if err != nil {
 			return fmt.Errorf("failed to get game: %w", err)
@@ -145,7 +152,7 @@ func (gameRole *GameRole) UpdateGameAuth(ctx context.Context, session *domain.OI
 
 	_, err = gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
-		return service.ErrInvalidGameID
+		return service.ErrNoGame
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get game: %w", err)
@@ -174,7 +181,7 @@ func (gameRole *GameRole) UpdateGameManagementRoleAuth(ctx context.Context, sess
 
 	_, err = gameRole.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
-		return service.ErrInvalidGameID
+		return service.ErrNoGame
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get game: %w", err)
