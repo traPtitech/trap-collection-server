@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"time"
 
@@ -107,7 +106,6 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 		return nil, fmt.Errorf("failed to get edition: %w", err)
 	}
 
-	log.Println(scanStruct)
 	dbEdition := scanStruct.Edition
 	dbProductKey := scanStruct.ProductKey
 	dbAccessToken := scanStruct.AccessToken
