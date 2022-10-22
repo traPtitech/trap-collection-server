@@ -16,6 +16,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var _ repository.Edition = (*Edition)(nil)
+
 type Edition struct {
 	db *DB
 }
@@ -300,4 +302,126 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 	}
 
 	return result, nil
+}
+
+func (edition *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := edition.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = edition.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersion migrate.GameVersionTable2
+	err = db.
+		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
+		Where("v2_game_versions.game_id = ?", uuid.UUID(gameID)).
+		Take(&gameVersion).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game version: %w", err)
+	}
+
+	return domain.NewGameVersion(
+		values.NewGameVersionIDFromUUID(gameVersion.ID),
+		values.NewGameVersionName(gameVersion.Name),
+		values.NewGameVersionDescription(gameVersion.Description),
+		gameVersion.CreatedAt,
+	), nil
+}
+
+func (edition *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := edition.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = edition.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersion migrate.GameVersionTable2
+	err = db.
+		Where("game_image_id = ?", uuid.UUID(imageID)).
+		Take(&gameVersion).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game version: %w", err)
+	}
+
+	return domain.NewGameVersion(
+		values.NewGameVersionIDFromUUID(gameVersion.ID),
+		values.NewGameVersionName(gameVersion.Name),
+		values.NewGameVersionDescription(gameVersion.Description),
+		gameVersion.CreatedAt,
+	), nil
+}
+
+func (edition *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := edition.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = edition.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersion migrate.GameVersionTable2
+	err = db.
+		Where("game_video_id = ?", uuid.UUID(videoID)).
+		Take(&gameVersion).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game version: %w", err)
+	}
+
+	return domain.NewGameVersion(
+		values.NewGameVersionIDFromUUID(gameVersion.ID),
+		values.NewGameVersionName(gameVersion.Name),
+		values.NewGameVersionDescription(gameVersion.Description),
+		gameVersion.CreatedAt,
+	), nil
+}
+
+func (edition *Edition) GetEditionGameVersionByFileID(ctx context.Context, editionID values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
+	db, err := edition.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	db, err = edition.db.setLock(db, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set lock: %w", err)
+	}
+
+	var gameVersion migrate.GameVersionTable2
+	err = db.
+		Joins("INNER JOIN game_version_game_file_relations ON game_version_game_file_relations.game_version_id = v2_game_versions.id").
+		Where("game_version_game_file_relations.game_file_id = ?", uuid.UUID(fileID)).
+		Take(&gameVersion).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edition game version: %w", err)
+	}
+
+	return domain.NewGameVersion(
+		values.NewGameVersionIDFromUUID(gameVersion.ID),
+		values.NewGameVersionName(gameVersion.Name),
+		values.NewGameVersionDescription(gameVersion.Description),
+		gameVersion.CreatedAt,
+	), nil
 }
