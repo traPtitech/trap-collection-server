@@ -202,7 +202,8 @@ func InjectApp() (*App, error) {
 	gameVersionV2 := gorm2.NewGameVersionV2(db)
 	v2GameVersion := v2_2.NewGameVersion(db, game, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)
 	gameVersion3 := v2.NewGameVersion(v2GameVersion)
-	v2GameFile := v2.NewGameFile()
+	v2GameFile := v2_2.NewGameFile(db, gameV2, gameFileV2, storageGameFile)
+	gameFile3 := v2.NewGameFile(v2GameFile)
 	v2GameImage := v2_2.NewGameImage(db, game, gameImageV2, storageGameImage)
 	gameImage3 := v2.NewGameImage(v2GameImage)
 	v2GameVideo := v2_2.NewGameVideo(db, gameV2, gameVideoV2, storageGameVideo)
@@ -212,7 +213,7 @@ func InjectApp() (*App, error) {
 	edition2 := v2.NewEdition(v2Edition)
 	editionAuth := v2.NewEditionAuth()
 	seat := v2.NewSeat()
-	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, v2GameRole, gameVersion3, v2GameFile, gameImage3, gameVideo3, edition2, editionAuth, seat)
+	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, v2GameRole, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, editionAuth, seat)
 	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
 	if err != nil {
 		return nil, err

@@ -227,7 +227,7 @@ func (edition *Edition) UpdateEditionGameVersions(
 			gameMap[game.GetID()] = game
 		}
 
-		files, err := edition.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeNone)
+		files, err := edition.gameFileRepository.GetGameFilesWithoutTypes(ctx, fileIDs, repository.LockTypeNone)
 		if err != nil {
 			return fmt.Errorf("failed to get game files: %w", err)
 		}
@@ -338,7 +338,7 @@ func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID va
 		gameMap[game.GetID()] = game
 	}
 
-	files, err := edition.gameFileRepository.GetGameFiles(ctx, fileIDs, repository.LockTypeNone)
+	files, err := edition.gameFileRepository.GetGameFilesWithoutTypes(ctx, fileIDs, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game files: %w", err)
 	}

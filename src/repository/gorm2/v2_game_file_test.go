@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestGetGameFilesV2(t *testing.T) {
+func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -285,7 +285,7 @@ func TestGetGameFilesV2(t *testing.T) {
 				}
 			}
 
-			gameFiles, err := gameFileRepository.GetGameFiles(ctx, testCase.fileIDs, testCase.lockType)
+			gameFiles, err := gameFileRepository.GetGameFilesWithoutTypes(ctx, testCase.fileIDs, testCase.lockType)
 
 			if testCase.isErr {
 				if testCase.err == nil {
