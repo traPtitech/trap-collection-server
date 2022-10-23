@@ -130,7 +130,7 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 }
 
 // GameOwnerAuthChecker
-// そのゲームのowner(maintainer)であるかどうかを調べるチェッカー
+// そのゲームのowner(administrator)であるかどうかを調べるチェッカー
 func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
@@ -169,6 +169,51 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 	}
 	if err != nil {
 		log.Printf("error: failed to authorize game owner: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize game owner")
+	}
+	return nil
+}
+
+// GameMaintainerAuthChecker
+// そのゲームのmaintainer(collaborator)であるかどうかを調べるチェッカー
+func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if err != nil {
+		// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	strGameID := c.Param("gameID")
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	err = checker.gameRoleService.UpdateGameAuth(ctx, authSession, gameID)
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized: neither owner nor maintainer")
+	}
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize game owner or maintainer: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize game owner")
 	}
 	return nil
