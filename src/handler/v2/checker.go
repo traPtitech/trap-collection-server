@@ -150,8 +150,10 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 	}
 
 	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
 	if err != nil {
-		// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
 		log.Printf("error: failed to get auth session: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -205,8 +207,10 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 	}
 
 	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
 	if err != nil {
-		// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
 		log.Printf("error: failed to get auth session: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
