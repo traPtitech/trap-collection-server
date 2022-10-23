@@ -31,6 +31,8 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 	var isAll bool
 	if params.All != nil {
 		isAll = *params.All
+	} else {
+		isAll = true
 	}
 
 	var limit int

@@ -162,7 +162,7 @@ func TestGetGames(t *testing.T) {
 				"accessToken",
 				time.Now().Add(time.Hour),
 			),
-			executeGetMyGames: true,
+			executeGetGames: true,
 			games: []*domain.Game{domain.NewGame(
 				gameID1,
 				values.NewGameName("test1"),
