@@ -2425,7 +2425,10 @@ components:
       type: object
       properties:
         type:
-          $ref: '#/components/schemas/GameFileType'
+          # OpenAPI Generatorのバグで、enumだとクライアントの生成がうまくいかないので、
+          # 一旦stringにしている
+          type: string
+          example: 'jar'
         entryPoint:
           $ref: '#/components/schemas/GameFileEntryPoint'
         content:
