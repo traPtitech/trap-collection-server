@@ -87,12 +87,12 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 
 	entryPoint := values.NewGameFileEntryPoint(headerEntryPoint)
 	var fileType values.GameFileType
-	switch headerFileType {
-	case "jar":
+	switch openapi.GameFileType(headerFileType) {
+	case openapi.Jar:
 		fileType = values.GameFileTypeJar
-	case "windows":
+	case openapi.Win32:
 		fileType = values.GameFileTypeWindows
-	case "darwin":
+	case openapi.Darwin:
 		fileType = values.GameFileTypeMac
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "file type is unknown")
