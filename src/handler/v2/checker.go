@@ -23,6 +23,7 @@ type Checker struct {
 	oidcService        service.OIDCV2
 	editionService     service.Edition
 	editionAuthService service.EditionAuth
+	gameRoleService    service.GameRoleV2
 }
 
 func NewChecker(
@@ -31,6 +32,7 @@ func NewChecker(
 	oidcService service.OIDCV2,
 	editionService service.Edition,
 	editionAuthService service.EditionAuth,
+	gameRoleService service.GameRoleV2,
 ) *Checker {
 	return &Checker{
 		context:            context,
@@ -38,6 +40,7 @@ func NewChecker(
 		oidcService:        oidcService,
 		editionService:     editionService,
 		editionAuthService: editionAuthService,
+		gameRoleService:    gameRoleService,
 	}
 }
 
@@ -124,6 +127,51 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	}
 
 	return true, "", nil
+}
+
+// GameOwnerAuthChecker
+// そのゲームのowner(maintainer)であるかどうかを調べるチェッカー
+func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if err != nil {
+		// TrapMemberAuthMiddlewareでErrNoValueなどは弾かれているはずなので、ここでエラーは起きないはず
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	strGameID := c.Param("gameID")
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	err = checker.gameRoleService.UpdateGameManagementRoleAuth(ctx, authSession, gameID)
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized: not owner")
+	}
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize game owner: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize game owner")
+	}
+	return nil
 }
 
 func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
