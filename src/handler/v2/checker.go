@@ -18,11 +18,13 @@ import (
 )
 
 type Checker struct {
-	context            *Context
-	session            *Session
-	oidcService        service.OIDCV2
-	editionService     service.Edition
-	editionAuthService service.EditionAuth
+	context                  *Context
+	session                  *Session
+	oidcService              service.OIDCV2
+	editionService           service.Edition
+	editionAuthService       service.EditionAuth
+	gameRoleService          service.GameRoleV2
+	administratorAuthService service.AdministratorAuth //現状未実装だが、将来的にV2に置き換える
 }
 
 func NewChecker(
@@ -31,13 +33,17 @@ func NewChecker(
 	oidcService service.OIDCV2,
 	editionService service.Edition,
 	editionAuthService service.EditionAuth,
+	gameRoleService service.GameRoleV2,
+	administratorAuthService service.AdministratorAuth,
 ) *Checker {
 	return &Checker{
-		context:            context,
-		session:            session,
-		oidcService:        oidcService,
-		editionService:     editionService,
-		editionAuthService: editionAuthService,
+		context:                  context,
+		session:                  session,
+		oidcService:              oidcService,
+		editionService:           editionService,
+		editionAuthService:       editionAuthService,
+		gameRoleService:          gameRoleService,
+		administratorAuthService: administratorAuthService,
 	}
 }
 
@@ -46,8 +52,8 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
 		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
 		"AdminAuth":            checker.noAuthChecker, // TODO: AdminAuthChecker
-		"GameOwnerAuth":        checker.noAuthChecker, // TODO: GameOwnerAuthChecker
-		"GameMaintainerAuth":   checker.noAuthChecker, // TODO: GameMaintainerAuthChecker
+		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
+		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
 		"EditionAuth":          checker.EditionAuthChecker,
 		"EditionGameAuth":      checker.EditionGameAuthChecker,
 		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
@@ -124,6 +130,120 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	}
 
 	return true, "", nil
+}
+
+// GameOwnerAuthChecker
+// そのゲームのowner(administrator)であるかどうかを調べるチェッカー
+func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
+	if err != nil {
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	//ランチャーの管理者は通す
+	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	if err != nil && !errors.Is(err, service.ErrForbidden) {
+		log.Printf("error: failed to check launcher admin auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
+	}
+	if err == nil {
+		return nil
+	}
+
+	strGameID := c.Param("gameID")
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	err = checker.gameRoleService.UpdateGameManagementRoleAuth(ctx, authSession, gameID)
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "forbidden: not owner")
+	}
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize game owner: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize game owner")
+	}
+	return nil
+}
+
+// GameMaintainerAuthChecker
+// そのゲームのmaintainer(collaborator)であるかどうかを調べるチェッカー
+func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
+	if err != nil {
+		log.Printf("error: failed to get auth session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	//ランチャーの管理者は通す
+	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	if err != nil && !errors.Is(err, service.ErrForbidden) {
+		log.Printf("error: failed to check launcher admin auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
+	}
+	if err == nil {
+		return nil
+	}
+
+	strGameID := c.Param("gameID")
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	err = checker.gameRoleService.UpdateGameAuth(ctx, authSession, gameID)
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "forbidden: neither owner nor maintainer")
+	}
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize game owner or maintainer: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize game owner")
+	}
+	return nil
 }
 
 func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {

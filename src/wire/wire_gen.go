@@ -194,7 +194,8 @@ func InjectApp() (*App, error) {
 	productKey := gorm2.NewProductKey(db)
 	accessToken := gorm2.NewAccessToken(db)
 	editionAuth := v2_2.NewEditionAuth(db, edition, productKey, accessToken)
-	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth)
+	v2GameRole := v2_2.NewGameRole(db, gameV2, gameManagementRole, v2User)
+	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth, v2GameRole, administratorAuth)
 	v2OAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
 	if err != nil {
 		return nil, err
@@ -203,7 +204,6 @@ func InjectApp() (*App, error) {
 	admin := v2.NewAdmin()
 	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, v2User)
 	game3 := v2.NewGame(v2Session, v2Game)
-	v2GameRole := v2_2.NewGameRole(db, gameV2, gameManagementRole, v2User)
 	gameRole2 := v2.NewGameRole(v2GameRole, v2Game, v2Session)
 	gameImageV2 := gorm2.NewGameImageV2(db)
 	gameVideoV2 := gorm2.NewGameVideoV2(db)
