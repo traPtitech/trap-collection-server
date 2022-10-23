@@ -18,12 +18,13 @@ import (
 )
 
 type Checker struct {
-	context            *Context
-	session            *Session
-	oidcService        service.OIDCV2
-	editionService     service.Edition
-	editionAuthService service.EditionAuth
-	gameRoleService    service.GameRoleV2
+	context                  *Context
+	session                  *Session
+	oidcService              service.OIDCV2
+	editionService           service.Edition
+	editionAuthService       service.EditionAuth
+	gameRoleService          service.GameRoleV2
+	administratorAuthService service.AdministratorAuth //現状未実装だが、将来的にV2に置き換える
 }
 
 func NewChecker(
@@ -33,14 +34,16 @@ func NewChecker(
 	editionService service.Edition,
 	editionAuthService service.EditionAuth,
 	gameRoleService service.GameRoleV2,
+	administratorAuthService service.AdministratorAuth,
 ) *Checker {
 	return &Checker{
-		context:            context,
-		session:            session,
-		oidcService:        oidcService,
-		editionService:     editionService,
-		editionAuthService: editionAuthService,
-		gameRoleService:    gameRoleService,
+		context:                  context,
+		session:                  session,
+		oidcService:              oidcService,
+		editionService:           editionService,
+		editionAuthService:       editionAuthService,
+		gameRoleService:          gameRoleService,
+		administratorAuthService: administratorAuthService,
 	}
 }
 
@@ -153,6 +156,16 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	//ランチャーの管理者は通す
+	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	if err != nil && !errors.Is(err, service.ErrForbidden) {
+		log.Printf("error: failed to check launcher admin auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
+	}
+	if err == nil {
+		return nil
+	}
+
 	strGameID := c.Param("gameID")
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -162,7 +175,7 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 
 	err = checker.gameRoleService.UpdateGameManagementRoleAuth(ctx, authSession, gameID)
 	if errors.Is(err, service.ErrForbidden) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized: not owner")
+		return echo.NewHTTPError(http.StatusUnauthorized, "forbidden: not owner")
 	}
 	if errors.Is(err, service.ErrNoGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "no game")
@@ -198,6 +211,16 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	//ランチャーの管理者は通す
+	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	if err != nil && !errors.Is(err, service.ErrForbidden) {
+		log.Printf("error: failed to check launcher admin auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
+	}
+	if err == nil {
+		return nil
+	}
+
 	strGameID := c.Param("gameID")
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
@@ -207,7 +230,7 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 
 	err = checker.gameRoleService.UpdateGameAuth(ctx, authSession, gameID)
 	if errors.Is(err, service.ErrForbidden) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized: neither owner nor maintainer")
+		return echo.NewHTTPError(http.StatusUnauthorized, "forbidden: neither owner nor maintainer")
 	}
 	if errors.Is(err, service.ErrNoGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "no game")
