@@ -52,8 +52,8 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
 		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
 		"AdminAuth":            checker.noAuthChecker, // TODO: AdminAuthChecker
-		"GameOwnerAuth":        checker.noAuthChecker, // TODO: GameOwnerAuthChecker
-		"GameMaintainerAuth":   checker.noAuthChecker, // TODO: GameMaintainerAuthChecker
+		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
+		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
 		"EditionAuth":          checker.EditionAuthChecker,
 		"EditionGameAuth":      checker.EditionGameAuthChecker,
 		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
@@ -169,7 +169,7 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 	strGameID := c.Param("gameID")
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
-		echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
 	}
 	gameID := values.NewGameIDFromUUID(uuidGameID)
 
@@ -224,7 +224,7 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 	strGameID := c.Param("gameID")
 	uuidGameID, err := uuid.Parse(strGameID)
 	if err != nil {
-		echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
 	}
 	gameID := values.NewGameIDFromUUID(uuidGameID)
 
