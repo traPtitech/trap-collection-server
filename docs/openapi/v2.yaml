@@ -764,7 +764,7 @@ paths:
       tags:
         - gameFile
       security:
-        - TrapMemberAuth: []
+        - GameMaintainerAuth: []
       operationId: postGameFile
       requestBody:
         content:
@@ -946,7 +946,7 @@ paths:
       tags:
         - gameImage
       security:
-        - TrapMemberAuth: []
+        - GameMaintainerAuth: []
       operationId: postGameImage
       requestBody:
         content:
@@ -1128,7 +1128,7 @@ paths:
       tags:
         - gameVideo
       security:
-        - TrapMemberAuth: []
+        - GameMaintainerAuth: []
       operationId: postGameVideo
       requestBody:
         content:
