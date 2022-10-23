@@ -10,11 +10,11 @@ import (
 type AdminAuthV2 interface {
 	//AddAdmin
 	//adminの追加
-	AddAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) (*UserInfo, error)
+	AddAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
 	//GetAdmins
 	//adminを全取得
-	GetAdmins(ctx context.Context, session *domain.OIDCSession) (*UserInfo, error)
+	GetAdmins(ctx context.Context, session *domain.OIDCSession) ([]*UserInfo, error)
 	//DeleteAdmin
 	//adminを削除
-	DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) (*UserInfo, error)
+	DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
 }
