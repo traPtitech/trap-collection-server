@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -74,4 +75,36 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 	))
 
 	return adminInfos, nil
+}
+
+func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
+	activeUsers, err := aa.user.getActiveUsers(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active users: %w", err)
+	}
+	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+	for _, activeUser := range activeUsers {
+		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+	}
+
+	adminIDs, err := aa.adminAuthRepository.GetAdmins(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get admins: %v", err)
+	}
+
+	adminsInfo := make([]*service.UserInfo, len(adminIDs))
+	for _, adminID := range adminIDs {
+		if adminName, ok := activeUsersMap[adminID]; ok {
+			adminsInfo = append(adminsInfo, service.NewUserInfo(
+				adminID,
+				adminName,
+				values.TrapMemberStatusActive,
+			))
+		} else {
+			//adminが凍結されているとき、一応ログを残す。
+			log.Printf("not active user: %v\n", adminID)
+		}
+	}
+
+	return adminsInfo, nil
 }
