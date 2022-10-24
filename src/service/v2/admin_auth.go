@@ -47,7 +47,7 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 
 		adminIDs, err := aa.adminAuthRepository.GetAdmins(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to get admins: %v", err)
+			return fmt.Errorf("failed to get admins: %w", err)
 		}
 
 		adminsMap := make(map[values.TraPMemberID]struct{})
@@ -60,7 +60,7 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 
 		err = aa.adminAuthRepository.AddAdmin(ctx, userID)
 		if err != nil {
-			return fmt.Errorf("failed to add admin: %v", err)
+			return fmt.Errorf("failed to add admin: %w", err)
 		}
 
 		for _, adminID := range adminIDs {
@@ -79,7 +79,7 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed in transaction: %v", err)
+		return nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 	return adminInfos, nil
 }
@@ -96,7 +96,7 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 
 	adminIDs, err := aa.adminAuthRepository.GetAdmins(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get admins: %v", err)
+		return nil, fmt.Errorf("failed to get admins: %w", err)
 	}
 
 	adminsInfo := make([]*service.UserInfo, len(adminIDs))
@@ -134,12 +134,12 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 		return nil, service.ErrNotAdmin
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete admin: %v", err)
+		return nil, fmt.Errorf("failed to delete admin: %w", err)
 	}
 
 	adminIDs, err := aa.adminAuthRepository.GetAdmins(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get admins: %v", err)
+		return nil, fmt.Errorf("failed to get admins: %w", err)
 	}
 
 	adminsInfo := make([]*service.UserInfo, len(adminIDs))
@@ -152,7 +152,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 					values.TrapMemberStatusActive,
 				))
 		} else {
-			log.Printf("not active user: %v", adminID)
+			log.Printf("not active user: %v", adminID) //ユーザーが凍結されているとき一応ログに残す
 		}
 	}
 	return adminsInfo, nil
