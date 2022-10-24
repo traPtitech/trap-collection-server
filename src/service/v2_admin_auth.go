@@ -10,11 +10,15 @@ import (
 type AdminAuthV2 interface {
 	//AddAdmin
 	//adminの追加
+	//ユーザーが存在しないとき、ErrInvalidUserIDを返す。
+	//既にユーザーがadminのとき、ErrNoAdminsUpdatedを返す。
 	AddAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
 	//GetAdmins
 	//adminを全取得
 	GetAdmins(ctx context.Context, session *domain.OIDCSession) ([]*UserInfo, error)
 	//DeleteAdmin
 	//adminを削除
+	//ユーザーが存在しないとき、ErrInvalidUserIDを返す。
+	//ユーザーがadminでないとき、ErrNotAdminを返す。
 	DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
 }
