@@ -21,4 +21,8 @@ type AdminAuthV2 interface {
 	//ユーザーが存在しないとき、ErrInvalidUserIDを返す。
 	//ユーザーがadminでないとき、ErrNotAdminを返す。
 	DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
+	//AdminAuthorize
+	//ログイン中のユーザーがadminかどうか判断する。
+	//adminでなければErrForbiddenを返し、adminならnilを返す。
+	AdminAuthorize(ctx context.Context, session *domain.OIDCSession) error
 }
