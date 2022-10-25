@@ -195,7 +195,9 @@ func InjectApp() (*App, error) {
 	accessToken := gorm2.NewAccessToken(db)
 	editionAuth := v2_2.NewEditionAuth(db, edition, productKey, accessToken)
 	v2GameRole := v2_2.NewGameRole(db, gameV2, gameManagementRole, v2User)
-	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth, v2GameRole, administratorAuth)
+	adminAuth := gorm2.NewAdminAuth(db)
+	v2AdminAuth := v2_2.NewAdminAuth(db, adminAuth, v2User)
+	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth, v2GameRole, v2AdminAuth)
 	v2OAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
 	if err != nil {
 		return nil, err
