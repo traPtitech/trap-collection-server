@@ -24,5 +24,6 @@ type AdminAuthV2 interface {
 	//AdminAuthorize
 	//ログイン中のユーザーがadminかどうか判断する。
 	//adminでなければErrForbiddenを返し、adminならnilを返す。
+	//sessionが切れている場合はErrOIDCSessionExpiredを返す。
 	AdminAuthorize(ctx context.Context, session *domain.OIDCSession) error
 }
