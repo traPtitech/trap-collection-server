@@ -50,12 +50,10 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 			return fmt.Errorf("failed to get admins: %w", err)
 		}
 
-		adminsMap := make(map[values.TraPMemberID]struct{})
 		for _, adminID := range adminIDs {
-			adminsMap[adminID] = struct{}{}
-		}
-		if _, ok := adminsMap[userID]; ok { //ユーザーがすでにadmin
-			return service.ErrNoAdminsUpdated
+			if adminID == userID { //ユーザーがすでにadmin
+				return service.ErrNoAdminsUpdated
+			}
 		}
 
 		err = aa.adminAuthRepository.AddAdmin(ctx, userID)
@@ -63,11 +61,11 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 			return fmt.Errorf("failed to add admin: %w", err)
 		}
 
-		for _, adminID := range adminIDs {
+		for _, adminID := range adminIDs { //TODO:adminsInfo作っとく
 			adminInfos = append(adminInfos, service.NewUserInfo(
 				adminID,
-				activeUsersMap[adminID],
-				values.TrapMemberStatusActive,
+				activeUsersMap[adminID],       //TODO:activeUsersMapいらなそう
+				values.TrapMemberStatusActive, //TODO:凍結されてるユーザー
 			))
 		}
 		adminInfos = append(adminInfos, service.NewUserInfo(
@@ -104,13 +102,13 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 		if adminName, ok := activeUsersMap[adminID]; ok {
 			adminsInfo = append(adminsInfo, service.NewUserInfo(
 				adminID,
-				adminName,
+				adminName, //TODO:activeUsersMapいらなそう
 				values.TrapMemberStatusActive,
 			))
 		} else {
 			//adminが凍結されているとき、一応ログを残す。
 			log.Printf("not active user: %v\n", adminID)
-		}
+		} //TODO:ログに残さない
 	}
 
 	return adminsInfo, nil
@@ -144,7 +142,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 
 	adminsInfo := make([]*service.UserInfo, len(adminIDs))
 	for _, adminID := range adminIDs {
-		if adminName, ok := activeUsersMap[adminID]; ok {
+		if adminName, ok := activeUsersMap[adminID]; ok { //TODO:activeUsersMapいらなそう
 			adminsInfo = append(adminsInfo,
 				service.NewUserInfo(
 					adminID,
@@ -153,7 +151,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 				))
 		} else {
 			log.Printf("not active user: %v", adminID) //ユーザーが凍結されているとき一応ログに残す
-		}
+		} //TODO:ログに残さない
 	}
 	return adminsInfo, nil
 }
@@ -163,7 +161,7 @@ func (aa *AdminAuth) AdminAuthorize(ctx context.Context, session *domain.OIDCSes
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-
+	//TODO:session期限確認
 	adminsID, err := aa.adminAuthRepository.GetAdmins(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get admins: %w", err)
