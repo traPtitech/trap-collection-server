@@ -26,6 +26,10 @@ func TestPostImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameImageService := mock.NewMockGameImage(ctrl)
 
 	gameImageHandler := NewGameImage(mockAppConfig, mockGameImageService)
@@ -139,6 +143,10 @@ func TestGetImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameImageService := mock.NewMockGameImage(ctrl)
 
 	gameImageHandler := NewGameImage(mockAppConfig, mockGameImageService)

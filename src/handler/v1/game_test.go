@@ -28,6 +28,10 @@ func TestPostGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -252,6 +256,10 @@ func TestGetGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -415,6 +423,10 @@ func TestPutGame(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -598,6 +610,10 @@ func TestGetGames(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -1098,6 +1114,10 @@ func TestDeleteGames(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().

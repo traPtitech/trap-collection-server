@@ -28,6 +28,10 @@ func TestPostURL(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameURLService := mock.NewMockGameURL(ctrl)
 
 	gameURLHandler := NewGameURL(mockAppConfig, mockGameURLService)
@@ -178,6 +182,10 @@ func TestGetGameURL(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameURLService := mock.NewMockGameURL(ctrl)
 
 	gameURLHandler := NewGameURL(mockAppConfig, mockGameURLService)

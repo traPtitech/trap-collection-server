@@ -29,6 +29,10 @@ func TestPostFile(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameFileService := mock.NewMockGameFile(ctrl)
 
 	gameFileHandler := NewGameFile(mockAppConfig, mockGameFileService)
@@ -259,6 +263,10 @@ func TestGetGameFile(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameFileService := mock.NewMockGameFile(ctrl)
 
 	gameFileHandler := NewGameFile(mockAppConfig, mockGameFileService)

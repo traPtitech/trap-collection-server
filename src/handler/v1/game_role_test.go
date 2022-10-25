@@ -27,6 +27,10 @@ func TestPostMaintainer(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
@@ -272,6 +276,10 @@ func TestGetMaintainer(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.

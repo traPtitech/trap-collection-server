@@ -28,6 +28,10 @@ func TestGetVersions(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
 	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
@@ -182,6 +186,10 @@ func TestPostVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
 	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
@@ -335,6 +343,10 @@ func TestGetVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
 	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
@@ -572,6 +584,10 @@ func TestPostGameToVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
 	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
@@ -842,6 +858,10 @@ func TestGetCheckList(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
 	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)

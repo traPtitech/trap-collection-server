@@ -27,6 +27,10 @@ func TestPostGameVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameVersionService := mock.NewMockGameVersion(ctrl)
 
 	gameVersionHandler := NewGameVersion(mockAppConfig, mockGameVersionService)
@@ -227,6 +231,10 @@ func TestGetGameVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameVersionService := mock.NewMockGameVersion(ctrl)
 
 	gameVersionHandler := NewGameVersion(mockAppConfig, mockGameVersionService)

@@ -31,6 +31,10 @@ func TestPostKeyGenerate(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
 	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
@@ -223,6 +227,10 @@ func TestPostLauncherLogin(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
 	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
@@ -355,6 +363,10 @@ func TestDeleteProductKey(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
 	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
@@ -456,6 +468,10 @@ func TestGetProductKeys(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
 	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
@@ -621,6 +637,10 @@ func TestGetLauncherMe(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
 	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)

@@ -26,6 +26,10 @@ func TestPostVideo(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameVideoService := mock.NewMockGameVideo(ctrl)
 
 	gameVideoHandler := NewGameVideo(mockAppConfig, mockGameVideoService)
@@ -139,6 +143,10 @@ func TestGetVideo(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameVideoService := mock.NewMockGameVideo(ctrl)
 
 	gameVideoHandler := NewGameVideo(mockAppConfig, mockGameVideoService)
