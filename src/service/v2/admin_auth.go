@@ -137,11 +137,15 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 }
 
 func (aa *AdminAuth) AdminAuthorize(ctx context.Context, session *domain.OIDCSession) error {
+	if session.IsExpired() {
+		return service.ErrOIDCSessionExpired
+	}
+
 	userInfo, err := aa.user.getMe(ctx, session)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-	//TODO:session期限確認
+
 	adminsID, err := aa.adminAuthRepository.GetAdmins(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get admins: %w", err)
