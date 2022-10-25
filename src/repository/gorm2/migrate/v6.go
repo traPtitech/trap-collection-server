@@ -16,14 +16,9 @@ func v6() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "6",
 		Migrate: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&productKeyTableV2{}, "deleted_at")
+			err := tx.AutoMigrate(&productKeyStatusTableV6{})
 			if err != nil {
-				return fmt.Errorf("failed to drop deleted_at column: %w", err)
-			}
-
-			err = tx.AutoMigrate(&productKeyStatusTableV6{}, &productKeyTableV6{})
-			if err != nil {
-				return fmt.Errorf("failed to migrate product_key table: %w", err)
+				return fmt.Errorf("failed to migrate product_key_status table: %w", err)
 			}
 
 			err = setupProductKeyStatusTableV6(tx)
@@ -31,10 +26,49 @@ func v6() *gormigrate.Migration {
 				return fmt.Errorf("failed to setup product key status table: %w", err)
 			}
 
+			var status productKeyStatusTableV6
+			err = tx.
+				Session(&gorm.Session{}).
+				Where("name = ?", productKeyStatusActiveV6).
+				Take(&status).Error
+			if err != nil {
+				return fmt.Errorf("failed to get product key status: %w", err)
+			}
+
+			err = tx.Exec(fmt.Sprintf("ALTER TABLE product_keys ADD COLUMN status_id tinyint(4) NOT NULL DEFAULT %d", status.ID)).Error
+			if err != nil {
+				return fmt.Errorf("failed to add status_id column: %w", err)
+			}
+
+			err = tx.Exec("UPDATE product_keys SET status_id = (SELECT id FROM product_key_statuses WHERE name = ?) WHERE deleted_at IS NOT NULL", productKeyStatusInactiveV6).Error
+			if err != nil {
+				return fmt.Errorf("failed to update status_id column: %w", err)
+			}
+
+			err = tx.AutoMigrate(&productKeyTableV6{})
+			if err != nil {
+				return fmt.Errorf("failed to migrate product_key table: %w", err)
+			}
+
+			err = tx.Migrator().DropColumn(&productKeyTableV2{}, "deleted_at")
+			if err != nil {
+				return fmt.Errorf("failed to drop deleted_at column: %w", err)
+			}
+
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			err := tx.Migrator().DropColumn(&productKeyTableV6{}, "status_id")
+			err := tx.AutoMigrate(&productKeyTableV2{})
+			if err != nil {
+				return fmt.Errorf("failed to migrate product_key table: %w", err)
+			}
+
+			err = tx.Exec("UPDATE product_keys JOIN product_key_statuses ON product_keys.status_id = product_key_statuses.id SET product_keys.deleted_at =  SET deleted_at = CURRENT_TIMESTAMP WHERE product_key_statuses.name = ?", productKeyStatusInactiveV6).Error
+			if err != nil {
+				return fmt.Errorf("failed to set deleted_at: %w", err)
+			}
+
+			err = tx.Migrator().DropColumn(&productKeyTableV6{}, "status_id")
 			if err != nil {
 				return fmt.Errorf("failed to drop status_id column: %w", err)
 			}
@@ -42,11 +76,6 @@ func v6() *gormigrate.Migration {
 			err = tx.Migrator().DropTable(&productKeyStatusTableV6{})
 			if err != nil {
 				return fmt.Errorf("failed to drop product_key_status_types table: %w", err)
-			}
-
-			err = tx.AutoMigrate(&productKeyTableV2{})
-			if err != nil {
-				return fmt.Errorf("failed to migrate product_key table: %w", err)
 			}
 
 			return nil
