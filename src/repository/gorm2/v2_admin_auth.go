@@ -60,3 +60,23 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, lockType repository.LockType
 	}
 	return adminsID, nil
 }
+
+func (aa *AdminAuth) DeleteAdmin(ctx context.Context, userID values.TraPMemberID) error {
+	db, err := aa.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.
+		Where("user_id = ?", userID).
+		Delete(&migrate.AdminTable{})
+	err = result.Error
+	if err != nil {
+		return fmt.Errorf("failed to remove admin: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+	return nil
+}
