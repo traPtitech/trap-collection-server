@@ -7,24 +7,31 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameRole struct {
+	featureWrite    bool
 	session         *Session
 	gameAuthService service.GameAuth
 }
 
-func NewGameRole(session *Session, gameAuthService service.GameAuth) *GameRole {
+func NewGameRole(appConf config.App, session *Session, gameAuthService service.GameAuth) *GameRole {
 	return &GameRole{
+		featureWrite:    appConf.FeatureV1Write(),
 		session:         session,
 		gameAuthService: gameAuthService,
 	}
 }
 
 func (gr *GameRole) PostMaintainer(c echo.Context, strGameID string, maintainers *openapi.Maintainers) error {
+	if !gr.featureWrite {
+		return echo.NewHTTPError(http.StatusForbidden, "write is disabled")
+	}
+
 	session, err := getSession(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)

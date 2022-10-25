@@ -10,21 +10,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameImage struct {
+	featureWrite     bool
 	gameImageService service.GameImage
 }
 
-func NewGameImage(gameImageService service.GameImage) *GameImage {
+func NewGameImage(appConf config.App, gameImageService service.GameImage) *GameImage {
 	return &GameImage{
+		featureWrite:     appConf.FeatureV1Write(),
 		gameImageService: gameImageService,
 	}
 }
 
 func (gi *GameImage) PostImage(c echo.Context, strGameID string, image multipart.File) error {
+	if !gi.featureWrite {
+		return echo.NewHTTPError(http.StatusForbidden, "v1 write is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)

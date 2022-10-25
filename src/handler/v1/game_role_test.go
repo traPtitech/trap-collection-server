@@ -26,6 +26,7 @@ func TestPostMaintainer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
@@ -47,7 +48,7 @@ func TestPostMaintainer(t *testing.T) {
 		return
 	}
 
-	gameRoleHandler := NewGameRole(session, mockGameAuthService)
+	gameRoleHandler := NewGameRole(mockAppConfig, session, mockGameAuthService)
 
 	type test struct {
 		description                 string
@@ -270,6 +271,7 @@ func TestGetMaintainer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockGameAuthService := mock.NewMockGameAuth(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
@@ -291,7 +293,7 @@ func TestGetMaintainer(t *testing.T) {
 		return
 	}
 
-	gameRoleHandler := NewGameRole(session, mockGameAuthService)
+	gameRoleHandler := NewGameRole(mockAppConfig, session, mockGameAuthService)
 
 	type test struct {
 		description            string

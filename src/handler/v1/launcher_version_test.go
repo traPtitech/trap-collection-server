@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -26,9 +27,10 @@ func TestGetVersions(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
-	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
 
 	type test struct {
 		description            string
@@ -179,9 +181,10 @@ func TestPostVersion(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
-	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
 
 	type test struct {
 		description                  string
@@ -331,9 +334,10 @@ func TestGetVersion(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
-	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
 
 	type test struct {
 		description               string
@@ -567,9 +571,10 @@ func TestPostGameToVersion(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
-	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
 
 	type test struct {
 		description                      string
@@ -836,9 +841,10 @@ func TestGetCheckList(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherVersionService := mock.NewMockLauncherVersion(ctrl)
 
-	launcherVersionHandler := NewLauncherVersion(mockLauncherVersionService)
+	launcherVersionHandler := NewLauncherVersion(mockAppConfig, mockLauncherVersionService)
 
 	type test struct {
 		description                        string

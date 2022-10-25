@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -29,9 +30,10 @@ func TestPostKeyGenerate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
-	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
 
 	type test struct {
 		description               string
@@ -220,9 +222,10 @@ func TestPostLauncherLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
-	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
 
 	type test struct {
 		description          string
@@ -351,9 +354,10 @@ func TestDeleteProductKey(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
-	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
 
 	type test struct {
 		description             string
@@ -451,9 +455,10 @@ func TestGetProductKeys(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
-	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
 
 	type test struct {
 		description              string
@@ -615,9 +620,10 @@ func TestGetLauncherMe(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
 	mockLauncherAuthService := mock.NewMockLauncherAuth(ctrl)
 
-	launcherAuthHandler := NewLauncherAuth(mockLauncherAuthService)
+	launcherAuthHandler := NewLauncherAuth(mockAppConfig, mockLauncherAuthService)
 
 	type test struct {
 		description     string

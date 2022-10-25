@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -18,11 +19,13 @@ import (
 )
 
 type LauncherVersion struct {
+	featureWrite           bool
 	launcherVersionService service.LauncherVersion
 }
 
-func NewLauncherVersion(launcherVersionService service.LauncherVersion) *LauncherVersion {
+func NewLauncherVersion(appConf config.App, launcherVersionService service.LauncherVersion) *LauncherVersion {
 	return &LauncherVersion{
+		featureWrite:           appConf.FeatureV1Write(),
 		launcherVersionService: launcherVersionService,
 	}
 }
@@ -61,6 +64,10 @@ func (lv *LauncherVersion) GetVersions(c echo.Context) ([]*openapi.Version, erro
 }
 
 func (lv *LauncherVersion) PostVersion(c echo.Context, newVersion *openapi.NewVersion) (*openapi.VersionMeta, error) {
+	if !lv.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	name := values.NewLauncherVersionName(newVersion.Name)
@@ -160,6 +167,10 @@ func (lv *LauncherVersion) GetVersion(c echo.Context, strLauncherVersionID strin
 }
 
 func (lv *LauncherVersion) PostGameToVersion(c echo.Context, strLauncherVersionID string, apiGameIDs *openapi.GameIDs) (*openapi.VersionDetails, error) {
+	if !lv.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidLauncherVersionID, err := uuid.Parse(strLauncherVersionID)

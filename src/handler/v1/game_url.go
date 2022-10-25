@@ -7,22 +7,29 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameURL struct {
+	featureWrite   bool
 	gameURLService service.GameURL
 }
 
-func NewGameURL(gameURLService service.GameURL) *GameURL {
+func NewGameURL(appConf config.App, gameURLService service.GameURL) *GameURL {
 	return &GameURL{
+		featureWrite:   appConf.FeatureV1Write(),
 		gameURLService: gameURLService,
 	}
 }
 
 func (gu *GameURL) PostURL(c echo.Context, strGameID string, newGameURL *openapi.NewGameUrl) (*openapi.GameUrl, error) {
+	if !gu.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "v1 write is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
