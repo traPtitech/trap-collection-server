@@ -72,6 +72,9 @@ func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDI
 	if errors.Is(err, service.ErrInvalidGameID) {
 		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
 	}
+	if errors.Is(err, service.ErrInvalidFormat) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid video file type")
+	}
 	if err != nil {
 		log.Printf("error: failed to save game video: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game video")

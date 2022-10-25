@@ -33,7 +33,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 	mockEditionService := mock.NewMockEdition(ctrl)
 	mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
 	mockGameRoleService := mock.NewMockGameRoleV2(ctrl)
-	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
+	mockAdministratorAuthService := mock.NewMockAdminAuthV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -164,7 +164,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 	mockEditionService := mock.NewMockEdition(ctrl)
 	mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
 	mockGameRoleService := mock.NewMockGameRoleV2(ctrl)
-	mockAdministratorAuthService := mock.NewMockAdministratorAuth(ctrl)
+	mockAdministratorAuthService := mock.NewMockAdminAuthV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().

@@ -24,7 +24,7 @@ type Checker struct {
 	editionService           service.Edition
 	editionAuthService       service.EditionAuth
 	gameRoleService          service.GameRoleV2
-	administratorAuthService service.AdministratorAuth //現状未実装だが、将来的にV2に置き換える
+	administratorAuthService service.AdminAuthV2
 }
 
 func NewChecker(
@@ -34,7 +34,7 @@ func NewChecker(
 	editionService service.Edition,
 	editionAuthService service.EditionAuth,
 	gameRoleService service.GameRoleV2,
-	administratorAuthService service.AdministratorAuth,
+	administratorAuthService service.AdminAuthV2,
 ) *Checker {
 	return &Checker{
 		context:                  context,
@@ -51,7 +51,7 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
 		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
-		"AdminAuth":            checker.noAuthChecker, // TODO: AdminAuthChecker
+		"AdminAuth":            checker.AdminAuthChecker,
 		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
 		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
 		"EditionAuth":          checker.EditionAuthChecker,
@@ -132,6 +132,43 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	return true, "", nil
 }
 
+// AdminAuthChecker
+// traPCollectionのadminであるかを調べるチェッカー
+func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
+
+	err = checker.administratorAuthService.AdminAuthorize(ctx, authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "not admin")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize admin: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize admin")
+	}
+
+	return nil
+}
+
 // GameOwnerAuthChecker
 // そのゲームのowner(administrator)であるかどうかを調べるチェッカー
 func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
@@ -159,7 +196,10 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 	}
 
 	//ランチャーの管理者は通す
-	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	err = checker.administratorAuthService.AdminAuthorize(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
 	if err != nil && !errors.Is(err, service.ErrForbidden) {
 		log.Printf("error: failed to check launcher admin auth: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
@@ -216,7 +256,10 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 	}
 
 	//ランチャーの管理者は通す
-	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	err = checker.administratorAuthService.AdminAuthorize(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
 	if err != nil && !errors.Is(err, service.ErrForbidden) {
 		log.Printf("error: failed to check launcher admin auth: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
