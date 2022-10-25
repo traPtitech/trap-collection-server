@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -106,10 +105,7 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 				adminName, //TODO:activeUsersMapいらなそう
 				values.TrapMemberStatusActive,
 			))
-		} else {
-			//adminが凍結されているとき、一応ログを残す。
-			log.Printf("not active user: %v\n", adminID)
-		} //TODO:ログに残さない
+		}
 	}
 
 	return adminsInfo, nil
@@ -150,9 +146,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 					adminName,
 					values.TrapMemberStatusActive,
 				))
-		} else {
-			log.Printf("not active user: %v", adminID) //ユーザーが凍結されているとき一応ログに残す
-		} //TODO:ログに残さない
+		}
 	}
 	return adminsInfo, nil
 }
