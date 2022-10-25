@@ -61,7 +61,8 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 			return fmt.Errorf("failed to add admin: %w", err)
 		}
 
-		for _, adminID := range adminIDs { //TODO:adminsInfo作っとく
+		adminInfos = make([]*service.UserInfo, 0, len(adminIDs)+1)
+		for _, adminID := range adminIDs {
 			adminInfos = append(adminInfos, service.NewUserInfo(
 				adminID,
 				activeUsersMap[adminID],       //TODO:activeUsersMapいらなそう
