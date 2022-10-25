@@ -3,8 +3,9 @@ package v1
 type envKey = string
 
 const (
-	envKeyCollectionEnv envKey = "COLLECTION_ENV"
-	envKeyFeatureV2     envKey = "FEATURE_V2"
+	envKeyCollectionEnv  envKey = "COLLECTION_ENV"
+	envKeyFeatureV2      envKey = "FEATURE_V2"
+	envKeyFeatureV1Write envKey = "FEATURE_V1_WRITE"
 
 	envKeyStorage envKey = "STORAGE"
 

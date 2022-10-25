@@ -45,3 +45,18 @@ func (*App) FeatureV2() bool {
 
 	return v2
 }
+
+func (*App) FeatureV1Write() bool {
+	env, ok := os.LookupEnv(envKeyFeatureV1Write)
+	if !ok {
+		return true
+	}
+
+	v2, err := strconv.ParseBool(env)
+	if err != nil {
+		log.Printf("failed to parse %s: %v\n", envKeyFeatureV2, err)
+		return true
+	}
+
+	return v2
+}
