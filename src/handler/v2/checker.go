@@ -24,7 +24,7 @@ type Checker struct {
 	editionService           service.Edition
 	editionAuthService       service.EditionAuth
 	gameRoleService          service.GameRoleV2
-	administratorAuthService service.AdministratorAuth //現状未実装だが、将来的にV2に置き換える
+	administratorAuthService service.AdminAuthV2
 }
 
 func NewChecker(
@@ -34,7 +34,7 @@ func NewChecker(
 	editionService service.Edition,
 	editionAuthService service.EditionAuth,
 	gameRoleService service.GameRoleV2,
-	administratorAuthService service.AdministratorAuth,
+	administratorAuthService service.AdminAuthV2,
 ) *Checker {
 	return &Checker{
 		context:                  context,
@@ -159,7 +159,10 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 	}
 
 	//ランチャーの管理者は通す
-	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	err = checker.administratorAuthService.AdminAuthorize(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
 	if err != nil && !errors.Is(err, service.ErrForbidden) {
 		log.Printf("error: failed to check launcher admin auth: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
@@ -216,7 +219,10 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 	}
 
 	//ランチャーの管理者は通す
-	err = checker.administratorAuthService.AdministratorAuth(c.Request().Context(), authSession)
+	err = checker.administratorAuthService.AdminAuthorize(c.Request().Context(), authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
 	if err != nil && !errors.Is(err, service.ErrForbidden) {
 		log.Printf("error: failed to check launcher admin auth: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check launcher admin auth")
