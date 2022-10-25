@@ -50,6 +50,7 @@ type (
 	ProductKeyTable2       = productKeyTableV6
 	ProductKeyStatusTable2 = productKeyStatusTableV6
 	AccessTokenTable2      = accessTokenTableV2
+	AdminTable             = adminTable
 )
 
 var (
