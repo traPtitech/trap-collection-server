@@ -37,15 +37,10 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, userID values.TraPMemberID) e
 	return nil
 }
 
-func (aa *AdminAuth) GetAdmins(ctx context.Context, lockType repository.LockType) ([]values.TraPMemberID, error) {
+func (aa *AdminAuth) GetAdmins(ctx context.Context) ([]values.TraPMemberID, error) {
 	db, err := aa.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
-	}
-
-	db, err = aa.db.setLock(db, lockType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set lock type:%w", err)
 	}
 
 	var admins []migrate.AdminTable
