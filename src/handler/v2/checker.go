@@ -132,6 +132,43 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	return true, "", nil
 }
 
+// AdminAuth
+// traPCollectionのadminであるかを調べるチェッカー
+func (checker *Checker) AdminAuth(ctx context.Context, ai openapi3filter.AuthenticationInput) error {
+	c := oapiMiddleware.GetEchoContext(ctx)
+	// GetEchoContextの内部実装をみるとnilがかえりうるので、
+	// ここではありえないはずだが念の為チェックする
+	if c == nil {
+		log.Printf("error: failed to get echo context\n")
+		return errors.New("echo context is not set")
+	}
+
+	session, err := checker.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	authSession, err := checker.session.getAuthSession(session)
+	if errors.Is(err, ErrNoValue) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no access token")
+	}
+
+	err = checker.administratorAuthService.AdminAuthorize(ctx, authSession)
+	if errors.Is(err, service.ErrOIDCSessionExpired) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "session is expired")
+	}
+	if errors.Is(err, service.ErrForbidden) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "not admin")
+	}
+	if err != nil {
+		log.Printf("error: failed to authorize admin: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to authorize admin")
+	}
+
+	return nil
+}
+
 // GameOwnerAuthChecker
 // そのゲームのowner(administrator)であるかどうかを調べるチェッカー
 func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
