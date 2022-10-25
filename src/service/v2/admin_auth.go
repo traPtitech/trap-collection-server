@@ -36,9 +36,9 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 		if err != nil {
 			return fmt.Errorf("failed to get active users: %w", err)
 		}
-		activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+		activeUsersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeUsers))
 		for _, activeUser := range activeUsers {
-			activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+			activeUsersMap[activeUser.GetID()] = activeUser
 		}
 		if _, ok := activeUsersMap[userID]; !ok {
 			return service.ErrInvalidUserID
@@ -62,17 +62,11 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 
 		adminInfos = make([]*service.UserInfo, 0, len(adminIDs)+1)
 		for _, adminID := range adminIDs {
-			adminInfos = append(adminInfos, service.NewUserInfo(
-				adminID,
-				activeUsersMap[adminID],       //TODO:activeUsersMapいらなそう
-				values.TrapMemberStatusActive, //TODO:凍結されてるユーザー
-			))
+			if activeUsersMap[adminID].GetStatus() == values.TrapMemberStatusActive {
+				adminInfos = append(adminInfos, activeUsersMap[adminID])
+			}
 		}
-		adminInfos = append(adminInfos, service.NewUserInfo(
-			userID,
-			activeUsersMap[userID],
-			values.TrapMemberStatusActive,
-		))
+		adminInfos = append(adminInfos, activeUsersMap[userID])
 		return nil
 	})
 
@@ -87,9 +81,9 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
 	}
-	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+	activeUsersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeUsers))
 	for _, activeUser := range activeUsers {
-		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+		activeUsersMap[activeUser.GetID()] = activeUser
 	}
 
 	adminIDs, err := aa.adminAuthRepository.GetAdmins(ctx)
@@ -99,12 +93,8 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 
 	adminsInfo := make([]*service.UserInfo, len(adminIDs))
 	for _, adminID := range adminIDs {
-		if adminName, ok := activeUsersMap[adminID]; ok {
-			adminsInfo = append(adminsInfo, service.NewUserInfo(
-				adminID,
-				adminName, //TODO:activeUsersMapいらなそう
-				values.TrapMemberStatusActive,
-			))
+		if adminInfo, ok := activeUsersMap[adminID]; ok {
+			adminsInfo = append(adminsInfo, adminInfo)
 		}
 	}
 
@@ -116,9 +106,9 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
 	}
-	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+	activeUsersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeUsers))
 	for _, activeUser := range activeUsers {
-		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+		activeUsersMap[activeUser.GetID()] = activeUser
 	}
 	if _, ok := activeUsersMap[userID]; !ok {
 		return nil, service.ErrInvalidUserID
@@ -139,13 +129,8 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 
 	adminsInfo := make([]*service.UserInfo, len(adminIDs))
 	for _, adminID := range adminIDs {
-		if adminName, ok := activeUsersMap[adminID]; ok { //TODO:activeUsersMapいらなそう
-			adminsInfo = append(adminsInfo,
-				service.NewUserInfo(
-					adminID,
-					adminName,
-					values.TrapMemberStatusActive,
-				))
+		if adminInfo, ok := activeUsersMap[adminID]; ok {
+			adminsInfo = append(adminsInfo, adminInfo)
 		}
 	}
 	return adminsInfo, nil
