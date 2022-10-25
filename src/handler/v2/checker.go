@@ -51,7 +51,7 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
 		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
-		"AdminAuth":            checker.noAuthChecker, // TODO: AdminAuthChecker
+		"AdminAuth":            checker.AdminAuthChecker,
 		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
 		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
 		"EditionAuth":          checker.EditionAuthChecker,
@@ -132,9 +132,9 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 	return true, "", nil
 }
 
-// AdminAuth
+// AdminAuthChecker
 // traPCollectionのadminであるかを調べるチェッカー
-func (checker *Checker) AdminAuth(ctx context.Context, ai openapi3filter.AuthenticationInput) error {
+func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
