@@ -16,6 +16,7 @@ var (
 		v5(), // v2_game_filesのunique制約を解除
 		v6(), // v2_product_keysのstatusカラムを追加
 		v7(), // adminテーブルの追加
+		v8(), // v2 api用のデータのマイグレーション
 	}
 )
 
