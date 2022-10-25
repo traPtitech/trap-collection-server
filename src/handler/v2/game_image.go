@@ -77,6 +77,9 @@ func (gameImage *GameImage) PostGameImage(c echo.Context, gameID openapi.GameIDI
 	if errors.Is(err, service.ErrInvalidGameID) {
 		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
 	}
+	if errors.Is(err, service.ErrInvalidFormat) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid image type")
+	}
 	if err != nil {
 		log.Printf("error: failed to save game image: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game image")
