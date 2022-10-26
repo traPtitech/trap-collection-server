@@ -63,7 +63,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, userID values.TraPMemberID
 	}
 
 	result := db.
-		Where("user_id = ?", userID).
+		Where("user_id = ?", uuid.UUID(userID)).
 		Delete(&migrate.AdminTable{})
 	err = result.Error
 	if err != nil {

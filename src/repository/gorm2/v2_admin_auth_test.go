@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"gorm.io/gorm"
 )
@@ -97,7 +98,7 @@ func TestAddAdminV2(t *testing.T) {
 	}
 }
 
-func TestGetAdmins(t *testing.T) {
+func TestGetAdminsV2(t *testing.T) {
 	ctx := context.Background()
 
 	db, err := testDB.getDB(ctx)
@@ -193,6 +194,118 @@ func TestGetAdmins(t *testing.T) {
 				assert.True(t, ok)
 			}
 
+		})
+	}
+}
+
+func TestDeleteAdminV2(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	adminAuthRepository := NewAdminAuth(testDB)
+
+	type test struct {
+		description   string
+		userID        values.TraPMemberID
+		beforeAdmins  []migrate.AdminTable
+		afterAdminMap map[values.TraPMemberID]struct{} // DBからの取得時の順序指定ができないため
+		isErr         bool
+		err           error
+	}
+
+	traPMemberID1 := values.NewTrapMemberID(uuid.New())
+	traPMemberID2 := values.NewTrapMemberID(uuid.New())
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			userID:      traPMemberID1,
+			beforeAdmins: []migrate.AdminTable{
+				{
+					UserID: uuid.UUID(traPMemberID1),
+				},
+			},
+			afterAdminMap: map[values.TraPMemberID]struct{}{},
+		},
+		{
+			description: "他のadminが存在してもエラーなし",
+			userID:      traPMemberID1,
+			beforeAdmins: []migrate.AdminTable{
+				{
+					UserID: uuid.UUID(traPMemberID1),
+				},
+				{
+					UserID: uuid.UUID(traPMemberID2),
+				},
+			},
+			afterAdminMap: map[values.TraPMemberID]struct{}{
+				traPMemberID2: {},
+			},
+		},
+		{
+			description:   "adminが存在しないのでErrNoRecordDeleted",
+			userID:        traPMemberID1,
+			beforeAdmins:  []migrate.AdminTable{},
+			afterAdminMap: map[values.TraPMemberID]struct{}{},
+			isErr:         true,
+			err:           repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&migrate.AdminTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete admins: %+v\n", err)
+				}
+			}()
+
+			if testCase.beforeAdmins != nil && len(testCase.beforeAdmins) != 0 {
+				err := db.Session(&gorm.Session{}).Create(&testCase.beforeAdmins).Error
+				if err != nil {
+					t.Fatalf("failed to create admin: %+v\n", err)
+				}
+			}
+
+			err := adminAuthRepository.DeleteAdmin(ctx, testCase.userID)
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var admins []migrate.AdminTable
+			err = db.
+				Unscoped().
+				Session(&gorm.Session{}).
+				Find(&admins).Error
+			if err != nil {
+				t.Fatalf("failed to get games: %+v\n", err)
+			}
+
+			assert.Len(t, admins, len(testCase.afterAdminMap))
+
+			for _, admin := range admins {
+				_, ok := testCase.afterAdminMap[values.TraPMemberID(admin.UserID)]
+				assert.True(t, ok)
+			}
 		})
 	}
 }
