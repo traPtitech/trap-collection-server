@@ -374,7 +374,6 @@ paths:
         - game
       security:
         - TrapMemberAuth: []
-        - EditionGameAuth: []
       operationId: getGame
       responses:
         "200":
@@ -1979,14 +1978,6 @@ components:
         プロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンが正しく、有効期限が切れていないかつ、
         editionIDを対応するエディションが一致する場合にのみアクセスできます。
-        プロダクトキーがrevokeされた場合、即座に反映されます。
-    EditionGameAuth:
-      type: http
-      scheme: bearer
-      description: |
-        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
-        アクセストークンから得られるエディションに、
-        ゲームIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
     EditionGameFileAuth:
       type: http
