@@ -8,22 +8,29 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameVersion struct {
+	featureWrite       bool
 	gameVersionService service.GameVersion
 }
 
-func NewGameVersion(gameVersionService service.GameVersion) *GameVersion {
+func NewGameVersion(appConf config.App, gameVersionService service.GameVersion) *GameVersion {
 	return &GameVersion{
+		featureWrite:       appConf.FeatureV1Write(),
 		gameVersionService: gameVersionService,
 	}
 }
 
 func (gv *GameVersion) PostGameVersion(c echo.Context, strGameID string, newGameVersion *openapi.NewGameVersion) (*openapi.GameVersion, error) {
+	if !gv.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "v1 write is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)

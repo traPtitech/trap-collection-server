@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -27,9 +28,14 @@ func TestPostFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameFileService := mock.NewMockGameFile(ctrl)
 
-	gameFileHandler := NewGameFile(mockGameFileService)
+	gameFileHandler := NewGameFile(mockAppConfig, mockGameFileService)
 
 	type test struct {
 		description         string
@@ -256,9 +262,14 @@ func TestGetGameFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameFileService := mock.NewMockGameFile(ctrl)
 
-	gameFileHandler := NewGameFile(mockGameFileService)
+	gameFileHandler := NewGameFile(mockAppConfig, mockGameFileService)
 
 	type test struct {
 		description        string

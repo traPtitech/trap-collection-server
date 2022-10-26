@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -26,9 +27,14 @@ func TestPostURL(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameURLService := mock.NewMockGameURL(ctrl)
 
-	gameURLHandler := NewGameURL(mockGameURLService)
+	gameURLHandler := NewGameURL(mockAppConfig, mockGameURLService)
 
 	type test struct {
 		description        string
@@ -175,9 +181,14 @@ func TestGetGameURL(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameURLService := mock.NewMockGameURL(ctrl)
 
-	gameURLHandler := NewGameURL(mockGameURLService)
+	gameURLHandler := NewGameURL(mockAppConfig, mockGameURLService)
 
 	type test struct {
 		description       string

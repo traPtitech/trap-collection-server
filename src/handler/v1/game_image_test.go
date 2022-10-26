@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConf "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
@@ -24,9 +25,14 @@ func TestPostImage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameImageService := mock.NewMockGameImage(ctrl)
 
-	gameImageHandler := NewGameImage(mockGameImageService)
+	gameImageHandler := NewGameImage(mockAppConfig, mockGameImageService)
 
 	type test struct {
 		description          string
@@ -136,9 +142,14 @@ func TestGetImage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConf.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockGameImageService := mock.NewMockGameImage(ctrl)
 
-	gameImageHandler := NewGameImage(mockGameImageService)
+	gameImageHandler := NewGameImage(mockAppConfig, mockGameImageService)
 
 	type test struct {
 		description         string

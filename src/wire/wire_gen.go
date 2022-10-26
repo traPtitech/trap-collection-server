@@ -137,8 +137,8 @@ func InjectApp() (*App, error) {
 	user2 := v1_2.NewUser(v1Session, v1User)
 	gameVersion := gorm2.NewGameVersion(db)
 	v1Game := v1_3.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
-	game2 := v1_2.NewGame(v1Session, v1Game)
-	gameRole := v1_2.NewGameRole(v1Session, gameAuth)
+	game2 := v1_2.NewGame(app, v1Session, v1Game)
+	gameRole := v1_2.NewGameRole(app, v1Session, gameAuth)
 	gameImage := gorm2.NewGameImage(db)
 	storage := v1.NewStorage()
 	storageSwift := v1.NewStorageSwift()
@@ -150,23 +150,23 @@ func InjectApp() (*App, error) {
 	}
 	storageGameImage := wireStorage.GameImage
 	v1GameImage := v1_3.NewGameImage(db, game, gameImage, storageGameImage)
-	gameImage2 := v1_2.NewGameImage(v1GameImage)
+	gameImage2 := v1_2.NewGameImage(app, v1GameImage)
 	gameVideo := gorm2.NewGameVideo(db)
 	storageGameVideo := wireStorage.GameVideo
 	v1GameVideo := v1_3.NewGameVideo(db, game, gameVideo, storageGameVideo)
-	gameVideo2 := v1_2.NewGameVideo(v1GameVideo)
+	gameVideo2 := v1_2.NewGameVideo(app, v1GameVideo)
 	v1GameVersion := v1_3.NewGameVersion(db, game, gameVersion)
-	gameVersion2 := v1_2.NewGameVersion(v1GameVersion)
+	gameVersion2 := v1_2.NewGameVersion(app, v1GameVersion)
 	gameFile := gorm2.NewGameFile(db)
 	storageGameFile := wireStorage.GameFile
 	v1GameFile := v1_3.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
-	gameFile2 := v1_2.NewGameFile(v1GameFile)
+	gameFile2 := v1_2.NewGameFile(app, v1GameFile)
 	gameURL := gorm2.NewGameURL(db)
 	v1GameURL := v1_3.NewGameURL(db, game, gameVersion, gameURL)
-	gameURL2 := v1_2.NewGameURL(v1GameURL)
-	v1LauncherAuth := v1_2.NewLauncherAuth(launcherAuth)
+	gameURL2 := v1_2.NewGameURL(app, v1GameURL)
+	v1LauncherAuth := v1_2.NewLauncherAuth(app, launcherAuth)
 	v1LauncherVersion := v1_3.NewLauncherVersion(db, launcherVersion, game)
-	launcherVersion2 := v1_2.NewLauncherVersion(v1LauncherVersion)
+	launcherVersion2 := v1_2.NewLauncherVersion(app, v1LauncherVersion)
 	oAuth2, err := v1_2.NewOAuth2(v1Handler, v1Session, v1OIDC)
 	if err != nil {
 		return nil, err

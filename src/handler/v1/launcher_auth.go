@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
@@ -16,16 +17,22 @@ import (
 )
 
 type LauncherAuth struct {
+	featureWrite        bool
 	launcherAuthService service.LauncherAuth
 }
 
-func NewLauncherAuth(launcherAuthService service.LauncherAuth) *LauncherAuth {
+func NewLauncherAuth(appConf config.App, launcherAuthService service.LauncherAuth) *LauncherAuth {
 	return &LauncherAuth{
+		featureWrite:        appConf.FeatureV1Write(),
 		launcherAuthService: launcherAuthService,
 	}
 }
 
 func (la *LauncherAuth) PostKeyGenerate(c echo.Context, productKeyGen *openapi.ProductKeyGen) ([]*openapi.ProductKey, error) {
+	if !la.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	keyNum := int(productKeyGen.Num)
@@ -83,6 +90,10 @@ func (la *LauncherAuth) PostLauncherLogin(c echo.Context, productKey *openapi.Pr
 }
 
 func (la *LauncherAuth) DeleteProductKey(c echo.Context, productKeyID string) error {
+	if !la.featureWrite {
+		return echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidLauncherUserID, err := uuid.Parse(productKeyID)

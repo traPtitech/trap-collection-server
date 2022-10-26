@@ -11,22 +11,29 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameFile struct {
+	featureWrite    bool
 	gameFileService service.GameFile
 }
 
-func NewGameFile(gameFileService service.GameFile) *GameFile {
+func NewGameFile(appConf config.App, gameFileService service.GameFile) *GameFile {
 	return &GameFile{
+		featureWrite:    appConf.FeatureV1Write(),
 		gameFileService: gameFileService,
 	}
 }
 
 func (gf *GameFile) PostFile(c echo.Context, strGameID string, strEntryPoint string, strFileType string, file multipart.File) (*openapi.GameFile, error) {
+	if !gf.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "v1 write is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)

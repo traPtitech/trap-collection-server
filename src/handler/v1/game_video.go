@@ -10,21 +10,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type GameVideo struct {
+	featureWrite     bool
 	gameVideoService service.GameVideo
 }
 
-func NewGameVideo(gameVideoService service.GameVideo) *GameVideo {
+func NewGameVideo(appConf config.App, gameVideoService service.GameVideo) *GameVideo {
 	return &GameVideo{
+		featureWrite:     appConf.FeatureV1Write(),
 		gameVideoService: gameVideoService,
 	}
 }
 
 func (gv *GameVideo) PostVideo(c echo.Context, strGameID string, video multipart.File) error {
+	if !gv.featureWrite {
+		return echo.NewHTTPError(http.StatusForbidden, "v1 write is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)

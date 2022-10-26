@@ -8,27 +8,35 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type Game struct {
-	session     *Session
-	gameService service.Game
+	featureWrite bool
+	session      *Session
+	gameService  service.Game
 }
 
 func NewGame(
+	appConf config.App,
 	session *Session,
 	gameService service.Game,
 ) *Game {
 	return &Game{
-		session:     session,
-		gameService: gameService,
+		featureWrite: appConf.FeatureV1Write(),
+		session:      session,
+		gameService:  gameService,
 	}
 }
 
 func (g *Game) PostGame(c echo.Context, newGame *openapi.NewGame) (*openapi.GameInfo, error) {
+	if !g.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	session, err := getSession(c)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
@@ -112,6 +120,10 @@ func (g *Game) GetGame(c echo.Context, strGameID string) (*openapi.Game, error) 
 }
 
 func (g *Game) PutGame(c echo.Context, strGameID string, gameMeta *openapi.NewGame) (*openapi.GameInfo, error) {
+	if !g.featureWrite {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)
@@ -219,6 +231,10 @@ func (g *Game) GetGames(c echo.Context, strAll string) ([]*openapi.Game, error) 
 }
 
 func (g *Game) DeleteGames(c echo.Context, strGameID string) error {
+	if !g.featureWrite {
+		return echo.NewHTTPError(http.StatusForbidden, "write feature is disabled")
+	}
+
 	ctx := c.Request().Context()
 
 	uuidGameID, err := uuid.Parse(strGameID)

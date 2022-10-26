@@ -27,6 +27,11 @@ func TestPostGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -48,7 +53,7 @@ func TestPostGame(t *testing.T) {
 	}
 	mockGameService := mock.NewMockGame(ctrl)
 
-	gameHandler := NewGame(session, mockGameService)
+	gameHandler := NewGame(mockAppConfig, session, mockGameService)
 
 	type test struct {
 		description       string
@@ -250,6 +255,11 @@ func TestGetGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -271,7 +281,7 @@ func TestGetGame(t *testing.T) {
 	}
 	mockGameService := mock.NewMockGame(ctrl)
 
-	gameHandler := NewGame(session, mockGameService)
+	gameHandler := NewGame(mockAppConfig, session, mockGameService)
 
 	type test struct {
 		description    string
@@ -412,6 +422,11 @@ func TestPutGame(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -433,7 +448,7 @@ func TestPutGame(t *testing.T) {
 	}
 	mockGameService := mock.NewMockGame(ctrl)
 
-	gameHandler := NewGame(session, mockGameService)
+	gameHandler := NewGame(mockAppConfig, session, mockGameService)
 
 	type test struct {
 		description       string
@@ -594,6 +609,11 @@ func TestGetGames(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -615,7 +635,7 @@ func TestGetGames(t *testing.T) {
 	}
 	mockGameService := mock.NewMockGame(ctrl)
 
-	gameHandler := NewGame(session, mockGameService)
+	gameHandler := NewGame(mockAppConfig, session, mockGameService)
 
 	type test struct {
 		description       string
@@ -1093,6 +1113,11 @@ func TestDeleteGames(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	mockAppConfig := mockConfig.NewMockApp(ctrl)
+	mockAppConfig.
+		EXPECT().
+		FeatureV1Write().
+		Return(true)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -1114,7 +1139,7 @@ func TestDeleteGames(t *testing.T) {
 	}
 	mockGameService := mock.NewMockGame(ctrl)
 
-	gameHandler := NewGame(session, mockGameService)
+	gameHandler := NewGame(mockAppConfig, session, mockGameService)
 
 	type test struct {
 		description       string
