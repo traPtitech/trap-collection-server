@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"encoding/hex"
 	"errors"
 	"log"
 	"net/http"
@@ -53,7 +54,7 @@ func (gameFile GameFile) GetGameFiles(c echo.Context, gameID openapi.GameIDInPat
 			Id:         openapi.GameFileID(file.GetID()),
 			Type:       fileType,
 			EntryPoint: string(file.GetEntryPoint()),
-			Md5:        string(file.GetHash()),
+			Md5:        hex.EncodeToString(file.GetHash()),
 			CreatedAt:  file.GetCreatedAt(),
 		})
 	}
@@ -111,7 +112,7 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		Id:         openapi.GameFileID(savedFile.GetID()),
 		Type:       openapi.GameFileType(headerFileType),
 		EntryPoint: openapi.GameFileEntryPoint(savedFile.GetEntryPoint()),
-		Md5:        openapi.GameFileMd5(savedFile.GetHash()),
+		Md5:        openapi.GameFileMd5(hex.EncodeToString(savedFile.GetHash())),
 		CreatedAt:  savedFile.GetCreatedAt(),
 	})
 }
