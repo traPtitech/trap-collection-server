@@ -55,7 +55,6 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
 		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
 		"EditionAuth":          checker.EditionAuthChecker,
-		"EditionGameAuth":      checker.EditionGameAuthChecker,
 		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
 		"EditionGameImageAuth": checker.EditionGameImageAuthChecker,
 		"EditionGameVideoAuth": checker.EditionGameVideoAuthChecker,
@@ -74,13 +73,6 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 	}
 
 	return err
-}
-
-// noAuthChecker
-// 認証なしで通すチェッカー
-// TODO: noAuthChecker削除
-func (checker *Checker) noAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	return nil
 }
 
 // TrapMemberAuthChecker
@@ -307,48 +299,6 @@ func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filt
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, message)
 	}
-
-	return nil
-}
-
-func (checker *Checker) EditionGameAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
-	// GetEchoContextの内部実装をみるとnilがかえりうるので、
-	// ここではありえないはずだが念の為チェックする
-	if c == nil {
-		log.Printf("error: failed to get echo context\n")
-		return errors.New("echo context is not set")
-	}
-
-	accessToken, ok, message := checker.getAccessToken(ai)
-	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, message)
-	}
-
-	strGameID := c.Param("gameID")
-	uuidGameID, err := uuid.Parse(strGameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid editionID")
-	}
-	gameID := values.NewGameIDFromUUID(uuidGameID)
-
-	productKey, edition, err := checker.editionAuthService.EditionGameAuth(ctx, accessToken, gameID)
-	if errors.Is(err, service.ErrInvalidAccessToken) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "invalid access token")
-	}
-	if errors.Is(err, service.ErrExpiredAccessToken) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "expired access token")
-	}
-	if errors.Is(err, service.ErrForbidden) {
-		return echo.NewHTTPError(http.StatusForbidden, "forbidden")
-	}
-	if err != nil {
-		log.Printf("error: failed to check edition game auth: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to check edition game auth")
-	}
-
-	checker.context.SetProductKey(c, productKey)
-	checker.context.SetEdition(c, edition)
 
 	return nil
 }
