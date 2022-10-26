@@ -49,7 +49,6 @@ func (gameFile GameFile) GetGameFiles(c echo.Context, gameID openapi.GameIDInPat
 			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game file type")
 		}
 
-		log.Printf("res: %v ->%v", string(file.GetHash()), []byte(file.GetHash())) //TODO:後で消す
 		resFiles = append(resFiles, openapi.GameFile{
 			Id:         openapi.GameFileID(file.GetID()),
 			Type:       fileType,
