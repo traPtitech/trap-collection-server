@@ -283,6 +283,9 @@ func TestPostGameFile(t *testing.T) {
 	type test struct {
 		description         string
 		gameID              openapi.GameIDInPath
+		noFileType          bool
+		noEntryPoint        bool
+		fileType            openapi.GameFileType
 		reader              *bytes.Reader
 		executeSaveGameFile bool
 		file                *domain.GameFile
@@ -297,86 +300,93 @@ func TestPostGameFile(t *testing.T) {
 	gameFileID2 := values.NewGameFileID()
 	gameFileID3 := values.NewGameFileID()
 
+	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
+
 	now := time.Now()
 	testCases := []test{
 		{
 			description:         "特に問題ないのでエラーなし",
 			gameID:              uuid.UUID(values.NewGameID()),
+			fileType:            openapi.Jar,
 			reader:              bytes.NewReader([]byte("test")),
 			executeSaveGameFile: true,
 			file: domain.NewGameFile(
 				gameFileID1,
 				values.GameFileTypeJar,
 				values.NewGameFileEntryPoint("path/to/file"),
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				md5Hash,
 				now,
 			),
 			resFile: openapi.GameFile{
 				Id:         uuid.UUID(gameFileID1),
 				Type:       openapi.Jar,
 				EntryPoint: string("path/to/file"),
-				Md5:        openapi.GameFileMd5([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
 				CreatedAt:  now,
 			},
 		},
 		{
 			description:         "win32でもエラーなし",
 			gameID:              uuid.UUID(values.NewGameID()),
+			fileType:            openapi.Win32,
 			reader:              bytes.NewReader([]byte("test")),
 			executeSaveGameFile: true,
 			file: domain.NewGameFile(
 				gameFileID2,
 				values.GameFileTypeWindows,
 				values.NewGameFileEntryPoint("path/to/file"),
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				md5Hash,
 				now,
 			),
 			resFile: openapi.GameFile{
 				Id:         uuid.UUID(gameFileID2),
 				Type:       openapi.Win32,
 				EntryPoint: string("path/to/file"),
-				Md5:        openapi.GameFileMd5([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
 				CreatedAt:  now,
 			},
 		},
 		{
 			description:         "macでもエラーなし",
 			gameID:              uuid.UUID(values.NewGameID()),
+			fileType:            openapi.Darwin,
 			reader:              bytes.NewReader([]byte("test")),
 			executeSaveGameFile: true,
 			file: domain.NewGameFile(
 				gameFileID3,
 				values.GameFileTypeMac,
 				values.NewGameFileEntryPoint("path/to/file"),
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				md5Hash,
 				now,
 			),
 			resFile: openapi.GameFile{
 				Id:         uuid.UUID(gameFileID3),
 				Type:       openapi.Darwin,
 				EntryPoint: string("path/to/file"),
-				Md5:        openapi.GameFileMd5([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
 				CreatedAt:  now,
 			},
 		},
 		{
 			// serviceが正しく動作していればあり得ないが、念のため確認
-			description:         "win32,darwin,jarのいずれでもないので500",
+			description:         "win32,darwin,jarのいずれでもないので400",
 			gameID:              uuid.UUID(values.NewGameID()),
+			fileType:            "invalid",
 			reader:              bytes.NewReader([]byte("test")),
-			executeSaveGameFile: true,
+			executeSaveGameFile: false,
 			file: domain.NewGameFile(
 				values.NewGameFileID(),
-				values.GameFileTypeJar,
+				100,
 				values.NewGameFileEntryPoint("path/to/file"),
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+				md5Hash,
 				now,
 			),
 			isErr:      true,
-			statusCode: http.StatusInternalServerError,
+			statusCode: http.StatusBadRequest,
 		},
 		{
 			description:         "SaveGameFileがErrInvalidGameIDなので404",
+			fileType:            openapi.Jar,
 			gameID:              uuid.UUID(values.NewGameID()),
 			reader:              bytes.NewReader([]byte("test")),
 			executeSaveGameFile: true,
@@ -386,6 +396,7 @@ func TestPostGameFile(t *testing.T) {
 		},
 		{
 			description:         "SaveGameFileがエラーなので500",
+			fileType:            openapi.Jar,
 			gameID:              uuid.UUID(values.NewGameID()),
 			reader:              bytes.NewReader([]byte("test")),
 			executeSaveGameFile: true,
@@ -395,22 +406,28 @@ func TestPostGameFile(t *testing.T) {
 		},
 		{
 			description: "contentがrequest bodyにないので400",
+			fileType:    openapi.Jar,
 			gameID:      uuid.UUID(values.NewGameID()),
 			isErr:       true,
 			statusCode:  http.StatusBadRequest,
 		},
 		{
-			description: "entryPointがrequest bodyにないので400",
+			description:  "entryPointがrequest bodyにないので400",
+			gameID:       uuid.UUID(values.NewGameID()),
+			fileType:     openapi.Jar,
+			reader:       bytes.NewReader([]byte("test")),
+			noEntryPoint: true,
+			isErr:        true,
+			statusCode:   http.StatusBadRequest,
+		},
+		{
+			description: "typeがrequest bodyにないので400",
 			gameID:      uuid.UUID(values.NewGameID()),
-			file: domain.NewGameFile(
-				values.NewGameFileID(),
-				values.GameFileTypeJar,
-				values.NewGameFileEntryPoint(""),
-				values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
-				now,
-			),
-			isErr:      true,
-			statusCode: http.StatusBadRequest,
+			fileType:    openapi.Jar,
+			reader:      bytes.NewReader([]byte("test")),
+			noFileType:  true,
+			isErr:       true,
+			statusCode:  http.StatusBadRequest,
 		},
 	}
 
@@ -427,7 +444,7 @@ func TestPostGameFile(t *testing.T) {
 				if testCase.reader != nil {
 					w, err := mw.CreateFormFile("content", "content")
 					if err != nil {
-						t.Fatalf("failed to create form field: %v", err)
+						t.Fatalf("failed to create form field: content: %v", err)
 						return
 					}
 
@@ -438,6 +455,31 @@ func TestPostGameFile(t *testing.T) {
 					}
 				}
 
+				if !testCase.noEntryPoint {
+					w2, err := mw.CreateFormField("entryPoint")
+					if err != nil {
+						t.Fatalf("failed to create form field: entryPoint: %v", err)
+						return
+					}
+					_, err = w2.Write([]byte("path/to/file"))
+					if err != nil {
+						t.Fatalf("failed to write form data: entryPoint: %v", err)
+						return
+					}
+				}
+
+				if !testCase.noFileType {
+					w3, err := mw.CreateFormField("type")
+					if err != nil {
+						t.Fatalf("failed to create form field: type: %v", err)
+						return
+					}
+					_, err = w3.Write([]byte(testCase.fileType))
+					if err != nil {
+						t.Fatalf("failed to write form data: type: %v", err)
+						return
+					}
+				}
 				boundary = mw.Boundary()
 			}()
 
@@ -449,7 +491,7 @@ func TestPostGameFile(t *testing.T) {
 			if testCase.executeSaveGameFile {
 				mockGameFileService.
 					EXPECT().
-					SaveGameFile(gomock.Any(), gomock.Any(), gomock.Any(), testCase.file.GetFileType(), testCase.file.GetEntryPoint()).
+					SaveGameFile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(testCase.file, testCase.saveGameFileErr)
 			}
 
