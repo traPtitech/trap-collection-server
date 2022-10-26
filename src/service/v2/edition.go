@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -327,6 +328,7 @@ func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID va
 		gameIDs = append(gameIDs, gameVersion.GameID)
 		fileIDs = append(fileIDs, gameVersion.FileIDs...)
 	}
+	log.Printf("game_ids: %d, %+v\n", len(gameIDs), gameIDs)
 
 	games, err := edition.gameRepository.GetGamesByIDs(ctx, gameIDs, repository.LockTypeNone)
 	if err != nil {
@@ -337,6 +339,7 @@ func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID va
 	for _, game := range games {
 		gameMap[game.GetID()] = game
 	}
+	log.Printf("game_map: %d, %+v\n", len(gameMap), gameMap)
 
 	files, err := edition.gameFileRepository.GetGameFilesWithoutTypes(ctx, fileIDs, repository.LockTypeNone)
 	if err != nil {
@@ -352,6 +355,7 @@ func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID va
 	for _, gameVersion := range gameVersions {
 		game, ok := gameMap[gameVersion.GameID]
 		if !ok {
+			log.Printf("game_id(false): %s\n", uuid.UUID(gameVersion.GameID))
 			return nil, errors.New("game not found")
 		}
 

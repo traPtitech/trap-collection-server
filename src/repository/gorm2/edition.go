@@ -263,6 +263,7 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id")
 		}).
+		Joins("JOIN games ON games.id = v2_game_versions.game_id AND games.deleted_at IS NULL").
 		Association("GameVersions").
 		Find(&gameVersions)
 	if err != nil {
