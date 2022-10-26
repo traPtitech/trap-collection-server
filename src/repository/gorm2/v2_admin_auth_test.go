@@ -13,8 +13,6 @@ import (
 )
 
 func TestAddAdminV2(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	db, err := testDB.getDB(ctx)
@@ -54,6 +52,18 @@ func TestAddAdminV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&migrate.AdminTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete admins: %+v\n", err)
+				}
+			}()
+
 			if testCase.beforeAdmins != nil && len(testCase.beforeAdmins) != 0 {
 				err := db.Session(&gorm.Session{}).Create(&testCase.beforeAdmins).Error
 				if err != nil {
@@ -83,6 +93,106 @@ func TestAddAdminV2(t *testing.T) {
 			}
 
 			assert.Equal(t, uuid.UUID(testCase.userID), admin.UserID)
+		})
+	}
+}
+
+func TestGetAdmins(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	adminAuthRepository := NewAdminAuth(testDB)
+
+	type test struct {
+		description  string
+		beforeAdmins []migrate.AdminTable
+		adminsMap    map[values.TraPMemberID]struct{} // 返り値での要素の順序が定まらないため
+		isErr        bool
+		err          error
+	}
+
+	traPMemberID1 := values.NewTrapMemberID(uuid.New())
+	traPMemberID2 := values.NewTrapMemberID(uuid.New())
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			beforeAdmins: []migrate.AdminTable{
+				{
+					UserID: uuid.UUID(traPMemberID1),
+				},
+			},
+			adminsMap: map[values.TraPMemberID]struct{}{
+				traPMemberID1: {},
+			},
+		},
+		{
+			description:  "adminが存在しなくてもエラーなし",
+			beforeAdmins: []migrate.AdminTable{},
+			adminsMap:    map[values.TraPMemberID]struct{}{},
+		},
+		{
+			description: "adminが複数でもエラーなし",
+			beforeAdmins: []migrate.AdminTable{
+				{
+					UserID: uuid.UUID(traPMemberID1),
+				},
+				{
+					UserID: uuid.UUID(traPMemberID2),
+				},
+			},
+			adminsMap: map[values.TraPMemberID]struct{}{
+				traPMemberID1: {},
+				traPMemberID2: {},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&migrate.AdminTable{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete admins: %+v\n", err)
+				}
+			}()
+
+			if len(testCase.beforeAdmins) != 0 {
+				err := db.Create(&testCase.beforeAdmins).Error
+				if err != nil {
+					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			admins, err := adminAuthRepository.GetAdmins(ctx)
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, admins, len(testCase.adminsMap))
+			for _, admin := range admins {
+				_, ok := testCase.adminsMap[admin]
+				assert.True(t, ok)
+			}
+
 		})
 	}
 }
