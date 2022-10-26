@@ -49,9 +49,9 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context) ([]values.TraPMemberID, erro
 		return nil, fmt.Errorf("failed to get admins: %w", err)
 	}
 
-	adminsID := make([]values.TraPMemberID, 0)
-	for _, admin := range admins {
-		adminsID = append(adminsID, values.NewTrapMemberID(admin.UserID))
+	adminsID := make([]values.TraPMemberID, len(admins))
+	for i, admin := range admins {
+		adminsID[i] = values.NewTrapMemberID(admin.UserID)
 	}
 	return adminsID, nil
 }
