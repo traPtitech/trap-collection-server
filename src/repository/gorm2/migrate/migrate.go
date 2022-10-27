@@ -17,6 +17,7 @@ var (
 		v6(), // v2_product_keysのstatusカラムを追加
 		v7(), // adminテーブルの追加
 		v8(), // v2 api用のデータのマイグレーション
+		v9(), // seatテーブルの追加
 	}
 )
 

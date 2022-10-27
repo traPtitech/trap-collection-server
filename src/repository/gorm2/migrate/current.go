@@ -51,9 +51,17 @@ type (
 	ProductKeyStatusTable2 = productKeyStatusTableV6
 	AccessTokenTable2      = accessTokenTableV2
 	AdminTable             = adminTable
+	SeatTable2             = seatTableV9
+	SeatStatusTable2       = seatStatusTableV9
 )
 
-var (
+const (
 	ProductKeyStatusActive   = productKeyStatusActiveV6
 	ProductKeyStatusInactive = productKeyStatusInactiveV6
+)
+
+const (
+	SeatStatusNone  = seatStatusNoneV9
+	SeatStatusEmpty = seatStatusEmptyV9
+	SeatStatusInUse = seatStatusInUseV9
 )
