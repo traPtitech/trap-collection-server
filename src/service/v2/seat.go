@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
+	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -26,7 +28,13 @@ func NewSeat(db repository.DB, seatRepository repository.Seat) *Seat {
 }
 
 func (s *Seat) GetSeats(ctx context.Context) ([]*domain.Seat, error) {
-	seats, err := s.seatRepository.GetActiveSeats(ctx, repository.LockTypeNone)
+	seats, err := s.seatCache.GetActiveSeats(ctx)
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// cacheからの取り出しに失敗しても、dbから取り出せば良いのでエラーは無視する
+		log.Printf("failed to get seats from cache: %v", err)
+	}
+
+	seats, err = s.seatRepository.GetActiveSeats(ctx, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
 	}
@@ -149,6 +157,12 @@ func (s *Seat) UpdateSeatNum(ctx context.Context, num uint) ([]*domain.Seat, err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update seat num: %w", err)
+	}
+
+	err = s.seatCache.SetActiveSeats(ctx, activeSeats)
+	if err != nil {
+		// cacheの設定に失敗しても致命傷ではないのでエラーを返さない
+		log.Printf("error: failed to set seats to cache: %v", err)
 	}
 
 	return activeSeats, nil
