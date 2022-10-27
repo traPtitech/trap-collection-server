@@ -27,6 +27,8 @@
 | [migrations](migrations.md) | 1 | マイグレーションテーブル(gormigrate) | BASE TABLE |
 | [product_keys](product_keys.md) | 5 | プロダクトキーテーブル(v2) | BASE TABLE |
 | [product_key_statuses](product_key_statuses.md) | 3 | プロダクトキーのステータスのテーブル | BASE TABLE |
+| [seats](seats.md) | 2 |  | BASE TABLE |
+| [seat_statuses](seat_statuses.md) | 3 |  | BASE TABLE |
 | [v2_game_files](v2_game_files.md) | 6 | ゲームファイルテーブル(v2) | BASE TABLE |
 | [v2_game_images](v2_game_images.md) | 4 | ゲーム画像テーブル(v2) | BASE TABLE |
 | [v2_game_versions](v2_game_versions.md) | 8 | ゲームバージョンテーブル(v2) | BASE TABLE |
