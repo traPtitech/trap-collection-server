@@ -104,12 +104,17 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 		return nil, fmt.Errorf("invalid file type: %s", file.GameFileType.Name)
 	}
 
+	byteHash, err := hex.DecodeString(file.Hash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode string to hash: %w", err)
+	}
+
 	return &repository.GameFileInfo{
 		GameFile: domain.NewGameFile(
 			values.NewGameFileIDFromUUID(file.ID),
 			fileType,
 			values.GameFileEntryPoint(file.EntryPoint),
-			values.GameFileHash(file.Hash),
+			values.NewGameFileHashFromBytes(byteHash),
 			file.CreatedAt,
 		),
 		GameID: values.NewGameIDFromUUID(file.GameID),
@@ -153,11 +158,16 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 			continue
 		}
 
+		byteHash, err := hex.DecodeString(file.Hash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode string to hash: %w", err)
+		}
+
 		gameFiles = append(gameFiles, domain.NewGameFile(
 			values.NewGameFileIDFromUUID(file.ID),
 			fileType,
 			values.GameFileEntryPoint(file.EntryPoint),
-			values.GameFileHash(file.Hash),
+			values.GameFileHash(byteHash),
 			file.CreatedAt,
 		))
 	}
