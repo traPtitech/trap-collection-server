@@ -11,4 +11,7 @@ import (
 var cacheSet = wire.NewSet(
 	wire.Bind(new(cache.User), new(*ristretto.User)),
 	ristretto.NewUser,
+
+	wire.Bind(new(cache.Seat), new(*ristretto.Seat)),
+	ristretto.NewSeat,
 )
