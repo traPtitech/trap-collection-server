@@ -69,10 +69,10 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 
 	err := checkerFunc(ctx, input)
 	if err != nil {
-		log.Println(err)
+		return fmt.Errorf("failed to check security scheme: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 // TrapMemberAuthChecker
