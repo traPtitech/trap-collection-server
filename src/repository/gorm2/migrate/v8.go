@@ -48,11 +48,11 @@ func v8() *gormigrate.Migration {
 				"FROM game_versions " +
 				"LEFT JOIN games ON game_versions.game_id = games.id " +
 				"LEFT JOIN (SELECT * FROM game_images AS gi1 WHERE id = (" +
-				"SELECT id FROM game_images AS gi2 WHERE gi1.game_id = gi2.game_id ORDER BY gi2.created_at LIMIT 1" +
+				"SELECT id FROM game_images AS gi2 WHERE gi1.game_id = gi2.game_id ORDER BY gi2.created_at DESC LIMIT 1" +
 				")) AS game_images ON games.id = game_images.game_id " +
 				"LEFT JOIN (SELECT * FROM game_videos AS gv1 WHERE id = (" +
-				"SELECT id FROM game_videos AS gv2 WHERE gv1.game_id = gv2.game_id ORDER BY gv2.created_at LIMIT 1)" +
-				") AS game_videos ON games.id = game_videos.game_id " +
+				"SELECT id FROM game_videos AS gv2 WHERE gv1.game_id = gv2.game_id ORDER BY gv2.created_at DESC LIMIT 1" +
+				")) AS game_videos ON games.id = game_videos.game_id " +
 				"LEFT JOIN game_urls ON game_versions.id = game_urls.game_version_id").Error
 			if err != nil {
 				return fmt.Errorf("failed to migrate v2_game_versions table: %w", err)
@@ -81,7 +81,7 @@ func v8() *gormigrate.Migration {
 				"(edition_id, game_version_id) " +
 				"SELECT launcher_version_game_relations.launcher_version_table_id, game_versions.id " +
 				"FROM launcher_version_game_relations " +
-				"LEFT JOIN (SELECT * FROM game_versions AS gv1 WHERE id = (SELECT id FROM game_versions AS gv2 WHERE gv1.game_id = gv2.game_id ORDER BY gv2.created_at LIMIT 1)) AS game_versions ON launcher_version_game_relations.game_table_id = game_versions.game_id").Error
+				"LEFT JOIN (SELECT * FROM game_versions AS gv1 WHERE id = (SELECT id FROM game_versions AS gv2 WHERE gv1.game_id = gv2.game_id ORDER BY gv2.created_at DESC LIMIT 1)) AS game_versions ON launcher_version_game_relations.game_table_id = game_versions.game_id").Error
 			if err != nil {
 				return fmt.Errorf("failed to migrate edition_game_version_relations table: %w", err)
 			}
