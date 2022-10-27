@@ -73,7 +73,7 @@ func (s *Seat) UpdateSeatStatus(ctx context.Context, seatID values.SeatID, statu
 }
 
 func (s *Seat) UpdateSeatNum(ctx context.Context, num uint) ([]*domain.Seat, error) {
-	seats, err := s.seatRepository.GetSeats(ctx)
+	seats, err := s.seatRepository.GetSeats(ctx, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
 	}
