@@ -39,6 +39,9 @@ func (s *Seat) GetSeats(ctx context.Context) ([]*domain.Seat, error) {
 		// cacheからの取り出しに失敗しても、dbから取り出せば良いのでエラーは無視する
 		log.Printf("error: failed to get seats from cache: %v\n", err)
 	}
+	if err == nil {
+		return seats, nil
+	}
 
 	seats, err = s.seatRepository.GetActiveSeats(ctx, repository.LockTypeNone)
 	if err != nil {

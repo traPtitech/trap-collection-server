@@ -17,10 +17,6 @@ type Seat struct {
 	activeSeatsTTL time.Duration
 }
 
-const (
-	activeSeatsKey = "active_seats"
-)
-
 func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 	activeSeatsTTL, err := conf.ActiveSeatsTTL()
 	if err != nil {
