@@ -3,14 +3,18 @@ package v2
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
 type Seat struct {
+	seatService service.Seat
 	seatUnimplemented
 }
 
-func NewSeat() *Seat {
-	return &Seat{}
+func NewSeat(seatService service.Seat) *Seat {
+	return &Seat{
+		seatService: seatService,
+	}
 }
 
 // seatUnimplemented
