@@ -19,14 +19,14 @@ type Seat struct {
 	db             repository.DB
 	seatRepository repository.Seat
 	seatCache      cache.Seat
-	seatMetrics    service.SeatMetrics
+	seatMetrics    *SeatMetrics
 }
 
 func NewSeat(
 	db repository.DB,
 	seatRepository repository.Seat,
 	seatCache cache.Seat,
-	seatMetrics service.SeatMetrics,
+	seatMetrics *SeatMetrics,
 ) *Seat {
 	return &Seat{
 		db:             db,
