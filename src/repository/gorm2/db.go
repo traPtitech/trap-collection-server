@@ -82,11 +82,18 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
 		return nil, fmt.Errorf("failed to migrate: %w", err)
 	}
 
+	var collector prometheus.MetricsCollector
+	if appConf.FeatureV2() {
+		collector = &MetricsCollectorV2{}
+	} else {
+		collector = &MetricsCollector{}
+	}
+
 	err = db.Use(prometheus.New(prometheus.Config{
 		DBName:          "trap_collection",
 		RefreshInterval: 15,
 		MetricsCollector: []prometheus.MetricsCollector{
-			&MetricsCollector{},
+			collector,
 		},
 	}))
 	if err != nil {
