@@ -1844,6 +1844,7 @@ paths:
       operationId: getSeats
       security:
         - TrapMemberAuth: []
+        - EditionAuth: []
       responses:
         "200":
           content:
@@ -1871,6 +1872,7 @@ paths:
       operationId: patchSeatStatus
       security:
         - TrapMemberAuth: []
+        - EditionAuth: []
       requestBody:
         required: true
         content:
