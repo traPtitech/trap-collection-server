@@ -131,8 +131,9 @@ func (s *Seat) GetActiveSeats(ctx context.Context, lockType repository.LockType)
 
 	var dbSeats []migrate.SeatTable2
 	err = db.
-		Joins("JOIN seat_statuses ON seat.status_id = seat_statuses.id AND active = true").
-		Where("seat_statuses.name != ?", migrate.SeatStatusNone).
+		Joins("SeatStatus").
+		Order("seats.id").
+		Where("SeatStatus.name != ?", migrate.SeatStatusNone).
 		Find(&dbSeats).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
@@ -173,7 +174,8 @@ func (s *Seat) GetSeats(ctx context.Context, lockType repository.LockType) ([]*d
 
 	var dbSeats []migrate.SeatTable2
 	err = db.
-		Joins("JOIN seat_statuses ON seat.status_id = seat_statuses.id AND active = true").
+		Joins("SeatStatus").
+		Order("seats.id").
 		Find(&dbSeats).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
@@ -191,7 +193,7 @@ func (s *Seat) GetSeats(ctx context.Context, lockType repository.LockType) ([]*d
 			status = values.SeatStatusInUse
 		default:
 			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
-			log.Printf("error: invalid product key status: %s\n", dbSeat.SeatStatus.Name)
+			log.Printf("error: invalid seat status: %s\n", dbSeat.SeatStatus.Name)
 			continue
 		}
 
@@ -217,8 +219,8 @@ func (s *Seat) GetSeat(ctx context.Context, seatID values.SeatID, lockType repos
 
 	var dbSeat migrate.SeatTable2
 	err = db.
-		Joins("JOIN seat_statuses ON seat.status_id = seat_statuses.id AND active = true").
-		Where("seat.id = ?", uint(seatID)).
+		Joins("SeatStatus").
+		Where("seats.id = ?", uint(seatID)).
 		Take(&dbSeat).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, repository.ErrRecordNotFound

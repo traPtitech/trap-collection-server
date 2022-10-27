@@ -16,9 +16,11 @@ type Seat interface {
 	UpdateSeatsStatus(ctx context.Context, seatIDs []values.SeatID, status values.SeatStatus) error
 	// GetActiveSeats
 	// 有効な座席の情報を取得する
+	// 並び順はidの昇順
 	GetActiveSeats(ctx context.Context, lockType LockType) ([]*domain.Seat, error)
 	// GetSeats
 	// 無効な座席を含めた座席の情報を取得する
+	// 並び順はidの昇順
 	GetSeats(ctx context.Context, lockType LockType) ([]*domain.Seat, error)
 	// GetSeat
 	// 座席情報を取得する
