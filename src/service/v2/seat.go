@@ -58,6 +58,8 @@ func (s *Seat) UpdateSeatStatus(ctx context.Context, seatID values.SeatID, statu
 			return nil
 		}
 
+		seat.SetStatus(status)
+
 		err = s.seatRepository.UpdateSeatsStatus(ctx, []values.SeatID{seatID}, status)
 		if err != nil {
 			return fmt.Errorf("failed to update seats status: %w", err)
@@ -73,43 +75,81 @@ func (s *Seat) UpdateSeatStatus(ctx context.Context, seatID values.SeatID, statu
 }
 
 func (s *Seat) UpdateSeatNum(ctx context.Context, num uint) ([]*domain.Seat, error) {
-	seats, err := s.seatRepository.GetSeats(ctx, repository.LockTypeNone)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get seats: %w", err)
-	}
-	seatNum := uint(len(seats))
-
-	switch {
-	case seatNum < num:
-		newSeats := make([]*domain.Seat, 0, num-seatNum)
-		for i := seatNum + 1; i <= num; i++ {
-			newSeats = append(newSeats, domain.NewSeat(
-				values.NewSeatID(i),
-				values.SeatStatusEmpty,
-			))
-		}
-
-		err := s.seatRepository.CreateSeats(ctx, newSeats)
+	var activeSeats []*domain.Seat
+	err := s.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		seats, err := s.seatRepository.GetSeats(ctx, repository.LockTypeNone)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create seats: %w", err)
+			return fmt.Errorf("failed to get seats: %w", err)
+		}
+		seatNum := uint(len(seats))
+
+		seatMap := make(map[values.SeatID]*domain.Seat)
+		for _, seat := range seats {
+			seatMap[seat.ID()] = seat
 		}
 
-		seats = append(seats, newSeats...)
-	case seatNum > num:
-		seatIDs := make([]values.SeatID, 0, seatNum-num)
+		activeSeats = make([]*domain.Seat, 0, num)
+		var (
+			newSeats          []*domain.Seat
+			deactivateSeatIDs []values.SeatID
+			activateSeatIDs   []values.SeatID
+		)
+		for i := uint(1); i <= num; i++ {
+			seatID := values.NewSeatID(i)
+
+			seat, ok := seatMap[seatID]
+			if ok {
+				if seat.Status() == values.SeatStatusNone {
+					activateSeatIDs = append(activateSeatIDs, seatID)
+					seat.SetStatus(values.SeatStatusEmpty)
+				}
+			} else {
+				newSeat := domain.NewSeat(seatID, values.SeatStatusEmpty)
+
+				newSeats = append(newSeats, newSeat)
+			}
+
+			activeSeats = append(activeSeats, seat)
+		}
+
 		for i := num + 1; i <= seatNum; i++ {
-			seatIDs = append(seatIDs, values.NewSeatID(i))
+			seatID := values.NewSeatID(i)
+
+			seat, ok := seatMap[seatID]
+			if ok {
+				if seat.Status() != values.SeatStatusNone {
+					deactivateSeatIDs = append(deactivateSeatIDs, seatID)
+					seat.SetStatus(values.SeatStatusNone)
+				}
+			}
 		}
 
-		err := s.seatRepository.UpdateSeatsStatus(ctx, seatIDs, values.SeatStatusNone)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update seats: %w", err)
+		if len(newSeats) > 0 {
+			err = s.seatRepository.CreateSeats(ctx, newSeats)
+			if err != nil {
+				return fmt.Errorf("failed to create seats: %w", err)
+			}
 		}
 
-		seats = seats[:num]
-	default:
-		return seats, nil
+		if len(deactivateSeatIDs) > 0 {
+			err = s.seatRepository.UpdateSeatsStatus(ctx, deactivateSeatIDs, values.SeatStatusNone)
+			if err != nil {
+				return fmt.Errorf("failed to deactivate seats: %w", err)
+			}
+		}
+
+		if len(activateSeatIDs) > 0 {
+			err = s.seatRepository.UpdateSeatsStatus(ctx, activateSeatIDs, values.SeatStatusEmpty)
+			if err != nil {
+				return fmt.Errorf("failed to activate seats: %w", err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update seat num: %w", err)
 	}
 
-	return seats, nil
+	return activeSeats, nil
 }
