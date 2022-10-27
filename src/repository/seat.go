@@ -19,7 +19,7 @@ type Seat interface {
 	GetActiveSeats(ctx context.Context, lockType LockType) ([]*domain.Seat, error)
 	// GetSeats
 	// 無効な座席を含めた座席の情報を取得する
-	GetSeats(ctx context.Context) ([]*domain.Seat, error)
+	GetSeats(ctx context.Context, lockType LockType) ([]*domain.Seat, error)
 	// GetSeat
 	// 座席情報を取得する
 	// 無効な座席情報も取得できる
