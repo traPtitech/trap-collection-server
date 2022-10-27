@@ -87,6 +87,8 @@ var (
 		wire.Bind(new(service.Seat), new(*v2.Seat)),
 		v2.NewSeat,
 
+		v2.NewSeatMetrics,
+
 		v2.NewUser,
 	)
 )
