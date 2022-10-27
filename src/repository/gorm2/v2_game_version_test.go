@@ -2266,3 +2266,105 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		})
 	}
 }
+
+type assetsForGameVersion struct {
+	gameInfo struct {
+		id          uuid.UUID
+		name        string
+		description string
+		createdAt   time.Time
+	}
+	gameImage migrate.GameImageTable2
+	gameVideo migrate.GameVideoTable2
+	gameFiles []migrate.GameFileTable2
+}
+
+// GameVersionが依存するテーブルの要素を作成
+// DBへのinsertは行わない
+// optionalGameIDを指定すると、それを使用する
+func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, optionalGameID *values.GameID) (values.GameVersionID, assetsForGameVersion) {
+	t.Helper()
+
+	var imageType migrate.GameImageTypeTable
+	err := db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameImageTypeJpeg).
+		Select("id").
+		Take(&imageType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	var videoType migrate.GameVideoTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameVideoTypeMp4).
+		Select("id").
+		Take(&videoType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	var fileType migrate.GameFileTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where("name = ?", migrate.GameFileTypeJar).
+		Select("id").
+		Take(&fileType).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	now := time.Now()
+
+	var gameID values.GameID
+	if optionalGameID != nil {
+		gameID = *optionalGameID
+	} else {
+		gameID = values.NewGameID()
+	}
+
+	gameImage := migrate.GameImageTable2{
+		ID:          uuid.UUID(values.NewGameImageID()),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: imageType.ID,
+		CreatedAt:   now,
+	}
+
+	gameVideo := migrate.GameVideoTable2{
+		ID:          uuid.UUID(values.NewGameVideoID()),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: videoType.ID,
+		CreatedAt:   now,
+	}
+
+	gameFiles := make([]migrate.GameFileTable2, 0, gameFileCount)
+	for i := 0; i < gameFileCount; i++ {
+		gameFile := migrate.GameFileTable2{
+			ID:         uuid.UUID(values.NewGameFileID()),
+			GameID:     uuid.UUID(gameID),
+			FileTypeID: fileType.ID,
+			Hash:       "hash",
+			EntryPoint: "/path/to/game.exe",
+			CreatedAt:  now.Add(time.Minute * time.Duration(i)), // 順序保証のため
+		}
+		gameFiles = append(gameFiles, gameFile)
+	}
+
+	return values.NewGameVersionID(), assetsForGameVersion{
+		gameInfo: struct {
+			id          uuid.UUID
+			name        string
+			description string
+			createdAt   time.Time
+		}{
+			id:          uuid.UUID(gameID),
+			name:        "test",
+			description: "test",
+			createdAt:   now,
+		},
+		gameImage: gameImage,
+		gameVideo: gameVideo,
+		gameFiles: gameFiles,
+	}
+}
