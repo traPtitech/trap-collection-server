@@ -19,17 +19,20 @@ type Seat struct {
 	db             repository.DB
 	seatRepository repository.Seat
 	seatCache      cache.Seat
+	seatMetrics    service.SeatMetrics
 }
 
 func NewSeat(
 	db repository.DB,
 	seatRepository repository.Seat,
 	seatCache cache.Seat,
+	seatMetrics service.SeatMetrics,
 ) *Seat {
 	return &Seat{
 		db:             db,
 		seatRepository: seatRepository,
 		seatCache:      seatCache,
+		seatMetrics:    seatMetrics,
 	}
 }
 
@@ -53,6 +56,9 @@ func (s *Seat) GetSeats(ctx context.Context) ([]*domain.Seat, error) {
 		// cacheの設定に失敗しても致命傷ではないのでエラーを返さない
 		log.Printf("error: failed to set seats to cache: %v\n", err)
 	}
+
+	// 基本はSeatStatusのupdate時に更新しているが、定期的に正確な情報への同期を行いたいので
+	s.seatMetrics.UpdateWithActiveSeats(seats)
 
 	return seats, nil
 }
@@ -87,6 +93,8 @@ func (s *Seat) UpdateSeatStatus(ctx context.Context, seatID values.SeatID, statu
 		if err != nil {
 			return fmt.Errorf("failed to update seats status: %w", err)
 		}
+
+		s.seatMetrics.UpdateWithNewSeatStatus(status)
 
 		return nil
 	})
@@ -179,6 +187,8 @@ func (s *Seat) UpdateSeatNum(ctx context.Context, num uint) ([]*domain.Seat, err
 		// cacheの設定に失敗しても致命傷ではないのでエラーを返さない
 		log.Printf("error: failed to set seats to cache: %v", err)
 	}
+
+	s.seatMetrics.UpdateWithActiveSeats(activeSeats)
 
 	return activeSeats, nil
 }
