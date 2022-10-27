@@ -1823,6 +1823,7 @@ paths:
           description: |
             席数の変更に成功した際に返されます。
             変更後の席一覧が返されます。
+            並び順は席idの昇順です。
         "400":
           content:
             application/json:
@@ -1837,12 +1838,15 @@ paths:
       summary: 席数の変更
       description: |
         席数を変更します。
+        既に存在していた席(例:20席から100席への変更ならidが1~20の席、100席から20席ならidが1~20の席)の
+        着席状態は変更されず、そのまま保持されます。
     get:
       tags:
         - seat
       operationId: getSeats
       security:
         - TrapMemberAuth: []
+        - EditionAuth: []
       responses:
         "200":
           content:
@@ -1854,6 +1858,7 @@ paths:
           description: |
             座席一覧の取得に成功した際に返されます。
             座席一覧が返されます。
+            並び順は席idの昇順です。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "500":
@@ -1870,6 +1875,7 @@ paths:
       operationId: patchSeatStatus
       security:
         - TrapMemberAuth: []
+        - EditionAuth: []
       requestBody:
         required: true
         content:

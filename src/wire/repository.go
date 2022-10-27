@@ -68,4 +68,7 @@ var repositorySet = wire.NewSet(
 
 	wire.Bind(new(repository.AdminAuthV2), new(*gorm2.AdminAuth)),
 	gorm2.NewAdminAuth,
+
+	wire.Bind(new(repository.Seat), new(*gorm2.Seat)),
+	gorm2.NewSeat,
 )
