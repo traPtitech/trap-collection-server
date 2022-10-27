@@ -1455,11 +1455,22 @@ func TestGetGamesByIDsV2(t *testing.T) {
 
 			assert.Len(t, games, len(testCase.expectedGames))
 
-			for i, game := range games {
-				assert.Equal(t, testCase.expectedGames[i].GetID(), game.GetID())
-				assert.Equal(t, testCase.expectedGames[i].GetName(), game.GetName())
-				assert.Equal(t, testCase.expectedGames[i].GetDescription(), game.GetDescription())
-				assert.WithinDuration(t, testCase.expectedGames[i].GetCreatedAt(), game.GetCreatedAt(), time.Second)
+			gameMap := make(map[values.GameID]*domain.Game)
+			for _, game := range games {
+				gameMap[game.GetID()] = game
+			}
+
+			for _, expectedGame := range testCase.expectedGames {
+				game, ok := gameMap[expectedGame.GetID()]
+				if !ok {
+					t.Errorf("game must be %+v, but actual is nil", expectedGame)
+					continue
+				}
+
+				assert.Equal(t, expectedGame.GetID(), game.GetID())
+				assert.Equal(t, expectedGame.GetName(), game.GetName())
+				assert.Equal(t, expectedGame.GetDescription(), game.GetDescription())
+				assert.WithinDuration(t, expectedGame.GetCreatedAt(), game.GetCreatedAt(), time.Second)
 			}
 		})
 	}
