@@ -66,13 +66,16 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 func (u *User) GetMe(ctx context.Context, accessToken values.OIDCAccessToken) (*service.UserInfo, error) {
 	iUser, ok := u.meCache.Get(string(accessToken))
 	if !ok {
+		hitCount.WithLabelValues("me", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
 
 	user, ok := iUser.(*service.UserInfo)
 	if !ok {
+		hitCount.WithLabelValues("me", "miss").Inc()
 		return nil, fmt.Errorf("failed to cast meCache: %v", iUser)
 	}
+	hitCount.WithLabelValues("me", "hit").Inc()
 
 	return user, nil
 }
@@ -98,13 +101,16 @@ func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *ser
 func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
 	iUsers, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
+		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
 
 	users, ok := iUsers.([]*service.UserInfo)
 	if !ok {
+		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, fmt.Errorf("failed to cast activeUsers: %v", iUsers)
 	}
+	hitCount.WithLabelValues("active_users", "hit").Inc()
 
 	return users, nil
 }

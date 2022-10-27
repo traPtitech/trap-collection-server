@@ -11,3 +11,7 @@ func NewCacheRistretto() *CacheRistretto {
 func (*CacheRistretto) ActiveUsersTTL() (time.Duration, error) {
 	return time.Hour, nil
 }
+
+func (*CacheRistretto) ActiveSeatsTTL() (time.Duration, error) {
+	return time.Second, nil
+}

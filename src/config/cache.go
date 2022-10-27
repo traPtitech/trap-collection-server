@@ -6,4 +6,5 @@ import "time"
 
 type CacheRistretto interface {
 	ActiveUsersTTL() (time.Duration, error)
+	ActiveSeatsTTL() (time.Duration, error)
 }
