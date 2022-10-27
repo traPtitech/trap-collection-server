@@ -109,7 +109,7 @@ func (s *Seat) UpdateSeatsStatus(ctx context.Context, seatIDs []values.SeatID, s
 		Where("id IN ?", seatIDs).
 		Update("status_id", dbStatus.ID)
 	if result.Error != nil {
-		return fmt.Errorf("failed to update seats status: %w", err)
+		return fmt.Errorf("failed to update seats status: %w", result.Error)
 	}
 
 	if result.RowsAffected == 0 {
