@@ -18,12 +18,18 @@ var _ service.Seat = (*Seat)(nil)
 type Seat struct {
 	db             repository.DB
 	seatRepository repository.Seat
+	seatCache      cache.Seat
 }
 
-func NewSeat(db repository.DB, seatRepository repository.Seat) *Seat {
+func NewSeat(
+	db repository.DB,
+	seatRepository repository.Seat,
+	seatCache cache.Seat,
+) *Seat {
 	return &Seat{
 		db:             db,
 		seatRepository: seatRepository,
+		seatCache:      seatCache,
 	}
 }
 
@@ -31,12 +37,18 @@ func (s *Seat) GetSeats(ctx context.Context) ([]*domain.Seat, error) {
 	seats, err := s.seatCache.GetActiveSeats(ctx)
 	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
 		// cacheからの取り出しに失敗しても、dbから取り出せば良いのでエラーは無視する
-		log.Printf("failed to get seats from cache: %v", err)
+		log.Printf("error: failed to get seats from cache: %v\n", err)
 	}
 
 	seats, err = s.seatRepository.GetActiveSeats(ctx, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
+	}
+
+	err = s.seatCache.SetActiveSeats(ctx, seats)
+	if err != nil {
+		// cacheの設定に失敗しても致命傷ではないのでエラーを返さない
+		log.Printf("error: failed to set seats to cache: %v\n", err)
 	}
 
 	return seats, nil
