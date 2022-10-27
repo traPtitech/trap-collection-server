@@ -1262,3 +1262,205 @@ func TestGetGamesByUserV2(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGamesByIDsV2(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameRepository := NewGameV2(testDB)
+
+	type test struct {
+		description   string
+		gameIDs       []values.GameID
+		lockType      repository.LockType
+		beforeGames   []migrate.GameTable2
+		expectedGames []*domain.Game
+		isErr         bool
+		err           error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+	gameID7 := values.NewGameID()
+	gameID8 := values.NewGameID()
+	gameID9 := values.NewGameID()
+
+	now := time.Now()
+
+	var roleTypes []*migrate.GameManagementRoleTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&roleTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	roleTypeMap := make(map[string]int, len(roleTypes))
+	for _, roleType := range roleTypes {
+		roleTypeMap[roleType.Name] = roleType.ID
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameIDs:     []values.GameID{gameID1},
+			lockType:    repository.LockTypeNone,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID1),
+					Name:        "test1",
+					Description: "test1",
+					CreatedAt:   now,
+				},
+			},
+			expectedGames: []*domain.Game{
+				domain.NewGame(gameID1, "test1", "test1", now),
+			},
+		},
+		{
+			description: "gameIDが複数でもエラーなし",
+			gameIDs:     []values.GameID{gameID2, gameID3},
+			lockType:    repository.LockTypeNone,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID2),
+					Name:        "test2",
+					Description: "test2",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID3),
+					Name:        "test3",
+					Description: "test3",
+					CreatedAt:   now.Add(-time.Hour),
+				},
+			},
+			expectedGames: []*domain.Game{
+				domain.NewGame(gameID2, "test2", "test2", now),
+				domain.NewGame(gameID3, "test3", "test3", now.Add(-time.Hour)),
+			},
+		},
+		{
+			description: "違うgameIDのゲームは取らない",
+			gameIDs:     []values.GameID{gameID4},
+			lockType:    repository.LockTypeNone,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID4),
+					Name:        "test4",
+					Description: "test4",
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(gameID5),
+					Name:        "test5",
+					Description: "test5",
+					CreatedAt:   now,
+				},
+			},
+			expectedGames: []*domain.Game{
+				domain.NewGame(gameID4, "test4", "test4", now),
+			},
+		},
+		{
+			description: "削除されたゲームは取らない",
+			gameIDs:     []values.GameID{gameID6},
+			lockType:    repository.LockTypeNone,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID6),
+					Name:        "test6",
+					Description: "test6",
+					CreatedAt:   now.Add(-time.Hour),
+					DeletedAt: gorm.DeletedAt{
+						Valid: true,
+						Time:  now,
+					},
+				},
+			},
+			expectedGames: []*domain.Game{},
+		},
+		{
+			description:   "ゲームが存在しなくても問題なし",
+			gameIDs:       []values.GameID{gameID7},
+			lockType:      repository.LockTypeNone,
+			beforeGames:   []migrate.GameTable2{},
+			expectedGames: []*domain.Game{},
+		},
+		{
+			description: "lockTypeがrecordでも問題なし",
+			gameIDs:     []values.GameID{gameID8},
+			lockType:    repository.LockTypeRecord,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID8),
+					Name:        "test8",
+					Description: "test8",
+					CreatedAt:   now,
+				},
+			},
+			expectedGames: []*domain.Game{
+				domain.NewGame(gameID8, "test8", "test8", now),
+			},
+		},
+		{
+			description: "lockTypeが無効",
+			gameIDs:     []values.GameID{gameID9},
+			lockType:    100,
+			beforeGames: []migrate.GameTable2{
+				{
+					ID:          uuid.UUID(gameID9),
+					Name:        "test9",
+					Description: "test9",
+					CreatedAt:   now,
+				},
+			},
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if len(testCase.beforeGames) != 0 {
+				err := db.Create(&testCase.beforeGames).Error
+				if err != nil {
+					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			games, err := gameRepository.GetGamesByIDs(ctx, testCase.gameIDs, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			assert.Len(t, games, len(testCase.expectedGames))
+
+			for i, game := range games {
+				assert.Equal(t, testCase.expectedGames[i].GetID(), game.GetID())
+				assert.Equal(t, testCase.expectedGames[i].GetName(), game.GetName())
+				assert.Equal(t, testCase.expectedGames[i].GetDescription(), game.GetDescription())
+				assert.WithinDuration(t, testCase.expectedGames[i].GetCreatedAt(), game.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
