@@ -829,3 +829,255 @@ func TestGetGameFile(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameFilesV2(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameFileRepository := NewGameFileV2(testDB)
+
+	type test struct {
+		description string
+		gameID      values.GameID
+		lockType    repository.LockType
+		files       []migrate.GameFileTable2
+		expectFiles []*domain.GameFile
+		isErr       bool
+		err         error
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
+	gameID6 := values.NewGameID()
+
+	fileID1 := values.NewGameFileID()
+	fileID2 := values.NewGameFileID()
+	fileID3 := values.NewGameFileID()
+	fileID4 := values.NewGameFileID()
+	fileID5 := values.NewGameFileID()
+	fileID6 := values.NewGameFileID()
+
+	var fileTypes []*migrate.GameFileTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&fileTypes).Error
+	if err != nil {
+		t.Fatalf("failed to get role type table: %+v\n", err)
+	}
+
+	fileTypeMap := make(map[string]int, len(fileTypes))
+	for _, fileType := range fileTypes {
+		fileTypeMap[fileType.Name] = fileType.ID
+	}
+
+	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
+
+	now := time.Now()
+
+	testCases := []test{
+		{
+			description: "特に問題ないので問題なし",
+			gameID:      gameID1,
+			lockType:    repository.LockTypeNone,
+			files: []migrate.GameFileTable2{
+				{
+					ID:         uuid.UUID(fileID1),
+					GameID:     uuid.UUID(gameID1),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now,
+				},
+			},
+			expectFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					fileID1,
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now,
+				),
+			},
+		},
+		{
+			description: "windowsでも問題なし",
+			gameID:      gameID2,
+			lockType:    repository.LockTypeNone,
+			files: []migrate.GameFileTable2{
+				{
+					ID:         uuid.UUID(fileID2),
+					GameID:     uuid.UUID(gameID2),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now,
+				},
+			},
+			expectFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					fileID2,
+					values.GameFileTypeWindows,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now,
+				),
+			},
+		},
+		{
+			description: "macでも問題なし",
+			gameID:      gameID3,
+			lockType:    repository.LockTypeNone,
+			files: []migrate.GameFileTable2{
+				{
+					ID:         uuid.UUID(fileID3),
+					GameID:     uuid.UUID(gameID3),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now,
+				},
+			},
+			expectFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					fileID3,
+					values.GameFileTypeMac,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now,
+				),
+			},
+		},
+		{
+			description: "lockTypeがRecordでも問題なし",
+			gameID:      gameID4,
+			lockType:    repository.LockTypeRecord,
+			files: []migrate.GameFileTable2{
+				{
+					ID:         uuid.UUID(fileID4),
+					GameID:     uuid.UUID(gameID4),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now,
+				},
+			},
+			expectFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					fileID4,
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now,
+				),
+			},
+		},
+		{
+			description: "複数のファイルがあっても問題なし",
+			gameID:      gameID5,
+			files: []migrate.GameFileTable2{
+				{
+					ID:         uuid.UUID(fileID5),
+					GameID:     uuid.UUID(gameID5),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now,
+				},
+				{
+					ID:         uuid.UUID(fileID6),
+					GameID:     uuid.UUID(gameID5),
+					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					EntryPoint: "path/to/file",
+					Hash:       md5Hash.String(),
+					CreatedAt:  now.Add(-time.Hour),
+				},
+			},
+			expectFiles: []*domain.GameFile{
+				domain.NewGameFile(
+					fileID5,
+					values.GameFileTypeJar,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now,
+				),
+				domain.NewGameFile(
+					fileID6,
+					values.GameFileTypeWindows,
+					values.NewGameFileEntryPoint("path/to/file"),
+					md5Hash,
+					now.Add(-time.Hour),
+				),
+			},
+		},
+		{
+			description: "ファイルが存在しなくても問題なし",
+			gameID:      gameID6,
+			lockType:    repository.LockTypeNone,
+			files:       []migrate.GameFileTable2{},
+			expectFiles: []*domain.GameFile{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			for _, file := range testCase.files {
+				if game, ok := gameIDMap[file.GameID]; ok {
+					game.GameFiles = append(game.GameFiles, file)
+				} else {
+					gameIDMap[file.GameID] = &migrate.GameTable2{
+						ID:          file.GameID,
+						Name:        "test",
+						Description: "test",
+						CreatedAt:   now,
+						GameFiles:   []migrate.GameFileTable2{file},
+					}
+				}
+			}
+
+			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			for _, game := range gameIDMap {
+				games = append(games, *game)
+			}
+
+			if len(games) > 0 {
+				err := db.Create(games).Error
+				if err != nil {
+					t.Fatalf("failed to create game table: %+v\n", err)
+				}
+			}
+
+			files, err := gameFileRepository.GetGameFiles(ctx, testCase.gameID, testCase.lockType)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			for i, expectFile := range testCase.expectFiles {
+				assert.Equal(t, expectFile.GetID(), files[i].GetID())
+				assert.Equal(t, expectFile.GetFileType(), files[i].GetFileType())
+				assert.Equal(t, expectFile.GetEntryPoint(), files[i].GetEntryPoint())
+				assert.Equal(t, expectFile.GetHash(), files[i].GetHash())
+				assert.WithinDuration(t, expectFile.GetCreatedAt(), files[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
