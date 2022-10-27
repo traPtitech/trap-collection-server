@@ -153,11 +153,11 @@ func (gameFile GameFile) GetGameFileMeta(ctx echo.Context, gameID openapi.GameID
 	var fileType openapi.GameFileType
 	switch file.GetFileType() {
 	case values.GameFileTypeJar:
-		fileType = openapi.GameFileType("jar")
+		fileType = openapi.Jar
 	case values.GameFileTypeWindows:
-		fileType = openapi.GameFileType("windows")
+		fileType = openapi.Win32
 	case values.GameFileTypeMac:
-		fileType = openapi.GameFileType("darwin")
+		fileType = openapi.Darwin
 	default:
 		log.Printf("error: unknown game file type: %v\n", file.GetFileType())
 		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game file type")
@@ -167,7 +167,7 @@ func (gameFile GameFile) GetGameFileMeta(ctx echo.Context, gameID openapi.GameID
 		Id:         openapi.GameFileID(file.GetID()),
 		Type:       fileType,
 		EntryPoint: openapi.GameFileEntryPoint(file.GetEntryPoint()),
-		Md5:        openapi.GameFileMd5(file.GetHash()),
+		Md5:        openapi.GameFileMd5(hex.EncodeToString(file.GetHash())),
 		CreatedAt:  file.GetCreatedAt(),
 	})
 }

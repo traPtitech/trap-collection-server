@@ -635,3 +635,173 @@ func TestGetGameFile(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameFileMeta(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameFileService := mock.NewMockGameFileV2(ctrl)
+
+	gameFile := NewGameFile(mockGameFileService)
+
+	type test struct {
+		description        string
+		gameID             openapi.GameIDInPath
+		gameFileID         openapi.GameFileIDInPath
+		file               *domain.GameFile
+		getGameFileMetaErr error
+		resFile            openapi.GameFile
+		isErr              bool
+		err                error
+		statusCode         int
+	}
+
+	gameFileID1 := values.NewGameFileID()
+	gameFileID2 := values.NewGameFileID()
+	gameFileID3 := values.NewGameFileID()
+
+	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
+
+	now := time.Now()
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			file: domain.NewGameFile(
+				gameFileID1,
+				values.GameFileTypeJar,
+				values.NewGameFileEntryPoint("path/to/file"),
+				md5Hash,
+				now,
+			),
+			resFile: openapi.GameFile{
+				Id:         uuid.UUID(gameFileID1),
+				Type:       openapi.Jar,
+				EntryPoint: openapi.GameFileEntryPoint("path/to/file"),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
+				CreatedAt:  now,
+			},
+		},
+		{
+			description: "win32でもエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			file: domain.NewGameFile(
+				gameFileID2,
+				values.GameFileTypeWindows,
+				values.NewGameFileEntryPoint("path/to/file"),
+				md5Hash,
+				now,
+			),
+			resFile: openapi.GameFile{
+				Id:         uuid.UUID(gameFileID2),
+				Type:       openapi.Win32,
+				EntryPoint: openapi.GameFileEntryPoint("path/to/file"),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
+				CreatedAt:  now,
+			},
+		},
+		{
+			description: "gifでもエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			file: domain.NewGameFile(
+				gameFileID3,
+				values.GameFileTypeMac,
+				values.NewGameFileEntryPoint("path/to/file"),
+				md5Hash,
+				now,
+			),
+			resFile: openapi.GameFile{
+				Id:         uuid.UUID(gameFileID3),
+				Type:       openapi.Darwin,
+				EntryPoint: openapi.GameFileEntryPoint("path/to/file"),
+				Md5:        openapi.GameFileMd5(hex.EncodeToString(md5Hash)),
+				CreatedAt:  now,
+			},
+		},
+		{
+			description: "jpeg,png,gifのいずれでもないので500",
+			gameID:      uuid.UUID(values.NewGameID()),
+			file: domain.NewGameFile(
+				gameFileID3,
+				100,
+				values.NewGameFileEntryPoint("path/to/file"),
+				md5Hash,
+				now,
+			),
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			description:        "GetGameFileMetaがErrInvalidGameIDなので404",
+			gameID:             uuid.UUID(values.NewGameID()),
+			getGameFileMetaErr: service.ErrInvalidGameID,
+			isErr:              true,
+			statusCode:         http.StatusNotFound,
+		},
+		{
+			description:        "GetGameFileMetaがErrInvalidGameFileIDなので404",
+			gameID:             uuid.UUID(values.NewGameID()),
+			getGameFileMetaErr: service.ErrInvalidGameFileID,
+			isErr:              true,
+			statusCode:         http.StatusNotFound,
+		},
+		{
+			description:        "GetGameFilesがエラーなので500",
+			gameID:             uuid.UUID(values.NewGameID()),
+			getGameFileMetaErr: errors.New("error"),
+			isErr:              true,
+			statusCode:         http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/files", testCase.gameID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			mockGameFileService.
+				EXPECT().
+				GetGameFileMeta(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(testCase.file, testCase.getGameFileMetaErr)
+
+			err := gameFile.GetGameFileMeta(c, testCase.gameID, testCase.gameFileID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			var resFile openapi.GameFile
+			err = json.NewDecoder(rec.Body).Decode(&resFile)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			assert.Equal(t, testCase.resFile.Id, resFile.Id)
+			assert.Equal(t, testCase.resFile.Type, resFile.Type)
+			assert.Equal(t, testCase.resFile.EntryPoint, resFile.EntryPoint)
+			assert.Equal(t, testCase.resFile.Md5, resFile.Md5)
+			assert.WithinDuration(t, testCase.resFile.CreatedAt, resFile.CreatedAt, time.Second)
+		})
+	}
+}
