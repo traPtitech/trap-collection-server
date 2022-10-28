@@ -20,7 +20,7 @@ type MetricsCollectorV2 struct {
 	gameImageGauge   *prometheus.GaugeVec
 	gameVideoGauge   *prometheus.GaugeVec
 	gameFileGauge    *prometheus.GaugeVec
-	gameURLGauge     prometheus.Gauge
+	seatGauge        *prometheus.GaugeVec
 }
 
 func (mc *MetricsCollectorV2) Metrics(p *gormPrometheus.Prometheus) []prometheus.Collector {
@@ -77,13 +77,13 @@ func (mc *MetricsCollectorV2) Metrics(p *gormPrometheus.Prometheus) []prometheus
 		}, []string{"type"})
 	}
 
-	if mc.gameURLGauge == nil {
-		mc.gameURLGauge = promauto.NewGauge(prometheus.GaugeOpts{
+	if mc.seatGauge == nil {
+		mc.seatGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: mc.Prefix,
-			Subsystem: "game_url",
+			Subsystem: "seat",
 			Name:      "count",
-			Help:      "Number of game urls",
-		})
+			Help:      "Number of seats",
+		}, []string{"status"})
 	}
 
 	go func() {
@@ -100,7 +100,7 @@ func (mc *MetricsCollectorV2) Metrics(p *gormPrometheus.Prometheus) []prometheus
 		mc.gameImageGauge,
 		mc.gameVideoGauge,
 		mc.gameFileGauge,
-		mc.gameURLGauge,
+		mc.seatGauge,
 	}
 }
 
@@ -130,6 +130,11 @@ func (mc *MetricsCollectorV2) collect(p *gormPrometheus.Prometheus) {
 	err = mc.collectGameFileMetrics(ctx, p)
 	if err != nil {
 		p.DB.Logger.Error(ctx, "failed to collect game file metrics", err)
+	}
+
+	err = mc.collectSeatMetrics(ctx, p)
+	if err != nil {
+		p.DB.Logger.Error(ctx, "failed to collect seat metrics", err)
 	}
 }
 
@@ -278,6 +283,34 @@ func (mc *MetricsCollectorV2) collectGameVideoMetrics(ctx context.Context, p *go
 	mc.gameVideoGauge.Reset()
 	for _, count := range gameVideoCounts {
 		mc.gameVideoGauge.
+			WithLabelValues(count.Type).
+			Set(float64(count.Count))
+	}
+
+	return nil
+}
+
+func (mc *MetricsCollectorV2) collectSeatMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+	var seatCounts []struct {
+		Type  string `gorm:"column:type"`
+		Count int64  `gorm:"column:count"`
+	}
+
+	err := p.DB.
+		Session(&gorm.Session{}).
+		Unscoped().
+		Model(&migrate.SeatTable2{}).
+		Joins("JOIN seat_statuses ON seats.status_id = seat_statuses.id AND seat_statuses.active").
+		Select("seat_statuses.name AS type, count(*) as count").
+		Group("type").
+		Find(&seatCounts).Error
+	if err != nil {
+		return fmt.Errorf("failed to get game video counts: %w", err)
+	}
+
+	mc.seatGauge.Reset()
+	for _, count := range seatCounts {
+		mc.seatGauge.
 			WithLabelValues(count.Type).
 			Set(float64(count.Count))
 	}
