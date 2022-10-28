@@ -224,8 +224,7 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	seatMetrics := v2_2.NewSeatMetrics()
-	v2Seat := v2_2.NewSeat(db, seat, ristrettoSeat, seatMetrics)
+	v2Seat := v2_2.NewSeat(db, seat, ristrettoSeat)
 	seat2 := v2.NewSeat(v2Seat)
 	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, gameRole2, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, v2EditionAuth, seat2)
 	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
