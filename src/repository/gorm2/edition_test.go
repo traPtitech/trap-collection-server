@@ -31,19 +31,21 @@ func TestSaveEdition(t *testing.T) {
 	editionRepository := NewEdition(testDB)
 
 	type test struct {
-		description    string
-		edition        *domain.LauncherVersion
-		beforeEditions []migrate.EditionTable2
-		isErr          bool
-		err            error
+		description     string
+		edition         *domain.LauncherVersion
+		beforeEditions  []migrate.EditionTable2
+		noQuestionnaire bool
+		isErr           bool
+		err             error
 	}
 
 	now := time.Now()
-	urlLink, err := url.Parse("https://example.com")
+	strURLLink := "https://example.com"
+	urlLink, err := url.Parse(strURLLink)
 	if err != nil {
 		t.Fatalf("failed to encode url: %v", err)
 	}
-	questionnaireURL := values.NewLauncherVersionQuestionnaireURL(urlLink)
+	//questionnaireURL := values.NewLauncherVersionQuestionnaireURL(urlLink)
 
 	editionID := values.NewLauncherVersionID()
 
@@ -69,7 +71,7 @@ func TestSaveEdition(t *testing.T) {
 				{
 					ID:               uuid.New(),
 					Name:             "test3",
-					QuestionnaireURL: sql.NullString{String: urlLink.String()},
+					QuestionnaireURL: sql.NullString{String: urlLink.String(), Valid: true},
 					CreatedAt:        now,
 				},
 			},
@@ -81,6 +83,7 @@ func TestSaveEdition(t *testing.T) {
 				"test4",
 				now,
 			),
+			noQuestionnaire: true,
 		},
 		{
 			description: "同じバージョンIDが存在するのでエラー",
@@ -94,7 +97,7 @@ func TestSaveEdition(t *testing.T) {
 				{
 					ID:               uuid.UUID(editionID),
 					Name:             "test6",
-					QuestionnaireURL: sql.NullString{String: urlLink.String()},
+					QuestionnaireURL: sql.NullString{String: urlLink.String(), Valid: true},
 					CreatedAt:        now,
 				},
 			},
@@ -124,6 +127,9 @@ func TestSaveEdition(t *testing.T) {
 		} else {
 			assert.NoError(t, err)
 		}
+		if err != nil {
+			return
+		}
 
 		var edition migrate.EditionTable2
 		err = db.
@@ -136,11 +142,9 @@ func TestSaveEdition(t *testing.T) {
 
 		assert.Equal(t, uuid.UUID(testCase.edition.GetID()), edition.ID)
 		assert.Equal(t, string(testCase.edition.GetName()), edition.Name)
-		savedURL, err := url.Parse(edition.QuestionnaireURL.String)
-		if err != nil {
-			t.Fatalf("failed to parse url: %+v_n", err)
+		if !testCase.noQuestionnaire {
+			assert.Equal(t, strURLLink, edition.QuestionnaireURL.String)
 		}
-		assert.Equal(t, questionnaireURL, values.LauncherVersionQuestionnaireURL(savedURL))
 		assert.WithinDuration(t, testCase.edition.GetCreatedAt(), edition.CreatedAt, time.Second)
 	}
 }
