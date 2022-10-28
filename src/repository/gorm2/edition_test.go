@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"net/url"
 	"testing"
 	"time"
@@ -424,4 +425,153 @@ func TestUpdateEdition(t *testing.T) {
 		})
 	}
 
+}
+
+func TestDeleteEdition(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	editionRepository := NewEdition(testDB)
+
+	now := time.Now()
+	urlLink1, err := url.Parse("https://example.com")
+	if err != nil {
+		t.Fatalf("failed to encode url: %v", err)
+	}
+
+	urlLink2, err := url.Parse("https://example2.com")
+	if err != nil {
+		t.Fatalf("failed to encode url: %v", err)
+	}
+
+	editionID1 := values.NewLauncherVersionID()
+	editionID2 := values.NewLauncherVersionID()
+
+	type test struct {
+		description    string
+		editionID      values.LauncherVersionID
+		beforeEditions []migrate.EditionTable2
+		afterEditions  []migrate.EditionTable2
+		isErr          bool
+		err            error
+	}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラー無し",
+			editionID:   editionID1,
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:               uuid.UUID(editionID1),
+					Name:             "test1",
+					QuestionnaireURL: sql.NullString{String: urlLink1.String()},
+					CreatedAt:        now.Add(-time.Hour),
+				},
+			},
+			afterEditions: []migrate.EditionTable2{},
+		},
+		{
+			description: "他のゲームがあっても問題なし",
+			editionID:   editionID1,
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:               uuid.UUID(editionID1),
+					Name:             "test1",
+					QuestionnaireURL: sql.NullString{String: urlLink1.String()},
+					CreatedAt:        now.Add(-time.Hour),
+				},
+				{
+					ID:               uuid.UUID(editionID2),
+					Name:             "test2",
+					QuestionnaireURL: sql.NullString{String: urlLink2.String(), Valid: true},
+					CreatedAt:        now.Add(-time.Hour * 2),
+				},
+			},
+			afterEditions: []migrate.EditionTable2{
+				{
+					ID:               uuid.UUID(editionID2),
+					Name:             "test2",
+					QuestionnaireURL: sql.NullString{String: urlLink2.String(), Valid: true},
+					CreatedAt:        now.Add(-time.Hour * 2),
+				},
+			},
+		},
+		{
+			description: "エディションが存在しないのでErrNoRecordDeleted",
+			editionID:   editionID1,
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:               uuid.UUID(editionID2),
+					Name:             "test1",
+					QuestionnaireURL: sql.NullString{String: urlLink1.String()},
+					CreatedAt:        now.Add(-time.Hour),
+				},
+			},
+			isErr: true,
+			err:   repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				err := db.
+					Unscoped().
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Delete(&migrate.EditionTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete edition: %+v\n", err)
+				}
+			}()
+
+			if testCase.beforeEditions != nil && len(testCase.beforeEditions) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Info),
+					}).
+					Create(&testCase.beforeEditions).Error
+				if err != nil {
+					t.Fatalf("failed to create edition: %+v\n", err)
+				}
+			}
+
+			err := editionRepository.DeleteEdition(ctx, testCase.editionID)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			var editions []migrate.EditionTable2
+			err = db.
+				Session(&gorm.Session{}).
+				Order("created_at desc").
+				Find(&editions).Error
+			if err != nil {
+				t.Fatalf("failed to get editions: %+v", err)
+			}
+
+			assert.Len(t, editions, len(testCase.afterEditions))
+			for i, edition := range editions {
+				assert.Equal(t, testCase.afterEditions[i].ID, edition.ID)
+				assert.Equal(t, testCase.afterEditions[i].Name, edition.Name)
+				assert.Equal(t, testCase.afterEditions[i].QuestionnaireURL.String, edition.QuestionnaireURL.String)
+				assert.WithinDuration(t, testCase.afterEditions[i].CreatedAt, edition.CreatedAt, time.Second)
+			}
+		})
+	}
 }
