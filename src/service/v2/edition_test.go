@@ -386,6 +386,133 @@ func TestGetEditions(t *testing.T) {
 	}
 }
 
+func TestGetEdition(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type args struct {
+		editionID values.LauncherVersionID
+	}
+	type mockInfo struct {
+		edition *domain.LauncherVersion
+
+		errGetEdition error
+	}
+
+	type test struct {
+		description     string
+		args            args
+		mockInfo        mockInfo
+		expectedEdition *domain.LauncherVersion
+		isErr           bool
+		err             error
+	}
+
+	editionID1, edition1 := generateEdition(t, true)
+	editionID2, edition2 := generateEdition(t, false)
+	editionID3, _ := generateEdition(t, true)
+	editionID4, _ := generateEdition(t, true)
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			args: args{
+				editionID: editionID1,
+			},
+			mockInfo: mockInfo{
+				edition: edition1,
+			},
+			expectedEdition: edition1,
+		},
+		{
+			description: "URLなしでもエラーなし",
+			args: args{
+				editionID: editionID2,
+			},
+			mockInfo: mockInfo{
+				edition: edition2,
+			},
+			expectedEdition: edition2,
+		},
+		{
+			description: "GetEditionでErrRecordNotFoundなのでエラー",
+			args: args{
+				editionID: editionID3,
+			},
+			mockInfo: mockInfo{
+				errGetEdition: repository.ErrRecordNotFound,
+			},
+			isErr: true,
+			err:   service.ErrInvalidEditionID,
+		},
+		{
+			description: "GetEditionでその他のエラーなのでエラー",
+			args: args{
+				editionID: editionID4,
+			},
+			mockInfo: mockInfo{
+				errGetEdition: errors.New("error"),
+			},
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+			mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
+
+			editionService := NewEdition(
+				mockDB,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+				mockGameFileRepository,
+			)
+
+			mockEditionRepository.
+				EXPECT().
+				GetEdition(ctx, testCase.args.editionID, repository.LockTypeNone).
+				Return(testCase.mockInfo.edition, testCase.mockInfo.errGetEdition)
+
+			got, err := editionService.GetEdition(ctx, testCase.args.editionID)
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			expected := testCase.expectedEdition
+
+			assert.Equal(t, expected.GetID(), got.GetID())
+			assert.Equal(t, expected.GetName(), got.GetName())
+
+			expectedURL, expectedErr := expected.GetQuestionnaireURL()
+			gotURL, gotErr := got.GetQuestionnaireURL()
+			assert.Equal(t, expectedURL, gotURL)
+			assert.Equal(t, expectedErr, gotErr)
+
+			assert.WithinDuration(t, expected.GetCreatedAt(), got.GetCreatedAt(), time.Second*2)
+		})
+	}
+}
+
 func generateGameVersionsForEditionTests(t *testing.T, count int) ([]values.GameVersionID, []*repository.GameVersionInfoWithGameID) {
 	t.Helper()
 
