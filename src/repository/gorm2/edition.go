@@ -88,7 +88,8 @@ func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.LauncherVer
 		}
 	}
 
-	result := db.
+	result := db.Model(&migrate.EditionTable2{}).
+		Select("name", "questionnaire_url").
 		Where("id = ?", uuid.UUID(edition.GetID())).
 		Updates(migrate.EditionTable2{
 			Name:             string(edition.GetName()),
