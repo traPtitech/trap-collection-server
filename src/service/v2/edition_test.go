@@ -271,6 +271,121 @@ func TestCreateEdition(t *testing.T) {
 
 }
 
+func TestGetEditions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type mockInfo struct {
+		editions []*domain.LauncherVersion
+
+		errGetEditions error
+	}
+
+	type test struct {
+		description      string
+		mockInfo         mockInfo
+		expectedEditions []*domain.LauncherVersion
+		isErr            bool
+		err              error
+	}
+
+	editions1 := generateEditions(t, true, 1)
+	editions2 := generateEditions(t, false, 1)
+	editions3 := generateEditions(t, true, 2)
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			mockInfo: mockInfo{
+				editions: editions1,
+			},
+			expectedEditions: editions1,
+		},
+		{
+			description: "URLなしでもエラーなし",
+			mockInfo: mockInfo{
+				editions: editions2,
+			},
+			expectedEditions: editions2,
+		},
+		{
+			description: "対象が複数でもエラーなし",
+			mockInfo: mockInfo{
+				editions: editions3,
+			},
+			expectedEditions: editions3,
+		},
+		{
+			description: "GetEditionsがエラーなのでエラー",
+			mockInfo: mockInfo{
+				errGetEditions: errors.New("error"),
+			},
+			isErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+			mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
+
+			editionService := NewEdition(
+				mockDB,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+				mockGameFileRepository,
+			)
+
+			mockEditionRepository.
+				EXPECT().
+				GetEditions(ctx, repository.LockTypeNone).
+				Return(testCase.mockInfo.editions, testCase.mockInfo.errGetEditions)
+
+			gotEditions, err := editionService.GetEditions(ctx)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+
+			if !assert.Len(t, gotEditions, len(testCase.expectedEditions)) {
+				return
+			}
+			for i, got := range gotEditions {
+				expected := testCase.expectedEditions[i]
+
+				assert.Equal(t, expected.GetID(), got.GetID())
+				assert.Equal(t, expected.GetName(), got.GetName())
+
+				expectedURL, expectedErr := expected.GetQuestionnaireURL()
+				gotURL, gotErr := got.GetQuestionnaireURL()
+				assert.Equal(t, expectedURL, gotURL)
+				assert.Equal(t, expectedErr, gotErr)
+
+				assert.WithinDuration(t, expected.GetCreatedAt(), got.GetCreatedAt(), time.Second*2)
+			}
+		})
+	}
+}
+
 func generateGameVersionsForEditionTests(t *testing.T, count int) ([]values.GameVersionID, []*repository.GameVersionInfoWithGameID) {
 	t.Helper()
 
@@ -293,4 +408,36 @@ func generateGameVersionsForEditionTests(t *testing.T, count int) ([]values.Game
 	}
 
 	return gameVersionIDs, gameVersions
+}
+
+func generateEdition(t *testing.T, haveQuestionnaire bool) (editionID values.LauncherVersionID, edition *domain.LauncherVersion) {
+	t.Helper()
+
+	editionID = values.NewLauncherVersionID()
+
+	if haveQuestionnaire {
+		urlStr := "https://example.com"
+		urlLink, err := url.Parse(urlStr)
+		if err != nil {
+			t.Fatalf("failed to parse url: %v", err)
+		}
+
+		edition = domain.NewLauncherVersionWithQuestionnaire(editionID, values.NewLauncherVersionName("v1.0.0"), values.NewLauncherVersionQuestionnaireURL(urlLink), time.Now())
+	} else {
+		edition = domain.NewLauncherVersionWithoutQuestionnaire(editionID, values.NewLauncherVersionName("v1.0.0"), time.Now())
+	}
+
+	return editionID, edition
+}
+
+func generateEditions(t *testing.T, haveQuestionnaire bool, count int) []*domain.LauncherVersion {
+	t.Helper()
+
+	editions := make([]*domain.LauncherVersion, 0, count)
+	for i := 0; i < count; i++ {
+		_, edition := generateEdition(t, haveQuestionnaire)
+		editions = append(editions, edition)
+	}
+
+	return editions
 }
