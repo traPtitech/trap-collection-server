@@ -145,9 +145,9 @@ func (s *Seat) UpdateSeatNum(ctx context.Context, num uint) ([]*domain.Seat, err
 					seat.SetStatus(values.SeatStatusEmpty)
 				}
 			} else {
-				newSeat := domain.NewSeat(seatID, values.SeatStatusEmpty)
+				seat = domain.NewSeat(seatID, values.SeatStatusEmpty)
 
-				newSeats = append(newSeats, newSeat)
+				newSeats = append(newSeats, seat)
 			}
 
 			activeSeats = append(activeSeats, seat)
