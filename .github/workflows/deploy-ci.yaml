@@ -31,7 +31,7 @@ jobs:
           context: .
           push: true
           file: docker/production/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
