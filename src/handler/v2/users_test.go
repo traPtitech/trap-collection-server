@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -135,13 +136,6 @@ func TestGetMe(t *testing.T) {
 				}
 
 				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				setCookieHeader(c)
 			}
 
 			if testCase.executeGetMe {
@@ -151,7 +145,7 @@ func TestGetMe(t *testing.T) {
 					Return(testCase.userInfo, testCase.GetMeErr)
 			}
 
-			user := userHandler.GetMe(c)
+			err = userHandler.GetMe(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -173,7 +167,7 @@ func TestGetMe(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, *testCase.user, user)
+			assert.Equal(t, testCase.user, c.Get("user"))
 		})
 	}
 }
@@ -329,13 +323,6 @@ func TestGetUsers(t *testing.T) {
 				}
 
 				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				setCookieHeader(c)
 			}
 
 			if testCase.executeGetAllActiveUser {
@@ -345,7 +332,7 @@ func TestGetUsers(t *testing.T) {
 					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
 			}
 
-			users := userHandler.GetUsers(c)
+			err := userHandler.GetUsers(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -367,10 +354,16 @@ func TestGetUsers(t *testing.T) {
 				return
 			}
 
-			var resUser openapi.User
-			assert.Equal(t, len(testCase.users), len(resUser))
-			for i, user := range resUser {
-				assert.Equal(t, *testCase.users[i], *user)
+			var resUsers []openapi.User
+			err = json.NewDecoder(rec.Body).Decode(&resUsers)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+
+			assert.Equal(t, testCase.users, resUsers) // kokohuann
+			for i, user := range resUsers {
+				assert.Equal(t, user.Id, resUsers[i].Id)
+				assert.Equal(t, user.Name, resUsers[i].Name)
 			}
 		})
 	}
