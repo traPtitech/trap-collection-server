@@ -167,7 +167,14 @@ func TestGetMe(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.user, c.Get("user"))
+			var resUser *openapi.User
+			err = json.NewDecoder(rec.Body).Decode(&resUser)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+
+			assert.Equal(t, testCase.user.Id, resUser.Id)
+			assert.Equal(t, testCase.user.Name, resUser.Name)
 		})
 	}
 }
@@ -354,7 +361,7 @@ func TestGetUsers(t *testing.T) {
 				return
 			}
 
-			var resUsers []openapi.User
+			var resUsers []*openapi.User
 			err = json.NewDecoder(rec.Body).Decode(&resUsers)
 			if err != nil {
 				t.Fatalf("failed to decode response body: %v", err)
