@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
+	openapi "github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
@@ -43,7 +43,7 @@ func (u *User) GetMe(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, openapi.User{
-		Id:   uuid.UUID(userInfo.GetID()).String(),
+		Id:   uuid.UUID(userInfo.GetID()),
 		Name: string(userInfo.GetName()),
 	})
 }
@@ -71,7 +71,7 @@ func (u *User) GetUsers(c echo.Context) error {
 	users := make([]*openapi.User, 0, len(userInfos))
 	for _, userInfo := range userInfos {
 		users = append(users, &openapi.User{
-			Id:   uuid.UUID(userInfo.GetID()).String(),
+			Id:   uuid.UUID(userInfo.GetID()),
 			Name: string(userInfo.GetName()),
 		})
 	}
