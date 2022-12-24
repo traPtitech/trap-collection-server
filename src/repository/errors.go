@@ -7,4 +7,5 @@ var (
 	ErrNoRecordDeleted = errors.New("no record deleted")
 	ErrNoRecordUpdated = errors.New("no record updated")
 	ErrNegativeLimit   = errors.New("limit is negative")
+	ErrLastAdmin       = errors.New("last admin cannot be deleted")
 )

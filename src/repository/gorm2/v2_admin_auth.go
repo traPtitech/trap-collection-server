@@ -62,6 +62,17 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, userID values.TraPMemberID
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
+	var adminsCount int64
+	err = db.
+		Table((&migrate.AdminTable{}).TableName()).
+		Count(&adminsCount).Error
+	if err != nil {
+		return fmt.Errorf("failed to count admins: %w", err)
+	}
+	if int(adminsCount) == 1 {
+		return repository.ErrLastAdmin
+	}
+
 	result := db.
 		Where("user_id = ?", uuid.UUID(userID)).
 		Delete(&migrate.AdminTable{})
