@@ -69,7 +69,9 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 
 	err := checkerFunc(ctx, input)
 	if err != nil {
-		return fmt.Errorf("failed to check security scheme: %w", err)
+		// fmt.Errorfでwrapすると*echo.HTTPError型でなくなりstatus codeが403になってしまうので、
+		// ここではwrapしてはいけない
+		return err
 	}
 
 	return nil
