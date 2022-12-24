@@ -228,16 +228,6 @@ func TestDeleteAdminV2(t *testing.T) {
 				{
 					UserID: uuid.UUID(traPMemberID1),
 				},
-			},
-			afterAdminMap: map[values.TraPMemberID]struct{}{},
-		},
-		{
-			description: "他のadminが存在してもエラーなし",
-			userID:      traPMemberID1,
-			beforeAdmins: []migrate.AdminTable{
-				{
-					UserID: uuid.UUID(traPMemberID1),
-				},
 				{
 					UserID: uuid.UUID(traPMemberID2),
 				},
@@ -245,6 +235,20 @@ func TestDeleteAdminV2(t *testing.T) {
 			afterAdminMap: map[values.TraPMemberID]struct{}{
 				traPMemberID2: {},
 			},
+		},
+		{
+			description: "最後の一人なのでErrLastAdmin",
+			userID:      traPMemberID1,
+			beforeAdmins: []migrate.AdminTable{
+				{
+					UserID: uuid.UUID(traPMemberID1),
+				},
+			},
+			afterAdminMap: map[values.TraPMemberID]struct{}{
+				traPMemberID2: {},
+			},
+			isErr: true,
+			err:   repository.ErrLastAdmin,
 		},
 		{
 			description:   "adminが存在しないのでErrNoRecordDeleted",
