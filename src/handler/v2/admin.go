@@ -24,21 +24,6 @@ func NewAdmin(adminService service.AdminAuthV2, session *Session) *Admin {
 	}
 }
 
-// adminUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type adminUnimplemented interface {
-	// traPの管理者一覧取得
-	// (GET /admins)
-	GetAdmins(ctx echo.Context) error
-	// traP Collection全体の管理者追加
-	// (POST /admins)
-	PostAdmin(ctx echo.Context) error
-	// traP Collection全体の管理者削除
-	// (DELETE /admins/{userID})
-	DeleteAdmin(ctx echo.Context, userID openapi.UserIDInPath) error
-}
-
 // traPの管理者一覧取得
 // (GET /admins)
 func (a *Admin) GetAdmins(ctx echo.Context) error {
