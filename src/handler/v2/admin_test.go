@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -135,7 +136,7 @@ func TestGetAdmins(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/admins", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/v2/admins", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
@@ -371,7 +372,7 @@ func TestPostAdmins(t *testing.T) {
 				reqBody = bytes.NewBufferString("bad requset body")
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/api/admins", reqBody)
+			req := httptest.NewRequest(http.MethodPost, "/api/v2/admins", reqBody)
 			req.Header.Set(echo.HeaderContentType, "application/json")
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -427,6 +428,221 @@ func TestPostAdmins(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			var response []openapi.User
+			err = json.NewDecoder(rec.Body).Decode(&response)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+
+			assert.Len(t, response, len(testCase.apiAdmins))
+
+			for i, admin := range testCase.apiAdmins {
+				assert.Equal(t, admin.Id, response[i].Id)
+			}
+		})
+	}
+}
+
+func TestDeleteAdmin(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAdminService := mock.NewMockAdminAuthV2(ctrl)
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	adminHandler := NewAdmin(mockAdminService, session)
+
+	type test struct {
+		description        string
+		adminID            openapi.UserIDInPath
+		sessionExist       bool
+		authSession        *domain.OIDCSession
+		executeDeleteAdmin bool
+		DeleteAdminErr     error
+		adminInfos         []*service.UserInfo
+		apiAdmins          []*openapi.User
+		isErr              bool
+		err                error
+		statusCode         int
+	}
+
+	userID1 := uuid.New()
+	userID2 := uuid.New()
+	userID3 := uuid.New()
+
+	testCases := []test{
+		{
+			description:  "特に問題ないのでエラー無し",
+			adminID:      userID1,
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			executeDeleteAdmin: true,
+			adminInfos: []*service.UserInfo{
+				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive),
+			},
+			apiAdmins: []*openapi.User{
+				{Id: userID2, Name: "ikura-hamu"},
+			},
+		},
+		{
+			description:  "sessionが無いので401",
+			sessionExist: false,
+			isErr:        true,
+			statusCode:   http.StatusUnauthorized,
+		},
+		{
+			description:  "auth sessionが無いのでエラー",
+			sessionExist: true,
+			isErr:        true,
+			statusCode:   http.StatusUnauthorized,
+		},
+		{
+			description:  "存在しないユーザーなので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			adminID:            userID1,
+			executeDeleteAdmin: true,
+			DeleteAdminErr:     service.ErrInvalidUserID,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:  "ユーザーが管理者ではないので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			adminID:            userID1,
+			executeDeleteAdmin: true,
+			DeleteAdminErr:     service.ErrNotAdmin,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:  "DeleteAdminがエラーなのでエラー",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			adminID:            userID1,
+			executeDeleteAdmin: true,
+			DeleteAdminErr:     errors.New("test"),
+			isErr:              true,
+			statusCode:         http.StatusInternalServerError,
+		},
+		{
+			description:  "残りの管理者が複数でもエラー無し",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			adminID:            userID1,
+			executeDeleteAdmin: true,
+			adminInfos: []*service.UserInfo{
+				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive),
+				service.NewUserInfo(values.TraPMemberID(userID3), "mazrean", values.TrapMemberStatusActive),
+			},
+			apiAdmins: []*openapi.User{
+				{Id: userID2, Name: "ikura-hamu"},
+				{Id: userID3, Name: "mazrean"},
+			},
+		},
+		//TODO:管理者がいなくなっちゃうときのテストケースを追加する
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/admins/v2/%s", testCase.adminID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.New(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.Get(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set("session", sess)
+			}
+
+			if testCase.executeDeleteAdmin {
+				mockAdminService.
+					EXPECT().
+					DeleteAdmin(gomock.Any(), gomock.Any(), values.NewTrapMemberID(testCase.adminID)).
+					Return(testCase.adminInfos, testCase.DeleteAdminErr)
+			}
+
+			err := adminHandler.DeleteAdmin(c, testCase.adminID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
 			if err != nil || testCase.isErr {
 				return
 			}
