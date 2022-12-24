@@ -100,12 +100,46 @@ func (a *Admin) PostAdmin(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add admin")
 	}
 
-	res := make([]openapi.User, 0, len(adminInfos))
+	responseAdmins := make([]openapi.User, 0, len(adminInfos))
 	for _, adminInfo := range adminInfos {
-		res = append(res,
+		responseAdmins = append(responseAdmins,
 			openapi.User{Id: uuid.UUID(adminInfo.GetID()), Name: string(adminInfo.GetName())},
 		)
 	}
 
-	return ctx.JSON(http.StatusOK, res)
+	return ctx.JSON(http.StatusOK, responseAdmins)
+}
+
+// traP Collection全体の管理者削除
+// (DELETE /admins/{userID})
+func (a *Admin) DeleteAdmin(ctx echo.Context, userID openapi.UserIDInPath) error {
+	session, err := a.session.get(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+	}
+
+	authSession, err := a.session.getAuthSession(session)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
+	}
+
+	adminInfos, err := a.adminService.DeleteAdmin(ctx.Request().Context(), authSession, values.TraPMemberID(userID))
+	if errors.Is(err, service.ErrInvalidUserID) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid user id")
+	}
+	if errors.Is(err, service.ErrNotAdmin) {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if err != nil {
+		log.Printf("error: failed to delete admin: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete admin")
+	}
+
+	responseAdmins := make([]openapi.User, 0, len(adminInfos))
+	for _, adminInfo := range adminInfos {
+		responseAdmins = append(responseAdmins,
+			openapi.User{Id: uuid.UUID(adminInfo.GetID()), Name: string(adminInfo.GetName())})
+	}
+
+	return ctx.JSON(http.StatusOK, responseAdmins)
 }
