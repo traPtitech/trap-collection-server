@@ -113,7 +113,7 @@ func (a *Admin) DeleteAdmin(ctx echo.Context, userID openapi.UserIDInPath) error
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid user id")
 	}
 	if errors.Is(err, service.ErrNotAdmin) {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, "not admin")
 	}
 	if err != nil {
 		log.Printf("error: failed to delete admin: %v", err)
