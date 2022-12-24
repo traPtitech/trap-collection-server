@@ -18,5 +18,6 @@ type AdminAuthV2 interface {
 	//DeleteAdmin
 	//adminを削除
 	//ユーザーが存在しない場合、ErrNoRecordDeletedを返す。
+	//最後の管理者を削除しようとした場合、ErrLastAdminを返す。
 	DeleteAdmin(ctx context.Context, userID values.TraPMemberID) error
 }

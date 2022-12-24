@@ -11,4 +11,5 @@ var (
 	ErrCannotEditOwners                   = errors.New("cannot update role bacause there is only 1 owner")
 	ErrNoAdminsUpdated                    = errors.New("no admins updated")
 	ErrNotAdmin                           = errors.New("not admin")
+	ErrLastAdmin                          = errors.New("last admin cannot be deleted")
 )

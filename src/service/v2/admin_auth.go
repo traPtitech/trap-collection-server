@@ -118,6 +118,9 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 	if errors.Is(err, repository.ErrNoRecordDeleted) {
 		return nil, service.ErrNotAdmin
 	}
+	if errors.Is(err, repository.ErrLastAdmin) {
+		return nil, service.ErrLastAdmin
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete admin: %w", err)
 	}
