@@ -91,7 +91,7 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 		return nil, fmt.Errorf("failed to get admins: %w", err)
 	}
 
-	adminsInfo := make([]*service.UserInfo, len(adminIDs))
+	adminsInfo := make([]*service.UserInfo, 0, len(adminIDs))
 	for _, adminID := range adminIDs {
 		if adminInfo, ok := activeUsersMap[adminID]; ok {
 			adminsInfo = append(adminsInfo, adminInfo)
@@ -127,7 +127,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSessio
 		return nil, fmt.Errorf("failed to get admins: %w", err)
 	}
 
-	adminsInfo := make([]*service.UserInfo, len(adminIDs))
+	adminsInfo := make([]*service.UserInfo, 0, len(adminIDs))
 	for _, adminID := range adminIDs {
 		if adminInfo, ok := activeUsersMap[adminID]; ok {
 			adminsInfo = append(adminsInfo, adminInfo)
