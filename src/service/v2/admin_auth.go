@@ -102,6 +102,15 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context, session *domain.OIDCSession)
 }
 
 func (aa *AdminAuth) DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*service.UserInfo, error) {
+	myInfo, err := aa.user.getMe(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get me: %w", err)
+	}
+
+	if myInfo.GetID() == userID {
+		return nil, service.ErrCannotDeleteMeFromAdmins
+	}
+
 	activeUsers, err := aa.user.getActiveUsers(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
