@@ -551,6 +551,19 @@ func TestDeleteAdmin(t *testing.T) {
 			statusCode:         http.StatusBadRequest,
 		},
 		{
+			description:  "自分を削除しようとしているので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			adminID:            userID1,
+			executeDeleteAdmin: true,
+			DeleteAdminErr:     service.ErrCannotDeleteMeFromAdmins,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
 			description:  "DeleteAdminがエラーなのでエラー",
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
@@ -581,7 +594,6 @@ func TestDeleteAdmin(t *testing.T) {
 				{Id: userID3, Name: "mazrean"},
 			},
 		},
-		//TODO:管理者がいなくなっちゃうときのテストケースを追加する
 	}
 
 	for _, testCase := range testCases {

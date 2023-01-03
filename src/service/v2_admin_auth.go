@@ -22,6 +22,7 @@ type AdminAuthV2 interface {
 	//adminを削除
 	//ユーザーが存在しないとき、ErrInvalidUserIDを返す。
 	//ユーザーがadminでないとき、ErrNotAdminを返す。
+	//自分自身を削除しようとしたとき、ErrCannotDeleteMeFromAdminを返す。
 	DeleteAdmin(ctx context.Context, session *domain.OIDCSession, userID values.TraPMemberID) ([]*UserInfo, error)
 	//AdminAuthorize
 	//ログイン中のユーザーがadminかどうか判断する。
