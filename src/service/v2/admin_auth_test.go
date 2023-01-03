@@ -529,3 +529,145 @@ func TestDeleteAdmin(t *testing.T) {
 
 	}
 }
+
+func TestAdminAuthorize(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB := mockRepository.NewMockDB(ctrl)
+	mockAdminAuthRepository := mockRepository.NewMockAdminAuthV2(ctrl)
+
+	mockUserCache := mockCache.NewMockUser(ctrl)
+	mockUserAuth := mockAuth.NewMockUser(ctrl)
+
+	user := NewUser(mockUserAuth, mockUserCache)
+
+	adminAuthService := NewAdminAuth(mockDB, mockAdminAuthRepository, user)
+
+	type test struct {
+		description      string
+		authSession      *domain.OIDCSession
+		executeGetMe     bool
+		myInfo           *service.UserInfo
+		getMeErr         error
+		executeGetAdmins bool
+		adminIDs         []values.TraPMemberID
+		GetAdminsErr     error
+		isErr            bool
+		err              error
+	}
+
+	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+	userID3 := values.NewTrapMemberID(uuid.New())
+
+	myInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
+	myInfo3 := service.NewUserInfo(userID3, "mazrean", values.TrapMemberStatusActive)
+
+	adminIDs := []values.TraPMemberID{userID1, userID2}
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラー無し",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMe:     true,
+			myInfo:           myInfo1,
+			executeGetAdmins: true,
+			adminIDs:         adminIDs,
+		},
+		{
+			description: "sessionが期限切れなのでErrOIDCSessionExpired",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(-time.Hour),
+			),
+			isErr: true,
+			err:   service.ErrOIDCSessionExpired,
+		},
+		{
+			description: "getMeがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMe: true,
+			getMeErr:     errors.New("test"),
+			isErr:        true,
+		},
+		{
+			description: "GetAdminsがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMe:     true,
+			myInfo:           myInfo1,
+			executeGetAdmins: true,
+			GetAdminsErr:     errors.New("test"),
+			isErr:            true,
+		},
+		{
+			description: "ユーザーがadminではないのでErrForbidden",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			executeGetMe:     true,
+			myInfo:           myInfo3,
+			executeGetAdmins: true,
+			isErr:            true,
+			err:              service.ErrForbidden,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeGetMe {
+				if testCase.getMeErr != nil {
+					mockUserCache.
+						EXPECT().
+						GetMe(gomock.Any(), gomock.Any()).
+						Return(nil, errors.New("test"))
+					mockUserAuth.
+						EXPECT().
+						GetMe(gomock.Any(), gomock.Any()).
+						Return(nil, errors.New("test"))
+				} else {
+					mockUserCache.
+						EXPECT().
+						GetMe(gomock.Any(), gomock.Any()).
+						Return(testCase.myInfo, nil)
+				}
+			}
+
+			if testCase.executeGetAdmins {
+				mockAdminAuthRepository.
+					EXPECT().
+					GetAdmins(gomock.Any()).
+					Return(testCase.adminIDs, testCase.GetAdminsErr)
+			}
+
+			err := adminAuthService.AdminAuthorize(ctx, testCase.authSession)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
+		})
+	}
+}
