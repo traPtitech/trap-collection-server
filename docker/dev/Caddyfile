@@ -1,0 +1,16 @@
+:80 {
+	handle /api* {
+		reverse_proxy /api* collection-server:3000
+	}
+
+	handle {
+		encode zstd gzip
+
+		file_server {
+				precompressed br gzip
+		}
+		root * /usr/share/caddy
+
+		try_files {path} /index.html
+	}
+}

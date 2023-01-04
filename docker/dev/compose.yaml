@@ -1,4 +1,10 @@
 services:
+  collection-proxy:
+    build:
+      context: .
+      dockerfile: proxy.Dockerfile
+    ports:
+      - 8080:80
   collection-server:
     extends:
       file: ../base/compose.yaml
