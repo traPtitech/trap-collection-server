@@ -36,12 +36,18 @@ func NewAPI(appConf config.App, conf config.Handler, session *common.Session, v1
 }
 
 func (api *API) Start() error {
+	const metricsPath = "/api/metrics"
+
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Request().URL.Path == metricsPath
+		},
+	}))
 
 	p := prometheus.NewPrometheus("echo", nil)
-	p.MetricsPath = "/api/metrics"
+	p.MetricsPath = metricsPath
 	p.Use(e)
 
 	api.session.Use(e)
