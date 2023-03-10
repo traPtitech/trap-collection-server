@@ -20,7 +20,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sync v0.1.0
 	gorm.io/driver/mysql v1.3.6
 	gorm.io/gorm v1.24.6
 )
