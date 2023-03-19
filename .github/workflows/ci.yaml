@@ -15,7 +15,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-          cache: true
       - run: go generate ./src/handler/v2/api.go
       - run: go build -o collection
   test:
@@ -26,14 +25,12 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-          cache: true
       - run: go generate ./...
       - run: docker compose -f docker/test/compose.yaml up --abort-on-container-exit
       - name: Upload coverage data
         uses: codecov/codecov-action@v3.1.1
         with:
           file: ./tmp/coverage/coverage.txt
-          yml: ./codecov.yml
       - uses: actions/upload-artifact@v3
         with:
           name: coverage.txt
@@ -47,12 +44,11 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-          cache: true
       - run: go generate ./...
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2.2
         with:
-          go-version-file: go.mod
+          go_version_file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
