@@ -15,7 +15,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-      - run: go generate ./src/handler/v2/api.go
       - run: go build -o collection
   test:
     name: Test
