@@ -18,7 +18,7 @@ require (
 	github.com/labstack/echo-contrib v0.14.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/ncw/swift/v2 v2.0.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	golang.org/x/mod v0.6.0
 	golang.org/x/sync v0.1.0
 	gorm.io/driver/mysql v1.3.6
