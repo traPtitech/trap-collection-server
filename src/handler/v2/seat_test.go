@@ -2,11 +2,11 @@ package v2
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
@@ -24,42 +24,27 @@ func TestSeat_GetSeats(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockConf := mockConfig.NewMockHandler(ctrl)
-	mockConf.
-		EXPECT().
-		SessionKey().
-		Return("key", nil)
-	mockConf.
-		EXPECT().
-		SessionSecret().
-		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
-	if err != nil {
-		t.Fatalf("failed to create session: %v", err)
-		return
-	}
-	session, err := NewSession(sess)
-	if err != nil {
-		t.Fatalf("failed to create session: %v", err)
-		return
-	}
-
 	mockSeatService := mock.NewMockSeat(ctrl)
 	seatHandler := NewSeat(mockSeatService)
 
 	type test struct {
-		description string
-		isErr       bool
-		statusCode  int
-		seats       []*openapi.Seat
+		description     string
+		seats           []*domain.Seat
+		res             []*openapi.Seat
+		executeGetSeats bool
+		getSeatsErr     error
+		isErr           bool
+		err             error
+		statusCode      int
 	}
 
 	testCases := []test{
 		{
-			description: "正常に席の情報を取得できる",
-			isErr:       false,
-			statusCode:  http.StatusOK,
-			seats:       []*openapi.Seat{{Id: 1, Status: "in-use"}},
+			description:     "正常に席の情報を取得できる",
+			executeGetSeats: true,
+			statusCode:      http.StatusOK,
+			seats:           []*domain.Seat{domain.NewSeat(1, 2)},
+			res:             []*openapi.Seat{{Id: 1, Status: "in-use"}},
 		},
 	}
 
@@ -70,11 +55,11 @@ func TestSeat_GetSeats(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			if testCase.executeGetAllActiveUser {
-				mockUserService.
+			if testCase.executeGetSeats {
+				mockSeatService.
 					EXPECT().
-					GetAllActiveUser(gomock.Any(), gomock.Any()).
-					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
+					GetSeats(gomock.Any()).
+					Return(testCase.seats, testCase.getSeatsErr)
 			}
 
 			err := seatHandler.GetSeats(c)
@@ -82,26 +67,36 @@ func TestSeat_GetSeats(t *testing.T) {
 				t.Errorf("failed to get seats: %v", err)
 			}
 
-			//if testCase.isErr {
-			//	var httpError *echo.HTTPError
-			//	if errors.As(err, &httpError) {
-			//		assert.Equal(t, testCase.statusCode, httpError.Code)
-			//	} else {
-			//		t.Errorf("error is not *echo.HTTPError")
-			//	}
-			//	return
-			//}
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpError *echo.HTTPError
+					if errors.As(err, &httpError) {
+						assert.Equal(t, testCase.statusCode, httpError.Code)
+					} else {
+						t.Errorf("error is not *echo.HTTPError")
+					}
+				} else if testCase.err == nil {
+					assert.Error(t, err)
+				} else if !errors.Is(err, testCase.err) {
+					t.Errorf("error must be %v, but actual is %v", testCase.err, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil {
+				return
+			}
 
-			var resSeats []*openapi.User
+			var resSeats []*openapi.Seat
 			err = json.NewDecoder(rec.Body).Decode(&resSeats)
 			if err != nil {
 				t.Fatalf("failed to decode response body: %v", err)
 			}
 
-			assert.Equal(t, testCase.seats, resSeats)
+			assert.Equal(t, testCase.res, resSeats)
 			for i, seat := range resSeats {
 				assert.Equal(t, seat.Id, resSeats[i].Id)
-				assert.Equal(t, seat.Name, resSeats[i].Name)
+				assert.Equal(t, seat.Status, resSeats[i].Status)
 			}
 		})
 	}
