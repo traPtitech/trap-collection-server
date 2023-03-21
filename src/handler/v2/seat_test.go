@@ -15,9 +15,6 @@ import (
 	"testing"
 )
 
-func TestNewSeat(t *testing.T) {
-}
-
 func TestSeat_GetSeats(t *testing.T) {
 	t.Parallel()
 
@@ -46,6 +43,13 @@ func TestSeat_GetSeats(t *testing.T) {
 			seats:           []*domain.Seat{domain.NewSeat(1, 2)},
 			res:             []*openapi.Seat{{Id: 1, Status: "in-use"}},
 		},
+		{
+			description:     "getSeatsがエラーなので500",
+			executeGetSeats: true,
+			getSeatsErr:     errors.New("error"),
+			isErr:           true,
+			statusCode:      http.StatusInternalServerError,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -63,9 +67,6 @@ func TestSeat_GetSeats(t *testing.T) {
 			}
 
 			err := seatHandler.GetSeats(c)
-			if err != nil {
-				t.Errorf("failed to get seats: %v", err)
-			}
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
