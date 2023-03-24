@@ -544,12 +544,14 @@ func TestGetLauncherUsersByLauncherVersionID(t *testing.T) {
 	for i, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
+			dbLauncherUsers := make([]migrate.LauncherUserTable, len(testCase.dbLauncherUsers))
+			copy(dbLauncherUsers, testCase.dbLauncherUsers)
 			launcherVersionID := values.NewLauncherVersionID()
 			dbLauncherVersion := migrate.LauncherVersionTable{
 				ID:            uuid.UUID(launcherVersionID),
 				Name:          fmt.Sprintf("TestCreateLauncherUsers%d", i),
 				CreatedAt:     time.Now(),
-				LauncherUsers: testCase.dbLauncherUsers,
+				LauncherUsers: dbLauncherUsers,
 			}
 			err := db.Create(&dbLauncherVersion).Error
 			if err != nil {
