@@ -21,7 +21,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/mod v0.6.0
 	golang.org/x/sync v0.1.0
-	gorm.io/driver/mysql v1.3.6
+	gorm.io/driver/mysql v1.4.7
 	gorm.io/gorm v1.24.6
 )
 
@@ -78,7 +78,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-gormigrate/gormigrate/v2 v2.0.2
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
