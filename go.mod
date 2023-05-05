@@ -8,7 +8,7 @@ require (
 	github.com/cosmtrek/air v1.43.0
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.110.0
+	github.com/getkin/kin-openapi v0.116.0
 	github.com/go-task/task/v3 v3.24.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
@@ -63,6 +63,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
+	github.com/perimeterx/marshmallow v1.1.4 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
