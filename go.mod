@@ -15,7 +15,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/h2non/filetype v1.1.3
-	github.com/labstack/echo-contrib v0.14.1
+	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/stretchr/testify v1.8.3
