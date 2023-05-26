@@ -173,8 +173,8 @@ github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 h1:p104kn46Q8WdvHunIJ9dAyjPVtrBPhSr3KT2yUst43I=
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0/go.mod h1:fyg7847qk6SyHyPtNmDHnmrv/HOrqktSC+C9fM+CJOE=
-github.com/go-task/task/v3 v3.24.0 h1:0DKsGTmqYbEaACffm9H2BOm8pTcuSnb5SRUl7TCilQ4=
-github.com/go-task/task/v3 v3.24.0/go.mod h1:wx5IE8QSi35PEcTt0eC37C1tOTrSVIWBpNtiC6R/V0E=
+github.com/go-task/task/v3 v3.25.0 h1:XtIEtWpQSbIf2FGU+44/QB1whFf2sBUB/02W7ZQSz0U=
+github.com/go-task/task/v3 v3.25.0/go.mod h1:xJkiE7qQ+xT1WfDfaKN/Jk3dVd+LzKT2duNGdJVnmWY=
 github.com/goccy/go-json v0.9.7/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gohugoio/hugo v0.111.3 h1:m98NJv/5ivJLkQ4u3vPYsrAfBTnDIefZPGhnw/7xW80=
