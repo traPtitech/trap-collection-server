@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.20.4-alpine AS build
+FROM golang:1.20.5-alpine AS build
 
 RUN --mount=type=cache,target=/var/cache/apk \
   apk --update add tzdata git build-base && \
