@@ -3,7 +3,7 @@ module github.com/traPtitech/trap-collection-server
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.18.0
+	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.24
 	github.com/cosmtrek/air v1.44.0
 	github.com/deepmap/oapi-codegen v1.11.0
