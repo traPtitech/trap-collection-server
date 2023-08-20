@@ -243,7 +243,7 @@ func TestPostAdmins(t *testing.T) {
 
 	type test struct {
 		description      string
-		newAdminID       *openapi.PostAdminJSONBody
+		newAdminID       *openapi.PostAdminJSONRequestBody
 		sessionExist     bool
 		authSession      *domain.OIDCSession
 		executeAddAdmin  bool
@@ -262,7 +262,7 @@ func TestPostAdmins(t *testing.T) {
 	testCases := []test{
 		{
 			description:  "特に問題ないのでエラー無し",
-			newAdminID:   &openapi.PostAdminJSONBody{Id: uuid.UUID(userID1)},
+			newAdminID:   &openapi.PostAdminJSONRequestBody{Id: uuid.UUID(userID1)},
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
@@ -301,7 +301,7 @@ func TestPostAdmins(t *testing.T) {
 		},
 		{
 			description:  "存在しないユーザーなので400",
-			newAdminID:   &openapi.PostAdminJSONBody{Id: uuid.UUID(userID1)},
+			newAdminID:   &openapi.PostAdminJSONRequestBody{Id: uuid.UUID(userID1)},
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
@@ -314,7 +314,7 @@ func TestPostAdmins(t *testing.T) {
 		},
 		{
 			description:  "ユーザーが既にadminなので400",
-			newAdminID:   &openapi.PostAdminJSONBody{Id: uuid.UUID(userID1)},
+			newAdminID:   &openapi.PostAdminJSONRequestBody{Id: uuid.UUID(userID1)},
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
@@ -327,7 +327,7 @@ func TestPostAdmins(t *testing.T) {
 		},
 		{
 			description:  "AddAdminsがエラーなので500",
-			newAdminID:   &openapi.PostAdminJSONBody{Id: uuid.UUID(userID1)},
+			newAdminID:   &openapi.PostAdminJSONRequestBody{Id: uuid.UUID(userID1)},
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
@@ -340,7 +340,7 @@ func TestPostAdmins(t *testing.T) {
 		},
 		{
 			description:  "他にadminがいてもエラー無し",
-			newAdminID:   &openapi.PostAdminJSONBody{Id: uuid.UUID(userID1)},
+			newAdminID:   &openapi.PostAdminJSONRequestBody{Id: uuid.UUID(userID1)},
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
