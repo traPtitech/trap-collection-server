@@ -35,8 +35,7 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
 	}
-
-	req := &openapi.PatchGameRoleJSONBody{}
+	req := &openapi.PatchGameRoleJSONRequestBody{}
 	err = ctx.Bind(req)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
