@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM caddy:2.6.4
+FROM caddy:2.7.4
 
 COPY Caddyfile /etc/caddy/Caddyfile
 RUN wget -O - https://github.com/traPtitech/trap-collection-admin/releases/latest/download/dist.tar.gz \
