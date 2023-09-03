@@ -10,7 +10,7 @@ require (
 	github.com/cosmtrek/air v1.45.0
 	github.com/deepmap/oapi-codegen v1.13.4
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.118.0
+	github.com/getkin/kin-openapi v0.119.0
 	github.com/go-task/task/v3 v3.27.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
