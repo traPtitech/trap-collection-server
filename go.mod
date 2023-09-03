@@ -7,7 +7,7 @@ toolchain go1.21.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.21.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.35
-	github.com/cosmtrek/air v1.44.0
+	github.com/cosmtrek/air v1.45.0
 	github.com/deepmap/oapi-codegen v1.13.4
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/getkin/kin-openapi v0.118.0
@@ -28,6 +28,7 @@ require (
 )
 
 require (
+	dario.cat/mergo v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.13 // indirect
@@ -65,7 +66,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gohugoio/hugo v0.111.3 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
