@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Set IMAGE_TAG env
         run: echo "IMAGE_TAG=${GITHUB_REF:10}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
