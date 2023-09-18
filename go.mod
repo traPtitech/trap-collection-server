@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.15.0
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/getkin/kin-openapi v0.120.0
-	github.com/go-task/task/v3 v3.29.1
+	github.com/go-task/task/v3 v3.30.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.1
 	github.com/google/wire v0.5.0
@@ -52,13 +52,14 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
+	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gohugoio/hugo v0.111.3 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-zglob v0.0.4 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
@@ -71,6 +72,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tdewolff/parse/v2 v2.6.8 // indirect
+	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
