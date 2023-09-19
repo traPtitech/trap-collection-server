@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,14 +17,16 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
-	v1 "github.com/traPtitech/trap-collection-server/src/config/v1"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
 var testClient *Client
 
 func (c *Client) createBucket() error {
+	fmt.Printf("bucket: %v\n", c.bucket)
 	_, err := c.client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
 		Bucket: &c.bucket,
 	})
@@ -35,9 +38,57 @@ func (c *Client) createBucket() error {
 }
 
 func TestMain(m *testing.M) {
-	conf := v1.NewStorageS3()
+	// conf := v1.NewStorageS3()
 
-	var err error
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not create pool: %s", err)
+	}
+
+	err = pool.Client.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping: %s", err)
+	}
+
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "minio/minio",
+		Tag:        "RELEASE.2022-09-17T00-09-45Z",
+		Env: []string{
+			"MINIO_ROOT_USER=AKID",
+			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
+			"MINIO_DOMAIN=s3",
+			"MINIO_SITE_REGION=us-east-1",
+		},
+		Cmd: []string{"server", "/data"},
+	},
+		func(config *docker.HostConfig) {
+			config.AutoRemove = true
+			config.RestartPolicy = docker.RestartPolicy{
+				Name: "no",
+			}
+		},
+	)
+	if err != nil {
+		log.Fatalf("Could not create container: %s", err)
+	}
+
+	conf := &testStorageS3{port: resource.GetPort("9000/tcp")}
+
+	if err := pool.Retry(func() error {
+		endpoint, _ := conf.Endpoint()
+		url := fmt.Sprintf("%s/minio/health/live", endpoint)
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("status code not OK")
+		}
+		return nil
+	}); err != nil {
+		log.Fatalf("Could not connect to storage: %s", err)
+	}
+
 	testClient, err = NewClient(conf)
 	if err != nil {
 		fmt.Printf("failed to create client: %v", err)
@@ -52,7 +103,31 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	if err = pool.Purge(resource); err != nil {
+		log.Fatalf("Could not remove the container: %s", err)
+	}
+
 	os.Exit(code)
+}
+
+type testStorageS3 struct {
+	port string
+}
+
+func (*testStorageS3) AccessKeyID() (string, error) {
+	return "AKID", nil
+}
+func (*testStorageS3) SecretAccessKey() (string, error) {
+	return "SECRETPASSWORD", nil
+}
+func (*testStorageS3) Region() (string, error) {
+	return "us-east-1", nil
+}
+func (*testStorageS3) Bucket() (string, error) {
+	return "trap-collection", nil
+}
+func (t *testStorageS3) Endpoint() (string, error) {
+	return "http://localhost:" + t.port, nil
 }
 
 func TestSaveFile(t *testing.T) {
