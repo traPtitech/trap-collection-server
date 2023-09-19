@@ -127,7 +127,8 @@ func (*testStorageS3) Bucket() (string, error) {
 	return "trap-collection", nil
 }
 func (t *testStorageS3) Endpoint() (string, error) {
-	return "http://localhost:" + t.port, nil
+	bucket, _ := t.Bucket()
+	return "http://" + bucket + ".localhost:" + t.port, nil
 }
 
 func TestSaveFile(t *testing.T) {
