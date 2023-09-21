@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 jobs:
@@ -19,21 +19,27 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    services:
+      dind:
+        image: docker:23.0-rc-dind-rootless
+        ports:
+          - 2375:2375
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
       - run: go generate ./...
-      - run: docker compose -f docker/test/compose.yaml up --abort-on-container-exit
+      - name: Run test
+        run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
         uses: codecov/codecov-action@v3.1.4
         with:
-          file: ./tmp/coverage/coverage.txt
+          file: /tmp/coverage/coverage.txt
       - uses: actions/upload-artifact@v3
         with:
           name: coverage.txt
-          path: ./tmp/coverage/coverage.txt
+          path: /tmp/coverage/coverage.txt
   lint:
     name: Lint
     runs-on: ubuntu-latest
