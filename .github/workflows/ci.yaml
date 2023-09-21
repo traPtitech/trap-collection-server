@@ -30,6 +30,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go generate ./...
+      - run: mkdir -p /tmp/coverage
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
