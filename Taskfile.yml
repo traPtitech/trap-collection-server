@@ -51,15 +51,9 @@ tasks:
 
   test:
     cmds:
-      - task: test:down
       - task: os:test
-      - task: test:down
     deps:
       - generate
-
-  test:down:
-    cmds:
-      - task: os:test:down
 
   tbls:
     cmds:
