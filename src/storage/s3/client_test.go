@@ -38,8 +38,6 @@ func (c *Client) createBucket() error {
 }
 
 func TestMain(m *testing.M) {
-	// conf := v1.NewStorageS3()
-
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not create pool: %s", err)
@@ -56,7 +54,7 @@ func TestMain(m *testing.M) {
 		Env: []string{
 			"MINIO_ROOT_USER=AKID",
 			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
-			"MINIO_DOMAIN=s3",
+			"MINIO_DOMAIN=localhost",
 			"MINIO_SITE_REGION=us-east-1",
 		},
 		Cmd: []string{"server", "/data"},
@@ -127,8 +125,7 @@ func (*testStorageS3) Bucket() (string, error) {
 	return "trap-collection", nil
 }
 func (t *testStorageS3) Endpoint() (string, error) {
-	bucket, _ := t.Bucket()
-	return "http://" + bucket + ".localhost:" + t.port, nil
+	return "http://localhost:" + t.port, nil
 }
 
 func TestSaveFile(t *testing.T) {

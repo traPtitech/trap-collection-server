@@ -19,7 +19,6 @@ require (
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/oapi-codegen/runtime v1.0.0
-	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/mod v0.12.0
@@ -68,7 +67,6 @@ require (
 	github.com/gohugoio/hugo v0.111.3 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -100,7 +98,6 @@ require (
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gotest.tools v2.2.0+incompatible // indirect
 	mvdan.cc/sh/v3 v3.7.0 // indirect
 )
 
