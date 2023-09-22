@@ -23,10 +23,17 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
+const (
+	minioRootUser     = "AKID"
+	minioRootPassword = "SECRETPASSWORD"
+	minioDomain       = "localhost"
+	minioSiteRegion   = "us-east-1"
+	minioBucket       = "trap-collection"
+)
+
 var testClient *Client
 
 func (c *Client) createBucket() error {
-	fmt.Printf("bucket: %v\n", c.bucket)
 	_, err := c.client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
 		Bucket: &c.bucket,
 	})
@@ -40,22 +47,22 @@ func (c *Client) createBucket() error {
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not create pool: %s", err)
+		panic(fmt.Sprintf("Could not create pool: %s", err))
 	}
 
 	err = pool.Client.Ping()
 	if err != nil {
-		log.Fatalf("Failed to ping: %s", err)
+		panic(fmt.Sprintf("Failed to ping: %s", err))
 	}
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "minio/minio",
 		Tag:        "RELEASE.2022-09-17T00-09-45Z",
 		Env: []string{
-			"MINIO_ROOT_USER=AKID",
-			"MINIO_ROOT_PASSWORD=SECRETPASSWORD",
-			"MINIO_DOMAIN=localhost",
-			"MINIO_SITE_REGION=us-east-1",
+			"MINIO_ROOT_USER=" + minioRootUser,
+			"MINIO_ROOT_PASSWORD=" + minioRootPassword,
+			"MINIO_DOMAIN=" + minioDomain,
+			"MINIO_SITE_REGION=" + minioSiteRegion,
 		},
 		Cmd: []string{"server", "/data"},
 	},
@@ -67,7 +74,7 @@ func TestMain(m *testing.M) {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Could not create container: %s", err)
+		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
 	conf := &testStorageS3{port: resource.GetPort("9000/tcp")}
@@ -84,25 +91,23 @@ func TestMain(m *testing.M) {
 		}
 		return nil
 	}); err != nil {
-		log.Fatalf("Could not connect to storage: %s", err)
+		panic(fmt.Sprintf("Could not connect to storage: %s", err))
 	}
 
 	testClient, err = NewClient(conf)
 	if err != nil {
-		fmt.Printf("failed to create client: %v", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("failed to create client: %v", err))
 	}
 
 	err = testClient.createBucket()
 	if err != nil {
-		fmt.Printf("failed to create bucket: %v", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("failed to create bucket: %v", err))
 	}
 
 	code := m.Run()
 
 	if err = pool.Purge(resource); err != nil {
-		log.Fatalf("Could not remove the container: %s", err)
+		log.Printf("Could not remove the container: %s", err)
 	}
 
 	os.Exit(code)

@@ -14,26 +14,30 @@ import (
 
 var testDB *DB
 
-func TestMain(m *testing.M) {
-	var err error
+const (
+	mysqlRootPassword = "pass"
+	mysqlDatabase     = "trap_collection"
+	timezone          = "Asia/Tokyo"
+)
 
+func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not create pool: %s", err)
+		panic(fmt.Sprintf("Could not create pool: %s", err))
 	}
 
 	err = pool.Client.Ping()
 	if err != nil {
-		log.Fatalf("Failed to ping: %s", err)
+		panic(fmt.Sprintf("Failed to ping: %s", err))
 	}
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mariadb",
 		Tag:        "10.6.4",
 		Env: []string{
-			"MYSQL_ROOT_PASSWORD=pass",
-			"MYSQL_DATABASE=trap_collection",
-			"TZ=Asia/Tokyo",
+			"MYSQL_ROOT_PASSWORD=" + mysqlRootPassword,
+			"MYSQL_DATABASE=" + mysqlDatabase,
+			"TZ=" + timezone,
 		},
 	},
 		func(config *docker.HostConfig) {
@@ -44,7 +48,7 @@ func TestMain(m *testing.M) {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Could not create container: %s", err)
+		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
 	if err := pool.Retry(func() error {
@@ -54,13 +58,13 @@ func TestMain(m *testing.M) {
 		}
 		return nil
 	}); err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
+		panic(fmt.Sprintf("Could not connect to database: %s", err))
 	}
 
 	code := m.Run()
 
 	if err = pool.Purge(resource); err != nil {
-		log.Fatalf("Could not remove the container: %s", err)
+		panic(fmt.Sprintf("Could not remove the container: %s", err))
 	}
 
 	os.Exit(code)
