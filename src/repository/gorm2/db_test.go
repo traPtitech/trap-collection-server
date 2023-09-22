@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/traPtitech/trap-collection-server/src/config"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 )
 
 var testDB *DB
@@ -17,6 +19,8 @@ var testDB *DB
 const (
 	mysqlRootPassword = "pass"
 	mysqlDatabase     = "trap_collection"
+	mysqlHost         = "localhost"
+	mysqlUser         = "root"
 	timezone          = "Asia/Tokyo"
 )
 
@@ -51,8 +55,29 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
+	portStr := resource.GetPort("3306/tcp")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		panic(fmt.Sprintf("port is invalid: %s", err))
+	}
+
+	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
+	ctrl := gomock.NewController(&reporter{})
+	mockAppConf := mock.NewMockApp(ctrl)
+	mockRepositoryConf := mock.NewMockRepositoryGorm2(ctrl)
+
+	// pool.Retryで繰り返すため、AnyTimesをつける
+	mockAppConf.EXPECT().FeatureV2().Return(true).AnyTimes()
+	mockAppConf.EXPECT().Status().Return(config.AppStatusDevelopment, nil).AnyTimes()
+
+	mockRepositoryConf.EXPECT().Database().Return(mysqlDatabase, nil).AnyTimes()
+	mockRepositoryConf.EXPECT().Host().Return(mysqlHost, nil).AnyTimes()
+	mockRepositoryConf.EXPECT().Password().Return(mysqlRootPassword, nil).AnyTimes()
+	mockRepositoryConf.EXPECT().User().Return(mysqlUser, nil).AnyTimes()
+	mockRepositoryConf.EXPECT().Port().Return(port, nil).AnyTimes()
+
 	if err := pool.Retry(func() error {
-		testDB, err = NewDB(&testAppConfig{}, &testRepositoryConfig{resource.GetPort("3306/tcp")})
+		testDB, err = NewDB(mockAppConf, mockRepositoryConf)
 		if err != nil {
 			return err
 		}
@@ -63,6 +88,8 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	// os.Exitはdeferを使わないのでここでやる。
+	ctrl.Finish()
 	if err = pool.Purge(resource); err != nil {
 		panic(fmt.Sprintf("Could not remove the container: %s", err))
 	}
@@ -70,42 +97,13 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// テスト用のAppConfig
-// config.Appを実装
-type testAppConfig struct{}
+// gomock.TestReporterを実装
+type reporter struct{}
 
-func (*testAppConfig) Status() (config.AppStatus, error) {
-	return config.AppStatusDevelopment, nil
-}
-func (*testAppConfig) FeatureV2() bool {
-	return true
-}
-func (*testAppConfig) FeatureV1Write() bool {
-	return true
+func (*reporter) Errorf(format string, args ...interface{}) {
+	log.Println(fmt.Errorf(format, args...))
 }
 
-// テスト用のRepositoryConfig
-// config.RepositoryGorm2を実装
-type testRepositoryConfig struct {
-	port string
-}
-
-func (*testRepositoryConfig) User() (string, error) {
-	return "root", nil
-}
-func (*testRepositoryConfig) Password() (string, error) {
-	return "pass", nil
-}
-func (t *testRepositoryConfig) Host() (string, error) {
-	return "localhost", nil
-}
-func (t *testRepositoryConfig) Port() (int, error) {
-	port, err := strconv.Atoi(t.port)
-	if err != nil {
-		return 0, fmt.Errorf("failed to convert port to int: %w", err)
-	}
-	return port, nil
-}
-func (*testRepositoryConfig) Database() (string, error) {
-	return "trap_collection", nil
+func (*reporter) Fatalf(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
 }
