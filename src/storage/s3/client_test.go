@@ -17,9 +17,11 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/golang/mock/gomock"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 )
 
@@ -77,10 +79,19 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
-	conf := &testStorageS3{port: resource.GetPort("9000/tcp")}
+	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
+	ctrl := gomock.NewController(&reporter{})
+	mockS3Conf := mock.NewMockStorageS3(ctrl)
+
+	// pool.Retryで繰り返すため、AnyTimesをつける
+	mockS3Conf.EXPECT().AccessKeyID().Return(minioRootUser, nil).AnyTimes()
+	mockS3Conf.EXPECT().Bucket().Return(minioBucket, nil).AnyTimes()
+	mockS3Conf.EXPECT().Endpoint().Return("http://localhost:"+resource.GetPort("9000/tcp"), nil).AnyTimes()
+	mockS3Conf.EXPECT().Region().Return(minioSiteRegion, nil).AnyTimes()
+	mockS3Conf.EXPECT().SecretAccessKey().Return(minioRootPassword, nil).AnyTimes()
 
 	if err := pool.Retry(func() error {
-		endpoint, _ := conf.Endpoint()
+		endpoint, _ := mockS3Conf.Endpoint()
 		url := fmt.Sprintf("%s/minio/health/live", endpoint)
 		resp, err := http.Get(url)
 		if err != nil {
@@ -94,7 +105,7 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not connect to storage: %s", err))
 	}
 
-	testClient, err = NewClient(conf)
+	testClient, err = NewClient(mockS3Conf)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create client: %v", err))
 	}
@@ -106,6 +117,8 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
+	// os.Exitはdeferを使わないのでここでやる。
+	ctrl.Finish()
 	if err = pool.Purge(resource); err != nil {
 		log.Printf("Could not remove the container: %s", err)
 	}
@@ -113,24 +126,15 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-type testStorageS3 struct {
-	port string
+// gomock.TestReporterを実装
+type reporter struct{}
+
+func (*reporter) Errorf(format string, args ...interface{}) {
+	log.Println(fmt.Errorf(format, args...))
 }
 
-func (*testStorageS3) AccessKeyID() (string, error) {
-	return "AKID", nil
-}
-func (*testStorageS3) SecretAccessKey() (string, error) {
-	return "SECRETPASSWORD", nil
-}
-func (*testStorageS3) Region() (string, error) {
-	return "us-east-1", nil
-}
-func (*testStorageS3) Bucket() (string, error) {
-	return "trap-collection", nil
-}
-func (t *testStorageS3) Endpoint() (string, error) {
-	return "http://localhost:" + t.port, nil
+func (*reporter) Fatalf(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
 }
 
 func TestSaveFile(t *testing.T) {
