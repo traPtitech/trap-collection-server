@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/traPtitech/trap-collection-server/src/config"
 )
@@ -159,8 +160,16 @@ func (*StorageS3) Endpoint() (string, error) {
 }
 
 func (*StorageS3) UsePathStyle() bool {
-	s3UsePathStyle := os.Getenv(envKeyS3UsePathStyle)
-	return s3UsePathStyle == "true"
+	s3UsePathStyleStr, ok := os.LookupEnv(envKeyS3UsePathStyle)
+	if !ok {
+		return false
+	}
+
+	s3UsePathStyle, err := strconv.ParseBool(s3UsePathStyleStr)
+	if err != nil {
+		return false
+	}
+	return s3UsePathStyle
 }
 
 type StorageLocal struct{}
