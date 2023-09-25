@@ -77,9 +77,8 @@ func setupS3(
 			aws.EndpointResolverWithOptionsFunc(
 				func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
 					return aws.Endpoint{
-						URL:               endpoint,
-						HostnameImmutable: true, // パス形式を使うようにする
-						SigningRegion:     region,
+						URL:           endpoint,
+						SigningRegion: region,
 					}, nil
 				},
 			),
