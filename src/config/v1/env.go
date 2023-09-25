@@ -29,6 +29,7 @@ const (
 	envKeyS3Region          envKey = "S3_REGION"
 	envKeyS3Bucket          envKey = "S3_BUCKET"
 	envKeyS3Endpoint        envKey = "S3_ENDPOINT"
+	envKeyS3UsePathStyle    envKey = "S3_USE_PATH_STYLE"
 
 	envKeyFilePath envKey = "FILE_PATH"
 

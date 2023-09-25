@@ -158,6 +158,11 @@ func (*StorageS3) Endpoint() (string, error) {
 	return s3Endpoint, nil
 }
 
+func (*StorageS3) UsePathStyle() bool {
+	s3UsePathStyle := os.Getenv(envKeyS3UsePathStyle)
+	return s3UsePathStyle == "true"
+}
+
 type StorageLocal struct{}
 
 func NewStorageLocal() *StorageLocal {

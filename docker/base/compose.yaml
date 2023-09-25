@@ -13,6 +13,7 @@ services:
       S3_REGION: us-east-1
       S3_BUCKET: trap-collection
       S3_ENDPOINT: http://s3:9000
+      S3_USE_PATH_STYLE: false
       PORT: :3000
     depends_on:
       mariadb:
