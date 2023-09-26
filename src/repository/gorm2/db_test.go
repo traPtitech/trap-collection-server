@@ -3,7 +3,6 @@ package gorm2
 import (
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"testing"
 
@@ -55,6 +54,12 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
+	defer func() {
+		if err = pool.Purge(resource); err != nil {
+			log.Printf("Could not remove the container: %s", err)
+		}
+	}()
+
 	portStr := resource.GetPort("3306/tcp")
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -63,6 +68,7 @@ func TestMain(m *testing.M) {
 
 	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
 	ctrl := gomock.NewController(&reporter{})
+	defer ctrl.Finish()
 	mockAppConf := mock.NewMockApp(ctrl)
 	mockRepositoryConf := mock.NewMockRepositoryGorm2(ctrl)
 
@@ -86,15 +92,7 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not connect to database: %s", err))
 	}
 
-	code := m.Run()
-
-	// os.Exitはdeferを使わないのでここでやる。
-	ctrl.Finish()
-	if err = pool.Purge(resource); err != nil {
-		panic(fmt.Sprintf("Could not remove the container: %s", err))
-	}
-
-	os.Exit(code)
+	m.Run()
 }
 
 // gomock.TestReporterを実装

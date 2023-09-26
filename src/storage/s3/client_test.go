@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -79,8 +78,15 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("Could not create container: %s", err))
 	}
 
+	defer func() {
+		if err = pool.Purge(resource); err != nil {
+			log.Printf("Could not remove the container: %s", err)
+		}
+	}()
+
 	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
 	ctrl := gomock.NewController(&reporter{})
+	defer ctrl.Finish()
 	mockS3Conf := mock.NewMockStorageS3(ctrl)
 
 	// pool.Retryで繰り返すため、AnyTimesをつける
@@ -116,15 +122,7 @@ func TestMain(m *testing.M) {
 		panic(fmt.Sprintf("failed to create bucket: %v", err))
 	}
 
-	code := m.Run()
-
-	// os.Exitはdeferを使わないのでここでやる。
-	ctrl.Finish()
-	if err = pool.Purge(resource); err != nil {
-		log.Printf("Could not remove the container: %s", err)
-	}
-
-	os.Exit(code)
+	m.Run()
 }
 
 // gomock.TestReporterを実装
