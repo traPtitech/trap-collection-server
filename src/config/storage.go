@@ -32,6 +32,7 @@ type StorageS3 interface {
 	Region() (string, error)
 	Bucket() (string, error)
 	Endpoint() (string, error)
+	UsePathStyle() bool
 }
 
 type StorageLocal interface {

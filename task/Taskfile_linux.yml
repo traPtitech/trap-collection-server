@@ -38,10 +38,6 @@ tasks:
     cmds:
       - task: unix:test
 
-  test:down:
-    cmds:
-      - task: unix:test:down
-
   tbls:
     cmds:
       - task: unix:tbls

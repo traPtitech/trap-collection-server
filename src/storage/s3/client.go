@@ -49,7 +49,9 @@ func NewClient(conf config.StorageS3) (*Client, error) {
 		return nil, fmt.Errorf("failed to get endpoint: %w", err)
 	}
 
-	client, err := setupS3(ctx, accessKeyID, secretAccessKey, region, endpoint)
+	usePathStyle := conf.UsePathStyle()
+
+	client, err := setupS3(ctx, accessKeyID, secretAccessKey, region, endpoint, usePathStyle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup s3: %w", err)
 	}
@@ -66,6 +68,7 @@ func setupS3(
 	secretAccessKey string,
 	region string,
 	endpoint string,
+	usePathStyle bool,
 ) (*s3.Client, error) {
 	cfg, err := awsConfig.LoadDefaultConfig(
 		ctx,
@@ -77,8 +80,9 @@ func setupS3(
 			aws.EndpointResolverWithOptionsFunc(
 				func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
 					return aws.Endpoint{
-						URL:           endpoint,
-						SigningRegion: region,
+						URL:               endpoint,
+						SigningRegion:     region,
+						HostnameImmutable: usePathStyle,
 					}, nil
 				},
 			),

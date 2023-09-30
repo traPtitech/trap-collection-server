@@ -49,12 +49,7 @@ tasks:
   test:
     dir: ../
     cmds:
-      - docker compose -f docker/test/compose.yaml up --build --abort-on-container-exit
-
-  test:down:
-    dir: ../
-    cmds:
-      - docker compose -f docker/test/compose.yaml down
+      - go test ./src/... -v -race -vet=off
 
   tbls:
     dir: ../

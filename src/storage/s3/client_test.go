@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,9 +16,20 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/golang/mock/gomock"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
-	v1 "github.com/traPtitech/trap-collection-server/src/config/v1"
+	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/storage"
+)
+
+const (
+	minioRootUser     = "AKID"
+	minioRootPassword = "SECRETPASSWORD"
+	minioDomain       = "localhost"
+	minioSiteRegion   = "us-east-1"
+	minioBucket       = "trap-collection"
 )
 
 var testClient *Client
@@ -35,24 +46,94 @@ func (c *Client) createBucket() error {
 }
 
 func TestMain(m *testing.M) {
-	conf := v1.NewStorageS3()
-
-	var err error
-	testClient, err = NewClient(conf)
+	pool, err := dockertest.NewPool("")
 	if err != nil {
-		fmt.Printf("failed to create client: %v", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("Could not create pool: %s", err))
+	}
+
+	err = pool.Client.Ping()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to ping: %s", err))
+	}
+
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "minio/minio",
+		Tag:        "RELEASE.2022-09-17T00-09-45Z",
+		Env: []string{
+			"MINIO_ROOT_USER=" + minioRootUser,
+			"MINIO_ROOT_PASSWORD=" + minioRootPassword,
+			"MINIO_DOMAIN=" + minioDomain,
+			"MINIO_SITE_REGION=" + minioSiteRegion,
+		},
+		Cmd: []string{"server", "/data"},
+	},
+		func(config *docker.HostConfig) {
+			config.AutoRemove = true
+			config.RestartPolicy = docker.RestartPolicy{
+				Name: "no",
+			}
+		},
+	)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create container: %s", err))
+	}
+
+	defer func() {
+		if err = pool.Purge(resource); err != nil {
+			log.Printf("Could not remove the container: %s", err)
+		}
+	}()
+
+	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
+	ctrl := gomock.NewController(&reporter{})
+	defer ctrl.Finish()
+	mockS3Conf := mock.NewMockStorageS3(ctrl)
+
+	// pool.Retryで繰り返すため、AnyTimesをつける
+	mockS3Conf.EXPECT().AccessKeyID().Return(minioRootUser, nil).AnyTimes()
+	mockS3Conf.EXPECT().Bucket().Return(minioBucket, nil).AnyTimes()
+	mockS3Conf.EXPECT().Endpoint().Return("http://localhost:"+resource.GetPort("9000/tcp"), nil).AnyTimes()
+	mockS3Conf.EXPECT().Region().Return(minioSiteRegion, nil).AnyTimes()
+	mockS3Conf.EXPECT().SecretAccessKey().Return(minioRootPassword, nil).AnyTimes()
+	mockS3Conf.EXPECT().UsePathStyle().Return(true).AnyTimes() // Dockerコンテナでs3ストレージを立ち上げるとき、仮想ホスト形式だと名前解決できないので、パス形式を使う。
+
+	if err := pool.Retry(func() error {
+		endpoint, _ := mockS3Conf.Endpoint()
+		url := fmt.Sprintf("%s/minio/health/live", endpoint)
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("status code not OK")
+		}
+		return nil
+	}); err != nil {
+		panic(fmt.Sprintf("Could not connect to storage: %s", err))
+	}
+
+	testClient, err = NewClient(mockS3Conf)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create client: %v", err))
 	}
 
 	err = testClient.createBucket()
 	if err != nil {
-		fmt.Printf("failed to create bucket: %v", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("failed to create bucket: %v", err))
 	}
 
-	code := m.Run()
+	m.Run()
+}
 
-	os.Exit(code)
+// gomock.TestReporterを実装
+type reporter struct{}
+
+func (*reporter) Errorf(format string, args ...interface{}) {
+	log.Println(fmt.Errorf(format, args...))
+}
+
+func (*reporter) Fatalf(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
 }
 
 func TestSaveFile(t *testing.T) {
