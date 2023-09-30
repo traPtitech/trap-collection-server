@@ -95,7 +95,7 @@ func TestMain(m *testing.M) {
 	mockS3Conf.EXPECT().Endpoint().Return("http://localhost:"+resource.GetPort("9000/tcp"), nil).AnyTimes()
 	mockS3Conf.EXPECT().Region().Return(minioSiteRegion, nil).AnyTimes()
 	mockS3Conf.EXPECT().SecretAccessKey().Return(minioRootPassword, nil).AnyTimes()
-	mockS3Conf.EXPECT().UsePathStyle().Return(false).AnyTimes()
+	mockS3Conf.EXPECT().UsePathStyle().Return(true).AnyTimes() // Dockerコンテナでs3ストレージを立ち上げるとき、仮想ホスト形式だと名前解決できないので、パス形式を使う。
 
 	if err := pool.Retry(func() error {
 		endpoint, _ := mockS3Conf.Endpoint()
