@@ -34,3 +34,10 @@ services:
       service: mariadb
     volumes:
       - ../../mysql/data:/var/lib/mysql
+  adminer:
+    image: adminer:latest
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: mariadb
+    ports:
+      - 8081:8080
