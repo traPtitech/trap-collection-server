@@ -36,7 +36,7 @@ CLIENT_SECRET={{traQのClientのClientSecret}}
 ```
 
 最後に以下のコマンドを実行することで開発環境がポート3000番で起動します。
-また、Web UIをhttp://localhost:8080 で開けるようになります。
+また、Web UIをhttp://localhost:8080 で、[Adminer](https://www.adminer.org/)をhttp://localhost:8081 で開けるようになります。
 ```bash
 task dev
 ```
