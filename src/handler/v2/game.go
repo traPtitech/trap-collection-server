@@ -81,8 +81,21 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 		responseGames = append(responseGames, responseGame)
 	}
 
+	//TODO: ビルドを通すためにいったん仮の配列を返している。全体が正しく動くよう修正する必要がある。
+	gamesWithGenres := make([]openapi.GameInfoWithGenres, 0, len(responseGames))
+	for _, game := range responseGames {
+		gameWithGenre := openapi.GameInfoWithGenres{
+			Name:        game.Name,
+			Id:          game.Id,
+			Description: game.Description,
+			CreatedAt:   game.CreatedAt,
+			Genres:      []openapi.GameGenreID{},
+		}
+		gamesWithGenres = append(gamesWithGenres, gameWithGenre)
+	}
+
 	res := openapi.GetGamesResponse{
-		Games: responseGames,
+		Games: gamesWithGenres,
 		Num:   gameNumber,
 	}
 
@@ -278,4 +291,11 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// ゲームのジャンル編集
+// (PUT /games/{gameID}/genres)
+// TODO: 実装
+func (g *Game) PutGameGenres(ctx echo.Context, gameID openapi.GameIDInPath) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented")
 }
