@@ -27,6 +27,9 @@ tags:
   - name: gameRole
     description: |
       ゲームの管理権限関連のAPIです。
+  - name: gameGenre
+    description: |
+      ゲームのジャンル関連のAPIです。
   - name: gameVersion
     description: |
       ゲームのバージョン関連のAPIです。
@@ -306,6 +309,12 @@ paths:
           description: |
             ゲームの追加に成功した際に返されます。
             レスポンスで新しく追加されたゲームの情報が返されます。
+        "400":
+          description: リクエストが不正な際に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "500":
@@ -318,8 +327,6 @@ paths:
     get:
       tags:
         - game
-      security:
-        - TrapMemberAuth: []
       parameters:
         - name: all
           in: query
@@ -330,6 +337,7 @@ paths:
             trueを指定すると、全てのゲーム、
             falseを指定すると、ログイン中のユーザーが作成したゲームのみを返します。
             デフォルトはtrueです。
+            ログインしている部員以外がfalseでリクエストを送った場合はtrueとして扱われます。
         - name: limit
           in: query
           required: false
@@ -338,7 +346,7 @@ paths:
             minimum: 1
           description: |
             取得するゲームの上限数を指定します。
-            指定なしの場合は制限なしです。
+            指定なしの場合は30です。
         - name: offset
           in: query
           required: false
@@ -348,6 +356,26 @@ paths:
           description: |
             取得するゲームの開始位置を指定します。
             指定なしの場合は0となります。
+        - schema:
+            type: string
+            example: 3fa85f64-5717-4562-b3fc-2c963f66afa
+          in: query
+          name: genre
+          description: 取得するゲームのジャンルを指定します。指定なしの場合は、ジャンルによる絞り込みを行いません。また、コンマ区切りで複数指定することができ、複数指定した場合はそれらすべてのジャンルに当てはまるゲームを返します。
+        - schema:
+            type: string
+            example: げーむ
+          in: query
+          name: name
+          description: ゲームの名前を指定すると部分一致するゲームを返します。指定なしの場合は名前による絞り込みを行いません。
+        - schema:
+            type: string
+            enum:
+              - createdAt
+              - latestVersion
+          in: query
+          name: sort
+          description: 取得するゲームの並び順を指定します。指定なしの場合は、各ゲームの最新のバージョンが新しい順に取得します。
       operationId: getGames
       responses:
         "200":
@@ -358,22 +386,24 @@ paths:
           description: |
             ゲームの一覧の取得に成功した際に返されます。
             レスポンスで取得したゲームの一覧と条件を満たすゲームの数が返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
+        "400":
+          description: リクエストが不正な場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲーム一覧の取得
       description: |
         ゲームの一覧を取得します。
-        作成時刻での降順で結果が返されます。
+        各ゲームの最新バージョンが作られた時刻の降順（新しい順）で結果が返されます。
   /games/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
     get:
       tags:
         - game
-      security:
-        - TrapMemberAuth: []
       operationId: getGame
       responses:
         "200":
@@ -391,14 +421,6 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正な値である場合に返されます。
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            traQのOAuth 2.0による認証が通過できない、かつ、
-            ランチャー用のアクセストークンによるBearer認証も通過できない場合に返されます。
         "404":
           content:
             application/json:
@@ -604,9 +626,54 @@ paths:
         指定したゲームIDのゲームの管理権限を削除します。
         ownerは1人以上はいる必要があるため、
         削除によりownerがいなくなる場合はエラーとなります。
-
-  # gameVersion
-  /games/{gameID}/versions:
+  '/games/{gameID}/genres':
+    parameters:
+      - $ref: '#/components/parameters/gameIDInPath'
+    put:
+      summary: ゲームのジャンル編集
+      operationId: putGameGenres
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '400':
+          description: リクエストが不正な際に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '404':
+          description: 与えられたgameIDに該当するゲームが存在しない、または削除されているときに返します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: ゲームのジャンルを与えられた配列で上書きします。
+      security:
+        - GameMaintainerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                genres:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GameGenreID'
+        description: ゲームのジャンルIDの配列です。
+      tags:
+        - gameGenre
+  '/games/{gameID}/versions':
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
     post:
@@ -720,8 +787,6 @@ paths:
     get:
       tags:
         - gameVersion
-      security:
-        - TrapMemberAuth: []
       operationId: getLatestGameVersion
       responses:
         "200":
@@ -739,8 +804,6 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正である場合に返されます。
-        "401":
-          $ref: '#/components/responses/TraPUnauthorized'
         "404":
           content:
             application/json:
@@ -847,9 +910,6 @@ paths:
     get:
       tags:
         - gameFile
-      security:
-        - TrapMemberAuth: []
-        - EditionGameFileAuth: []
       operationId: getGameFile
       responses:
         "200":
@@ -895,9 +955,6 @@ paths:
     get:
       tags:
         - gameFile
-      security:
-        - TrapMemberAuth: []
-        - EditionGameFileAuth: []
       operationId: getGameFileMeta
       responses:
         "200":
@@ -1029,9 +1086,6 @@ paths:
     get:
       tags:
         - gameImage
-      security:
-        - TrapMemberAuth: []
-        - EditionGameImageAuth: []
       operationId: getGameImage
       responses:
         "200":
@@ -1077,9 +1131,6 @@ paths:
     get:
       tags:
         - gameImage
-      security:
-        - TrapMemberAuth: []
-        - EditionGameImageAuth: []
       operationId: getGameImageMeta
       responses:
         "200":
@@ -1211,9 +1262,6 @@ paths:
     get:
       tags:
         - gameVideo
-      security:
-        - TrapMemberAuth: []
-        - EditionGameVideoAuth: []
       operationId: getGameVideo
       responses:
         "200":
@@ -1259,9 +1307,6 @@ paths:
     get:
       tags:
         - gameVideo
-      security:
-        - TrapMemberAuth: []
-        - EditionGameVideoAuth: []
       operationId: getGameVideoMeta
       responses:
         "200":
@@ -1906,6 +1951,110 @@ paths:
       description: |
         席の変更を行います。
 
+  #gameGenre
+  /genres:
+    get:
+      summary: 全てのジャンルの取得
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  num:
+                    type: integer
+                    description: ジャンルの数です。
+                  genres:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameGenre'
+                required:
+                  - num
+                  - genres
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      operationId: getGameGenres
+      description: 全てのゲームのジャンルを取得します。
+      tags:
+        - gameGenre
+  '/genres/{gameGenreID}':
+    parameters:
+      - $ref: '#/components/parameters/gameGenreIDInPath'
+    patch:
+      summary: ジャンル情報の変更
+      operationId: patchGameGenre
+      responses:
+        '200':
+          description: ジャンルの情報の編集に成功した際に返されます。編集後のジャンルの値が返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenre'
+        '400':
+          description: リクエストが不正である場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '404':
+          description: 指定されたIDのジャンルが存在しない場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: ジャンルの情報を編集します。traP Collectionのadminにのみ許可されています。
+      security:
+        - AdminAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                genre:
+                  $ref: '#/components/schemas/GameGenreName'
+              required:
+                - genre
+        description: ジャンルの情報を指定します。
+      tags:
+        - gameGenre
+    delete:
+      summary: ジャンルの削除
+      operationId: deleteGameGenre
+      responses:
+        '200':
+          description: ジャンルの削除に成功した際に返されます。
+        '400':
+          description: リクエストが不正である場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '404':
+          description: 指定したIDのジャンルが存在しない、または削除されている場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: ジャンルを削除します。traP Collectionのadminのみが削除できます。
+      security:
+        - AdminAuth: []
+      tags:
+        - gameGenre
 components:
   responses:
     TraPUnauthorized:
@@ -2103,6 +2252,14 @@ components:
         $ref: '#/components/schemas/SeatID'
       description: |
         席のIDを示すパスパラメータです。
+    gameGenreIDInPath:
+      name: gameGenreID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ジャンルを示すID(UUID)です。
   schemas:
     Error:
       type: object
@@ -2132,10 +2289,10 @@ components:
             limit、offsetが適用される前のゲームの数です。
         games:
           type: array
-          items:
-            $ref: '#/components/schemas/GameInfo'
           description: |
             limit、offsetが適用された後のゲームの一覧です。
+          items:
+            $ref: '#/components/schemas/GameInfoWithGenres'
       required:
         - num
         - games
@@ -2258,25 +2415,30 @@ components:
           $ref: '#/components/schemas/GameName'
         description:
           $ref: '#/components/schemas/GameDescription'
+        genres:
+          type: array
+          description: ゲームのジャンルの名前の配列です。ジャンルが無い場合はこのフィールドは省略されます。
+          items:
+            $ref: '#/components/schemas/GameGenreName'
         owners:
           type: array
-          items:
-            $ref: '#/components/schemas/UserName'
           description: |
             ゲームのownerの一覧です。
             指定されない場合、空配列として扱われます。
             ゲームの作成を実行したユーザーは、このリストに含まれていなくてもownerとなります。
             また、このリストにゲームの作成を実行したユーザーが含まれていた場合、
             400エラーになります。
-        maintainers:
-          type: array
           items:
             $ref: '#/components/schemas/UserName'
+        maintainers:
+          type: array
           description: |
             ゲームのmaintainerの一覧です。
             指定されない場合、空配列として扱われます。
             ゲームの作成を実行したユーザーを含むownerと重複するユーザーが存在した場合、
             400エラーとなります。
+          items:
+            $ref: '#/components/schemas/UserName'
       required:
         - name
         - description
@@ -2298,6 +2460,9 @@ components:
         ゲームの情報を修正する際に必要な情報です。
     Game:
       type: object
+      additionalProperties: false
+      description: |
+        ゲームの情報です。
       properties:
         id:
           $ref: '#/components/schemas/GameID'
@@ -2305,32 +2470,38 @@ components:
           $ref: '#/components/schemas/GameName'
         description:
           $ref: '#/components/schemas/GameDescription'
+        genres:
+          type: array
+          description: ジャンルの名前です。ジャンルが無い場合はこのフィールドはありません。
+          items:
+            $ref: '#/components/schemas/GameGenreName'
         owners:
           type: array
-          items:
-            $ref: '#/components/schemas/UserName'
           description: |
             ゲームのownerの一覧です。
-        maintainers:
-          type: array
           items:
             $ref: '#/components/schemas/UserName'
+        maintainers:
+          type: array
           description: |
             ゲームのmaintainerの一覧です。
             maintainerがいない場合、このフィールドは存在しません。
+          items:
+            $ref: '#/components/schemas/UserName'
         createdAt:
           $ref: '#/components/schemas/GameCreatedAt'
       required:
         - id
         - name
         - description
+        - genres
         - owners
         - createdAt
+    GameInfo:
+      type: object
       additionalProperties: false
       description: |
         ゲームの情報です。
-    GameInfo:
-      type: object
       properties:
         id:
           $ref: '#/components/schemas/GameID'
@@ -2345,11 +2516,30 @@ components:
         - name
         - description
         - createdAt
+    GameInfoWithGenres:
+      type: object
       additionalProperties: false
       description: |
-        ゲームの情報です。
-
-    # ゲームバージョン
+        ゲームとそのジャンルの情報です。
+      properties:
+        id:
+          $ref: '#/components/schemas/GameID'
+        name:
+          $ref: '#/components/schemas/GameName'
+        description:
+          $ref: '#/components/schemas/GameDescription'
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameGenreID'
+        createdAt:
+          $ref: '#/components/schemas/GameCreatedAt'
+      required:
+        - id
+        - name
+        - description
+        - genres
+        - createdAt
     NewGameVersion:
       type: object
       properties:
@@ -2425,7 +2615,7 @@ components:
           # OpenAPI Generatorのバグで、enumだとクライアントの生成がうまくいかないので、
           # 一旦stringにしている
           type: string
-          example: 'jar'
+          example: jar
         entryPoint:
           $ref: '#/components/schemas/GameFileEntryPoint'
         content:
@@ -2867,3 +3057,41 @@ components:
       description: |
         席の状態です。
         in-useは使用中、emptyは空席です。
+
+    # ゲームジャンル
+    GameGenreID:
+      title: GameGenreID
+      type: string
+      format: uuid
+      description: ジャンルのID(UUID)です。
+    GameGenreName:
+      title: GameGenreName
+      type: string
+      example: 3D
+      maxLength: 32
+      x-examples: {}
+      description: ジャンルの名前です。32文字以下です。
+    GameGenre:
+      title: GameGenre
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameGenreID'
+        genre:
+          $ref: '#/components/schemas/GameGenreName'
+        num:
+          type: integer
+          description: そのジャンルが含まれるゲームの数です。
+        createdAt:
+          $ref: '#/components/schemas/GameGenreCreatedAt'
+      required:
+        - id
+        - genre
+        - num
+        - createdAt
+      description: ''
+    GameGenreCreatedAt:
+      title: GameGenreCreatedAt
+      type: string
+      format: date-time
+      description: ジャンルが作成された日時です
