@@ -11,6 +11,8 @@
 | [games](games.md) | 5 | ゲームテーブル | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |
 | [game_file_types](game_file_types.md) | 3 | ゲームファイルの種類のテーブル | BASE TABLE |
+| [game_genres](game_genres.md) | 3 |  | BASE TABLE |
+| [game_genre_relations](game_genre_relations.md) | 2 |  | BASE TABLE |
 | [game_images](game_images.md) | 4 | ゲーム画像テーブル(v1) | BASE TABLE |
 | [game_image_types](game_image_types.md) | 3 | ゲーム画像の種類のテーブル | BASE TABLE |
 | [game_management_roles](game_management_roles.md) | 3 | ゲーム管理者の権限のテーブル | BASE TABLE |
