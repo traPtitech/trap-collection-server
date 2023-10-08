@@ -9,15 +9,16 @@ import (
 
 var (
 	migrations = []*gormigrate.Migration{
-		v1(), // アプリケーションのv1時へのマイグレーション
-		v2(), // アプリケーションのv2用テーブルの追加
-		v3(), // v2でmigrationし忘れていたgameTable2のmigration
-		v4(), // v2_game_versionsにurlカラムを追加
-		v5(), // v2_game_filesのunique制約を解除
-		v6(), // v2_product_keysのstatusカラムを追加
-		v7(), // adminテーブルの追加
-		v8(), // v2 api用のデータのマイグレーション
-		v9(), // seatテーブルの追加
+		v1(),  // アプリケーションのv1時へのマイグレーション
+		v2(),  // アプリケーションのv2用テーブルの追加
+		v3(),  // v2でmigrationし忘れていたgameTable2のmigration
+		v4(),  // v2_game_versionsにurlカラムを追加
+		v5(),  // v2_game_filesのunique制約を解除
+		v6(),  // v2_product_keysのstatusカラムを追加
+		v7(),  // adminテーブルの追加
+		v8(),  // v2 api用のデータのマイグレーション
+		v9(),  // seatテーブルの追加
+		v10(), // ゲームジャンル関係の変更
 	}
 )
 

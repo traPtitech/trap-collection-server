@@ -53,6 +53,7 @@ type (
 	AdminTable             = adminTable
 	SeatTable2             = seatTableV9
 	SeatStatusTable2       = seatStatusTableV9
+	GameGenreTable         = gameGenreTableV10
 )
 
 const (
