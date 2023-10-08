@@ -26,4 +26,7 @@ type gameGenreUnimplemented interface {
 	// ジャンル情報の変更
 	// (PATCH /genres/{gameGenreID})
 	PatchGameGenre(ctx echo.Context, gameGenreID openapi.GameGenreIDInPath) error
+	// ゲームのジャンル編集
+	// (PUT /games/{gameID}/genres)
+	PutGameGenres(ctx echo.Context, gameID openapi.GameIDInPath) error
 }
