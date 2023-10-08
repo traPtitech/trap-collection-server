@@ -6,8 +6,8 @@ import (
 	"github.com/google/wire"
 	"github.com/traPtitech/trap-collection-server/src/handler"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
-	"github.com/traPtitech/trap-collection-server/src/handler/v1"
-	"github.com/traPtitech/trap-collection-server/src/handler/v2"
+	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
+	v2 "github.com/traPtitech/trap-collection-server/src/handler/v2"
 )
 
 var (
@@ -43,6 +43,7 @@ var (
 		v2.NewAdmin,
 		v2.NewGame,
 		v2.NewGameRole,
+		v2.NewGameGenre,
 		v2.NewGameVersion,
 		v2.NewGameFile,
 		v2.NewGameImage,

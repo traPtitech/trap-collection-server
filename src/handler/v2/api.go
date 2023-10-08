@@ -22,6 +22,7 @@ type API struct {
 	*Admin
 	*Game
 	*GameRole
+	*GameGenre
 	*GameVersion
 	*GameFile
 	*GameImage
@@ -39,6 +40,7 @@ func NewAPI(
 	admin *Admin,
 	game *Game,
 	gameRole *GameRole,
+	gameGenre *GameGenre,
 	gameVersion *GameVersion,
 	gameFile *GameFile,
 	gameImage *GameImage,
@@ -55,6 +57,7 @@ func NewAPI(
 		Admin:       admin,
 		Game:        game,
 		GameRole:    gameRole,
+		GameGenre:   gameGenre,
 		GameVersion: gameVersion,
 		GameFile:    gameFile,
 		GameImage:   gameImage,
