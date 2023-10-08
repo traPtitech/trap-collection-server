@@ -357,11 +357,15 @@ paths:
             取得するゲームの開始位置を指定します。
             指定なしの場合は0となります。
         - schema:
-            type: string
-            example: 3fa85f64-5717-4562-b3fc-2c963f66afa
+            type: array
+            items:
+              $ref: '#/components/schemas/GameGenreID'
+            example: [3fa85f64-5717-4562-b3fc-2c963f66afa]
           in: query
           name: genre
-          description: 取得するゲームのジャンルを指定します。指定なしの場合は、ジャンルによる絞り込みを行いません。また、コンマ区切りで複数指定することができ、複数指定した場合はそれらすべてのジャンルに当てはまるゲームを返します。
+          description: |
+            取得するゲームのジャンルを指定します。指定なしの場合は、ジャンルによる絞り込みを行いません。
+            また、コンマ区切りで配列として複数指定でき、複数指定した場合はそれらすべてのジャンルに当てはまるゲームを返します。
         - schema:
             type: string
             example: げーむ
