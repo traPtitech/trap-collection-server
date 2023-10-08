@@ -292,10 +292,3 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
-
-// ゲームのジャンル編集
-// (PUT /games/{gameID}/genres)
-// TODO: 実装
-func (g *Game) PutGameGenres(ctx echo.Context, gameID openapi.GameIDInPath) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented")
-}
