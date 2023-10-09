@@ -8,3 +8,4 @@ tmp
 !src/repository/mock/db.go
 cache/*
 .idea
+.DS_Store
