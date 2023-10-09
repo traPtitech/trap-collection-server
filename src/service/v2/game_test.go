@@ -30,6 +30,7 @@ func TestCreateGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -40,6 +41,7 @@ func TestCreateGame(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		user,
 	)
 
@@ -514,6 +516,7 @@ func TestGetGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -524,6 +527,7 @@ func TestGetGame(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		userUtils,
 	)
 
@@ -536,6 +540,9 @@ func TestGetGame(t *testing.T) {
 		executeGetGameManagersByGameID bool
 		administrators                 []*repository.UserIDAndManagementRole
 		GetGameManagersByGameIDErr     error
+		executeGetGenresByGameID       bool
+		genres                         []*domain.GameGenre
+		GetGenresByGameIDErr           error
 		isErr                          bool
 		err                            error
 	}
@@ -543,6 +550,9 @@ func TestGetGame(t *testing.T) {
 	gameID := values.NewGameID()
 
 	userID1 := values.NewTrapMemberID(uuid.New())
+
+	gameGenreID := values.NewGameGenreID()
+	gameGenreName := values.NewGameGenreName("ジャンル")
 
 	activeUsers := []*service.UserInfo{
 		service.NewUserInfo(
@@ -570,6 +580,8 @@ func TestGetGame(t *testing.T) {
 					Role:   values.GameManagementRoleAdministrator,
 				},
 			},
+			executeGetGenresByGameID: true,
+			genres:                   []*domain.GameGenre{domain.NewGameGenre(gameGenreID, gameGenreName, time.Now().Add(-time.Hour))},
 		},
 		{
 			description: "ゲームが存在しないのでErrNoGame",
@@ -591,6 +603,35 @@ func TestGetGame(t *testing.T) {
 			GetGameManagersByGameIDErr:     errors.New("error"),
 			isErr:                          true,
 		},
+		{
+			description: "GetGameGenresByGameIDがエラーなのでエラー",
+			gameID: gameID,
+			executeGetGameManagersByGameID: true,
+			executeGetActiveUsers: true,
+			executeGetGenresByGameID: true,
+			GetGenresByGameIDErr: errors.New("error"),
+			isErr: true,
+		},
+		{
+			description: "Genreが空でも問題ない",
+			gameID: gameID,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				time.Now(),
+			),
+			executeGetActiveUsers:          true,
+			executeGetGameManagersByGameID: true,
+			administrators: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+			},
+			executeGetGenresByGameID: true,
+			genres:                   []*domain.GameGenre{},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -611,6 +652,12 @@ func TestGetGame(t *testing.T) {
 					EXPECT().
 					GetGameManagersByGameID(ctx, testCase.gameID).
 					Return(testCase.administrators, testCase.GetGameManagersByGameIDErr)
+			}
+			if testCase.executeGetGenresByGameID {
+				mockGameGenreRepository.
+					EXPECT().
+					GetGenresByGameID(ctx, testCase.gameID).
+					Return(testCase.genres, testCase.GetGenresByGameIDErr)
 			}
 
 			gameInfo, err := gameService.GetGame(ctx, domain.NewOIDCSession("access token", time.Now().Add(time.Hour)), testCase.gameID)
@@ -642,6 +689,18 @@ func TestGetGame(t *testing.T) {
 			} else {
 				assert.Nil(t, gameInfo.Maintainers)
 			}
+
+			if testCase.genres != nil {
+				for i:= 0; i < len(testCase.genres); i++ {
+					assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
+
+					assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())
+					assert.Equal(t, testCase.genres[i].GetName(), gameInfo.Genres[i].GetName())
+					assert.WithinDuration(t, testCase.genres[i].GetCreatedAt(), gameInfo.Genres[i].GetCreatedAt(), time.Second)
+				}
+			} else {
+				assert.Nil(t, gameInfo.Genres)
+			}
 		})
 	}
 }
@@ -657,6 +716,7 @@ func TestGetGames(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -667,6 +727,7 @@ func TestGetGames(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		userUtils,
 	)
 
@@ -824,6 +885,7 @@ func TestGetMyGames(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -834,6 +896,7 @@ func TestGetMyGames(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		userUtils,
 	)
 
@@ -1061,6 +1124,7 @@ func TestUpdateGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -1071,6 +1135,7 @@ func TestUpdateGame(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		userUtils,
 	)
 
@@ -1240,6 +1305,7 @@ func TestDeleteGame(t *testing.T) {
 	mockDB := mockRepository.NewMockDB(ctrl)
 	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameManagementRoleRepository := mockRepository.NewMockGameManagementRole(ctrl)
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
 
 	mockUserCache := mockCache.NewMockUser(ctrl)
 	mockUserAuth := mockAuth.NewMockUser(ctrl)
@@ -1250,6 +1316,7 @@ func TestDeleteGame(t *testing.T) {
 		mockDB,
 		mockGameRepository,
 		mockGameManagementRoleRepository,
+		mockGameGenreRepository,
 		userUtils,
 	)
 
