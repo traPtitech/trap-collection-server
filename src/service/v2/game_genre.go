@@ -26,6 +26,9 @@ func (gameGenre *GameGenre) DeleteGameGenre(ctx context.Context, gameGenreID val
 	if errors.Is(err, repository.ErrNoRecordDeleted) {
 		return service.ErrNoGameGenre
 	}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
