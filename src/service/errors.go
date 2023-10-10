@@ -44,4 +44,5 @@ var (
 	ErrDuplicateGameVersion              = errors.New("duplicate game version")
 	ErrInvalidLimit                      = errors.New("invalid limit")
 	ErrNoAsset                           = errors.New("no asset")
+	ErrNoGameGenre                       = errors.New("no game genre")
 )

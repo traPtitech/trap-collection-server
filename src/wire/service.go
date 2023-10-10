@@ -5,8 +5,8 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/traPtitech/trap-collection-server/src/service"
-	"github.com/traPtitech/trap-collection-server/src/service/v1"
-	"github.com/traPtitech/trap-collection-server/src/service/v2"
+	v1 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	v2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 )
 
 var (
@@ -86,6 +86,9 @@ var (
 
 		wire.Bind(new(service.Seat), new(*v2.Seat)),
 		v2.NewSeat,
+
+		wire.Bind(new(service.GameGenre), new(*v2.GameGenre)),
+		v2.NewGameGenre,
 
 		v2.NewUser,
 	)

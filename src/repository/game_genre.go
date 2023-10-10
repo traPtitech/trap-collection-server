@@ -11,4 +11,8 @@ import (
 
 type GameGenre interface {
 	GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error)
+	// RemoveGameGenre
+	// ゲームジャンルを削除する。
+	// IDに該当するゲームジャンルが存在しない場合は、ErrNoRecordDeletedを返す。
+	RemoveGameGenre(ctx context.Context, gameGenreID values.GameGenreID) error
 }
