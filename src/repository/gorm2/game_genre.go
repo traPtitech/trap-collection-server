@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -22,7 +23,7 @@ func NewGameGenre(db *DB) *GameGenre {
 	}
 }
 
-var _ repository.GameGenre = &GameGenre{} 
+var _ repository.GameGenre = &GameGenre{}
 
 func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error) {
 	db, err := gameGenre.db.getDB(ctx)
@@ -49,4 +50,24 @@ func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values
 		result = append(result, domain.NewGameGenre(values.GameGenreID(genre.ID), values.GameGenreName(genre.Name), genre.CreatedAt))
 	}
 	return result, nil
+}
+
+func (gameGenre *GameGenre) RemoveGameGenre(ctx context.Context, gameGenreID values.GameGenreID) error {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	result := db.
+		Select("Games").
+		Delete(&migrate.GameGenreTable{ID: uuid.UUID(gameGenreID)})
+	err = result.Error
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+	if err != nil {
+		return fmt.Errorf("failed to remove game genre: %w", err)
+	}
+
+	return nil
 }
