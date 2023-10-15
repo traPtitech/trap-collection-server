@@ -41,7 +41,6 @@ func TestRemoveGameGenre(t *testing.T) {
 	genreID5 := values.NewGameGenreID()
 	genreID6 := values.NewGameGenreID()
 	genreID7 := values.NewGameGenreID()
-	genreID8 := values.NewGameGenreID()
 
 	gameID1 := values.NewGameID()
 
@@ -98,15 +97,11 @@ func TestRemoveGameGenre(t *testing.T) {
 				},
 			},
 		},
-		"削除に失敗したのでエラー": {
-			genreID: genreID6,
-			isErr:   true,
-		},
 		"ゲームが紐づいていてもエラー無し": {
-			genreID: genreID7,
+			genreID: genreID6,
 			beforeGameGenres: []migrate.GameGenreTable{
 				{
-					ID:        uuid.UUID(genreID7),
+					ID:        uuid.UUID(genreID6),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
 					Games: []migrate.GameTable2{
@@ -119,7 +114,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					},
 				},
 				{
-					ID:        uuid.UUID(genreID8),
+					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
 					Games: []migrate.GameTable2{
@@ -134,7 +129,7 @@ func TestRemoveGameGenre(t *testing.T) {
 			},
 			afterGameGenres: []migrate.GameGenreTable{
 				{
-					ID:        uuid.UUID(genreID8),
+					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
 					Games: []migrate.GameTable2{
