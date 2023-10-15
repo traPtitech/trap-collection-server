@@ -604,17 +604,17 @@ func TestGetGame(t *testing.T) {
 			isErr:                          true,
 		},
 		{
-			description: "GetGameGenresByGameIDがエラーなのでエラー",
-			gameID: gameID,
+			description:                    "GetGameGenresByGameIDがエラーなのでエラー",
+			gameID:                         gameID,
 			executeGetGameManagersByGameID: true,
-			executeGetActiveUsers: true,
-			executeGetGenresByGameID: true,
-			GetGenresByGameIDErr: errors.New("error"),
-			isErr: true,
+			executeGetActiveUsers:          true,
+			executeGetGenresByGameID:       true,
+			GetGenresByGameIDErr:           errors.New("error"),
+			isErr:                          true,
 		},
 		{
 			description: "Genreが空でも問題ない",
-			gameID: gameID,
+			gameID:      gameID,
 			game: domain.NewGame(
 				gameID,
 				"game name",
@@ -691,7 +691,7 @@ func TestGetGame(t *testing.T) {
 			}
 
 			if testCase.genres != nil {
-				for i:= 0; i < len(testCase.genres); i++ {
+				for i := 0; i < len(testCase.genres); i++ {
 					assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
 
 					assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())

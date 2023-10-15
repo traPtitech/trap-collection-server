@@ -28,11 +28,11 @@ func NewGame(
 	user *User,
 ) *Game {
 	return &Game{
-		db:                 db,
-		gameRepository:     gameRepository,
-		gameManagementRole: gameManagementRole,
+		db:                  db,
+		gameRepository:      gameRepository,
+		gameManagementRole:  gameManagementRole,
 		gameGenreRepository: gameGenreRepository,
-		user:               user,
+		user:                user,
 	}
 }
 
