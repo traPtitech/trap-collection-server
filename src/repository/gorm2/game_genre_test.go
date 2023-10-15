@@ -171,6 +171,11 @@ func TestRemoveGameGenre(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete genres: %+v\n", err)
 				}
+
+				err = _db.Delete(&migrate.GameTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete games: %+v\n", err)
+				}
 			}()
 
 			if testCase.beforeGameGenres != nil && len(testCase.beforeGameGenres) != 0 {
