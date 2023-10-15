@@ -62,11 +62,12 @@ func (gameGenre *GameGenre) RemoveGameGenre(ctx context.Context, gameGenreID val
 		Select("Games").
 		Delete(&migrate.GameGenreTable{ID: uuid.UUID(gameGenreID)})
 	err = result.Error
-	if result.RowsAffected == 0 {
-		return repository.ErrNoRecordDeleted
-	}
 	if err != nil {
 		return fmt.Errorf("failed to remove game genre: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
 	}
 
 	return nil
