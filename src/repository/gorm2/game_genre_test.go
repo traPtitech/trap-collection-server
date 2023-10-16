@@ -195,9 +195,9 @@ func TestRemoveGameGenre(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			if err != nil {
-				return
-			}
+			// if err != nil && errors.Is(err, testCase.expectedErr) {
+			// 	return
+			// }
 
 			var genres []migrate.GameGenreTable
 			err = db.
