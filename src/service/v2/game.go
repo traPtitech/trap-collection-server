@@ -13,23 +13,26 @@ import (
 )
 
 type Game struct {
-	db                 repository.DB
-	gameRepository     repository.GameV2
-	gameManagementRole repository.GameManagementRole
-	user               *User
+	db                  repository.DB
+	gameRepository      repository.GameV2
+	gameManagementRole  repository.GameManagementRole
+	gameGenreRepository repository.GameGenre
+	user                *User
 }
 
 func NewGame(
 	db repository.DB,
 	gameRepository repository.GameV2,
 	gameManagementRole repository.GameManagementRole,
+	gameGenreRepository repository.GameGenre,
 	user *User,
 ) *Game {
 	return &Game{
-		db:                 db,
-		gameRepository:     gameRepository,
-		gameManagementRole: gameManagementRole,
-		user:               user,
+		db:                  db,
+		gameRepository:      gameRepository,
+		gameManagementRole:  gameManagementRole,
+		gameGenreRepository: gameGenreRepository,
+		user:                user,
 	}
 }
 
@@ -196,10 +199,16 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		}
 	}
 
+	genres, err := g.gameGenreRepository.GetGenresByGameID(ctx, gameID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game genre: %w", err)
+	}
+
 	gameInfo := &service.GameInfoV2{
 		Game:        game,
 		Owners:      ownersInfo,
 		Maintainers: maintainersInfo,
+		Genres:      genres,
 	}
 
 	return gameInfo, nil

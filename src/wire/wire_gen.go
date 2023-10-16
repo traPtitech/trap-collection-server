@@ -204,10 +204,12 @@ func InjectApp() (*App, error) {
 	}
 	user3 := v2.NewUser(v2Session, v1User)
 	admin := v2.NewAdmin(v2AdminAuth, v2Session)
-	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, v2User)
+	gameGenre := gorm2.NewGameGenre(db)
+	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, gameGenre, v2User)
 	game3 := v2.NewGame(v2Session, v2Game)
 	gameRole2 := v2.NewGameRole(v2GameRole, v2Game, v2Session)
-	gameGenre := v2.NewGameGenre()
+	v2GameGenre := v2_2.NewGameGenre(gameGenre)
+	gameGenre2 := v2.NewGameGenre(v2GameGenre)
 	gameImageV2 := gorm2.NewGameImageV2(db)
 	gameVideoV2 := gorm2.NewGameVideoV2(db)
 	v2GameVersion := v2_2.NewGameVersion(db, game, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)
@@ -227,7 +229,7 @@ func InjectApp() (*App, error) {
 	}
 	v2Seat := v2_2.NewSeat(db, seat, ristrettoSeat)
 	seat2 := v2.NewSeat(v2Seat)
-	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, gameRole2, gameGenre, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, v2EditionAuth, seat2)
+	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, gameRole2, gameGenre2, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, v2EditionAuth, seat2)
 	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
 	if err != nil {
 		return nil, err

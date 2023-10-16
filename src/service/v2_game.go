@@ -50,4 +50,5 @@ type GameInfoV2 struct {
 	Game        *domain.Game
 	Owners      []*UserInfo
 	Maintainers []*UserInfo
+	Genres      []*domain.GameGenre
 }
