@@ -155,7 +155,8 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		gameName,
 		values.GameDescription(req.Description),
 		owners,
-		maintainers)
+		maintainers,
+		[]values.GameGenreName{})
 
 	if errors.Is(err, service.ErrOverlapInOwners) {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
