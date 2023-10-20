@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -98,10 +99,37 @@ func (gameGenre *GameGenre) GetGameGenresWithNames(ctx context.Context, gameGenr
 	return resultGenres, nil
 }
 
-// 	// SaveGameGenres
-// 	// ゲームジャンルを作成する。
-// 	// 名前が重複するゲームジャンルが1つでも存在するとき、ErrDuplicateUniqueKeyを返す。
-// func (gameGenre *GameGenre)	SaveGameGenres(ctx context.Context, gameGenres []*domain.GameGenre) error{}
+// // SaveGameGenres
+// // ゲームジャンルを作成する。
+// // 名前が重複するゲームジャンルが1つでも存在するとき、ErrDuplicatedUniqueKeyを返す。
+func (gameGenre *GameGenre) SaveGameGenres(ctx context.Context, gameGenres []*domain.GameGenre) error {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	genres := make([]migrate.GameGenreTable, 0, len(gameGenres))
+	for i := range gameGenres {
+		genres = append(genres, migrate.GameGenreTable{
+			ID:        uuid.UUID(gameGenres[i].GetID()),
+			Name:      string(gameGenres[i].GetName()),
+			CreatedAt: gameGenres[i].GetCreatedAt(),
+		})
+	}
+
+	err = db.Create(&genres).Error
+	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+		if mysqlErr.Number == 1062 {
+			return repository.ErrDuplicatedUniqueKey
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // 	// RegisterGenresToGame
 // 	// ゲームにゲームジャンルを登録する。
 // func (gameGenre *GameGenre)	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error{}

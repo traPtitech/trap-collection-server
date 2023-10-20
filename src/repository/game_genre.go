@@ -21,7 +21,7 @@ type GameGenre interface {
 	GetGameGenresWithNames(ctx context.Context, gameGenreNames []values.GameGenreName) ([]*domain.GameGenre, error)
 	// SaveGameGenres
 	// ゲームジャンルを作成する。
-	// 名前が重複するゲームジャンルが1つでも存在するとき、ErrDuplicateUniqueKeyを返す。
+	// 名前が重複するゲームジャンルが1つでも存在するとき、ErrDuplicatedUniqueKeyを返す。
 	SaveGameGenres(ctx context.Context, gameGenres []*domain.GameGenre) error
 	// RegisterGenresToGame
 	// ゲームにゲームジャンルを登録する。
