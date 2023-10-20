@@ -366,6 +366,105 @@ func TestGetGameGenresWithNames(t *testing.T) {
 	}
 }
 
+func TestSaveGameGenres(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	type test struct {
+		gameGenres       []*domain.GameGenre
+		beforeGameGenres []migrate.GameGenreTable
+		afterGameGenres  []migrate.GameGenreTable
+		isErr            bool
+		expectedErr      error
+	}
+
+	gameGenreID1 := uuid.New()
+	gameGenreID2 := uuid.New()
+
+	gameGenreName1 := "ジャンル1"
+	gameGenreName2 := "ジャンル2"
+
+	now := time.Now()
+
+	testCases := map[string]test{
+		"特に問題ないのでエラー無し": {
+			gameGenres:      []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
+			afterGameGenres: []migrate.GameGenreTable{{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now}},
+		},
+		"他にジャンルがあってもエラー無し": {
+			gameGenres:       []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
+			beforeGameGenres: []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Hour)}},
+			afterGameGenres: []migrate.GameGenreTable{
+				{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now},
+				{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Hour)},
+			},
+		},
+		"複数ジャンルの作成でもエラー無し": {
+			gameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now),
+				domain.NewGameGenre(values.GameGenreID(gameGenreID2), values.GameGenreName(gameGenreName2), now.Add(-time.Second)),
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now},
+				{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Second)},
+			},
+		},
+		"ジャンルが重複しているのでErrDuplicatedUniqueKey": {
+			gameGenres:       []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
+			beforeGameGenres: []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
+			afterGameGenres:  []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
+			isErr:            true,
+			expectedErr:      repository.ErrDuplicatedUniqueKey,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			defer cleanupGameGenresTable(t)
+
+			if testCase.beforeGameGenres != nil && len(testCase.beforeGameGenres) > 0 {
+				err := db.Create(&testCase.beforeGameGenres).Error
+				if err != nil {
+					t.Fatalf("failed to create game genres before sub test: %v", err)
+				}
+			}
+
+			err := gameGenreRepository.SaveGameGenres(ctx, testCase.gameGenres)
+
+			if testCase.isErr {
+				if testCase.expectedErr != nil {
+					assert.ErrorIs(t, err, testCase.expectedErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			var genres []migrate.GameGenreTable
+
+			err = db.Order("created_at desc").Find(&genres).Error
+			if err != nil {
+				t.Fatalf("failed to get game genres: %v", err)
+			}
+
+			assert.Len(t, genres, len(testCase.afterGameGenres))
+
+			for i, genre := range genres {
+				assert.Equal(t, testCase.afterGameGenres[i].ID, genre.ID)
+				assert.Equal(t, testCase.afterGameGenres[i].Name, genre.Name)
+				assert.WithinDuration(t, testCase.afterGameGenres[i].CreatedAt, genre.CreatedAt, time.Second)
+			}
+		})
+	}
+}
+
 // game_genresテーブルとgame_genre_relationsテーブルを削除する。gamesテーブルは削除されない。
 func cleanupGameGenresTable(t *testing.T) {
 	t.Helper()
