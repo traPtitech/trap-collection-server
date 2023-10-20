@@ -23,7 +23,7 @@ func NewGameGenre(db *DB) *GameGenre {
 	}
 }
 
-var _ repository.GameGenre = &GameGenre{}
+// var _ repository.GameGenre = &GameGenre{}
 
 func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error) {
 	db, err := gameGenre.db.getDB(ctx)
@@ -72,3 +72,36 @@ func (gameGenre *GameGenre) RemoveGameGenre(ctx context.Context, gameGenreID val
 
 	return nil
 }
+
+func (gameGenre *GameGenre) GetGameGenresWithNames(ctx context.Context, gameGenreNames []values.GameGenreName) ([]*domain.GameGenre, error) {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var genres []migrate.GameGenreTable
+	result := db.
+		Where("name IN ?", gameGenreNames).
+		Find(&genres)
+	if result.RowsAffected == 0 {
+		return nil, repository.ErrRecordNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game genres with names: %w", err)
+	}
+
+	resultGenres := make([]*domain.GameGenre, 0, len(genres))
+	for _, genre := range genres {
+		resultGenres = append(resultGenres, domain.NewGameGenre(values.GameGenreID(genre.ID), values.GameGenreName(genre.Name), genre.CreatedAt))
+	}
+
+	return resultGenres, nil
+}
+
+// 	// SaveGameGenres
+// 	// ゲームジャンルを作成する。
+// 	// 名前が重複するゲームジャンルが1つでも存在するとき、ErrDuplicateUniqueKeyを返す。
+// func (gameGenre *GameGenre)	SaveGameGenres(ctx context.Context, gameGenres []*domain.GameGenre) error{}
+// 	// RegisterGenresToGame
+// 	// ゲームにゲームジャンルを登録する。
+// func (gameGenre *GameGenre)	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error{}
