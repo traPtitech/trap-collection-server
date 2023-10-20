@@ -2,11 +2,13 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
@@ -220,5 +222,170 @@ func TestRemoveGameGenre(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGetGameGenresWithNames(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	type test struct {
+		gameGenreNames     []values.GameGenreName
+		gameGenres         []migrate.GameGenreTable
+		isErr              bool
+		expectedGameGenres []*domain.GameGenre
+		expectedErr        error
+	}
+
+	gameGenreID1 := uuid.New()
+	gameGenreID2 := uuid.New()
+
+	now := time.Now()
+
+	testCases := map[string]test{
+		"特に問題ないのでエラー無し": {
+			gameGenreNames: []values.GameGenreName{values.NewGameGenreName("ジャンル")},
+			gameGenres: []migrate.GameGenreTable{
+				{
+					ID:        gameGenreID1,
+					Name:      "ジャンル",
+					CreatedAt: now.Add(-time.Hour),
+				},
+			},
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenreID1), values.NewGameGenreName("ジャンル"), now.Add(-time.Hour)),
+			},
+		},
+		"ジャンルが複数でも問題なし": {
+			gameGenreNames: []values.GameGenreName{
+				values.NewGameGenreName("ジャンル1"),
+				values.NewGameGenreName("ジャンル2"),
+			},
+			gameGenres: []migrate.GameGenreTable{
+				{
+					ID:        gameGenreID1,
+					Name:      "ジャンル1",
+					CreatedAt: now.Add(-time.Hour),
+				},
+				{
+					ID:        gameGenreID2,
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour * 2),
+				},
+			},
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenreID1), values.NewGameGenreName("ジャンル1"), now.Add(-time.Hour)),
+				domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenreID2), values.NewGameGenreName("ジャンル2"), now.Add(-time.Hour*2)),
+			},
+		},
+		"関係ないジャンルがDBに合っても問題なし": {
+			gameGenreNames: []values.GameGenreName{
+				values.NewGameGenreName("ジャンル1"),
+			},
+			gameGenres: []migrate.GameGenreTable{
+				{
+					ID:        gameGenreID1,
+					Name:      "ジャンル1",
+					CreatedAt: now.Add(-time.Hour),
+				},
+				{
+					ID:        gameGenreID2,
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour * 2),
+				},
+			},
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenreID1), values.NewGameGenreName("ジャンル1"), now.Add(-time.Hour)),
+			},
+		},
+		"該当するジャンルが存在しないのでErrRecordNotFound": {
+			gameGenreNames: []values.GameGenreName{
+				values.NewGameGenreName("ジャンル1"),
+			},
+			gameGenres: []migrate.GameGenreTable{
+				{
+					ID:        gameGenreID2,
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour * 2),
+				},
+			},
+			isErr:       true,
+			expectedErr: repository.ErrRecordNotFound,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			defer cleanupGameGenresTable(t)
+
+			if testCase.gameGenres != nil && len(testCase.gameGenres) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Info),
+					}).Create(testCase.gameGenres).Error
+				if err != nil {
+					t.Fatalf("failed to create game genres: %v", err)
+				}
+			}
+
+			genres, err := gameGenreRepository.GetGameGenresWithNames(ctx, testCase.gameGenreNames)
+
+			if testCase.isErr {
+				if testCase.expectedErr != nil {
+					if !errors.Is(err, testCase.expectedErr) {
+						t.Fatalf("expected: %v, actual: %v", testCase.expectedErr, err)
+					}
+					// assert.ErrorIs(t, err, testCase.expectedErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil || testCase.isErr {
+				return
+			}
+
+			assert.Len(t, genres, len(testCase.expectedGameGenres))
+
+			for i := range genres {
+				assert.Equal(t, testCase.expectedGameGenres[i].GetID(), genres[i].GetID())
+				assert.Equal(t, testCase.expectedGameGenres[i].GetName(), genres[i].GetName())
+				assert.WithinDuration(t, testCase.expectedGameGenres[i].GetCreatedAt(), genres[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
+// game_genresテーブルとgame_genre_relationsテーブルを削除する。gamesテーブルは削除されない。
+func cleanupGameGenresTable(t *testing.T) {
+	t.Helper()
+	db, err := testDB.getDB(context.Background())
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	db = db.Session(&gorm.Session{AllowGlobalUpdate: true})
+
+	var genres []migrate.GameGenreTable
+	err = db.Find(&genres).Error
+	if err != nil {
+		t.Fatalf("failed to get genres")
+	}
+
+	err = db.
+		Select("Games").
+		Delete(&genres).Error
+	if err != nil {
+		t.Fatalf("failed to delete genres: %+v\n", err)
 	}
 }
