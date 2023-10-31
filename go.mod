@@ -16,7 +16,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/h2non/filetype v1.1.3
 	github.com/labstack/echo-contrib v0.15.0
-	github.com/labstack/echo/v4 v4.11.1
+	github.com/labstack/echo/v4 v4.11.2
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/ory/dockertest/v3 v3.10.0
