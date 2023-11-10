@@ -104,6 +104,7 @@ func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType rep
 
 	var game migrate.GameTable2
 	err = db.
+		Joins("GameVisibilityType").
 		Where("id = ?", uuid.UUID(gameID)).
 		Take(&game).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -113,10 +114,21 @@ func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType rep
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
+	var visibility values.GameVisibility
+	switch game.GameVisibilityType.Name {
+	case migrate.GameVisibilityTypePublic:
+		visibility = values.GameVisibilityTypePublic
+	case migrate.GameVisibilityTypeLimited:
+		visibility = values.GameVisibilityTypeLimited
+	case migrate.GameVisibilityTypePrivate:
+		visibility = values.GameVisibilityTypePrivate
+	}
+
 	return domain.NewGame(
 		values.NewGameIDFromUUID(game.ID),
 		values.NewGameName(game.Name),
 		values.NewGameDescription(game.Description),
+		visibility,
 		game.CreatedAt,
 	), nil
 }
@@ -146,6 +158,7 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	}
 
 	err = query.
+		Joins("GameVisibillityType").
 		Find(&games).Error
 
 	if err != nil {
@@ -154,10 +167,21 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
 	for _, game := range games {
+		var visibility values.GameVisibility
+		switch game.GameVisibilityType.Name {
+		case migrate.GameVisibilityTypePublic:
+			visibility = values.GameVisibilityTypePublic
+		case migrate.GameVisibilityTypeLimited:
+			visibility = values.GameVisibilityTypeLimited
+		case migrate.GameVisibilityTypePrivate:
+			visibility = values.GameVisibilityTypePrivate
+		}
+
 		gamesDomain = append(gamesDomain, domain.NewGame(
 			values.NewGameIDFromUUID(game.ID),
 			values.NewGameName(game.Name),
 			values.NewGameDescription(game.Description),
+			visibility,
 			game.CreatedAt,
 		))
 	}
@@ -203,6 +227,7 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 	}
 
 	err = query.
+		Joins("GameVisibillityType").
 		Find(&games).Error
 
 	if err != nil {
@@ -211,10 +236,21 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 
 	gamesDomain := make([]*domain.Game, 0, len(games))
 	for _, game := range games {
+		var visibility values.GameVisibility
+		switch game.GameVisibilityType.Name {
+		case migrate.GameVisibilityTypePublic:
+			visibility = values.GameVisibilityTypePublic
+		case migrate.GameVisibilityTypeLimited:
+			visibility = values.GameVisibilityTypeLimited
+		case migrate.GameVisibilityTypePrivate:
+			visibility = values.GameVisibilityTypePrivate
+		}
+
 		gamesDomain = append(gamesDomain, domain.NewGame(
 			values.NewGameIDFromUUID(game.ID),
 			values.NewGameName(game.Name),
 			values.NewGameDescription(game.Description),
+			visibility,
 			game.CreatedAt,
 		))
 	}
@@ -250,6 +286,7 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 
 	var games []migrate.GameTable2
 	err = db.
+		Joins("GameVisibillityType").
 		Where("id IN ?", uuidGameIDs).
 		Find(&games).Error
 	if err != nil {
@@ -258,10 +295,21 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 
 	gamesDomains := make([]*domain.Game, 0, len(games))
 	for _, game := range games {
+		var visibility values.GameVisibility
+		switch game.GameVisibilityType.Name {
+		case migrate.GameVisibilityTypePublic:
+			visibility = values.GameVisibilityTypePublic
+		case migrate.GameVisibilityTypeLimited:
+			visibility = values.GameVisibilityTypeLimited
+		case migrate.GameVisibilityTypePrivate:
+			visibility = values.GameVisibilityTypePrivate
+		}
+
 		gamesDomains = append(gamesDomains, domain.NewGame(
 			values.NewGameIDFromUUID(game.ID),
 			values.NewGameName(game.Name),
 			values.NewGameDescription(game.Description),
+			visibility,
 			game.CreatedAt,
 		))
 	}

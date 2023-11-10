@@ -11,6 +11,7 @@ type (
 	GameID          uuid.UUID
 	GameName        string
 	GameDescription string
+	GameVisibility  int
 )
 
 func NewGameID() GameID {
@@ -47,3 +48,9 @@ func (gn GameName) Validate() error {
 func NewGameDescription(description string) GameDescription {
 	return GameDescription(description)
 }
+
+const (
+	GameVisibilityTypePublic GameVisibility = iota
+	GameVisibilityTypeLimited
+	GameVisibilityTypePrivate
+)
