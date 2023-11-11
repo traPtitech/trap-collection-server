@@ -6,32 +6,34 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	// v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
-	v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
+
 	v2 "github.com/traPtitech/trap-collection-server/src/handler/v2"
 )
 
 type API struct {
-	featureV2 bool
-	addr      string
-	session   *common.Session
-	v1        *v1.API
-	v2        *v2.API
+	addr    string
+	session *common.Session
+	v2      *v2.API
 }
 
-func NewAPI(appConf config.App, conf config.Handler, session *common.Session, v1 *v1.API, v2 *v2.API) (*API, error) {
+func NewAPI(appConf config.App, conf config.Handler, session *common.Session, v2 *v2.API) (*API, error) {
 	addr, err := conf.Addr()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get addr: %w", err)
 	}
 
+	if !appConf.FeatureV2() {
+		return nil, fmt.Errorf("only v2 is allowed")
+	}
+
 	return &API{
-		featureV2: appConf.FeatureV2(),
-		addr:      addr,
-		session:   session,
-		v1:        v1,
-		v2:        v2,
+		addr:    addr,
+		session: session,
+		v2:      v2,
 	}, nil
 }
 
@@ -52,16 +54,9 @@ func (api *API) Start() error {
 
 	api.session.Use(e)
 
-	err := api.v1.SetRoutes(e)
+	err := api.v2.SetRoutes(e)
 	if err != nil {
-		return fmt.Errorf("failed to set v1 routes: %w", err)
-	}
-
-	if api.featureV2 {
-		err := api.v2.SetRoutes(e)
-		if err != nil {
-			return fmt.Errorf("failed to set v2 routes: %w", err)
-		}
+		return fmt.Errorf("failed to set v2 routes: %w", err)
 	}
 
 	return e.Start(api.addr)

@@ -44,7 +44,6 @@ func NewGameImage(
 func (gameImage *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, gameID values.GameID) (*domain.GameImage, error) {
 	var image *domain.GameImage
 	err := gameImage.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		// TODO: v2のgameRepositoryに変更
 		_, err := gameImage.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrInvalidGameID
