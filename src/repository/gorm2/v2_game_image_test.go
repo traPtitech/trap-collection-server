@@ -82,7 +82,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -100,7 +100,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -118,7 +118,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -147,7 +147,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -155,13 +155,13 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -178,7 +178,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -186,7 +186,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -309,7 +309,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -330,7 +330,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -351,7 +351,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -372,7 +372,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID4),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -392,13 +392,13 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -533,7 +533,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -553,7 +553,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -573,7 +573,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -593,7 +593,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID4),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -612,13 +612,13 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},

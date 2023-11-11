@@ -78,7 +78,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -107,7 +107,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -115,13 +115,13 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -138,7 +138,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -146,7 +146,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -265,7 +265,7 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -286,7 +286,7 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -306,13 +306,13 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -443,7 +443,7 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -463,7 +463,7 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -482,13 +482,13 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},

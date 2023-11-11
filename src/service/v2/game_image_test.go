@@ -31,7 +31,7 @@ func TestSaveGameImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 
 	type test struct {
@@ -224,7 +224,7 @@ func TestGetGameImages(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
 
@@ -369,7 +369,7 @@ func TestGetGameImage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
 
@@ -561,7 +561,7 @@ func TestGetGameImageMeta(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameImageStorage := mockStorage.NewGameImage(ctrl, nil)
 

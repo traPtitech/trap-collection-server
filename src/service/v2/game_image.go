@@ -22,14 +22,14 @@ var _ service.GameImageV2 = &GameImage{}
 
 type GameImage struct {
 	db                  repository.DB
-	gameRepository      repository.Game
+	gameRepository      repository.GameV2
 	gameImageRepository repository.GameImageV2
 	gameImageStorage    storage.GameImage
 }
 
 func NewGameImage(
 	db repository.DB,
-	gameRepository repository.Game,
+	gameRepository repository.GameV2,
 	gameImageRepository repository.GameImageV2,
 	gameImageStorage storage.GameImage,
 ) *GameImage {
