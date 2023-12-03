@@ -29,11 +29,33 @@ func (g *GameV2) SaveGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
+	var visibilityTypeName string
+	switch game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		visibilityTypeName = migrate.GameVisibilityTypePublic
+	case values.GameVisibilityTypeLimited:
+		visibilityTypeName = migrate.GameVisibilityTypeLimited
+	case values.GameVisibilityTypePrivate:
+		visibilityTypeName = migrate.GameVisibilityTypePrivate
+	default:
+		return fmt.Errorf("invalid visibility type: %d", game.GetVisibility())
+	}
+
+	var visibilityType migrate.GameVisibilityTypeTable
+	err = db.
+		Where("name = ?", visibilityTypeName).
+		Select("id").Take(&visibilityType).Error
+	if err != nil {
+		return fmt.Errorf("failed to get visibility type: %w", err)
+	}
+	visibilityTypeID := visibilityType.ID
+
 	gameTable := migrate.GameTable2{
-		ID:          uuid.UUID(game.GetID()),
-		Name:        string(game.GetName()),
-		Description: string(game.GetDescription()),
-		CreatedAt:   game.GetCreatedAt(),
+		ID:               uuid.UUID(game.GetID()),
+		Name:             string(game.GetName()),
+		Description:      string(game.GetDescription()),
+		CreatedAt:        game.GetCreatedAt(),
+		VisibilityTypeID: visibilityTypeID,
 	}
 
 	err = db.Create(&gameTable).Error
@@ -105,7 +127,7 @@ func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType rep
 	var game migrate.GameTable2
 	err = db.
 		Joins("GameVisibilityType").
-		Where("id = ?", uuid.UUID(gameID)).
+		Where("games.id = ?", uuid.UUID(gameID)).
 		Take(&game).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, repository.ErrRecordNotFound
@@ -148,7 +170,10 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 
 	var games []migrate.GameTable2
 
-	query := db.Order("created_at DESC")
+	query := db.
+		Model(&migrate.GameTable2{}).
+		Preload("GameVisibilityType").
+		Order("created_at DESC")
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -158,7 +183,6 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 	}
 
 	err = query.
-		Joins("GameVisibillityType").
 		Find(&games).Error
 
 	if err != nil {
@@ -175,6 +199,8 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 			visibility = values.GameVisibilityTypeLimited
 		case migrate.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
+		default:
+			return nil, 0, fmt.Errorf("invalid game visibility: %s", game.GameVisibilityType.Name)
 		}
 
 		gamesDomain = append(gamesDomain, domain.NewGame(
@@ -212,7 +238,10 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 
 	var games []migrate.GameTable2
 
-	tx := db.Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+	tx := db.
+		Model(&migrate.GameTable2{}).
+		Preload("GameVisibilityType").
+		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
 		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
 		Session(&gorm.Session{})
 
@@ -227,7 +256,6 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 	}
 
 	err = query.
-		Joins("GameVisibillityType").
 		Find(&games).Error
 
 	if err != nil {
@@ -244,6 +272,8 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 			visibility = values.GameVisibilityTypeLimited
 		case migrate.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
+		default:
+			return nil, 0, fmt.Errorf("unknown visibility type: %s", game.GameVisibilityType.Name)
 		}
 
 		gamesDomain = append(gamesDomain, domain.NewGame(
@@ -286,7 +316,8 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 
 	var games []migrate.GameTable2
 	err = db.
-		Joins("GameVisibillityType").
+		Model(&migrate.GameTable2{}).
+		Preload("GameVisibilityType").
 		Where("id IN ?", uuidGameIDs).
 		Find(&games).Error
 	if err != nil {
@@ -303,6 +334,8 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 			visibility = values.GameVisibilityTypeLimited
 		case migrate.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
+		default:
+			return nil, fmt.Errorf("invalid game visibility: %s", game.GameVisibilityType.Name)
 		}
 
 		gamesDomains = append(gamesDomains, domain.NewGame(
