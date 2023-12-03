@@ -62,6 +62,16 @@ func TestSaveGameVideoV2(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -157,11 +167,12 @@ func TestSaveGameVideoV2(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := db.Create(&migrate.GameTable2{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
-				GameVideo2s: testCase.beforeVideos,
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				CreatedAt:        time.Now(),
+				GameVideo2s:      testCase.beforeVideos,
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -254,6 +265,16 @@ func TestGetGameVideo(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -343,11 +364,12 @@ func TestGetGameVideo(t *testing.T) {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
 					gameIDMap[video.GameID] = &migrate.GameTable2{
-						ID:          video.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameVideo2s: []migrate.GameVideoTable2{video},
+						ID:               video.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameVideo2s:      []migrate.GameVideoTable2{video},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
@@ -431,6 +453,16 @@ func TestGetGameVideos(t *testing.T) {
 	for _, videoType := range videoTypes {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	now := time.Now()
 
@@ -522,11 +554,12 @@ func TestGetGameVideos(t *testing.T) {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
 					gameIDMap[video.GameID] = &migrate.GameTable2{
-						ID:          video.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameVideo2s: []migrate.GameVideoTable2{video},
+						ID:               video.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameVideo2s:      []migrate.GameVideoTable2{video},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}

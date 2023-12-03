@@ -66,6 +66,16 @@ func TestSaveGameImageV2(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -197,11 +207,12 @@ func TestSaveGameImageV2(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := db.Create(&migrate.GameTable2{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
-				GameImage2s: testCase.beforeImages,
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				CreatedAt:        time.Now(),
+				GameImage2s:      testCase.beforeImages,
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -297,6 +308,16 @@ func TestGetGameImage(t *testing.T) {
 	for _, imageType := range imageTypes {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	now := time.Now()
 
@@ -429,11 +450,12 @@ func TestGetGameImage(t *testing.T) {
 					game.GameImage2s = append(game.GameImage2s, image)
 				} else {
 					gameIDMap[image.GameID] = &migrate.GameTable2{
-						ID:          image.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameImage2s: []migrate.GameImageTable2{image},
+						ID:               image.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameImage2s:      []migrate.GameImageTable2{image},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
@@ -521,6 +543,16 @@ func TestGetGameImages(t *testing.T) {
 	for _, imageType := range imageTypes {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	now := time.Now()
 
@@ -652,11 +684,12 @@ func TestGetGameImages(t *testing.T) {
 					game.GameImage2s = append(game.GameImage2s, image)
 				} else {
 					gameIDMap[image.GameID] = &migrate.GameTable2{
-						ID:          image.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameImage2s: []migrate.GameImageTable2{image},
+						ID:               image.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameImage2s:      []migrate.GameImageTable2{image},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
