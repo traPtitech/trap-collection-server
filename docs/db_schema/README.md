@@ -8,11 +8,11 @@
 | [admins](admins.md) | 1 |  | BASE TABLE |
 | [editions](editions.md) | 5 | エディションテーブル(v2) | BASE TABLE |
 | [edition_game_version_relations](edition_game_version_relations.md) | 2 | エディションとゲームバージョンの関係テーブル(v2) | BASE TABLE |
-| [games](games.md) | 5 | ゲームテーブル | BASE TABLE |
+| [games](games.md) | 6 | ゲームテーブル | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |
 | [game_file_types](game_file_types.md) | 3 | ゲームファイルの種類のテーブル | BASE TABLE |
-| [game_genres](game_genres.md) | 3 |  | BASE TABLE |
-| [game_genre_relations](game_genre_relations.md) | 2 |  | BASE TABLE |
+| [game_genres](game_genres.md) | 3 | ゲームのジャンルのテーブル | BASE TABLE |
+| [game_genre_relations](game_genre_relations.md) | 2 | ゲームとジャンルの関係テーブル | BASE TABLE |
 | [game_images](game_images.md) | 4 | ゲーム画像テーブル(v1) | BASE TABLE |
 | [game_image_types](game_image_types.md) | 3 | ゲーム画像の種類のテーブル | BASE TABLE |
 | [game_management_roles](game_management_roles.md) | 3 | ゲーム管理者の権限のテーブル | BASE TABLE |
@@ -22,6 +22,7 @@
 | [game_version_game_file_relations](game_version_game_file_relations.md) | 2 | ゲームバージョンとゲームファイルの関係テーブル(v2) | BASE TABLE |
 | [game_videos](game_videos.md) | 4 | ゲーム動画テーブル(v1) | BASE TABLE |
 | [game_video_types](game_video_types.md) | 3 | ゲーム動画の種類のテーブル | BASE TABLE |
+| [game_visibility_types](game_visibility_types.md) | 3 | ゲームの公開範囲のテーブル | BASE TABLE |
 | [launcher_sessions](launcher_sessions.md) | 6 | ランチャーセッションテーブル(v1) | BASE TABLE |
 | [launcher_users](launcher_users.md) | 5 | ランチャーユーザーテーブル(v1) | BASE TABLE |
 | [launcher_versions](launcher_versions.md) | 5 | ランチャーバージョンテーブル(v1) | BASE TABLE |

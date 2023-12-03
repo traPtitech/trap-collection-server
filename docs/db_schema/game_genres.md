@@ -2,6 +2,8 @@
 
 ## Description
 
+ゲームのジャンルのテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -21,9 +23,9 @@ CREATE TABLE `game_genres` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false | [game_genre_relations](game_genre_relations.md) |  |  |
-| name | varchar(32) |  | false |  |  |  |
-| created_at | datetime | current_timestamp() | false |  |  |  |
+| id | varchar(36) |  | false | [game_genre_relations](game_genre_relations.md) |  | ゲームのジャンルのID |
+| name | varchar(32) |  | false |  |  | ゲームのジャンルの名前 |
+| created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
 
 ## Constraints
 

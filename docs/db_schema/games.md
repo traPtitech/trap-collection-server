@@ -14,7 +14,10 @@ CREATE TABLE `games` (
   `description` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `visibility_type_id` tinyint(4) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_games_game_visibility_type` (`visibility_type_id`),
+  CONSTRAINT `fk_games_game_visibility_type` FOREIGN KEY (`visibility_type_id`) REFERENCES `game_visibility_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -29,17 +32,20 @@ CREATE TABLE `games` (
 | description | text |  | false |  |  | ゲームの説明 |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
 | deleted_at | datetime | NULL | true |  |  | 削除日時 |
+| visibility_type_id | tinyint(4) |  | false |  | [game_visibility_types](game_visibility_types.md) | ゲームの公開範囲のID |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| fk_games_game_visibility_type | FOREIGN KEY | FOREIGN KEY (visibility_type_id) REFERENCES game_visibility_types (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
+| fk_games_game_visibility_type | KEY fk_games_game_visibility_type (visibility_type_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

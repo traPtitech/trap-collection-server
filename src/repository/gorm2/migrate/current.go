@@ -41,19 +41,20 @@ const (
 
 // アプリケーションのv2
 type (
-	GameTable2             = gameTable2V5 // 実際に使用されるテーブルはv1のGameTableと同一
-	GameVersionTable2      = gameVersionTable2V5
-	GameFileTable2         = gameFileTable2V5
-	GameImageTable2        = gameImageTable2V2
-	GameVideoTable2        = gameVideoTable2V2
-	EditionTable2          = editionTableV6
-	ProductKeyTable2       = productKeyTableV6
-	ProductKeyStatusTable2 = productKeyStatusTableV6
-	AccessTokenTable2      = accessTokenTableV2
-	AdminTable             = adminTable
-	SeatTable2             = seatTableV9
-	SeatStatusTable2       = seatStatusTableV9
-	GameGenreTable         = gameGenreTableV10
+	GameTable2              = gameTable2V11 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameVersionTable2       = gameVersionTable2V5
+	GameFileTable2          = gameFileTable2V5
+	GameImageTable2         = gameImageTable2V2
+	GameVideoTable2         = gameVideoTable2V2
+	EditionTable2           = editionTableV6
+	ProductKeyTable2        = productKeyTableV6
+	ProductKeyStatusTable2  = productKeyStatusTableV6
+	AccessTokenTable2       = accessTokenTableV2
+	AdminTable              = adminTable
+	SeatTable2              = seatTableV9
+	SeatStatusTable2        = seatStatusTableV9
+	GameGenreTable          = gameGenreTableV11
+	GameVisibilityTypeTable = gameVisibilityTypeTableV11
 )
 
 const (
@@ -65,4 +66,10 @@ const (
 	SeatStatusNone  = seatStatusNoneV9
 	SeatStatusEmpty = seatStatusEmptyV9
 	SeatStatusInUse = seatStatusInUseV9
+)
+
+const (
+	GameVisibilityTypePublic  = gameVisibilityTypePublicV11
+	GameVisibilityTypeLimited = gameVisibilityTypeLimitedV11
+	GameVisibilityTypePrivate = gameVisibilityTypePrivateV11
 )

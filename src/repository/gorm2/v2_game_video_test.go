@@ -62,6 +62,16 @@ func TestSaveGameVideoV2(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -78,7 +88,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -107,7 +117,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -115,13 +125,13 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -138,7 +148,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -146,7 +156,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -157,11 +167,12 @@ func TestSaveGameVideoV2(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := db.Create(&migrate.GameTable2{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
-				GameVideo2s: testCase.beforeVideos,
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				CreatedAt:        time.Now(),
+				GameVideo2s:      testCase.beforeVideos,
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -254,6 +265,16 @@ func TestGetGameVideo(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -265,7 +286,7 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -286,7 +307,7 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -306,13 +327,13 @@ func TestGetGameVideo(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -343,11 +364,12 @@ func TestGetGameVideo(t *testing.T) {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
 					gameIDMap[video.GameID] = &migrate.GameTable2{
-						ID:          video.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameVideo2s: []migrate.GameVideoTable2{video},
+						ID:               video.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameVideo2s:      []migrate.GameVideoTable2{video},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
@@ -432,6 +454,16 @@ func TestGetGameVideos(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -443,7 +475,7 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -463,7 +495,7 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -482,13 +514,13 @@ func TestGetGameVideos(t *testing.T) {
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[gameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -522,11 +554,12 @@ func TestGetGameVideos(t *testing.T) {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
 					gameIDMap[video.GameID] = &migrate.GameTable2{
-						ID:          video.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameVideo2s: []migrate.GameVideoTable2{video},
+						ID:               video.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameVideo2s:      []migrate.GameVideoTable2{video},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}

@@ -149,11 +149,23 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		}
 	}
 
+	var visibility values.GameVisibility
+	switch req.Visibility {
+	case openapi.Public:
+		visibility = values.GameVisibilityTypePublic
+	case openapi.Limited:
+		visibility = values.GameVisibilityTypeLimited
+	case openapi.Private:
+		visibility = values.GameVisibilityTypePrivate
+	default:
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid visibility")
+	}
 	gameInfo, err := g.gameService.CreateGame(
 		ctx.Request().Context(),
 		authSession,
 		gameName,
 		values.GameDescription(req.Description),
+		visibility,
 		owners,
 		maintainers)
 

@@ -15,7 +15,7 @@ import (
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
-	"github.com/traPtitech/trap-collection-server/src/handler/v1/openapi"
+	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
 )
@@ -80,7 +80,7 @@ func TestGetMe(t *testing.T) {
 				values.TrapMemberStatusActive,
 			),
 			user: &openapi.User{
-				Id:   id1.String(),
+				Id:   id1,
 				Name: "mazrean",
 			},
 		},
@@ -243,7 +243,7 @@ func TestGetUsers(t *testing.T) {
 			},
 			users: []*openapi.User{
 				{
-					Id:   id1.String(),
+					Id:   id1,
 					Name: "mazrean",
 				},
 			},
@@ -269,11 +269,11 @@ func TestGetUsers(t *testing.T) {
 			},
 			users: []*openapi.User{
 				{
-					Id:   id1.String(),
+					Id:   id1,
 					Name: "mazrean",
 				},
 				{
-					Id:   id2.String(),
+					Id:   id2,
 					Name: "mazrean2",
 				},
 			},
