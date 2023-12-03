@@ -69,25 +69,25 @@ func TestGetGenresByGameID(t *testing.T) {
 			gameID: gameID2,
 			gameGenres: []migrate.GameGenreTable{
 				{
-					ID: uuid.UUID(genreID2),
-					Name: "test1",
+					ID:        uuid.UUID(genreID2),
+					Name:      "test1",
 					CreatedAt: now.Add(-time.Hour),
 					Games: []migrate.GameTable2{
 						{
-							ID: uuid.UUID(gameID2),
-							Name: "test2",
+							ID:          uuid.UUID(gameID2),
+							Name:        "test2",
 							Description: "test2",
 						},
 					},
 				},
 				{
-					ID: uuid.UUID(genreID3),
-					Name: "test2",
-					CreatedAt: now.Add(-time.Hour*2),
+					ID:        uuid.UUID(genreID3),
+					Name:      "test2",
+					CreatedAt: now.Add(-time.Hour * 2),
 					Games: []migrate.GameTable2{
 						{
-							ID: uuid.UUID(gameID2),
-							Name: "test2",
+							ID:          uuid.UUID(gameID2),
+							Name:        "test2",
 							Description: "test2",
 						},
 					},
@@ -99,8 +99,8 @@ func TestGetGenresByGameID(t *testing.T) {
 			},
 		},
 		"ジャンルが空でもエラーなし": {
-			gameID: gameID3,
-			gameGenres: []migrate.GameGenreTable{},
+			gameID:             gameID3,
+			gameGenres:         []migrate.GameGenreTable{},
 			expectedGameGenres: []*domain.GameGenre{},
 		},
 		"違うゲームがあってもエラーなし": {
@@ -121,7 +121,6 @@ func TestGetGenresByGameID(t *testing.T) {
 			},
 			expectedGameGenres: []*domain.GameGenre{},
 		},
-
 	}
 
 	for description, testCase := range testCases {
@@ -150,7 +149,7 @@ func TestGetGenresByGameID(t *testing.T) {
 					t.Fatalf("failed to delete games: %+v\n", err)
 				}
 			}()
-			
+
 			if testCase.gameGenres != nil && len(testCase.gameGenres) != 0 {
 				err := db.
 					Session(&gorm.Session{

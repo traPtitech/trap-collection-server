@@ -30,7 +30,7 @@ func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
-    
+
 	var genres []*migrate.GameGenreTable
 	err = db.
 		Model(&migrate.GameGenreTable{}).
