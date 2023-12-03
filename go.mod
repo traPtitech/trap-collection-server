@@ -139,5 +139,5 @@ require (
 	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/plugin/prometheus v0.0.0-20211123021611-a2bccbfb6cbf
+	gorm.io/plugin/prometheus v0.1.0
 )
