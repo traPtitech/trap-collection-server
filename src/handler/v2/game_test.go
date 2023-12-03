@@ -1154,6 +1154,7 @@ func TestGetGame(t *testing.T) {
 	}
 
 	gameID := values.NewGameID()
+	genreID := values.NewGameGenreID()
 
 	userID1 := values.NewTrapMemberID(uuid.New())
 	userID2 := values.NewTrapMemberID(uuid.New())
@@ -1192,6 +1193,9 @@ func TestGetGame(t *testing.T) {
 						values.TrapMemberStatusActive,
 					),
 				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(genreID, "test", now.Add(-time.Hour)),
+				},
 			},
 			apiGame: openapi.Game{
 				Id:          uuid.UUID(gameID),
@@ -1200,6 +1204,7 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      []openapi.GameGenreName{"test"},
 			},
 		},
 		{
@@ -1227,6 +1232,9 @@ func TestGetGame(t *testing.T) {
 					),
 				},
 				Maintainers: []*service.UserInfo{},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(genreID, "test", now.Add(-time.Hour)),
+				},
 			},
 			apiGame: openapi.Game{
 				Id:          uuid.UUID(gameID),
@@ -1235,6 +1243,50 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{},
+				Genres:      []openapi.GameGenreName{"test"},
+			},
+		},
+		{
+			description:  "Genresが空でもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						userID2,
+						values.NewTrapMemberName("pikachu"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      []openapi.GameGenreName{},
 			},
 		},
 		{

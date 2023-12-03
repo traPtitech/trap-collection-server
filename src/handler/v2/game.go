@@ -237,6 +237,11 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		resMaintainers = append(resMaintainers, string(maintainerInfo.GetName()))
 	}
 
+	resGenres := make([]string, 0, len(gameInfo.Genres))
+	for _, genre := range gameInfo.Genres {
+		resGenres = append(resGenres, string(genre.GetName()))
+	}
+
 	res := openapi.Game{
 		Name:        string(gameInfo.Game.GetName()),
 		Id:          uuid.UUID(gameInfo.Game.GetID()),
@@ -244,6 +249,7 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      resGenres,
 	}
 	return ctx.JSON(http.StatusOK, res)
 }

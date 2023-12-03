@@ -33,10 +33,12 @@ func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values
 
 	var genres []*migrate.GameGenreTable
 	err = db.
-		Joins("Games").
-		Where("game_genre_relations.game_id = ?", gameID).
-		Order("created_at DESC").
+		Model(&migrate.GameGenreTable{}).
+		Joins("JOIN game_genre_relations ON game_genres.id = game_genre_relations.genre_id").
+		Where("game_genre_relations.game_id = ?", uuid.UUID(gameID)).
+		Order("`created_at` DESC").
 		Find(&genres).Error
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return []*domain.GameGenre{}, nil
 	}
