@@ -37,7 +37,7 @@ jobs:
         uses: codecov/codecov-action@v3.1.4
         with:
           file: /tmp/coverage/coverage.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage.txt
           path: /tmp/coverage/coverage.txt
