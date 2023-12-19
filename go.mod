@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.16.2
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/getkin/kin-openapi v0.120.0
-	github.com/go-task/task/v3 v3.31.0
+	github.com/go-task/task/v3 v3.32.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.4.0
 	github.com/google/wire v0.5.0
@@ -58,7 +58,7 @@ require (
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/fatih/color v1.15.0 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	mvdan.cc/sh/v3 v3.7.0 // indirect
 )
