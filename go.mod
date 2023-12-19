@@ -11,7 +11,7 @@ require (
 	github.com/getkin/kin-openapi v0.120.0
 	github.com/go-task/task/v3 v3.32.0
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/sessions v1.2.2
 	github.com/h2non/filetype v1.1.3
