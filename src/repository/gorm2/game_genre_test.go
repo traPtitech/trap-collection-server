@@ -34,6 +34,13 @@ func TestRemoveGameGenre(t *testing.T) {
 		expectedErr      error
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	genreID1 := values.NewGameGenreID()
@@ -108,10 +115,11 @@ func TestRemoveGameGenre(t *testing.T) {
 					CreatedAt: now.Add(-time.Hour),
 					Games: []migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID1),
-							Name:        "test",
-							Description: "test",
-							CreatedAt:   now.Add(-time.Hour),
+							ID:               uuid.UUID(gameID1),
+							Name:             "test",
+							Description:      "test",
+							CreatedAt:        now.Add(-time.Hour),
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
@@ -121,10 +129,11 @@ func TestRemoveGameGenre(t *testing.T) {
 					CreatedAt: now.Add(-time.Hour * 2),
 					Games: []migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID1),
-							Name:        "test",
-							Description: "test",
-							CreatedAt:   now.Add(-time.Hour),
+							ID:               uuid.UUID(gameID1),
+							Name:             "test",
+							Description:      "test",
+							CreatedAt:        now.Add(-time.Hour),
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
@@ -136,10 +145,11 @@ func TestRemoveGameGenre(t *testing.T) {
 					CreatedAt: now.Add(-time.Hour * 2),
 					Games: []migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID1),
-							Name:        "test",
-							Description: "test",
-							CreatedAt:   now.Add(-time.Hour),
+							ID:               uuid.UUID(gameID1),
+							Name:             "test",
+							Description:      "test",
+							CreatedAt:        now.Add(-time.Hour),
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
@@ -169,7 +179,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					t.Fatalf("failed to delete genres: %+v\n", err)
 				}
 
-				err = _db.Delete(&migrate.GameTable2{}).Error
+				err = _db.Delete(&migrate.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
 				if err != nil {
 					t.Fatalf("failed to delete games: %+v\n", err)
 				}

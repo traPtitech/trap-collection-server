@@ -9,10 +9,10 @@ import (
 )
 
 type gameGenreTableV10 struct {
-	ID        uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
-	Name      string       `gorm:"type:varchar(32);not null;unique"`
-	CreatedAt time.Time    `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	Games     []GameTable2 `gorm:"many2many:game_genre_relations;joinForeignKey:GenreID;joinReferences:GameID"`
+	ID        uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
+	Name      string         `gorm:"type:varchar(32);not null;unique"`
+	CreatedAt time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	Games     []gameTable2V5 `gorm:"many2many:game_genre_relations;joinForeignKey:GenreID;joinReferences:GameID"`
 }
 
 //nolint:unused

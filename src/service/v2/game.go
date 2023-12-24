@@ -37,13 +37,13 @@ func NewGame(
 	}
 }
 
-func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName, gameGenreNames []values.GameGenreName) (*service.GameInfoV2, error) {
+func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, visibility values.GameVisibility, owners []values.TraPMemberName, maintainers []values.TraPMemberName, gameGenreNames []values.GameGenreName) (*service.GameInfoV2, error) {
 	user, err := g.user.getMe(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	game := domain.NewGame(values.NewGameID(), name, description, time.Now())
+	game := domain.NewGame(values.NewGameID(), name, description, visibility, time.Now())
 
 	ownersInfo := make([]*service.UserInfo, 0, len(owners))
 	maintainersInfo := make([]*service.UserInfo, 0, len(maintainers))

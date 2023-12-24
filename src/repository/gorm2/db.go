@@ -86,7 +86,7 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
 	if appConf.FeatureV2() {
 		collector = &MetricsCollectorV2{}
 	} else {
-		collector = &MetricsCollector{}
+		return nil, fmt.Errorf("only v2 is allowed")
 	}
 
 	err = db.Use(prometheus.New(prometheus.Config{
