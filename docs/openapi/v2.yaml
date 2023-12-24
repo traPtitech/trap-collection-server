@@ -677,7 +677,7 @@ paths:
                 genres:
                   type: array
                   items:
-                    $ref: '#/components/schemas/GameGenreID'
+                    $ref: '#/components/schemas/GameGenreName'
         description: ゲームのジャンルIDの配列です。
       tags:
         - gameGenre
@@ -2568,7 +2568,6 @@ components:
         - name
         - description
         - visibility
-        - genres
         - owners
         - createdAt
     GameInfo:
@@ -2608,7 +2607,7 @@ components:
         genres:
           type: array
           items:
-            $ref: '#/components/schemas/GameGenreID'
+            $ref: '#/components/schemas/GameGenreName'
         visibility:
           $ref: '#/components/schemas/GameVisibility'
         createdAt:
@@ -2617,7 +2616,6 @@ components:
         - id
         - name
         - description
-        - genres
         - visibility
         - createdAt
     NewGameVersion:
