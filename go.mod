@@ -4,7 +4,7 @@ go 1.21.2
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.12
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.13
 	github.com/cosmtrek/air v1.49.0
 	github.com/deepmap/oapi-codegen v1.16.2
 	github.com/dgraph-io/ristretto v0.1.1
@@ -46,7 +46,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.18.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.26.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.6 // indirect
 	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/bep/godartsass v0.16.0 // indirect
 	github.com/bep/golibsass v1.1.0 // indirect
@@ -102,8 +102,8 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.26.1
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.7
+	github.com/aws/aws-sdk-go-v2/config v1.26.2
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.7
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
