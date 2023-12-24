@@ -21,6 +21,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6
 	golang.org/x/mod v0.14.0
 	golang.org/x/sync v0.5.0
 	gorm.io/driver/mysql v1.5.2
@@ -95,7 +96,6 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	mvdan.cc/sh/v3 v3.7.0 // indirect
@@ -110,7 +110,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-gormigrate/gormigrate/v2 v2.1.1
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

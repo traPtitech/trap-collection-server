@@ -160,6 +160,28 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid visibility")
 	}
+
+	var genreNames []values.GameGenreName
+	if req.Genres != nil {
+		genreNames = make([]values.GameGenreName, 0, len(*req.Genres))
+		for i := range *req.Genres {
+			genreName := values.NewGameGenreName((*req.Genres)[i])
+			err := genreName.Validate()
+			if errors.Is(err, values.ErrGameGenreNameEmpty) {
+				return echo.NewHTTPError(http.StatusBadRequest, "game genre name is empty")
+			}
+			if errors.Is(err, values.ErrGameGenreNameTooLong) {
+				return echo.NewHTTPError(http.StatusBadRequest, "game genre name is too long")
+			}
+			if err != nil {
+				log.Printf("failed to validate game genre name: %v\n", genreName)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game genre name")
+			}
+
+			genreNames = append(genreNames, genreName)
+		}
+	}
+
 	gameInfo, err := g.gameService.CreateGame(
 		ctx.Request().Context(),
 		authSession,
@@ -168,7 +190,8 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		visibility,
 		owners,
 		maintainers,
-		[]values.GameGenreName{})
+		genreNames,
+	)
 
 	if errors.Is(err, service.ErrOverlapInOwners) {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
