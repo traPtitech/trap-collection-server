@@ -89,7 +89,7 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 			Id:          game.Id,
 			Description: game.Description,
 			CreatedAt:   game.CreatedAt,
-			Genres:      []openapi.GameGenreID{},
+			Genres:      &[]openapi.GameGenreName{},
 		}
 		gamesWithGenres = append(gamesWithGenres, gameWithGenre)
 	}
