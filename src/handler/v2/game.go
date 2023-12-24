@@ -217,6 +217,11 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	resGameGenreNames := make([]openapi.GameGenreName, 0, len(gameInfo.Genres))
+	for _, genre := range gameInfo.Genres {
+		resGameGenreNames = append(resGameGenreNames, openapi.GameGenreName(genre.GetName()))
+	}
+
 	res := openapi.Game{
 		Name:        string(gameInfo.Game.GetName()),
 		Id:          uuid.UUID(gameInfo.Game.GetID()),
@@ -224,6 +229,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &resGameGenreNames,
 	}
 
 	return ctx.JSON(http.StatusCreated, res)
