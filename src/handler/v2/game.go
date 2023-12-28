@@ -217,9 +217,12 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
-	resGameGenreNames := make([]openapi.GameGenreName, 0, len(gameInfo.Genres))
-	for _, genre := range gameInfo.Genres {
-		resGameGenreNames = append(resGameGenreNames, openapi.GameGenreName(genre.GetName()))
+	var resGameGenreNames []openapi.GameGenreName
+	if gameInfo.Genres != nil && len(gameInfo.Genres) != 0 { // ジャンルが無い場合はnilにする
+		resGameGenreNames = make([]openapi.GameGenreName, 0, len(gameInfo.Genres))
+		for _, genre := range gameInfo.Genres {
+			resGameGenreNames = append(resGameGenreNames, openapi.GameGenreName(genre.GetName()))
+		}
 	}
 
 	res := openapi.Game{
