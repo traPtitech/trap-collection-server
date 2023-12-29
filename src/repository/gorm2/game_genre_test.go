@@ -113,7 +113,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					ID:        uuid.UUID(genreID6),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -127,7 +127,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -143,7 +143,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -353,7 +353,6 @@ func TestGetGameGenresWithNames(t *testing.T) {
 					if !errors.Is(err, testCase.expectedErr) {
 						t.Fatalf("expected: %v, actual: %v", testCase.expectedErr, err)
 					}
-					// assert.ErrorIs(t, err, testCase.expectedErr)
 				} else {
 					assert.Error(t, err)
 				}
@@ -469,6 +468,250 @@ func TestSaveGameGenres(t *testing.T) {
 			for i, genre := range genres {
 				assert.Equal(t, testCase.afterGameGenres[i].ID, genre.ID)
 				assert.Equal(t, testCase.afterGameGenres[i].Name, genre.Name)
+				assert.WithinDuration(t, testCase.afterGameGenres[i].CreatedAt, genre.CreatedAt, time.Second)
+			}
+		})
+	}
+}
+
+func TestRegisterGenresToGame(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	type test struct {
+		gameID           values.GameID
+		gameGenreIDs     []values.GameGenreID
+		games            []migrate.GameTable2
+		beforeGameGenres []migrate.GameGenreTable
+		afterGameGenres  []migrate.GameGenreTable
+		isErr            bool
+		expectedErr      error
+	}
+
+	gameID1 := values.NewGameID()
+
+	game1 := migrate.GameTable2{
+		ID:               uuid.UUID(gameID1),
+		Name:             "test",
+		Description:      "test",
+		CreatedAt:        time.Now(),
+		VisibilityTypeID: 1,
+	}
+
+	gameGenreID1 := values.NewGameGenreID()
+	gameGenreID2 := values.NewGameGenreID()
+
+	now := time.Now()
+
+	testCases := map[string]test{
+		"特に問題ないのでエラー無し": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{gameGenreID1},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+		},
+		"違うジャンルが紐づいていても問題なし": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{gameGenreID2},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour),
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{},
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour),
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+		},
+		"ジャンルの追加でも問題なし": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{gameGenreID1, gameGenreID2},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour),
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "ジャンル2",
+					CreatedAt: now.Add(-time.Hour),
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+		},
+		"存在しないゲームなのでエラー": {
+			gameID:       values.NewGameID(),
+			gameGenreIDs: []values.GameGenreID{gameGenreID1},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			isErr:       true,
+			expectedErr: repository.ErrRecordNotFound,
+		},
+		"存在しないジャンルなのでエラー": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{values.NewGameGenreID()},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			isErr:       true,
+			expectedErr: repository.ErrIncludeInvalidArgs,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			defer func() {
+				cleanupGameGenresTable(t)
+				err := db.
+					Session(&gorm.Session{AllowGlobalUpdate: true}).
+					Unscoped().
+					Delete(&migrate.GameTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete games: %+v\n", err)
+				}
+			}()
+
+			if testCase.games != nil && len(testCase.games) > 0 {
+				err := db.Create(&testCase.games).Error
+				if err != nil {
+					t.Fatalf("failed to create games before sub test: %v", err)
+				}
+			}
+
+			if testCase.beforeGameGenres != nil && len(testCase.games) > 0 {
+				err := db.Create(testCase.beforeGameGenres).Error
+				if err != nil {
+					t.Fatalf("failed to create game genres before sub test: %v", err)
+				}
+			}
+
+			err := gameGenreRepository.RegisterGenresToGame(ctx, testCase.gameID, testCase.gameGenreIDs)
+
+			if testCase.isErr {
+				if testCase.expectedErr != nil {
+					assert.ErrorIs(t, err, testCase.expectedErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			var genres []migrate.GameGenreTable
+
+			genreIDs := make([]uuid.UUID, 0, len(testCase.afterGameGenres))
+			for i := range testCase.afterGameGenres {
+				genreIDs = append(genreIDs, uuid.UUID(testCase.afterGameGenres[i].ID))
+			}
+			err = db.Preload("Games").Where("`game_genres`.`id` in ?", genreIDs).Order("created_at desc").Find(&genres).Error
+			if err != nil {
+				t.Fatalf("failed to get game genres: %v", err)
+			}
+
+			assert.Len(t, genres, len(testCase.afterGameGenres))
+
+			for i, genre := range genres {
+				assert.Equal(t, testCase.afterGameGenres[i].ID, genre.ID)
+				assert.Equal(t, testCase.afterGameGenres[i].Name, genre.Name)
+				assert.WithinDuration(t, testCase.afterGameGenres[i].CreatedAt, genre.CreatedAt, time.Second)
+
+				if testCase.afterGameGenres[i].Games != nil {
+					assert.Len(t, genre.Games, len(testCase.afterGameGenres[i].Games))
+					for j, game := range genre.Games {
+						assert.Equal(t, testCase.afterGameGenres[i].Games[j].ID, game.ID)
+						assert.Equal(t, testCase.afterGameGenres[i].Games[j].Name, game.Name)
+						assert.Equal(t, testCase.afterGameGenres[i].Games[j].Description, game.Description)
+						assert.WithinDuration(t, testCase.afterGameGenres[i].Games[j].CreatedAt, game.CreatedAt, time.Second)
+					}
+				}
+
 				assert.WithinDuration(t, testCase.afterGameGenres[i].CreatedAt, genre.CreatedAt, time.Second)
 			}
 		})

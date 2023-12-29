@@ -25,5 +25,8 @@ type GameGenre interface {
 	SaveGameGenres(ctx context.Context, gameGenres []*domain.GameGenre) error
 	// RegisterGenresToGame
 	// ゲームにゲームジャンルを登録する。
+	// ゲームが存在しない場合は、ErrRecordNotFoundを返す。
+	// ゲームジャンルが存在しない場合は、ErrIncludeInvalidArgsを返す。
+	// ゲームジャンルを追加するのではなく、置き換える。
 	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error
 }

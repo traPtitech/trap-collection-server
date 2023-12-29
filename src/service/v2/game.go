@@ -183,6 +183,9 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			gameGenreIDs = append(gameGenreIDs, gameGenres[i].GetID())
 		}
 		err = g.gameGenreRepository.RegisterGenresToGame(ctx, game.GetID(), gameGenreIDs)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGame
+		}
 		if err != nil {
 			return fmt.Errorf("failed to register genre to game: %w", err)
 		}

@@ -24,7 +24,7 @@ func NewGameGenre(db *DB) *GameGenre {
 	}
 }
 
-// var _ repository.GameGenre = &GameGenre{}
+var _ repository.GameGenre = &GameGenre{}
 
 func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error) {
 	db, err := gameGenre.db.getDB(ctx)
@@ -130,6 +130,41 @@ func (gameGenre *GameGenre) SaveGameGenres(ctx context.Context, gameGenres []*do
 	return nil
 }
 
-// 	// RegisterGenresToGame
-// 	// ゲームにゲームジャンルを登録する。
-// func (gameGenre *GameGenre)	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error{}
+// RegisterGenresToGame
+// ゲームにゲームジャンルを登録する。
+func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenreIDs []values.GameGenreID) error {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var game migrate.GameTable2
+
+	if err = db.First(&game, uuid.UUID(gameID)).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return repository.ErrRecordNotFound
+	} else if err != nil {
+		return fmt.Errorf("failed to get game: %w", err)
+	}
+
+	genres := make([]uuid.UUID, 0, len(gameGenreIDs))
+	for _, genre := range gameGenreIDs {
+		genres = append(genres, uuid.UUID(genre))
+	}
+
+	var gameGenres []migrate.GameGenreTable
+	err = db.Find(&gameGenres, genres).Error
+	if err != nil {
+		return fmt.Errorf("failed to get game genres: %w", err)
+	}
+
+	if len(gameGenres) != len(gameGenreIDs) {
+		return repository.ErrIncludeInvalidArgs
+	}
+
+	err = db.Model(&game).Association("GameGenres").Replace(gameGenres)
+	if err != nil {
+		return fmt.Errorf("failed to register genres to game: %w", err)
+	}
+
+	return nil
+}
