@@ -12,91 +12,105 @@
 <!-- game_genre_relations -->
 <g id="node1" class="node">
 <title>game_genre_relations</title>
-<polygon fill="#efefef" stroke="transparent" points="282.3634,-442.5 282.3634,-477.5 572.3634,-477.5 572.3634,-442.5 282.3634,-442.5"/>
-<polygon fill="none" stroke="#000000" points="282.3634,-442.5 282.3634,-477.5 572.3634,-477.5 572.3634,-442.5 282.3634,-442.5"/>
-<text text-anchor="start" x="289.2126" y="-455.3" font-family="Arial Bold" font-size="18.00" fill="#000000">game_genre_relations</text>
-<text text-anchor="start" x="468.2604" y="-455.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="472.151" y="-455.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="282.3634,-412.5 282.3634,-442.5 572.3634,-442.5 572.3634,-412.5 282.3634,-412.5"/>
-<text text-anchor="start" x="289.3634" y="-423.9" font-family="Arial" font-size="14.00" fill="#000000">genre_id </text>
-<text text-anchor="start" x="347.7168" y="-423.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
-<polygon fill="none" stroke="#000000" points="282.3634,-382.5 282.3634,-412.5 572.3634,-412.5 572.3634,-382.5 282.3634,-382.5"/>
-<text text-anchor="start" x="289.3634" y="-393.9" font-family="Arial" font-size="14.00" fill="#000000">game_id </text>
-<text text-anchor="start" x="346.9342" y="-393.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
-<polygon fill="none" stroke="#000000" stroke-width="3" points="280.8634,-381.5 280.8634,-479.5 573.8634,-479.5 573.8634,-381.5 280.8634,-381.5"/>
+<polygon fill="#efefef" stroke="transparent" points="282.4685,-442.5 282.4685,-477.5 572.4685,-477.5 572.4685,-442.5 282.4685,-442.5"/>
+<polygon fill="none" stroke="#000000" points="282.4685,-442.5 282.4685,-477.5 572.4685,-477.5 572.4685,-442.5 282.4685,-442.5"/>
+<text text-anchor="start" x="289.3177" y="-455.3" font-family="Arial Bold" font-size="18.00" fill="#000000">game_genre_relations</text>
+<text text-anchor="start" x="468.3655" y="-455.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="472.2561" y="-455.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="282.4685,-412.5 282.4685,-442.5 572.4685,-442.5 572.4685,-412.5 282.4685,-412.5"/>
+<text text-anchor="start" x="289.4685" y="-423.9" font-family="Arial" font-size="14.00" fill="#000000">genre_id </text>
+<text text-anchor="start" x="347.8219" y="-423.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<polygon fill="none" stroke="#000000" points="282.4685,-382.5 282.4685,-412.5 572.4685,-412.5 572.4685,-382.5 282.4685,-382.5"/>
+<text text-anchor="start" x="289.4685" y="-393.9" font-family="Arial" font-size="14.00" fill="#000000">game_id </text>
+<text text-anchor="start" x="347.0393" y="-393.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<polygon fill="none" stroke="#000000" stroke-width="3" points="280.9685,-381.5 280.9685,-479.5 573.9685,-479.5 573.9685,-381.5 280.9685,-381.5"/>
 </g>
 <!-- game_genres -->
 <g id="node2" class="node">
 <title>game_genres</title>
-<polygon fill="#efefef" stroke="transparent" points="164.3634,-177.5 164.3634,-212.5 385.3634,-212.5 385.3634,-177.5 164.3634,-177.5"/>
-<polygon fill="none" stroke="#000000" points="164.3634,-177.5 164.3634,-212.5 385.3634,-212.5 385.3634,-177.5 164.3634,-177.5"/>
-<text text-anchor="start" x="171.2195" y="-190.3" font-family="Arial Bold" font-size="18.00" fill="#000000">game_genres</text>
-<text text-anchor="start" x="281.2535" y="-190.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="285.1441" y="-190.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="164.3634,-147.5 164.3634,-177.5 385.3634,-177.5 385.3634,-147.5 164.3634,-147.5"/>
-<text text-anchor="start" x="171.3634" y="-158.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
-<text text-anchor="start" x="186.1432" y="-158.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
-<polygon fill="none" stroke="#000000" points="164.3634,-117.5 164.3634,-147.5 385.3634,-147.5 385.3634,-117.5 164.3634,-117.5"/>
-<text text-anchor="start" x="171.3634" y="-128.9" font-family="Arial" font-size="14.00" fill="#000000">name </text>
-<text text-anchor="start" x="210.2624" y="-128.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
-<polygon fill="none" stroke="#000000" points="164.3634,-87.5 164.3634,-117.5 385.3634,-117.5 385.3634,-87.5 164.3634,-87.5"/>
-<text text-anchor="start" x="171.3634" y="-98.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="241.3914" y="-98.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
+<polygon fill="#efefef" stroke="transparent" points="164.4685,-177.5 164.4685,-212.5 385.4685,-212.5 385.4685,-177.5 164.4685,-177.5"/>
+<polygon fill="none" stroke="#000000" points="164.4685,-177.5 164.4685,-212.5 385.4685,-212.5 385.4685,-177.5 164.4685,-177.5"/>
+<text text-anchor="start" x="171.3246" y="-190.3" font-family="Arial Bold" font-size="18.00" fill="#000000">game_genres</text>
+<text text-anchor="start" x="281.3586" y="-190.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="285.2492" y="-190.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="164.4685,-147.5 164.4685,-177.5 385.4685,-177.5 385.4685,-147.5 164.4685,-147.5"/>
+<text text-anchor="start" x="171.4685" y="-158.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
+<text text-anchor="start" x="186.2483" y="-158.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<polygon fill="none" stroke="#000000" points="164.4685,-117.5 164.4685,-147.5 385.4685,-147.5 385.4685,-117.5 164.4685,-117.5"/>
+<text text-anchor="start" x="171.4685" y="-128.9" font-family="Arial" font-size="14.00" fill="#000000">name </text>
+<text text-anchor="start" x="210.3675" y="-128.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
+<polygon fill="none" stroke="#000000" points="164.4685,-87.5 164.4685,-117.5 385.4685,-117.5 385.4685,-87.5 164.4685,-87.5"/>
+<text text-anchor="start" x="171.4685" y="-98.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="241.4965" y="-98.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
 </g>
 <!-- game_genre_relations&#45;&gt;game_genres -->
 <g id="edge1" class="edge">
 <title>game_genre_relations:genre_id&#45;&gt;game_genres:id</title>
-<path fill="none" stroke="#000000" d="M272.1062,-426.5399C236.6489,-419.1231 257.1616,-370.3529 273.3634,-337 298.81,-284.6161 350.9169,-308.3839 376.3634,-256 394.5209,-218.6213 417.919,-162.5 385.3634,-162.5"/>
-<polygon fill="#000000" stroke="#000000" points="272.4069,-426.568 281.944,-431.9804 277.3852,-427.034 282.3634,-427.5 282.3634,-427.5 282.3634,-427.5 277.3852,-427.034 282.7828,-423.0196 272.4069,-426.568 272.4069,-426.568"/>
-<text text-anchor="start" x="6.9079" y="-437.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (genre_id) REFERENCES game_genres (id)</text>
+<path fill="none" stroke="#000000" d="M272.4785,-426.8811C227.0574,-420.7808 247.992,-370.9182 264.4685,-337 289.915,-284.6161 342.0219,-308.3839 367.4685,-256 385.626,-218.6213 409.024,-162.5 385.4685,-162.5"/>
+<polygon fill="#000000" stroke="#000000" points="272.4876,-426.8816 282.1902,-431.9914 277.478,-427.1908 282.4685,-427.5 282.4685,-427.5 282.4685,-427.5 277.478,-427.1908 282.7468,-423.0086 272.4876,-426.8816 272.4876,-426.8816"/>
+<text text-anchor="start" x="7.013" y="-437.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (genre_id) REFERENCES game_genres (id)</text>
 </g>
 <!-- game_genre_relations&#45;&gt;game_genres -->
 <g id="edge2" class="edge">
 <title>game_genre_relations:genre_id&#45;&gt;game_genres:id</title>
-<path fill="none" stroke="#000000" d="M272.0515,-424.338C257.5577,-412.2337 276.319,-367.9702 291.3634,-337 316.81,-284.6161 368.9169,-308.3839 394.3634,-256 412.4854,-218.6943 435.8276,-162.7192 385.6588,-162.5006"/>
-<polygon fill="#000000" stroke="#000000" points="272.4691,-424.4705 280.6379,-431.7864 277.2346,-425.984 282,-427.4975 282,-427.4975 282,-427.4975 277.2346,-425.984 283.3621,-423.2086 272.4691,-424.4705 272.4691,-424.4705"/>
+<path fill="none" stroke="#000000" d="M272.1198,-425.9067C246.7773,-416.6933 266.6718,-369.5187 282.4685,-337 307.915,-284.6161 360.0219,-308.3839 385.4685,-256 403.555,-218.7673 426.8413,-162.9382 385.9525,-162.5026"/>
+<polygon fill="#000000" stroke="#000000" points="272.1272,-425.9078 281.2846,-431.9403 277.0636,-426.7027 282,-427.4975 282,-427.4975 282,-427.4975 277.0636,-426.7027 282.7154,-423.0547 272.1272,-425.9078 272.1272,-425.9078"/>
 <text text-anchor="start" x="6.5445" y="-411.4975" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (genre_id) REFERENCES game_genres (id)</text>
+</g>
+<!-- game_genre_relations&#45;&gt;game_genres -->
+<g id="edge3" class="edge">
+<title>game_genre_relations:genre_id&#45;&gt;game_genres:id</title>
+<path fill="none" stroke="#000000" d="M273.9531,-421.0226C269.5064,-405.551 286.5729,-365.6052 300.4685,-337 325.915,-284.6161 378.0219,-308.3839 403.4685,-256 421.5905,-218.6943 444.9327,-162.7192 385.8165,-162.5006"/>
+<polygon fill="#000000" stroke="#000000" points="274.1782,-421.2045 279.1273,-430.99 278.067,-424.3473 281.9558,-427.4901 281.9558,-427.4901 281.9558,-427.4901 278.067,-424.3473 284.7844,-423.9901 274.1782,-421.2045 274.1782,-421.2045"/>
+<text text-anchor="start" x="288.5003" y="-437.4901" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (genre_id) REFERENCES game_genres (id)</text>
 </g>
 <!-- games -->
 <g id="node3" class="node">
 <title>games</title>
-<polygon fill="#efefef" stroke="transparent" points="489.3634,-222.5 489.3634,-257.5 669.3634,-257.5 669.3634,-222.5 489.3634,-222.5"/>
-<polygon fill="none" stroke="#000000" points="489.3634,-222.5 489.3634,-257.5 669.3634,-257.5 669.3634,-222.5 489.3634,-222.5"/>
-<text text-anchor="start" x="503.7311" y="-235.3" font-family="Arial Bold" font-size="18.00" fill="#000000">games</text>
-<text text-anchor="start" x="557.7419" y="-235.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="561.6325" y="-235.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-192.5 489.3634,-222.5 669.3634,-222.5 669.3634,-192.5 489.3634,-192.5"/>
-<text text-anchor="start" x="496.3634" y="-203.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
-<text text-anchor="start" x="511.1432" y="-203.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-162.5 489.3634,-192.5 669.3634,-192.5 669.3634,-162.5 489.3634,-162.5"/>
-<text text-anchor="start" x="496.3634" y="-173.9" font-family="Arial" font-size="14.00" fill="#000000">name </text>
-<text text-anchor="start" x="535.2624" y="-173.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(256)]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-132.5 489.3634,-162.5 669.3634,-162.5 669.3634,-132.5 489.3634,-132.5"/>
-<text text-anchor="start" x="496.3634" y="-143.9" font-family="Arial" font-size="14.00" fill="#000000">description </text>
-<text text-anchor="start" x="567.9314" y="-143.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-102.5 489.3634,-132.5 669.3634,-132.5 669.3634,-102.5 489.3634,-102.5"/>
-<text text-anchor="start" x="496.3634" y="-113.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="566.3914" y="-113.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-72.5 489.3634,-102.5 669.3634,-102.5 669.3634,-72.5 489.3634,-72.5"/>
-<text text-anchor="start" x="496.3634" y="-83.9" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
-<text text-anchor="start" x="565.62" y="-83.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
-<polygon fill="none" stroke="#000000" points="489.3634,-42.5 489.3634,-72.5 669.3634,-72.5 669.3634,-42.5 489.3634,-42.5"/>
-<text text-anchor="start" x="496.1376" y="-53.9" font-family="Arial" font-size="14.00" fill="#000000">visibility_type_id </text>
-<text text-anchor="start" x="601.1446" y="-53.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
-</g>
-<!-- game_genre_relations&#45;&gt;games -->
-<g id="edge3" class="edge">
-<title>game_genre_relations:game_id&#45;&gt;games:id</title>
-<path fill="none" stroke="#000000" d="M580.4669,-391.5707C584.2206,-379.9956 574.5436,-354.0357 563.3634,-337 541.3017,-303.3835 502.4252,-334.6165 480.3634,-301 457.563,-266.258 438.8079,-207.5 489.3634,-207.5"/>
-<polygon fill="#000000" stroke="#000000" points="580.4338,-391.5949 569.7061,-393.8683 576.3986,-394.5474 572.3634,-397.5 572.3634,-397.5 572.3634,-397.5 576.3986,-394.5474 575.0207,-401.1317 580.4338,-391.5949 580.4338,-391.5949"/>
-<text text-anchor="start" x="579.7494" y="-407.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (game_id) REFERENCES games (id)</text>
+<polygon fill="#efefef" stroke="transparent" points="489.4685,-222.5 489.4685,-257.5 669.4685,-257.5 669.4685,-222.5 489.4685,-222.5"/>
+<polygon fill="none" stroke="#000000" points="489.4685,-222.5 489.4685,-257.5 669.4685,-257.5 669.4685,-222.5 489.4685,-222.5"/>
+<text text-anchor="start" x="503.8362" y="-235.3" font-family="Arial Bold" font-size="18.00" fill="#000000">games</text>
+<text text-anchor="start" x="557.847" y="-235.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="561.7376" y="-235.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-192.5 489.4685,-222.5 669.4685,-222.5 669.4685,-192.5 489.4685,-192.5"/>
+<text text-anchor="start" x="496.4685" y="-203.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
+<text text-anchor="start" x="511.2483" y="-203.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-162.5 489.4685,-192.5 669.4685,-192.5 669.4685,-162.5 489.4685,-162.5"/>
+<text text-anchor="start" x="496.4685" y="-173.9" font-family="Arial" font-size="14.00" fill="#000000">name </text>
+<text text-anchor="start" x="535.3675" y="-173.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(256)]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-132.5 489.4685,-162.5 669.4685,-162.5 669.4685,-132.5 489.4685,-132.5"/>
+<text text-anchor="start" x="496.4685" y="-143.9" font-family="Arial" font-size="14.00" fill="#000000">description </text>
+<text text-anchor="start" x="568.0365" y="-143.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-102.5 489.4685,-132.5 669.4685,-132.5 669.4685,-102.5 489.4685,-102.5"/>
+<text text-anchor="start" x="496.4685" y="-113.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="566.4965" y="-113.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-72.5 489.4685,-102.5 669.4685,-102.5 669.4685,-72.5 489.4685,-72.5"/>
+<text text-anchor="start" x="496.4685" y="-83.9" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
+<text text-anchor="start" x="565.7251" y="-83.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
+<polygon fill="none" stroke="#000000" points="489.4685,-42.5 489.4685,-72.5 669.4685,-72.5 669.4685,-42.5 489.4685,-42.5"/>
+<text text-anchor="start" x="496.2427" y="-53.9" font-family="Arial" font-size="14.00" fill="#000000">visibility_type_id </text>
+<text text-anchor="start" x="601.2497" y="-53.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
 </g>
 <!-- game_genre_relations&#45;&gt;games -->
 <g id="edge4" class="edge">
 <title>game_genre_relations:game_id&#45;&gt;games:id</title>
-<path fill="none" stroke="#000000" d="M582.7444,-396.1243C605.4799,-389.1165 594.4517,-356.9431 581.3634,-337 559.3017,-303.3835 520.4252,-334.6165 498.3634,-301 475.6521,-266.3937 456.9545,-207.9587 488.9843,-207.5027"/>
-<polygon fill="#000000" stroke="#000000" points="582.688,-396.132 572.167,-393.0405 577.7349,-396.8151 572.7818,-397.4983 572.7818,-397.4983 572.7818,-397.4983 577.7349,-396.8151 573.3966,-401.9561 582.688,-396.132 582.688,-396.132"/>
+<path fill="none" stroke="#000000" d="M575.1437,-387.5577C573.3144,-374.7379 564.496,-352.2795 554.4685,-337 532.4067,-303.3835 493.5302,-334.6165 471.4685,-301 448.6681,-266.258 429.9129,-207.5 489.4685,-207.5"/>
+<polygon fill="#000000" stroke="#000000" points="575.0669,-387.8435 568.123,-396.3307 573.7677,-392.6717 572.4685,-397.5 572.4685,-397.5 572.4685,-397.5 573.7677,-392.6717 576.8139,-398.6693 575.0669,-387.8435 575.0669,-387.8435"/>
+<text text-anchor="start" x="579.8545" y="-407.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (game_id) REFERENCES games (id)</text>
+</g>
+<!-- game_genre_relations&#45;&gt;games -->
+<g id="edge5" class="edge">
+<title>game_genre_relations:game_id&#45;&gt;games:id</title>
+<path fill="none" stroke="#000000" d="M582.5063,-394.8141C595.4183,-385.7637 584.8679,-355.8935 572.4685,-337 550.4067,-303.3835 511.5302,-334.6165 489.4685,-301 466.7572,-266.3937 448.0595,-207.9587 488.9843,-207.5027"/>
+<polygon fill="#000000" stroke="#000000" points="582.4213,-394.8375 571.5845,-393.1605 577.6016,-396.1679 572.7818,-397.4983 572.7818,-397.4983 572.7818,-397.4983 577.6016,-396.1679 573.9791,-401.8361 582.4213,-394.8375 582.4213,-394.8375"/>
 <text text-anchor="start" x="580.1678" y="-381.4983" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (game_id) REFERENCES games (id)</text>
+</g>
+<!-- game_genre_relations&#45;&gt;games -->
+<g id="edge6" class="edge">
+<title>game_genre_relations:game_id&#45;&gt;games:id</title>
+<path fill="none" stroke="#000000" d="M583.0021,-396.6584C615.2081,-390.9492 603.9275,-357.5081 590.4685,-337 568.4067,-303.3835 529.5302,-334.6165 507.4685,-301 484.7572,-266.3937 466.0595,-207.9587 489.1944,-207.5027"/>
+<polygon fill="#000000" stroke="#000000" points="582.6975,-396.6833 572.3635,-393.0146 577.7142,-397.0914 572.7308,-397.4996 572.7308,-397.4996 572.7308,-397.4996 577.7142,-397.0914 573.0982,-401.9846 582.6975,-396.6833 582.6975,-396.6833"/>
+<text text-anchor="start" x="329.1168" y="-407.4996" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (game_id) REFERENCES games (id)</text>
 </g>
 </g>
 </svg>
