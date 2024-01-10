@@ -2482,7 +2482,9 @@ components:
           $ref: '#/components/schemas/GameDescription'
         genres:
           type: array
-          description: ゲームのジャンルの名前の配列です。ジャンルが無い場合はこのフィールドは省略されます。
+          description: |
+            ゲームのジャンルの名前の配列です。ジャンルが無い場合はこのフィールドは省略されます。
+            ジャンルに重複があった場合は400エラーとなります。
           items:
             $ref: '#/components/schemas/GameGenreName'
         visibility:

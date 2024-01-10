@@ -46,22 +46,37 @@ func TestCreateGame(t *testing.T) {
 	)
 
 	type test struct {
-		description                    string
-		authSession                    *domain.OIDCSession
-		user                           *service.UserInfo
-		isGetMeErr                     bool
-		name                           values.GameName
-		gameDescription                values.GameDescription
-		owners                         []values.TraPMemberName
-		maintainers                    []values.TraPMemberName
-		executeSaveGame                bool
-		SaveGameErr                    error
+		description     string
+		authSession     *domain.OIDCSession
+		user            *service.UserInfo
+		isGetMeErr      bool
+		name            values.GameName
+		gameDescription values.GameDescription
+		owners          []values.TraPMemberName
+		maintainers     []values.TraPMemberName
+		gameGenreNames  []values.GameGenreName
+
+		executeSaveGame bool
+		SaveGameErr     error
+
 		executeAddGameManagementRoles  bool
 		AddGameManagementRoleAdminErr  error
 		AddGameManagementRoleCollabErr error
-		expectedOwners                 []values.TraPMemberName
-		isErr                          bool
-		err                            error
+
+		executeGetGameGenresWithNames bool
+		GetGameGenresWithNamesReturn  []*domain.GameGenre
+		GetGameGenresWithNamesErr     error
+
+		executeSaveGameGenres bool
+		SaveGameGenresErr     error
+
+		executeRegisterGenresToGame bool
+		RegisterGenresToGameErr     error
+
+		expectedOwners     []values.TraPMemberName
+		expectedGameGenres []*domain.GameGenre
+		isErr              bool
+		err                error
 	}
 
 	userID1 := values.NewTrapMemberID(uuid.New())
@@ -92,6 +107,11 @@ func TestCreateGame(t *testing.T) {
 		),
 	}
 
+	gameGenreName1 := values.NewGameGenreName("ジャンル1")
+	gameGenreName2 := values.NewGameGenreName("ジャンル2")
+
+	gameGenreID1 := values.NewGameGenreID()
+
 	testCases := []test{
 		{
 			description: "ユーザー情報の取得に失敗したのでエラー",
@@ -115,8 +135,16 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "nameが空でもエラーなし",
@@ -134,8 +162,16 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "descriptionが空でもエラーなし",
@@ -153,8 +189,16 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "ownersが複数いてもエラーなし",
@@ -171,9 +215,17 @@ func TestCreateGame(t *testing.T) {
 			gameDescription:               values.GameDescription("test"),
 			owners:                        []values.TraPMemberName{"mazrean", "JichouP"},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "JichouP", "ikura-hamu"},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "ownersがいなくてもエラーなし",
@@ -191,8 +243,16 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{},
 			maintainers:                   []values.TraPMemberName{"pikachu"},
 			expectedOwners:                []values.TraPMemberName{"ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "maintainersが複数いてもエラーなし",
@@ -210,8 +270,16 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{"pikachu", "JichouP"},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
 		},
 		{
 			description: "maintainersがいなくてもエラーなし",
@@ -229,8 +297,89 @@ func TestCreateGame(t *testing.T) {
 			owners:                        []values.TraPMemberName{"mazrean"},
 			maintainers:                   []values.TraPMemberName{},
 			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
+				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
+		},
+		{
+			description: "新しいジャンルが無くてもエラー無し",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+		},
+		{
+			description: "ジャンル名が重複しているのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			isErr:                         true,
+			err:                           service.ErrDuplicateGameGenre,
+		},
+		{
+			description: "全て新しいジャンルでも問題なし",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesErr:     repository.ErrRecordNotFound,
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			expectedGameGenres: []*domain.GameGenre{
+				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
 		},
 		{
 			description: "ownerとユーザーが同じなのでエラー",
@@ -429,6 +578,160 @@ func TestCreateGame(t *testing.T) {
 			AddGameManagementRoleCollabErr: errors.New("test"),
 			isErr:                          true,
 		},
+		{
+			description: "GetGameGenresWithNamesがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesErr:     errors.New("error"),
+			isErr:                         true,
+		},
+		{
+			description: "SaveGameGenresがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			SaveGameGenresErr:             errors.New("error"),
+			isErr:                         true,
+		},
+		{
+			description: "SaveGameGenresがErrDuplicatedUniqueKeyなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			SaveGameGenresErr:             repository.ErrDuplicatedUniqueKey,
+			isErr:                         true,
+			err:                           service.ErrDuplicateGameGenre,
+		},
+		{
+			description: "RegisterGenresToGameがエラーなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			RegisterGenresToGameErr:       errors.New("error"),
+			isErr:                         true,
+		},
+		{
+			description: "RegisterGenresToGameがErrRecordNotFoundなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			RegisterGenresToGameErr:       repository.ErrRecordNotFound,
+			isErr:                         true,
+			err:                           service.ErrNoGame,
+		},
+		{
+			description: "RegisterGenresToGameがErrIncludeInvalidArgsなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			RegisterGenresToGameErr:       repository.ErrIncludeInvalidArgs,
+			isErr:                         true,
+			err:                           service.ErrNoGameGenre,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -477,7 +780,36 @@ func TestCreateGame(t *testing.T) {
 			}
 
 			//TODO: とりあえずvisibilityをすべてLimitedにして実行している。テストケースに追加するべき。
-			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, values.GameVisibilityTypeLimited, testCase.owners, testCase.maintainers)
+			if testCase.executeGetGameGenresWithNames {
+				mockGameGenreRepository.
+					EXPECT().
+					GetGameGenresWithNames(ctx, gomock.Any()).
+					Return(testCase.GetGameGenresWithNamesReturn, testCase.GetGameGenresWithNamesErr)
+			}
+
+			if testCase.executeSaveGameGenres {
+				mockGameGenreRepository.
+					EXPECT().
+					SaveGameGenres(gomock.Any(), gomock.Any()).
+					Return(testCase.SaveGameGenresErr)
+			}
+
+			if testCase.executeRegisterGenresToGame {
+				mockGameGenreRepository.
+					EXPECT().
+					RegisterGenresToGame(ctx, gomock.Any(), gomock.Any()).
+					Return(testCase.RegisterGenresToGameErr)
+			}
+
+			game, err := gameService.CreateGame(
+				ctx,
+				testCase.authSession,
+				testCase.name,
+				testCase.gameDescription, values.GameVisibilityTypeLimited,
+				testCase.owners,
+				testCase.maintainers,
+				testCase.gameGenreNames,
+			)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -502,6 +834,11 @@ func TestCreateGame(t *testing.T) {
 			}
 			assert.WithinDuration(t, time.Now(), game.Game.GetCreatedAt(), time.Second)
 
+			assert.Len(t, game.Genres, len(testCase.expectedGameGenres))
+			for i := range game.Genres {
+				// ジャンルのIDと作成時刻は生成されるものと元から決まっているものが混ざっているので、比較できない。
+				assert.Equal(t, testCase.expectedGameGenres[i].GetName(), game.Genres[i].GetName())
+			}
 		})
 	}
 }
