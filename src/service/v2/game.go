@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/service"
-	"golang.org/x/exp/slices"
 )
 
 type Game struct {
@@ -141,7 +141,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		}
 
 		// 重複を除く
-		slices.Sort[values.GameGenreName](gameGenreNames)
+		slices.Sort[[]values.GameGenreName](gameGenreNames)
 		uniqueGameGenreNames := slices.Compact[[]values.GameGenreName, values.GameGenreName](gameGenreNames)
 
 		// 渡されたジャンルのうち既に存在するジャンル
