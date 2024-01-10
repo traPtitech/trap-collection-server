@@ -1079,6 +1079,26 @@ func TestPostGame(t *testing.T) {
 			statusCode:        http.StatusBadRequest,
 		},
 		{
+			description:  "ジャンルに重複があるので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"ikura-hamu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D", "3D"},
+			},
+			executeCreateGame: true,
+			CreateGameErr:     service.ErrDuplicateGameGenre,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
 			description:  "visibilityがlimitedでも問題なし",
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(

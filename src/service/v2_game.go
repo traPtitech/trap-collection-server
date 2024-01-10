@@ -16,7 +16,7 @@ type GameV2 interface {
 	// owners内に重複がある場合、ErrOverlapInOwnersを返す。
 	// maintainers内に重複がある場合、ErrOverlapInMaintainersを返す。
 	// ownersとmaintainersに重複がある場合、また、ログイン中のユーザーがmaintainersに含まれる場合、ErrOverlapBetweenOwnersAndMaintainersを返す。
-	// 存在しないジャンルの場合はジャンルが新規作成される。ジャンルの重複は1つに合わせてゲームを追加する。
+	// 存在しないジャンルの場合はジャンルが新規作成される。ジャンルの重複はErrDuplicateGameGenreを返す。
 	CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, visibility values.GameVisibility, owners []values.TraPMemberName, maintainers []values.TraPMemberName, gameGenreNames []values.GameGenreName) (*GameInfoV2, error)
 
 	// GetGame

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"slices"
 	"time"
 
@@ -140,9 +141,13 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 			return nil
 		}
 
-		// 重複を除く
+		// 重複したらエラー
 		slices.Sort[[]values.GameGenreName](gameGenreNames)
 		uniqueGameGenreNames := slices.Compact[[]values.GameGenreName, values.GameGenreName](gameGenreNames)
+		if len(uniqueGameGenreNames) != len(gameGenreNames) {
+			log.Println("duplicate game genre")
+			return service.ErrDuplicateGameGenre
+		}
 
 		// 渡されたジャンルのうち既に存在するジャンル
 		existGenres, err := g.gameGenreRepository.GetGameGenresWithNames(ctx, uniqueGameGenreNames)
@@ -169,9 +174,9 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 
 		if len(newGameGenres) > 0 {
 			err = g.gameGenreRepository.SaveGameGenres(ctx, newGameGenres)
-			if errors.Is(err, repository.ErrNoRecordUpdated) {
+			if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
 				// 上で既に存在するジャンルは除いているはずなので、このエラーは無いはず。
-				return fmt.Errorf("genre duplicated: %w", err)
+				return service.ErrDuplicateGameGenre
 			}
 			if err != nil {
 				return fmt.Errorf("failed to save game genre: %w", err)

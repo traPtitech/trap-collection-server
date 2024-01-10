@@ -334,7 +334,7 @@ func TestCreateGame(t *testing.T) {
 				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
 		},
 		{
-			description: "ジャンル名が重複してもエラー無し",
+			description: "ジャンル名が重複しているのでエラー",
 			authSession: domain.NewOIDCSession(
 				"access token",
 				time.Now().Add(time.Hour),
@@ -352,13 +352,8 @@ func TestCreateGame(t *testing.T) {
 			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2, gameGenreName2},
 			executeSaveGame:               true,
 			executeAddGameManagementRoles: true,
-			executeGetGameGenresWithNames: true,
-			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
-			executeSaveGameGenres:         true,
-			executeRegisterGenresToGame:   true,
-			expectedGameGenres: []*domain.GameGenre{
-				domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour)),
-				domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())},
+			isErr:                         true,
+			err:                           service.ErrDuplicateGameGenre,
 		},
 		{
 			description: "全て新しいジャンルでも問題なし",
@@ -630,6 +625,32 @@ func TestCreateGame(t *testing.T) {
 			executeSaveGameGenres:         true,
 			SaveGameGenresErr:             errors.New("error"),
 			isErr:                         true,
+		},
+		{
+			description: "SaveGameGenresがErrDuplicatedUniqueKeyなのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user: service.NewUserInfo(
+				userID1,
+				"ikura-hamu",
+				values.TrapMemberStatusActive,
+			),
+			name:                          values.GameName("test"),
+			gameDescription:               values.GameDescription("test description"),
+			owners:                        []values.TraPMemberName{"mazrean"},
+			maintainers:                   []values.TraPMemberName{"pikachu"},
+			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeSaveGame:               true,
+			executeAddGameManagementRoles: true,
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesReturn:  []*domain.GameGenre{domain.NewGameGenre(gameGenreID1, gameGenreName1, time.Now().Add(-time.Hour))},
+			executeSaveGameGenres:         true,
+			SaveGameGenresErr:             repository.ErrDuplicatedUniqueKey,
+			isErr:                         true,
+			err:                           service.ErrDuplicateGameGenre,
 		},
 		{
 			description: "RegisterGenresToGameがエラーなのでエラー",

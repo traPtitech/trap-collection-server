@@ -202,6 +202,9 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners and maintainers")
 	}
+	if errors.Is(err, service.ErrDuplicateGameGenre) {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to add game genre")
+	}
 	if err != nil {
 		log.Printf("error: failed to create game: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create game")
