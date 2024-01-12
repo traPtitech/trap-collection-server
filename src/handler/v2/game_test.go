@@ -1564,7 +1564,7 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Genres:      []openapi.GameGenreName{"test"},
+				Genres:      &[]openapi.GameGenreName{"test"},
 			},
 		},
 		{
@@ -1604,7 +1604,7 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{},
-				Genres:      []openapi.GameGenreName{"test"},
+				Genres:      &[]openapi.GameGenreName{"test"},
 			},
 		},
 		{
@@ -1622,6 +1622,7 @@ func TestGetGame(t *testing.T) {
 					gameID,
 					"test",
 					"test",
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 				Owners: []*service.UserInfo{
@@ -1647,7 +1648,7 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Genres:      []openapi.GameGenreName{},
+				Genres:      &[]openapi.GameGenreName{},
 			},
 		},
 		{

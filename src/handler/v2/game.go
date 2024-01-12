@@ -297,7 +297,7 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
-		Genres:      resGenres,
+		Genres:      &resGenres,
 	}
 	return ctx.JSON(http.StatusOK, res)
 }

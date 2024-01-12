@@ -43,7 +43,13 @@ func TestGetGenresByGameID(t *testing.T) {
 	gameID3 := values.NewGameID()
 	genreID3 := values.NewGameGenreID()
 	gameID4 := values.NewGameID()
-	// genreID4 := values.NewGameGenreID()
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
@@ -53,11 +59,12 @@ func TestGetGenresByGameID(t *testing.T) {
 					ID:        uuid.UUID(genreID1),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID1),
-							Name:        "test",
-							Description: "test",
+							ID:               uuid.UUID(gameID1),
+							Name:             "test",
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
+							Description:      "test",
 						},
 					},
 				},
@@ -73,11 +80,12 @@ func TestGetGenresByGameID(t *testing.T) {
 					ID:        uuid.UUID(genreID2),
 					Name:      "test1",
 					CreatedAt: now.Add(-time.Hour),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID2),
-							Name:        "test2",
-							Description: "test2",
+							ID:               uuid.UUID(gameID2),
+							Name:             "test2",
+							Description:      "test2",
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
@@ -85,11 +93,12 @@ func TestGetGenresByGameID(t *testing.T) {
 					ID:        uuid.UUID(genreID3),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID2),
-							Name:        "test2",
-							Description: "test2",
+							ID:               uuid.UUID(gameID2),
+							Name:             "test2",
+							Description:      "test2",
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
@@ -111,11 +120,12 @@ func TestGetGenresByGameID(t *testing.T) {
 					ID:        uuid.UUID(genreID1),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
-					Games: []migrate.GameTable2{
+					Games: []*migrate.GameTable2{
 						{
-							ID:          uuid.UUID(gameID1),
-							Name:        "test",
-							Description: "test",
+							ID:               uuid.UUID(gameID1),
+							Name:             "test",
+							Description:      "test",
+							VisibilityTypeID: gameVisibilityTypeIDPublic,
 						},
 					},
 				},
