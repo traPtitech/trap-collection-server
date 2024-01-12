@@ -49,6 +49,9 @@ func TestGetGenresByGameID(t *testing.T) {
 		Session(&gorm.Session{}).
 		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v", err)
+	}
 	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	testCases := map[string]test{
