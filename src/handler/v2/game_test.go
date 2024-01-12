@@ -1565,6 +1565,7 @@ func TestGetGame(t *testing.T) {
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{"test"},
+				Visibility:  openapi.Limited,
 			},
 		},
 		{
@@ -1605,6 +1606,7 @@ func TestGetGame(t *testing.T) {
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{},
 				Genres:      &[]openapi.GameGenreName{"test"},
+				Visibility:  openapi.Limited,
 			},
 		},
 		{
@@ -1649,7 +1651,135 @@ func TestGetGame(t *testing.T) {
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{},
+				Visibility:  openapi.Limited,
 			},
+		},
+		{
+			description:  "visibilityがprivateでも問題なし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypePrivate,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						userID2,
+						values.NewTrapMemberName("pikachu"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{},
+				Visibility:  openapi.Private,
+			},
+		},
+		{
+			description:  "visibilityがpublicでもエラーなし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypePublic,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						userID2,
+						values.NewTrapMemberName("pikachu"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{},
+				Visibility:  openapi.Public,
+			},
+		},
+		{
+			description:  "visibilityが不正なので500",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			gameIDInPath:   openapi.GameID(gameID),
+			gameID:         gameID,
+			executeGetGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					100,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						userID1,
+						values.NewTrapMemberName("mazrean"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						userID2,
+						values.NewTrapMemberName("pikachu"),
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{},
+			},
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
 		},
 		{
 			description:  "ゲームが存在しないので404",
@@ -1769,6 +1899,7 @@ func TestGetGame(t *testing.T) {
 			assert.Equal(t, testCase.apiGame.Name, responseGame.Name)
 			assert.Equal(t, testCase.apiGame.Id, responseGame.Id)
 			assert.Equal(t, testCase.apiGame.Description, responseGame.Description)
+			assert.Equal(t, testCase.apiGame.Visibility, responseGame.Visibility)
 			assert.WithinDuration(t, testCase.apiGame.CreatedAt, responseGame.CreatedAt, time.Second)
 
 			assert.Len(t, testCase.apiGame.Owners, len(responseGame.Owners))
