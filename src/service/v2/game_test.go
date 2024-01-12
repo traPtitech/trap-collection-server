@@ -875,6 +875,7 @@ func TestGetGame(t *testing.T) {
 		game                           *domain.Game
 		noAuthSession                  bool
 		executeGetActiveUsers          bool
+		getActiveUsersErr              error
 		GetGameErr                     error
 		executeGetGameManagersByGameID bool
 		administrators                 []*repository.UserIDAndManagementRole
@@ -969,6 +970,14 @@ func TestGetGame(t *testing.T) {
 			isErr:                          true,
 		},
 		{
+			description:                    "getActiveUsersがエラーなのでエラー",
+			gameID:                         gameID,
+			executeGetGameManagersByGameID: true,
+			executeGetActiveUsers:          true,
+			getActiveUsersErr:              errors.New("error"),
+			isErr:                          true,
+		},
+		{
 			description:                    "GetGameGenresByGameIDがエラーなのでエラー",
 			gameID:                         gameID,
 			executeGetGameManagersByGameID: true,
@@ -1040,7 +1049,13 @@ func TestGetGame(t *testing.T) {
 				mockUserCache.
 					EXPECT().
 					GetActiveUsers(gomock.Any()).
-					Return(activeUsers, nil)
+					Return(activeUsers, testCase.getActiveUsersErr)
+			}
+			if testCase.executeGetActiveUsers && testCase.getActiveUsersErr != nil {
+				mockUserAuth.
+					EXPECT().
+					GetActiveUsers(gomock.Any(), gomock.Any()).
+					Return(activeUsers, testCase.getActiveUsersErr)
 			}
 			if testCase.executeGetGameManagersByGameID {
 				mockGameManagementRoleRepository.
