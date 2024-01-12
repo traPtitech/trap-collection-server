@@ -41,6 +41,7 @@ comments:
     columnComments:
       id: ゲームUUID
       name: ゲーム名
+      visibility_type_id: ゲームの公開範囲のID
       description: ゲームの説明
       created_at: 作成日時
       deleted_at: 削除日時
@@ -198,3 +199,20 @@ comments:
       game_id: ゲームUUID
       video_type_id: 動画の種類のUUID
       created_at: 作成日時
+  - table: game_visibility_types
+    tableComment: ゲームの公開範囲のテーブル
+    columnComments:
+      id: ゲームの公開範囲のID
+      name: ゲームの公開範囲の名前
+      created_at: 作成日時
+  - table: game_genres
+    tableComment: ゲームのジャンルのテーブル
+    columnComments:
+      id: ゲームのジャンルのID
+      name: ゲームのジャンルの名前
+      created_at: 作成日時
+  - table: game_genre_relations
+    tableComment: ゲームとジャンルの関係テーブル
+    columnComments:
+      game_id: ゲームUUID
+      genre_id: ゲームのジャンルのID

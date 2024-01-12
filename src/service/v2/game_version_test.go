@@ -26,7 +26,7 @@ func TestCreateGameVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
 	mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
@@ -870,7 +870,7 @@ func TestGetGameVersions(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
 	mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)
@@ -1887,7 +1887,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGameRepository := mockRepository.NewMockGame(ctrl)
+	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 	mockGameImageRepository := mockRepository.NewMockGameImageV2(ctrl)
 	mockGameVideoRepository := mockRepository.NewMockGameVideoV2(ctrl)
 	mockGameFileRepository := mockRepository.NewMockGameFileV2(ctrl)

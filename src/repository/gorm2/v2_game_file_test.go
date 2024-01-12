@@ -66,6 +66,16 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
@@ -87,6 +97,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 							CreatedAt:  now,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			gameFiles: []*repository.GameFileInfo{
@@ -122,6 +133,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 							CreatedAt:  now,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			gameFiles: []*repository.GameFileInfo{
@@ -157,6 +169,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 							CreatedAt:  now,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			gameFiles: []*repository.GameFileInfo{
@@ -207,6 +220,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 							CreatedAt:  now.Add(-time.Hour),
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			gameFiles: []*repository.GameFileInfo{
@@ -259,6 +273,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 							CreatedAt:  now,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			gameFiles: []*repository.GameFileInfo{
@@ -365,6 +380,16 @@ func TestSaveGameFileV2(t *testing.T) {
 	for _, fileType := range fileTypes {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
 
@@ -527,11 +552,12 @@ func TestSaveGameFileV2(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := db.Create(&migrate.GameTable2{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
-				GameFiles:   testCase.beforeFiles,
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				CreatedAt:        time.Now(),
+				GameFiles:        testCase.beforeFiles,
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -629,6 +655,16 @@ func TestGetGameFile(t *testing.T) {
 	for _, fileType := range fileTypes {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
 
@@ -784,11 +820,12 @@ func TestGetGameFile(t *testing.T) {
 					game.GameFiles = append(game.GameFiles, file)
 				} else {
 					gameIDMap[file.GameID] = &migrate.GameTable2{
-						ID:          file.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameFiles:   []migrate.GameFileTable2{file},
+						ID:               file.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameFiles:        []migrate.GameFileTable2{file},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
@@ -878,6 +915,16 @@ func TestGetGameFilesV2(t *testing.T) {
 	for _, fileType := range fileTypes {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
+
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
 	md5Hash := values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6})
 
@@ -1035,11 +1082,12 @@ func TestGetGameFilesV2(t *testing.T) {
 					game.GameFiles = append(game.GameFiles, file)
 				} else {
 					gameIDMap[file.GameID] = &migrate.GameTable2{
-						ID:          file.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameFiles:   []migrate.GameFileTable2{file},
+						ID:               file.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameFiles:        []migrate.GameFileTable2{file},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}

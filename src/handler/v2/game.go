@@ -89,7 +89,7 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 			Id:          game.Id,
 			Description: game.Description,
 			CreatedAt:   game.CreatedAt,
-			Genres:      []openapi.GameGenreID{},
+			Genres:      &[]openapi.GameGenreName{},
 		}
 		gamesWithGenres = append(gamesWithGenres, gameWithGenre)
 	}
@@ -149,13 +149,49 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		}
 	}
 
+	var visibility values.GameVisibility
+	switch req.Visibility {
+	case openapi.Public:
+		visibility = values.GameVisibilityTypePublic
+	case openapi.Limited:
+		visibility = values.GameVisibilityTypeLimited
+	case openapi.Private:
+		visibility = values.GameVisibilityTypePrivate
+	default:
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid visibility")
+	}
+
+	var genreNames []values.GameGenreName
+	if req.Genres != nil {
+		genreNames = make([]values.GameGenreName, 0, len(*req.Genres))
+		for i := range *req.Genres {
+			genreName := values.NewGameGenreName((*req.Genres)[i])
+			err := genreName.Validate()
+			if errors.Is(err, values.ErrGameGenreNameEmpty) {
+				return echo.NewHTTPError(http.StatusBadRequest, "game genre name is empty")
+			}
+			if errors.Is(err, values.ErrGameGenreNameTooLong) {
+				return echo.NewHTTPError(http.StatusBadRequest, "game genre name is too long")
+			}
+			if err != nil {
+				log.Printf("failed to validate game genre name: %v\n", genreName)
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game genre name")
+			}
+
+			genreNames = append(genreNames, genreName)
+		}
+	}
+
 	gameInfo, err := g.gameService.CreateGame(
 		ctx.Request().Context(),
 		authSession,
 		gameName,
 		values.GameDescription(req.Description),
+		visibility,
 		owners,
-		maintainers)
+		maintainers,
+		genreNames,
+	)
 
 	if errors.Is(err, service.ErrOverlapInOwners) {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners")
@@ -165,6 +201,9 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	}
 	if errors.Is(err, service.ErrOverlapBetweenOwnersAndMaintainers) {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to add owners and maintainers")
+	}
+	if errors.Is(err, service.ErrDuplicateGameGenre) {
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to add game genre")
 	}
 	if err != nil {
 		log.Printf("error: failed to create game: %v\n", err)
@@ -181,6 +220,14 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	var resGameGenreNames []openapi.GameGenreName
+	if gameInfo.Genres != nil && len(gameInfo.Genres) != 0 { // ジャンルが無い場合はnilにする
+		resGameGenreNames = make([]openapi.GameGenreName, 0, len(gameInfo.Genres))
+		for _, genre := range gameInfo.Genres {
+			resGameGenreNames = append(resGameGenreNames, openapi.GameGenreName(genre.GetName()))
+		}
+	}
+
 	res := openapi.Game{
 		Name:        string(gameInfo.Game.GetName()),
 		Id:          uuid.UUID(gameInfo.Game.GetID()),
@@ -188,6 +235,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &resGameGenreNames,
 	}
 
 	return ctx.JSON(http.StatusCreated, res)

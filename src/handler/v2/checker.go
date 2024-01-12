@@ -59,6 +59,11 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		"EditionGameImageAuth": checker.EditionGameImageAuthChecker,
 		"EditionGameVideoAuth": checker.EditionGameVideoAuthChecker,
 		"EditionIDAuth":        checker.EditionIDAuthChecker,
+
+		"GameInfoVisibilityAuth":  checker.NotImplementedChecker,
+		"GameFileVisibilityAuth":  checker.NotImplementedChecker,
+		"GameImageVisibilityAuth": checker.NotImplementedChecker,
+		"GameVideoVisibilityAuth": checker.NotImplementedChecker,
 	}
 
 	checkerFunc, ok := checkerMap[input.SecuritySchemeName]
@@ -74,6 +79,10 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		return err
 	}
 
+	return nil
+}
+
+func (checker *Checker) NotImplementedChecker(context.Context, *openapi3filter.AuthenticationInput) error {
 	return nil
 }
 

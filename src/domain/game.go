@@ -10,6 +10,7 @@ type Game struct {
 	id          values.GameID
 	name        values.GameName
 	description values.GameDescription
+	visibility  values.GameVisibility
 	createdAt   time.Time
 }
 
@@ -17,12 +18,14 @@ func NewGame(
 	id values.GameID,
 	name values.GameName,
 	description values.GameDescription,
+	visibility values.GameVisibility,
 	createdAt time.Time,
 ) *Game {
 	return &Game{
 		id:          id,
 		name:        name,
 		description: description,
+		visibility:  visibility,
 		createdAt:   createdAt,
 	}
 }
@@ -49,4 +52,12 @@ func (g *Game) SetDescription(description values.GameDescription) {
 
 func (g *Game) GetCreatedAt() time.Time {
 	return g.createdAt
+}
+
+func (g *Game) GetVisibility() values.GameVisibility {
+	return g.visibility
+}
+
+func (g *Game) SetVisibility(visibility values.GameVisibility) {
+	g.visibility = visibility
 }

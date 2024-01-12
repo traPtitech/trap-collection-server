@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,6 +96,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -137,6 +139,7 @@ func TestGetGames(t *testing.T) {
 				gameID1,
 				values.NewGameName("test1"),
 				values.NewGameDescription("test1"),
+				values.GameVisibilityTypeLimited,
 				now,
 			),
 			},
@@ -167,6 +170,7 @@ func TestGetGames(t *testing.T) {
 				gameID1,
 				values.NewGameName("test1"),
 				values.NewGameDescription("test1"),
+				values.GameVisibilityTypeLimited,
 				now,
 			),
 			},
@@ -243,12 +247,14 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 				domain.NewGame(
 					gameID2,
 					values.NewGameName("test2"),
 					values.NewGameDescription("test2"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -302,12 +308,14 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 				domain.NewGame(
 					gameID2,
 					values.NewGameName("test2"),
 					values.NewGameDescription("test2"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -340,6 +348,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -366,6 +375,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -392,6 +402,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -423,6 +434,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -454,6 +466,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -485,6 +498,7 @@ func TestGetGames(t *testing.T) {
 					gameID1,
 					values.NewGameName("test1"),
 					values.NewGameDescription("test1"),
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 			},
@@ -651,6 +665,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{"3D"},
+				Visibility:  openapi.Public,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -658,6 +674,7 @@ func TestPostGame(t *testing.T) {
 					gameID,
 					"test",
 					"test",
+					values.GameVisibilityTypePublic,
 					now,
 				),
 				Owners: []*service.UserInfo{
@@ -679,6 +696,9 @@ func TestPostGame(t *testing.T) {
 						values.TrapMemberStatusActive,
 					),
 				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.GameGenreIDFromUUID(uuid.New()), "3D", now),
+				},
 			},
 			apiGame: openapi.Game{
 				Id:          uuid.UUID(gameID),
@@ -687,6 +707,8 @@ func TestPostGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 		},
 		{
@@ -724,6 +746,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			isErr:      true,
 			statusCode: http.StatusBadRequest,
@@ -740,6 +764,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			isErr:      true,
 			statusCode: http.StatusBadRequest,
@@ -756,6 +782,8 @@ func TestPostGame(t *testing.T) {
 				Description: "",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -763,6 +791,7 @@ func TestPostGame(t *testing.T) {
 					gameID,
 					"test",
 					"",
+					values.GameVisibilityTypePublic,
 					now,
 				),
 				Owners: []*service.UserInfo{
@@ -784,6 +813,9 @@ func TestPostGame(t *testing.T) {
 						values.TrapMemberStatusActive,
 					),
 				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.NewGameGenreID(), "3D", now),
+				},
 			},
 			apiGame: openapi.Game{
 				Id:          uuid.UUID(gameID),
@@ -792,6 +824,158 @@ func TestPostGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
+			},
+		},
+		{
+			description:  "Genresが空でもエラー無し",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "すごいゲーム",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+			},
+			executeCreateGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"すごいゲーム",
+					values.GameVisibilityTypePublic,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"mazrean",
+						values.TrapMemberStatusActive,
+					),
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"ikura-hamu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"pikachu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "すごいゲーム",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      nil,
+			},
+		},
+		{
+			description:  "ジャンル名が長すぎるので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{strings.Repeat("あ", 33)},
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description:  "ジャンル名が0文字なので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{""},
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description:  "ジャンルが複数あっても問題なし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{"3D", "2D"},
+				Visibility:  openapi.Public,
+			},
+			executeCreateGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypePublic,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"mazrean",
+						values.TrapMemberStatusActive,
+					),
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"ikura-hamu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"pikachu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.NewGameGenreID(), "3D", now),
+					domain.NewGameGenre(values.NewGameGenreID(), "2D", now),
+				},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D", "2D"},
 			},
 		},
 		{
@@ -806,6 +990,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			CreateGameErr:     errors.New("test"),
@@ -824,6 +1010,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean", "mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			CreateGameErr:     service.ErrOverlapInOwners,
@@ -842,6 +1030,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu", "pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			CreateGameErr:     service.ErrOverlapInMaintainers,
@@ -860,6 +1050,8 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean", "mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			CreateGameErr:     service.ErrOverlapInOwners,
@@ -878,11 +1070,167 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"mazrean"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
 			CreateGameErr:     service.ErrOverlapBetweenOwnersAndMaintainers,
 			isErr:             true,
 			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description:  "ジャンルに重複があるので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"ikura-hamu"},
+				Visibility:  openapi.Public,
+				Genres:      &[]openapi.GameGenreName{"3D", "3D"},
+			},
+			executeCreateGame: true,
+			CreateGameErr:     service.ErrDuplicateGameGenre,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description:  "visibilityがlimitedでも問題なし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{"3D"},
+				Visibility:  openapi.Limited,
+			},
+			executeCreateGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypeLimited,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"mazrean",
+						values.TrapMemberStatusActive,
+					),
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"ikura-hamu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"pikachu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.GameGenreIDFromUUID(uuid.New()), "3D", now),
+				},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Limited,
+				Genres:      &[]openapi.GameGenreName{"3D"},
+			},
+		},
+		{
+			description:  "visibilityがlimitedでも問題なし",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{"3D"},
+				Visibility:  openapi.Private,
+			},
+			executeCreateGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypePrivate,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"mazrean",
+						values.TrapMemberStatusActive,
+					),
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"ikura-hamu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"pikachu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.GameGenreIDFromUUID(uuid.New()), "3D", now),
+				},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  openapi.Private,
+				Genres:      &[]openapi.GameGenreName{"3D"},
+			},
+		},
+		{
+			description:  "visibilityの値が正しくないので400",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Visibility:  "変なやつ",
+				Genres:      &[]openapi.GameGenreName{"3D"},
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
 	}
 
@@ -950,8 +1298,10 @@ func TestPostGame(t *testing.T) {
 						gomock.Any(),
 						values.NewGameName(testCase.newGame.Name),
 						values.NewGameDescription(testCase.newGame.Description),
+						gomock.Any(),
 						owners,
-						maintainers).
+						maintainers,
+						gomock.Any()).
 					Return(testCase.game, testCase.CreateGameErr)
 			}
 
@@ -992,6 +1342,15 @@ func TestPostGame(t *testing.T) {
 
 			if *responseGame.Maintainers != nil {
 				assert.Len(t, *responseGame.Maintainers, len(*testCase.apiGame.Maintainers))
+			}
+
+			if responseGame.Genres != nil {
+				assert.Len(t, *responseGame.Genres, len(*testCase.apiGame.Genres))
+				for i, resGenre := range *responseGame.Genres {
+					assert.Equal(t, (*testCase.apiGame.Genres)[i], resGenre)
+				}
+			} else {
+				assert.Nil(t, testCase.apiGame.Genres)
 			}
 
 			for i, resOwner := range responseGame.Owners {
@@ -1177,6 +1536,7 @@ func TestGetGame(t *testing.T) {
 					gameID,
 					"test",
 					"test",
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 				Owners: []*service.UserInfo{
@@ -1222,6 +1582,7 @@ func TestGetGame(t *testing.T) {
 					gameID,
 					"test",
 					"test",
+					values.GameVisibilityTypeLimited,
 					now,
 				),
 				Owners: []*service.UserInfo{
@@ -1484,6 +1845,7 @@ func TestPatchGame(t *testing.T) {
 				gameID,
 				values.NewGameName("test"),
 				values.NewGameDescription("test"),
+				values.GameVisibilityTypeLimited,
 				now,
 			),
 			apiGame: openapi.GameInfo{
@@ -1531,6 +1893,7 @@ func TestPatchGame(t *testing.T) {
 				gameID,
 				values.NewGameName("test"),
 				values.NewGameDescription(""),
+				values.GameVisibilityTypeLimited,
 				now,
 			),
 			apiGame: openapi.GameInfo{

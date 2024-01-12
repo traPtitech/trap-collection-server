@@ -17,9 +17,8 @@ import (
 var _ service.GameVersionV2 = &GameVersion{}
 
 type GameVersion struct {
-	db repository.DB
-	// TODO: v2のgameRepositoryに変更
-	gameRepository        repository.Game
+	db                    repository.DB
+	gameRepository        repository.GameV2
 	gameImageRepository   repository.GameImageV2
 	gameVideoRepository   repository.GameVideoV2
 	gameFileRepository    repository.GameFileV2
@@ -28,7 +27,7 @@ type GameVersion struct {
 
 func NewGameVersion(
 	db repository.DB,
-	gameRepository repository.Game,
+	gameRepository repository.GameV2,
 	gameImageRepository repository.GameImageV2,
 	gameVideoRepository repository.GameVideoV2,
 	gameFileRepository repository.GameFileV2,

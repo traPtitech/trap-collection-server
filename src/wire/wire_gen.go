@@ -15,11 +15,10 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/config/v1"
 	"github.com/traPtitech/trap-collection-server/src/handler"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
-	v1_2 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
-	v1_3 "github.com/traPtitech/trap-collection-server/src/service/v1"
+	v1_2 "github.com/traPtitech/trap-collection-server/src/service/v1"
 	v2_2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
@@ -92,11 +91,12 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	v1Session, err := v1_2.NewSession(session)
+	context := v2.NewContext()
+	v2Session, err := v2.NewSession(session)
 	if err != nil {
 		return nil, err
 	}
-	serviceV1 := v1.NewServiceV1()
+	serviceV2 := v1.NewServiceV2()
 	authTraQ := v1.NewAuthTraQ()
 	user, err := traq.NewUser(authTraQ)
 	if err != nil {
@@ -107,82 +107,17 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	userUtils := v1_3.NewUserUtils(user, ristrettoUser)
-	administratorAuth, err := v1_3.NewAdministratorAuth(serviceV1, userUtils)
+	v2User := v2_2.NewUser(user, ristrettoUser)
+	oidc, err := traq.NewOIDC(authTraQ)
+	if err != nil {
+		return nil, err
+	}
+	v2OIDC, err := v2_2.NewOIDC(serviceV2, v2User, oidc)
 	if err != nil {
 		return nil, err
 	}
 	repositoryGorm2 := v1.NewRepositoryGorm2()
 	db, err := gorm2.NewDB(app, repositoryGorm2)
-	if err != nil {
-		return nil, err
-	}
-	launcherVersion := gorm2.NewLauncherVersion(db)
-	launcherUser := gorm2.NewLauncherUser(db)
-	launcherSession := gorm2.NewLauncherSession(db)
-	launcherAuth := v1_3.NewLauncherAuth(db, launcherVersion, launcherUser, launcherSession)
-	game := gorm2.NewGame(db)
-	gameManagementRole := gorm2.NewGameManagementRole(db)
-	gameAuth := v1_3.NewGameAuth(db, game, gameManagementRole, userUtils)
-	oidc, err := traq.NewOIDC(authTraQ)
-	if err != nil {
-		return nil, err
-	}
-	v1OIDC, err := v1_3.NewOIDC(serviceV1, oidc)
-	if err != nil {
-		return nil, err
-	}
-	middleware := v1_2.NewMiddleware(v1Session, administratorAuth, launcherAuth, gameAuth, v1OIDC)
-	v1User := v1_3.NewUser(userUtils)
-	user2 := v1_2.NewUser(v1Session, v1User)
-	gameVersion := gorm2.NewGameVersion(db)
-	v1Game := v1_3.NewGame(db, game, gameVersion, gameManagementRole, userUtils)
-	game2 := v1_2.NewGame(app, v1Session, v1Game)
-	gameRole := v1_2.NewGameRole(app, v1Session, gameAuth)
-	gameImage := gorm2.NewGameImage(db)
-	storage := v1.NewStorage()
-	storageSwift := v1.NewStorageSwift()
-	storageLocal := v1.NewStorageLocal()
-	storageS3 := v1.NewStorageS3()
-	wireStorage, err := storageSwitch(storage, storageSwift, storageLocal, storageS3)
-	if err != nil {
-		return nil, err
-	}
-	storageGameImage := wireStorage.GameImage
-	v1GameImage := v1_3.NewGameImage(db, game, gameImage, storageGameImage)
-	gameImage2 := v1_2.NewGameImage(app, v1GameImage)
-	gameVideo := gorm2.NewGameVideo(db)
-	storageGameVideo := wireStorage.GameVideo
-	v1GameVideo := v1_3.NewGameVideo(db, game, gameVideo, storageGameVideo)
-	gameVideo2 := v1_2.NewGameVideo(app, v1GameVideo)
-	v1GameVersion := v1_3.NewGameVersion(db, game, gameVersion)
-	gameVersion2 := v1_2.NewGameVersion(app, v1GameVersion)
-	gameFile := gorm2.NewGameFile(db)
-	storageGameFile := wireStorage.GameFile
-	v1GameFile := v1_3.NewGameFile(db, game, gameVersion, gameFile, storageGameFile)
-	gameFile2 := v1_2.NewGameFile(app, v1GameFile)
-	gameURL := gorm2.NewGameURL(db)
-	v1GameURL := v1_3.NewGameURL(db, game, gameVersion, gameURL)
-	gameURL2 := v1_2.NewGameURL(app, v1GameURL)
-	v1LauncherAuth := v1_2.NewLauncherAuth(app, launcherAuth)
-	v1LauncherVersion := v1_3.NewLauncherVersion(db, launcherVersion, game)
-	launcherVersion2 := v1_2.NewLauncherVersion(app, v1LauncherVersion)
-	oAuth2, err := v1_2.NewOAuth2(v1Handler, v1Session, v1OIDC)
-	if err != nil {
-		return nil, err
-	}
-	api, err := v1_2.NewAPI(v1Handler, middleware, user2, game2, gameRole, gameImage2, gameVideo2, gameVersion2, gameFile2, gameURL2, v1LauncherAuth, launcherVersion2, oAuth2, v1Session)
-	if err != nil {
-		return nil, err
-	}
-	context := v2.NewContext()
-	v2Session, err := v2.NewSession(session)
-	if err != nil {
-		return nil, err
-	}
-	serviceV2 := v1.NewServiceV2()
-	v2User := v2_2.NewUser(user, ristrettoUser)
-	v2OIDC, err := v2_2.NewOIDC(serviceV2, v2User, oidc)
 	if err != nil {
 		return nil, err
 	}
@@ -194,31 +129,46 @@ func InjectApp() (*App, error) {
 	productKey := gorm2.NewProductKey(db)
 	accessToken := gorm2.NewAccessToken(db)
 	editionAuth := v2_2.NewEditionAuth(db, edition, productKey, accessToken)
-	v2GameRole := v2_2.NewGameRole(db, gameV2, gameManagementRole, v2User)
+	gameManagementRole := gorm2.NewGameManagementRole(db)
+	gameRole := v2_2.NewGameRole(db, gameV2, gameManagementRole, v2User)
 	adminAuth := gorm2.NewAdminAuth(db)
 	v2AdminAuth := v2_2.NewAdminAuth(db, adminAuth, v2User)
-	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth, v2GameRole, v2AdminAuth)
-	v2OAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
+	checker := v2.NewChecker(context, v2Session, v2OIDC, v2Edition, editionAuth, gameRole, v2AdminAuth)
+	oAuth2, err := v2.NewOAuth2(v1Handler, v2Session, v2OIDC)
 	if err != nil {
 		return nil, err
 	}
-	user3 := v2.NewUser(v2Session, v1User)
+	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
+	v1User := v1_2.NewUser(userUtils)
+	user2 := v2.NewUser(v2Session, v1User)
 	admin := v2.NewAdmin(v2AdminAuth, v2Session)
 	gameGenre := gorm2.NewGameGenre(db)
-	v2Game := v2_2.NewGame(db, gameV2, gameManagementRole, gameGenre, v2User)
-	game3 := v2.NewGame(v2Session, v2Game)
-	gameRole2 := v2.NewGameRole(v2GameRole, v2Game, v2Session)
-	v2GameGenre := v2.NewGameGenre()
+	game := v2_2.NewGame(db, gameV2, gameManagementRole, gameGenre, v2User)
+	v2Game := v2.NewGame(v2Session, game)
+	v2GameRole := v2.NewGameRole(gameRole, game, v2Session)
+	v2GameGenre := v2_2.NewGameGenre(gameGenre)
+	gameGenre2 := v2.NewGameGenre(v2GameGenre)
 	gameImageV2 := gorm2.NewGameImageV2(db)
 	gameVideoV2 := gorm2.NewGameVideoV2(db)
-	v2GameVersion := v2_2.NewGameVersion(db, game, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)
-	gameVersion3 := v2.NewGameVersion(v2GameVersion)
-	v2GameFile := v2_2.NewGameFile(db, gameV2, gameFileV2, storageGameFile)
-	gameFile3 := v2.NewGameFile(v2GameFile)
-	v2GameImage := v2_2.NewGameImage(db, game, gameImageV2, storageGameImage)
-	gameImage3 := v2.NewGameImage(v2GameImage)
-	v2GameVideo := v2_2.NewGameVideo(db, gameV2, gameVideoV2, storageGameVideo)
-	gameVideo3 := v2.NewGameVideo(v2GameVideo)
+	gameVersion := v2_2.NewGameVersion(db, gameV2, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)
+	v2GameVersion := v2.NewGameVersion(gameVersion)
+	storage := v1.NewStorage()
+	storageSwift := v1.NewStorageSwift()
+	storageLocal := v1.NewStorageLocal()
+	storageS3 := v1.NewStorageS3()
+	wireStorage, err := storageSwitch(storage, storageSwift, storageLocal, storageS3)
+	if err != nil {
+		return nil, err
+	}
+	gameFile := wireStorage.GameFile
+	v2GameFile := v2_2.NewGameFile(db, gameV2, gameFileV2, gameFile)
+	gameFile2 := v2.NewGameFile(v2GameFile)
+	gameImage := wireStorage.GameImage
+	v2GameImage := v2_2.NewGameImage(db, gameV2, gameImageV2, gameImage)
+	gameImage2 := v2.NewGameImage(v2GameImage)
+	gameVideo := wireStorage.GameVideo
+	v2GameVideo := v2_2.NewGameVideo(db, gameV2, gameVideoV2, gameVideo)
+	gameVideo2 := v2.NewGameVideo(v2GameVideo)
 	edition2 := v2.NewEdition(v2Edition)
 	v2EditionAuth := v2.NewEditionAuth(context, editionAuth)
 	seat := gorm2.NewSeat(db)
@@ -228,8 +178,8 @@ func InjectApp() (*App, error) {
 	}
 	v2Seat := v2_2.NewSeat(db, seat, ristrettoSeat)
 	seat2 := v2.NewSeat(v2Seat)
-	v2API := v2.NewAPI(checker, v2Session, v2OAuth2, user3, admin, game3, gameRole2, v2GameGenre, gameVersion3, gameFile3, gameImage3, gameVideo3, edition2, v2EditionAuth, seat2)
-	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api, v2API)
+	api := v2.NewAPI(checker, v2Session, oAuth2, user2, admin, v2Game, v2GameRole, gameGenre2, v2GameVersion, gameFile2, gameImage2, gameVideo2, edition2, v2EditionAuth, seat2)
+	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api)
 	if err != nil {
 		return nil, err
 	}
