@@ -10,6 +10,9 @@ import (
 )
 
 type GameGenre interface {
+	// 全てのジャンルと、そのジャンルに含まれるゲームの数を返す。
+	GetGameGenres(ctx context.Context) ([]*GameGenreInfo, error)
+	// ゲームのIDからそのゲームのジャンルを取得する。
 	GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error)
 	// RemoveGameGenre
 	// ゲームジャンルを削除する。
@@ -29,4 +32,9 @@ type GameGenre interface {
 	// ゲームジャンルが存在しない場合は、ErrIncludeInvalidArgsを返す。
 	// ゲームジャンルを追加するのではなく、置き換える。
 	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error
+}
+
+type GameGenreInfo struct {
+	domain.GameGenre
+	Num int //そのジャンルに含まれるゲームの数
 }

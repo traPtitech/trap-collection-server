@@ -21,6 +21,22 @@ func NewGameGenre(gameGenreRepository repository.GameGenre) *GameGenre {
 
 var _ service.GameGenre = &GameGenre{}
 
+func (gameGenre *GameGenre) GetGameGenres(ctx context.Context) ([]*service.GameGenreInfo, error) {
+	gameInfosRepo, err := gameGenre.gameGenreRepository.GetGameGenres(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	gameInfos := make([]*service.GameGenreInfo, 0, len(gameInfosRepo))
+	for i := range gameInfosRepo {
+		gameInfos = append(gameInfos, &service.GameGenreInfo{
+			GameGenre: gameInfosRepo[i].GameGenre,
+			Num:       gameInfosRepo[i].Num,
+		})
+	}
+	return gameInfos, nil
+}
+
 func (gameGenre *GameGenre) DeleteGameGenre(ctx context.Context, gameGenreID values.GameGenreID) error {
 	err := gameGenre.gameGenreRepository.RemoveGameGenre(ctx, gameGenreID)
 	if errors.Is(err, repository.ErrNoRecordDeleted) {
