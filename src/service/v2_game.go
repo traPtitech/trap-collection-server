@@ -22,6 +22,7 @@ type GameV2 interface {
 	// GetGame
 	// ゲームのidを指定してゲーム（id、名前、説明、オーナー、メンテナー）を取得する。
 	// idが一致するゲームが存在しなかった場合、ErrNoGameを返す。
+	// sessionがnilの場合、返り値のOwnersとMaintainersは空配列。
 	GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*GameInfoV2, error)
 
 	// GetGames

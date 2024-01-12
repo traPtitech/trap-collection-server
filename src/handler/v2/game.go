@@ -265,7 +265,8 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
+		// 部員以外でも、管理者情報以外は取得できるようにするので、エラーは返さない。
+		authSession = nil
 	}
 
 	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
