@@ -168,3 +168,42 @@ func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID val
 
 	return nil
 }
+
+type gameGenreInfo struct {
+	migrate.GameGenreTable
+	Num int
+}
+
+func (gameGenre *GameGenre) GetGameGenres(ctx context.Context) ([]*repository.GameGenreInfo, error) {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	// ジャンルごとのゲーム数を数え、ジャンルと一緒に返す。
+	query := "SELECT COUNT(ggr.game_id) AS Num, game_genres.* FROM game_genres " +
+		"LEFT JOIN game_genre_relations AS ggr ON game_genres.id = ggr.genre_id " +
+		"GROUP BY ggr.genre_id " +
+		"ORDER BY game_genres.created_at DESC"
+
+	var gameGenreInfos []gameGenreInfo
+	err = db.Raw(query).Scan(&gameGenreInfos).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game genres: %w", err)
+	}
+
+	result := make([]*repository.GameGenreInfo, 0, len(gameGenreInfos))
+
+	for i := range gameGenreInfos {
+		result = append(result, &repository.GameGenreInfo{
+			GameGenre: *domain.NewGameGenre(
+				values.GameGenreID(gameGenreInfos[i].ID),
+				values.GameGenreName(gameGenreInfos[i].Name),
+				gameGenreInfos[i].CreatedAt,
+			),
+			Num: gameGenreInfos[i].Num,
+		})
+	}
+
+	return result, nil
+}
