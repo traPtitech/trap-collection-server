@@ -34,7 +34,7 @@ jobs:
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.5
+        uses: codecov/codecov-action@v4.0.1
         with:
           file: /tmp/coverage/coverage.txt
       - uses: actions/upload-artifact@v4
