@@ -46,4 +46,5 @@ var (
 	ErrNoAsset                           = errors.New("no asset")
 	ErrNoGameGenre                       = errors.New("no game genre")
 	ErrDuplicateGameGenre                = errors.New("duplicate game genre")
+	ErrInvalidGamesOrderType             = errors.New("invalid games order")
 )

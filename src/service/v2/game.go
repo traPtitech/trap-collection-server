@@ -283,11 +283,22 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 	return gameInfo, nil
 }
 
-func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetGames(ctx context.Context, limit int, offset int, gameGenreIDs []values.GameGenreID, gameName string, order string) (int, []*domain.Game, error) {
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
-	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
+
+	var gamesOrder repository.GameOrderType
+	switch order {
+	case "latestVersion":
+		gamesOrder = repository.GamesOrderTypeLatestVersion
+	case "createdAt":
+		gamesOrder = repository.GamesOrderTypeCreatedAt
+	default:
+		return 0, nil, service.ErrInvalidGamesOrderType
+	}
+
+	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset, gameGenreIDs, gameName, gamesOrder)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
 	}
@@ -297,7 +308,7 @@ func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*dom
 	return gameNumber, games, nil
 }
 
-func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int, gameGenreIDs []values.GameGenreID, gameName string, order string) (int, []*domain.Game, error) {
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
@@ -306,7 +317,17 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset)
+	var gamesOrder repository.GameOrderType
+	switch order {
+	case "latestVersion":
+		gamesOrder = repository.GamesOrderTypeLatestVersion
+	case "createdAt":
+		gamesOrder = repository.GamesOrderTypeCreatedAt
+	default:
+		return 0, nil, service.ErrInvalidGamesOrderType
+	}
+
+	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset, gameGenreIDs, gameName, gamesOrder)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get game IDs: %w", err)
 	}
