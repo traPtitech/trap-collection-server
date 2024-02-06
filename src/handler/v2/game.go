@@ -265,7 +265,8 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 	authSession, err := g.session.getAuthSession(session)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
+		// 部員以外でも、管理者情報以外は取得できるようにするので、エラーは返さない。
+		authSession = nil
 	}
 
 	gameInfo, err := g.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
@@ -285,6 +286,24 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		resMaintainers = append(resMaintainers, string(maintainerInfo.GetName()))
 	}
 
+	resGenres := make([]string, 0, len(gameInfo.Genres))
+	for _, genre := range gameInfo.Genres {
+		resGenres = append(resGenres, string(genre.GetName()))
+	}
+
+	var visibility openapi.GameVisibility
+	switch gameInfo.Game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		visibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		visibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		visibility = openapi.Private
+	default:
+		log.Printf("error: failed to get game visibility: %v\n", gameInfo.Game.GetVisibility())
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
 	res := openapi.Game{
 		Name:        string(gameInfo.Game.GetName()),
 		Id:          uuid.UUID(gameInfo.Game.GetID()),
@@ -292,6 +311,8 @@ func (g *Game) GetGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &resGenres,
+		Visibility:  visibility,
 	}
 	return ctx.JSON(http.StatusOK, res)
 }

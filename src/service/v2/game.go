@@ -222,46 +222,49 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	//管理者たちを取得
-	administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get game management role: %w", err)
-	}
+	var ownersInfo, maintainersInfo []*service.UserInfo
+	if session != nil {
+		// 部員としてログインしているので、管理者たちを取得
+		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get game management role: %w", err)
+		}
 
-	activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
-	if err != nil {
-		return nil, fmt.Errorf("failed to get active users: %w", err)
-	}
+		activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+		if err != nil {
+			return nil, fmt.Errorf("failed to get active users: %w", err)
+		}
 
-	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
-	for _, activeUser := range activeUsers {
-		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
-	}
+		activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+		for _, activeUser := range activeUsers {
+			activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+		}
 
-	ownersInfo := make([]*service.UserInfo, 0, len(administrators))
-	maintainersInfo := make([]*service.UserInfo, 0, len(administrators))
-	for _, administrator := range administrators {
-		switch administrator.Role {
-		case values.GameManagementRoleAdministrator:
-			if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
-				ownerInfo := service.NewUserInfo(
-					administrator.UserID,
-					ownerName,
-					values.TrapMemberStatusActive,
-				)
-				ownersInfo = append(ownersInfo, ownerInfo)
+		ownersInfo = make([]*service.UserInfo, 0, len(administrators))
+		maintainersInfo = make([]*service.UserInfo, 0, len(administrators))
+		for _, administrator := range administrators {
+			switch administrator.Role {
+			case values.GameManagementRoleAdministrator:
+				if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
+					ownerInfo := service.NewUserInfo(
+						administrator.UserID,
+						ownerName,
+						values.TrapMemberStatusActive,
+					)
+					ownersInfo = append(ownersInfo, ownerInfo)
+				}
+			case values.GameManagementRoleCollaborator:
+				if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
+					maintainerInfo := service.NewUserInfo(
+						administrator.UserID,
+						maintainerName,
+						values.TrapMemberStatusActive,
+					)
+					maintainersInfo = append(maintainersInfo, maintainerInfo)
+				}
+			default:
+				fmt.Println("invalid administrator role")
 			}
-		case values.GameManagementRoleCollaborator:
-			if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
-				maintainerInfo := service.NewUserInfo(
-					administrator.UserID,
-					maintainerName,
-					values.TrapMemberStatusActive,
-				)
-				maintainersInfo = append(maintainersInfo, maintainerInfo)
-			}
-		default:
-			fmt.Println("invalid administrator role")
 		}
 	}
 

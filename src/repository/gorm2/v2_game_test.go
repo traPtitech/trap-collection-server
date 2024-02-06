@@ -563,7 +563,7 @@ func TestGetGameV2(t *testing.T) {
 				gameID1,
 				"test",
 				"test",
-				values.GameVisibilityTypeLimited,
+				values.GameVisibilityTypePublic,
 				now,
 			),
 		},
@@ -584,7 +584,7 @@ func TestGetGameV2(t *testing.T) {
 				gameID2,
 				"test",
 				"test",
-				values.GameVisibilityTypeLimited,
+				values.GameVisibilityTypePublic,
 				now,
 			),
 		},
@@ -605,7 +605,7 @@ func TestGetGameV2(t *testing.T) {
 				gameID5,
 				"test",
 				"test",
-				values.GameVisibilityTypeLimited,
+				values.GameVisibilityTypePublic,
 				now,
 			),
 			isErr: true,
@@ -676,6 +676,7 @@ func TestGetGameV2(t *testing.T) {
 			assert.Equal(t, testCase.game.GetID(), game.GetID())
 			assert.Equal(t, testCase.game.GetName(), game.GetName())
 			assert.Equal(t, testCase.game.GetDescription(), game.GetDescription())
+			assert.Equal(t, testCase.game.GetVisibility(), game.GetVisibility())
 			assert.WithinDuration(t, testCase.game.GetCreatedAt(), game.GetCreatedAt(), 2*time.Second)
 		})
 	}

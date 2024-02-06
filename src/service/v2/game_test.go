@@ -873,7 +873,9 @@ func TestGetGame(t *testing.T) {
 		description                    string
 		gameID                         values.GameID
 		game                           *domain.Game
+		noAuthSession                  bool
 		executeGetActiveUsers          bool
+		getActiveUsersErr              error
 		GetGameErr                     error
 		executeGetGameManagersByGameID bool
 		administrators                 []*repository.UserIDAndManagementRole
@@ -881,6 +883,8 @@ func TestGetGame(t *testing.T) {
 		executeGetGenresByGameID       bool
 		genres                         []*domain.GameGenre
 		GetGenresByGameIDErr           error
+		owners                         []*service.UserInfo
+		maintainers                    []*service.UserInfo
 		isErr                          bool
 		err                            error
 	}
@@ -888,17 +892,22 @@ func TestGetGame(t *testing.T) {
 	gameID := values.NewGameID()
 
 	userID1 := values.NewTrapMemberID(uuid.New())
+	userID2 := values.NewTrapMemberID(uuid.New())
+
+	user1 := service.NewUserInfo(
+		userID1,
+		"ikura-hamu",
+		values.TrapMemberStatusActive,
+	)
+	user2 := service.NewUserInfo(
+		userID2,
+		"mazrean",
+		values.TrapMemberStatusActive,
+	)
+	activeUsers := []*service.UserInfo{user1, user2}
 
 	gameGenreID := values.NewGameGenreID()
 	gameGenreName := values.NewGameGenreName("ジャンル")
-
-	activeUsers := []*service.UserInfo{
-		service.NewUserInfo(
-			userID1,
-			"ikura-hamu",
-			values.TrapMemberStatusActive,
-		),
-	}
 
 	testCases := []test{
 		{
@@ -921,6 +930,24 @@ func TestGetGame(t *testing.T) {
 			},
 			executeGetGenresByGameID: true,
 			genres:                   []*domain.GameGenre{domain.NewGameGenre(gameGenreID, gameGenreName, time.Now().Add(-time.Hour))},
+			owners:                   []*service.UserInfo{user1},
+			maintainers:              []*service.UserInfo{},
+		},
+		{
+			description:   "authSessionが無くても問題なし",
+			gameID:        gameID,
+			noAuthSession: true,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				values.GameVisibilityTypeLimited,
+				time.Now(),
+			),
+			executeGetGenresByGameID: true,
+			genres:                   []*domain.GameGenre{domain.NewGameGenre(gameGenreID, gameGenreName, time.Now().Add(-time.Hour))},
+			owners:                   []*service.UserInfo{},
+			maintainers:              []*service.UserInfo{},
 		},
 		{
 			description: "ゲームが存在しないのでErrNoGame",
@@ -940,6 +967,14 @@ func TestGetGame(t *testing.T) {
 			gameID:                         gameID,
 			executeGetGameManagersByGameID: true,
 			GetGameManagersByGameIDErr:     errors.New("error"),
+			isErr:                          true,
+		},
+		{
+			description:                    "getActiveUsersがエラーなのでエラー",
+			gameID:                         gameID,
+			executeGetGameManagersByGameID: true,
+			executeGetActiveUsers:          true,
+			getActiveUsersErr:              errors.New("error"),
 			isErr:                          true,
 		},
 		{
@@ -971,6 +1006,35 @@ func TestGetGame(t *testing.T) {
 			},
 			executeGetGenresByGameID: true,
 			genres:                   []*domain.GameGenre{},
+			owners:                   []*service.UserInfo{user1},
+			maintainers:              []*service.UserInfo{},
+		},
+		{
+			description: "maintainerがいても問題ない",
+			gameID:      gameID,
+			game: domain.NewGame(
+				gameID,
+				"game name",
+				"game description",
+				values.GameVisibilityTypeLimited,
+				time.Now(),
+			),
+			executeGetActiveUsers:          true,
+			executeGetGameManagersByGameID: true,
+			administrators: []*repository.UserIDAndManagementRole{
+				{
+					UserID: userID1,
+					Role:   values.GameManagementRoleAdministrator,
+				},
+				{
+					UserID: userID2,
+					Role:   values.GameManagementRoleCollaborator,
+				},
+			},
+			executeGetGenresByGameID: true,
+			genres:                   []*domain.GameGenre{},
+			owners:                   []*service.UserInfo{user1},
+			maintainers:              []*service.UserInfo{user2},
 		},
 	}
 
@@ -985,7 +1049,13 @@ func TestGetGame(t *testing.T) {
 				mockUserCache.
 					EXPECT().
 					GetActiveUsers(gomock.Any()).
-					Return(activeUsers, nil)
+					Return(activeUsers, testCase.getActiveUsersErr)
+			}
+			if testCase.executeGetActiveUsers && testCase.getActiveUsersErr != nil {
+				mockUserAuth.
+					EXPECT().
+					GetActiveUsers(gomock.Any(), gomock.Any()).
+					Return(activeUsers, testCase.getActiveUsersErr)
 			}
 			if testCase.executeGetGameManagersByGameID {
 				mockGameManagementRoleRepository.
@@ -1000,7 +1070,12 @@ func TestGetGame(t *testing.T) {
 					Return(testCase.genres, testCase.GetGenresByGameIDErr)
 			}
 
-			gameInfo, err := gameService.GetGame(ctx, domain.NewOIDCSession("access token", time.Now().Add(time.Hour)), testCase.gameID)
+			var authSession *domain.OIDCSession
+			if !testCase.noAuthSession {
+				authSession = domain.NewOIDCSession("access token", time.Now().Add(time.Hour))
+			}
+
+			gameInfo, err := gameService.GetGame(ctx, authSession, testCase.gameID)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -1020,26 +1095,29 @@ func TestGetGame(t *testing.T) {
 			assert.Equal(t, testCase.game.GetID(), gameInfo.Game.GetID())
 			assert.Equal(t, testCase.game.GetName(), gameInfo.Game.GetName())
 			assert.Equal(t, testCase.game.GetDescription(), gameInfo.Game.GetDescription())
+			assert.Equal(t, testCase.game.GetVisibility(), gameInfo.Game.GetVisibility())
 			assert.WithinDuration(t, testCase.game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
 
-			if testCase.administrators != nil {
-				for i := 0; i < len(testCase.administrators); i++ {
-					assert.Equal(t, testCase.administrators[i].UserID, gameInfo.Owners[i].GetID())
-				}
-			} else {
-				assert.Nil(t, gameInfo.Maintainers)
+			assert.Len(t, gameInfo.Owners, len(testCase.owners))
+			for i := range gameInfo.Owners {
+				assert.Equal(t, testCase.owners[i].GetID(), gameInfo.Owners[i].GetID())
+				assert.Equal(t, testCase.owners[i].GetName(), gameInfo.Owners[i].GetName())
+				assert.Equal(t, testCase.owners[i].GetStatus(), gameInfo.Owners[i].GetStatus())
 			}
 
-			if testCase.genres != nil {
-				for i := 0; i < len(testCase.genres); i++ {
-					assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
+			assert.Len(t, gameInfo.Maintainers, len(testCase.maintainers))
+			for i := range gameInfo.Maintainers {
+				assert.Equal(t, testCase.maintainers[i].GetID(), gameInfo.Maintainers[i].GetID())
+				assert.Equal(t, testCase.maintainers[i].GetName(), gameInfo.Maintainers[i].GetName())
+				assert.Equal(t, testCase.maintainers[i].GetStatus(), gameInfo.Maintainers[i].GetStatus())
+			}
 
-					assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())
-					assert.Equal(t, testCase.genres[i].GetName(), gameInfo.Genres[i].GetName())
-					assert.WithinDuration(t, testCase.genres[i].GetCreatedAt(), gameInfo.Genres[i].GetCreatedAt(), time.Second)
-				}
-			} else {
-				assert.Nil(t, gameInfo.Genres)
+			for i := 0; i < len(testCase.genres); i++ {
+				assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
+
+				assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())
+				assert.Equal(t, testCase.genres[i].GetName(), gameInfo.Genres[i].GetName())
+				assert.WithinDuration(t, testCase.genres[i].GetCreatedAt(), gameInfo.Genres[i].GetCreatedAt(), time.Second)
 			}
 		})
 	}
