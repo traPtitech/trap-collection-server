@@ -1153,9 +1153,6 @@ func TestGetGames(t *testing.T) {
 		description     string
 		limit           int
 		offset          int
-		gameGenreIDs    []values.GameGenreID
-		gameName        string
-		order           string
 		n               int
 		executeGetGames bool
 		games           []*domain.Game
@@ -1268,11 +1265,11 @@ func TestGetGames(t *testing.T) {
 			if testCase.executeGetGames {
 				mockGameRepository.
 					EXPECT().
-					GetGames(gomock.Any(), testCase.limit, testCase.offset, testCase.gameGenreIDs, testCase.gameName, gomock.Any()).
+					GetGames(gomock.Any(), testCase.limit, testCase.offset).
 					Return(testCase.games, testCase.n, testCase.GetGamesErr)
 			}
 
-			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset, testCase.gameGenreIDs, testCase.gameName, testCase.order)
+			n, games, err := gameService.GetGames(ctx, testCase.limit, testCase.offset)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -1335,9 +1332,6 @@ func TestGetMyGames(t *testing.T) {
 		GetGamesByUserErr     error
 		limit                 int
 		offset                int
-		gameGenreIDs          []values.GameGenreID
-		gameName              string
-		order                 string
 		n                     int
 		games                 []*domain.Game
 		GetGamesErr           error
@@ -1515,11 +1509,11 @@ func TestGetMyGames(t *testing.T) {
 			if testCase.executeGetGamesByUser {
 				mockGameRepository.
 					EXPECT().
-					GetGamesByUser(gomock.Any(), testCase.user.GetID(), testCase.limit, testCase.offset, testCase.gameGenreIDs, testCase.gameName, gomock.Any()).
+					GetGamesByUser(gomock.Any(), testCase.user.GetID(), testCase.limit, testCase.offset).
 					Return(testCase.games, testCase.n, testCase.GetGamesByUserErr)
 			}
 
-			n, games, err := gameService.GetMyGames(ctx, testCase.authSession, testCase.limit, testCase.offset, testCase.gameGenreIDs, testCase.gameName, testCase.order)
+			n, games, err := gameService.GetMyGames(ctx, testCase.authSession, testCase.limit, testCase.offset)
 
 			if testCase.isErr {
 				if testCase.err == nil {
