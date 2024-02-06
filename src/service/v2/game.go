@@ -266,9 +266,6 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 				fmt.Println("invalid administrator role")
 			}
 		}
-	} else {
-		ownersInfo = []*service.UserInfo{}
-		maintainersInfo = []*service.UserInfo{}
 	}
 
 	genres, err := g.gameGenreRepository.GetGenresByGameID(ctx, gameID)
