@@ -1098,33 +1098,26 @@ func TestGetGame(t *testing.T) {
 			assert.Equal(t, testCase.game.GetVisibility(), gameInfo.Game.GetVisibility())
 			assert.WithinDuration(t, testCase.game.GetCreatedAt(), gameInfo.Game.GetCreatedAt(), time.Second)
 
-			if testCase.owners != nil {
-				assert.Len(t, gameInfo.Owners, len(testCase.owners))
-				for i := range gameInfo.Owners {
-					assert.Equal(t, testCase.owners[i].GetID(), gameInfo.Owners[i].GetID())
-					assert.Equal(t, testCase.owners[i].GetName(), gameInfo.Owners[i].GetName())
-					assert.Equal(t, testCase.owners[i].GetStatus(), gameInfo.Owners[i].GetStatus())
-				}
-			}
-			if testCase.maintainers != nil {
-				assert.Len(t, gameInfo.Maintainers, len(testCase.maintainers))
-				for i := range gameInfo.Maintainers {
-					assert.Equal(t, testCase.maintainers[i].GetID(), gameInfo.Maintainers[i].GetID())
-					assert.Equal(t, testCase.maintainers[i].GetName(), gameInfo.Maintainers[i].GetName())
-					assert.Equal(t, testCase.maintainers[i].GetStatus(), gameInfo.Maintainers[i].GetStatus())
-				}
+			assert.Len(t, gameInfo.Owners, len(testCase.owners))
+			for i := range gameInfo.Owners {
+				assert.Equal(t, testCase.owners[i].GetID(), gameInfo.Owners[i].GetID())
+				assert.Equal(t, testCase.owners[i].GetName(), gameInfo.Owners[i].GetName())
+				assert.Equal(t, testCase.owners[i].GetStatus(), gameInfo.Owners[i].GetStatus())
 			}
 
-			if testCase.genres != nil {
-				for i := 0; i < len(testCase.genres); i++ {
-					assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
+			assert.Len(t, gameInfo.Maintainers, len(testCase.maintainers))
+			for i := range gameInfo.Maintainers {
+				assert.Equal(t, testCase.maintainers[i].GetID(), gameInfo.Maintainers[i].GetID())
+				assert.Equal(t, testCase.maintainers[i].GetName(), gameInfo.Maintainers[i].GetName())
+				assert.Equal(t, testCase.maintainers[i].GetStatus(), gameInfo.Maintainers[i].GetStatus())
+			}
 
-					assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())
-					assert.Equal(t, testCase.genres[i].GetName(), gameInfo.Genres[i].GetName())
-					assert.WithinDuration(t, testCase.genres[i].GetCreatedAt(), gameInfo.Genres[i].GetCreatedAt(), time.Second)
-				}
-			} else {
-				assert.Nil(t, gameInfo.Genres)
+			for i := 0; i < len(testCase.genres); i++ {
+				assert.Equal(t, testCase.genres[i], gameInfo.Genres[i])
+
+				assert.Equal(t, testCase.genres[i].GetID(), gameInfo.Genres[i].GetID())
+				assert.Equal(t, testCase.genres[i].GetName(), gameInfo.Genres[i].GetName())
+				assert.WithinDuration(t, testCase.genres[i].GetCreatedAt(), gameInfo.Genres[i].GetCreatedAt(), time.Second)
 			}
 		})
 	}

@@ -1920,11 +1920,9 @@ func TestGetGame(t *testing.T) {
 				assert.Equal(t, apiOwner, responseGame.Owners[i])
 			}
 
-			if len(*responseGame.Maintainers) != 0 {
-				assert.Len(t, *testCase.apiGame.Maintainers, len(*responseGame.Maintainers))
-				for i, apiMaintainer := range *testCase.apiGame.Maintainers {
-					assert.Equal(t, apiMaintainer, []string(*responseGame.Maintainers)[i])
-				}
+			assert.Len(t, *testCase.apiGame.Maintainers, len(*responseGame.Maintainers))
+			for i, apiMaintainer := range *testCase.apiGame.Maintainers {
+				assert.Equal(t, apiMaintainer, []string(*responseGame.Maintainers)[i])
 			}
 		})
 	}
