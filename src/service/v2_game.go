@@ -54,3 +54,10 @@ type GameInfoV2 struct {
 	Maintainers []*UserInfo
 	Genres      []*domain.GameGenre
 }
+
+type GamesSortType int
+
+const (
+	GamesSortTypeCreatedAt GamesSortType = iota
+	GamesSortTypeLatestVersion
+)
