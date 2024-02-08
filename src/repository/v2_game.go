@@ -29,19 +29,35 @@ type GameV2 interface {
 	//ゲームが見つからなかったとき、ErrRecordNotFoundを返す。
 	GetGame(ctx context.Context, gameID values.GameID, lockType LockType) (*domain.Game, error)
 
-	//GetGames
-	//取得する個数の上限(limit>=0)と開始位置(offset>=0)を指定してゲームを取得する。
-	//上限なしはlimit=0。返り値のintは制限をかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
-	//limitが負のとき、ErrNegativeLimitを返す。
-	GetGames(ctx context.Context, limit int, offset int) ([]*domain.Game, int, error)
-
-	//GetGamesByUser
-	//ユーザーのuuidと取得する個数の上限(limit)と開始位置(offset)を指定して、その人が作成したゲームを取得する。
-	//上限なしはlimit=0。返り値のintは制限をかけないときのその人が作ったゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
-	//limitが負のとき、ErrNegativeLimitを返す。
-	GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error)
-
 	//GetGamesByIDs
 	//指定されたidのゲームを取得する。
 	GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType LockType) ([]*domain.Game, error)
+
+	// GetGames
+	// 取得する個数の上限(limit>=0)と開始位置(offset>=0)を指定してゲームを取得する。
+	// 上限なしはlimit=0。返り値のintは制限をかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
+	// limitが負のとき、ErrNegativeLimitを返す。
+	// visibilitiesが無いときは、全てのゲームを取得する。
+	// userIDが指定されているときは、そのユーザーが作成したゲームを取得する。
+	// gameGenresが指定されているときは、そのジャンルがすべて含まれるゲームを取得する。
+	// nameが指定されているときは、その名前を含むゲームを取得する。
+	GetGames(
+		// 必須
+		ctx context.Context,
+		limit int,
+		offset int,
+		sort GamesSortType,
+		// nil、空文字列でもよい
+		visibilities []values.GameVisibility,
+		userID *values.TraPMemberID,
+		gameGenres []values.GameGenreID,
+		name string,
+	) ([]*domain.GameWithGenres, int, error)
 }
+
+type GamesSortType int
+
+const (
+	GamesSortTypeCreatedAt GamesSortType = iota
+	GamesSortTypeLatestVersion
+)
