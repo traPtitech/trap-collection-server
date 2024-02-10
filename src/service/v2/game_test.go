@@ -46,22 +46,23 @@ func TestCreateGame(t *testing.T) {
 	)
 
 	type test struct {
-		description                    string
-		authSession                    *domain.OIDCSession
-		user                           *service.UserInfo
-		isGetMeErr                     bool
-		name                           values.GameName
-		gameDescription                values.GameDescription
-		owners                         []values.TraPMemberName
-		maintainers                    []values.TraPMemberName
-		executeSaveGame                bool
-		SaveGameErr                    error
-		executeAddGameManagementRoles  bool
-		AddGameManagementRoleAdminErr  error
-		AddGameManagementRoleCollabErr error
-		expectedOwners                 []values.TraPMemberName
-		isErr                          bool
-		err                            error
+		description                               string
+		authSession                               *domain.OIDCSession
+		user                                      *service.UserInfo
+		isGetMeErr                                bool
+		name                                      values.GameName
+		gameDescription                           values.GameDescription
+		owners                                    []values.TraPMemberName
+		maintainers                               []values.TraPMemberName
+		executeSaveGame                           bool
+		SaveGameErr                               error
+		executeAddGameManagementRolesAdmin        bool
+		executeAddGameManagementRolesCollaborator bool
+		AddGameManagementRoleAdminErr             error
+		AddGameManagementRoleCollabErr            error
+		expectedOwners                            []values.TraPMemberName
+		isErr                                     bool
+		err                                       error
 	}
 
 	userID1 := values.NewTrapMemberID(uuid.New())
@@ -110,13 +111,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test description"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test description"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "nameが空でもエラーなし",
@@ -129,13 +131,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName(""),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName(""),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "descriptionが空でもエラーなし",
@@ -148,13 +151,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription(""),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "ownersが複数いてもエラーなし",
@@ -167,13 +171,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean", "JichouP"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "JichouP", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean", "JichouP"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "JichouP", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "ownersがいなくてもエラーなし",
@@ -186,13 +191,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "maintainersが複数いてもエラーなし",
@@ -205,13 +211,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu", "JichouP"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu", "JichouP"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "maintainersがいなくてもエラーなし",
@@ -224,13 +231,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription(""),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription(""),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "ownerとユーザーが同じなのでエラー",
@@ -243,14 +251,13 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"ikura-hamu"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			isErr:                         true,
-			err:                           service.ErrOverlapInOwners,
+			name:            values.GameName("test"),
+			gameDescription: values.GameDescription("test"),
+			owners:          []values.TraPMemberName{"ikura-hamu"},
+			maintainers:     []values.TraPMemberName{"pikachu"},
+			executeSaveGame: true,
+			isErr:           true,
+			err:             service.ErrOverlapInOwners,
 		},
 		{
 			description: "maintainerとユーザーが同じなのでエラー",
@@ -263,14 +270,13 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			isErr:                         true,
-			err:                           service.ErrOverlapBetweenOwnersAndMaintainers,
+			name:            values.GameName("test"),
+			gameDescription: values.GameDescription("test"),
+			owners:          []values.TraPMemberName{"mazrean"},
+			maintainers:     []values.TraPMemberName{"ikura-hamu"},
+			executeSaveGame: true,
+			isErr:           true,
+			err:             service.ErrOverlapBetweenOwnersAndMaintainers,
 		},
 		{
 			description: "ownersに同じ人が含まれているのでエラー",
@@ -283,14 +289,13 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean", "mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			isErr:                         true,
-			err:                           service.ErrOverlapInOwners,
+			name:            values.GameName("test"),
+			gameDescription: values.GameDescription("test"),
+			owners:          []values.TraPMemberName{"mazrean", "mazrean"},
+			maintainers:     []values.TraPMemberName{"pikachu"},
+			executeSaveGame: true,
+			isErr:           true,
+			err:             service.ErrOverlapInOwners,
 		},
 		{
 			description: "maintainersに同じ人が含まれているのでエラー",
@@ -303,14 +308,13 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu", "pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			isErr:                         true,
-			err:                           service.ErrOverlapInMaintainers,
+			name:            values.GameName("test"),
+			gameDescription: values.GameDescription("test"),
+			owners:          []values.TraPMemberName{"mazrean"},
+			maintainers:     []values.TraPMemberName{"pikachu", "pikachu"},
+			executeSaveGame: true,
+			isErr:           true,
+			err:             service.ErrOverlapInMaintainers,
 		},
 		{
 			description: "ownersとmaintainersに同じ人がいるのでエラー",
@@ -323,14 +327,13 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"pikachu"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			isErr:                         true,
-			err:                           service.ErrOverlapBetweenOwnersAndMaintainers,
+			name:            values.GameName("test"),
+			gameDescription: values.GameDescription("test"),
+			owners:          []values.TraPMemberName{"pikachu"},
+			maintainers:     []values.TraPMemberName{"pikachu"},
+			executeSaveGame: true,
+			isErr:           true,
+			err:             service.ErrOverlapBetweenOwnersAndMaintainers,
 		},
 		{
 			description: "ownersにactiveUserでない人が含まれるが問題なし",
@@ -343,13 +346,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"s9"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			expectedOwners:                []values.TraPMemberName{"ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"s9"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			expectedOwners:                     []values.TraPMemberName{"ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "maintainersにactiveUserでない人が含まれるが問題なし",
@@ -362,13 +366,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"s9"},
-			expectedOwners:                []values.TraPMemberName{"mazrean", "ikura-hamu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"s9"},
+			expectedOwners:                     []values.TraPMemberName{"mazrean", "ikura-hamu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
 		},
 		{
 			description: "SaveGameがエラーなのでエラー",
@@ -400,14 +405,14 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                          values.GameName("test"),
-			gameDescription:               values.GameDescription("test"),
-			owners:                        []values.TraPMemberName{"mazrean"},
-			maintainers:                   []values.TraPMemberName{"pikachu"},
-			executeSaveGame:               true,
-			executeAddGameManagementRoles: true,
-			AddGameManagementRoleAdminErr: errors.New("test"),
-			isErr:                         true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			AddGameManagementRoleAdminErr:      errors.New("test"),
+			isErr:                              true,
 		},
 		{
 			description: "AddGameManagementRolesがmaintainerの追加でエラーなのでエラー",
@@ -420,14 +425,15 @@ func TestCreateGame(t *testing.T) {
 				"ikura-hamu",
 				values.TrapMemberStatusActive,
 			),
-			name:                           values.GameName("test"),
-			gameDescription:                values.GameDescription("test"),
-			owners:                         []values.TraPMemberName{"mazrean"},
-			maintainers:                    []values.TraPMemberName{"pikachu"},
-			executeSaveGame:                true,
-			executeAddGameManagementRoles:  true,
-			AddGameManagementRoleCollabErr: errors.New("test"),
-			isErr:                          true,
+			name:                               values.GameName("test"),
+			gameDescription:                    values.GameDescription("test"),
+			owners:                             []values.TraPMemberName{"mazrean"},
+			maintainers:                        []values.TraPMemberName{"pikachu"},
+			executeSaveGame:                    true,
+			executeAddGameManagementRolesAdmin: true,
+			executeAddGameManagementRolesCollaborator: true,
+			AddGameManagementRoleCollabErr:            errors.New("test"),
+			isErr:                                     true,
 		},
 	}
 
@@ -461,19 +467,17 @@ func TestCreateGame(t *testing.T) {
 					Return(testCase.SaveGameErr)
 			}
 
-			if testCase.executeAddGameManagementRoles {
+			if testCase.executeAddGameManagementRolesAdmin {
 				mockGameManagementRoleRepository.
 					EXPECT().
-					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					DoAndReturn(func(ctx interface{}, gameID interface{}, userIDs interface{}, role values.GameManagementRole) error {
-						switch role {
-						case values.GameManagementRoleAdministrator:
-							return testCase.AddGameManagementRoleAdminErr
-						case values.GameManagementRoleCollaborator:
-							return testCase.AddGameManagementRoleCollabErr
-						}
-						return nil
-					}).AnyTimes()
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleAdministrator).
+					Return(testCase.AddGameManagementRoleAdminErr)
+			}
+			if testCase.executeAddGameManagementRolesCollaborator {
+				mockGameManagementRoleRepository.
+					EXPECT().
+					AddGameManagementRoles(gomock.Any(), gomock.Any(), gomock.Any(), values.GameManagementRoleCollaborator).
+					Return(testCase.AddGameManagementRoleCollabErr)
 			}
 
 			game, err := gameService.CreateGame(ctx, testCase.authSession, testCase.name, testCase.gameDescription, testCase.owners, testCase.maintainers)
