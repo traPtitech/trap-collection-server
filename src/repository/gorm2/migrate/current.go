@@ -41,7 +41,7 @@ const (
 
 // アプリケーションのv2
 type (
-	GameTable2              = gameTable2V12 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameTable2              = gameTable2V13 // 実際に使用されるテーブルはv1のGameTableと同一
 	GameVersionTable2       = gameVersionTable2V5
 	GameFileTable2          = gameFileTable2V5
 	GameImageTable2         = gameImageTable2V2
@@ -53,7 +53,7 @@ type (
 	AdminTable              = adminTable
 	SeatTable2              = seatTableV9
 	SeatStatusTable2        = seatStatusTableV9
-	GameGenreTable          = gameGenreTableV12
+	GameGenreTable          = gameGenreTableV13
 	GameVisibilityTypeTable = gameVisibilityTypeTableV11
 )
 

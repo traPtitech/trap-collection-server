@@ -35,12 +35,14 @@ type GameV2 interface {
 
 	// GetGames
 	// 取得する個数の上限(limit>=0)と開始位置(offset>=0)を指定してゲームを取得する。
-	// 上限なしはlimit=0。返り値のintは制限をかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
+	// 返り値のintはlimitとoffsetをかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
 	// limitが負のとき、ErrNegativeLimitを返す。
+	// sortは、ゲームの並び順を指定する。
 	// visibilitiesが無いときは、全てのゲームを取得する。
 	// userIDが指定されているときは、そのユーザーが作成したゲームを取得する。
 	// gameGenresが指定されているときは、そのジャンルがすべて含まれるゲームを取得する。
 	// nameが指定されているときは、その名前を含むゲームを取得する。
+	// 引数が不正なとき、ErrIncludeInvalidArgsを返す。
 	GetGames(
 		// 必須
 		ctx context.Context,
@@ -58,6 +60,8 @@ type GameV2 interface {
 type GamesSortType int
 
 const (
+	// ゲームの作成日時の降順でソート
 	GamesSortTypeCreatedAt GamesSortType = iota
+	// ゲームの最終バージョンの作成日時の降順でソート
 	GamesSortTypeLatestVersion
 )

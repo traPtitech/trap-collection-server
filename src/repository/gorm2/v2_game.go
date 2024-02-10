@@ -155,7 +155,9 @@ func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType rep
 	), nil
 }
 
-func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain.Game, int, error) {
+func (g *GameV2) GetGames(
+	ctx context.Context, limit int, offset int, sort repository.GamesSortType,
+	visibilities []values.GameVisibility, userID *values.TraPMemberID, gameGenreIDs []values.GameGenreID, name string) ([]*domain.GameWithGenres, int, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
@@ -165,107 +167,100 @@ func (g *GameV2) GetGames(ctx context.Context, limit int, offset int) ([]*domain
 		return nil, 0, repository.ErrNegativeLimit
 	}
 	if limit == 0 && offset != 0 {
-		return nil, 0, errors.New("bad limit and offset")
+		return nil, 0, fmt.Errorf("bad limit and offset: %w", repository.ErrIncludeInvalidArgs)
 	}
 
-	var games []migrate.GameTable2
-
-	query := db.
-		Model(&migrate.GameTable2{}).
-		Preload("GameVisibilityType").
-		Order("created_at DESC")
-
-	if limit > 0 {
-		query = query.Limit(limit)
-	}
-	if limit > 0 && offset > 0 {
-		query = query.Offset(offset)
+	var orderBy string
+	switch sort {
+	case repository.GamesSortTypeCreatedAt:
+		orderBy = "games.created_at DESC"
+	case repository.GamesSortTypeLatestVersion:
+		orderBy = "games.latest_version_updated_at DESC"
+	default:
+		return nil, 0, repository.ErrIncludeInvalidArgs
 	}
 
-	err = query.
-		Find(&games).Error
-
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get games: %w", err)
-	}
-
-	gamesDomain := make([]*domain.Game, 0, len(games))
-	for _, game := range games {
-		var visibility values.GameVisibility
-		switch game.GameVisibilityType.Name {
-		case migrate.GameVisibilityTypePublic:
-			visibility = values.GameVisibilityTypePublic
-		case migrate.GameVisibilityTypeLimited:
-			visibility = values.GameVisibilityTypeLimited
-		case migrate.GameVisibilityTypePrivate:
-			visibility = values.GameVisibilityTypePrivate
-		default:
-			return nil, 0, fmt.Errorf("invalid game visibility: %s", game.GameVisibilityType.Name)
+	// visibilityの指定が無い時は全てのvisibilityを取得する
+	if len(visibilities) == 0 {
+		visibilities = []values.GameVisibility{
+			values.GameVisibilityTypePublic,
+			values.GameVisibilityTypeLimited,
+			values.GameVisibilityTypePrivate,
 		}
-
-		gamesDomain = append(gamesDomain, domain.NewGame(
-			values.NewGameIDFromUUID(game.ID),
-			values.NewGameName(game.Name),
-			values.NewGameDescription(game.Description),
-			visibility,
-			game.CreatedAt,
-		))
 	}
 
-	var gamesNumber int64
-	err = db.Table("games").
-		Where("deleted_at IS NULL").
-		Count(&gamesNumber).Error
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get games number: %w", err)
-	}
-
-	return gamesDomain, int(gamesNumber), nil
-}
-
-func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID, limit int, offset int) ([]*domain.Game, int, error) {
-	db, err := g.db.getDB(ctx)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get db: %w", err)
-	}
-
-	if limit < 0 {
-		return nil, 0, repository.ErrNegativeLimit
-	}
-	if limit == 0 && offset != 0 {
-		return nil, 0, errors.New("bad limit and offset")
+	visibilityNames := make([]string, len(visibilities))
+	for i := range visibilities {
+		switch visibilities[i] {
+		case values.GameVisibilityTypePublic:
+			visibilityNames[i] = migrate.GameVisibilityTypePublic
+		case values.GameVisibilityTypeLimited:
+			visibilityNames[i] = migrate.GameVisibilityTypeLimited
+		case values.GameVisibilityTypePrivate:
+			visibilityNames[i] = migrate.GameVisibilityTypePrivate
+		default:
+			return nil, 0, fmt.Errorf("invalid game visibility args: %w", repository.ErrIncludeInvalidArgs)
+		}
 	}
 
 	var games []migrate.GameTable2
 
 	tx := db.
 		Model(&migrate.GameTable2{}).
+		Preload("GameGenres").
 		Preload("GameVisibilityType").
-		Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
-		Where("game_management_roles.user_id = ?", uuid.UUID(userID)).
-		Session(&gorm.Session{})
+		Joins("JOIN game_visibility_types ON game_visibility_types.id = games.visibility_type_id").
+		Where("game_visibility_types.name IN ?", visibilityNames)
 
-	query := tx.
-		Order("created_at DESC")
-
-	if limit > 0 {
-		query = query.Limit(limit)
-	}
-	if limit > 0 && offset > 0 {
-		query = query.Offset(offset)
+	if userID != nil {
+		tx = tx.
+			Joins("JOIN game_management_roles ON game_management_roles.game_id = games.id").
+			Where("game_management_roles.user_id = ?", uuid.UUID(*userID))
 	}
 
-	err = query.
-		Find(&games).Error
+	if len(gameGenreIDs) > 0 {
+		gameGenreUUIDs := make([]uuid.UUID, 0, len(gameGenreIDs))
+		for _, gameGenreID := range gameGenreIDs {
+			gameGenreUUIDs = append(gameGenreUUIDs, uuid.UUID(gameGenreID))
+		}
 
+		// サブクエリをJOINする。
+		// 指定されたゲームジャンル全てを持っている必要があるので、
+		// INで少なくとも一つは指定されたジャンルを持つものに絞ったうえで、COUNTでジャンルの数を数えて、
+		// その数が指定されたジャンルの数と一致するものを取得する。
+		//
+		// SELECT game_id FROM game_genre_relations WHERE genre_id IN (ジャンルのid全部)
+		// GROUP BY game_id HAVING COUNT(DISTINCT genre_id) = ジャンルの数
+		subQuery := db.
+			Table("game_genre_relations").
+			Where("genre_id IN ?", gameGenreUUIDs).
+			Group("game_id").
+			Having("COUNT(DISTINCT genre_id) = ?", len(gameGenreUUIDs)).
+			Select("game_id")
+
+		tx = tx.
+			Joins("JOIN (?) AS sub ON sub.game_id = games.id", subQuery)
+	}
+
+	if name != "" {
+		tx = tx.Where("games.name LIKE ?", "%"+name+"%")
+	}
+
+	err = tx.
+		Session(&gorm.Session{}).
+		Order(orderBy).
+		Limit(limit).
+		Offset(offset).
+		Find(&games).
+		Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}
 
-	gamesDomain := make([]*domain.Game, 0, len(games))
-	for _, game := range games {
+	gamesDomain := make([]*domain.GameWithGenres, 0, len(games))
+	for i := range games {
 		var visibility values.GameVisibility
-		switch game.GameVisibilityType.Name {
+		switch games[i].GameVisibilityType.Name {
 		case migrate.GameVisibilityTypePublic:
 			visibility = values.GameVisibilityTypePublic
 		case migrate.GameVisibilityTypeLimited:
@@ -273,29 +268,31 @@ func (g *GameV2) GetGamesByUser(ctx context.Context, userID values.TraPMemberID,
 		case migrate.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
 		default:
-			return nil, 0, fmt.Errorf("unknown visibility type: %s", game.GameVisibilityType.Name)
+			return nil, 0, fmt.Errorf("invalid game visibility: '%s'", games[i].GameVisibilityType.Name)
 		}
 
-		gamesDomain = append(gamesDomain, domain.NewGame(
-			values.NewGameIDFromUUID(game.ID),
-			values.NewGameName(game.Name),
-			values.NewGameDescription(game.Description),
-			visibility,
-			game.CreatedAt,
+		var gameGenresDomain []*domain.GameGenre
+		for j := range games[i].GameGenres {
+			gameGenresDomain = append(gameGenresDomain, domain.NewGameGenre(
+				values.GameGenreIDFromUUID(games[i].GameGenres[j].ID),
+				values.NewGameGenreName(games[i].GameGenres[j].Name),
+				games[i].GameGenres[j].CreatedAt,
+			))
+		}
+
+		gamesDomain = append(gamesDomain, domain.NewGameWithGenres(
+			domain.NewGame(values.GameID(games[i].ID), values.GameName(games[i].Name), values.GameDescription(games[i].Description), visibility, games[i].CreatedAt),
+			gameGenresDomain,
 		))
 	}
 
-	var gameNumber int64
-
-	err = tx.
-		Table("games").
-		Where("deleted_at IS NULL").
-		Count(&gameNumber).Error
+	var gamesNumber int64
+	err = tx.Count(&gamesNumber).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games number: %w", err)
 	}
 
-	return gamesDomain, int(gameNumber), nil
+	return gamesDomain, int(gamesNumber), nil
 }
 
 func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, lockType repository.LockType) ([]*domain.Game, error) {
