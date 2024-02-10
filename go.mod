@@ -1,6 +1,6 @@
 module github.com/traPtitech/trap-collection-server
 
-go 1.21.2
+go 1.22.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.24.1
