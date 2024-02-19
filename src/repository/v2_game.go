@@ -42,7 +42,6 @@ type GameV2 interface {
 	// userIDが指定されているときは、そのユーザーが作成したゲームを取得する。
 	// gameGenresが指定されているときは、そのジャンルがすべて含まれるゲームを取得する。
 	// nameが指定されているときは、その名前を含むゲームを取得する。
-	// 引数が不正なとき、ErrIncludeInvalidArgsを返す。
 	GetGames(
 		// 必須
 		ctx context.Context,

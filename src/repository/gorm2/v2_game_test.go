@@ -1214,27 +1214,24 @@ func TestGetGamesV2(t *testing.T) {
 			isErr:  true,
 			err:    repository.ErrNegativeLimit,
 		},
-		"limitが0なのにoffsetが正なのでErrIncludeInvalidArgs": {
+		"limitが0なのにoffsetが正なのでエラー": {
 			limit:  0,
 			offset: 1,
 			sort:   repository.GamesSortTypeCreatedAt,
 			isErr:  true,
-			err:    repository.ErrIncludeInvalidArgs,
 		},
-		"sortの値がおかしいのでErrIncludeInvalidArgs": {
+		"sortの値がおかしいのでエラーs": {
 			limit:  1,
 			offset: 0,
 			sort:   100,
 			isErr:  true,
-			err:    repository.ErrIncludeInvalidArgs,
 		},
-		"visibilityの値がおかしいのでErrIncludeInvalidArgs": {
+		"visibilityの値がおかしいのでエラー": {
 			limit:        1,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
 			visibilities: []values.GameVisibility{100},
 			isErr:        true,
-			err:          repository.ErrIncludeInvalidArgs,
 		},
 	}
 
@@ -1306,7 +1303,7 @@ func TestGetGamesV2(t *testing.T) {
 				for j := range testCase.games[i].GetGenres() {
 					assert.Contains(t, testCaseGameGenresMap, games[i].GetGenres()[j].GetID())
 
-					genre, _ := testCaseGameGenresMap[games[i].GetGenres()[j].GetID()]
+					genre := testCaseGameGenresMap[games[i].GetGenres()[j].GetID()]
 					//存在しなかったら上のContainsでテスト失敗するので、存在確認はしない
 					assert.Equal(t, genre.GetName(), games[i].GetGenres()[j].GetName())
 					assert.WithinDuration(t, genre.GetCreatedAt(), games[i].GetGenres()[j].GetCreatedAt(), time.Second)

@@ -26,14 +26,26 @@ type GameV2 interface {
 	GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*GameInfoV2, error)
 
 	// GetGames
-	// ゲームにいろいろ制限をかけて取得。limitは取得上限、offsetは取得開始位置。上限なしで取得する場合limit=0。
+	// ゲームにいろいろ制限をかけて取得。limitは取得上限、offsetは取得開始位置。
+	// visibilitiesは取得するゲームの公開範囲を指定。空配列の場合は全ての公開範囲のゲームを取得。
+	// gameGenreIDsは取得するゲームのジャンルを指定。空配列の場合は全てのジャンルのゲームを取得。
+	// gameNameはゲーム名の部分一致検索。空文字の場合は全てのゲームを取得。
 	// 返り値のintは制限をかけない場合のゲーム数
-	GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error)
+	// sortTypeがおかしいときErrInvalidGamesSortType
+	GetGames(
+		ctx context.Context, limit int, offset int, sort GamesSortType,
+		visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error)
 
 	// GetMyGames
-	// ログイン中のユーザーが作ったゲームを制限をかけて取得。limitは取得上限、offsetは取得開始位置。上限なしで取得する場合limit=0。
+	// ログイン中のユーザーが作ったゲームを制限をかけて取得。limitは取得上限、offsetは取得開始位置。
+	// visibilitiesは取得するゲームの公開範囲を指定。空配列の場合は全ての公開範囲のゲームを取得。
+	// gameGenreIDsは取得するゲームのジャンルを指定。空配列の場合は全てのジャンルのゲームを取得。
+	// gameNameはゲーム名の部分一致検索。空文字の場合は全てのゲームを取得。
 	// 返り値のintは制限をかけない場合のゲーム数
-	GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error)
+	// sortTypeがおかしいときErrInvalidGamesSortType
+	GetMyGames(
+		ctx context.Context, session *domain.OIDCSession, limit int, offset int, sort GamesSortType,
+		visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error)
 
 	// UpdateGame
 	// ゲームのidを指定して情報（名前、説明）を修正する。

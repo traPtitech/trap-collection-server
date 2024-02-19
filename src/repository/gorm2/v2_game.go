@@ -167,7 +167,7 @@ func (g *GameV2) GetGames(
 		return nil, 0, repository.ErrNegativeLimit
 	}
 	if limit == 0 && offset != 0 {
-		return nil, 0, fmt.Errorf("bad limit and offset: %w", repository.ErrIncludeInvalidArgs)
+		return nil, 0, errors.New("bad limit and offset")
 	}
 
 	var orderBy string
@@ -177,7 +177,7 @@ func (g *GameV2) GetGames(
 	case repository.GamesSortTypeLatestVersion:
 		orderBy = "games.latest_version_updated_at DESC"
 	default:
-		return nil, 0, repository.ErrIncludeInvalidArgs
+		return nil, 0, fmt.Errorf("invalid sort type: %v", sort)
 	}
 
 	// visibilityの指定が無い時は全てのvisibilityを取得する
@@ -199,7 +199,7 @@ func (g *GameV2) GetGames(
 		case values.GameVisibilityTypePrivate:
 			visibilityNames[i] = migrate.GameVisibilityTypePrivate
 		default:
-			return nil, 0, fmt.Errorf("invalid game visibility args: %w", repository.ErrIncludeInvalidArgs)
+			return nil, 0, fmt.Errorf("invalid game visibility args: %v", visibilities[i])
 		}
 	}
 
