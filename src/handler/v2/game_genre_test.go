@@ -31,6 +31,15 @@ func TestDeleteGameGenre(t *testing.T) {
 	mockGameGenreService := mock.NewMockGameGenre(ctrl)
 
 	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+
 	sess, err := common.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
