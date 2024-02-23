@@ -48,8 +48,7 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 		isAll = true
 	}
 
-	var limit int
-	var offset int
+	limit, offset := 0, 0
 	if params.Limit != nil {
 		limit = *params.Limit
 	}

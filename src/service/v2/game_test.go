@@ -1300,6 +1300,13 @@ func TestGetGames(t *testing.T) {
 			executeGetGames: true,
 		},
 		{
+			description: "limitが負なのでエラー",
+			limit:       -1,
+			offset:      0,
+			isErr:       true,
+			err:         service.ErrInvalidLimit,
+		},
+		{
 			description: "offsetだけ設定されているのでエラー",
 			limit:       0,
 			offset:      1,
@@ -1595,6 +1602,19 @@ func TestGetMyGames(t *testing.T) {
 			offset:     1,
 			sort:       service.GamesSortTypeLatestVersion,
 			gameNumber: 1,
+		},
+		{
+			description: "limitが負なのでエラー",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			user:   user,
+			limit:  -1,
+			offset: 0,
+			sort:   service.GamesSortTypeCreatedAt,
+			isErr:  true,
+			err:    service.ErrInvalidLimit,
 		},
 		{
 			description: "offsetだけが設定されているのでエラー",

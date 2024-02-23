@@ -1193,7 +1193,7 @@ func TestGetGamesV2(t *testing.T) {
 			sort:         repository.GamesSortTypeCreatedAt,
 			visibilities: nil,
 			userID:       nil,
-			gameGenres:   []values.GameGenreID{gameGenreID1},
+			gameGenres:   nil,
 			gameName:     "",
 			beforeGames: []migrate.GameTable2{
 				{
@@ -1204,8 +1204,10 @@ func TestGetGamesV2(t *testing.T) {
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
-			games:       []*domain.GameWithGenres{},
-			expectedNum: 0,
+			games: []*domain.GameWithGenres{
+				domain.NewGameWithGenres(game1, []*domain.GameGenre{}),
+			},
+			expectedNum: 1,
 		},
 		"limitが負なのでErrNegativeLimit": {
 			limit:  -1,

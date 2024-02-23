@@ -246,13 +246,13 @@ func (g *GameV2) GetGames(
 		tx = tx.Where("games.name LIKE ?", "%"+name+"%")
 	}
 
-	err = tx.
-		Session(&gorm.Session{}).
-		Order(orderBy).
-		Limit(limit).
-		Offset(offset).
-		Find(&games).
-		Error
+	txSelect := tx.
+		Order(orderBy)
+
+	if limit > 0 {
+		txSelect = txSelect.Session(&gorm.Session{}).Limit(limit).Offset(offset)
+	}
+	err = txSelect.Find(&games).Error
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get games: %w", err)
 	}

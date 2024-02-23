@@ -26,7 +26,7 @@ type GameV2 interface {
 	GetGame(ctx context.Context, session *domain.OIDCSession, gameID values.GameID) (*GameInfoV2, error)
 
 	// GetGames
-	// ゲームにいろいろ制限をかけて取得。limitは取得上限、offsetは取得開始位置。
+	// ゲームにいろいろ制限をかけて取得。limitは取得上限、offsetは取得開始位置。limitが0のときは全て取得。
 	// visibilitiesは取得するゲームの公開範囲を指定。空配列の場合は全ての公開範囲のゲームを取得。
 	// gameGenreIDsは取得するゲームのジャンルを指定。空配列の場合は全てのジャンルのゲームを取得。
 	// gameNameはゲーム名の部分一致検索。空文字の場合は全てのゲームを取得。
@@ -37,7 +37,7 @@ type GameV2 interface {
 		visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error)
 
 	// GetMyGames
-	// ログイン中のユーザーが作ったゲームを制限をかけて取得。limitは取得上限、offsetは取得開始位置。
+	// ログイン中のユーザーが作ったゲームを制限をかけて取得。limitは取得上限、offsetは取得開始位置。limitが0のときは全て取得。
 	// visibilitiesは取得するゲームの公開範囲を指定。空配列の場合は全ての公開範囲のゲームを取得。
 	// gameGenreIDsは取得するゲームのジャンルを指定。空配列の場合は全てのジャンルのゲームを取得。
 	// gameNameはゲーム名の部分一致検索。空文字の場合は全てのゲームを取得。

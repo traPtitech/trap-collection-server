@@ -35,6 +35,7 @@ type GameV2 interface {
 
 	// GetGames
 	// 取得する個数の上限(limit>=0)と開始位置(offset>=0)を指定してゲームを取得する。
+	// limitが0のときは、すべてのゲームを取得する。
 	// 返り値のintはlimitとoffsetをかけないときのゲーム数で、エラーのときは0。また、offsetのみを指定することはできない。
 	// limitが負のとき、ErrNegativeLimitを返す。
 	// sortは、ゲームの並び順を指定する。

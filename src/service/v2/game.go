@@ -286,6 +286,9 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 func (g *Game) GetGames(
 	ctx context.Context, limit int, offset int, sort service.GamesSortType,
 	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
@@ -314,6 +317,9 @@ func (g *Game) GetGames(
 func (g *Game) GetMyGames(
 	ctx context.Context, session *domain.OIDCSession, limit int, offset int, sort service.GamesSortType,
 	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
