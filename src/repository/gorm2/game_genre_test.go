@@ -922,6 +922,7 @@ func cleanupGameGenresTable(t *testing.T) {
 
 	err = db.
 		Select("Games").
+		Unscoped().
 		Delete(&genres).Error
 	if err != nil {
 		t.Fatalf("failed to delete genres: %+v\n", err)
