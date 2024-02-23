@@ -729,6 +729,7 @@ func TestGetGameGenres(t *testing.T) {
 	gameGenreRepository := NewGameGenre(testDB)
 
 	type test struct {
+		visibilities       []values.GameVisibility
 		gameGenres         []*migrate.GameGenreTable
 		expectedGenresInfo []*repository.GameGenreInfo
 		isErr              bool
@@ -737,15 +738,24 @@ func TestGetGameGenres(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var visibilities []migrate.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
-		Find(&gameVisibilityPublic).Error
+		Find(&visibilities).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
 	}
-	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
+	var gameVisibilityTypeIDPublic int
+	var gameVisibilityTypeIDPrivate int
+	for i := range visibilities {
+		switch visibilities[i].Name {
+		case migrate.GameVisibilityTypePublic:
+			gameVisibilityTypeIDPublic = visibilities[i].ID
+		case migrate.GameVisibilityTypePrivate:
+			gameVisibilityTypeIDPrivate = visibilities[i].ID
+		}
+	}
 
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
@@ -759,7 +769,7 @@ func TestGetGameGenres(t *testing.T) {
 	game2 := &migrate.GameTable2{
 		ID:               uuid.UUID(gameID2),
 		Name:             "game2",
-		VisibilityTypeID: gameVisibilityTypeIDPublic,
+		VisibilityTypeID: gameVisibilityTypeIDPrivate,
 		CreatedAt:        now.Add(-time.Hour * 2),
 	}
 
@@ -768,6 +778,7 @@ func TestGetGameGenres(t *testing.T) {
 
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
+			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
 			gameGenres: []*migrate.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
@@ -781,10 +792,12 @@ func TestGetGameGenres(t *testing.T) {
 			},
 		},
 		"ジャンルが無くてもエラー無し": {
+			visibilities:       []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
 			gameGenres:         []*migrate.GameGenreTable{},
 			expectedGenresInfo: []*repository.GameGenreInfo{},
 		},
 		"ジャンルがたくさんあってもエラー無し": {
+			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
 			gameGenres: []*migrate.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
@@ -805,6 +818,7 @@ func TestGetGameGenres(t *testing.T) {
 			},
 		},
 		"1つのジャンルにゲームがたくさんあってもエラー無し": {
+			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
 			gameGenres: []*migrate.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
@@ -825,6 +839,7 @@ func TestGetGameGenres(t *testing.T) {
 			},
 		},
 		"1つのジャンルにゲームが無くてもエラー無し": {
+			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
 			gameGenres: []*migrate.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
@@ -841,8 +856,31 @@ func TestGetGameGenres(t *testing.T) {
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
 				{GameGenre: *domain.NewGameGenre(gameGenreID1, "3D", now.Add(-time.Hour)), Num: 2},
-				{GameGenre: *domain.NewGameGenre(gameGenreID2, "2D", now.Add(-time.Hour*2)), Num: 0},
 			},
+		},
+		"全てのvisibilityでなくてもok": {
+			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited},
+			gameGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "3D",
+					CreatedAt: now.Add(-time.Hour),
+					Games:     []*migrate.GameTable2{game1, game2},
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "2D",
+					CreatedAt: now.Add(-time.Hour * 2),
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+			expectedGenresInfo: []*repository.GameGenreInfo{
+				{GameGenre: *domain.NewGameGenre(gameGenreID1, "3D", now.Add(-time.Hour)), Num: 1},
+			},
+		},
+		"visibilityの値がおかしいのでエラー": {
+			visibilities: []values.GameVisibility{100},
+			isErr:        true,
 		},
 	}
 
@@ -864,7 +902,7 @@ func TestGetGameGenres(t *testing.T) {
 				}
 			}
 
-			genreInfos, err := gameGenreRepository.GetGameGenres(ctx)
+			genreInfos, err := gameGenreRepository.GetGameGenres(ctx, testCase.visibilities)
 
 			if testCase.isErr {
 				if testCase.expectedErr != nil {

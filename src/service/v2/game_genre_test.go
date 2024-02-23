@@ -28,6 +28,7 @@ func TestGetGameGenres(t *testing.T) {
 	gameGenreService := NewGameGenre(mockGameGenreRepository)
 
 	type test struct {
+		isLoginUser      bool
 		gameInfosRepo    []*repository.GameGenreInfo
 		GetGameGenresErr error
 		gameInfos        []*service.GameGenreInfo
@@ -40,6 +41,11 @@ func TestGetGameGenres(t *testing.T) {
 
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
+			gameInfosRepo: []*repository.GameGenreInfo{{GameGenre: *gameGenre1, Num: 1}},
+			gameInfos:     []*service.GameGenreInfo{{GameGenre: *gameGenre1, Num: 1}},
+		},
+		"ログインしていてもエラー無し": {
+			isLoginUser:   true,
 			gameInfosRepo: []*repository.GameGenreInfo{{GameGenre: *gameGenre1, Num: 1}},
 			gameInfos:     []*service.GameGenreInfo{{GameGenre: *gameGenre1, Num: 1}},
 		},
@@ -59,15 +65,23 @@ func TestGetGameGenres(t *testing.T) {
 		},
 	}
 
+	visibilitiesAll := []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate}
+	visibilitiesNotLogin := []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited}
+
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
-
+			var argVisibilities []values.GameVisibility
+			if testCase.isLoginUser {
+				argVisibilities = visibilitiesAll
+			} else {
+				argVisibilities = visibilitiesNotLogin
+			}
 			mockGameGenreRepository.
 				EXPECT().
-				GetGameGenres(gomock.Any()).
+				GetGameGenres(gomock.Any(), gomock.InAnyOrder(argVisibilities)).
 				Return(testCase.gameInfosRepo, testCase.GetGameGenresErr)
 
-			gameInfos, err := gameGenreService.GetGameGenres(ctx)
+			gameInfos, err := gameGenreService.GetGameGenres(ctx, testCase.isLoginUser)
 
 			if testCase.isErr {
 				if testCase.expectedErr != nil {

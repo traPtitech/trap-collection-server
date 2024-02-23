@@ -11,7 +11,8 @@ import (
 
 type GameGenre interface {
 	// 全てのゲームジャンルとそのジャンルのゲーム数を取得する。
-	GetGameGenres(ctx context.Context) ([]*GameGenreInfo, error)
+	// ユーザーがログインしていない場合、privateなゲームの数は含まれない。
+	GetGameGenres(ctx context.Context, isLoginUser bool) ([]*GameGenreInfo, error)
 	// ゲームジャンルを削除する。
 	// ゲームジャンルが存在しない場合は、ErrNoGameGenreを返す。
 	DeleteGameGenre(ctx context.Context, gameGenreID values.GameGenreID) error

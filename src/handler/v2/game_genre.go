@@ -14,12 +14,14 @@ import (
 
 type GameGenre struct {
 	gameGenreService       service.GameGenre
+	session                *Session
 	gameGenreUnimplemented //実装し終わったら消す
 }
 
-func NewGameGenre(gameGenreService service.GameGenre) *GameGenre {
+func NewGameGenre(gameGenreService service.GameGenre, session *Session) *GameGenre {
 	return &GameGenre{
 		gameGenreService: gameGenreService,
+		session:          session,
 	}
 }
 
@@ -53,7 +55,16 @@ func (gameGenre *GameGenre) DeleteGameGenre(c echo.Context, gameGenreID openapi.
 // 全てのジャンルの取得
 // (GET /genres)
 func (gameGenre *GameGenre) GetGameGenres(ctx echo.Context) error {
-	gameGenreInfos, err := gameGenre.gameGenreService.GetGameGenres(ctx.Request().Context())
+	session, err := gameGenre.session.get(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	// ログインしているかどうかだけ知ればいいので、auth sessionは捨てる
+	_, err = gameGenre.session.getAuthSession(session)
+	isLoginUser := (err == nil)
+
+	gameGenreInfos, err := gameGenre.gameGenreService.GetGameGenres(ctx.Request().Context(), isLoginUser)
 	if err != nil {
 		log.Printf("error: failed to get game genres: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game genres")

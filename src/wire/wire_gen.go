@@ -147,7 +147,7 @@ func InjectApp() (*App, error) {
 	v2Game := v2.NewGame(v2Session, game)
 	v2GameRole := v2.NewGameRole(gameRole, game, v2Session)
 	v2GameGenre := v2_2.NewGameGenre(gameGenre)
-	gameGenre2 := v2.NewGameGenre(v2GameGenre)
+	gameGenre2 := v2.NewGameGenre(v2GameGenre, v2Session)
 	gameImageV2 := gorm2.NewGameImageV2(db)
 	gameVideoV2 := gorm2.NewGameVideoV2(db)
 	gameVersion := v2_2.NewGameVersion(db, gameV2, gameImageV2, gameVideoV2, gameFileV2, gameVersionV2)

@@ -21,8 +21,16 @@ func NewGameGenre(gameGenreRepository repository.GameGenre) *GameGenre {
 
 var _ service.GameGenre = &GameGenre{}
 
-func (gameGenre *GameGenre) GetGameGenres(ctx context.Context) ([]*service.GameGenreInfo, error) {
-	gameInfosRepo, err := gameGenre.gameGenreRepository.GetGameGenres(ctx)
+func (gameGenre *GameGenre) GetGameGenres(ctx context.Context, isLoginUser bool) ([]*service.GameGenreInfo, error) {
+	var visibilities []values.GameVisibility
+	if !isLoginUser {
+		visibilities = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited}
+	} else {
+		visibilities = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate}
+
+	}
+
+	gameInfosRepo, err := gameGenre.gameGenreRepository.GetGameGenres(ctx, visibilities)
 	if err != nil {
 		return nil, err
 	}

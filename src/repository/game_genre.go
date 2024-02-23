@@ -11,7 +11,7 @@ import (
 
 type GameGenre interface {
 	// 全てのジャンルと、そのジャンルに含まれるゲームの数を、ジャンル作成日時の降順で返す。
-	GetGameGenres(ctx context.Context) ([]*GameGenreInfo, error)
+	GetGameGenres(ctx context.Context, visibilities []values.GameVisibility) ([]*GameGenreInfo, error)
 	// ゲームのIDからそのゲームのジャンルを取得する。
 	GetGenresByGameID(ctx context.Context, gameID values.GameID) ([]*domain.GameGenre, error)
 	// RemoveGameGenre

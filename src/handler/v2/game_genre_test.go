@@ -13,8 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
@@ -28,7 +30,19 @@ func TestDeleteGameGenre(t *testing.T) {
 
 	mockGameGenreService := mock.NewMockGameGenre(ctrl)
 
-	gameGenre := NewGameGenre(mockGameGenreService)
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	gameGenre := NewGameGenre(mockGameGenreService, session)
 
 	type test struct {
 		genreID            openapi.GameGenreIDInPath
@@ -104,9 +118,31 @@ func TestGetGameGenres(t *testing.T) {
 
 	mockGameGenreService := mock.NewMockGameGenre(ctrl)
 
-	gameGenre := NewGameGenre(mockGameGenreService)
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	gameGenre := NewGameGenre(mockGameGenreService, session)
 
 	type test struct {
+		sessionExist     bool
+		authSession      *domain.OIDCSession
 		gameGenreInfos   []*service.GameGenreInfo
 		GetGameGenresErr error
 		apiGameGenres    []openapi.GameGenre
@@ -137,6 +173,17 @@ func TestGetGameGenres(t *testing.T) {
 			},
 			statusCode: http.StatusOK,
 		},
+		"sessionがあってもエラー無し": {
+			sessionExist: true,
+			authSession:  domain.NewOIDCSession(values.NewOIDCAccessToken("token"), now.Add(time.Hour)),
+			gameGenreInfos: []*service.GameGenreInfo{
+				{GameGenre: *domain.NewGameGenre(gameGenreID1, gameGenreName1, now.Add(-time.Hour)), Num: 2},
+			},
+			apiGameGenres: []openapi.GameGenre{
+				{Id: gameGenreUUID1, Genre: gameGenreNameStr1, CreatedAt: now.Add(-time.Hour), Num: 2},
+			},
+			statusCode: http.StatusOK,
+		},
 		"複数あってもエラー無し": {
 			gameGenreInfos: []*service.GameGenreInfo{
 				{GameGenre: *domain.NewGameGenre(gameGenreID1, gameGenreName1, now.Add(-time.Hour)), Num: 2},
@@ -159,13 +206,39 @@ func TestGetGameGenres(t *testing.T) {
 		t.Run(description, func(t *testing.T) {
 			mockGameGenreService.
 				EXPECT().
-				GetGameGenres(gomock.Any()).
+				GetGameGenres(gomock.Any(), testCase.sessionExist).
 				Return(testCase.gameGenreInfos, testCase.GetGameGenresErr)
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/api/v2/genres", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
+
+			if testCase.sessionExist {
+				sess, err := session.New(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if testCase.authSession != nil {
+					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
+					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
+				}
+
+				err = sess.Save(req, rec)
+				if err != nil {
+					t.Fatalf("failed to save session: %v", err)
+				}
+
+				setCookieHeader(c)
+
+				sess, err = session.Get(req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				c.Set("session", sess)
+			}
 
 			err := gameGenre.GetGameGenres(c)
 
