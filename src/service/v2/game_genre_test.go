@@ -171,3 +171,156 @@ func TestDeleteGameGenre(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateGameGenres(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
+	mockDB := mockRepository.NewMockDB(ctrl)
+
+	gameGenreService := NewGameGenre(mockDB, mockGameGenreRepository)
+
+	type test struct {
+		gameID                        values.GameID
+		gameGenreNames                []values.GameGenreName
+		executeGetGameGenresWithNames bool
+		GetGameGenresWithNamesResult  []*domain.GameGenre
+		GetGameGenresWithNamesErr     error
+		executeSaveGameGenres         bool
+		SaveGameGenresErr             error
+		executeRegisterGenresToGame   bool
+		RegisterGenresToGameErr       error
+		isErr                         bool
+		expectedErr                   error
+	}
+
+	gameGenreName1 := values.GameGenreName("3D")
+	gameGenreName2 := values.GameGenreName("2D")
+
+	gameGenre1 := domain.NewGameGenre(values.NewGameGenreID(), gameGenreName1, time.Now())
+	gameGenre2 := domain.NewGameGenre(values.NewGameGenreID(), gameGenreName2, time.Now())
+
+	testCases := map[string]test{
+		"特に問題ないのでエラー無し": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+		},
+		"ジャンル名が重複しているのでエラー": {
+			gameID:         values.NewGameID(),
+			gameGenreNames: []values.GameGenreName{gameGenreName1, gameGenreName1},
+			isErr:          true,
+			expectedErr:    service.ErrDuplicateGameGenre,
+		},
+		"GetGameGenresWithNamesがErrRecordNotFoundでもエラー無し": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{},
+			GetGameGenresWithNamesErr:     repository.ErrRecordNotFound,
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+		},
+		"GetGameGenresWithNamesがErrRecordNotFound以外のエラーなのでエラー": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{},
+			GetGameGenresWithNamesErr:     errors.New("test"),
+			isErr:                         true,
+		},
+		"全てが既存のジャンルでもエラー無し": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1, gameGenre2},
+			executeRegisterGenresToGame:   true,
+		},
+		"SaveGameGenresがErrDuplicatedUniqueKeyなのでエラー": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1},
+			executeSaveGameGenres:         true,
+			SaveGameGenresErr:             repository.ErrDuplicatedUniqueKey,
+			isErr:                         true,
+			expectedErr:                   service.ErrDuplicateGameGenre,
+		},
+		"SaveGameGenresが他のエラーなのでエラー": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1},
+			executeSaveGameGenres:         true,
+			SaveGameGenresErr:             errors.New("test"),
+			isErr:                         true,
+		},
+		"RegisterGenresToGameがErrRecordNotFoundなのでエラー": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			RegisterGenresToGameErr:       repository.ErrRecordNotFound,
+			isErr:                         true,
+			expectedErr:                   service.ErrNoGame,
+		},
+		"RegisterGenresToGameが他のエラーなのでエラー": {
+			gameID:                        values.NewGameID(),
+			gameGenreNames:                []values.GameGenreName{gameGenreName1, gameGenreName2},
+			executeGetGameGenresWithNames: true,
+			GetGameGenresWithNamesResult:  []*domain.GameGenre{gameGenre1},
+			executeSaveGameGenres:         true,
+			executeRegisterGenresToGame:   true,
+			RegisterGenresToGameErr:       errors.New("test"),
+			isErr:                         true,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			if testCase.executeGetGameGenresWithNames {
+				mockGameGenreRepository.
+					EXPECT().
+					GetGameGenresWithNames(ctx, testCase.gameGenreNames).
+					Return(testCase.GetGameGenresWithNamesResult, testCase.GetGameGenresWithNamesErr)
+			}
+
+			if testCase.executeSaveGameGenres {
+				mockGameGenreRepository.
+					EXPECT().
+					SaveGameGenres(ctx, gomock.Len(len(testCase.gameGenreNames)-len(testCase.GetGameGenresWithNamesResult))).
+					Return(testCase.SaveGameGenresErr)
+			}
+
+			if testCase.executeRegisterGenresToGame {
+				mockGameGenreRepository.
+					EXPECT().
+					RegisterGenresToGame(ctx, testCase.gameID, gomock.Len(len(testCase.gameGenreNames))).
+					Return(testCase.RegisterGenresToGameErr)
+			}
+
+			err := gameGenreService.UpdateGameGenres(ctx, testCase.gameID, testCase.gameGenreNames)
+
+			if !testCase.isErr {
+				assert.NoError(t, err)
+				return
+			}
+
+			if testCase.expectedErr != nil {
+				assert.ErrorIs(t, err, testCase.expectedErr)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
