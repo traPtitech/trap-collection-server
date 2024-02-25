@@ -24,8 +24,9 @@ func TestGetGameGenres(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
+	mockDB := mockRepository.NewMockDB(ctrl)
 
-	gameGenreService := NewGameGenre(mockGameGenreRepository)
+	gameGenreService := NewGameGenre(mockDB, mockGameGenreRepository)
 
 	type test struct {
 		isLoginUser      bool
@@ -118,8 +119,9 @@ func TestDeleteGameGenre(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
+	mockDB := mockRepository.NewMockDB(ctrl)
 
-	gameGenreService := NewGameGenre(mockGameGenreRepository)
+	gameGenreService := NewGameGenre(mockDB, mockGameGenreRepository)
 
 	type test struct {
 		ID                 values.GameGenreID
