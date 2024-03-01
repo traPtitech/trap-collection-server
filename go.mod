@@ -20,7 +20,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/ory/dockertest/v3 v3.10.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/mod v0.15.0
 	golang.org/x/sync v0.6.0
 	gorm.io/driver/mysql v1.5.4
