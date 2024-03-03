@@ -7,8 +7,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.4
 	github.com/cosmtrek/air v1.50.0
 	github.com/deepmap/oapi-codegen v1.16.2
+	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.120.0
+	github.com/getkin/kin-openapi v0.122.0
 	github.com/go-task/task/v3 v3.35.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
