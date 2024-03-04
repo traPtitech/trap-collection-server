@@ -1564,8 +1564,6 @@ func TestGetGame(t *testing.T) {
 				CreatedAt:   now,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Genres:      &[]openapi.GameGenreName{"test"},
-				Visibility:  openapi.Limited,
 			},
 		},
 		{

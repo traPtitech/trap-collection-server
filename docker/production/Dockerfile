@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.21.4-alpine AS build
+FROM golang:1.22.0-alpine AS build
 
 RUN apk add --update --no-cache git
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.18.5
+FROM alpine:3.19.1
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
