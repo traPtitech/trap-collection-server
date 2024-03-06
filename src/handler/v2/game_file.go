@@ -3,11 +3,15 @@ package v2
 import (
 	"encoding/hex"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mazrean/formstream"
+	echoform "github.com/mazrean/formstream/echo"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -65,47 +69,69 @@ func (gameFile GameFile) GetGameFiles(c echo.Context, gameID openapi.GameIDInPat
 // ゲームファイルの作成
 // (POST /games/{gameID}/files)
 func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPath) error {
-	headerFile, err := c.FormFile("content")
+	parser, err := echoform.NewParser(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid file")
-	}
-	headerEntryPoint := c.FormValue("entryPoint")
-	headerFileType := c.FormValue("type")
-
-	if headerEntryPoint == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "entry point is empty")
-	}
-	if headerFileType == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "file type is empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	file, err := headerFile.Open()
+	var (
+		noContent      = true
+		headerFileType string
+		savedFile      *domain.GameFile
+	)
+	err = parser.Register("content", func(r io.Reader, header formstream.Header) error {
+		noContent = false
+
+		headerEntryPoint, _, _ := parser.Value("entryPoint")
+		headerFileType, _, _ = parser.Value("type")
+
+		entryPoint := values.NewGameFileEntryPoint(headerEntryPoint)
+		if err := entryPoint.Validate(); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid entry point")
+		}
+
+		var fileType values.GameFileType
+		switch openapi.GameFileType(headerFileType) {
+		case openapi.Jar:
+			fileType = values.GameFileTypeJar
+		case openapi.Win32:
+			fileType = values.GameFileTypeWindows
+		case openapi.Darwin:
+			fileType = values.GameFileTypeMac
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "file type is unknown")
+		}
+
+		var err error
+		savedFile, err = gameFile.gameFileService.SaveGameFile(c.Request().Context(), r, values.NewGameIDFromUUID(gameID), fileType, entryPoint)
+		if errors.Is(err, service.ErrInvalidGameID) {
+			return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+		}
+		if err != nil {
+			log.Printf("error: failed to save game file: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game file")
+		}
+
+		return nil
+	}, formstream.WithRequiredPart("entryPoint"), formstream.WithRequiredPart("type"))
 	if err != nil {
-		log.Printf("error: failed to open file: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open file")
-	}
-	defer file.Close()
-
-	entryPoint := values.NewGameFileEntryPoint(headerEntryPoint)
-	var fileType values.GameFileType
-	switch openapi.GameFileType(headerFileType) {
-	case openapi.Jar:
-		fileType = values.GameFileTypeJar
-	case openapi.Win32:
-		fileType = values.GameFileTypeWindows
-	case openapi.Darwin:
-		fileType = values.GameFileTypeMac
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "file type is unknown")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to register parser")
 	}
 
-	savedFile, err := gameFile.gameFileService.SaveGameFile(c.Request().Context(), file, values.NewGameIDFromUUID(gameID), fileType, entryPoint)
-	if errors.Is(err, service.ErrInvalidGameID) {
-		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+	if err := parser.Parse(); err != nil {
+		return err
 	}
-	if err != nil {
-		log.Printf("error: failed to save game file: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game file")
+
+	if _, _, ok := parser.Value("entryPoint"); !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "no entry point")
+	}
+
+	if _, _, ok := parser.Value("type"); !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "no file type")
+	}
+
+	if noContent {
+		return echo.NewHTTPError(http.StatusBadRequest, "no content")
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameFile{
