@@ -76,7 +76,7 @@ func (gameImage *GameImage) PostGameImage(c echo.Context, gameID openapi.GameIDI
 		image     *domain.GameImage
 		mime      openapi.GameImageMime
 	)
-	err = parser.Register("content", func(r io.Reader, header formstream.Header) error {
+	err = parser.Register("content", func(r io.Reader, _ formstream.Header) error {
 		noContent = false
 
 		var err error

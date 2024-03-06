@@ -71,7 +71,7 @@ func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDI
 		video     *domain.GameVideo
 		mime      openapi.GameVideoMime
 	)
-	err = parser.Register("content", func(file io.Reader, header formstream.Header) error {
+	err = parser.Register("content", func(file io.Reader, _ formstream.Header) error {
 		noContent = false
 
 		var err error

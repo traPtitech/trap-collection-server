@@ -79,7 +79,7 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		headerFileType string
 		savedFile      *domain.GameFile
 	)
-	err = parser.Register("content", func(r io.Reader, header formstream.Header) error {
+	err = parser.Register("content", func(r io.Reader, _ formstream.Header) error {
 		noContent = false
 
 		headerEntryPoint, _, _ := parser.Value("entryPoint")
