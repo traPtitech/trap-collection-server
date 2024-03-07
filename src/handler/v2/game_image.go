@@ -2,11 +2,15 @@ package v2
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mazrean/formstream"
+	echoform "github.com/mazrean/formstream/echo"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -62,40 +66,56 @@ func (gameImage *GameImage) GetGameImages(c echo.Context, gameID openapi.GameIDI
 // ゲームファイルの作成
 // (POST /games/{gameID}/images)
 func (gameImage *GameImage) PostGameImage(c echo.Context, gameID openapi.GameIDInPath) error {
-	header, err := c.FormFile("content")
+	parser, err := echoform.NewParser(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid file")
-	}
-	file, err := header.Open()
-	if err != nil {
-		log.Printf("error: failed to open file: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open file")
-	}
-	defer file.Close()
-
-	image, err := gameImage.gameImageService.SaveGameImage(c.Request().Context(), file, values.NewGameIDFromUUID(gameID))
-	if errors.Is(err, service.ErrInvalidGameID) {
-		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
-	}
-	if errors.Is(err, service.ErrInvalidFormat) {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid image type")
-	}
-	if err != nil {
-		log.Printf("error: failed to save game image: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game image")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	var mime openapi.GameImageMime
-	switch image.GetType() {
-	case values.GameImageTypeJpeg:
-		mime = openapi.Imagejpeg
-	case values.GameImageTypePng:
-		mime = openapi.Imagepng
-	case values.GameImageTypeGif:
-		mime = openapi.Imagegif
-	default:
-		log.Printf("error: unknown game image type: %v\n", image.GetType())
-		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game image type")
+	var (
+		noContent = true
+		image     *domain.GameImage
+		mime      openapi.GameImageMime
+	)
+	err = parser.Register("content", func(r io.Reader, _ formstream.Header) error {
+		noContent = false
+
+		var err error
+		image, err = gameImage.gameImageService.SaveGameImage(c.Request().Context(), r, values.NewGameIDFromUUID(gameID))
+		if errors.Is(err, service.ErrInvalidGameID) {
+			return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+		}
+		if errors.Is(err, service.ErrInvalidFormat) {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid image type")
+		}
+		if err != nil {
+			log.Printf("error: failed to save game image: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game image")
+		}
+
+		switch image.GetType() {
+		case values.GameImageTypeJpeg:
+			mime = openapi.Imagejpeg
+		case values.GameImageTypePng:
+			mime = openapi.Imagepng
+		case values.GameImageTypeGif:
+			mime = openapi.Imagegif
+		default:
+			log.Printf("error: unknown game image type: %v\n", image.GetType())
+			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game image type")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to register content")
+	}
+
+	if err := parser.Parse(); err != nil {
+		return err
+	}
+
+	if noContent {
+		return echo.NewHTTPError(http.StatusBadRequest, "no content")
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameImage{

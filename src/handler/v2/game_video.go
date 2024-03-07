@@ -2,11 +2,15 @@ package v2
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mazrean/formstream"
+	echoform "github.com/mazrean/formstream/echo"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -57,35 +61,51 @@ func (gameVideo *GameVideo) GetGameVideos(c echo.Context, gameID openapi.GameIDI
 // ゲーム動画の作成
 // (POST /games/{gameID}/videos)
 func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDInPath) error {
-	header, err := c.FormFile("content")
+	parser, err := echoform.NewParser(c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid file")
-	}
-	file, err := header.Open()
-	if err != nil {
-		log.Printf("error: failed to open file: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open file")
-	}
-	defer file.Close()
-
-	video, err := gameVideo.gameVideoService.SaveGameVideo(c.Request().Context(), file, values.NewGameIDFromUUID(gameID))
-	if errors.Is(err, service.ErrInvalidGameID) {
-		return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
-	}
-	if errors.Is(err, service.ErrInvalidFormat) {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid video file type")
-	}
-	if err != nil {
-		log.Printf("error: failed to save game video: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game video")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	var mime openapi.GameVideoMime
-	if video.GetType() == values.GameVideoTypeMp4 {
-		mime = openapi.Videomp4
-	} else {
-		log.Printf("error: unknown game video type: %v\n", video.GetType())
-		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
+	var (
+		noContent = true
+		video     *domain.GameVideo
+		mime      openapi.GameVideoMime
+	)
+	err = parser.Register("content", func(file io.Reader, _ formstream.Header) error {
+		noContent = false
+
+		var err error
+		video, err = gameVideo.gameVideoService.SaveGameVideo(c.Request().Context(), file, values.NewGameIDFromUUID(gameID))
+		if errors.Is(err, service.ErrInvalidGameID) {
+			return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+		}
+		if errors.Is(err, service.ErrInvalidFormat) {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid video file type")
+		}
+		if err != nil {
+			log.Printf("error: failed to save game video: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game video")
+		}
+
+		if video.GetType() == values.GameVideoTypeMp4 {
+			mime = openapi.Videomp4
+		} else {
+			log.Printf("error: unknown game video type: %v\n", video.GetType())
+			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to register content")
+	}
+
+	if err := parser.Parse(); err != nil {
+		return err
+	}
+
+	if noContent {
+		return echo.NewHTTPError(http.StatusBadRequest, "no content")
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameVideo{
