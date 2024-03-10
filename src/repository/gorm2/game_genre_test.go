@@ -643,6 +643,27 @@ func TestRegisterGenresToGame(t *testing.T) {
 			isErr:       true,
 			expectedErr: repository.ErrIncludeInvalidArgs,
 		},
+		"ジャンルが空でもエラー無し": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+		},
 	}
 
 	for description, testCase := range testCases {
