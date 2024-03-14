@@ -799,6 +799,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 		},
 	}
 
+	//TODO: gamesテーブルのlatest_version_updated_atが更新されているかを確かめる
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.existGame {
@@ -808,7 +809,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 						ID:               uuid.UUID(testCase.gameID),
 						Name:             "test",
 						Description:      "test",
-						CreatedAt:        time.Now(),
+						CreatedAt:        time.Now().Add(-time.Hour),
 						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}).Error
 				if err != nil {
@@ -933,6 +934,15 @@ func TestCreateGameVersionV2(t *testing.T) {
 					assert.Equal(t, expectFile.EntryPoint, actualFile.EntryPoint)
 					assert.WithinDuration(t, expectFile.CreatedAt, actualFile.CreatedAt, 2*time.Second)
 				}
+			}
+
+			if testCase.existGame {
+				var game migrate.GameTable2
+				err = db.Model(&migrate.GameTable2{ID: uuid.UUID(testCase.gameID)}).Find(&game).Error
+				if err != nil {
+					t.Fatalf("failed to get game: %+v\n", err)
+				}
+				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second)
 			}
 		})
 	}

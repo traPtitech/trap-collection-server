@@ -78,6 +78,14 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 		return fmt.Errorf("failed to append game files: %w", err)
 	}
 
+	err = db.
+		Model(&migrate.GameTable2{ID: uuid.UUID(gameID)}).
+		Update("latest_version_updated_at", version.GetCreatedAt()).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to update latest version updated at: %w", err)
+	}
+
 	return nil
 }
 
