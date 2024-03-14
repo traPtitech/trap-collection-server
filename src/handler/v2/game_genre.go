@@ -14,13 +14,15 @@ import (
 
 type GameGenre struct {
 	gameGenreService       service.GameGenre
+	game                   service.GameV2
 	session                *Session
 	gameGenreUnimplemented //実装し終わったら消す
 }
 
-func NewGameGenre(gameGenreService service.GameGenre, session *Session) *GameGenre {
+func NewGameGenre(gameGenreService service.GameGenre, game service.GameV2, session *Session) *GameGenre {
 	return &GameGenre{
 		gameGenreService: gameGenreService,
+		game:             game,
 		session:          session,
 	}
 }
@@ -32,9 +34,6 @@ type gameGenreUnimplemented interface {
 	// ジャンル情報の変更
 	// (PATCH /genres/{gameGenreID})
 	PatchGameGenre(ctx echo.Context, gameGenreID openapi.GameGenreIDInPath) error
-	// ゲームのジャンル編集
-	// (PUT /games/{gameID}/genres)
-	PutGameGenres(ctx echo.Context, gameID openapi.GameIDInPath) error
 }
 
 // ジャンルの削除
@@ -81,4 +80,101 @@ func (gameGenre *GameGenre) GetGameGenres(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, gameGenresResponse)
+}
+
+// ゲームのジャンル編集
+// (PUT /games/{gameID}/genres)
+func (gameGenre *GameGenre) PutGameGenres(c echo.Context, gameID openapi.GameIDInPath) error {
+	session, err := gameGenre.session.get(c)
+	if err != nil {
+		log.Printf("error: failed to get session: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+	authSession, err := gameGenre.session.getAuthSession(session)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	var reqBody openapi.PutGameGenresJSONRequestBody
+	if err := c.Bind(&reqBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	var gameGenreNames []values.GameGenreName
+	if reqBody.Genres != nil {
+		gameGenreNames = make([]values.GameGenreName, len(*reqBody.Genres))
+		for i, genre := range *reqBody.Genres {
+			gameGenreNames[i] = values.GameGenreName(genre)
+		}
+	} else {
+		gameGenreNames = []values.GameGenreName{}
+	}
+
+	for i := range gameGenreNames {
+		if gameGenreNames[i].Validate() != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid genre name")
+		}
+	}
+
+	err = gameGenre.gameGenreService.UpdateGameGenres(c.Request().Context(), values.NewGameIDFromUUID(gameID), gameGenreNames)
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid game ID")
+	}
+	if errors.Is(err, service.ErrDuplicateGameGenre) {
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game genre")
+	}
+	if err != nil {
+		log.Printf("error: failed to update game genres: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game genres")
+	}
+
+	gameInfo, err := gameGenre.game.GetGame(c.Request().Context(), authSession, values.NewGameIDFromUUID(gameID))
+	if err != nil {
+		log.Printf("error: failed to get game: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game")
+	}
+
+	gameGenresResponse := make([]openapi.GameGenreName, len(gameInfo.Genres))
+	for i := range gameInfo.Genres {
+		gameGenresResponse[i] = openapi.GameGenreName(gameInfo.Genres[i].GetName())
+	}
+
+	var visibility openapi.GameVisibility
+	switch gameInfo.Game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		visibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		visibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		visibility = openapi.Private
+	}
+
+	owners := make([]openapi.UserName, len(gameInfo.Owners))
+	for i := range gameInfo.Owners {
+		owners[i] = openapi.UserName(gameInfo.Owners[i].GetName())
+	}
+
+	maintainers := make([]openapi.UserName, len(gameInfo.Maintainers))
+	for i := range gameInfo.Maintainers {
+		maintainers[i] = openapi.UserName(gameInfo.Maintainers[i].GetName())
+	}
+
+	res := openapi.Game{
+		Id:          uuid.UUID(gameInfo.Game.GetID()),
+		Name:        openapi.GameName(gameInfo.Game.GetName()),
+		Description: openapi.GameDescription(gameInfo.Game.GetDescription()),
+		Visibility:  visibility,
+		Owners:      owners,
+		CreatedAt:   gameInfo.Game.GetCreatedAt(),
+	}
+
+	if len(gameGenresResponse) > 0 {
+		res.Genres = &gameGenresResponse
+	}
+
+	if len(maintainers) > 0 {
+		res.Maintainers = &maintainers
+	}
+
+	return c.JSON(http.StatusOK, res)
 }

@@ -16,6 +16,11 @@ type GameGenre interface {
 	// ゲームジャンルを削除する。
 	// ゲームジャンルが存在しない場合は、ErrNoGameGenreを返す。
 	DeleteGameGenre(ctx context.Context, gameGenreID values.GameGenreID) error
+	// ゲームが持つジャンルを修正する。
+	// ゲームが存在しない場合は、ErrNoGameを返す。
+	// ジャンル名に重複がある場合は、ErrDuplicateGameGenreを返す。
+	// 存在しないジャンル名が含まれている場合は、ジャンルを作成する。
+	UpdateGameGenres(ctx context.Context, gameID values.GameID, gameGenreNames []values.GameGenreName) error
 }
 
 type GameGenreInfo struct {
