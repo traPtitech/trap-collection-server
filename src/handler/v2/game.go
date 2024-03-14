@@ -28,15 +28,27 @@ func NewGame(session *Session, gameService service.GameV2) *Game {
 // ゲーム一覧の取得
 // (GET /games)
 func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
+	session, err := g.session.get(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no session")
+	}
+	authSession, _ := g.session.getAuthSession(session)
+	// authSessionが取得出来なくても、普通のユーザーとしてゲーム一覧を取得するため、エラーは返さない。
+	var visibilities []values.GameVisibility
+	if authSession == nil {
+		visibilities = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited}
+	} else {
+		visibilities = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate}
+	}
+
 	var isAll bool
-	if params.All != nil {
+	if params.All != nil && authSession != nil {
 		isAll = *params.All
 	} else {
 		isAll = true
 	}
 
-	var limit int
-	var offset int
+	limit, offset := 0, 0
 	if params.Limit != nil {
 		limit = *params.Limit
 	}
@@ -44,58 +56,82 @@ func (g *Game) GetGames(ctx echo.Context, params openapi.GetGamesParams) error {
 		offset = *params.Offset
 	}
 
-	var games []*domain.Game
+	var sortType service.GamesSortType
+	if params.Sort != nil {
+		switch *params.Sort {
+		case openapi.CreatedAt:
+			sortType = service.GamesSortTypeCreatedAt
+		case openapi.LatestVersion:
+			sortType = service.GamesSortTypeLatestVersion
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid sort type")
+		}
+	} else {
+		sortType = service.GamesSortTypeCreatedAt
+	}
+
+	var gameName string
+	if params.Name != nil {
+		gameName = *params.Name
+	}
+
+	var gameGenreIDs []values.GameGenreID
+	if params.Genre != nil {
+		gameGenreIDs = make([]values.GameGenreID, 0, len(*params.Genre))
+		for i := range *params.Genre {
+			gameGenreIDs = append(gameGenreIDs, values.GameGenreIDFromUUID((*params.Genre)[i]))
+		}
+	}
+
+	var gameWithGenres []*domain.GameWithGenres
 	var gameNumber int
-	var err error
 	if isAll {
-		gameNumber, games, err = g.gameService.GetGames(ctx.Request().Context(), limit, offset)
+		gameNumber, gameWithGenres, err = g.gameService.GetGames(ctx.Request().Context(), limit, offset, sortType, visibilities, gameGenreIDs, gameName)
 		if err != nil {
 			log.Printf("error: failed to get games: %v\n", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
 		}
 	} else {
-		session, err := g.session.get(ctx)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no session")
-		}
-		authSession, err := g.session.getAuthSession(session)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no auth session")
-		}
-
-		gameNumber, games, err = g.gameService.GetMyGames(ctx.Request().Context(), authSession, limit, offset)
+		gameNumber, gameWithGenres, err = g.gameService.GetMyGames(ctx.Request().Context(), authSession, limit, offset, sortType, visibilities, gameGenreIDs, gameName)
 		if err != nil {
 			log.Printf("error: failed to get games: %v\n", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get my games")
 		}
 	}
 
-	responseGames := make([]openapi.GameInfo, 0, len(games))
-	for _, game := range games {
-		responseGame := openapi.GameInfo{
-			Name:        string(game.GetName()),
-			Id:          uuid.UUID(game.GetID()),
-			Description: string(game.GetDescription()),
-			CreatedAt:   game.GetCreatedAt(),
+	responseGames := make([]openapi.GameInfoWithGenres, 0, len(gameWithGenres))
+	for i := range gameWithGenres {
+		var visibility openapi.GameVisibility
+		switch gameWithGenres[i].GetGame().GetVisibility() {
+		case values.GameVisibilityTypePublic:
+			visibility = openapi.Public
+		case values.GameVisibilityTypeLimited:
+			visibility = openapi.Limited
+		case values.GameVisibilityTypePrivate:
+			visibility = openapi.Private
+		default:
+			log.Printf("error: failed to get game visibility: %v\n", gameWithGenres[i].GetGame().GetVisibility())
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get games")
+		}
+
+		genreNames := make([]openapi.GameGenreName, 0, len(gameWithGenres[i].GetGenres()))
+		for _, genre := range gameWithGenres[i].GetGenres() {
+			genreNames = append(genreNames, openapi.GameGenreName(genre.GetName()))
+		}
+
+		responseGame := openapi.GameInfoWithGenres{
+			Name:        string(gameWithGenres[i].GetGame().GetName()),
+			Id:          uuid.UUID(gameWithGenres[i].GetGame().GetID()),
+			Description: string(gameWithGenres[i].GetGame().GetDescription()),
+			Visibility:  visibility,
+			CreatedAt:   gameWithGenres[i].GetGame().GetCreatedAt(),
+			Genres:      &genreNames,
 		}
 		responseGames = append(responseGames, responseGame)
 	}
 
-	//TODO: ビルドを通すためにいったん仮の配列を返している。全体が正しく動くよう修正する必要がある。
-	gamesWithGenres := make([]openapi.GameInfoWithGenres, 0, len(responseGames))
-	for _, game := range responseGames {
-		gameWithGenre := openapi.GameInfoWithGenres{
-			Name:        game.Name,
-			Id:          game.Id,
-			Description: game.Description,
-			CreatedAt:   game.CreatedAt,
-			Genres:      &[]openapi.GameGenreName{},
-		}
-		gamesWithGenres = append(gamesWithGenres, gameWithGenre)
-	}
-
 	res := openapi.GetGamesResponse{
-		Games: gamesWithGenres,
+		Games: responseGames,
 		Num:   gameNumber,
 	}
 

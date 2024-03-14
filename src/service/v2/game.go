@@ -283,21 +283,43 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 	return gameInfo, nil
 }
 
-func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetGames(
+	ctx context.Context, limit int, offset int, sort service.GamesSortType,
+	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
-	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
+
+	var sortType repository.GamesSortType
+	switch sort {
+	case service.GamesSortTypeCreatedAt:
+		sortType = repository.GamesSortTypeCreatedAt
+	case service.GamesSortTypeLatestVersion:
+		sortType = repository.GamesSortTypeLatestVersion
+	default:
+		return 0, nil, service.ErrInvalidGamesSortType
+	}
+
+	gamesWithGenres, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset, sortType, visibilities, nil, gameGenreIDs, gameName)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
 	}
-	if len(games) == 0 {
-		return 0, []*domain.Game{}, nil
+	if len(gamesWithGenres) == 0 {
+		return 0, []*domain.GameWithGenres{}, nil
 	}
-	return gameNumber, games, nil
+
+	return gameNumber, gamesWithGenres, nil
 }
 
-func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetMyGames(
+	ctx context.Context, session *domain.OIDCSession, limit int, offset int, sort service.GamesSortType,
+	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
@@ -305,17 +327,28 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}
+	userID := user.GetID()
 
-	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset)
+	var sortType repository.GamesSortType
+	switch sort {
+	case service.GamesSortTypeCreatedAt:
+		sortType = repository.GamesSortTypeCreatedAt
+	case service.GamesSortTypeLatestVersion:
+		sortType = repository.GamesSortTypeLatestVersion
+	default:
+		return 0, nil, service.ErrInvalidGamesSortType
+	}
+
+	myGamesWithGenres, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset, sortType, visibilities, &userID, gameGenreIDs, gameName)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get game IDs: %w", err)
 	}
 
-	if len(myGames) == 0 {
-		return 0, []*domain.Game{}, nil
+	if len(myGamesWithGenres) == 0 {
+		return 0, []*domain.GameWithGenres{}, nil
 	}
 
-	return gameNumber, myGames, nil
+	return gameNumber, myGamesWithGenres, nil
 }
 
 func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
