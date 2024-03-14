@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -13,12 +14,14 @@ import (
 
 type GameGenre struct {
 	gameGenreService       service.GameGenre
+	session                *Session
 	gameGenreUnimplemented //実装し終わったら消す
 }
 
-func NewGameGenre(gameGenreService service.GameGenre) *GameGenre {
+func NewGameGenre(gameGenreService service.GameGenre, session *Session) *GameGenre {
 	return &GameGenre{
 		gameGenreService: gameGenreService,
+		session:          session,
 	}
 }
 
@@ -26,9 +29,6 @@ func NewGameGenre(gameGenreService service.GameGenre) *GameGenre {
 // メソッドとして実装予定だが、未実装のもの
 // TODO: 実装
 type gameGenreUnimplemented interface {
-	// 全てのジャンルの取得
-	// (GET /genres)
-	GetGameGenres(ctx echo.Context) error
 	// ジャンル情報の変更
 	// (PATCH /genres/{gameGenreID})
 	PatchGameGenre(ctx echo.Context, gameGenreID openapi.GameGenreIDInPath) error
@@ -39,7 +39,7 @@ type gameGenreUnimplemented interface {
 
 // ジャンルの削除
 // (DELETE /genres/{gameGenreID})
-func (gameGenre GameGenre) DeleteGameGenre(c echo.Context, gameGenreID openapi.GameGenreIDInPath) error {
+func (gameGenre *GameGenre) DeleteGameGenre(c echo.Context, gameGenreID openapi.GameGenreIDInPath) error {
 	err := gameGenre.gameGenreService.DeleteGameGenre(c.Request().Context(), values.GameGenreIDFromUUID(gameGenreID))
 	if errors.Is(err, service.ErrNoGameGenre) {
 		return echo.NewHTTPError(http.StatusNotFound, "invalid game genre ID")
@@ -50,4 +50,35 @@ func (gameGenre GameGenre) DeleteGameGenre(c echo.Context, gameGenreID openapi.G
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// 全てのジャンルの取得
+// (GET /genres)
+func (gameGenre *GameGenre) GetGameGenres(ctx echo.Context) error {
+	session, err := gameGenre.session.get(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session")
+	}
+
+	// ログインしているかどうかだけ知ればいいので、auth sessionは捨てる
+	_, err = gameGenre.session.getAuthSession(session)
+	isLoginUser := (err == nil)
+
+	gameGenreInfos, err := gameGenre.gameGenreService.GetGameGenres(ctx.Request().Context(), isLoginUser)
+	if err != nil {
+		log.Printf("error: failed to get game genres: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game genres")
+	}
+
+	gameGenresResponse := make([]openapi.GameGenre, len(gameGenreInfos))
+	for i := range gameGenreInfos {
+		gameGenresResponse[i] = openapi.GameGenre{
+			Id:        uuid.UUID(gameGenreInfos[i].GetID()),
+			Genre:     string(gameGenreInfos[i].GetName()),
+			Num:       gameGenreInfos[i].Num,
+			CreatedAt: gameGenreInfos[i].GetCreatedAt(),
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, gameGenresResponse)
 }
