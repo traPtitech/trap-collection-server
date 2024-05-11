@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.16.2
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.124.0
 	github.com/go-task/task/v3 v3.37.1
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
