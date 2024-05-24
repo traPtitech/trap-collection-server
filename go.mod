@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.27.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.15
-	github.com/cosmtrek/air v1.51.0
+	github.com/cosmtrek/air v1.52.0
 	github.com/deepmap/oapi-codegen v1.16.2
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/dgraph-io/ristretto v0.1.1
