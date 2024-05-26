@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.19.1
+FROM alpine:3.20.0
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
