@@ -223,8 +223,8 @@ github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1vB6EwHI=
 github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZiAzKg9hl15HA8=
-github.com/go-task/task/v3 v3.37.1 h1:UeOHuozF6CgQTBFdCaZlVB9vkMN/o6WeyaU69p+pEoU=
-github.com/go-task/task/v3 v3.37.1/go.mod h1:Slch7y8w2K8fQPHQT3UZq2vMiCxdi5ZOL7CwBnUZaOQ=
+github.com/go-task/task/v3 v3.37.2 h1:Jwgvo+2vX79Fu+44xPxVKC5DIkUE89QeDjN2tmYaQzA=
+github.com/go-task/task/v3 v3.37.2/go.mod h1:Slch7y8w2K8fQPHQT3UZq2vMiCxdi5ZOL7CwBnUZaOQ=
 github.com/go-task/template v0.0.0-20240422130016-8f6b279b1e90 h1:JBbiZ2CXIZ9Upe3O2yI5+3ksWoa7hNVNi4BINs8TIrs=
 github.com/go-task/template v0.0.0-20240422130016-8f6b279b1e90/go.mod h1:RgwRaZK+kni/hJJ7/AaOE2lPQFPbAdji/DyhC6pxo4k=
 github.com/go-test/deep v1.0.8 h1:TDsG77qcSprGbC6vTN8OuXp5g+J+b5Pcguhf7Zt61VM=
