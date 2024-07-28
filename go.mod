@@ -113,7 +113,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.8
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.58.2
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
