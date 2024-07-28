@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.126.0
 	github.com/go-task/task/v3 v3.38.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
@@ -67,8 +67,8 @@ require (
 	github.com/dominikbraun/graph v0.23.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-openapi/jsonpointer v0.20.2 // indirect
-	github.com/go-openapi/swag v0.22.8 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-task/template v0.0.0-20240602015157-960e6f576656 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
