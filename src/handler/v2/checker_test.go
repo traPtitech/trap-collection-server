@@ -482,3 +482,158 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 		})
 	}
 }
+
+func TestGameFileVisibilityChecker(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
+	mockEditionService := mock.NewMockEdition(ctrl)
+	mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
+	mockGameRoleService := mock.NewMockGameRoleV2(ctrl)
+	mockAdministratorAuthService := mock.NewMockAdminAuthV2(ctrl)
+	mockGameService := mock.NewMockGameV2(ctrl)
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	checker := NewChecker(
+		NewContext(),
+		session,
+		mockOIDCService,
+		mockEditionService,
+		mockEditionAuthService,
+		mockGameRoleService,
+		mockAdministratorAuthService,
+		mockGameService,
+	)
+
+	type test struct {
+		gameID              string
+		hasToken            bool
+		executeAuthenticate bool
+		AuthenticateErr     error
+		executeGetGame      bool
+		gameVisibility      values.GameVisibility
+		GetGameErr          error
+		isError             bool
+		statusCode          int
+	}
+
+	testCases := map[string]test{
+		"部員なのでOK": {
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			hasToken:            true,
+		},
+		"トークンが無いが、publicなのでOK": {
+			gameID:         uuid.NewString(),
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypePublic,
+		},
+		"部員でなく、limitedなので401": {
+			gameID:         uuid.NewString(),
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypeLimited,
+			isError:        true,
+			statusCode:     http.StatusUnauthorized,
+		},
+		"部員でなく、privateなので401": {
+			gameID:         uuid.NewString(),
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypePrivate,
+			isError:        true,
+			statusCode:     http.StatusUnauthorized,
+		},
+		"ゲームが存在しないので404": {
+			gameID:         uuid.NewString(),
+			executeGetGame: true,
+			GetGameErr:     service.ErrNoGame,
+			isError:        true,
+			statusCode:     http.StatusNotFound,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			sess, err := session.New(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if testCase.hasToken {
+				sess.Values[accessTokenSessionKey] = "token"
+				sess.Values[expiresAtSessionKey] = time.Now().Add(time.Hour)
+			}
+
+			err = sess.Save(req, rec)
+			if err != nil {
+				t.Fatalf("failed to save session: %v", err)
+			}
+
+			setCookieHeader(c)
+
+			if testCase.executeAuthenticate {
+				mockOIDCService.
+					EXPECT().
+					Authenticate(gomock.Any(), gomock.Any()).
+					Return(testCase.AuthenticateErr)
+			}
+
+			if testCase.executeGetGame {
+				gameID := values.NewGameIDFromUUID(uuid.MustParse(testCase.gameID))
+				mockGameService.
+					EXPECT().
+					GetGame(gomock.Any(), gomock.Nil(), gameID).
+					Return(&service.GameInfoV2{
+						Game: domain.NewGame(gameID, "name", "description", testCase.gameVisibility, time.Now()),
+					}, testCase.GetGameErr)
+			}
+
+			ctx := setEchoContext(context.Background(), c)
+
+			ai := openapi3filter.AuthenticationInput{
+				RequestValidationInput: &openapi3filter.RequestValidationInput{
+					PathParams: map[string]string{"gameID": testCase.gameID},
+				},
+			}
+
+			err = checker.GameFileVisibilityChecker(ctx, &ai)
+
+			if !testCase.isError {
+				assert.NoError(t, err)
+			} else {
+				var httpErr *echo.HTTPError
+				assert.ErrorAs(t, err, &httpErr)
+				assert.Equal(t, testCase.statusCode, httpErr.Code)
+			}
+
+		})
+	}
+
+}
