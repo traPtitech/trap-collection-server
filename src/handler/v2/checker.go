@@ -12,6 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -25,6 +26,7 @@ type Checker struct {
 	editionAuthService       service.EditionAuth
 	gameRoleService          service.GameRoleV2
 	administratorAuthService service.AdminAuthV2
+	gameService              service.GameV2
 }
 
 func NewChecker(
@@ -35,6 +37,7 @@ func NewChecker(
 	editionAuthService service.EditionAuth,
 	gameRoleService service.GameRoleV2,
 	administratorAuthService service.AdminAuthV2,
+	gameService service.GameV2,
 ) *Checker {
 	return &Checker{
 		context:                  context,
@@ -44,23 +47,24 @@ func NewChecker(
 		editionAuthService:       editionAuthService,
 		gameRoleService:          gameRoleService,
 		administratorAuthService: administratorAuthService,
+		gameService:              gameService,
 	}
 }
 
 func (checker *Checker) check(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
-		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
-		"AdminAuth":            checker.AdminAuthChecker,
-		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
-		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
-		"EditionAuth":          checker.EditionAuthChecker,
-		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
-		"EditionGameImageAuth": checker.EditionGameImageAuthChecker,
-		"EditionGameVideoAuth": checker.EditionGameVideoAuthChecker,
-		"EditionIDAuth":        checker.EditionIDAuthChecker,
+		"TrapMemberAuth":         checker.TrapMemberAuthChecker,
+		"AdminAuth":              checker.AdminAuthChecker,
+		"GameOwnerAuth":          checker.GameOwnerAuthChecker,
+		"GameMaintainerAuth":     checker.GameMaintainerAuthChecker,
+		"EditionAuth":            checker.EditionAuthChecker,
+		"EditionGameFileAuth":    checker.EditionGameFileAuthChecker,
+		"EditionGameImageAuth":   checker.EditionGameImageAuthChecker,
+		"EditionGameVideoAuth":   checker.EditionGameVideoAuthChecker,
+		"EditionIDAuth":          checker.EditionIDAuthChecker,
+		"GameInfoVisibilityAuth": checker.GameInfoVisibilityChecker,
 
-		"GameInfoVisibilityAuth":  checker.NotImplementedChecker,
 		"GameFileVisibilityAuth":  checker.NotImplementedChecker,
 		"GameImageVisibilityAuth": checker.NotImplementedChecker,
 		"GameVideoVisibilityAuth": checker.NotImplementedChecker,
@@ -105,6 +109,52 @@ func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, ai *openapi3f
 
 	if !ok {
 		return echo.NewHTTPError(http.StatusUnauthorized, message)
+	}
+
+	return nil
+}
+
+// 部員もしくはゲームがprivateでないときは通す
+func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := echoMiddleware.GetEchoContext(ctx)
+	if c == nil {
+		log.Println("error: failed to get echo context")
+		return errors.New("echo context is not set")
+	}
+
+	ok, _, err := checker.checkTrapMemberAuth(c)
+	if err != nil {
+		log.Printf("error: failed to check member auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 部員だったら全て通す
+	if ok {
+		return nil
+	}
+
+	strGameID, ok := ai.RequestValidationInput.PathParams["gameID"]
+	if !ok {
+		strGameID = c.Param("gameID")
+	}
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	gameInfo, err := checker.gameService.GetGame(ctx, nil, gameID)
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
+	if gameInfo.Game.GetVisibility() == values.GameVisibilityTypePrivate {
+		return echo.NewHTTPError(http.StatusUnauthorized, "private game")
 	}
 
 	return nil
