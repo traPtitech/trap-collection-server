@@ -1334,6 +1334,8 @@ func TestPostGame(t *testing.T) {
 				assert.Len(t, *responseGame.Maintainers, len(*testCase.apiGame.Maintainers))
 			}
 
+			assert.Equal(t, testCase.apiGame.Visibility, responseGame.Visibility)
+
 			if responseGame.Genres != nil {
 				assert.Len(t, *responseGame.Genres, len(*testCase.apiGame.Genres))
 				for i, resGenre := range *responseGame.Genres {

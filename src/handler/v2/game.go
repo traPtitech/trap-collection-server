@@ -271,6 +271,19 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		}
 	}
 
+	var resVisibility openapi.GameVisibility
+	switch gameInfo.Game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		resVisibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		resVisibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		resVisibility = openapi.Private
+	default:
+		log.Printf("error: failed to get game visibility: %v\n", gameInfo.Game.GetVisibility())
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
 	res := openapi.Game{
 		Name:        string(gameInfo.Game.GetName()),
 		Id:          uuid.UUID(gameInfo.Game.GetID()),
@@ -278,6 +291,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Visibility:  resVisibility,
 		Genres:      &resGameGenreNames,
 	}
 
