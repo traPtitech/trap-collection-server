@@ -1562,6 +1562,7 @@ func TestGetGame(t *testing.T) {
 				Name:        "test",
 				Description: "test",
 				CreatedAt:   now,
+				Visibility:  openapi.Limited,
 				Owners:      []openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 			},
