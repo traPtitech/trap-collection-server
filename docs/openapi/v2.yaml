@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.2.0'
+  version: '2.3.0'
   title: 'traP Collection v2'
   contact:
     name: traP
@@ -2511,7 +2511,6 @@ components:
       required:
         - name
         - description
-        - visibility
       additionalProperties: false
       description: |
         ゲームを新しく作成する際に必要な情報です。
@@ -2527,7 +2526,6 @@ components:
       required:
         - name
         - description
-        - visibility
       additionalProperties: false
       description: |
         ゲームの情報を修正する際に必要な情報です。
@@ -2952,6 +2950,8 @@ components:
         publicは全てのユーザーが全ての情報・ファイルにアクセスできます。
         limitedは部員は全ての情報・ファイルに、部員以外はファイル以外にアクセスできます。
         privateは部員はアクセスできます。
+        ゲーム作成時、指定がない場合はprivateになります
+      default: private
 
     # ゲームバージョン
     GameVersionID:

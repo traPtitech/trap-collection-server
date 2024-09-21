@@ -573,6 +573,13 @@ func TestPostGame(t *testing.T) {
 		statusCode        int
 	}
 
+	var (
+		visibilityPublic  openapi.GameVisibility = openapi.Public
+		visibilityLimited openapi.GameVisibility = openapi.Limited
+		visibilityPrivate openapi.GameVisibility = openapi.Private
+		invalidVisibility openapi.GameVisibility = openapi.GameVisibility("invalid")
+	)
+
 	gameID := values.NewGameID()
 
 	now := time.Now()
@@ -591,7 +598,7 @@ func TestPostGame(t *testing.T) {
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{"3D"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -671,7 +678,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			isErr:      true,
@@ -689,7 +696,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			isErr:      true,
@@ -707,7 +714,7 @@ func TestPostGame(t *testing.T) {
 				Description: "",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -765,7 +772,7 @@ func TestPostGame(t *testing.T) {
 				Description: "すごいゲーム",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -820,7 +827,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{strings.Repeat("あ", 33)},
 			},
 			isErr:      true,
@@ -838,7 +845,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{""},
 			},
 			isErr:      true,
@@ -857,7 +864,7 @@ func TestPostGame(t *testing.T) {
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{"3D", "2D"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -915,7 +922,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -935,7 +942,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean", "mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -955,7 +962,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu", "pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -975,7 +982,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean", "mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -995,7 +1002,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"mazrean"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			executeCreateGame: true,
@@ -1015,7 +1022,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"ikura-hamu"},
-				Visibility:  openapi.Public,
+				Visibility:  &visibilityPublic,
 				Genres:      &[]openapi.GameGenreName{"3D", "3D"},
 			},
 			executeCreateGame: true,
@@ -1036,7 +1043,7 @@ func TestPostGame(t *testing.T) {
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{"3D"},
-				Visibility:  openapi.Limited,
+				Visibility:  &visibilityLimited,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -1082,7 +1089,7 @@ func TestPostGame(t *testing.T) {
 			},
 		},
 		{
-			description:  "visibilityがlimitedでも問題なし",
+			description:  "visibilityがprivateでも問題なし",
 			sessionExist: true,
 			authSession: domain.NewOIDCSession(
 				"accessToken",
@@ -1094,7 +1101,65 @@ func TestPostGame(t *testing.T) {
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
 				Genres:      &[]openapi.GameGenreName{"3D"},
+				Visibility:  &visibilityPrivate,
+			},
+			executeCreateGame: true,
+			game: &service.GameInfoV2{
+				Game: domain.NewGame(
+					gameID,
+					"test",
+					"test",
+					values.GameVisibilityTypePrivate,
+					now,
+				),
+				Owners: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"mazrean",
+						values.TrapMemberStatusActive,
+					),
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"ikura-hamu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Maintainers: []*service.UserInfo{
+					service.NewUserInfo(
+						values.NewTrapMemberID(uuid.New()),
+						"pikachu",
+						values.TrapMemberStatusActive,
+					),
+				},
+				Genres: []*domain.GameGenre{
+					domain.NewGameGenre(values.GameGenreIDFromUUID(uuid.New()), "3D", now),
+				},
+			},
+			apiGame: openapi.Game{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				CreatedAt:   now,
+				Owners:      []openapi.UserName{"mazrean", "ikura-hamu"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
 				Visibility:  openapi.Private,
+				Genres:      &[]openapi.GameGenreName{"3D"},
+			},
+		},
+		{
+			description:  "visibilityがnilでもprivateになる",
+			sessionExist: true,
+			authSession: domain.NewOIDCSession(
+				"accessToken",
+				time.Now().Add(time.Hour),
+			),
+			newGame: &openapi.NewGame{
+				Name:        "test",
+				Description: "test",
+				Owners:      &[]openapi.UserName{"mazrean"},
+				Maintainers: &[]openapi.UserName{"pikachu"},
+				Genres:      &[]openapi.GameGenreName{"3D"},
+				Visibility:  nil,
 			},
 			executeCreateGame: true,
 			game: &service.GameInfoV2{
@@ -1151,7 +1216,7 @@ func TestPostGame(t *testing.T) {
 				Description: "test",
 				Owners:      &[]openapi.UserName{"mazrean"},
 				Maintainers: &[]openapi.UserName{"pikachu"},
-				Visibility:  "変なやつ",
+				Visibility:  &invalidVisibility,
 				Genres:      &[]openapi.GameGenreName{"3D"},
 			},
 			isErr:      true,
@@ -1268,6 +1333,8 @@ func TestPostGame(t *testing.T) {
 			if *responseGame.Maintainers != nil {
 				assert.Len(t, *responseGame.Maintainers, len(*testCase.apiGame.Maintainers))
 			}
+
+			assert.Equal(t, testCase.apiGame.Visibility, responseGame.Visibility)
 
 			if responseGame.Genres != nil {
 				assert.Len(t, *responseGame.Genres, len(*testCase.apiGame.Genres))
