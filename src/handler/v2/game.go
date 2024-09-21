@@ -185,8 +185,15 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		}
 	}
 
+	var reqVisibility openapi.GameVisibility
+	if req.Visibility == nil {
+		reqVisibility = openapi.Private
+	} else {
+		reqVisibility = *req.Visibility
+	}
+
 	var visibility values.GameVisibility
-	switch req.Visibility {
+	switch reqVisibility {
 	case openapi.Public:
 		visibility = values.GameVisibilityTypePublic
 	case openapi.Limited:
