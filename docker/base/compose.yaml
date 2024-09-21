@@ -15,9 +15,6 @@ services:
       S3_ENDPOINT: http://s3:9000
       S3_USE_PATH_STYLE: false
       PORT: :3000
-    depends_on:
-      mariadb:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/metrics"]
       timeout: 5m
