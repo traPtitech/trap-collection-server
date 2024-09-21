@@ -236,7 +236,6 @@ func TestRemoveGameGenre(t *testing.T) {
 }
 
 func TestGetGameGenresWithNames(t *testing.T) {
-	t.Parallel()
 
 	ctx := context.Background()
 

@@ -61,3 +61,23 @@ func (g *Game) GetVisibility() values.GameVisibility {
 func (g *Game) SetVisibility(visibility values.GameVisibility) {
 	g.visibility = visibility
 }
+
+type GameWithGenres struct {
+	game   *Game
+	genres []*GameGenre
+}
+
+func NewGameWithGenres(game *Game, genres []*GameGenre) *GameWithGenres {
+	return &GameWithGenres{
+		game:   game,
+		genres: genres,
+	}
+}
+
+func (g *GameWithGenres) GetGame() *Game {
+	return g.game
+}
+
+func (g *GameWithGenres) GetGenres() []*GameGenre {
+	return g.genres
+}

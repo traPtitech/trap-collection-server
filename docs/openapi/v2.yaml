@@ -346,7 +346,7 @@ paths:
             minimum: 1
           description: |
             取得するゲームの上限数を指定します。
-            指定なしの場合は30です。
+            指定なしの場合はすべてのゲームが取得されます。
         - name: offset
           in: query
           required: false
