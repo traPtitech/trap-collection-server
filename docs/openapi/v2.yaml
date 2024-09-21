@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.2.0'
+  version: '2.3.0'
   title: 'traP Collection v2'
   contact:
     name: traP
