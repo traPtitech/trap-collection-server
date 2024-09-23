@@ -1966,6 +1966,8 @@ func TestPatchGame(t *testing.T) {
 
 	now := time.Now()
 
+	openapiLimited := openapi.Limited
+
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
@@ -1973,6 +1975,7 @@ func TestPatchGame(t *testing.T) {
 			newGame: &openapi.PatchGameJSONRequestBody{
 				Name:        "test",
 				Description: "test",
+				Visibility:  &openapiLimited,
 			},
 			executeUpdateGame: true,
 			game: domain.NewGame(
@@ -1986,6 +1989,30 @@ func TestPatchGame(t *testing.T) {
 				Id:          uuid.UUID(gameID),
 				Name:        "test",
 				Description: "test",
+				Visibility:  openapi.Limited,
+				CreatedAt:   now,
+			},
+		},
+		{
+			description: "visibilityがnilでもエラーなし",
+			gameID:      gameID,
+			newGame: &openapi.PatchGameJSONRequestBody{
+				Name:        "test",
+				Description: "test",
+			},
+			executeUpdateGame: true,
+			game: domain.NewGame(
+				gameID,
+				values.NewGameName("test"),
+				values.NewGameDescription("test"),
+				values.GameVisibilityTypePublic,
+				now,
+			),
+			apiGame: openapi.GameInfo{
+				Id:          uuid.UUID(gameID),
+				Name:        "test",
+				Description: "test",
+				Visibility:  openapi.Public,
 				CreatedAt:   now,
 			},
 		},
@@ -2034,6 +2061,7 @@ func TestPatchGame(t *testing.T) {
 				Id:          uuid.UUID(gameID),
 				Name:        "test",
 				Description: "",
+				Visibility:  openapi.Limited,
 				CreatedAt:   now,
 			},
 		},
@@ -2090,9 +2118,25 @@ func TestPatchGame(t *testing.T) {
 			c := e.NewContext(req, rec)
 
 			if testCase.executeUpdateGame {
+				var visibility *values.GameVisibility
+				if testCase.newGame.Visibility != nil {
+					var vis values.GameVisibility
+					switch *testCase.newGame.Visibility {
+					case openapi.Limited:
+						vis = values.GameVisibilityTypeLimited
+					case openapi.Private:
+						vis = values.GameVisibilityTypePrivate
+					case openapi.Public:
+						vis = values.GameVisibilityTypePublic
+					default:
+						t.Fatalf("invalid visibility: %v", *testCase.newGame.Visibility)
+					}
+					visibility = &vis
+				}
+
 				mockGameService.
 					EXPECT().
-					UpdateGame(gomock.Any(), gomock.Any(), values.NewGameName(testCase.newGame.Name), values.NewGameDescription(testCase.newGame.Description)).
+					UpdateGame(gomock.Any(), gomock.Any(), values.NewGameName(testCase.newGame.Name), values.NewGameDescription(testCase.newGame.Description), visibility).
 					Return(testCase.game, testCase.UpdateGameErr)
 			}
 
@@ -2127,6 +2171,7 @@ func TestPatchGame(t *testing.T) {
 			assert.Equal(t, testCase.apiGame.Name, responseGame.Name)
 			assert.Equal(t, testCase.apiGame.Id, responseGame.Id)
 			assert.Equal(t, testCase.apiGame.Description, responseGame.Description)
+			assert.Equal(t, testCase.apiGame.Visibility, responseGame.Visibility)
 			assert.WithinDuration(t, testCase.apiGame.CreatedAt, responseGame.CreatedAt, time.Second)
 		})
 	}
