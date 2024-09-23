@@ -1,6 +1,8 @@
 module github.com/traPtitech/trap-collection-server
 
-go 1.22.0
+go 1.23
+
+toolchain go1.23.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.5
@@ -13,7 +15,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.6.0
-	github.com/gorilla/sessions v1.3.0
+	github.com/gorilla/sessions v1.4.0
 	github.com/h2non/filetype v1.1.3
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/labstack/echo/v4 v4.12.0
