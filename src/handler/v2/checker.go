@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -25,6 +26,7 @@ type Checker struct {
 	editionAuthService       service.EditionAuth
 	gameRoleService          service.GameRoleV2
 	administratorAuthService service.AdminAuthV2
+	gameService              service.GameV2
 }
 
 func NewChecker(
@@ -35,6 +37,7 @@ func NewChecker(
 	editionAuthService service.EditionAuth,
 	gameRoleService service.GameRoleV2,
 	administratorAuthService service.AdminAuthV2,
+	gameService service.GameV2,
 ) *Checker {
 	return &Checker{
 		context:                  context,
@@ -44,26 +47,26 @@ func NewChecker(
 		editionAuthService:       editionAuthService,
 		gameRoleService:          gameRoleService,
 		administratorAuthService: administratorAuthService,
+		gameService:              gameService,
 	}
 }
 
 func (checker *Checker) check(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
-		"TrapMemberAuth":       checker.TrapMemberAuthChecker,
-		"AdminAuth":            checker.AdminAuthChecker,
-		"GameOwnerAuth":        checker.GameOwnerAuthChecker,
-		"GameMaintainerAuth":   checker.GameMaintainerAuthChecker,
-		"EditionAuth":          checker.EditionAuthChecker,
-		"EditionGameFileAuth":  checker.EditionGameFileAuthChecker,
-		"EditionGameImageAuth": checker.EditionGameImageAuthChecker,
-		"EditionGameVideoAuth": checker.EditionGameVideoAuthChecker,
-		"EditionIDAuth":        checker.EditionIDAuthChecker,
-
-		"GameInfoVisibilityAuth":  checker.NotImplementedChecker,
-		"GameFileVisibilityAuth":  checker.NotImplementedChecker,
-		"GameImageVisibilityAuth": checker.NotImplementedChecker,
-		"GameVideoVisibilityAuth": checker.NotImplementedChecker,
+		"TrapMemberAuth":          checker.TrapMemberAuthChecker,
+		"AdminAuth":               checker.AdminAuthChecker,
+		"GameOwnerAuth":           checker.GameOwnerAuthChecker,
+		"GameMaintainerAuth":      checker.GameMaintainerAuthChecker,
+		"EditionAuth":             checker.EditionAuthChecker,
+		"EditionGameFileAuth":     checker.EditionGameFileAuthChecker,
+		"EditionGameImageAuth":    checker.EditionGameImageAuthChecker,
+		"EditionGameVideoAuth":    checker.EditionGameVideoAuthChecker,
+		"EditionIDAuth":           checker.EditionIDAuthChecker,
+		"GameInfoVisibilityAuth":  checker.GameInfoVisibilityChecker,
+		"GameFileVisibilityAuth":  checker.GameFileVisibilityChecker, // この3つは同じ条件のためえ、一つのチェッカーのみ実装している
+		"GameImageVisibilityAuth": checker.GameFileVisibilityChecker,
+		"GameVideoVisibilityAuth": checker.GameFileVisibilityChecker,
 	}
 
 	checkerFunc, ok := checkerMap[input.SecuritySchemeName]
@@ -108,6 +111,105 @@ func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, _ *openapi3fi
 	}
 
 	return nil
+}
+
+var (
+	gameInfoAllowedVisibilities []values.GameVisibility = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited}
+	gameFileAllowedVisibilities []values.GameVisibility = []values.GameVisibility{values.GameVisibilityTypePublic}
+)
+
+// 部員もしくはゲームがprivateでないときは通す
+func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
+	if c == nil {
+		log.Println("error: failed to get echo context")
+		return errors.New("echo context is not set")
+	}
+
+	ok, _, err := checker.checkTrapMemberAuth(c)
+	if err != nil {
+		log.Printf("error: failed to check member auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 部員だったら全て通す
+	if ok {
+		return nil
+	}
+
+	gameID, err := checker.getGameID(ai, c)
+	if err != nil {
+		return err
+	}
+
+	gameInfo, err := checker.gameService.GetGame(ctx, nil, gameID)
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
+	if !slices.Contains(gameInfoAllowedVisibilities, gameInfo.Game.GetVisibility()) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "private game")
+	}
+
+	return nil
+}
+
+func (checker *Checker) GameFileVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
+	if c == nil {
+		log.Println("error: failed to get echo context")
+		return errors.New("echo context is not set")
+	}
+
+	ok, _, err := checker.checkTrapMemberAuth(c)
+	if err != nil {
+		log.Printf("error: failed to check member auth: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 部員だったら全て通す
+	if ok {
+		return nil
+	}
+
+	gameID, err := checker.getGameID(ai, c)
+	if err != nil {
+		return err
+	}
+
+	gameInfo, err := checker.gameService.GetGame(ctx, nil, gameID)
+	if errors.Is(err, service.ErrNoGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
+	if !slices.Contains(gameFileAllowedVisibilities, gameInfo.Game.GetVisibility()) {
+		return echo.NewHTTPError(http.StatusUnauthorized, "private/limited game")
+	}
+
+	return nil
+}
+
+func (*Checker) getGameID(ai *openapi3filter.AuthenticationInput, c echo.Context) (values.GameID, error) {
+	strGameID, ok := ai.RequestValidationInput.PathParams["gameID"]
+	if !ok {
+		strGameID = c.Param("gameID")
+	}
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return values.GameID{}, echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	return gameID, nil
 }
 
 func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error) {
