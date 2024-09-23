@@ -126,7 +126,7 @@ func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVe
 	return nil
 }
 
-func (e *Edition) GetEditions(ctx context.Context, lockType repository.LockType) ([]*domain.LauncherVersion, error) {
+func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*domain.LauncherVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -306,7 +306,7 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 	return result, nil
 }
 
-func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -337,7 +337,7 @@ func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID v
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -367,7 +367,7 @@ func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID 
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -397,7 +397,7 @@ func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID 
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, editionID values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)

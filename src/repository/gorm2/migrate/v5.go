@@ -73,7 +73,7 @@ func (*gameVersionTable2V5) TableName() string {
 	return "v2_game_versions"
 }
 
-type editionTableV5 struct {
+type editionTableV5 struct { // nolint:unused
 	ID               uuid.UUID             `gorm:"type:varchar(36);not null;primaryKey"`
 	Name             string                `gorm:"type:varchar(32);not null;unique"`
 	QuestionnaireURL sql.NullString        `gorm:"type:text;default:NULL"`
@@ -83,7 +83,7 @@ type editionTableV5 struct {
 	GameVersions     []gameVersionTable2V5 `gorm:"many2many:edition_game_version_relations;joinForeignKey:EditionID;joinReferences:GameVersionID"`
 }
 
-func (*editionTableV5) TableName() string {
+func (*editionTableV5) TableName() string { // nolint:unused
 	return "editions"
 }
 

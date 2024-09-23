@@ -185,7 +185,7 @@ func TestRemoveGameGenre(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeGameGenres != nil && len(testCase.beforeGameGenres) != 0 {
+			if len(testCase.beforeGameGenres) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),
@@ -335,7 +335,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 		t.Run(description, func(t *testing.T) {
 			defer cleanupGameGenresTable(t)
 
-			if testCase.gameGenres != nil && len(testCase.gameGenres) != 0 {
+			if len(testCase.gameGenres) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),
@@ -436,7 +436,7 @@ func TestSaveGameGenres(t *testing.T) {
 		t.Run(description, func(t *testing.T) {
 			defer cleanupGameGenresTable(t)
 
-			if testCase.beforeGameGenres != nil && len(testCase.beforeGameGenres) > 0 {
+			if len(testCase.beforeGameGenres) > 0 {
 				err := db.Create(&testCase.beforeGameGenres).Error
 				if err != nil {
 					t.Fatalf("failed to create game genres before sub test: %v", err)
@@ -642,6 +642,27 @@ func TestRegisterGenresToGame(t *testing.T) {
 			isErr:       true,
 			expectedErr: repository.ErrIncludeInvalidArgs,
 		},
+		"ジャンルが空でもエラー無し": {
+			gameID:       gameID1,
+			gameGenreIDs: []values.GameGenreID{},
+			games:        []migrate.GameTable2{game1},
+			beforeGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{&game1},
+				},
+			},
+			afterGameGenres: []migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "ジャンル1",
+					CreatedAt: now,
+					Games:     []*migrate.GameTable2{},
+				},
+			},
+		},
 	}
 
 	for description, testCase := range testCases {
@@ -657,7 +678,7 @@ func TestRegisterGenresToGame(t *testing.T) {
 				}
 			}()
 
-			if testCase.games != nil && len(testCase.games) > 0 {
+			if len(testCase.games) > 0 {
 				err := db.Create(&testCase.games).Error
 				if err != nil {
 					t.Fatalf("failed to create games before sub test: %v", err)
@@ -894,7 +915,7 @@ func TestGetGameGenres(t *testing.T) {
 				}
 			}()
 
-			if testCase.gameGenres != nil && len(testCase.gameGenres) > 0 {
+			if len(testCase.gameGenres) > 0 {
 				err := db.Create(testCase.gameGenres).Error
 				if err != nil {
 					t.Fatalf("failed to create game genres: %v\n", err)

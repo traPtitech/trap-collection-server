@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"strings"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/oapi-codegen/echo-middleware"
+	echomiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -91,8 +90,8 @@ func (checker *Checker) NotImplementedChecker(context.Context, *openapi3filter.A
 
 // TrapMemberAuthChecker
 // traPのメンバーかどうかをチェックするチェッカー
-func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -231,8 +230,8 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 
 // AdminAuthChecker
 // traPCollectionのadminであるかを調べるチェッカー
-func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+func (checker *Checker) AdminAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -268,8 +267,8 @@ func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter
 
 // GameOwnerAuthChecker
 // そのゲームのowner(administrator)であるかどうかを調べるチェッカー
-func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -328,8 +327,8 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 
 // GameMaintainerAuthChecker
 // そのゲームのmaintainer(collaborator)であるかどうかを調べるチェッカー
-func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -387,7 +386,7 @@ func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *opena
 }
 
 func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -409,7 +408,7 @@ func (checker *Checker) EditionAuthChecker(ctx context.Context, ai *openapi3filt
 }
 
 func (checker *Checker) EditionGameFileAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -451,7 +450,7 @@ func (checker *Checker) EditionGameFileAuthChecker(ctx context.Context, ai *open
 }
 
 func (checker *Checker) EditionGameImageAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -493,7 +492,7 @@ func (checker *Checker) EditionGameImageAuthChecker(ctx context.Context, ai *ope
 }
 
 func (checker *Checker) EditionGameVideoAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {
@@ -535,7 +534,7 @@ func (checker *Checker) EditionGameVideoAuthChecker(ctx context.Context, ai *ope
 }
 
 func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := oapiMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
 	if c == nil {

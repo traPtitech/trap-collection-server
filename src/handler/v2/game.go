@@ -185,8 +185,15 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		}
 	}
 
+	var reqVisibility openapi.GameVisibility
+	if req.Visibility == nil {
+		reqVisibility = openapi.Private // デフォルトはprivate
+	} else {
+		reqVisibility = *req.Visibility
+	}
+
 	var visibility values.GameVisibility
-	switch req.Visibility {
+	switch reqVisibility {
 	case openapi.Public:
 		visibility = values.GameVisibilityTypePublic
 	case openapi.Limited:
@@ -257,11 +264,24 @@ func (g *Game) PostGame(ctx echo.Context) error {
 	}
 
 	var resGameGenreNames []openapi.GameGenreName
-	if gameInfo.Genres != nil && len(gameInfo.Genres) != 0 { // ジャンルが無い場合はnilにする
+	if len(gameInfo.Genres) != 0 { // ジャンルが無い場合はnilにする
 		resGameGenreNames = make([]openapi.GameGenreName, 0, len(gameInfo.Genres))
 		for _, genre := range gameInfo.Genres {
 			resGameGenreNames = append(resGameGenreNames, openapi.GameGenreName(genre.GetName()))
 		}
+	}
+
+	var resVisibility openapi.GameVisibility
+	switch gameInfo.Game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		resVisibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		resVisibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		resVisibility = openapi.Private
+	default:
+		log.Printf("error: failed to get game visibility: %v\n", gameInfo.Game.GetVisibility())
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
 	}
 
 	res := openapi.Game{
@@ -271,6 +291,7 @@ func (g *Game) PostGame(ctx echo.Context) error {
 		CreatedAt:   gameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Visibility:  resVisibility,
 		Genres:      &resGameGenreNames,
 	}
 

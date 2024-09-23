@@ -89,7 +89,7 @@ func (gameGenre *GameGenre) GetGameGenresWithNames(ctx context.Context, gameGenr
 	if result.RowsAffected == 0 {
 		return nil, repository.ErrRecordNotFound
 	}
-	if err != nil {
+	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get game genres with names: %w", err)
 	}
 
@@ -148,13 +148,13 @@ func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID val
 		return fmt.Errorf("failed to get game: %w", err)
 	}
 
-	genres := make([]uuid.UUID, 0, len(gameGenreIDs))
+	gameGenreUUIDs := make([]uuid.UUID, 0, len(gameGenreIDs))
 	for _, genre := range gameGenreIDs {
-		genres = append(genres, uuid.UUID(genre))
+		gameGenreUUIDs = append(gameGenreUUIDs, uuid.UUID(genre))
 	}
 
 	var gameGenres []migrate.GameGenreTable
-	err = db.Find(&gameGenres, genres).Error
+	err = db.Where("`id` IN ?", gameGenreUUIDs).Find(&gameGenres).Error
 	if err != nil {
 		return fmt.Errorf("failed to get game genres: %w", err)
 	}
