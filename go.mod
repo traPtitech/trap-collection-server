@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.124.0
 	github.com/go-task/task/v3 v3.38.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
@@ -20,6 +20,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mazrean/formstream v1.1.1
 	github.com/ncw/swift/v2 v2.0.2
+	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/ory/dockertest/v3 v3.11.0
 	github.com/stretchr/testify v1.9.0
@@ -123,7 +124,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-gormigrate/gormigrate/v2 v2.1.2
-	github.com/go-sql-driver/mysql v1.8.1 // indirect
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/google/subcommands v1.2.0 // indirect

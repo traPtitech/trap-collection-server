@@ -6,11 +6,11 @@ package v2
 import (
 	"fmt"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echomiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 )
 
@@ -100,7 +100,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	// 他のrouteにはoapiMiddleware.OapiRequestValidatorを設定したくないため、
 	// 空のpathのgroupを作成し、oapiMiddleware.OapiRequestValidatorを設定する
 	apiGroup := e.Group("")
-	apiGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
+	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: api.Checker.check,
 			// validate時にデータがメモリに乗るため、
