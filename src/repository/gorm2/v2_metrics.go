@@ -138,7 +138,7 @@ func (mc *MetricsCollectorV2) collect(p *gormPrometheus.Prometheus) {
 	}
 }
 
-func (mc *MetricsCollectorV2) collectAccessTokenMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectAccessTokenMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var accessTokenCounts []struct {
 		IsDeleted bool  `gorm:"column:is_deleted"`
 		Count     int64 `gorm:"column:count"`
@@ -172,7 +172,7 @@ func (mc *MetricsCollectorV2) collectAccessTokenMetrics(ctx context.Context, p *
 	return nil
 }
 
-func (mc *MetricsCollectorV2) collectGameMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectGameMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var gameCounts []struct {
 		IsDeleted bool  `gorm:"column:is_deleted"`
 		Count     int64 `gorm:"column:count"`
@@ -206,7 +206,7 @@ func (mc *MetricsCollectorV2) collectGameMetrics(ctx context.Context, p *gormPro
 	return nil
 }
 
-func (mc *MetricsCollectorV2) collectGameFileMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectGameFileMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var gameFileCounts []struct {
 		Type  string `gorm:"column:type"`
 		Count int64  `gorm:"column:count"`
@@ -234,7 +234,7 @@ func (mc *MetricsCollectorV2) collectGameFileMetrics(ctx context.Context, p *gor
 	return nil
 }
 
-func (mc *MetricsCollectorV2) collectGameImageMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectGameImageMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var gameImageCounts []struct {
 		Type  string `gorm:"column:type"`
 		Count int64  `gorm:"column:count"`
@@ -262,7 +262,7 @@ func (mc *MetricsCollectorV2) collectGameImageMetrics(ctx context.Context, p *go
 	return nil
 }
 
-func (mc *MetricsCollectorV2) collectGameVideoMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectGameVideoMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var gameVideoCounts []struct {
 		Type  string `gorm:"column:type"`
 		Count int64  `gorm:"column:count"`
@@ -290,7 +290,7 @@ func (mc *MetricsCollectorV2) collectGameVideoMetrics(ctx context.Context, p *go
 	return nil
 }
 
-func (mc *MetricsCollectorV2) collectSeatMetrics(ctx context.Context, p *gormPrometheus.Prometheus) error {
+func (mc *MetricsCollectorV2) collectSeatMetrics(_ context.Context, p *gormPrometheus.Prometheus) error {
 	var seatCounts []struct {
 		Type  string `gorm:"column:type"`
 		Count int64  `gorm:"column:count"`

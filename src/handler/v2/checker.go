@@ -88,7 +88,7 @@ func (checker *Checker) NotImplementedChecker(context.Context, *openapi3filter.A
 
 // TrapMemberAuthChecker
 // traPのメンバーかどうかをチェックするチェッカー
-func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
@@ -137,7 +137,7 @@ func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error
 
 // AdminAuthChecker
 // traPCollectionのadminであるかを調べるチェッカー
-func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+func (checker *Checker) AdminAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
@@ -174,7 +174,7 @@ func (checker *Checker) AdminAuthChecker(ctx context.Context, ai *openapi3filter
 
 // GameOwnerAuthChecker
 // そのゲームのowner(administrator)であるかどうかを調べるチェッカー
-func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする
@@ -234,7 +234,7 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, ai *openapi3fi
 
 // GameMaintainerAuthChecker
 // そのゲームのmaintainer(collaborator)であるかどうかを調べるチェッカー
-func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
+func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
 	c := oapiMiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
 	// ここではありえないはずだが念の為チェックする

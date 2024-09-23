@@ -38,7 +38,7 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 	}, nil
 }
 
-func (seat *Seat) GetActiveSeats(ctx context.Context) ([]*domain.Seat, error) {
+func (seat *Seat) GetActiveSeats(_ context.Context) ([]*domain.Seat, error) {
 	iSeats, ok := seat.activeSeats.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_seats", "miss").Inc()
@@ -55,7 +55,7 @@ func (seat *Seat) GetActiveSeats(ctx context.Context) ([]*domain.Seat, error) {
 	return seats, nil
 }
 
-func (seat *Seat) SetActiveSeats(ctx context.Context, seats []*domain.Seat) error {
+func (seat *Seat) SetActiveSeats(_ context.Context, seats []*domain.Seat) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := seat.activeSeats.SetWithTTL(
 		activeUsersKey,

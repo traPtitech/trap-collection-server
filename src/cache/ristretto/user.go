@@ -63,7 +63,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 	}, nil
 }
 
-func (u *User) GetMe(ctx context.Context, accessToken values.OIDCAccessToken) (*service.UserInfo, error) {
+func (u *User) GetMe(_ context.Context, accessToken values.OIDCAccessToken) (*service.UserInfo, error) {
 	iUser, ok := u.meCache.Get(string(accessToken))
 	if !ok {
 		hitCount.WithLabelValues("me", "miss").Inc()
@@ -80,7 +80,7 @@ func (u *User) GetMe(ctx context.Context, accessToken values.OIDCAccessToken) (*
 	return user, nil
 }
 
-func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *service.UserInfo) error {
+func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := u.meCache.SetWithTTL(
 		string(session.GetAccessToken()),
@@ -98,7 +98,7 @@ func (u *User) SetMe(ctx context.Context, session *domain.OIDCSession, user *ser
 
 // GetAllActiveUsers
 // deprecated: v1 API廃止時に削除する
-func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
+func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
 	iUsers, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_users", "miss").Inc()
@@ -117,7 +117,7 @@ func (u *User) GetAllActiveUsers(ctx context.Context) ([]*service.UserInfo, erro
 
 // SetAllActiveUsers
 // deprecated: v1 API廃止時に削除する
-func (u *User) SetAllActiveUsers(ctx context.Context, users []*service.UserInfo) error {
+func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := u.activeUsers.SetWithTTL(
 		activeUsersKey,
@@ -132,7 +132,7 @@ func (u *User) SetAllActiveUsers(ctx context.Context, users []*service.UserInfo)
 	return nil
 }
 
-func (u *User) GetActiveUsers(ctx context.Context) ([]*service.UserInfo, error) {
+func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
 	iUsers, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
 		return nil, cache.ErrCacheMiss
@@ -146,7 +146,7 @@ func (u *User) GetActiveUsers(ctx context.Context) ([]*service.UserInfo, error) 
 	return users, nil
 }
 
-func (u *User) SetActiveUsers(ctx context.Context, users []*service.UserInfo) error {
+func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := u.activeUsers.SetWithTTL(
 		activeUsersKey,

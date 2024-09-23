@@ -34,14 +34,14 @@ func NewGameVideo(directoryManager *DirectoryManager) (*GameVideo, error) {
 	}, nil
 }
 
-func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoID values.GameVideoID) error {
+func (gv *GameVideo) SaveGameVideo(_ context.Context, reader io.Reader, videoID values.GameVideoID) error {
 	videoPath := path.Join(gv.videoRootPath, uuid.UUID(videoID).String())
 
 	_, err := os.Stat(videoPath)
 	if err == nil {
 		return storage.ErrAlreadyExists
 	}
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+	if !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("failed to stat file: %w", err)
 	}
 
@@ -59,7 +59,7 @@ func (gv *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader, videoI
 	return nil
 }
 
-func (gv *GameVideo) GetTempURL(ctx context.Context, video *domain.GameVideo, expires time.Duration) (values.GameVideoTmpURL, error) {
+func (gv *GameVideo) GetTempURL(_ context.Context, video *domain.GameVideo, _ time.Duration) (values.GameVideoTmpURL, error) {
 	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gv.videoRootPath, uuid.UUID(video.GetID()).String())))
 	if err != nil {

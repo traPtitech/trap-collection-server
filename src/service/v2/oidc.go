@@ -39,7 +39,7 @@ func NewOIDC(conf config.ServiceV2, user *User, oidc auth.OIDC) (*OIDC, error) {
 	}, nil
 }
 
-func (o *OIDC) GenerateAuthState(ctx context.Context) (*domain.OIDCClient, *domain.OIDCAuthState, error) {
+func (o *OIDC) GenerateAuthState(_ context.Context) (*domain.OIDCClient, *domain.OIDCAuthState, error) {
 	codeChallengeMethod := values.OIDCCodeChallengeMethodSha256
 	codeChallenge, err := values.NewOIDCCodeVerifier()
 	if err != nil {
@@ -72,7 +72,7 @@ func (o *OIDC) Logout(ctx context.Context, session *domain.OIDCSession) error {
 	return nil
 }
 
-func (o *OIDC) Authenticate(ctx context.Context, session *domain.OIDCSession) error {
+func (o *OIDC) Authenticate(_ context.Context, session *domain.OIDCSession) error {
 	// traQで凍結された場合の反映が遅れるのは許容しているので、sessionの有効期限確認のみ
 	if session.IsExpired() {
 		return service.ErrOIDCSessionExpired

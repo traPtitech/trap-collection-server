@@ -116,7 +116,7 @@ func (editionAuth *EditionAuth) PostProductKey(c echo.Context, editionID openapi
 
 // プロダクトキーの再有効化
 // (POST /editions/{editionID}/keys/{productKeyID}/activate)
-func (editionAuth *EditionAuth) PostActivateProductKey(c echo.Context, editionID openapi.EditionIDInPath, productKeyID openapi.ProductKeyIDInPath) error {
+func (editionAuth *EditionAuth) PostActivateProductKey(c echo.Context, _ openapi.EditionIDInPath, productKeyID openapi.ProductKeyIDInPath) error {
 	productKey, err := editionAuth.editionAuthService.ActivateProductKey(
 		c.Request().Context(),
 		values.NewLauncherUserIDFromUUID(productKeyID),
@@ -142,7 +142,7 @@ func (editionAuth *EditionAuth) PostActivateProductKey(c echo.Context, editionID
 
 // プロダクトキーの失効
 // (POST /editions/{editionID}/keys/{productKeyID}/revoke)
-func (editionAuth *EditionAuth) PostRevokeProductKey(c echo.Context, editionID openapi.EditionIDInPath, productKeyID openapi.ProductKeyIDInPath) error {
+func (editionAuth *EditionAuth) PostRevokeProductKey(c echo.Context, _ openapi.EditionIDInPath, productKeyID openapi.ProductKeyIDInPath) error {
 	productKey, err := editionAuth.editionAuthService.RevokeProductKey(
 		c.Request().Context(),
 		values.NewLauncherUserIDFromUUID(productKeyID),

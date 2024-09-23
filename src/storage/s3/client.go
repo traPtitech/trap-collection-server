@@ -78,7 +78,7 @@ func setupS3(
 		awsConfig.WithRegion(region),
 		awsConfig.WithEndpointResolverWithOptions(
 			aws.EndpointResolverWithOptionsFunc(
-				func(service string, region string, options ...interface{}) (aws.Endpoint, error) {
+				func(_ string, region string, _ ...interface{}) (aws.Endpoint, error) {
 					return aws.Endpoint{
 						URL:               endpoint,
 						SigningRegion:     region,
