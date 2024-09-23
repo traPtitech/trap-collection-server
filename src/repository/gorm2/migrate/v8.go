@@ -109,7 +109,7 @@ func v8() *gormigrate.Migration {
 
 			return nil
 		},
-		Rollback: func(tx *gorm.DB) error {
+		Rollback: func(_ *gorm.DB) error {
 			return nil
 		},
 	}

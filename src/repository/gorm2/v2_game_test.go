@@ -107,7 +107,7 @@ func TestSaveGameV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+			if len(testCase.beforeGames) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
 					Create(&testCase.beforeGames).Error
@@ -283,7 +283,7 @@ func TestUpdateGameV2(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+			if len(testCase.beforeGames) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),
@@ -455,7 +455,7 @@ func TestRemoveGameV2(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeGames != nil && len(testCase.beforeGames) != 0 {
+			if len(testCase.beforeGames) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),

@@ -34,7 +34,7 @@ func NewGameFile(directoryManager *DirectoryManager) (*GameFile, error) {
 	}, nil
 }
 
-func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID values.GameFileID) error {
+func (gf *GameFile) SaveGameFile(_ context.Context, reader io.Reader, fileID values.GameFileID) error {
 	filePath := path.Join(gf.fileRootPath, uuid.UUID(fileID).String())
 
 	_, err := os.Stat(filePath)
@@ -59,7 +59,7 @@ func (gf *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, fileID v
 	return nil
 }
 
-func (gf *GameFile) GetTempURL(ctx context.Context, file *domain.GameFile, expires time.Duration) (values.GameFileTmpURL, error) {
+func (gf *GameFile) GetTempURL(_ context.Context, file *domain.GameFile, _ time.Duration) (values.GameFileTmpURL, error) {
 	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gf.fileRootPath, uuid.UUID(file.GetID()).String())))
 	if err != nil {

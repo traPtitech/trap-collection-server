@@ -1,16 +1,16 @@
 package v2
 
-//go:generate sh -c "go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config ./openapi/config.yaml ../../../docs/openapi/v2.yaml > openapi/openapi.gen.go"
+//go:generate sh -c "go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config ./openapi/config.yaml ../../../docs/openapi/v2.yaml > openapi/openapi.gen.go"
 //go:generate go fmt ./openapi/openapi.gen.go
 
 import (
 	"fmt"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echomiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 )
 
@@ -100,7 +100,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	// 他のrouteにはoapiMiddleware.OapiRequestValidatorを設定したくないため、
 	// 空のpathのgroupを作成し、oapiMiddleware.OapiRequestValidatorを設定する
 	apiGroup := e.Group("")
-	apiGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
+	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: api.Checker.check,
 			// validate時にデータがメモリに乗るため、

@@ -74,7 +74,7 @@ func (gameRole *GameRole) EditGameManagementRole(ctx context.Context, session *d
 					return service.ErrCannotEditOwners
 				}
 				err = gameRole.gameManagementRoleRepository.UpdateGameManagementRole(ctx, gameID, userID, newRole)
-				if errors.Is(repository.ErrNoRecordUpdated, err) {
+				if errors.Is(err, repository.ErrNoRecordUpdated) {
 					return service.ErrNoGameManagementRoleUpdated
 				}
 				if err != nil {

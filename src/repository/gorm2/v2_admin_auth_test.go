@@ -65,7 +65,7 @@ func TestAddAdminV2(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeAdmins != nil && len(testCase.beforeAdmins) != 0 {
+			if len(testCase.beforeAdmins) != 0 {
 				err := db.Session(&gorm.Session{}).Create(&testCase.beforeAdmins).Error
 				if err != nil {
 					t.Fatalf("failed to create admin: %+v\n", err)
@@ -270,7 +270,7 @@ func TestDeleteAdminV2(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeAdmins != nil && len(testCase.beforeAdmins) != 0 {
+			if len(testCase.beforeAdmins) != 0 {
 				err := db.Session(&gorm.Session{}).Create(&testCase.beforeAdmins).Error
 				if err != nil {
 					t.Fatalf("failed to create admin: %+v\n", err)
