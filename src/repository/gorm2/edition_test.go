@@ -383,7 +383,7 @@ func TestUpdateEdition(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeEditions != nil && len(testCase.beforeEditions) != 0 {
+			if len(testCase.beforeEditions) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),
@@ -533,7 +533,7 @@ func TestDeleteEdition(t *testing.T) {
 				}
 			}()
 
-			if testCase.beforeEditions != nil && len(testCase.beforeEditions) != 0 {
+			if len(testCase.beforeEditions) != 0 {
 				err := db.
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Info),

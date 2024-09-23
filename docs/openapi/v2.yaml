@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.0.0'
+  version: '2.3.0'
   title: 'traP Collection v2'
   contact:
     name: traP
@@ -346,7 +346,7 @@ paths:
             minimum: 1
           description: |
             取得するゲームの上限数を指定します。
-            指定なしの場合は30です。
+            指定なしの場合はすべてのゲームが取得されます。
         - name: offset
           in: query
           required: false
@@ -401,6 +401,7 @@ paths:
       description: |
         ゲームの一覧を取得します。
         各ゲームの最新バージョンが作られた時刻の降順（新しい順）で結果が返されます。
+        部員以外がこのAPIを叩いたとき、公開設定がprivateのものは返されず、数にも含まれません。
   /games/{gameID}:
     parameters:
       - $ref: '#/components/parameters/gameIDInPath'
@@ -408,6 +409,8 @@ paths:
       tags:
         - game
       operationId: getGame
+      security:
+        - GameInfoVisibilityAuth: []      
       responses:
         "200":
           content:
@@ -424,6 +427,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             ゲームIDが不正な値である場合に返されます。
+        "403":
+          $ref: '#/components/responses/GameInfoForbidden'
         "404":
           content:
             application/json:
@@ -672,7 +677,7 @@ paths:
                 genres:
                   type: array
                   items:
-                    $ref: '#/components/schemas/GameGenreID'
+                    $ref: '#/components/schemas/GameGenreName'
         description: ゲームのジャンルIDの配列です。
       tags:
         - gameGenre
@@ -914,6 +919,9 @@ paths:
       tags:
         - gameFile
       operationId: getGameFile
+      security:
+        - GameFileVisibilityAuth: []
+        - EditionGameFileAuth: []      
       responses:
         "200":
           content:
@@ -959,6 +967,9 @@ paths:
       tags:
         - gameFile
       operationId: getGameFileMeta
+      security:
+        - GameFileVisibilityAuth: []
+        - EditionGameFileAuth: []      
       responses:
         "200":
           content:
@@ -1090,6 +1101,9 @@ paths:
       tags:
         - gameImage
       operationId: getGameImage
+      security:
+        - GameImageVisibilityAuth: []
+        - EditionGameImageAuth: []      
       responses:
         "200":
           content:
@@ -1135,6 +1149,9 @@ paths:
       tags:
         - gameImage
       operationId: getGameImageMeta
+      security:
+        - GameImageVisibilityAuth: []
+        - EditionGameImageAuth: []   
       responses:
         "200":
           content:
@@ -1266,6 +1283,9 @@ paths:
       tags:
         - gameVideo
       operationId: getGameVideo
+      security:
+        - GameVideoVisibilityAuth: []
+        - EditionGameVideoAuth: []
       responses:
         "200":
           content:
@@ -1311,6 +1331,9 @@ paths:
       tags:
         - gameVideo
       operationId: getGameVideoMeta
+      security:
+        - GameVideoVisibilityAuth: []
+        - EditionGameVideoAuth: []
       responses:
         "200":
           content:
@@ -2075,6 +2098,13 @@ components:
             $ref: '#/components/schemas/Error'
       description: |
         adminでない場合に返されます。
+    GameInfoForbidden:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: |
+        ゲームの名前、説明、画像、動画などにアクセスできない場合に返されます。
     EditionForbidden:
       content:
         application/json:
@@ -2161,6 +2191,38 @@ components:
         アクセストークンから得られるエディションに、
         動画IDで指定された動画に対応するゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
+    GameInfoVisibilityAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームの名前、説明などの情報にアクセスできます。
+        部員であれば全てのゲームについてアクセスできます。
+        部員以外は、ゲームの公開設定がlimited、publicの場合にアクセスできます。
+    GameFileVisibilityAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームのファイルのバイナリとメタデータにアクセスできます。
+        部員であれば全てのゲームについてアクセスできます。
+        部員以外は、ゲームの公開設定がpublicの場合にアクセスできます。
+    GameImageVisibilityAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームの画像のバイナリとメタデータにアクセスできます。
+        部員であれば全てのゲームについてアクセスできます。
+        部員以外は、ゲームの公開設定がpublicの場合にアクセスできます。
+    GameVideoVisibilityAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームの動画のバイナリとメタデータにアクセスできます。
+        部員であれば全てのゲームについてアクセスできます。
+        部員以外は、ゲームの公開設定がpublicの場合にアクセスできます。
   parameters:
     authorizationCodeInQuery:
       name: code
@@ -2420,9 +2482,13 @@ components:
           $ref: '#/components/schemas/GameDescription'
         genres:
           type: array
-          description: ゲームのジャンルの名前の配列です。ジャンルが無い場合はこのフィールドは省略されます。
+          description: |
+            ゲームのジャンルの名前の配列です。ジャンルが無い場合はこのフィールドは省略されます。
+            ジャンルに重複があった場合は400エラーとなります。
           items:
             $ref: '#/components/schemas/GameGenreName'
+        visibility:
+          $ref: '#/components/schemas/GameVisibility'
         owners:
           type: array
           description: |
@@ -2455,6 +2521,8 @@ components:
           $ref: '#/components/schemas/GameName'
         description:
           $ref: '#/components/schemas/GameDescription'
+        visibility:
+          $ref: '#/components/schemas/GameVisibility'
       required:
         - name
         - description
@@ -2478,6 +2546,8 @@ components:
           description: ジャンルの名前です。ジャンルが無い場合はこのフィールドはありません。
           items:
             $ref: '#/components/schemas/GameGenreName'
+        visibility:
+          $ref: '#/components/schemas/GameVisibility'
         owners:
           type: array
           description: |
@@ -2497,7 +2567,7 @@ components:
         - id
         - name
         - description
-        - genres
+        - visibility
         - owners
         - createdAt
     GameInfo:
@@ -2512,12 +2582,15 @@ components:
           $ref: '#/components/schemas/GameName'
         description:
           $ref: '#/components/schemas/GameDescription'
+        visibility:
+          $ref: '#/components/schemas/GameVisibility'
         createdAt:
           $ref: '#/components/schemas/GameCreatedAt'
       required:
         - id
         - name
         - description
+        - visibility
         - createdAt
     GameInfoWithGenres:
       type: object
@@ -2534,14 +2607,16 @@ components:
         genres:
           type: array
           items:
-            $ref: '#/components/schemas/GameGenreID'
+            $ref: '#/components/schemas/GameGenreName'
+        visibility:
+          $ref: '#/components/schemas/GameVisibility'
         createdAt:
           $ref: '#/components/schemas/GameCreatedAt'
       required:
         - id
         - name
         - description
-        - genres
+        - visibility
         - createdAt
     NewGameVersion:
       type: object
@@ -2862,6 +2937,21 @@ components:
         ゲームの管理権限の種類です。
         ownerはゲームの所有者で、ゲーム情報の変更や管理者の変更ができます。
         maintainerはゲームのメンテナーで、ゲーム情報の変更のみできます。
+    
+    # ゲームの公開設定
+    GameVisibility:
+      type: string
+      enum:
+        - public
+        - limited
+        - private
+      description: |
+        ゲームの公開設定です。
+        publicは全てのユーザーが全ての情報・ファイルにアクセスできます。
+        limitedは部員は全ての情報・ファイルに、部員以外はファイル以外にアクセスできます。
+        privateは部員はアクセスできます。
+        ゲーム作成時、指定がない場合はprivateになります
+      default: private
 
     # ゲームバージョン
     GameVersionID:

@@ -78,6 +78,14 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 		return fmt.Errorf("failed to append game files: %w", err)
 	}
 
+	err = db.
+		Model(&migrate.GameTable2{ID: uuid.UUID(gameID)}).
+		Update("latest_version_updated_at", version.GetCreatedAt()).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to update latest version updated at: %w", err)
+	}
+
 	return nil
 }
 
@@ -86,7 +94,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 	gameID values.GameID,
 	limit uint,
 	offset uint,
-	lockType repository.LockType,
+	_ repository.LockType,
 ) (uint, []*repository.GameVersionInfo, error) {
 	db, err := gameVersion.db.getDB(ctx)
 	if err != nil {
@@ -165,7 +173,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 func (gameVersion *GameVersionV2) GetLatestGameVersion(
 	ctx context.Context,
 	gameID values.GameID,
-	lockType repository.LockType,
+	_ repository.LockType,
 ) (*repository.GameVersionInfo, error) {
 	db, err := gameVersion.db.getDB(ctx)
 	if err != nil {

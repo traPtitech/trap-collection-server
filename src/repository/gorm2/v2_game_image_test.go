@@ -66,6 +66,16 @@ func TestSaveGameImageV2(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -82,7 +92,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -100,7 +110,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -118,7 +128,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -147,7 +157,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -155,13 +165,13 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -178,7 +188,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -186,7 +196,7 @@ func TestSaveGameImageV2(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID8),
 					GameID:      uuid.UUID(gameID6),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -197,11 +207,12 @@ func TestSaveGameImageV2(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			err := db.Create(&migrate.GameTable2{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
-				GameImage2s: testCase.beforeImages,
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				CreatedAt:        time.Now(),
+				GameImage2s:      testCase.beforeImages,
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -298,6 +309,16 @@ func TestGetGameImage(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -309,7 +330,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -330,7 +351,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -351,7 +372,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -372,7 +393,7 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID4),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -392,13 +413,13 @@ func TestGetGameImage(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -429,11 +450,12 @@ func TestGetGameImage(t *testing.T) {
 					game.GameImage2s = append(game.GameImage2s, image)
 				} else {
 					gameIDMap[image.GameID] = &migrate.GameTable2{
-						ID:          image.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameImage2s: []migrate.GameImageTable2{image},
+						ID:               image.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameImage2s:      []migrate.GameImageTable2{image},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
@@ -522,6 +544,16 @@ func TestGetGameImages(t *testing.T) {
 		imageTypeMap[imageType.Name] = imageType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -533,7 +565,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID1),
 					GameID:      uuid.UUID(gameID1),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -553,7 +585,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID2),
 					GameID:      uuid.UUID(gameID2),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now,
 				},
 			},
@@ -573,7 +605,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID3),
 					GameID:      uuid.UUID(gameID3),
-					ImageTypeID: imageTypeMap[gameImageTypeGif],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeGif],
 					CreatedAt:   now,
 				},
 			},
@@ -593,7 +625,7 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID4),
 					GameID:      uuid.UUID(gameID4),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 			},
@@ -612,13 +644,13 @@ func TestGetGameImages(t *testing.T) {
 				{
 					ID:          uuid.UUID(imageID5),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypeJpeg],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypeJpeg],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(imageID6),
 					GameID:      uuid.UUID(gameID5),
-					ImageTypeID: imageTypeMap[gameImageTypePng],
+					ImageTypeID: imageTypeMap[migrate.GameImageTypePng],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -652,11 +684,12 @@ func TestGetGameImages(t *testing.T) {
 					game.GameImage2s = append(game.GameImage2s, image)
 				} else {
 					gameIDMap[image.GameID] = &migrate.GameTable2{
-						ID:          image.GameID,
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   now,
-						GameImage2s: []migrate.GameImageTable2{image},
+						ID:               image.GameID,
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        now,
+						GameImage2s:      []migrate.GameImageTable2{image},
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}

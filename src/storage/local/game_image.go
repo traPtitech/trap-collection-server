@@ -34,7 +34,7 @@ func NewGameImage(directoryManager *DirectoryManager) (*GameImage, error) {
 	}, nil
 }
 
-func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageID values.GameImageID) error {
+func (gi *GameImage) SaveGameImage(_ context.Context, reader io.Reader, imageID values.GameImageID) error {
 	imagePath := path.Join(gi.imageRootPath, uuid.UUID(imageID).String())
 
 	_, err := os.Stat(imagePath)
@@ -59,7 +59,7 @@ func (gi *GameImage) SaveGameImage(ctx context.Context, reader io.Reader, imageI
 	return nil
 }
 
-func (gi *GameImage) GetTempURL(ctx context.Context, image *domain.GameImage, expires time.Duration) (values.GameImageTmpURL, error) {
+func (gi *GameImage) GetTempURL(_ context.Context, image *domain.GameImage, _ time.Duration) (values.GameImageTmpURL, error) {
 	// 正しいURLにはならないが、開発環境用のmockのため妥協する
 	tmpURL, err := url.Parse(fmt.Sprintf("file://%s", path.Join(gi.imageRootPath, uuid.UUID(image.GetID()).String())))
 	if err != nil {

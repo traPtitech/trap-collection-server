@@ -61,6 +61,16 @@ func TestAddGameManagementRoles(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
@@ -133,11 +143,12 @@ func TestAddGameManagementRoles(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&migrate.GameTable{
-				ID:          uuid.UUID(testCase.gameID),
-				Name:        "test",
-				Description: "test",
-				CreatedAt:   time.Now(),
+			err := db.Create(&migrate.GameTable2{
+				ID:               uuid.UUID(testCase.gameID),
+				Name:             "test",
+				Description:      "test",
+				VisibilityTypeID: gameVisibilityTypeIDPublic,
+				CreatedAt:        time.Now(),
 			}).Error
 			if err != nil {
 				t.Fatalf("failed to create game table: %+v\n", err)
@@ -189,7 +200,7 @@ func TestUpdateGameManagementRole(t *testing.T) {
 		gameID      values.GameID
 		userID      values.TraPMemberID
 		role        values.GameManagementRole
-		beforeGames []migrate.GameTable
+		beforeGames []migrate.GameTable2
 		beforeRoles []migrate.GameManagementRoleTable
 		expectRoles []migrate.GameManagementRoleTable
 		isErr       bool
@@ -227,18 +238,29 @@ func TestUpdateGameManagementRole(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			userID:      userID1,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID1),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID1),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -261,12 +283,13 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID2,
 			userID:      userID2,
 			role:        values.GameManagementRoleCollaborator,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID2),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -288,12 +311,13 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			description: "roleがAdministratorでもCollaboratorでもないのでエラー",
 			gameID:      gameID3,
 			userID:      userID3,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID3),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -311,12 +335,13 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID4,
 			userID:      userID4,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID4),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID4),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -349,18 +374,20 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID5,
 			userID:      userID6,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID5),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID5),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
-					ID:          uuid.UUID(gameID6),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID6),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -410,12 +437,13 @@ func TestUpdateGameManagementRole(t *testing.T) {
 			gameID:      gameID8,
 			userID:      userID8,
 			role:        values.GameManagementRoleAdministrator,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID8),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID8),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -499,7 +527,7 @@ func TestRemoveGameManagementRole(t *testing.T) {
 		description string
 		gameID      values.GameID
 		userID      values.TraPMemberID
-		beforeGames []migrate.GameTable
+		beforeGames []migrate.GameTable2
 		beforeRoles []migrate.GameManagementRoleTable
 		expectRoles []migrate.GameManagementRoleTable
 		isErr       bool
@@ -531,17 +559,28 @@ func TestRemoveGameManagementRole(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			userID:      userID1,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID1),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID1),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -557,12 +596,13 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			description: "削除対象以外のユーザーのroleが存在しても問題なし",
 			gameID:      gameID2,
 			userID:      userID2,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID2),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -589,18 +629,20 @@ func TestRemoveGameManagementRole(t *testing.T) {
 			description: "削除対象以外のゲームのroleが存在しても問題なし",
 			gameID:      gameID3,
 			userID:      userID4,
-			beforeGames: []migrate.GameTable{
+			beforeGames: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID3),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
-					ID:          uuid.UUID(gameID4),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID4),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			beforeRoles: []migrate.GameManagementRoleTable{
@@ -695,7 +737,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 	type test struct {
 		description        string
 		gameID             values.GameID
-		games              []migrate.GameTable
+		games              []migrate.GameTable2
 		expectUserAndRoles []*repository.UserIDAndManagementRole
 		isErr              bool
 		err                error
@@ -729,11 +771,21 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -745,6 +797,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{
@@ -757,7 +810,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "roleがcollaboratorでも問題なし",
 			gameID:      gameID7,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test",
@@ -769,6 +822,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{
@@ -781,12 +835,13 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "roleが存在しなくても問題なし",
 			gameID:      gameID2,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID2),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID2),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{},
@@ -795,13 +850,13 @@ func TestGetGameManagersByGameID(t *testing.T) {
 			// 実際にはあり得ないが念のため確認
 			description:        "gameが存在しなくても問題なし",
 			gameID:             gameID3,
-			games:              []migrate.GameTable{},
+			games:              []migrate.GameTable2{},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{},
 		},
 		{
 			description: "roleが複数でも問題なし",
 			gameID:      gameID4,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -817,6 +872,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{
@@ -833,7 +889,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 		{
 			description: "他のgameにroleがあっても問題なし",
 			gameID:      gameID5,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -845,6 +901,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          uuid.UUID(gameID6),
@@ -857,6 +914,7 @@ func TestGetGameManagersByGameID(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectUserAndRoles: []*repository.UserIDAndManagementRole{
@@ -927,7 +985,7 @@ func TestGetGameManagementRole(t *testing.T) {
 		gameID      values.GameID
 		userID      values.TraPMemberID
 		lockType    repository.LockType
-		games       []migrate.GameTable
+		games       []migrate.GameTable2
 		role        values.GameManagementRole
 		isErr       bool
 		err         error
@@ -972,13 +1030,23 @@ func TestGetGameManagementRole(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			userID:      userID1,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
@@ -990,6 +1058,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			role: values.GameManagementRoleAdministrator,
@@ -999,7 +1068,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID2,
 			userID:      userID2,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
@@ -1011,6 +1080,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			role: values.GameManagementRoleCollaborator,
@@ -1020,12 +1090,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID3,
 			userID:      userID3,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID3),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID3),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,
@@ -1045,7 +1116,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID5,
 			userID:      userID5,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
@@ -1061,6 +1132,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			role: values.GameManagementRoleAdministrator,
@@ -1070,7 +1142,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID6,
 			userID:      userID7,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
@@ -1082,6 +1154,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,
@@ -1092,7 +1165,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID7,
 			userID:      userID9,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test",
@@ -1104,6 +1177,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          uuid.UUID(gameID8),
@@ -1116,6 +1190,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			role: values.GameManagementRoleAdministrator,
@@ -1125,12 +1200,13 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID9,
 			userID:      userID10,
 			lockType:    repository.LockTypeNone,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID9),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID9),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          uuid.UUID(gameID10),
@@ -1143,6 +1219,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeCollaborator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,
@@ -1153,7 +1230,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID11,
 			userID:      userID11,
 			lockType:    repository.LockTypeRecord,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID11),
 					Name:        "test",
@@ -1165,6 +1242,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			role: values.GameManagementRoleAdministrator,
@@ -1175,7 +1253,7 @@ func TestGetGameManagementRole(t *testing.T) {
 			gameID:      gameID12,
 			userID:      userID12,
 			lockType:    100,
-			games: []migrate.GameTable{
+			games: []migrate.GameTable2{
 				{
 					ID:          uuid.UUID(gameID12),
 					Name:        "test",
@@ -1187,6 +1265,7 @@ func TestGetGameManagementRole(t *testing.T) {
 							RoleTypeID: roleTypeMap[gameManagementRoleTypeAdministrator],
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,

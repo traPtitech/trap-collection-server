@@ -155,6 +155,16 @@ func TestCreateGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	now := time.Now()
 
 	testCases := []test{
@@ -789,16 +799,18 @@ func TestCreateGameVersionV2(t *testing.T) {
 		},
 	}
 
+	//TODO: gamesテーブルのlatest_version_updated_atが更新されているかを確かめる
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.existGame {
 				err := db.
 					Session(&gorm.Session{}).
 					Create(&migrate.GameTable2{
-						ID:          uuid.UUID(testCase.gameID),
-						Name:        "test",
-						Description: "test",
-						CreatedAt:   time.Now(),
+						ID:               uuid.UUID(testCase.gameID),
+						Name:             "test",
+						Description:      "test",
+						CreatedAt:        time.Now().Add(-time.Hour),
+						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}).Error
 				if err != nil {
 					t.Fatalf("failed to create game table: %+v\n", err)
@@ -923,6 +935,15 @@ func TestCreateGameVersionV2(t *testing.T) {
 					assert.WithinDuration(t, expectFile.CreatedAt, actualFile.CreatedAt, 2*time.Second)
 				}
 			}
+
+			if testCase.existGame {
+				var game migrate.GameTable2
+				err = db.Model(&migrate.GameTable2{ID: uuid.UUID(testCase.gameID)}).Find(&game).Error
+				if err != nil {
+					t.Fatalf("failed to get game: %+v\n", err)
+				}
+				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second)
+			}
 		})
 	}
 }
@@ -1044,6 +1065,16 @@ func TestGetGameVersionsV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	urlLink, err := url.Parse("https://example.com")
 	if err != nil {
 		t.Fatalf("failed to parse url: %v", err)
@@ -1085,6 +1116,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 1,
@@ -1164,6 +1196,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 2,
@@ -1197,10 +1230,11 @@ func TestGetGameVersionsV2(t *testing.T) {
 			gameID:      gameID5,
 			games: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID5),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID5),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum:             0,
@@ -1239,6 +1273,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          uuid.UUID(gameID7),
@@ -1269,6 +1304,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 1,
@@ -1328,6 +1364,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 1,
@@ -1395,6 +1432,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 1,
@@ -1468,6 +1506,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 2,
@@ -1542,6 +1581,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 2,
@@ -1615,6 +1655,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,
@@ -1652,6 +1693,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectNum: 1,
@@ -1823,6 +1865,16 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	urlLink, err := url.Parse("https://example.com")
 	if err != nil {
 		t.Fatalf("failed to parse url: %v", err)
@@ -1864,6 +1916,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -1941,6 +1994,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -1960,10 +2014,11 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 			gameID:      gameID4,
 			games: []migrate.GameTable2{
 				{
-					ID:          uuid.UUID(gameID4),
-					Name:        "test",
-					Description: "test",
-					CreatedAt:   time.Now(),
+					ID:               uuid.UUID(gameID4),
+					Name:             "test",
+					Description:      "test",
+					CreatedAt:        time.Now(),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			isErr: true,
@@ -2002,6 +2057,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          uuid.UUID(gameID6),
@@ -2032,6 +2088,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -2088,6 +2145,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -2152,6 +2210,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -2199,6 +2258,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							},
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectGameVersionInfo: &repository.GameVersionInfo{
@@ -2308,6 +2368,16 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 	gameVersionID9_1, assets9_1 := generateAssetsForGameVersion(t, db, 0, nil)
 	gameVersionID9_2, _ := generateAssetsForGameVersion(t, db, 0, nil)
 
+	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Find(&gameVisibilityPublic).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+
 	testCases := []test{
 		{
 			description:    "問題ないのでエラーなし",
@@ -2333,6 +2403,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets1.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2374,6 +2445,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets2.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2414,6 +2486,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets3_1.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 				{
 					ID:          assets3_2.gameInfo.id,
@@ -2434,6 +2507,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets3_2.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2488,6 +2562,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameFiles:   assets4.gameFiles,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2531,6 +2606,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameFiles:   assets5.gameFiles,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2573,6 +2649,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets6.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2626,6 +2703,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets7_2.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{
@@ -2686,6 +2764,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 							GameVideo:   assets9_1.gameVideo,
 						},
 					},
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{

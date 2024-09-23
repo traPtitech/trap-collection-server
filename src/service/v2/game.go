@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"slices"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -36,16 +38,17 @@ func NewGame(
 	}
 }
 
-func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, owners []values.TraPMemberName, maintainers []values.TraPMemberName) (*service.GameInfoV2, error) {
+func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name values.GameName, description values.GameDescription, visibility values.GameVisibility, owners []values.TraPMemberName, maintainers []values.TraPMemberName, gameGenreNames []values.GameGenreName) (*service.GameInfoV2, error) {
 	user, err := g.user.getMe(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	game := domain.NewGame(values.NewGameID(), name, description, time.Now())
+	game := domain.NewGame(values.NewGameID(), name, description, visibility, time.Now())
 
 	ownersInfo := make([]*service.UserInfo, 0, len(owners))
 	maintainersInfo := make([]*service.UserInfo, 0, len(maintainers))
+	gameGenres := make([]*domain.GameGenre, 0, len(gameGenreNames))
 
 	err = g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		err := g.gameRepository.SaveGame(ctx, game)
@@ -133,6 +136,68 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		if err != nil {
 			return fmt.Errorf("failed to add management role 'maintainer': %w", err)
 		}
+
+		if len(gameGenreNames) == 0 {
+			return nil
+		}
+
+		// 重複したらエラー
+		slices.Sort[[]values.GameGenreName](gameGenreNames)
+		uniqueGameGenreNames := slices.Compact[[]values.GameGenreName, values.GameGenreName](gameGenreNames)
+		if len(uniqueGameGenreNames) != len(gameGenreNames) {
+			log.Println("duplicate game genre")
+			return service.ErrDuplicateGameGenre
+		}
+
+		// 渡されたジャンルのうち既に存在するジャンル
+		existGenres, err := g.gameGenreRepository.GetGameGenresWithNames(ctx, uniqueGameGenreNames)
+		if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
+			return fmt.Errorf("failed to get game genres with names: %w", err)
+		}
+		existGenresMap := make(map[values.GameGenreName]domain.GameGenre, len(existGenres))
+		for i := range existGenres {
+			existGenresMap[existGenres[i].GetName()] = *existGenres[i]
+		}
+
+		// 存在しないジャンル
+		newGameGenres := make([]*domain.GameGenre, 0, len(uniqueGameGenreNames)-len(existGenres))
+
+		for _, gameGenreName := range uniqueGameGenreNames {
+			if gameGenre, ok := existGenresMap[gameGenreName]; ok {
+				gameGenres = append(gameGenres, &gameGenre)
+			} else {
+				newGameGenre := domain.NewGameGenre(values.NewGameGenreID(), values.NewGameGenreName(string(gameGenreName)), time.Now())
+				gameGenres = append(gameGenres, newGameGenre)
+				newGameGenres = append(newGameGenres, newGameGenre)
+			}
+		}
+
+		if len(newGameGenres) > 0 {
+			err = g.gameGenreRepository.SaveGameGenres(ctx, newGameGenres)
+			if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+				// 上で既に存在するジャンルは除いているはずなので、このエラーは無いはず。
+				return service.ErrDuplicateGameGenre
+			}
+			if err != nil {
+				return fmt.Errorf("failed to save game genre: %w", err)
+			}
+		}
+
+		gameGenreIDs := make([]values.GameGenreID, 0, len(gameGenres))
+		for i := range gameGenres {
+			gameGenreIDs = append(gameGenreIDs, gameGenres[i].GetID())
+		}
+		err = g.gameGenreRepository.RegisterGenresToGame(ctx, game.GetID(), gameGenreIDs)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGame
+		}
+		if errors.Is(err, repository.ErrIncludeInvalidArgs) {
+			return service.ErrNoGameGenre
+		}
+		if err != nil {
+			return fmt.Errorf("failed to register genre to game: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -143,6 +208,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 		Game:        game,
 		Owners:      ownersInfo,
 		Maintainers: maintainersInfo,
+		Genres:      gameGenres,
 	}
 	return gameInfo, nil
 }
@@ -156,46 +222,49 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	//管理者たちを取得
-	administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get game management role: %w", err)
-	}
+	var ownersInfo, maintainersInfo []*service.UserInfo
+	if session != nil {
+		// 部員としてログインしているので、管理者たちを取得
+		administrators, err := g.gameManagementRole.GetGameManagersByGameID(ctx, gameID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get game management role: %w", err)
+		}
 
-	activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
-	if err != nil {
-		return nil, fmt.Errorf("failed to get active users: %w", err)
-	}
+		activeUsers, err := g.user.getActiveUsers(ctx, session) //ユーザー名=>uuidの変換のために全アクティブユーザーを取得
+		if err != nil {
+			return nil, fmt.Errorf("failed to get active users: %w", err)
+		}
 
-	activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
-	for _, activeUser := range activeUsers {
-		activeUsersMap[activeUser.GetID()] = activeUser.GetName()
-	}
+		activeUsersMap := make(map[values.TraPMemberID]values.TraPMemberName, len(activeUsers))
+		for _, activeUser := range activeUsers {
+			activeUsersMap[activeUser.GetID()] = activeUser.GetName()
+		}
 
-	ownersInfo := make([]*service.UserInfo, 0, len(administrators))
-	maintainersInfo := make([]*service.UserInfo, 0, len(administrators))
-	for _, administrator := range administrators {
-		switch administrator.Role {
-		case values.GameManagementRoleAdministrator:
-			if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
-				ownerInfo := service.NewUserInfo(
-					administrator.UserID,
-					ownerName,
-					values.TrapMemberStatusActive,
-				)
-				ownersInfo = append(ownersInfo, ownerInfo)
+		ownersInfo = make([]*service.UserInfo, 0, len(administrators))
+		maintainersInfo = make([]*service.UserInfo, 0, len(administrators))
+		for _, administrator := range administrators {
+			switch administrator.Role {
+			case values.GameManagementRoleAdministrator:
+				if ownerName, ok := activeUsersMap[administrator.UserID]; ok {
+					ownerInfo := service.NewUserInfo(
+						administrator.UserID,
+						ownerName,
+						values.TrapMemberStatusActive,
+					)
+					ownersInfo = append(ownersInfo, ownerInfo)
+				}
+			case values.GameManagementRoleCollaborator:
+				if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
+					maintainerInfo := service.NewUserInfo(
+						administrator.UserID,
+						maintainerName,
+						values.TrapMemberStatusActive,
+					)
+					maintainersInfo = append(maintainersInfo, maintainerInfo)
+				}
+			default:
+				fmt.Println("invalid administrator role")
 			}
-		case values.GameManagementRoleCollaborator:
-			if maintainerName, ok := activeUsersMap[administrator.UserID]; ok {
-				maintainerInfo := service.NewUserInfo(
-					administrator.UserID,
-					maintainerName,
-					values.TrapMemberStatusActive,
-				)
-				maintainersInfo = append(maintainersInfo, maintainerInfo)
-			}
-		default:
-			fmt.Println("invalid administrator role")
 		}
 	}
 
@@ -214,21 +283,43 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 	return gameInfo, nil
 }
 
-func (g *Game) GetGames(ctx context.Context, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetGames(
+	ctx context.Context, limit int, offset int, sort service.GamesSortType,
+	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
-	games, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset)
+
+	var sortType repository.GamesSortType
+	switch sort {
+	case service.GamesSortTypeCreatedAt:
+		sortType = repository.GamesSortTypeCreatedAt
+	case service.GamesSortTypeLatestVersion:
+		sortType = repository.GamesSortTypeLatestVersion
+	default:
+		return 0, nil, service.ErrInvalidGamesSortType
+	}
+
+	gamesWithGenres, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset, sortType, visibilities, nil, gameGenreIDs, gameName)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get games: %w", err)
 	}
-	if len(games) == 0 {
-		return 0, []*domain.Game{}, nil
+	if len(gamesWithGenres) == 0 {
+		return 0, []*domain.GameWithGenres{}, nil
 	}
-	return gameNumber, games, nil
+
+	return gameNumber, gamesWithGenres, nil
 }
 
-func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limit int, offset int) (int, []*domain.Game, error) {
+func (g *Game) GetMyGames(
+	ctx context.Context, session *domain.OIDCSession, limit int, offset int, sort service.GamesSortType,
+	visibilities []values.GameVisibility, gameGenreIDs []values.GameGenreID, gameName string) (int, []*domain.GameWithGenres, error) {
+	if limit < 0 {
+		return 0, nil, service.ErrInvalidLimit
+	}
 	if limit == 0 && offset != 0 {
 		return 0, nil, service.ErrOffsetWithoutLimit
 	}
@@ -236,17 +327,28 @@ func (g *Game) GetMyGames(ctx context.Context, session *domain.OIDCSession, limi
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get user: %w", err)
 	}
+	userID := user.GetID()
 
-	myGames, gameNumber, err := g.gameRepository.GetGamesByUser(ctx, user.GetID(), limit, offset)
+	var sortType repository.GamesSortType
+	switch sort {
+	case service.GamesSortTypeCreatedAt:
+		sortType = repository.GamesSortTypeCreatedAt
+	case service.GamesSortTypeLatestVersion:
+		sortType = repository.GamesSortTypeLatestVersion
+	default:
+		return 0, nil, service.ErrInvalidGamesSortType
+	}
+
+	myGamesWithGenres, gameNumber, err := g.gameRepository.GetGames(ctx, limit, offset, sortType, visibilities, &userID, gameGenreIDs, gameName)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to get game IDs: %w", err)
 	}
 
-	if len(myGames) == 0 {
-		return 0, []*domain.Game{}, nil
+	if len(myGamesWithGenres) == 0 {
+		return 0, []*domain.GameWithGenres{}, nil
 	}
 
-	return gameNumber, myGames, nil
+	return gameNumber, myGamesWithGenres, nil
 }
 
 func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
