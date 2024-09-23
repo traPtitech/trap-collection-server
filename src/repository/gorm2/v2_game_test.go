@@ -1560,3 +1560,54 @@ func TestGetGamesByIDsV2(t *testing.T) {
 		})
 	}
 }
+
+func Test_getVisibility(t *testing.T) {
+	ctx := context.Background()
+
+	gameRepository := NewGameV2(testDB)
+
+	type test struct {
+		visibility values.GameVisibility
+		want       migrate.GameVisibilityTypeTable
+		isErr      bool
+	}
+
+	testCases := map[string]test{
+		"public": {
+			visibility: values.GameVisibilityTypePublic,
+			want: migrate.GameVisibilityTypeTable{
+				Name: migrate.GameVisibilityTypePublic,
+			},
+		},
+		"limited": {
+			visibility: values.GameVisibilityTypeLimited,
+			want: migrate.GameVisibilityTypeTable{
+				Name: migrate.GameVisibilityTypeLimited,
+			},
+		},
+		"private": {
+			visibility: values.GameVisibilityTypePrivate,
+			want: migrate.GameVisibilityTypeTable{
+				Name: migrate.GameVisibilityTypePrivate,
+			},
+		},
+		"invalid": {
+			visibility: values.GameVisibility(-1),
+			want:       migrate.GameVisibilityTypeTable{},
+			isErr:      true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			got, err := gameRepository.getVisibility(ctx, testCase.visibility)
+
+			if testCase.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, testCase.want.Name, got.Name)
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
