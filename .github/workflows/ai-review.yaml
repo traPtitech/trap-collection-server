@@ -34,3 +34,4 @@ jobs:
           PR_DESCRIPTION.ADD_ORIGINAL_USER_DESCRIPTION: "true"
           PR_DESCRIPTION.EXTRA_INSTRUCTIONS: "Please use Japanese in descriptions."
           PR_CODE_SUGGESTIONS.EXTRA_INSTRUCTIONS: "Please use Japanese in descriptions."
+          IGNORE.GLOB: "['*.gen.go']"
