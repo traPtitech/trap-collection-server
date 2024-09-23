@@ -131,16 +131,10 @@ func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *opena
 		return nil
 	}
 
-	strGameID, ok := ai.RequestValidationInput.PathParams["gameID"]
-	if !ok {
-		strGameID = c.Param("gameID")
-	}
-
-	uuidGameID, err := uuid.Parse(strGameID)
+	gameID, err := checker.getGameID(ai, c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+		return err
 	}
-	gameID := values.NewGameIDFromUUID(uuidGameID)
 
 	gameInfo, err := checker.gameService.GetGame(ctx, nil, gameID)
 	if errors.Is(err, service.ErrNoGame) {
@@ -176,16 +170,10 @@ func (checker *Checker) GameFileVisibilityChecker(ctx context.Context, ai *opena
 		return nil
 	}
 
-	strGameID, ok := ai.RequestValidationInput.PathParams["gameID"]
-	if !ok {
-		strGameID = c.Param("gameID")
-	}
-
-	uuidGameID, err := uuid.Parse(strGameID)
+	gameID, err := checker.getGameID(ai, c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+		return err
 	}
-	gameID := values.NewGameIDFromUUID(uuidGameID)
 
 	gameInfo, err := checker.gameService.GetGame(ctx, nil, gameID)
 	if errors.Is(err, service.ErrNoGame) {
@@ -201,6 +189,21 @@ func (checker *Checker) GameFileVisibilityChecker(ctx context.Context, ai *opena
 	}
 
 	return nil
+}
+
+func (*Checker) getGameID(ai *openapi3filter.AuthenticationInput, c echo.Context) (values.GameID, error) {
+	strGameID, ok := ai.RequestValidationInput.PathParams["gameID"]
+	if !ok {
+		strGameID = c.Param("gameID")
+	}
+
+	uuidGameID, err := uuid.Parse(strGameID)
+	if err != nil {
+		return values.GameID{}, echo.NewHTTPError(http.StatusBadRequest, "invalid gameID")
+	}
+	gameID := values.NewGameIDFromUUID(uuidGameID)
+
+	return gameID, nil
 }
 
 func (checker *Checker) checkTrapMemberAuth(c echo.Context) (bool, string, error) {
