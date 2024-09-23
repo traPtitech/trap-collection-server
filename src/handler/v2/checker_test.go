@@ -358,60 +358,98 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 	)
 
 	type test struct {
-		gameID                   string
-		AuthenticateErr          error
-		executeGetGameVisibility bool
-		gameVisibility           values.GameVisibility
-		GetGameVisibilityErr     error
-		isErr                    bool
-		expectedErr              error
-		statusCode               int
+		gameID              string
+		noToken             bool
+		executeAuthenticate bool
+		AuthenticateErr     error
+		executeGetGame      bool
+		gameVisibility      values.GameVisibility
+		GetGameErr          error
+		isErr               bool
+		expectedErr         error
+		statusCode          int
 	}
 
 	testCases := map[string]test{
 		"部員なので問題なし": {
-			gameID: uuid.NewString(),
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
 		},
 		"Authenticateがエラーなのでエラー": {
-			gameID:          uuid.NewString(),
-			AuthenticateErr: errors.New("error"),
-			isErr:           true,
-			statusCode:      http.StatusInternalServerError,
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     errors.New("error"),
+			isErr:               true,
+			statusCode:          http.StatusInternalServerError,
 		},
 		"publicなのでエラー無し": {
-			gameID:                   uuid.NewString(),
-			AuthenticateErr:          service.ErrOIDCSessionExpired,
-			executeGetGameVisibility: true,
-			gameVisibility:           values.GameVisibilityTypePublic,
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			executeGetGame:      true,
+			gameVisibility:      values.GameVisibilityTypePublic,
 		},
 		"limitedなのでエラー無し": {
-			gameID:                   uuid.NewString(),
-			AuthenticateErr:          service.ErrOIDCSessionExpired,
-			executeGetGameVisibility: true,
-			gameVisibility:           values.GameVisibilityTypeLimited,
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			executeGetGame:      true,
+			gameVisibility:      values.GameVisibilityTypeLimited,
 		},
 		"privateなので403": {
-			gameID:                   uuid.NewString(),
-			AuthenticateErr:          service.ErrOIDCSessionExpired,
-			executeGetGameVisibility: true,
-			gameVisibility:           values.GameVisibilityTypePrivate,
-			isErr:                    true,
-			statusCode:               http.StatusUnauthorized,
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			executeGetGame:      true,
+			gameVisibility:      values.GameVisibilityTypePrivate,
+			isErr:               true,
+			statusCode:          http.StatusUnauthorized,
+		},
+		"トークンが無いがpublicなので問題なし": {
+			gameID:         uuid.NewString(),
+			noToken:        true,
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypePublic,
+		},
+		"トークンが無いがlimitedなので問題なし": {
+			gameID:         uuid.NewString(),
+			noToken:        true,
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypeLimited,
+		},
+		"トークンが無いがprivateなので403": {
+			gameID:         uuid.NewString(),
+			noToken:        true,
+			executeGetGame: true,
+			gameVisibility: values.GameVisibilityTypePrivate,
+			isErr:          true,
+			statusCode:     http.StatusUnauthorized,
 		},
 		"ゲームが存在しないのでエラー": {
-			gameID:                   uuid.NewString(),
-			AuthenticateErr:          service.ErrOIDCSessionExpired,
-			executeGetGameVisibility: true,
-			gameVisibility:           values.GameVisibilityTypePrivate,
-			GetGameVisibilityErr:     service.ErrNoGame,
-			isErr:                    true,
-			statusCode:               http.StatusNotFound,
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			executeGetGame:      true,
+			gameVisibility:      values.GameVisibilityTypePrivate,
+			GetGameErr:          service.ErrNoGame,
+			isErr:               true,
+			statusCode:          http.StatusNotFound,
 		},
 		"gameIDがuuidでないのでエラー": {
-			gameID:          "invalid",
-			AuthenticateErr: service.ErrOIDCSessionExpired,
-			isErr:           true,
-			statusCode:      http.StatusBadRequest,
+			executeAuthenticate: true,
+			gameID:              "invalid",
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			isErr:               true,
+			statusCode:          http.StatusBadRequest,
+		},
+		"GetGameがエラーなのでエラー": {
+			gameID:              uuid.NewString(),
+			executeAuthenticate: true,
+			AuthenticateErr:     service.ErrOIDCSessionExpired,
+			executeGetGame:      true,
+			GetGameErr:          errors.New("error"),
+			isErr:               true,
+			statusCode:          http.StatusInternalServerError,
 		},
 	}
 
@@ -428,8 +466,10 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			sess.Values[accessTokenSessionKey] = "token"
-			sess.Values[expiresAtSessionKey] = time.Now().Add(time.Hour)
+			if !testCase.noToken {
+				sess.Values[accessTokenSessionKey] = "token"
+				sess.Values[expiresAtSessionKey] = time.Now().Add(time.Hour)
+			}
 
 			err = sess.Save(req, rec)
 			if err != nil {
@@ -438,18 +478,20 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 
 			setCookieHeader(c)
 
-			mockOIDCService.
-				EXPECT().
-				Authenticate(gomock.Any(), gomock.Any()).
-				Return(testCase.AuthenticateErr)
+			if testCase.executeAuthenticate {
+				mockOIDCService.
+					EXPECT().
+					Authenticate(gomock.Any(), gomock.Any()).
+					Return(testCase.AuthenticateErr)
+			}
 
-			if testCase.executeGetGameVisibility {
+			if testCase.executeGetGame {
 				mockGameService.
 					EXPECT().
 					GetGame(gomock.Any(), gomock.Nil(), gomock.Any()).
 					Return(&service.GameInfoV2{
 						Game: domain.NewGame(values.NewGameIDFromUUID(uuid.MustParse(testCase.gameID)), "name", "description", testCase.gameVisibility, time.Now()),
-					}, testCase.GetGameVisibilityErr)
+					}, testCase.GetGameErr)
 			}
 
 			ctx := setEchoContext(context.Background(), c)
