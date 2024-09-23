@@ -172,15 +172,29 @@ func TestUpdateGameV2(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityTypes []migrate.GameVisibilityTypeTable
 	err = db.
-		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
-		Find(&gameVisibilityPublic).Error
+		Find(&gameVisibilityTypes).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
 	}
-	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
+	var (
+		gameVisibilityTypeIDPublic  int
+		gameVisibilityTypeIDLimited int
+		// gameVisibilityTypeIDPrivate int
+	)
+	for i := range gameVisibilityTypes {
+		switch gameVisibilityTypes[i].Name {
+		case migrate.GameVisibilityTypePublic:
+			gameVisibilityTypeIDPublic = gameVisibilityTypes[i].ID
+		case migrate.GameVisibilityTypeLimited:
+			gameVisibilityTypeIDLimited = gameVisibilityTypes[i].ID
+		case migrate.GameVisibilityTypePrivate:
+			_ = gameVisibilityTypes[i].ID
+		default:
+			t.Fatalf("unknown game visibility type: %s", gameVisibilityTypes[i].Name)
+		}
+	}
 
 	testCases := []test{
 		{
@@ -207,7 +221,7 @@ func TestUpdateGameV2(t *testing.T) {
 					Name:             "test2",
 					Description:      "test2",
 					CreatedAt:        now,
-					VisibilityTypeID: gameVisibilityTypeIDPublic,
+					VisibilityTypeID: gameVisibilityTypeIDLimited,
 				},
 			},
 		},
@@ -242,7 +256,7 @@ func TestUpdateGameV2(t *testing.T) {
 					Name:             "test3",
 					Description:      "test3",
 					CreatedAt:        now,
-					VisibilityTypeID: gameVisibilityTypeIDPublic,
+					VisibilityTypeID: gameVisibilityTypeIDLimited,
 				},
 				{
 					ID:               uuid.UUID(gameID2),
@@ -324,6 +338,7 @@ func TestUpdateGameV2(t *testing.T) {
 				assert.Equal(t, game.ID, games[i].ID)
 				assert.Equal(t, game.Name, games[i].Name)
 				assert.Equal(t, game.Description, games[i].Description)
+				assert.Equal(t, game.VisibilityTypeID, games[i].VisibilityTypeID)
 				assert.WithinDuration(t, game.CreatedAt, games[i].CreatedAt, time.Second)
 			}
 		})
