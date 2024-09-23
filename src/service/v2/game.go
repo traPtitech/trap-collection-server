@@ -351,8 +351,8 @@ func (g *Game) GetMyGames(
 	return gameNumber, myGamesWithGenres, nil
 }
 
-func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription) (*domain.Game, error) { //V1と変わらず
-	var game *domain.Game
+func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription, visibility *values.GameVisibility) (*domain.Game, error) {
+	var game, newGame *domain.Game
 	err := g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		var err error
 		game, err = g.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
@@ -364,14 +364,21 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 		}
 
 		// 変更がなければ何もしない
-		if game.GetName() == name && game.GetDescription() == description {
+		if game.GetName() == name &&
+			game.GetDescription() == description &&
+			(visibility == nil || game.GetVisibility() == *visibility) { //visibilityがnilの場合はvisibilityの変更がないとみなす
+			newGame = game
 			return nil
 		}
 
-		game.SetName(name)
-		game.SetDescription(description)
+		newVisibility := game.GetVisibility()
+		if visibility != nil {
+			newVisibility = *visibility
+		}
 
-		err = g.gameRepository.UpdateGame(ctx, game)
+		newGame = domain.NewGame(game.GetID(), name, description, newVisibility, game.GetCreatedAt())
+
+		err = g.gameRepository.UpdateGame(ctx, newGame)
 		if err != nil {
 			return fmt.Errorf("failed to save game: %w", err)
 		}
@@ -382,7 +389,7 @@ func (g *Game) UpdateGame(ctx context.Context, gameID values.GameID, name values
 		return nil, fmt.Errorf("failed in transaction: %w", err)
 	}
 
-	return game, nil
+	return newGame, nil
 }
 
 func (g *Game) DeleteGame(ctx context.Context, gameID values.GameID) error { //V1と変わらない
