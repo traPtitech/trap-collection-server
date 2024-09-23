@@ -114,7 +114,7 @@ func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, _ *openapi3fi
 
 // 部員もしくはゲームがprivateでないときは通す
 func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := echoMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	if c == nil {
 		log.Println("error: failed to get echo context")
 		return errors.New("echo context is not set")
@@ -159,7 +159,7 @@ func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *opena
 }
 
 func (checker *Checker) GameFileVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
-	c := echoMiddleware.GetEchoContext(ctx)
+	c := echomiddleware.GetEchoContext(ctx)
 	if c == nil {
 		log.Println("error: failed to get echo context")
 		return errors.New("echo context is not set")
