@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -112,6 +113,11 @@ func (checker *Checker) TrapMemberAuthChecker(ctx context.Context, _ *openapi3fi
 	return nil
 }
 
+var (
+	gameInfoAllowedVisibilities []values.GameVisibility = []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited}
+	gameFileAllowedVisibilities []values.GameVisibility = []values.GameVisibility{values.GameVisibilityTypePublic}
+)
+
 // 部員もしくはゲームがprivateでないときは通す
 func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *openapi3filter.AuthenticationInput) error {
 	c := echomiddleware.GetEchoContext(ctx)
@@ -145,7 +151,7 @@ func (checker *Checker) GameInfoVisibilityChecker(ctx context.Context, ai *opena
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
 	}
 
-	if gameInfo.Game.GetVisibility() == values.GameVisibilityTypePrivate {
+	if !slices.Contains(gameInfoAllowedVisibilities, gameInfo.Game.GetVisibility()) {
 		return echo.NewHTTPError(http.StatusUnauthorized, "private game")
 	}
 
@@ -184,7 +190,7 @@ func (checker *Checker) GameFileVisibilityChecker(ctx context.Context, ai *opena
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
 	}
 
-	if gameInfo.Game.GetVisibility() == values.GameVisibilityTypePrivate || gameInfo.Game.GetVisibility() == values.GameVisibilityTypeLimited {
+	if !slices.Contains(gameFileAllowedVisibilities, gameInfo.Game.GetVisibility()) {
 		return echo.NewHTTPError(http.StatusUnauthorized, "private/limited game")
 	}
 
