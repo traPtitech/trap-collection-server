@@ -3,11 +3,13 @@ package gorm2
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -948,6 +950,141 @@ func TestGetGameGenres(t *testing.T) {
 			}
 		})
 
+	}
+}
+
+func TestUpdateGameGenre(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenreID1 := values.NewGameGenreID()
+	gameGenreID2 := values.NewGameGenreID()
+
+	now := time.Now()
+
+	testCases := map[string]struct {
+		currentGenres []*migrate.GameGenreTable
+		gameGenre     *domain.GameGenre
+		isErr         bool
+		expectedErr   error
+	}{
+		"特に問題ないのでエラー無し": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
+		},
+		"他のジャンルがあってもエラー無し": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "test3",
+					CreatedAt: now,
+				},
+			},
+			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
+		},
+		"ジャンルが存在しないのでErrNoRecordUpdated": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID2, "test2", now),
+			isErr:       true,
+			expectedErr: repository.ErrNoRecordUpdated,
+		},
+		"ジャンル名が存在するのでErrDuplicatedUniqueKey": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "test2",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID1, "test2", now),
+			isErr:       true,
+			expectedErr: repository.ErrDuplicatedUniqueKey,
+		},
+		"変更が無いのでErrNoRecordUpdated": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID1, "test", now),
+			isErr:       true,
+			expectedErr: repository.ErrNoRecordUpdated,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require.NoError(t, db.Create(testCase.currentGenres).Error)
+			t.Cleanup(func() {
+				require.NoError(t, db.
+					Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+			})
+
+			err := gameGenreRepository.UpdateGameGenre(ctx, testCase.gameGenre)
+
+			if testCase.isErr {
+				if testCase.expectedErr != nil {
+					assert.ErrorIs(t, err, testCase.expectedErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			{
+				var afterGenres []*migrate.GameGenreTable
+				err := db.
+					Model(&migrate.GameGenreTable{}).Find(&afterGenres).Error
+				require.NoError(t, err)
+
+				genresMap := make(map[uuid.UUID]*migrate.GameGenreTable, len(testCase.currentGenres))
+				for _, genre := range testCase.currentGenres {
+					genresMap[genre.ID] = genre
+				}
+
+				for _, afterGenre := range afterGenres {
+					if afterGenre.ID == uuid.UUID(testCase.gameGenre.GetID()) && !testCase.isErr {
+						assert.Equal(t, string(testCase.gameGenre.GetName()), afterGenre.Name)
+					} else {
+						slices.IndexFunc(testCase.currentGenres, func(g *migrate.GameGenreTable) bool {
+							return g.ID == afterGenre.ID
+						})
+						assert.Equal(t, string(afterGenre.Name), afterGenre.Name)
+					}
+				}
+			}
+		})
 	}
 }
 

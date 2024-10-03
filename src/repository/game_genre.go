@@ -34,7 +34,7 @@ type GameGenre interface {
 	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error
 	// UpdateGameGenre
 	// ゲームジャンルの情報を更新する。
-	// ゲームジャンルが存在しない場合は、ErrNoRecordUpdated
+	// ゲームジャンルが存在しない場合、または変更が起きなかった場合は、ErrNoRecordUpdatedを返す。
 	// ゲームジャンルの名前が重複する場合は、ErrDuplicatedUniqueKeyを返す。
 	UpdateGameGenre(ctx context.Context, gameGenre *domain.GameGenre) error
 	// GetGameGenre

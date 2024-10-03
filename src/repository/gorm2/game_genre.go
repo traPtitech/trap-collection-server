@@ -228,3 +228,35 @@ func (gameGenre *GameGenre) GetGameGenres(ctx context.Context, visibilities []va
 
 	return result, nil
 }
+
+func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, genre *domain.GameGenre) error {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	newGenre := migrate.GameGenreTable{
+		Name: string(genre.GetName()),
+	}
+
+	result := db.Model(&migrate.GameGenreTable{
+		ID: uuid.UUID(genre.GetID()),
+	}).Updates(&newGenre)
+	var mysqlErr *mysql.MySQLError
+	if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+		return repository.ErrDuplicatedUniqueKey
+	}
+	if result.Error != nil {
+		return fmt.Errorf("failed to update game genre: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordUpdated
+	}
+
+	return nil
+}
+
+func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*domain.GameGenre, error) {
+	return nil, nil
+}
