@@ -45,6 +45,7 @@ var (
 	ErrInvalidLimit                      = errors.New("invalid limit")
 	ErrNoAsset                           = errors.New("no asset")
 	ErrNoGameGenre                       = errors.New("no game genre")
+	ErrNoGameGenreUpdated                = errors.New("no game genre updated")
 	ErrDuplicateGameGenre                = errors.New("duplicate game genre")
 	ErrDuplicateGameGenreName            = errors.New("duplicate game genre name")
 	ErrInvalidGamesSortType              = errors.New("invalid games sort type")

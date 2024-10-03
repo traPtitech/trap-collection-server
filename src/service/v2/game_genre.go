@@ -131,10 +131,14 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID val
 			return fmt.Errorf("failed to get game genre: %w", err)
 		}
 
+		if genre.GetName() == gameGenreName {
+			return service.ErrNoGameGenreUpdated
+		}
+
 		newGameGenre := domain.NewGameGenre(genre.GetID(), gameGenreName, genre.GetCreatedAt())
 		err = gameGenre.gameGenreRepository.UpdateGameGenre(ctx, newGameGenre)
 		if errors.Is(err, repository.ErrNoRecordUpdated) { // 起きないはず
-			return service.ErrNoGameGenre
+			return service.ErrNoGameGenreUpdated
 		}
 		if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
 			return service.ErrDuplicateGameGenreName

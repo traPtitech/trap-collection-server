@@ -365,13 +365,11 @@ func TestUpdateGameGenre(t *testing.T) {
 			GetGameGenreErr:  errors.New("test"),
 			isError:          true,
 		},
-		"UpdateGameGenreがErrRecordNotFoundなのでErrNoGameGenre": {
-			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
-			newGameGenreName:       "2D",
-			executeUpdateGameGenre: true,
-			UpdateGameGenreErr:     repository.ErrRecordNotFound,
-			isError:                true,
-			wantErr:                service.ErrNoGameGenre,
+		"値に変更が無いのでErrNoGameGenreUpdated": {
+			gameGenre:        domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName: values.GameGenreName("3D"),
+			isError:          true,
+			wantErr:          service.ErrNoGameGenreUpdated,
 		},
 		"UpdateGameGenreがErrDuplicatedUniqueKeyなのでErrDuplicateGameGenre": {
 			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
@@ -380,6 +378,14 @@ func TestUpdateGameGenre(t *testing.T) {
 			UpdateGameGenreErr:     repository.ErrDuplicatedUniqueKey,
 			isError:                true,
 			wantErr:                service.ErrDuplicateGameGenreName,
+		},
+		"UpdateGameGenreがErrNoRecordUpdatedなのでErrNoGameGenreUpdated": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D", // 本来はこの値が異なるからErrNoRecordUpdatedにはならない
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     repository.ErrNoRecordUpdated,
+			isError:                true,
+			wantErr:                service.ErrNoGameGenreUpdated,
 		},
 		"UpdateGameGenreがエラーなのでエラー": {
 			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
