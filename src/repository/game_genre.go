@@ -32,6 +32,15 @@ type GameGenre interface {
 	// ゲームジャンルが存在しない場合は、ErrIncludeInvalidArgsを返す。
 	// ゲームジャンルを追加するのではなく、置き換える。
 	RegisterGenresToGame(ctx context.Context, gameID values.GameID, gameGenres []values.GameGenreID) error
+	// UpdateGameGenre
+	// ゲームジャンルの情報を更新する。
+	// ゲームジャンルが存在しない場合は、ErrRecordNotFoundを返す。
+	// ゲームジャンルの名前が重複する場合は、ErrDuplicatedUniqueKeyを返す。
+	UpdateGameGenre(ctx context.Context, gameGenreID values.GameGenreID, gameGenre *domain.GameGenre) error
+	// GetGameGenre
+	// ゲームジャンルのIDからゲームジャンルを取得する。
+	// ゲームジャンルが存在しない場合は、ErrRecordNotFoundを返す。
+	GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*domain.GameGenre, error)
 }
 
 type GameGenreInfo struct {

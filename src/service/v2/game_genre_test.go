@@ -324,3 +324,97 @@ func TestUpdateGameGenres(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateGameGenre(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
+	mockDB := mockRepository.NewMockDB(ctrl)
+
+	gameGenreService := NewGameGenre(mockDB, mockGameGenreRepository)
+
+	testCases := map[string]struct {
+		gameGenre              *domain.GameGenre
+		newGameGenreName       values.GameGenreName
+		GetGameGenreErr        error
+		executeUpdateGameGenre bool
+		UpdateGameGenreErr     error
+		isError                bool
+		wantErr                error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+		},
+		"GetGameGenreがErrRecordNotFoundなのでErrNoGameGenre": {
+			gameGenre:        domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName: "2D",
+			GetGameGenreErr:  repository.ErrRecordNotFound,
+			isError:          true,
+			wantErr:          service.ErrNoGameGenre,
+		},
+		"GetGameGenreがエラーなのでエラー": {
+			gameGenre:        domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName: "2D",
+			GetGameGenreErr:  errors.New("test"),
+			isError:          true,
+		},
+		"UpdateGameGenreがErrRecordNotFoundなのでErrNoGameGenre": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     repository.ErrRecordNotFound,
+			isError:                true,
+			wantErr:                service.ErrNoGameGenre,
+		},
+		"UpdateGameGenreがErrDuplicatedUniqueKeyなのでErrDuplicateGameGenre": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     repository.ErrDuplicatedUniqueKey,
+			isError:                true,
+			wantErr:                service.ErrDuplicateGameGenreName,
+		},
+		"UpdateGameGenreがエラーなのでエラー": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     errors.New("test"),
+			isError:                true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockGameGenreRepository.
+				EXPECT().
+				GetGameGenre(gomock.Any(), testCase.gameGenre.GetID()).
+				Return(testCase.gameGenre, testCase.GetGameGenreErr)
+
+			if testCase.executeUpdateGameGenre {
+				mockGameGenreRepository.
+					EXPECT().
+					UpdateGameGenre(gomock.Any(), testCase.gameGenre.GetID(), domain.NewGameGenre(testCase.gameGenre.GetID(), testCase.newGameGenreName, testCase.gameGenre.GetCreatedAt())).
+					Return(testCase.UpdateGameGenreErr)
+			}
+
+			err := gameGenreService.UpdateGameGenre(ctx, testCase.gameGenre.GetID(), testCase.newGameGenreName)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

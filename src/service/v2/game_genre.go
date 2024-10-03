@@ -120,3 +120,29 @@ func (gameGenre *GameGenre) UpdateGameGenres(ctx context.Context, gameID values.
 	}
 	return nil
 }
+
+func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID values.GameGenreID, gameGenreName values.GameGenreName) error {
+	return gameGenre.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		genre, err := gameGenre.gameGenreRepository.GetGameGenre(ctx, gameGenreID)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrNoGameGenre
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get game genre: %w", err)
+		}
+
+		newGameGenre := domain.NewGameGenre(genre.GetID(), gameGenreName, genre.GetCreatedAt())
+		err = gameGenre.gameGenreRepository.UpdateGameGenre(ctx, gameGenreID, newGameGenre)
+		if errors.Is(err, repository.ErrRecordNotFound) { // 起きないはず
+			return service.ErrNoGameGenre
+		}
+		if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+			return service.ErrDuplicateGameGenreName
+		}
+		if err != nil {
+			return fmt.Errorf("failed to update game genre: %w", err)
+		}
+
+		return nil
+	})
+}
