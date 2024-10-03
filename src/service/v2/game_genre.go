@@ -132,7 +132,7 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID val
 		}
 
 		newGameGenre := domain.NewGameGenre(genre.GetID(), gameGenreName, genre.GetCreatedAt())
-		err = gameGenre.gameGenreRepository.UpdateGameGenre(ctx, gameGenreID, newGameGenre)
+		err = gameGenre.gameGenreRepository.UpdateGameGenre(ctx, newGameGenre)
 		if errors.Is(err, repository.ErrRecordNotFound) { // 起きないはず
 			return service.ErrNoGameGenre
 		}

@@ -400,7 +400,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			if testCase.executeUpdateGameGenre {
 				mockGameGenreRepository.
 					EXPECT().
-					UpdateGameGenre(gomock.Any(), testCase.gameGenre.GetID(), domain.NewGameGenre(testCase.gameGenre.GetID(), testCase.newGameGenreName, testCase.gameGenre.GetCreatedAt())).
+					UpdateGameGenre(gomock.Any(), domain.NewGameGenre(testCase.gameGenre.GetID(), testCase.newGameGenreName, testCase.gameGenre.GetCreatedAt())).
 					Return(testCase.UpdateGameGenreErr)
 			}
 
