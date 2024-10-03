@@ -258,5 +258,21 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, genre *domain.G
 }
 
 func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*domain.GameGenre, error) {
-	return nil, nil
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var genre migrate.GameGenreTable
+	if err := db.First(&genre, uuid.UUID(gameGenreID)).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("failed to get game genre: %w", err)
+	}
+
+	return domain.NewGameGenre(
+		values.GameGenreID(genre.ID),
+		values.GameGenreName(genre.Name),
+		genre.CreatedAt), nil
 }

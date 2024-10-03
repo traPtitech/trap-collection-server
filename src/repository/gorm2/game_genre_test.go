@@ -1088,6 +1088,67 @@ func TestUpdateGameGenre(t *testing.T) {
 	}
 }
 
+func TestGetGameGenre(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenres := []migrate.GameGenreTable{
+		{ID: uuid.New(), Name: "test", CreatedAt: time.Now()},
+		{ID: uuid.New(), Name: "test2", CreatedAt: time.Now()},
+	}
+
+	require.NoError(t, db.Create(&gameGenres).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+	})
+
+	testCases := map[string]struct {
+		gameGenreID values.GameGenreID
+		want        *domain.GameGenre
+		isError     bool
+		wantErr     error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenreID: values.GameGenreIDFromUUID(gameGenres[0].ID),
+			want:        domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenres[0].ID), values.NewGameGenreName(gameGenres[0].Name), gameGenres[0].CreatedAt),
+		},
+		"存在しないジャンルなのでErrRecordNotFound": {
+			gameGenreID: values.NewGameGenreID(),
+			isError:     true,
+			wantErr:     repository.ErrRecordNotFound,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			genre, err := gameGenreRepository.GetGameGenre(ctx, testCase.gameGenreID)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if testCase.isError {
+				return
+			}
+
+			assert.Equal(t, testCase.want, genre)
+		})
+	}
+}
+
 // game_genresテーブルとgame_genre_relationsテーブルを削除する。gamesテーブルは削除されない。
 func cleanupGameGenresTable(t *testing.T) {
 	t.Helper()
