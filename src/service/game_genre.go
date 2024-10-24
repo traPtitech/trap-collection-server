@@ -26,6 +26,9 @@ type GameGenre interface {
 	// ジャンル名に重複がある場合は、ErrDuplicateGameGenreNameを返す。
 	// ジャンル名が変更されなかった場合は、ErrNoGameGenreUpdatedを返す。
 	UpdateGameGenre(ctx context.Context, gameGenreID values.GameGenreID, gameGenreName values.GameGenreName) error
+	// ゲームジャンルを取得する。
+	// ゲームジャンルが存在しない場合は、ErrNoGameGenreを返す。
+	GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*GameGenreInfo, error)
 }
 
 type GameGenreInfo struct {

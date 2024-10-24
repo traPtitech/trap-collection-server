@@ -13,10 +13,9 @@ import (
 )
 
 type GameGenre struct {
-	gameGenreService       service.GameGenre
-	game                   service.GameV2
-	session                *Session
-	gameGenreUnimplemented //実装し終わったら消す
+	gameGenreService service.GameGenre
+	game             service.GameV2
+	session          *Session
 }
 
 func NewGameGenre(gameGenreService service.GameGenre, game service.GameV2, session *Session) *GameGenre {
@@ -25,15 +24,6 @@ func NewGameGenre(gameGenreService service.GameGenre, game service.GameV2, sessi
 		game:             game,
 		session:          session,
 	}
-}
-
-// gameGenreUnimplemented
-// メソッドとして実装予定だが、未実装のもの
-// TODO: 実装
-type gameGenreUnimplemented interface {
-	// ジャンル情報の変更
-	// (PATCH /genres/{gameGenreID})
-	PatchGameGenre(ctx echo.Context, gameGenreID openapi.GameGenreIDInPath) error
 }
 
 // ジャンルの削除
@@ -174,6 +164,62 @@ func (gameGenre *GameGenre) PutGameGenres(c echo.Context, gameID openapi.GameIDI
 
 	if len(maintainers) > 0 {
 		res.Maintainers = &maintainers
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// ジャンル情報の変更
+// (PATCH /genres/{gameGenreID})
+func (gameGenre *GameGenre) PatchGameGenre(c echo.Context, gameGenreID openapi.GameGenreIDInPath) error {
+	var reqBody openapi.PatchGameGenreJSONRequestBody
+	if err := c.Bind(&reqBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	gameGenreName := values.NewGameGenreName(reqBody.Genre)
+	if err := gameGenreName.Validate(); err != nil {
+		if errors.Is(err, values.ErrGameGenreNameEmpty) {
+			return echo.NewHTTPError(http.StatusBadRequest, "genre name must not be empty")
+		}
+		if errors.Is(err, values.ErrGameGenreNameTooLong) {
+			return echo.NewHTTPError(http.StatusBadRequest, "genre name is too long")
+		}
+		log.Printf("failed to validate genre name: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate genre name")
+	}
+
+	ctx := c.Request().Context()
+
+	err := gameGenre.gameGenreService.UpdateGameGenre(ctx, values.GameGenreIDFromUUID(gameGenreID), gameGenreName)
+	if errors.Is(err, service.ErrNoGameGenre) {
+		return echo.NewHTTPError(http.StatusNotFound, "game genre not found")
+	}
+	if errors.Is(err, service.ErrDuplicateGameGenreName) {
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate genre name")
+	}
+	if errors.Is(err, service.ErrNoGameGenreUpdated) {
+		return echo.NewHTTPError(http.StatusBadRequest, "no game genre updated")
+	}
+	if err != nil {
+		log.Printf("error: failed to update game genre: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game genre")
+	}
+
+	gameGenreInfo, err := gameGenre.gameGenreService.GetGameGenre(ctx, values.GameGenreIDFromUUID(gameGenreID))
+	if errors.Is(err, service.ErrNoGameGenre) {
+		return echo.NewHTTPError(http.StatusNotFound, "game genre not found")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game genre: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game genre")
+	}
+
+	res := openapi.GameGenre{
+		Id:        uuid.UUID(gameGenreInfo.GetID()),
+		Genre:     string(gameGenreInfo.GetName()),
+		Num:       gameGenreInfo.Num,
+		CreatedAt: gameGenreInfo.GetCreatedAt(),
 	}
 
 	return c.JSON(http.StatusOK, res)

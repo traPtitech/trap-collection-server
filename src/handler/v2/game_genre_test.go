@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -598,6 +599,240 @@ func TestPutGameGenres(t *testing.T) {
 			} else {
 				assert.Nil(t, res.Maintainers)
 			}
+		})
+	}
+}
+
+func TestPatchGameGenre(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameGenreService := mock.NewMockGameGenre(ctrl)
+	mockGameService := mock.NewMockGameV2(ctrl)
+
+	mockConf := mockConfig.NewMockHandler(ctrl)
+	mockConf.
+		EXPECT().
+		SessionKey().
+		Return("key", nil)
+	mockConf.
+		EXPECT().
+		SessionSecret().
+		Return("secret", nil)
+	sess, err := common.NewSession(mockConf)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+	session, err := NewSession(sess)
+	if err != nil {
+		t.Fatalf("failed to create session: %v", err)
+		return
+	}
+
+	gameGenreHandler := NewGameGenre(mockGameGenreService, mockGameService, session)
+
+	gameGenreID := uuid.New()
+
+	testCases := map[string]struct {
+		gameGenreID        openapi.GameGenreIDInPath
+		req                openapi.PatchGameGenreJSONRequestBody
+		invalidRequestBody bool
+		executeUpdateGame  bool
+		UpdateGameGenreErr error
+		executeGetGame     bool
+		gameGenre          *service.GameGenreInfo
+		GetGameGenreErr    error
+		resBody            openapi.GameGenre
+		statusCode         int
+		isErr              bool
+		expectedErr        error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenreID: gameGenreID,
+			req: openapi.PatchGameGenreJSONRequestBody{
+				Genre: "new genre",
+			},
+			executeUpdateGame: true,
+			gameGenre: &service.GameGenreInfo{
+				GameGenre: *domain.NewGameGenre(values.GameGenreID(gameGenreID), values.NewGameGenreName("new genre"), time.Now()),
+				Num:       1,
+			},
+			executeGetGame: true,
+			resBody: openapi.GameGenre{
+				Id:        uuid.UUID(gameGenreID),
+				Genre:     "new genre",
+				CreatedAt: time.Now(),
+				Num:       1,
+			},
+			statusCode: http.StatusOK,
+		},
+		"リクエストボディがおかしいので400": {
+			gameGenreID:        gameGenreID,
+			invalidRequestBody: true,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		"ジャンル名が空なので400": {
+			gameGenreID: gameGenreID,
+			req: openapi.PatchGameGenreJSONRequestBody{
+				Genre: "",
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		"ジャンル名が長すぎるので400": {
+			gameGenreID: gameGenreID,
+			req: openapi.PatchGameGenreJSONRequestBody{
+				Genre: strings.Repeat("a", 100),
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		"UpdateGameGenreがErrNoGameGenreなので404": {
+			gameGenreID:        gameGenreID,
+			req:                openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame:  true,
+			UpdateGameGenreErr: service.ErrNoGameGenre,
+			isErr:              true,
+			statusCode:         http.StatusNotFound,
+		},
+		"UpdateGameGenreがErrDuplicateGameGenreNameなので400": {
+			gameGenreID:        gameGenreID,
+			req:                openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame:  true,
+			UpdateGameGenreErr: service.ErrDuplicateGameGenreName,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		"UpdateGameGenreがErrNoGameGenreUpdatedなので400": {
+			gameGenreID:        gameGenreID,
+			req:                openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame:  true,
+			UpdateGameGenreErr: service.ErrNoGameGenreUpdated,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		"UpdateGameGenreがエラーなので500": {
+			gameGenreID:        gameGenreID,
+			req:                openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame:  true,
+			UpdateGameGenreErr: errors.New("test error"),
+			isErr:              true,
+			statusCode:         http.StatusInternalServerError,
+		},
+		"GetGameGenreがErrNoGameGenreなので500": {
+			gameGenreID:       gameGenreID,
+			req:               openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame: true,
+			executeGetGame:    true,
+			GetGameGenreErr:   service.ErrNoGameGenre,
+			isErr:             true,
+			statusCode:        http.StatusNotFound,
+		},
+		"GetGameGenreがエラーなので500": {
+			gameGenreID:       gameGenreID,
+			req:               openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
+			executeUpdateGame: true,
+			executeGetGame:    true,
+			GetGameGenreErr:   errors.New("test error"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			reqBody := new(bytes.Buffer)
+			if !testCase.invalidRequestBody {
+				err := json.NewEncoder(reqBody).Encode(testCase.req)
+				if err != nil {
+					t.Fatalf("failed to encode request body: %v", err)
+				}
+			} else {
+				_, err := strings.NewReader("invalid request body").WriteTo(reqBody)
+				if err != nil {
+					t.Fatalf("failed to write to request body: %v", err)
+				}
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/genres/%s", testCase.gameGenreID), reqBody)
+			req.Header.Set(echo.HeaderContentType, "application/json")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			sess, err := session.New(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			authSession := domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))
+
+			sess.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
+			sess.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
+
+			err = sess.Save(req, rec)
+			if err != nil {
+				t.Fatalf("failed to save session: %v", err)
+			}
+
+			setCookieHeader(c)
+
+			sess, err = session.Get(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			c.Set("session", sess)
+
+			if testCase.executeUpdateGame {
+				mockGameGenreService.
+					EXPECT().
+					UpdateGameGenre(gomock.Any(), values.GameGenreIDFromUUID(testCase.gameGenreID), values.NewGameGenreName(testCase.req.Genre)).
+					Return(testCase.UpdateGameGenreErr)
+			}
+
+			if testCase.executeGetGame {
+				mockGameGenreService.
+					EXPECT().
+					GetGameGenre(gomock.Any(), values.GameGenreIDFromUUID(testCase.gameGenreID)).
+					Return(testCase.gameGenre, testCase.GetGameGenreErr)
+			}
+
+			err = gameGenreHandler.PatchGameGenre(c, testCase.gameGenreID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					if errors.As(err, &httpErr) {
+						assert.Equal(t, testCase.statusCode, httpErr.Code)
+					} else {
+						t.Errorf("err must be http error, but not http error: %v", err)
+					}
+				} else {
+					if testCase.expectedErr != nil {
+						assert.ErrorIs(t, err, testCase.expectedErr)
+					} else {
+						assert.Error(t, err)
+					}
+				}
+			}
+
+			if testCase.isErr {
+				return
+			}
+
+			var res openapi.GameGenre
+			err = json.NewDecoder(rec.Body).Decode(&res)
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.resBody.Id, res.Id)
+			assert.Equal(t, testCase.resBody.Genre, res.Genre)
+			assert.Equal(t, testCase.resBody.Num, res.Num)
+			assert.WithinDuration(t, testCase.resBody.CreatedAt, res.CreatedAt, time.Second)
 		})
 	}
 }
