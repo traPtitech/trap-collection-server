@@ -41,6 +41,9 @@ type GameGenre interface {
 	// ゲームジャンルのIDからゲームジャンルを取得する。
 	// ゲームジャンルが存在しない場合は、ErrRecordNotFoundを返す。
 	GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*domain.GameGenre, error)
+	// GetGamesByGenreID
+	// ゲームジャンルのIDからそのジャンルに含まれるゲームを取得する。
+	GetGamesByGenreID(ctx context.Context, gameGenreID values.GameGenreID) ([]*domain.Game, error)
 }
 
 type GameGenreInfo struct {

@@ -150,3 +150,25 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID val
 		return nil
 	})
 }
+
+// ゲームジャンルを取得する。
+// ゲームジャンルが存在しない場合は、ErrNoGameGenreを返す。
+func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*service.GameGenreInfo, error) {
+	genre, err := gameGenre.gameGenreRepository.GetGameGenre(ctx, gameGenreID)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrNoGameGenre
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get game genre error: %w", err)
+	}
+
+	games, err := gameGenre.gameGenreRepository.GetGamesByGenreID(ctx, gameGenreID)
+	if err != nil {
+		return nil, fmt.Errorf("get games by genre id error: %w", err)
+	}
+
+	return &service.GameGenreInfo{
+		GameGenre: *genre,
+		Num:       len(games),
+	}, nil
+}
