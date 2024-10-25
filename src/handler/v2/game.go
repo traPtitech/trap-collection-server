@@ -396,7 +396,8 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
 	}
 
-	var visibility *values.GameVisibility
+	// visibilityが変更されない場合はnilを指定する
+	var visibility *values.GameVisibility = nil
 	if req.Visibility != nil {
 		var vis values.GameVisibility
 		switch {

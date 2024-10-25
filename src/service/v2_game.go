@@ -50,6 +50,7 @@ type GameV2 interface {
 	// UpdateGame
 	// ゲームのidを指定して情報（名前、説明）を修正する。
 	// idが一致するゲームが存在しなかった場合、ErrNoGameを返す。
+	// visibilityが変わらないときはnilを指定する。
 	UpdateGame(ctx context.Context, gameID values.GameID, name values.GameName, description values.GameDescription, visibility *values.GameVisibility) (*domain.Game, error)
 
 	// DeleteGame
