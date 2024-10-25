@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.41
 	github.com/cosmtrek/air v1.52.1
 	github.com/deepmap/oapi-codegen v1.16.3
-	github.com/dgraph-io/ristretto v0.1.1
+	github.com/dgraph-io/ristretto v0.2.0
 	github.com/getkin/kin-openapi v0.128.0
 	github.com/go-task/task/v3 v3.39.2
 	github.com/golang/mock v1.6.0
@@ -132,7 +132,6 @@ require (
 	github.com/go-gormigrate/gormigrate/v2 v2.1.3
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang/glog v1.2.0 // indirect
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
