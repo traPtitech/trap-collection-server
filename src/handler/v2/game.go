@@ -397,7 +397,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	}
 
 	// visibilityが変更されない場合はnilを指定する
-	var visibility *values.GameVisibility = nil
+	var visibility *values.GameVisibility
 	if req.Visibility != nil {
 		var vis values.GameVisibility
 		switch {
