@@ -396,11 +396,29 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to validate game name")
 	}
 
+	// visibilityが変更されない場合はnilを指定する
+	var visibility *values.GameVisibility
+	if req.Visibility != nil {
+		var vis values.GameVisibility
+		switch {
+		case *req.Visibility == openapi.Public:
+			vis = values.GameVisibilityTypePublic
+		case *req.Visibility == openapi.Limited:
+			vis = values.GameVisibilityTypeLimited
+		case *req.Visibility == openapi.Private:
+			vis = values.GameVisibilityTypePrivate
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid visibility")
+		}
+		visibility = &vis
+	}
+
 	game, err := g.gameService.UpdateGame(
 		ctx.Request().Context(),
 		values.GameID(gameID),
 		gameName,
 		values.GameDescription(req.Description),
+		visibility,
 	)
 	if errors.Is(err, service.ErrNoGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "game not found")
@@ -409,10 +427,25 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game")
 	}
 
+	gameVisibility := game.GetVisibility()
+	var apiVisibility openapi.GameVisibility
+	switch gameVisibility {
+	case values.GameVisibilityTypePublic:
+		apiVisibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		apiVisibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		apiVisibility = openapi.Private
+	default:
+		log.Printf("error: invalid visibility: %v\n", gameVisibility)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
+	}
+
 	res := openapi.GameInfo{
 		Name:        string(game.GetName()),
 		Id:          uuid.UUID(game.GetID()),
 		Description: string(game.GetDescription()),
+		Visibility:  apiVisibility,
 		CreatedAt:   game.GetCreatedAt(),
 	}
 

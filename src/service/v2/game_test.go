@@ -1758,8 +1758,10 @@ func TestUpdateGame(t *testing.T) {
 		gameID            values.GameID
 		name              values.GameName
 		gameDescription   values.GameDescription
-		game              *domain.Game
+		visibility        *values.GameVisibility
+		currentGame       *domain.Game
 		GetGameErr        error
+		newGame           *domain.Game
 		executeUpdateGame bool
 		UpdateGameErr     error
 		isErr             bool
@@ -1767,6 +1769,13 @@ func TestUpdateGame(t *testing.T) {
 	}
 
 	gameID := values.NewGameID()
+	var (
+		visibilityPublic  = values.GameVisibilityTypePublic
+		visibilityLimited = values.GameVisibilityTypeLimited
+		// visibilityPrivate = values.GameVisibilityTypePrivate
+	)
+
+	now := time.Now()
 
 	testCases := []test{
 		{
@@ -1774,12 +1783,20 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("after"),
 			gameDescription: values.GameDescription("after"),
-			game: domain.NewGame(
+			visibility:      &visibilityPublic,
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("after"),
+				values.GameVisibilityTypePublic,
+				now,
 			),
 			executeUpdateGame: true,
 		},
@@ -1788,12 +1805,20 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("before"),
 			gameDescription: values.GameDescription("after"),
-			game: domain.NewGame(
+			visibility:      &visibilityPublic,
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("before"),
+				values.GameDescription("after"),
+				values.GameVisibilityTypePublic,
+				now,
 			),
 			executeUpdateGame: true,
 		},
@@ -1802,12 +1827,64 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("after"),
 			gameDescription: values.GameDescription("before"),
-			game: domain.NewGame(
+			visibility:      &visibilityPublic,
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypePublic,
+				now,
+			),
+			executeUpdateGame: true,
+		},
+		{
+			description:     "visibilityの変更なしでもエラーなし",
+			gameID:          gameID,
+			name:            values.GameName("after"),
+			gameDescription: values.GameDescription("before"),
+			visibility:      &visibilityLimited,
+			currentGame: domain.NewGame(
+				gameID,
+				values.GameName("before"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypeLimited,
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypeLimited,
+				now,
+			),
+			executeUpdateGame: true,
+		},
+		{
+			description:     "visibilityの変更なし(nil)でもエラーなし",
+			gameID:          gameID,
+			name:            values.GameName("after"),
+			gameDescription: values.GameDescription("before"),
+			visibility:      nil,
+			currentGame: domain.NewGame(
+				gameID,
+				values.GameName("before"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypeLimited,
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypeLimited,
+				now,
 			),
 			executeUpdateGame: true,
 		},
@@ -1816,12 +1893,19 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("before"),
 			gameDescription: values.GameDescription("before"),
-			game: domain.NewGame(
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("before"),
+				values.GameDescription("before"),
+				values.GameVisibilityTypeLimited,
+				now,
 			),
 		},
 		{
@@ -1846,12 +1930,19 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("after"),
 			gameDescription: values.GameDescription("after"),
-			game: domain.NewGame(
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("after"),
+				values.GameVisibilityTypeLimited,
+				now,
 			),
 			executeUpdateGame: true,
 			UpdateGameErr:     repository.ErrNoRecordUpdated,
@@ -1862,12 +1953,19 @@ func TestUpdateGame(t *testing.T) {
 			gameID:          gameID,
 			name:            values.GameName("after"),
 			gameDescription: values.GameDescription("after"),
-			game: domain.NewGame(
+			currentGame: domain.NewGame(
 				gameID,
 				values.GameName("before"),
 				values.GameDescription("before"),
 				values.GameVisibilityTypeLimited,
-				time.Now(),
+				now,
+			),
+			newGame: domain.NewGame(
+				gameID,
+				values.GameName("after"),
+				values.GameDescription("after"),
+				values.GameVisibilityTypeLimited,
+				now,
 			),
 			executeUpdateGame: true,
 			UpdateGameErr:     errors.New("error"),
@@ -1880,16 +1978,16 @@ func TestUpdateGame(t *testing.T) {
 			mockGameRepository.
 				EXPECT().
 				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
-				Return(testCase.game, testCase.GetGameErr)
+				Return(testCase.currentGame, testCase.GetGameErr)
 
 			if testCase.executeUpdateGame {
 				mockGameRepository.
 					EXPECT().
-					UpdateGame(gomock.Any(), testCase.game).
+					UpdateGame(gomock.Any(), testCase.newGame).
 					Return(testCase.UpdateGameErr)
 			}
 
-			game, err := gameVersionService.UpdateGame(ctx, testCase.gameID, testCase.name, testCase.gameDescription)
+			game, err := gameVersionService.UpdateGame(ctx, testCase.gameID, testCase.name, testCase.gameDescription, testCase.visibility)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -1904,12 +2002,11 @@ func TestUpdateGame(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.game, game)
-
-			assert.Equal(t, testCase.game.GetID(), game.GetID())
-			assert.Equal(t, testCase.name, game.GetName())
-			assert.Equal(t, testCase.gameDescription, game.GetDescription())
-			assert.Equal(t, testCase.game.GetCreatedAt(), game.GetCreatedAt())
+			assert.Equal(t, testCase.newGame.GetID(), game.GetID())
+			assert.Equal(t, testCase.newGame.GetName(), game.GetName())
+			assert.Equal(t, testCase.newGame.GetDescription(), game.GetDescription())
+			assert.Equal(t, testCase.newGame.GetVisibility(), game.GetVisibility())
+			assert.WithinDuration(t, testCase.newGame.GetCreatedAt(), game.GetCreatedAt(), time.Second)
 		})
 	}
 }

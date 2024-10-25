@@ -72,9 +72,15 @@ func (g *GameV2) UpdateGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
+	visibility, err := g.getVisibility(ctx, game.GetVisibility())
+	if err != nil {
+		return fmt.Errorf("failed to get visibility: %w", err)
+	}
+
 	gameTable := migrate.GameTable2{
-		Name:        string(game.GetName()),
-		Description: string(game.GetDescription()),
+		Name:             string(game.GetName()),
+		Description:      string(game.GetDescription()),
+		VisibilityTypeID: visibility.ID,
 	}
 
 	result := db.
@@ -345,4 +351,26 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 	}
 
 	return gamesDomains, nil
+}
+
+func (g *GameV2) getVisibility(ctx context.Context, visibility values.GameVisibility) (*migrate.GameVisibilityTypeTable, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	visibilityTypeName, err := convertVisibilityType(visibility)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert visibility type: %w", err)
+	}
+
+	var visibilityType migrate.GameVisibilityTypeTable
+	err = db.
+		Where("name = ?", visibilityTypeName).
+		Take(&visibilityType).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get visibility type: %w", err)
+	}
+
+	return &visibilityType, nil
 }
