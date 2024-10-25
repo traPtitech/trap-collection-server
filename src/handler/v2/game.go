@@ -427,8 +427,9 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game")
 	}
 
+	gameVisibility := game.GetVisibility()
 	var apiVisibility openapi.GameVisibility
-	switch game.GetVisibility() {
+	switch gameVisibility {
 	case values.GameVisibilityTypePublic:
 		apiVisibility = openapi.Public
 	case values.GameVisibilityTypeLimited:
@@ -436,7 +437,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	case values.GameVisibilityTypePrivate:
 		apiVisibility = openapi.Private
 	default:
-		log.Printf("error: failed to get game visibility: %v\n", game.GetVisibility())
+		log.Printf("error: invalid visibility: %v\n", gameVisibility)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game visibility")
 	}
 
