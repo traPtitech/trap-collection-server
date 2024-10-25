@@ -1,6 +1,7 @@
 package gorm2
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"slices"
@@ -1147,6 +1148,137 @@ func TestGetGameGenre(t *testing.T) {
 			assert.Equal(t, testCase.want, genre)
 		})
 	}
+}
+
+func TestGetGamesByGenreID(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	now := time.Now()
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenreID1 := values.NewGameGenreID()
+	gameGenreID2 := values.NewGameGenreID()
+	gameGenreID3 := values.NewGameGenreID()
+
+	gameGenre1 := migrate.GameGenreTable{
+		ID:        uuid.UUID(gameGenreID1),
+		Name:      "ジャンル1",
+		CreatedAt: now,
+	}
+	gameGenre2 := migrate.GameGenreTable{
+		ID:        uuid.UUID(gameGenreID2),
+		Name:      "ジャンル2",
+		CreatedAt: now.Add(-time.Hour),
+	}
+
+	var visibilities []migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&visibilities).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+
+	var gameVisibilityTypeIDPublic int
+	for i := range visibilities {
+		if visibilities[i].Name == migrate.GameVisibilityTypePublic {
+			gameVisibilityTypeIDPublic = visibilities[i].ID
+		}
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	games := []migrate.GameTable2{
+		{
+			ID:               uuid.UUID(gameID1),
+			Name:             "test",
+			Description:      "test",
+			CreatedAt:        now,
+			VisibilityTypeID: gameVisibilityTypeIDPublic,
+			GameGenres:       []*migrate.GameGenreTable{&gameGenre1, &gameGenre2},
+		},
+		{
+			ID:               uuid.UUID(gameID2),
+			Name:             "test2",
+			Description:      "test2",
+			CreatedAt:        now.Add(-time.Hour),
+			VisibilityTypeID: gameVisibilityTypeIDPublic,
+			GameGenres:       []*migrate.GameGenreTable{&gameGenre2},
+		},
+	}
+
+	require.NoError(t, db.Create(&games).Error)
+	t.Cleanup(func() {
+		cleanupGameGenresTable(t)
+		require.NoError(t, db.
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameTable2{}).Error)
+	})
+
+	testCases := map[string]struct {
+		gameGenreID values.GameGenreID
+		games       []*domain.Game
+		isError     bool
+		wantErr     error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenreID: gameGenreID1,
+			games: []*domain.Game{
+				domain.NewGame(gameID1, "test", "test", values.GameVisibilityTypePublic, now),
+			},
+		},
+		"複数のゲームでも問題なし": {
+			gameGenreID: gameGenreID2,
+			games: []*domain.Game{
+				domain.NewGame(gameID1, "test", "test", values.GameVisibilityTypePublic, now),
+				domain.NewGame(gameID2, "test2", "test2", values.GameVisibilityTypePublic, now.Add(-time.Hour)),
+			},
+		},
+		"ゲームが無くても問題なし": {
+			gameGenreID: gameGenreID3,
+			games:       []*domain.Game{},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			games, err := gameGenreRepository.GetGamesByGenreID(ctx, testCase.gameGenreID)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, len(testCase.games), len(games))
+
+			// 返って来る順番は保証されないので、IDでソートして比較する
+			// 件数が少ないのでソートしているが、件数が多い場合はmapを使うなどが必要
+			gameSortFunc := func(a, b *domain.Game) int {
+				return cmp.Compare(uuid.UUID(a.GetID()).String(), uuid.UUID(b.GetID()).String())
+			}
+			slices.SortFunc(games, gameSortFunc)
+			slices.SortFunc(testCase.games, gameSortFunc)
+			for i := range games {
+				assert.Equal(t, testCase.games[i].GetID(), games[i].GetID())
+				assert.Equal(t, testCase.games[i].GetName(), games[i].GetName())
+				assert.Equal(t, testCase.games[i].GetDescription(), games[i].GetDescription())
+				assert.Equal(t, testCase.games[i].GetVisibility(), games[i].GetVisibility())
+				assert.WithinDuration(t, testCase.games[i].GetCreatedAt(), games[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+
 }
 
 // game_genresテーブルとgame_genre_relationsテーブルを削除する。gamesテーブルは削除されない。

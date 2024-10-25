@@ -276,3 +276,46 @@ func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values
 		values.GameGenreName(genre.Name),
 		genre.CreatedAt), nil
 }
+
+func (gameGenre *GameGenre) GetGamesByGenreID(ctx context.Context, gameGenreID values.GameGenreID) ([]*domain.Game, error) {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []migrate.GameTable2
+	err = db.
+		Model(&migrate.GameTable2{}).
+		Preload("GameVisibilityType").
+		Joins("JOIN game_genre_relations ON games.id = game_genre_relations.game_id").
+		Where("genre_id = ?", uuid.UUID(gameGenreID)).
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games by genre id: %w", err)
+	}
+
+	result := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		var visibility values.GameVisibility
+		switch game.GameVisibilityType.Name {
+		case migrate.GameVisibilityTypePublic:
+			visibility = values.GameVisibilityTypePublic
+		case migrate.GameVisibilityTypeLimited:
+			visibility = values.GameVisibilityTypeLimited
+		case migrate.GameVisibilityTypePrivate:
+			visibility = values.GameVisibilityTypePrivate
+		default:
+			return nil, fmt.Errorf("invalid game visibility: %v", game.GameVisibilityType.Name)
+		}
+
+		result = append(result, domain.NewGame(
+			values.GameID(game.ID),
+			values.GameName(game.Name),
+			values.GameDescription(game.Description),
+			visibility,
+			game.CreatedAt,
+		))
+	}
+
+	return result, nil
+}
