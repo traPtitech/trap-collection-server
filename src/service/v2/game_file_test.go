@@ -1,9 +1,11 @@
 package v2
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/url"
 	"strings"
 	"testing"
@@ -11,13 +13,123 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
+	"github.com/traPtitech/trap-collection-server/testdata"
 )
+
+func Test_checkZip(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		readerFunc func(t *testing.T) io.Reader
+		wantOk     bool
+		isErr      bool
+		err        error
+	}{
+		"zipファイルなのでエラー無し": {
+			readerFunc: func(t *testing.T) io.Reader {
+				t.Helper()
+
+				r, err := testdata.FS.Open("a.zip")
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					r.Close()
+				})
+
+				return r
+			},
+			wantOk: true,
+		},
+		"zipファイルではないのでfalse": {
+			readerFunc: func(t *testing.T) io.Reader {
+				t.Helper()
+
+				return strings.NewReader("test")
+			},
+			wantOk: false,
+		},
+	}
+
+	gameFile := &GameFile{}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			_, ok, err := gameFile.checkZip(context.Background(), testCase.readerFunc(t))
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, testCase.wantOk, ok)
+		})
+	}
+}
+
+func Test_checkEntryPointExist(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		entryPoint values.GameFileEntryPoint
+		result     bool
+		isErr      bool
+		err        error
+	}{
+		"特に問題ないのでエラーなし": {
+			entryPoint: values.NewGameFileEntryPoint("a/b/file"),
+			result:     true,
+		},
+		"存在しないパスなのでfalse": {
+			entryPoint: values.NewGameFileEntryPoint("a/b/not_exist"),
+			result:     false,
+		},
+		".で始まる相対パスはfalse": {
+			entryPoint: values.NewGameFileEntryPoint("./a/b/file"),
+			result:     false,
+		},
+		"ディレクトリを指定しているのでfalse": {
+			entryPoint: values.NewGameFileEntryPoint("a/b/"),
+			result:     false,
+		},
+	}
+
+	gameFile := &GameFile{}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			b, err := testdata.FS.ReadFile("a.zip")
+			require.NoError(t, err)
+
+			r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+			require.NoError(t, err)
+
+			result, err := gameFile.checkEntryPointExist(context.Background(), r, testCase.entryPoint)
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, testCase.result, result)
+		})
+	}
+}
 
 func TestSaveGameFile(t *testing.T) {
 	t.Parallel()
@@ -33,7 +145,7 @@ func TestSaveGameFile(t *testing.T) {
 
 	type test struct {
 		description                   string
-		reader                        *bytes.Buffer
+		readerFunc                    func(t *testing.T) io.Reader
 		gameID                        values.GameID
 		fileType                      values.GameFileType
 		entryPoint                    values.GameFileEntryPoint
@@ -49,52 +161,65 @@ func TestSaveGameFile(t *testing.T) {
 
 	gameID := values.NewGameID()
 
+	testdataZipReaderFunc := func(t *testing.T) io.Reader {
+		t.Helper()
+
+		r, err := testdata.FS.Open("a.zip")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			r.Close()
+		})
+
+		return r
+	}
+	testdataZipHash := values.NewGameFileHashFromBytes([]byte{0x02, 0x4d, 0xc4, 0x46, 0xbe, 0x7a, 0xb9, 0x1e, 0x64, 0xb9, 0x50, 0x10, 0x2a, 0x94, 0xb7, 0xbd})
+
 	testCases := []test{
 		{
 			description:                   "特に問題ないのでエラーなし",
-			reader:                        bytes.NewBufferString("test"),
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeJar,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
-			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+			hash:                          testdataZipHash,
 		},
 		{
 			description: "ゲームが存在しないのでエラー",
-			reader:      bytes.NewBufferString("test"),
+			readerFunc:  testdataZipReaderFunc,
 			gameID:      gameID,
 			fileType:    values.GameFileTypeJar,
-			entryPoint:  values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:  values.NewGameFileEntryPoint("a/b/file"),
 			GetGameErr:  repository.ErrRecordNotFound,
 			isErr:       true,
 			err:         service.ErrInvalidGameID,
 		},
 		{
 			description: "GetGameがエラーなのでエラー",
-			reader:      bytes.NewBufferString("test"),
+			readerFunc:  testdataZipReaderFunc,
 			gameID:      gameID,
 			fileType:    values.GameFileTypeJar,
-			entryPoint:  values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:  values.NewGameFileEntryPoint("a/b/file"),
 			GetGameErr:  errors.New("error"),
 			isErr:       true,
 		},
 		{
 			description:                   "repositoryのSaveGameFileがエラーなのでエラー",
-			reader:                        bytes.NewBufferString("test"),
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeJar,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
 			executeRepositorySaveGameFile: true,
 			repositorySaveGameFileErr:     errors.New("error"),
 			isErr:                         true,
 		},
 		{
 			description:                   "storageのSaveGameFileがエラーなのでエラー",
-			reader:                        bytes.NewBufferString("test"),
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeJar,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
 			storageSaveGameFileErr:        errors.New("error"),
@@ -102,43 +227,56 @@ func TestSaveGameFile(t *testing.T) {
 		},
 		{
 			description:                   "fileTypeがwindowsでもエラーなし",
-			reader:                        bytes.NewBufferString("test"),
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeWindows,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
-			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+			hash:                          testdataZipHash,
 		},
 		{
 			description:                   "fileTypeがmacでもエラーなし",
-			reader:                        bytes.NewBufferString("test"),
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeMac,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
-			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+			hash:                          testdataZipHash,
 		},
 		{
-			description:                   "entryPointが空でもエラーなし",
-			reader:                        bytes.NewBufferString("test"),
+			description:                   "entryPointが空なので、ErrInvalidEntryPoint",
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeJar,
 			entryPoint:                    values.NewGameFileEntryPoint(""),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
-			hash:                          values.NewGameFileHashFromBytes([]byte{0x09, 0x8f, 0x6b, 0xcd, 0x46, 0x21, 0xd3, 0x73, 0xca, 0xde, 0x4e, 0x83, 0x26, 0x27, 0xb4, 0xf6}),
+			isErr:                         true,
+			err:                           service.ErrInvalidEntryPoint,
 		},
 		{
-			description:                   "データが大きくてもエラーなし",
-			reader:                        bytes.NewBufferString(strings.Repeat("a", 1e7)),
+			description:                   "無効なentryPointなので、ErrInvalidEntryPoint",
+			readerFunc:                    testdataZipReaderFunc,
 			gameID:                        gameID,
 			fileType:                      values.GameFileTypeJar,
-			entryPoint:                    values.NewGameFileEntryPoint("/path/to/file"),
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/not_exist"),
 			executeRepositorySaveGameFile: true,
 			executeStorageSaveGameFile:    true,
-			hash:                          values.NewGameFileHashFromBytes([]byte{0x70, 0x95, 0xba, 0xe0, 0x98, 0x25, 0x9e, 0xd, 0xda, 0x4b, 0x7a, 0xcc, 0x62, 0x4d, 0xe4, 0xe2}),
+			isErr:                         true,
+			err:                           service.ErrInvalidEntryPoint,
+		},
+		{
+			description:                   "zipではないので、ErrNotZipFile",
+			readerFunc:                    func(t *testing.T) io.Reader { t.Helper(); return strings.NewReader("test") },
+			gameID:                        gameID,
+			fileType:                      values.GameFileTypeJar,
+			entryPoint:                    values.NewGameFileEntryPoint("a/b/file"),
+			executeRepositorySaveGameFile: true,
+			executeStorageSaveGameFile:    true,
+			isErr:                         true,
+			err:                           service.ErrNotZipFile,
 		},
 	}
 
@@ -171,11 +309,13 @@ func TestSaveGameFile(t *testing.T) {
 			}
 
 			var expectBytes []byte
-			if testCase.reader != nil {
-				expectBytes = testCase.reader.Bytes()
+			if testCase.readerFunc != nil {
+				var err error
+				expectBytes, err = io.ReadAll(testCase.readerFunc(t))
+				require.NoError(t, err)
 			}
 
-			gameFile, err := gameFileService.SaveGameFile(ctx, testCase.reader, testCase.gameID, testCase.fileType, testCase.entryPoint)
+			gameFile, err := gameFileService.SaveGameFile(ctx, testCase.readerFunc(t), testCase.gameID, testCase.fileType, testCase.entryPoint)
 
 			if testCase.isErr {
 				if testCase.err == nil {

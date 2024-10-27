@@ -47,4 +47,6 @@ var (
 	ErrNoGameGenre                       = errors.New("no game genre")
 	ErrDuplicateGameGenre                = errors.New("duplicate game genre")
 	ErrInvalidGamesSortType              = errors.New("invalid games sort type")
+	ErrNotZipFile                        = errors.New("not zip file")
+	ErrInvalidEntryPoint                 = errors.New("invalid entry point")
 )

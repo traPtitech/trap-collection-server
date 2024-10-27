@@ -1,11 +1,14 @@
 package v2
 
 import (
+	"archive/zip"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
+	"os"
+	"slices"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -37,7 +40,47 @@ func NewGameFile(
 	}
 }
 
+func (*GameFile) checkZip(_ context.Context, reader io.Reader) (*zip.Reader, bool, error) {
+	f, err := os.CreateTemp("", "game_file")
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(f.Name())
+
+	_, err = io.Copy(f, reader)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	fInfo, err := f.Stat()
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get file info: %w", err)
+	}
+	zr, err := zip.NewReader(f, fInfo.Size())
+	if errors.Is(err, zip.ErrFormat) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to open zip file: %w", err)
+	}
+
+	return zr, true, nil
+}
+
+func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
+	entryPointExists := slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
+		return zf.Name == string(entryPoint) && !zf.FileInfo().IsDir()
+	})
+
+	if !entryPointExists {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, gameID values.GameID, fileType values.GameFileType, entryPoint values.GameFileEntryPoint) (*domain.GameFile, error) {
+
 	var file *domain.GameFile
 	err := gameFile.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		_, err := gameFile.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
@@ -53,6 +96,7 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 		eg, ctx := errgroup.WithContext(ctx)
 		hashPr, hashPw := io.Pipe()
 		filePr, filePw := io.Pipe()
+		entryPointPr, entryPointPw := io.Pipe()
 
 		eg.Go(func() error {
 			defer hashPr.Close()
@@ -90,10 +134,33 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 		})
 
 		eg.Go(func() error {
+			defer entryPointPr.Close()
+
+			zr, ok, err := gameFile.checkZip(ctx, entryPointPr)
+			if err != nil {
+				return fmt.Errorf("failed to check zip: %w", err)
+			}
+			if !ok {
+				return service.ErrNotZipFile
+			}
+
+			ok, err = gameFile.checkEntryPointExist(ctx, zr, entryPoint)
+			if err != nil {
+				return fmt.Errorf("failed to check entry point exist: %w", err)
+			}
+			if !ok {
+				return service.ErrInvalidEntryPoint
+			}
+
+			return nil
+		})
+
+		eg.Go(func() error {
 			defer hashPw.Close()
 			defer filePw.Close()
+			defer entryPointPw.Close()
 
-			mw := io.MultiWriter(hashPw, filePw)
+			mw := io.MultiWriter(hashPw, filePw, entryPointPw)
 			_, err = io.Copy(mw, reader)
 			if err != nil {
 				return fmt.Errorf("failed to copy file: %w", err)
