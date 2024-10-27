@@ -396,7 +396,7 @@ func TestPostGameFile(t *testing.T) {
 			statusCode:          http.StatusNotFound,
 		},
 		{
-			description:         "SaveGameFileがErrNotZipFileなので404",
+			description:         "SaveGameFileがErrNotZipFileなので400",
 			fileType:            openapi.Jar,
 			gameID:              uuid.UUID(values.NewGameID()),
 			reader:              bytes.NewReader([]byte("test")),
@@ -406,7 +406,7 @@ func TestPostGameFile(t *testing.T) {
 			statusCode:          http.StatusBadRequest,
 		},
 		{
-			description:         "SaveGameFileがErrInvalidEntryPointなので404",
+			description:         "SaveGameFileがErrInvalidEntryPointなので400",
 			fileType:            openapi.Jar,
 			gameID:              uuid.UUID(values.NewGameID()),
 			reader:              bytes.NewReader([]byte("test")),
