@@ -121,8 +121,9 @@ func (gameGenre *GameGenre) UpdateGameGenres(ctx context.Context, gameID values.
 	return nil
 }
 
-func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID values.GameGenreID, gameGenreName values.GameGenreName) error {
-	return gameGenre.db.Transaction(ctx, nil, func(ctx context.Context) error {
+func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID values.GameGenreID, gameGenreName values.GameGenreName) (*service.GameGenreInfo, error) {
+	var genreInfo *service.GameGenreInfo
+	err := gameGenre.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		genre, err := gameGenre.gameGenreRepository.GetGameGenre(ctx, gameGenreID)
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return service.ErrNoGameGenre
@@ -147,28 +148,21 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, gameGenreID val
 			return fmt.Errorf("failed to update game genre: %w", err)
 		}
 
+		games, err := gameGenre.gameGenreRepository.GetGamesByGenreID(ctx, gameGenreID)
+		if err != nil {
+			return fmt.Errorf("get games by genre id error: %w", err)
+		}
+
+		genreInfo = &service.GameGenreInfo{
+			GameGenre: *newGameGenre,
+			Num:       len(games),
+		}
+
 		return nil
 	})
-}
-
-// ゲームジャンルを取得する。
-// ゲームジャンルが存在しない場合は、ErrNoGameGenreを返す。
-func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*service.GameGenreInfo, error) {
-	genre, err := gameGenre.gameGenreRepository.GetGameGenre(ctx, gameGenreID)
-	if errors.Is(err, repository.ErrRecordNotFound) {
-		return nil, service.ErrNoGameGenre
-	}
 	if err != nil {
-		return nil, fmt.Errorf("get game genre error: %w", err)
+		return nil, err
 	}
 
-	games, err := gameGenre.gameGenreRepository.GetGamesByGenreID(ctx, gameGenreID)
-	if err != nil {
-		return nil, fmt.Errorf("get games by genre id error: %w", err)
-	}
-
-	return &service.GameGenreInfo{
-		GameGenre: *genre,
-		Num:       len(games),
-	}, nil
+	return genreInfo, nil
 }
