@@ -228,3 +228,94 @@ func (gameGenre *GameGenre) GetGameGenres(ctx context.Context, visibilities []va
 
 	return result, nil
 }
+
+func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, genre *domain.GameGenre) error {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	newGenre := migrate.GameGenreTable{
+		Name: string(genre.GetName()),
+	}
+
+	result := db.Model(&migrate.GameGenreTable{
+		ID: uuid.UUID(genre.GetID()),
+	}).Updates(&newGenre)
+	var mysqlErr *mysql.MySQLError
+	if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+		return repository.ErrDuplicatedUniqueKey
+	}
+	if result.Error != nil {
+		return fmt.Errorf("failed to update game genre: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordUpdated
+	}
+
+	return nil
+}
+
+func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values.GameGenreID) (*domain.GameGenre, error) {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var genre migrate.GameGenreTable
+	if err := db.First(&genre, uuid.UUID(gameGenreID)).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("failed to get game genre: %w", err)
+	}
+
+	return domain.NewGameGenre(
+		values.GameGenreID(genre.ID),
+		values.GameGenreName(genre.Name),
+		genre.CreatedAt), nil
+}
+
+func (gameGenre *GameGenre) GetGamesByGenreID(ctx context.Context, gameGenreID values.GameGenreID) ([]*domain.Game, error) {
+	db, err := gameGenre.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db: %w", err)
+	}
+
+	var games []migrate.GameTable2
+	err = db.
+		Model(&migrate.GameTable2{}).
+		Preload("GameVisibilityType").
+		Joins("JOIN game_genre_relations ON games.id = game_genre_relations.game_id").
+		Where("genre_id = ?", uuid.UUID(gameGenreID)).
+		Find(&games).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games by genre id: %w", err)
+	}
+
+	result := make([]*domain.Game, 0, len(games))
+	for _, game := range games {
+		var visibility values.GameVisibility
+		switch game.GameVisibilityType.Name {
+		case migrate.GameVisibilityTypePublic:
+			visibility = values.GameVisibilityTypePublic
+		case migrate.GameVisibilityTypeLimited:
+			visibility = values.GameVisibilityTypeLimited
+		case migrate.GameVisibilityTypePrivate:
+			visibility = values.GameVisibilityTypePrivate
+		default:
+			return nil, fmt.Errorf("invalid game visibility: %v", game.GameVisibilityType.Name)
+		}
+
+		result = append(result, domain.NewGame(
+			values.GameID(game.ID),
+			values.GameName(game.Name),
+			values.GameDescription(game.Description),
+			visibility,
+			game.CreatedAt,
+		))
+	}
+
+	return result, nil
+}

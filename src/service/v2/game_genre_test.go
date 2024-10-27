@@ -324,3 +324,166 @@ func TestUpdateGameGenres(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateGameGenre(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGameGenreRepository := mockRepository.NewMockGameGenre(ctrl)
+	mockDB := mockRepository.NewMockDB(ctrl)
+
+	gameGenreService := NewGameGenre(mockDB, mockGameGenreRepository)
+
+	gameGenreID := values.NewGameGenreID()
+
+	testCases := map[string]struct {
+		gameGenre              *domain.GameGenre
+		newGameGenreName       values.GameGenreName
+		GetGameGenreErr        error
+		executeUpdateGameGenre bool
+		UpdateGameGenreErr     error
+		executeGetGenreGames   bool
+		games                  []*domain.Game
+		GetGenreGamesErr       error
+		genreInfo              *service.GameGenreInfo
+		isError                bool
+		wantErr                error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenre:              domain.NewGameGenre(gameGenreID, "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			executeGetGenreGames:   true,
+			games: []*domain.Game{
+				domain.NewGame(values.NewGameID(), "game", "description", values.GameVisibilityTypePublic, time.Now()),
+			},
+			genreInfo: &service.GameGenreInfo{
+				GameGenre: *domain.NewGameGenre(gameGenreID, "2D", time.Now()),
+				Num:       1,
+			},
+		},
+		"GetGameGenreがErrRecordNotFoundなのでErrNoGameGenre": {
+			gameGenre:        domain.NewGameGenre(gameGenreID, "3D", time.Now()),
+			newGameGenreName: "2D",
+			GetGameGenreErr:  repository.ErrRecordNotFound,
+			isError:          true,
+			wantErr:          service.ErrNoGameGenre,
+		},
+		"GetGameGenreがエラーなのでエラー": {
+			gameGenre:        domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName: "2D",
+			GetGameGenreErr:  errors.New("test"),
+			isError:          true,
+		},
+		"値に変更が無いのでErrNoGameGenreUpdated": {
+			gameGenre:        domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName: values.GameGenreName("3D"),
+			isError:          true,
+			wantErr:          service.ErrNoGameGenreUpdated,
+		},
+		"UpdateGameGenreがErrDuplicatedUniqueKeyなのでErrDuplicateGameGenre": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     repository.ErrDuplicatedUniqueKey,
+			isError:                true,
+			wantErr:                service.ErrDuplicateGameGenreName,
+		},
+		"UpdateGameGenreがErrNoRecordUpdatedなのでErrNoGameGenreUpdated": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D", // 本来はこの値が異なるからErrNoRecordUpdatedにはならない
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     repository.ErrNoRecordUpdated,
+			isError:                true,
+			wantErr:                service.ErrNoGameGenreUpdated,
+		},
+		"UpdateGameGenreがエラーなのでエラー": {
+			gameGenre:              domain.NewGameGenre(values.NewGameGenreID(), "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			UpdateGameGenreErr:     errors.New("test"),
+			isError:                true,
+		},
+		"GetGenreGamesがnilなので0件でエラー無し": {
+			gameGenre:              domain.NewGameGenre(gameGenreID, "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			executeGetGenreGames:   true,
+			games:                  nil,
+			genreInfo: &service.GameGenreInfo{
+				GameGenre: *domain.NewGameGenre(gameGenreID, "2D", time.Now()),
+				Num:       0,
+			},
+		},
+		"GetGenreGamesが複数でもエラー無し": {
+			gameGenre:              domain.NewGameGenre(gameGenreID, "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			executeGetGenreGames:   true,
+			games: []*domain.Game{
+				domain.NewGame(values.NewGameID(), "game1", "description1", values.GameVisibilityTypePublic, time.Now()),
+				domain.NewGame(values.NewGameID(), "game2", "description2", values.GameVisibilityTypePublic, time.Now()),
+			},
+			genreInfo: &service.GameGenreInfo{
+				GameGenre: *domain.NewGameGenre(gameGenreID, "2D", time.Now()),
+				Num:       2,
+			},
+		},
+		"GetGenreGamesがエラーなのでエラー": {
+			gameGenre:              domain.NewGameGenre(gameGenreID, "3D", time.Now()),
+			newGameGenreName:       "2D",
+			executeUpdateGameGenre: true,
+			executeGetGenreGames:   true,
+			GetGenreGamesErr:       errors.New("test"),
+			isError:                true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockGameGenreRepository.
+				EXPECT().
+				GetGameGenre(gomock.Any(), testCase.gameGenre.GetID()).
+				Return(testCase.gameGenre, testCase.GetGameGenreErr)
+
+			if testCase.executeUpdateGameGenre {
+				mockGameGenreRepository.
+					EXPECT().
+					UpdateGameGenre(gomock.Any(), domain.NewGameGenre(testCase.gameGenre.GetID(), testCase.newGameGenreName, testCase.gameGenre.GetCreatedAt())).
+					Return(testCase.UpdateGameGenreErr)
+			}
+
+			if testCase.executeGetGenreGames {
+				mockGameGenreRepository.
+					EXPECT().
+					GetGamesByGenreID(gomock.Any(), testCase.gameGenre.GetID()).
+					Return(testCase.games, testCase.GetGenreGamesErr)
+			}
+
+			genreInfo, err := gameGenreService.UpdateGameGenre(ctx, testCase.gameGenre.GetID(), testCase.newGameGenreName)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.genreInfo.GetID(), genreInfo.GetID())
+			assert.Equal(t, testCase.genreInfo.GetName(), genreInfo.GetName())
+			assert.WithinDuration(t, testCase.genreInfo.GetCreatedAt(), genreInfo.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.genreInfo.Num, genreInfo.Num)
+		})
+	}
+}

@@ -1,13 +1,16 @@
 package gorm2
 
 import (
+	"cmp"
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -949,6 +952,333 @@ func TestGetGameGenres(t *testing.T) {
 		})
 
 	}
+}
+
+func TestUpdateGameGenre(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenreID1 := values.NewGameGenreID()
+	gameGenreID2 := values.NewGameGenreID()
+
+	now := time.Now()
+
+	testCases := map[string]struct {
+		currentGenres []*migrate.GameGenreTable
+		gameGenre     *domain.GameGenre
+		isErr         bool
+		expectedErr   error
+	}{
+		"特に問題ないのでエラー無し": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
+		},
+		"他のジャンルがあってもエラー無し": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "test3",
+					CreatedAt: now,
+				},
+			},
+			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
+		},
+		"ジャンルが存在しないのでErrNoRecordUpdated": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID2, "test2", now),
+			isErr:       true,
+			expectedErr: repository.ErrNoRecordUpdated,
+		},
+		"ジャンル名が存在するのでErrDuplicatedUniqueKey": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+				{
+					ID:        uuid.UUID(gameGenreID2),
+					Name:      "test2",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID1, "test2", now),
+			isErr:       true,
+			expectedErr: repository.ErrDuplicatedUniqueKey,
+		},
+		"変更が無いのでErrNoRecordUpdated": {
+			currentGenres: []*migrate.GameGenreTable{
+				{
+					ID:        uuid.UUID(gameGenreID1),
+					Name:      "test",
+					CreatedAt: now,
+				},
+			},
+			gameGenre:   domain.NewGameGenre(gameGenreID1, "test", now),
+			isErr:       true,
+			expectedErr: repository.ErrNoRecordUpdated,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require.NoError(t, db.Create(testCase.currentGenres).Error)
+			t.Cleanup(func() {
+				require.NoError(t, db.
+					Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+			})
+
+			err := gameGenreRepository.UpdateGameGenre(ctx, testCase.gameGenre)
+
+			if testCase.isErr {
+				if testCase.expectedErr != nil {
+					assert.ErrorIs(t, err, testCase.expectedErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			{
+				var afterGenres []*migrate.GameGenreTable
+				err := db.
+					Model(&migrate.GameGenreTable{}).Find(&afterGenres).Error
+				require.NoError(t, err)
+
+				genresMap := make(map[uuid.UUID]*migrate.GameGenreTable, len(testCase.currentGenres))
+				for _, genre := range testCase.currentGenres {
+					genresMap[genre.ID] = genre
+				}
+
+				for _, afterGenre := range afterGenres {
+					if afterGenre.ID == uuid.UUID(testCase.gameGenre.GetID()) && !testCase.isErr {
+						assert.Equal(t, string(testCase.gameGenre.GetName()), afterGenre.Name)
+					} else {
+						slices.IndexFunc(testCase.currentGenres, func(g *migrate.GameGenreTable) bool {
+							return g.ID == afterGenre.ID
+						})
+						assert.Equal(t, string(afterGenre.Name), afterGenre.Name)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGetGameGenre(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenres := []migrate.GameGenreTable{
+		{ID: uuid.New(), Name: "test", CreatedAt: time.Now()},
+		{ID: uuid.New(), Name: "test2", CreatedAt: time.Now()},
+	}
+
+	require.NoError(t, db.Create(&gameGenres).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+	})
+
+	testCases := map[string]struct {
+		gameGenreID values.GameGenreID
+		want        *domain.GameGenre
+		isError     bool
+		wantErr     error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenreID: values.GameGenreIDFromUUID(gameGenres[0].ID),
+			want:        domain.NewGameGenre(values.GameGenreIDFromUUID(gameGenres[0].ID), values.NewGameGenreName(gameGenres[0].Name), gameGenres[0].CreatedAt),
+		},
+		"存在しないジャンルなのでErrRecordNotFound": {
+			gameGenreID: values.NewGameGenreID(),
+			isError:     true,
+			wantErr:     repository.ErrRecordNotFound,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			genre, err := gameGenreRepository.GetGameGenre(ctx, testCase.gameGenreID)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if testCase.isError {
+				return
+			}
+
+			assert.Equal(t, testCase.want, genre)
+		})
+	}
+}
+
+func TestGetGamesByGenreID(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+
+	now := time.Now()
+
+	gameGenreRepository := NewGameGenre(testDB)
+
+	gameGenreID1 := values.NewGameGenreID()
+	gameGenreID2 := values.NewGameGenreID()
+	gameGenreID3 := values.NewGameGenreID()
+
+	gameGenre1 := migrate.GameGenreTable{
+		ID:        uuid.UUID(gameGenreID1),
+		Name:      "ジャンル1",
+		CreatedAt: now,
+	}
+	gameGenre2 := migrate.GameGenreTable{
+		ID:        uuid.UUID(gameGenreID2),
+		Name:      "ジャンル2",
+		CreatedAt: now.Add(-time.Hour),
+	}
+
+	var visibilities []migrate.GameVisibilityTypeTable
+	err = db.
+		Session(&gorm.Session{}).
+		Find(&visibilities).Error
+	if err != nil {
+		t.Fatalf("failed to get game visibility: %v\n", err)
+	}
+
+	var gameVisibilityTypeIDPublic int
+	for i := range visibilities {
+		if visibilities[i].Name == migrate.GameVisibilityTypePublic {
+			gameVisibilityTypeIDPublic = visibilities[i].ID
+		}
+	}
+
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	games := []migrate.GameTable2{
+		{
+			ID:               uuid.UUID(gameID1),
+			Name:             "test",
+			Description:      "test",
+			CreatedAt:        now,
+			VisibilityTypeID: gameVisibilityTypeIDPublic,
+			GameGenres:       []*migrate.GameGenreTable{&gameGenre1, &gameGenre2},
+		},
+		{
+			ID:               uuid.UUID(gameID2),
+			Name:             "test2",
+			Description:      "test2",
+			CreatedAt:        now.Add(-time.Hour),
+			VisibilityTypeID: gameVisibilityTypeIDPublic,
+			GameGenres:       []*migrate.GameGenreTable{&gameGenre2},
+		},
+	}
+
+	require.NoError(t, db.Create(&games).Error)
+	t.Cleanup(func() {
+		cleanupGameGenresTable(t)
+		require.NoError(t, db.
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameTable2{}).Error)
+	})
+
+	testCases := map[string]struct {
+		gameGenreID values.GameGenreID
+		games       []*domain.Game
+		isError     bool
+		wantErr     error
+	}{
+		"特に問題ないのでエラー無し": {
+			gameGenreID: gameGenreID1,
+			games: []*domain.Game{
+				domain.NewGame(gameID1, "test", "test", values.GameVisibilityTypePublic, now),
+			},
+		},
+		"複数のゲームでも問題なし": {
+			gameGenreID: gameGenreID2,
+			games: []*domain.Game{
+				domain.NewGame(gameID1, "test", "test", values.GameVisibilityTypePublic, now),
+				domain.NewGame(gameID2, "test2", "test2", values.GameVisibilityTypePublic, now.Add(-time.Hour)),
+			},
+		},
+		"ゲームが無くても問題なし": {
+			gameGenreID: gameGenreID3,
+			games:       []*domain.Game{},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			games, err := gameGenreRepository.GetGamesByGenreID(ctx, testCase.gameGenreID)
+
+			if testCase.isError {
+				if testCase.wantErr != nil {
+					assert.ErrorIs(t, err, testCase.wantErr)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, len(testCase.games), len(games))
+
+			// 返って来る順番は保証されないので、IDでソートして比較する
+			// 件数が少ないのでソートしているが、件数が多い場合はmapを使うなどが必要
+			gameSortFunc := func(a, b *domain.Game) int {
+				return cmp.Compare(uuid.UUID(a.GetID()).String(), uuid.UUID(b.GetID()).String())
+			}
+			slices.SortFunc(games, gameSortFunc)
+			slices.SortFunc(testCase.games, gameSortFunc)
+			for i := range games {
+				assert.Equal(t, testCase.games[i].GetID(), games[i].GetID())
+				assert.Equal(t, testCase.games[i].GetName(), games[i].GetName())
+				assert.Equal(t, testCase.games[i].GetDescription(), games[i].GetDescription())
+				assert.Equal(t, testCase.games[i].GetVisibility(), games[i].GetVisibility())
+				assert.WithinDuration(t, testCase.games[i].GetCreatedAt(), games[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+
 }
 
 // game_genresテーブルとgame_genre_relationsテーブルを削除する。gamesテーブルは削除されない。
