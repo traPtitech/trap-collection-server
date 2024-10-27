@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.3.0'
+  version: '2.4.0'
   title: 'traP Collection v2'
   contact:
     name: traP
@@ -857,6 +857,7 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
+            エントリーポイントが存在しない、zipファイルでないなどです。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "404":

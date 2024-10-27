@@ -105,7 +105,13 @@ func (gameFile GameFile) PostGameFile(c echo.Context, gameID openapi.GameIDInPat
 		var err error
 		savedFile, err = gameFile.gameFileService.SaveGameFile(c.Request().Context(), r, values.NewGameIDFromUUID(gameID), fileType, entryPoint)
 		if errors.Is(err, service.ErrInvalidGameID) {
-			return echo.NewHTTPError(http.StatusNotFound, "invalid gameID")
+			return echo.NewHTTPError(http.StatusNotFound, "gameID not found")
+		}
+		if errors.Is(err, service.ErrNotZipFile) {
+			return echo.NewHTTPError(http.StatusBadRequest, "only zip file is allowed")
+		}
+		if errors.Is(err, service.ErrInvalidEntryPoint) {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid entry point")
 		}
 		if err != nil {
 			log.Printf("error: failed to save game file: %v\n", err)
