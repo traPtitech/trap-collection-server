@@ -642,9 +642,7 @@ func TestPatchGameGenre(t *testing.T) {
 		invalidRequestBody bool
 		executeUpdateGame  bool
 		UpdateGameGenreErr error
-		executeGetGame     bool
 		gameGenre          *service.GameGenreInfo
-		GetGameGenreErr    error
 		resBody            openapi.GameGenre
 		statusCode         int
 		isErr              bool
@@ -660,7 +658,6 @@ func TestPatchGameGenre(t *testing.T) {
 				GameGenre: *domain.NewGameGenre(values.GameGenreID(gameGenreID), values.NewGameGenreName("new genre"), time.Now()),
 				Num:       1,
 			},
-			executeGetGame: true,
 			resBody: openapi.GameGenre{
 				Id:        uuid.UUID(gameGenreID),
 				Genre:     "new genre",
@@ -723,24 +720,6 @@ func TestPatchGameGenre(t *testing.T) {
 			isErr:              true,
 			statusCode:         http.StatusInternalServerError,
 		},
-		"GetGameGenreがErrNoGameGenreなので500": {
-			gameGenreID:       gameGenreID,
-			req:               openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
-			executeUpdateGame: true,
-			executeGetGame:    true,
-			GetGameGenreErr:   service.ErrNoGameGenre,
-			isErr:             true,
-			statusCode:        http.StatusNotFound,
-		},
-		"GetGameGenreがエラーなので500": {
-			gameGenreID:       gameGenreID,
-			req:               openapi.PatchGameGenreJSONRequestBody{Genre: "new genre"},
-			executeUpdateGame: true,
-			executeGetGame:    true,
-			GetGameGenreErr:   errors.New("test error"),
-			isErr:             true,
-			statusCode:        http.StatusInternalServerError,
-		},
 	}
 
 	for name, testCase := range testCases {
@@ -792,14 +771,7 @@ func TestPatchGameGenre(t *testing.T) {
 				mockGameGenreService.
 					EXPECT().
 					UpdateGameGenre(gomock.Any(), values.GameGenreIDFromUUID(testCase.gameGenreID), values.NewGameGenreName(testCase.req.Genre)).
-					Return(testCase.UpdateGameGenreErr)
-			}
-
-			if testCase.executeGetGame {
-				mockGameGenreService.
-					EXPECT().
-					GetGameGenre(gomock.Any(), values.GameGenreIDFromUUID(testCase.gameGenreID)).
-					Return(testCase.gameGenre, testCase.GetGameGenreErr)
+					Return(testCase.gameGenre, testCase.UpdateGameGenreErr)
 			}
 
 			err = gameGenreHandler.PatchGameGenre(c, testCase.gameGenreID)

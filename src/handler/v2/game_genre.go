@@ -191,7 +191,7 @@ func (gameGenre *GameGenre) PatchGameGenre(c echo.Context, gameGenreID openapi.G
 
 	ctx := c.Request().Context()
 
-	err := gameGenre.gameGenreService.UpdateGameGenre(ctx, values.GameGenreIDFromUUID(gameGenreID), gameGenreName)
+	gameGenreInfo, err := gameGenre.gameGenreService.UpdateGameGenre(ctx, values.GameGenreIDFromUUID(gameGenreID), gameGenreName)
 	if errors.Is(err, service.ErrNoGameGenre) {
 		return echo.NewHTTPError(http.StatusNotFound, "game genre not found")
 	}
@@ -204,15 +204,6 @@ func (gameGenre *GameGenre) PatchGameGenre(c echo.Context, gameGenreID openapi.G
 	if err != nil {
 		log.Printf("error: failed to update game genre: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to update game genre")
-	}
-
-	gameGenreInfo, err := gameGenre.gameGenreService.GetGameGenre(ctx, values.GameGenreIDFromUUID(gameGenreID))
-	if errors.Is(err, service.ErrNoGameGenre) {
-		return echo.NewHTTPError(http.StatusNotFound, "game genre not found")
-	}
-	if err != nil {
-		log.Printf("error: failed to get game genre: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game genre")
 	}
 
 	res := openapi.GameGenre{
