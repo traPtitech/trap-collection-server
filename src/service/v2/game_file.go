@@ -40,12 +40,17 @@ func NewGameFile(
 	}
 }
 
-func (*GameFile) checkZip(_ context.Context, reader io.Reader) (*zip.Reader, bool, error) {
+func (*GameFile) checkZip(_ context.Context, reader io.Reader) (zr *zip.Reader, ok bool, err error) {
 	f, err := os.CreateTemp("", "game_file")
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer os.Remove(f.Name())
+	defer func() {
+		err = os.Remove(f.Name())
+	}()
+	defer func() {
+		err = f.Close()
+	}()
 
 	_, err = io.Copy(f, reader)
 	if err != nil {
@@ -56,7 +61,7 @@ func (*GameFile) checkZip(_ context.Context, reader io.Reader) (*zip.Reader, boo
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to get file info: %w", err)
 	}
-	zr, err := zip.NewReader(f, fInfo.Size())
+	zr, err = zip.NewReader(f, fInfo.Size())
 	if errors.Is(err, zip.ErrFormat) {
 		return nil, false, nil
 	}
