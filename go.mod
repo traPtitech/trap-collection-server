@@ -26,7 +26,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/ory/dockertest/v3 v3.11.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/mod v0.21.0
+	golang.org/x/mod v0.22.0
 	golang.org/x/sync v0.9.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
