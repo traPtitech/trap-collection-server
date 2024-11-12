@@ -81,26 +81,36 @@ func Test_checkEntryPointExist(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		entryPoint values.GameFileEntryPoint
-		result     bool
-		isErr      bool
-		err        error
+		entryPoint  values.GameFileEntryPoint
+		zipFileName string
+		result      bool
+		isErr       bool
+		err         error
 	}{
 		"特に問題ないのでエラーなし": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/file"),
-			result:     true,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/file"),
+			zipFileName: "a.zip",
+			result:      true,
 		},
 		"存在しないパスなのでfalse": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/not_exist"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/not_exist"),
+			zipFileName: "a.zip",
+			result:      false,
 		},
 		".で始まる相対パスはfalse": {
-			entryPoint: values.NewGameFileEntryPoint("./a/b/file"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("./a/b/file"),
+			zipFileName: "a.zip",
+			result:      false,
 		},
 		"ディレクトリを指定しているのでfalse": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/"),
+			zipFileName: "a.zip",
+			result:      false,
+		},
+		"ファイルのzipでもエラー無し": {
+			entryPoint:  values.NewGameFileEntryPoint("b.txt"),
+			zipFileName: "b.zip",
+			result:      true,
 		},
 	}
 
@@ -109,7 +119,7 @@ func Test_checkEntryPointExist(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			b, err := testdata.FS.ReadFile("a.zip")
+			b, err := testdata.FS.ReadFile(testCase.zipFileName)
 			require.NoError(t, err)
 
 			r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
