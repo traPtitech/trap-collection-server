@@ -8,7 +8,9 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -72,6 +74,8 @@ func (*GameFile) checkZip(_ context.Context, reader io.Reader) (zr *zip.Reader, 
 	return zr, true, nil
 }
 
+// エントリーポイントが存在し、それがディレクトリでないことを確認。
+// 一般的なエントリーポイントの存在確認に使う。
 func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
 	entryPointExists := slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
 		return zf.Name == string(entryPoint) && !zf.FileInfo().IsDir()
@@ -79,6 +83,50 @@ func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPo
 
 	if !entryPointExists {
 		return false, nil
+	}
+
+	return true, nil
+}
+
+// macOSのアプリケーション(*.app)のエントリーポイントが正しいか確認。
+// 仕様は [Appleの開発者向けページ] を参照。
+//
+// 具体的には、
+//   - エントリーポイントがディレクトリで .app で終わること
+//   - エントリーポイント/Contents/MacOS というディレクトリが存在すること
+//   - エントリーポイント/Contents/Info.plist というファイルが存在すること
+//
+// [Appleの開発者向けページ]: https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html#//apple_ref/doc/uid/10000123i-CH101-SW1
+func (*GameFile) checkMacOSAppEntryPointValid(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
+	if !strings.HasSuffix(string(entryPoint), ".app") {
+		return false, nil
+	}
+
+	requiredDirs := []string{
+		string(entryPoint),
+		path.Join(string(entryPoint), "Contents"),
+		path.Join(string(entryPoint), "Contents", "MacOS"),
+	}
+
+	for _, dir := range requiredDirs {
+		dir = dir + "/"
+		if !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
+			return zf.Name == dir && zf.FileInfo().IsDir()
+		}) {
+			return false, nil
+		}
+	}
+
+	requiredFiles := []string{
+		path.Join(string(entryPoint), "Contents", "Info.plist"),
+	}
+
+	for _, file := range requiredFiles {
+		if !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
+			return zf.Name == file && !zf.FileInfo().IsDir()
+		}) {
+			return false, nil
+		}
 	}
 
 	return true, nil
@@ -149,15 +197,22 @@ func (gameFile *GameFile) SaveGameFile(ctx context.Context, reader io.Reader, ga
 				return service.ErrNotZipFile
 			}
 
-			ok, err = gameFile.checkEntryPointExist(ctx, zr, entryPoint)
-			if err != nil {
-				return fmt.Errorf("failed to check entry point exist: %w", err)
+			// これらのどれか一つで成功した場合(trueが返ってきた場合)、有効なエントリーポイントとして扱う
+			checkers := []func(context.Context, *zip.Reader, values.GameFileEntryPoint) (bool, error){
+				gameFile.checkEntryPointExist,
+				gameFile.checkMacOSAppEntryPointValid,
 			}
-			if !ok {
-				return service.ErrInvalidEntryPoint
+			for _, checker := range checkers {
+				ok, err = checker(ctx, zr, entryPoint)
+				if err != nil {
+					return fmt.Errorf("failed to check entry point: %w", err)
+				}
+				if ok {
+					return nil
+				}
 			}
 
-			return nil
+			return service.ErrInvalidEntryPoint
 		})
 
 		eg.Go(func() error {
