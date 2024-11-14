@@ -74,12 +74,19 @@ func (*GameFile) checkZip(_ context.Context, reader io.Reader) (zr *zip.Reader, 
 	return zr, true, nil
 }
 
+func zipFileContains(zr *zip.Reader, filePath string, isDir bool) bool {
+	return slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
+		if isDir {
+			return path.Clean(zf.Name) == filePath && zf.FileInfo().IsDir()
+		}
+		return zf.Name == filePath && !zf.FileInfo().IsDir()
+	})
+}
+
 // エントリーポイントが存在し、それがディレクトリでないことを確認。
 // 一般的なエントリーポイントの存在確認に使う。
 func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
-	entryPointExists := slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
-		return zf.Name == string(entryPoint) && !zf.FileInfo().IsDir()
-	})
+	entryPointExists := zipFileContains(zr, string(entryPoint), false)
 
 	if !entryPointExists {
 		return false, nil
@@ -98,9 +105,7 @@ func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPo
 //
 // [Appleの開発者向けページ]: https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html#//apple_ref/doc/uid/10000123i-CH101-SW1
 func (*GameFile) checkMacOSAppEntryPointValid(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
-	if !strings.HasSuffix(string(entryPoint), ".app") || !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
-		return zf.Name == string(entryPoint) && zf.FileInfo().IsDir()
-	}) {
+	if !strings.HasSuffix(string(entryPoint), ".app") || !zipFileContains(zr, string(entryPoint), true) {
 		return false, nil
 	}
 
@@ -110,10 +115,7 @@ func (*GameFile) checkMacOSAppEntryPointValid(_ context.Context, zr *zip.Reader,
 	}
 
 	for _, dir := range requiredDirs {
-		dir = dir + "/"
-		if !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
-			return zf.Name == dir && zf.FileInfo().IsDir()
-		}) {
+		if !zipFileContains(zr, dir, true) {
 			return false, nil
 		}
 	}
@@ -123,9 +125,7 @@ func (*GameFile) checkMacOSAppEntryPointValid(_ context.Context, zr *zip.Reader,
 	}
 
 	for _, file := range requiredFiles {
-		if !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
-			return zf.Name == file && !zf.FileInfo().IsDir()
-		}) {
+		if !zipFileContains(zr, file, false) {
 			return false, nil
 		}
 	}
