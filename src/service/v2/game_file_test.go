@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -81,26 +82,36 @@ func Test_checkEntryPointExist(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		entryPoint values.GameFileEntryPoint
-		result     bool
-		isErr      bool
-		err        error
+		entryPoint  values.GameFileEntryPoint
+		zipFileName string
+		result      bool
+		isErr       bool
+		err         error
 	}{
 		"特に問題ないのでエラーなし": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/file"),
-			result:     true,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/file"),
+			zipFileName: "a.zip",
+			result:      true,
 		},
 		"存在しないパスなのでfalse": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/not_exist"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/not_exist"),
+			zipFileName: "a.zip",
+			result:      false,
 		},
 		".で始まる相対パスはfalse": {
-			entryPoint: values.NewGameFileEntryPoint("./a/b/file"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("./a/b/file"),
+			zipFileName: "a.zip",
+			result:      false,
 		},
 		"ディレクトリを指定しているのでfalse": {
-			entryPoint: values.NewGameFileEntryPoint("a/b/"),
-			result:     false,
+			entryPoint:  values.NewGameFileEntryPoint("a/b/"),
+			zipFileName: "a.zip",
+			result:      false,
+		},
+		"ファイルのzipでもエラー無し": {
+			entryPoint:  values.NewGameFileEntryPoint("b.txt"),
+			zipFileName: "b.zip",
+			result:      true,
 		},
 	}
 
@@ -109,7 +120,7 @@ func Test_checkEntryPointExist(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			b, err := testdata.FS.ReadFile("a.zip")
+			b, err := testdata.FS.ReadFile(testCase.zipFileName)
 			require.NoError(t, err)
 
 			r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
@@ -127,6 +138,80 @@ func Test_checkEntryPointExist(t *testing.T) {
 			}
 
 			assert.Equal(t, testCase.result, result)
+		})
+	}
+}
+
+func Test_checkMacOSAppEntryPointValid(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		zipFileName string
+		entryPoint  values.GameFileEntryPoint
+		result      bool
+		isErr       bool
+		err         error
+	}{
+		"特に問題ないのでエラー無し": {
+			zipFileName: "test.app.zip",
+			entryPoint:  values.NewGameFileEntryPoint("test.app"),
+			result:      true,
+		},
+		"entryPointが*.appでないのでfalse": {
+			zipFileName: "test.app2.zip",
+			entryPoint:  values.NewGameFileEntryPoint("test.app2"),
+			result:      false,
+		},
+		"Contentsフォルダが無いのでfalse": {
+			zipFileName: "NoContents.zip",
+			entryPoint:  values.NewGameFileEntryPoint("test.app"),
+			result:      false,
+		},
+		"MacOSフォルダが無いのでfalse": {
+			zipFileName: "NoMacOS.zip",
+			entryPoint:  values.NewGameFileEntryPoint("test.app"),
+			result:      false,
+		},
+		"Info.plistが無いのでfalse": {
+			zipFileName: "NoInfoPlist.zip",
+			entryPoint:  values.NewGameFileEntryPoint("test.app"),
+			result:      false,
+		},
+		"エントリーポイントに該当するファイルが無いのでfalse": {
+			zipFileName: "test.app.zip",
+			entryPoint:  values.NewGameFileEntryPoint("invalid.app"),
+			result:      false,
+		},
+		".appがフォルダでないのでfalse": {
+			zipFileName: "file.app.zip",
+			entryPoint:  values.NewGameFileEntryPoint("file.app"),
+			result:      false,
+		},
+	}
+	gameFile := &GameFile{}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			b, err := testdata.FS.ReadFile(path.Join("macOS_app", testCase.zipFileName))
+			require.NoError(t, err)
+
+			r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+			require.NoError(t, err)
+
+			ok, err := gameFile.checkMacOSAppEntryPointValid(context.Background(), r, testCase.entryPoint)
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, testCase.result, ok)
 		})
 	}
 }
