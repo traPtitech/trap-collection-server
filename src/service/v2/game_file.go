@@ -98,12 +98,13 @@ func (*GameFile) checkEntryPointExist(_ context.Context, zr *zip.Reader, entryPo
 //
 // [Appleの開発者向けページ]: https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html#//apple_ref/doc/uid/10000123i-CH101-SW1
 func (*GameFile) checkMacOSAppEntryPointValid(_ context.Context, zr *zip.Reader, entryPoint values.GameFileEntryPoint) (bool, error) {
-	if !strings.HasSuffix(string(entryPoint), ".app") {
+	if !strings.HasSuffix(string(entryPoint), ".app") || !slices.ContainsFunc(zr.File, func(zf *zip.File) bool {
+		return zf.Name == string(entryPoint) && zf.FileInfo().IsDir()
+	}) {
 		return false, nil
 	}
 
 	requiredDirs := []string{
-		string(entryPoint),
 		path.Join(string(entryPoint), "Contents"),
 		path.Join(string(entryPoint), "Contents", "MacOS"),
 	}
