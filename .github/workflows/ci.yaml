@@ -36,7 +36,7 @@ jobs:
       - name: Upload coverage data
         uses: codecov/codecov-action@v5.0.1
         with:
-          file: /tmp/coverage/coverage.txt
+          files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
