@@ -15,7 +15,7 @@ CREATE TABLE `launcher_users` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `product_key` (`product_key`),
+  UNIQUE KEY `uni_launcher_users_product_key` (`product_key`),
   KEY `fk_launcher_versions_launcher_users` (`launcher_version_id`),
   CONSTRAINT `fk_launcher_versions_launcher_users` FOREIGN KEY (`launcher_version_id`) REFERENCES `launcher_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -39,7 +39,7 @@ CREATE TABLE `launcher_users` (
 | ---- | ---- | ---------- |
 | fk_launcher_versions_launcher_users | FOREIGN KEY | FOREIGN KEY (launcher_version_id) REFERENCES launcher_versions (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
-| product_key | UNIQUE | UNIQUE KEY product_key (product_key) |
+| uni_launcher_users_product_key | UNIQUE | UNIQUE KEY uni_launcher_users_product_key (product_key) |
 
 ## Indexes
 
@@ -47,7 +47,7 @@ CREATE TABLE `launcher_users` (
 | ---- | ---------- |
 | fk_launcher_versions_launcher_users | KEY fk_launcher_versions_launcher_users (launcher_version_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| product_key | UNIQUE KEY product_key (product_key) USING BTREE |
+| uni_launcher_users_product_key | UNIQUE KEY uni_launcher_users_product_key (product_key) USING BTREE |
 
 ## Relations
 

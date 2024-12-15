@@ -13,7 +13,7 @@ CREATE TABLE `game_visibility_types` (
   `name` varchar(32) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uni_game_visibility_types_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `game_visibility_types` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_game_visibility_types_name | UNIQUE | UNIQUE KEY uni_game_visibility_types_name (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_game_visibility_types_name | UNIQUE KEY uni_game_visibility_types_name (name) USING BTREE |
 
 ## Relations
 

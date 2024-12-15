@@ -13,7 +13,7 @@ CREATE TABLE `product_key_statuses` (
   `name` varchar(32) NOT NULL,
   `active` tinyint(1) DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uni_product_key_statuses_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `product_key_statuses` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_product_key_statuses_name | UNIQUE | UNIQUE KEY uni_product_key_statuses_name (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_product_key_statuses_name | UNIQUE KEY uni_product_key_statuses_name (name) USING BTREE |
 
 ## Relations
 

@@ -15,7 +15,7 @@ CREATE TABLE `product_keys` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `status_id` tinyint(4) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `product_key` (`product_key`),
+  UNIQUE KEY `uni_product_keys_product_key` (`product_key`),
   KEY `fk_editions_product_keys` (`edition_id`),
   KEY `fk_product_keys_status` (`status_id`),
   CONSTRAINT `fk_editions_product_keys` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
@@ -42,7 +42,7 @@ CREATE TABLE `product_keys` (
 | fk_editions_product_keys | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
 | fk_product_keys_status | FOREIGN KEY | FOREIGN KEY (status_id) REFERENCES product_key_statuses (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
-| product_key | UNIQUE | UNIQUE KEY product_key (product_key) |
+| uni_product_keys_product_key | UNIQUE | UNIQUE KEY uni_product_keys_product_key (product_key) |
 
 ## Indexes
 
@@ -51,7 +51,7 @@ CREATE TABLE `product_keys` (
 | fk_editions_product_keys | KEY fk_editions_product_keys (edition_id) USING BTREE |
 | fk_product_keys_status | KEY fk_product_keys_status (status_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| product_key | UNIQUE KEY product_key (product_key) USING BTREE |
+| uni_product_keys_product_key | UNIQUE KEY uni_product_keys_product_key (product_key) USING BTREE |
 
 ## Relations
 

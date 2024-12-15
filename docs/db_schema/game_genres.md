@@ -13,7 +13,7 @@ CREATE TABLE `game_genres` (
   `name` varchar(32) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uni_game_genres_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `game_genres` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_game_genres_name | UNIQUE | UNIQUE KEY uni_game_genres_name (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_game_genres_name | UNIQUE KEY uni_game_genres_name (name) USING BTREE |
 
 ## Relations
 

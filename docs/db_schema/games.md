@@ -15,6 +15,7 @@ CREATE TABLE `games` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   `visibility_type_id` tinyint(4) NOT NULL,
+  `latest_version_updated_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `fk_games_game_visibility_type` (`visibility_type_id`),
   CONSTRAINT `fk_games_game_visibility_type` FOREIGN KEY (`visibility_type_id`) REFERENCES `game_visibility_types` (`id`)
@@ -33,6 +34,7 @@ CREATE TABLE `games` (
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
 | deleted_at | datetime | NULL | true |  |  | 削除日時 |
 | visibility_type_id | tinyint(4) |  | false |  | [game_visibility_types](game_visibility_types.md) | ゲームの公開範囲のID |
+| latest_version_updated_at | datetime | current_timestamp() | false |  |  |  |
 
 ## Constraints
 

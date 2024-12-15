@@ -16,7 +16,7 @@ CREATE TABLE `access_tokens` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `access_token` (`access_token`),
+  UNIQUE KEY `uni_access_tokens_access_token` (`access_token`),
   KEY `fk_product_keys_access_tokens` (`product_key_id`),
   CONSTRAINT `fk_product_keys_access_tokens` FOREIGN KEY (`product_key_id`) REFERENCES `product_keys` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -39,9 +39,9 @@ CREATE TABLE `access_tokens` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| access_token | UNIQUE | UNIQUE KEY access_token (access_token) |
 | fk_product_keys_access_tokens | FOREIGN KEY | FOREIGN KEY (product_key_id) REFERENCES product_keys (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_access_tokens_access_token | UNIQUE | UNIQUE KEY uni_access_tokens_access_token (access_token) |
 
 ## Indexes
 
@@ -49,7 +49,7 @@ CREATE TABLE `access_tokens` (
 | ---- | ---------- |
 | fk_product_keys_access_tokens | KEY fk_product_keys_access_tokens (product_key_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| access_token | UNIQUE KEY access_token (access_token) USING BTREE |
+| uni_access_tokens_access_token | UNIQUE KEY uni_access_tokens_access_token (access_token) USING BTREE |
 
 ## Relations
 
