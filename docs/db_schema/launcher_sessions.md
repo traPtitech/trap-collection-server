@@ -16,7 +16,7 @@ CREATE TABLE `launcher_sessions` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `access_token` (`access_token`),
+  UNIQUE KEY `uni_launcher_sessions_access_token` (`access_token`),
   KEY `fk_launcher_users_launcher_sessions` (`launcher_user_id`),
   CONSTRAINT `fk_launcher_users_launcher_sessions` FOREIGN KEY (`launcher_user_id`) REFERENCES `launcher_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -39,9 +39,9 @@ CREATE TABLE `launcher_sessions` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| access_token | UNIQUE | UNIQUE KEY access_token (access_token) |
 | fk_launcher_users_launcher_sessions | FOREIGN KEY | FOREIGN KEY (launcher_user_id) REFERENCES launcher_users (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_launcher_sessions_access_token | UNIQUE | UNIQUE KEY uni_launcher_sessions_access_token (access_token) |
 
 ## Indexes
 
@@ -49,7 +49,7 @@ CREATE TABLE `launcher_sessions` (
 | ---- | ---------- |
 | fk_launcher_users_launcher_sessions | KEY fk_launcher_users_launcher_sessions (launcher_user_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| access_token | UNIQUE KEY access_token (access_token) USING BTREE |
+| uni_launcher_sessions_access_token | UNIQUE KEY uni_launcher_sessions_access_token (access_token) USING BTREE |
 
 ## Relations
 

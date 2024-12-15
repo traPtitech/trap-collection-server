@@ -8,7 +8,7 @@
 | [admins](admins.md) | 1 |  | BASE TABLE |
 | [editions](editions.md) | 5 | エディションテーブル(v2) | BASE TABLE |
 | [edition_game_version_relations](edition_game_version_relations.md) | 2 | エディションとゲームバージョンの関係テーブル(v2) | BASE TABLE |
-| [games](games.md) | 6 | ゲームテーブル | BASE TABLE |
+| [games](games.md) | 7 | ゲームテーブル | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |
 | [game_file_types](game_file_types.md) | 3 | ゲームファイルの種類のテーブル | BASE TABLE |
 | [game_genres](game_genres.md) | 3 | ゲームのジャンルのテーブル | BASE TABLE |

@@ -19,8 +19,8 @@
 - service: アプリケーションのロジック。
 - auth: traQを用いた認証。
 - cache: オンメモリキャッシュ。現在は[ristretto](https://github.com/dgraph-io/ristretto)を使用した実装を使っている。
-- repository: データの永続化。RDBMSの範囲での抽象化になっている。現在はGORM2でMySQLを使用する実装を使っている。
-- handler: REST API。現在はOpenAPI Generatorによるコード生成を使ったv1実装を使っている。
+- repository: データの永続化。RDBMSの範囲での抽象化になっている。現在は[GORM2](https://gorm.io/)でMySQLを使用する実装を使っている。
+- handler: REST API。現在は [oapi-codegen](github.com/oapi-codegen/oapi-codegen) によるコード生成を使ったv2実装を使っている。
 - storage: ファイルなどのデータの格納。現在は[ncs/swift](https://github.com/ncw/swift/v2)、OpenStack Swift互換のObject Storageを使う実装を使っている。
 - wire: DI。各要素をDIにより繋ぎ合わせる。
 
@@ -29,7 +29,6 @@
 全体
 
 ![](../docs/images/overview.drawio.svg)
-
 
 Application内
 

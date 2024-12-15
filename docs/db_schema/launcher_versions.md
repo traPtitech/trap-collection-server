@@ -15,7 +15,7 @@ CREATE TABLE `launcher_versions` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uni_launcher_versions_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -35,15 +35,15 @@ CREATE TABLE `launcher_versions` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| name | UNIQUE | UNIQUE KEY name (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_launcher_versions_name | UNIQUE | UNIQUE KEY uni_launcher_versions_name (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| name | UNIQUE KEY name (name) USING BTREE |
+| uni_launcher_versions_name | UNIQUE KEY uni_launcher_versions_name (name) USING BTREE |
 
 ## Relations
 

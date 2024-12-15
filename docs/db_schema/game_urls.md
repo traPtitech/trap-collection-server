@@ -14,7 +14,7 @@ CREATE TABLE `game_urls` (
   `url` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `game_version_id` (`game_version_id`),
+  UNIQUE KEY `uni_game_urls_game_version_id` (`game_version_id`),
   CONSTRAINT `fk_game_versions_game_url` FOREIGN KEY (`game_version_id`) REFERENCES `game_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -35,15 +35,15 @@ CREATE TABLE `game_urls` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | fk_game_versions_game_url | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES game_versions (id) |
-| game_version_id | UNIQUE | UNIQUE KEY game_version_id (game_version_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
+| uni_game_urls_game_version_id | UNIQUE | UNIQUE KEY uni_game_urls_game_version_id (game_version_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
-| game_version_id | UNIQUE KEY game_version_id (game_version_id) USING BTREE |
+| uni_game_urls_game_version_id | UNIQUE KEY uni_game_urls_game_version_id (game_version_id) USING BTREE |
 
 ## Relations
 

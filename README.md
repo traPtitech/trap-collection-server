@@ -17,7 +17,7 @@ traPのゲームランチャーtraP Collectionのサーバーサイドです。
 [Task](https://taskfile.dev/)をタスクランナーとして使用しているので、
 Goをinstallした上で以下のコマンドを実行してinstallしてください。
 ```bash
-go install github.com/go-task/task/v3/cmd/task
+go install github.com/go-task/task/v3/cmd/task@latest
 ```
 
 次に以下のコマンドを実行することで環境構築が完了します。
@@ -47,11 +47,7 @@ task dev
 task clean:db
 ```
 
-### v1のAPIのみで起動
-以下のコマンドを実行することで、現在の本番環境と同様のv1のAPIのみが有効な状態で起動できます。
-```bash
-task dev:v1
-```
+`Permission denied`などと表示される場合は、`task down`でアプリを止めた後にプロジェクトのルートで`sudo rm -rf mysql`を実行してください。
 
 ## テストの実行
 GitHub Actionsで走っているのと同様のテストを以下のコマンドで実行できます。
