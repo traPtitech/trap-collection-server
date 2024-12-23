@@ -42,7 +42,7 @@ const (
 // アプリケーションのv2
 type (
 	GameTable2              = gameTable2V13 // 実際に使用されるテーブルはv1のGameTableと同一
-	GameVersionTable2       = gameVersionTable2V5
+	GameVersionTable2       = gameVersionTable2V14
 	GameFileTable2          = gameFileTable2V5
 	GameImageTable2         = gameImageTable2V2
 	GameVideoTable2         = gameVideoTable2V2
