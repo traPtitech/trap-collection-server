@@ -87,9 +87,14 @@ func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDI
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game video")
 		}
 
-		if video.GetType() == values.GameVideoTypeMp4 {
+		switch video.GetType() {
+		case values.GameVideoTypeMp4:
 			mime = openapi.Videomp4
-		} else {
+		case values.GameVideoTypeM4v:
+			mime = openapi.Videom4v
+		case values.GameVideoTypeMkv:
+			mime = openapi.Videomkv
+		default:
 			log.Printf("error: unknown game video type: %v\n", video.GetType())
 			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
 		}

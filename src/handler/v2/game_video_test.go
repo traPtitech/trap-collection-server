@@ -226,6 +226,38 @@ func TestPostGameVideo(t *testing.T) {
 			},
 		},
 		{
+			description:          "m4vでもエラーなし",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameVideo: true,
+			video: domain.NewGameVideo(
+				gameVideoID1,
+				values.GameVideoTypeM4v,
+				now,
+			),
+			resVideo: openapi.GameVideo{
+				Id:        uuid.UUID(gameVideoID1),
+				Mime:      openapi.Videom4v,
+				CreatedAt: now,
+			},
+		},
+		{
+			description:          "mkvでもエラーなし",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameVideo: true,
+			video: domain.NewGameVideo(
+				gameVideoID1,
+				values.GameVideoTypeMkv,
+				now,
+			),
+			resVideo: openapi.GameVideo{
+				Id:        uuid.UUID(gameVideoID1),
+				Mime:      openapi.Videomkv,
+				CreatedAt: now,
+			},
+		},
+		{
 			// serviceが正しく動作していればあり得ないが、念のため確認
 			description:          "mp4でないので500",
 			gameID:               uuid.UUID(values.NewGameID()),
