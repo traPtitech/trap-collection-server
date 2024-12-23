@@ -30,19 +30,25 @@ func (gameVideo *GameVideoV2) SaveGameVideo(ctx context.Context, gameID values.G
 	}
 
 	var videoTypeName string
-	if video.GetType() == values.GameVideoTypeMp4 {
+	switch video.GetType() {
+	case values.GameVideoTypeMp4:
 		videoTypeName = migrate.GameVideoTypeMp4
-	} else {
+	case values.GameVideoTypeM4v:
+		videoTypeName = migrate.GameVideoTypeM4v
+	case values.GameVideoTypeMkv:
+		videoTypeName = migrate.GameVideoTypeMkv
+	default:
 		return fmt.Errorf("invalid video type: %d", video.GetType())
 	}
 
 	var videoType migrate.GameVideoTypeTable
 	err = db.
 		Where("name = ?", videoTypeName).
+		Where("active = ?", true).
 		Select("id").
 		Take(&videoType).Error
 	if err != nil {
-		return fmt.Errorf("failed to get role type: %w", err)
+		return fmt.Errorf("failed to get video type: %w", err)
 	}
 	videoTypeID := videoType.ID
 
