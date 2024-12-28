@@ -2,6 +2,7 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -35,7 +36,7 @@ func convertVideoType(value values.GameVideoType) (openapi.GameVideoMime, error)
 	case values.GameVideoTypeMkv:
 		return openapi.Videomkv, nil
 	default:
-		return "", errors.New("invalid video type")
+		return "", fmt.Errorf("invalid video type: %v", value)
 	}
 }
 
