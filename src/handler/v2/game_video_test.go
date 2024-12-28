@@ -320,6 +320,15 @@ func TestPostGameVideo(t *testing.T) {
 			statusCode:           http.StatusNotFound,
 		},
 		{
+			description:          "SaveGameVideoがErrInvalidFormatなので400",
+			gameID:               uuid.UUID(values.NewGameID()),
+			reader:               bytes.NewReader([]byte("test")),
+			executeSaveGameVideo: true,
+			saveGameVideoErr:     service.ErrInvalidFormat,
+			isErr:                true,
+			statusCode:           http.StatusBadRequest,
+		},
+		{
 			description:          "SaveGameVideoがエラーなので500",
 			gameID:               uuid.UUID(values.NewGameID()),
 			reader:               bytes.NewReader([]byte("test")),
