@@ -48,6 +48,7 @@ func TestGetGameVideos(t *testing.T) {
 	gameVideoID1 := values.NewGameVideoID()
 	gameVideoID2 := values.NewGameVideoID()
 	gameVideoID3 := values.NewGameVideoID()
+	gameVideoID4 := values.NewGameVideoID()
 
 	now := time.Now()
 	testCases := []test{
@@ -70,7 +71,7 @@ func TestGetGameVideos(t *testing.T) {
 			},
 		},
 		{
-			description: "mp4でないので500",
+			description: "動画タイプがmp4,mkv,m4vでないので500",
 			gameID:      uuid.UUID(values.NewGameID()),
 			videos: []*domain.GameVideo{
 				domain.NewGameVideo(
@@ -127,6 +128,44 @@ func TestGetGameVideos(t *testing.T) {
 					Id:        uuid.UUID(gameVideoID3),
 					Mime:      openapi.Videomp4,
 					CreatedAt: now.Add(-10 * time.Hour),
+				},
+			},
+		},
+		{
+			description: "動画のタイプが複数あっても問題なし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			videos: []*domain.GameVideo{
+				domain.NewGameVideo(
+					gameVideoID2,
+					values.GameVideoTypeMp4,
+					now,
+				),
+				domain.NewGameVideo(
+					gameVideoID3,
+					values.GameVideoTypeM4v,
+					now.Add(-10*time.Hour),
+				),
+				domain.NewGameVideo(
+					gameVideoID4,
+					values.GameVideoTypeMkv,
+					now.Add(-20*time.Hour),
+				),
+			},
+			resVideos: []openapi.GameVideo{
+				{
+					Id:        uuid.UUID(gameVideoID2),
+					Mime:      openapi.Videomp4,
+					CreatedAt: now,
+				},
+				{
+					Id:        uuid.UUID(gameVideoID3),
+					Mime:      openapi.Videom4v,
+					CreatedAt: now.Add(-10 * time.Hour),
+				},
+				{
+					Id:        uuid.UUID(gameVideoID4),
+					Mime:      openapi.Videomkv,
+					CreatedAt: now.Add(-20 * time.Hour),
 				},
 			},
 		},
@@ -259,7 +298,7 @@ func TestPostGameVideo(t *testing.T) {
 		},
 		{
 			// serviceが正しく動作していればあり得ないが、念のため確認
-			description:          "mp4でないので500",
+			description:          "mp4,m4v,mkvでないので500",
 			gameID:               uuid.UUID(values.NewGameID()),
 			reader:               bytes.NewReader([]byte("test")),
 			executeSaveGameVideo: true,
@@ -515,7 +554,35 @@ func TestGetGameVideoMeta(t *testing.T) {
 			},
 		},
 		{
-			description: "mp4でないので500",
+			description: "m4vで問題ないのでエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			video: domain.NewGameVideo(
+				gameVideoID1,
+				values.GameVideoTypeM4v,
+				now,
+			),
+			resVideo: openapi.GameVideo{
+				Id:        uuid.UUID(gameVideoID1),
+				Mime:      openapi.Videom4v,
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "mkvで問題ないのでエラーなし",
+			gameID:      uuid.UUID(values.NewGameID()),
+			video: domain.NewGameVideo(
+				gameVideoID1,
+				values.GameVideoTypeMkv,
+				now,
+			),
+			resVideo: openapi.GameVideo{
+				Id:        uuid.UUID(gameVideoID1),
+				Mime:      openapi.Videomkv,
+				CreatedAt: now,
+			},
+		},
+		{
+			description: "mp4,mkv,m4vでないので500",
 			gameID:      uuid.UUID(values.NewGameID()),
 			video: domain.NewGameVideo(
 				values.NewGameVideoID(),

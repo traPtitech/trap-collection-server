@@ -26,6 +26,19 @@ func NewGameVideo(gameVideoService service.GameVideoV2) *GameVideo {
 	}
 }
 
+func convertVideoType(value values.GameVideoType) (openapi.GameVideoMime, error) {
+	switch value {
+	case values.GameVideoTypeMp4:
+		return openapi.Videomp4, nil
+	case values.GameVideoTypeM4v:
+		return openapi.Videom4v, nil
+	case values.GameVideoTypeMkv:
+		return openapi.Videomkv, nil
+	default:
+		return "", errors.New("invalid video type")
+	}
+}
+
 // ゲーム動画一覧の取得
 // (GET /games/{gameID}/videos)
 func (gameVideo *GameVideo) GetGameVideos(c echo.Context, gameID openapi.GameIDInPath) error {
@@ -41,11 +54,10 @@ func (gameVideo *GameVideo) GetGameVideos(c echo.Context, gameID openapi.GameIDI
 	resVideos := make([]openapi.GameVideo, 0, len(videos))
 	for _, video := range videos {
 		var mime openapi.GameVideoMime
-		if video.GetType() == values.GameVideoTypeMp4 {
-			mime = openapi.Videomp4
-		} else {
-			log.Printf("error: unknown game video type: %v\n", video.GetType())
-			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
+		mime, err := convertVideoType(video.GetType())
+		if err != nil {
+			log.Printf("error: failed to convert video type: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert video type")
 		}
 
 		resVideos = append(resVideos, openapi.GameVideo{
@@ -87,16 +99,10 @@ func (gameVideo *GameVideo) PostGameVideo(c echo.Context, gameID openapi.GameIDI
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to save game video")
 		}
 
-		switch video.GetType() {
-		case values.GameVideoTypeMp4:
-			mime = openapi.Videomp4
-		case values.GameVideoTypeM4v:
-			mime = openapi.Videom4v
-		case values.GameVideoTypeMkv:
-			mime = openapi.Videomkv
-		default:
-			log.Printf("error: unknown game video type: %v\n", video.GetType())
-			return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
+		mime, err = convertVideoType(video.GetType())
+		if err != nil {
+			log.Printf("error: failed to convert video type: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert video type")
 		}
 
 		return nil
@@ -154,11 +160,10 @@ func (gameVideo *GameVideo) GetGameVideoMeta(ctx echo.Context, gameID openapi.Ga
 	}
 
 	var mime openapi.GameVideoMime
-	if video.GetType() == values.GameVideoTypeMp4 {
-		mime = openapi.Videomp4
-	} else {
-		log.Printf("error: unknown game video type: %v\n", video.GetType())
-		return echo.NewHTTPError(http.StatusInternalServerError, "unknown game video type")
+	mime, err = convertVideoType(video.GetType())
+	if err != nil {
+		log.Printf("error: failed to convert video type: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert video type")
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.GameVideo{
