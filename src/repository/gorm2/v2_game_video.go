@@ -17,6 +17,19 @@ type GameVideoV2 struct {
 	db *DB
 }
 
+func convertGameVideoType(migrateGameVideoType string) (values.GameVideoType, error) {
+	switch migrateGameVideoType {
+	case migrate.GameVideoTypeMp4:
+		return values.GameVideoTypeMp4, nil
+	case migrate.GameVideoTypeM4v:
+		return values.GameVideoTypeM4v, nil
+	case migrate.GameVideoTypeMkv:
+		return values.GameVideoTypeMkv, nil
+	default:
+		return 0, fmt.Errorf("invalid video type: %s", migrateGameVideoType)
+	}
+}
+
 func NewGameVideoV2(db *DB) *GameVideoV2 {
 	return &GameVideoV2{
 		db: db,
@@ -89,11 +102,9 @@ func (gameVideo *GameVideoV2) GetGameVideo(ctx context.Context, gameVideoID valu
 		return nil, fmt.Errorf("failed to get game video: %w", err)
 	}
 
-	var videoType values.GameVideoType
-	if video.GameVideoType.Name == migrate.GameVideoTypeMp4 {
-		videoType = values.GameVideoTypeMp4
-	} else {
-		return nil, fmt.Errorf("invalid video type: %s", video.GameVideoType.Name)
+	videoType, err := convertGameVideoType(video.GameVideoType.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert video type: %w", err)
 	}
 
 	return &repository.GameVideoInfo{
@@ -129,11 +140,9 @@ func (gameVideo *GameVideoV2) GetGameVideos(ctx context.Context, gameID values.G
 
 	gameVideos := make([]*domain.GameVideo, 0, len(videos))
 	for _, video := range videos {
-		var videoType values.GameVideoType
-		if video.GameVideoType.Name == migrate.GameVideoTypeMp4 {
-			videoType = values.GameVideoTypeMp4
-		} else {
-			return nil, fmt.Errorf("invalid video type: %s", video.GameVideoType.Name)
+		videoType, err := convertGameVideoType(video.GameVideoType.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert video type: %w", err)
 		}
 
 		gameVideos = append(gameVideos, domain.NewGameVideo(

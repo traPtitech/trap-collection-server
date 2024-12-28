@@ -284,12 +284,16 @@ func TestGetGameVideo(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 	gameID3 := values.NewGameID()
+	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
 
 	videoID1 := values.NewGameVideoID()
 	videoID2 := values.NewGameVideoID()
 	videoID3 := values.NewGameVideoID()
 	videoID4 := values.NewGameVideoID()
 	videoID5 := values.NewGameVideoID()
+	videoID6 := values.NewGameVideoID()
+	videoID7 := values.NewGameVideoID()
 
 	var videoTypes []*migrate.GameVideoTypeTable
 	err = db.
@@ -336,6 +340,48 @@ func TestGetGameVideo(t *testing.T) {
 					now,
 				),
 				GameID: gameID1,
+			},
+		},
+		{
+			description: "mkv問題なし",
+			videoID:     videoID6,
+			lockType:    repository.LockTypeNone,
+			videos: []migrate.GameVideoTable2{
+				{
+					ID:          uuid.UUID(videoID6),
+					GameID:      uuid.UUID(gameID4),
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMkv],
+					CreatedAt:   now,
+				},
+			},
+			expectVideo: repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					videoID6,
+					values.GameVideoTypeMkv,
+					now,
+				),
+				GameID: gameID4,
+			},
+		},
+		{
+			description: "m4v問題なし",
+			videoID:     videoID7,
+			lockType:    repository.LockTypeNone,
+			videos: []migrate.GameVideoTable2{
+				{
+					ID:          uuid.UUID(videoID7),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeM4v],
+					CreatedAt:   now,
+				},
+			},
+			expectVideo: repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					videoID7,
+					values.GameVideoTypeM4v,
+					now,
+				),
+				GameID: gameID5,
 			},
 		},
 		{
@@ -474,11 +520,15 @@ func TestGetGameVideos(t *testing.T) {
 	gameID2 := values.NewGameID()
 	gameID3 := values.NewGameID()
 	gameID4 := values.NewGameID()
+	gameID5 := values.NewGameID()
 
 	videoID1 := values.NewGameVideoID()
 	videoID2 := values.NewGameVideoID()
 	videoID3 := values.NewGameVideoID()
 	videoID4 := values.NewGameVideoID()
+	videoID5 := values.NewGameVideoID()
+	videoID6 := values.NewGameVideoID()
+	videoID7 := values.NewGameVideoID()
 
 	var videoTypes []*migrate.GameVideoTypeTable
 	err = db.
@@ -573,6 +623,47 @@ func TestGetGameVideos(t *testing.T) {
 					videoID4,
 					values.GameVideoTypeMp4,
 					now.Add(-10*time.Hour),
+				),
+			},
+		},
+		{
+			description: "いろんなタイプの動画があっても問題なし",
+			gameID:      gameID5,
+			videos: []migrate.GameVideoTable2{
+				{
+					ID:          uuid.UUID(videoID5),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					CreatedAt:   now,
+				},
+				{
+					ID:          uuid.UUID(videoID6),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMkv],
+					CreatedAt:   now.Add(-10 * time.Hour),
+				},
+				{
+					ID:          uuid.UUID(videoID7),
+					GameID:      uuid.UUID(gameID5),
+					VideoTypeID: videoTypeMap[migrate.GameVideoTypeM4v],
+					CreatedAt:   now.Add(-20 * time.Hour),
+				},
+			},
+			expectVideos: []*domain.GameVideo{
+				domain.NewGameVideo(
+					videoID5,
+					values.GameVideoTypeMp4,
+					now,
+				),
+				domain.NewGameVideo(
+					videoID6,
+					values.GameVideoTypeMkv,
+					now.Add(-10*time.Hour),
+				),
+				domain.NewGameVideo(
+					videoID7,
+					values.GameVideoTypeM4v,
+					now.Add(-20*time.Hour),
 				),
 			},
 		},
