@@ -58,7 +58,7 @@ jobs:
           go_version_file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: any
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
