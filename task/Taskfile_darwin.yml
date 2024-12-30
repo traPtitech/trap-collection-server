@@ -49,3 +49,7 @@ tasks:
   clean:db:
     cmds:
       - task: unix:clean:db
+
+  update-frontend:
+    cmds:
+      - task: unix:update-frontend
