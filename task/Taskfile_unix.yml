@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   download:
@@ -70,3 +70,8 @@ tasks:
     dir: ../
     cmds:
       - rm -rf mysql/data
+
+  update-frontend:
+    dir: ../
+    cmds:
+      - docker compose -f docker/dev/compose.yaml build --no-cache collection-proxy

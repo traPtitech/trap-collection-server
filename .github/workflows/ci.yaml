@@ -34,7 +34,7 @@ jobs:
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.1.1
+        uses: codecov/codecov-action@v5.1.2
         with:
           files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
           go_version_file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: any
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
