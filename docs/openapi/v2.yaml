@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.4.0'
+  version: '2.4.1'
   title: 'traP Collection v2'
   contact:
     name: traP
@@ -3064,6 +3064,8 @@ components:
       type: string
       enum:
         - video/mp4
+        - video/m4v
+        - video/mkv
       description: |
         ゲーム紹介動画のmimeです。
     GameVideoContent:

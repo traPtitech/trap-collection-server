@@ -22,6 +22,7 @@ var (
 		v11(), // ゲームの公開範囲(visibility)の設定
 		v12(), // ゲームジャンルとゲームの関係を後方参照に変更
 		v13(), // gamesテーブルにバージョンの最終更新日時(latest_version_updated_at)カラムを追加
+		v14(), // game_video_typesにmkvとm4vを追加
 	}
 )
 

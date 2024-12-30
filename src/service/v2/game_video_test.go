@@ -38,6 +38,7 @@ func TestSaveGameVideo(t *testing.T) {
 		description                    string
 		gameID                         values.GameID
 		isValidFile                    bool
+		videoFileName                  string
 		videoType                      values.GameVideoType
 		GetGameErr                     error
 		executeRepositorySaveGameVideo bool
@@ -53,26 +54,47 @@ func TestSaveGameVideo(t *testing.T) {
 			description:                    "特に問題ないのでエラーなし",
 			gameID:                         values.NewGameID(),
 			isValidFile:                    true,
+			videoFileName:                  "1.mp4",
 			videoType:                      values.GameVideoTypeMp4,
 			executeRepositorySaveGameVideo: true,
 			executeStorageSaveGameVideo:    true,
 		},
 		{
-			description: "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
-			gameID:      values.NewGameID(),
-			isValidFile: true,
-			videoType:   values.GameVideoTypeMp4,
-			GetGameErr:  repository.ErrRecordNotFound,
-			isErr:       true,
-			err:         service.ErrInvalidGameID,
+			description:                    "m4vでも問題なし",
+			gameID:                         values.NewGameID(),
+			isValidFile:                    true,
+			videoFileName:                  "1.m4v",
+			videoType:                      values.GameVideoTypeM4v,
+			executeRepositorySaveGameVideo: true,
+			executeStorageSaveGameVideo:    true,
 		},
 		{
-			description: "GetGameがエラーなのでエラー",
-			gameID:      values.NewGameID(),
-			isValidFile: true,
-			videoType:   values.GameVideoTypeMp4,
-			GetGameErr:  errors.New("error"),
-			isErr:       true,
+			description:                    "mkvでも問題なし",
+			gameID:                         values.NewGameID(),
+			isValidFile:                    true,
+			videoFileName:                  "1.mkv",
+			videoType:                      values.GameVideoTypeMkv,
+			executeRepositorySaveGameVideo: true,
+			executeStorageSaveGameVideo:    true,
+		},
+		{
+			description:   "GetGameがErrRecordNotFoundなのでErrInvalidGameID",
+			gameID:        values.NewGameID(),
+			isValidFile:   true,
+			videoFileName: "1.mp4",
+			videoType:     values.GameVideoTypeMp4,
+			GetGameErr:    repository.ErrRecordNotFound,
+			isErr:         true,
+			err:           service.ErrInvalidGameID,
+		},
+		{
+			description:   "GetGameがエラーなのでエラー",
+			gameID:        values.NewGameID(),
+			isValidFile:   true,
+			videoFileName: "1.mp4",
+			videoType:     values.GameVideoTypeMp4,
+			GetGameErr:    errors.New("error"),
+			isErr:         true,
 		},
 		{
 			description:                 "動画が不正なのでエラー",
@@ -86,6 +108,7 @@ func TestSaveGameVideo(t *testing.T) {
 			description:                    "repository.SaveGameVideoがエラーなのでエラー",
 			gameID:                         values.NewGameID(),
 			isValidFile:                    true,
+			videoFileName:                  "1.mp4",
 			videoType:                      values.GameVideoTypeMp4,
 			executeRepositorySaveGameVideo: true,
 			executeStorageSaveGameVideo:    true,
@@ -96,6 +119,7 @@ func TestSaveGameVideo(t *testing.T) {
 			description:                    "storage.SaveGameVideoがエラーなのでエラー",
 			gameID:                         values.NewGameID(),
 			isValidFile:                    true,
+			videoFileName:                  "1.mp4",
 			videoType:                      values.GameVideoTypeMp4,
 			executeRepositorySaveGameVideo: true,
 			executeStorageSaveGameVideo:    true,
@@ -123,14 +147,7 @@ func TestSaveGameVideo(t *testing.T) {
 				imgBuf := bytes.NewBuffer(nil)
 
 				err := func() error {
-					var path string
-					if testCase.videoType == values.GameVideoTypeMp4 {
-						path = "1.mp4"
-					} else {
-						t.Fatalf("invalid video type: %v\n", testCase.videoType)
-					}
-
-					f, err := testdata.FS.Open(path)
+					f, err := testdata.FS.Open(testCase.videoFileName)
 					if err != nil {
 						return fmt.Errorf("failed to open file: %w", err)
 					}

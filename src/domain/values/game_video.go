@@ -22,6 +22,8 @@ func NewGameVideoIDFromUUID(id uuid.UUID) GameVideoID {
 
 const (
 	GameVideoTypeMp4 GameVideoType = iota
+	GameVideoTypeM4v
+	GameVideoTypeMkv
 )
 
 func NewGameVideoTmpURL(tmpURL *url.URL) GameVideoTmpURL {
