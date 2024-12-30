@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 includes:
   os:
@@ -74,3 +74,7 @@ tasks:
   clean:db:
     cmds:
       - task: os:clean:db
+
+  update-frontend:
+    cmds:
+      - task: os:update-frontend
