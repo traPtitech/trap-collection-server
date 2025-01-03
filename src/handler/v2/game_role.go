@@ -102,6 +102,11 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert visibility")
 	}
 
+	genres := make([]openapi.GameGenreName, 0, len(newGameInfo.Genres))
+	for _, genre := range newGameInfo.Genres {
+		genres = append(genres, openapi.GameGenreName(genre.GetName()))
+	}
+
 	resGame := openapi.Game{
 		Id:          uuid.UUID(newGameInfo.Game.GetID()),
 		Name:        string(newGameInfo.Game.GetName()),
@@ -110,6 +115,7 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 		Visibility:  visibility,
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &genres,
 	}
 
 	return ctx.JSON(http.StatusOK, resGame)
