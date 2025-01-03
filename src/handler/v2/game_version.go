@@ -183,6 +183,8 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid fileType")
 	case errors.Is(err, service.ErrNoAsset):
 		return echo.NewHTTPError(http.StatusBadRequest, "no assets")
+	case errors.Is(err, service.ErrDuplicateGameVersion):
+		return echo.NewHTTPError(http.StatusBadRequest, "duplicate game version")
 	case err != nil:
 		log.Printf("failed to create game version: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create game version")
