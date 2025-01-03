@@ -1078,6 +1078,28 @@ func TestPostGameVersion(t *testing.T) {
 			isErr:                true,
 			statusCode:           http.StatusBadRequest,
 		},
+		{
+			description: "CreateGameVersionがErrDuplicateGameVersionなので400",
+			apiGameVersion: &openapi.NewGameVersion{
+				Name:        "v1.0.0",
+				Description: "リリース",
+				ImageID:     uuid.UUID(imageID),
+				VideoID:     uuid.UUID(videoID),
+				Url:         &strURL,
+			},
+			executeCreateGameVersion: true,
+			gameID:                   gameID,
+			gameVersionName:          values.NewGameVersionName("v1.0.0"),
+			gameVersionDescription:   values.NewGameVersionDescription("リリース"),
+			imageID:                  imageID,
+			videoID:                  videoID,
+			assets: &service.Assets{
+				URL: types.NewOption(urlValue),
+			},
+			CreateGameVersionErr: service.ErrDuplicateGameVersion,
+			isErr:                true,
+			statusCode:           http.StatusBadRequest,
+		},
 	}
 
 	for _, testCase := range testCases {
