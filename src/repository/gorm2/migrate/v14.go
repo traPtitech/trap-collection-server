@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"database/sql"
+	"strconv"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -11,10 +12,10 @@ import (
 
 type gameVersionTable2V14 struct {
 	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID      uuid.UUID `gorm:"type:varchar(36);not null"`
+	GameID      uuid.UUID `gorm:"type:varchar(36);not null;index:idx_game_id_name,unique"` // GameIDとNameの組み合わせでuniqueに
 	GameImageID uuid.UUID `gorm:"type:varchar(36);not null"`
 	GameVideoID uuid.UUID `gorm:"type:varchar(36);not null"`
-	Name        string    `gorm:"type:varchar(32);size:32;not null;unique"`
+	Name        string    `gorm:"type:varchar(32);size:32;not null;uniqueIndex:idx_game_id_name"` // GameIDとNameの組み合わせでuniqueに
 	Description string    `gorm:"type:text;not null"`
 	URL         string    `gorm:"type:text;default:null"`
 	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
@@ -69,28 +70,61 @@ func (*editionTableV14) TableName() string {
 }
 
 // V14
-// v2_game_versionsのnameフィールドをuniqueに変更
+// v2_game_versionsの(GameID,Name)の組をuniqueに変更し，既存データの重複をリネームして反映する。
 func v14() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "14",
 		Migrate: func(tx *gorm.DB) error {
-			err := tx.Exec("ALTER TABLE v2_game_versions ADD CONSTRAINT unique_game_version_name UNIQUE (name)").Error
-			if err != nil {
+			var gameVersions []gameVersionTable2V14
+			if err := tx.Order("game_id, name, created_at").
+				Find(&gameVersions).Error; err != nil {
 				return err
 			}
-			err = tx.AutoMigrate(&gameVersionTable2V14{})
-			if err != nil {
+
+			// 同一GameID内でnameの重複をリネーム
+			var currentGameID uuid.UUID
+			tmpMap := make(map[string]int)
+			for _, gameVersion := range gameVersions {
+				// 違うゲームになったらmapを初期化
+				if currentGameID != gameVersion.GameID {
+					currentGameID = gameVersion.GameID
+					tmpMap = make(map[string]int)
+				}
+
+				if count, exists := tmpMap[gameVersion.Name]; exists {
+					newName := gameVersion.Name + "+" + strconv.Itoa(count)
+					tmpMap[gameVersion.Name] = count + 1
+					gameVersion.Name = newName
+				} else {
+					tmpMap[gameVersion.Name] = 1
+				}
+				if err := tx.Save(&gameVersion).Error; err != nil {
+					return err
+				}
+			}
+
+			// 複合ユニーク制約を追加
+			if err := tx.Exec(
+				"ALTER TABLE v2_game_versions ADD CONSTRAINT unique_game_version_per_game UNIQUE (game_id, name)",
+			).Error; err != nil {
 				return err
 			}
+
+			if err := tx.AutoMigrate(&gameVersionTable2V14{}); err != nil {
+				return err
+			}
+
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			err := tx.Exec("ALTER TABLE v2_game_versions DROP INDEX unique_game_version_name").Error
-			if err != nil {
+			// 複合ユニーク制約を削除
+			if err := tx.Exec(
+				"ALTER TABLE v2_game_versions DROP INDEX unique_game_version_per_game",
+			).Error; err != nil {
 				return err
 			}
-			err = tx.Migrator().DropTable(&gameVersionTable2V14{})
-			if err != nil {
+			// テーブル定義をロールバック
+			if err := tx.Migrator().DropTable(&gameVersionTable2V14{}); err != nil {
 				return err
 			}
 			return nil
