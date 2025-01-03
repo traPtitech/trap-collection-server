@@ -42,32 +42,34 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 	}
 
 	userID := values.NewTrapMemberID(req.Id)
-	var roleType values.GameManagementRole
-	switch *req.Type {
-	case "owner":
-		roleType = values.GameManagementRoleAdministrator
-	case "maintainer":
-		roleType = values.GameManagementRoleCollaborator
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "role type is invalid")
-	}
+	if req.Type != nil {
+		var roleType values.GameManagementRole
+		switch *req.Type {
+		case "owner":
+			roleType = values.GameManagementRoleAdministrator
+		case "maintainer":
+			roleType = values.GameManagementRoleCollaborator
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "role type is invalid")
+		}
 
-	err = gameRole.gameRoleService.EditGameManagementRole(ctx.Request().Context(), authSession, values.GameID(gameID), userID, roleType)
-	if errors.Is(err, service.ErrNoGameManagementRoleUpdated) {
-		return echo.NewHTTPError(http.StatusBadRequest, "there is no change")
-	}
-	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "no game")
-	}
-	if errors.Is(err, service.ErrInvalidUserID) {
-		return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
-	}
-	if errors.Is(err, service.ErrCannotEditOwners) {
-		return echo.NewHTTPError(http.StatusBadRequest, "you cannot change the user role beause there is only 1 owner")
-	}
-	if err != nil {
-		log.Printf("error: failed to edit game management role: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to edit game management role")
+		err = gameRole.gameRoleService.EditGameManagementRole(ctx.Request().Context(), authSession, values.GameID(gameID), userID, roleType)
+		if errors.Is(err, service.ErrNoGameManagementRoleUpdated) {
+			return echo.NewHTTPError(http.StatusBadRequest, "there is no change")
+		}
+		if errors.Is(err, service.ErrNoGame) {
+			return echo.NewHTTPError(http.StatusNotFound, "no game")
+		}
+		if errors.Is(err, service.ErrInvalidUserID) {
+			return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
+		}
+		if errors.Is(err, service.ErrCannotEditOwners) {
+			return echo.NewHTTPError(http.StatusBadRequest, "you cannot change the user role because there is only 1 owner")
+		}
+		if err != nil {
+			log.Printf("error: failed to edit game management role: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to edit game management role")
+		}
 	}
 
 	newGameInfo, err := gameRole.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
