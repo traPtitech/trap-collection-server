@@ -90,11 +90,24 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	var visibility openapi.GameVisibility
+	switch newGameInfo.Game.GetVisibility() {
+	case values.GameVisibilityTypePublic:
+		visibility = openapi.Public
+	case values.GameVisibilityTypeLimited:
+		visibility = openapi.Limited
+	case values.GameVisibilityTypePrivate:
+		visibility = openapi.Private
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert visibility")
+	}
+
 	resGame := openapi.Game{
 		Id:          uuid.UUID(newGameInfo.Game.GetID()),
 		Name:        string(newGameInfo.Game.GetName()),
 		Description: string(newGameInfo.Game.GetDescription()),
 		CreatedAt:   newGameInfo.Game.GetCreatedAt(),
+		Visibility:  visibility,
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
 	}
