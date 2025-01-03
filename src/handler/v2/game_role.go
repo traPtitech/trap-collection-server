@@ -91,15 +91,10 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 	}
 
 	var visibility openapi.GameVisibility
-	switch newGameInfo.Game.GetVisibility() {
-	case values.GameVisibilityTypePublic:
-		visibility = openapi.Public
-	case values.GameVisibilityTypeLimited:
-		visibility = openapi.Limited
-	case values.GameVisibilityTypePrivate:
-		visibility = openapi.Private
-	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert visibility")
+	visibility, err = convertGameVisibility(newGameInfo.Game.GetVisibility())
+	if err != nil {
+		log.Printf("error: failed to convert game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert game visibility")
 	}
 
 	genres := make([]openapi.GameGenreName, 0, len(newGameInfo.Genres))

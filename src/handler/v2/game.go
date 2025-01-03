@@ -2,6 +2,7 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -22,6 +23,19 @@ func NewGame(session *Session, gameService service.GameV2) *Game {
 	return &Game{
 		session:     session,
 		gameService: gameService,
+	}
+}
+
+func convertGameVisibility(value values.GameVisibility) (openapi.GameVisibility, error) {
+	switch value {
+	case values.GameVisibilityTypePublic:
+		return openapi.Public, nil
+	case values.GameVisibilityTypeLimited:
+		return openapi.Limited, nil
+	case values.GameVisibilityTypePrivate:
+		return openapi.Private, nil
+	default:
+		return "", fmt.Errorf("invalid game visibility: %v", value)
 	}
 }
 
