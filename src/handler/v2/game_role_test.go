@@ -472,7 +472,7 @@ func TestDeleteGameRole(t *testing.T) {
 			authSession:                     validAuthSession,
 			executeDeleteGameManagementRole: true,
 			DeleteGameManagementRoleErr:     service.ErrNoGame,
-			statusCode:                      http.StatusBadRequest,
+			statusCode:                      http.StatusNotFound,
 			isErr:                           true,
 		},
 		"RemoveGameManagementRoleがエラーなので500": {
