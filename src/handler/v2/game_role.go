@@ -165,6 +165,17 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	resVisibility, err := convertGameVisibility(newGameInfo.Game.GetVisibility())
+	if err != nil {
+		log.Printf("error: failed to convert game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert game visibility")
+	}
+
+	resGenres := make([]openapi.GameGenreName, 0, len(newGameInfo.Genres))
+	for _, genre := range newGameInfo.Genres {
+		resGenres = append(resGenres, openapi.GameGenreName(genre.GetName()))
+	}
+
 	resGame := openapi.Game{
 		Id:          uuid.UUID(newGameInfo.Game.GetID()),
 		Name:        string(newGameInfo.Game.GetName()),
@@ -172,6 +183,8 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 		CreatedAt:   newGameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &resGenres,
+		Visibility:  resVisibility,
 	}
 
 	return ctx.JSON(http.StatusOK, resGame)
