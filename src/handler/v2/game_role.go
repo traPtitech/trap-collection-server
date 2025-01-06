@@ -132,7 +132,7 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 
 	err = gameRole.gameRoleService.RemoveGameManagementRole(ctx.Request().Context(), values.GameID(gameID), values.TraPMemberID(userID))
 	if errors.Is(err, service.ErrInvalidRole) {
-		return echo.NewHTTPError(http.StatusNotFound, "the user does not has any role")
+		return echo.NewHTTPError(http.StatusNotFound, "the user does not have any role")
 	}
 	if errors.Is(err, service.ErrCannotDeleteOwner) {
 		return echo.NewHTTPError(http.StatusBadRequest, "you cannot delete owner because there is only 1 owner")
