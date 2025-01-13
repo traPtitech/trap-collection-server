@@ -49,6 +49,7 @@ func TestCreateGameVersion(t *testing.T) {
 		imageID                  values.GameImageID
 		videoID                  values.GameVideoID
 		assets                   *service.Assets
+		fileIDs                  []values.GameFileID
 		executeGetGame           bool
 		getGameErr               error
 		executeGetGameImage      bool
@@ -60,8 +61,13 @@ func TestCreateGameVersion(t *testing.T) {
 		executeGetGameFile       bool
 		files                    []*repository.GameFileInfo
 		getGameFilesErr          error
+		executeGetGameVersions   bool
+		limit                    uint
+		offset                   uint
+		num                      uint
+		versions                 []*repository.GameVersionInfo
+		getGameVersionsErr       error
 		executeCreateGameVersion bool
-		fileIDs                  []values.GameFileID
 		createGameVersionErr     error
 		isErr                    bool
 		err                      error
@@ -158,8 +164,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID1,
@@ -190,8 +197,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Windows: types.NewOption(fileID1),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID2,
@@ -235,8 +243,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Mac: types.NewOption(fileID2),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID3,
@@ -280,8 +289,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Jar: types.NewOption(fileID3),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID4,
@@ -365,11 +375,12 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
-			getGameImageErr:     repository.ErrRecordNotFound,
-			isErr:               true,
-			err:                 service.ErrInvalidGameImageID,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
+			getGameImageErr:        repository.ErrRecordNotFound,
+			isErr:                  true,
+			err:                    service.ErrInvalidGameImageID,
 		},
 		{
 			description:        "GetGameImageがエラーなのでエラー",
@@ -381,10 +392,11 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
-			getGameImageErr:     errors.New("error"),
-			isErr:               true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
+			getGameImageErr:        errors.New("error"),
+			isErr:                  true,
 		},
 		{
 			description:        "画像に紐づくゲームが違うのでErrInvalidGameImageID",
@@ -396,8 +408,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID10,
@@ -419,8 +432,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID11,
@@ -444,8 +458,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID12,
@@ -468,8 +483,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID13,
@@ -500,8 +516,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Windows: types.NewOption(fileID4),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID14,
@@ -534,8 +551,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Windows: types.NewOption(fileID5),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID15,
@@ -569,8 +587,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Windows: types.NewOption(fileID6),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID16,
@@ -615,8 +634,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				URL: types.NewOption(values.NewGameURLLink(urlLink)),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID17,
@@ -650,8 +670,9 @@ func TestCreateGameVersion(t *testing.T) {
 				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
 				Windows: types.NewOption(fileID7),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID18,
@@ -696,8 +717,9 @@ func TestCreateGameVersion(t *testing.T) {
 				Windows: types.NewOption(fileID8),
 				Mac:     types.NewOption(fileID9),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID19,
@@ -751,8 +773,9 @@ func TestCreateGameVersion(t *testing.T) {
 			assets: &service.Assets{
 				Windows: types.NewOption(fileID10),
 			},
-			executeGetGame:      true,
-			executeGetGameImage: true,
+			executeGetGame:         true,
+			executeGetGameImage:    true,
+			executeGetGameVersions: true,
 			image: &repository.GameImageInfo{
 				GameImage: domain.NewGameImage(
 					imageID2,
@@ -796,6 +819,13 @@ func TestCreateGameVersion(t *testing.T) {
 					EXPECT().
 					GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
 					Return(nil, testCase.getGameErr)
+			}
+
+			if testCase.executeGetGameVersions {
+				mockGameVersionRepository.
+					EXPECT().
+					GetGameVersions(gomock.Any(), testCase.gameID, testCase.limit, testCase.offset, repository.LockTypeNone).
+					Return(testCase.num, testCase.versions, testCase.getGameVersionsErr)
 			}
 
 			if testCase.executeGetGameImage {
