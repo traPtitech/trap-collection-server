@@ -97,6 +97,7 @@ func TestCreateGameVersion(t *testing.T) {
 	gameID17 := values.NewGameID()
 	gameID18 := values.NewGameID()
 	gameID19 := values.NewGameID()
+	gameID20 := values.NewGameID()
 
 	imageID1 := values.NewGameImageID()
 	imageID2 := values.NewGameImageID()
@@ -118,6 +119,7 @@ func TestCreateGameVersion(t *testing.T) {
 	imageID18 := values.NewGameImageID()
 	imageID19 := values.NewGameImageID()
 	imageID20 := values.NewGameImageID()
+	imageID21 := values.NewGameImageID()
 
 	videoID1 := values.NewGameVideoID()
 	videoID2 := values.NewGameVideoID()
@@ -139,6 +141,7 @@ func TestCreateGameVersion(t *testing.T) {
 	videoID18 := values.NewGameVideoID()
 	videoID19 := values.NewGameVideoID()
 	videoID20 := values.NewGameVideoID()
+	videoID21 := values.NewGameVideoID()
 
 	fileID1 := values.NewGameFileID()
 	fileID2 := values.NewGameFileID()
@@ -810,6 +813,52 @@ func TestCreateGameVersion(t *testing.T) {
 			isErr: true,
 			err:   service.ErrInvalidGameFileID,
 		},
+		{
+			description:        "同名のバージョンが存在するのでエラー",
+			gameID:             gameID20,
+			versionName:        values.NewGameVersionName("v1.0.0"),
+			versionDescription: values.NewGameVersionDescription("アップデート"),
+			imageID:            imageID21,
+			videoID:            videoID21,
+			assets: &service.Assets{
+				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+			executeGetGame:         true,
+			executeGetGameVersions: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					imageID21,
+					values.GameImageTypeJpeg,
+					now,
+				),
+				GameID: gameID20,
+			},
+			video: &repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					videoID21,
+					values.GameVideoTypeMp4,
+					now,
+				),
+				GameID: gameID20,
+			},
+			versions: []*repository.GameVersionInfo{
+				{
+					GameVersion: domain.NewGameVersion(
+						values.NewGameVersionID(),
+						"v1.0.0",
+						"version description",
+						now,
+					),
+					ImageID: imageID21,
+					VideoID: videoID21,
+					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+				},
+			},
+			fileIDs:                  []values.GameFileID{},
+			getGameVersionsErr:       nil,
+			isErr:                    true,
+			err:                      service.ErrDuplicateGameVersion,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -819,13 +868,6 @@ func TestCreateGameVersion(t *testing.T) {
 					EXPECT().
 					GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
 					Return(nil, testCase.getGameErr)
-			}
-
-			if testCase.executeGetGameVersions {
-				mockGameVersionRepository.
-					EXPECT().
-					GetGameVersions(gomock.Any(), testCase.gameID, testCase.limit, testCase.offset, repository.LockTypeNone).
-					Return(testCase.num, testCase.versions, testCase.getGameVersionsErr)
 			}
 
 			if testCase.executeGetGameImage {
@@ -854,6 +896,13 @@ func TestCreateGameVersion(t *testing.T) {
 					EXPECT().
 					CreateGameVersion(gomock.Any(), testCase.gameID, testCase.imageID, testCase.videoID, testCase.assets.URL, testCase.fileIDs, gomock.Any()).
 					Return(testCase.createGameVersionErr)
+			}
+
+			if testCase.executeGetGameVersions {
+				mockGameVersionRepository.
+					EXPECT().
+					GetGameVersions(gomock.Any(), testCase.gameID, testCase.limit, testCase.offset, repository.LockTypeNone).
+					Return(testCase.num, testCase.versions, testCase.getGameVersionsErr)
 			}
 
 			gameVersion, err := gameVersionService.CreateGameVersion(
