@@ -69,6 +69,10 @@ func (*gameTable2V14) TableName() string {
 	return "games"
 }
 
+func (*gameGenreTableV14) TableName() string {
+	return "game_genres"
+}
+
 //nolint:unused
 type editionTableV14 struct {
 	ID               uuid.UUID              `gorm:"type:varchar(36);not null;primaryKey"`
