@@ -72,9 +72,14 @@ func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader,
 			}
 
 			var videoType values.GameVideoType
-			if fType.Extension == matchers.TypeMp4.Extension {
+			switch fType.Extension {
+			case matchers.TypeMp4.Extension:
 				videoType = values.GameVideoTypeMp4
-			} else {
+			case matchers.TypeM4v.Extension:
+				videoType = values.GameVideoTypeM4v
+			case matchers.TypeMkv.Extension:
+				videoType = values.GameVideoTypeMkv
+			default:
 				return service.ErrInvalidFormat
 			}
 

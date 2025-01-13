@@ -42,32 +42,34 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 	}
 
 	userID := values.NewTrapMemberID(req.Id)
-	var roleType values.GameManagementRole
-	switch *req.Type {
-	case "owner":
-		roleType = values.GameManagementRoleAdministrator
-	case "maintainer":
-		roleType = values.GameManagementRoleCollaborator
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "role type is invalid")
-	}
+	if req.Type != nil {
+		var roleType values.GameManagementRole
+		switch *req.Type {
+		case "owner":
+			roleType = values.GameManagementRoleAdministrator
+		case "maintainer":
+			roleType = values.GameManagementRoleCollaborator
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "role type is invalid")
+		}
 
-	err = gameRole.gameRoleService.EditGameManagementRole(ctx.Request().Context(), authSession, values.GameID(gameID), userID, roleType)
-	if errors.Is(err, service.ErrNoGameManagementRoleUpdated) {
-		return echo.NewHTTPError(http.StatusBadRequest, "there is no change")
-	}
-	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusNotFound, "no game")
-	}
-	if errors.Is(err, service.ErrInvalidUserID) {
-		return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
-	}
-	if errors.Is(err, service.ErrCannotEditOwners) {
-		return echo.NewHTTPError(http.StatusBadRequest, "you cannot change the user role beause there is only 1 owner")
-	}
-	if err != nil {
-		log.Printf("error: failed to edit game management role: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to edit game management role")
+		err = gameRole.gameRoleService.EditGameManagementRole(ctx.Request().Context(), authSession, values.GameID(gameID), userID, roleType)
+		if errors.Is(err, service.ErrNoGameManagementRoleUpdated) {
+			return echo.NewHTTPError(http.StatusBadRequest, "there is no change")
+		}
+		if errors.Is(err, service.ErrNoGame) {
+			return echo.NewHTTPError(http.StatusNotFound, "no game")
+		}
+		if errors.Is(err, service.ErrInvalidUserID) {
+			return echo.NewHTTPError(http.StatusBadRequest, "userID is invalid or no user")
+		}
+		if errors.Is(err, service.ErrCannotEditOwners) {
+			return echo.NewHTTPError(http.StatusBadRequest, "you cannot change the user role because there is only 1 owner")
+		}
+		if err != nil {
+			log.Printf("error: failed to edit game management role: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to edit game management role")
+		}
 	}
 
 	newGameInfo, err := gameRole.gameService.GetGame(ctx.Request().Context(), authSession, values.GameID(gameID))
@@ -90,13 +92,27 @@ func (gameRole *GameRole) PatchGameRole(ctx echo.Context, gameID openapi.GameIDI
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	var visibility openapi.GameVisibility
+	visibility, err = convertGameVisibility(newGameInfo.Game.GetVisibility())
+	if err != nil {
+		log.Printf("error: failed to convert game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert game visibility")
+	}
+
+	genres := make([]openapi.GameGenreName, 0, len(newGameInfo.Genres))
+	for _, genre := range newGameInfo.Genres {
+		genres = append(genres, openapi.GameGenreName(genre.GetName()))
+	}
+
 	resGame := openapi.Game{
 		Id:          uuid.UUID(newGameInfo.Game.GetID()),
 		Name:        string(newGameInfo.Game.GetName()),
 		Description: string(newGameInfo.Game.GetDescription()),
 		CreatedAt:   newGameInfo.Game.GetCreatedAt(),
+		Visibility:  visibility,
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &genres,
 	}
 
 	return ctx.JSON(http.StatusOK, resGame)
@@ -116,13 +132,13 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 
 	err = gameRole.gameRoleService.RemoveGameManagementRole(ctx.Request().Context(), values.GameID(gameID), values.TraPMemberID(userID))
 	if errors.Is(err, service.ErrInvalidRole) {
-		return echo.NewHTTPError(http.StatusNotFound, "the user does not has any role")
+		return echo.NewHTTPError(http.StatusNotFound, "the user does not have any role")
 	}
 	if errors.Is(err, service.ErrCannotDeleteOwner) {
 		return echo.NewHTTPError(http.StatusBadRequest, "you cannot delete owner because there is only 1 owner")
 	}
 	if errors.Is(err, service.ErrNoGame) {
-		return echo.NewHTTPError(http.StatusBadRequest, "no game")
+		return echo.NewHTTPError(http.StatusNotFound, "no game")
 	}
 	if err != nil {
 		log.Printf("error: failed to remove game management role: %v\n", err)
@@ -149,6 +165,17 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 		resMaintainers = append(resMaintainers, string(maintainer.GetName()))
 	}
 
+	resVisibility, err := convertGameVisibility(newGameInfo.Game.GetVisibility())
+	if err != nil {
+		log.Printf("error: failed to convert game visibility: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to convert game visibility")
+	}
+
+	resGenres := make([]openapi.GameGenreName, 0, len(newGameInfo.Genres))
+	for _, genre := range newGameInfo.Genres {
+		resGenres = append(resGenres, openapi.GameGenreName(genre.GetName()))
+	}
+
 	resGame := openapi.Game{
 		Id:          uuid.UUID(newGameInfo.Game.GetID()),
 		Name:        string(newGameInfo.Game.GetName()),
@@ -156,6 +183,8 @@ func (gameRole *GameRole) DeleteGameRole(ctx echo.Context, gameID openapi.GameID
 		CreatedAt:   newGameInfo.Game.GetCreatedAt(),
 		Owners:      resOwners,
 		Maintainers: &resMaintainers,
+		Genres:      &resGenres,
+		Visibility:  resVisibility,
 	}
 
 	return ctx.JSON(http.StatusOK, resGame)

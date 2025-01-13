@@ -32,6 +32,8 @@ const (
 
 const (
 	GameVideoTypeMp4 = gameVideoTypeMp4V1
+	GameVideoTypeMkv = gameVideoTypeMkvV14
+	GameVideoTypeM4v = gameVideoTypeM4vV14
 )
 
 const (
