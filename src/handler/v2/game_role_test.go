@@ -363,9 +363,18 @@ func TestPatchGameRole(t *testing.T) {
 
 			mockGameRoleService := mock.NewMockGameRoleV2(ctrl)
 			if testCase.executeEditGameManagementRole {
+				var roleType values.GameManagementRole
+				switch *testCase.reqBody.Type {
+				case openapi.Owner:
+					roleType = values.GameManagementRoleAdministrator
+				case openapi.Maintainer:
+					roleType = values.GameManagementRoleCollaborator
+				default:
+					t.Fatalf("unexpected role type: %v", *testCase.reqBody.Type)
+				}
 				mockGameRoleService.
 					EXPECT().
-					EditGameManagementRole(gomock.Any(), gomock.Any(), values.GameID(testCase.gameID), values.NewTrapMemberID(testCase.reqBody.Id), gomock.Any()).
+					EditGameManagementRole(gomock.Any(), gomock.Any(), values.GameID(testCase.gameID), values.NewTrapMemberID(testCase.reqBody.Id), roleType).
 					Return(testCase.EditGameManagementRoleErr)
 			}
 
