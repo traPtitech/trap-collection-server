@@ -854,10 +854,10 @@ func TestCreateGameVersion(t *testing.T) {
 					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
-			fileIDs:                  []values.GameFileID{},
-			getGameVersionsErr:       nil,
-			isErr:                    true,
-			err:                      service.ErrDuplicateGameVersion,
+			fileIDs:            []values.GameFileID{},
+			getGameVersionsErr: nil,
+			isErr:              true,
+			err:                service.ErrDuplicateGameVersion,
 		},
 	}
 
