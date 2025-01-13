@@ -93,7 +93,7 @@ func (*editionTableV15) TableName() string {
 // v2_game_versionsの(GameID,Name)の組をuniqueに変更し，既存データの重複をリネームして反映する。
 func v15() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "14",
+		ID: "15",
 		Migrate: func(tx *gorm.DB) error {
 			var gameVersions []gameVersionTable2V15
 			if err := tx.Order("game_id, name, created_at").
