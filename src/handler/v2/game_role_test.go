@@ -32,7 +32,8 @@ func TestPatchGameRole(t *testing.T) {
 
 	game := domain.NewGame(values.NewGameID(), "game1", "game1 description", values.GameVisibilityTypePrivate, time.Now())
 	user := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user1", values.TrapMemberStatusActive)
-	genre1 := domain.NewGameGenre(values.NewGameGenreID(), "genre1", time.Now())
+	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user2", values.TrapMemberStatusActive)
+	genre := domain.NewGameGenre(values.NewGameGenreID(), "genre1", time.Now())
 
 	var (
 		roleTypeOwner      openapi.GameRoleType = openapi.Owner
@@ -72,7 +73,7 @@ func TestPatchGameRole(t *testing.T) {
 			newGameInfo: &service.GameInfoV2{
 				Game:   game,
 				Owners: []*service.UserInfo{user},
-				Genres: []*domain.GameGenre{genre1},
+				Genres: []*domain.GameGenre{genre},
 			},
 			expectedResponse: &openapi.Game{
 				Id:          openapi.GameID(game.GetID()),
@@ -81,7 +82,7 @@ func TestPatchGameRole(t *testing.T) {
 				Visibility:  openapi.Private,
 				Owners:      []openapi.UserName{string(user.GetName())},
 				CreatedAt:   game.GetCreatedAt(),
-				Genres:      &[]openapi.GameGenreName{string(genre1.GetName())},
+				Genres:      &[]openapi.GameGenreName{string(genre.GetName())},
 			},
 		},
 		"maintainerでも問題なし": {
@@ -96,19 +97,65 @@ func TestPatchGameRole(t *testing.T) {
 			executeGetGame:                true,
 			newGameInfo: &service.GameInfoV2{
 				Game:        game,
-				Owners:      []*service.UserInfo{},
+				Owners:      []*service.UserInfo{user2},
 				Maintainers: []*service.UserInfo{user},
-				Genres:      []*domain.GameGenre{genre1},
+				Genres:      []*domain.GameGenre{genre},
 			},
 			expectedResponse: &openapi.Game{
 				Id:          openapi.GameID(game.GetID()),
 				Name:        openapi.GameName(game.GetName()),
 				Description: openapi.GameDescription(game.GetDescription()),
 				Visibility:  openapi.Private,
-				Owners:      []openapi.UserName{},
+				Owners:      []openapi.UserName{string(user2.GetName())},
 				Maintainers: &[]openapi.UserName{string(user.GetName())},
 				CreatedAt:   game.GetCreatedAt(),
-				Genres:      &[]openapi.GameGenreName{string(genre1.GetName())},
+				Genres:      &[]openapi.GameGenreName{string(genre.GetName())},
+			},
+		},
+		"複数人いても問題なし": {
+			gameID:                        openapi.GameIDInPath(game.GetID()),
+			sessionExist:                  true,
+			authSession:                   validAuthSession,
+			reqBody:                       ownerRequestBody,
+			executeEditGameManagementRole: true,
+			executeGetGame:                true,
+			newGameInfo: &service.GameInfoV2{
+				Game:        game,
+				Owners:      []*service.UserInfo{user, user2},
+				Maintainers: []*service.UserInfo{},
+				Genres:      []*domain.GameGenre{genre},
+			},
+			expectedResponse: &openapi.Game{
+				Id:          openapi.GameID(game.GetID()),
+				Name:        openapi.GameName(game.GetName()),
+				Description: openapi.GameDescription(game.GetDescription()),
+				Visibility:  openapi.Private,
+				Owners:      []openapi.UserName{string(user.GetName()), string(user2.GetName())},
+				CreatedAt:   game.GetCreatedAt(),
+				Genres:      &[]openapi.GameGenreName{string(genre.GetName())},
+			},
+		},
+		"複数ジャンルでも問題なし": {
+			gameID:                        openapi.GameIDInPath(game.GetID()),
+			sessionExist:                  true,
+			authSession:                   validAuthSession,
+			reqBody:                       ownerRequestBody,
+			executeEditGameManagementRole: true,
+			executeGetGame:                true,
+			newGameInfo: &service.GameInfoV2{
+				Game:        game,
+				Owners:      []*service.UserInfo{user},
+				Maintainers: []*service.UserInfo{},
+				Genres:      []*domain.GameGenre{genre, domain.NewGameGenre(values.NewGameGenreID(), "genre2", time.Now())},
+			},
+			expectedResponse: &openapi.Game{
+				Id:          openapi.GameID(game.GetID()),
+				Name:        openapi.GameName(game.GetName()),
+				Description: openapi.GameDescription(game.GetDescription()),
+				Visibility:  openapi.Private,
+				Owners:      []openapi.UserName{string(user.GetName())},
+				CreatedAt:   game.GetCreatedAt(),
+				Genres:      &[]openapi.GameGenreName{string(genre.GetName()), "genre2"},
 			},
 		},
 		"roleTypeがnilでも問題なし": {
@@ -124,7 +171,7 @@ func TestPatchGameRole(t *testing.T) {
 				Game:        game,
 				Owners:      []*service.UserInfo{user},
 				Maintainers: []*service.UserInfo{},
-				Genres:      []*domain.GameGenre{genre1},
+				Genres:      []*domain.GameGenre{genre},
 			},
 			expectedResponse: &openapi.Game{
 				Id:          openapi.GameID(game.GetID()),
@@ -133,7 +180,7 @@ func TestPatchGameRole(t *testing.T) {
 				Visibility:  openapi.Private,
 				Owners:      []openapi.UserName{string(user.GetName())},
 				CreatedAt:   game.GetCreatedAt(),
-				Genres:      &[]openapi.GameGenreName{string(genre1.GetName())},
+				Genres:      &[]openapi.GameGenreName{string(genre.GetName())},
 			},
 		},
 		"sessionがないので401": {
@@ -242,7 +289,7 @@ func TestPatchGameRole(t *testing.T) {
 			newGameInfo: &service.GameInfoV2{
 				Game:   domain.NewGame(game.GetID(), game.GetName(), game.GetDescription(), values.GameVisibility(100), game.GetCreatedAt()),
 				Owners: []*service.UserInfo{user},
-				Genres: []*domain.GameGenre{genre1},
+				Genres: []*domain.GameGenre{genre},
 			},
 			statusCode: http.StatusInternalServerError,
 			isErr:      true,
