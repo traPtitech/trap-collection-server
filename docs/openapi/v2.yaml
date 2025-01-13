@@ -166,6 +166,15 @@ paths:
     get:
       tags:
         - user
+      parameters:
+        - name: bot
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: |
+            falseの場合botを除外します。
+            デフォルトではbotも含めます。
       security:
         - TrapMemberAuth: []
       operationId: getUsers
