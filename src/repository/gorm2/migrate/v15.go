@@ -12,7 +12,7 @@ import (
 
 type gameVersionTable2V15 struct {
 	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID      uuid.UUID `gorm:"type:varchar(36);not null;index:idx_game_id_name,unique"` // GameIDとNameの組み合わせでuniqueに
+	GameID      uuid.UUID `gorm:"type:varchar(36);not null;index:uniqueIndex:idx_game_id_name"` // GameIDとNameの組み合わせでuniqueに
 	GameImageID uuid.UUID `gorm:"type:varchar(36);not null"`
 	GameVideoID uuid.UUID `gorm:"type:varchar(36);not null"`
 	Name        string    `gorm:"type:varchar(32);size:32;not null;uniqueIndex:idx_game_id_name"` // GameIDとNameの組み合わせでuniqueに
