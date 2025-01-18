@@ -123,13 +123,6 @@ func v15() *gormigrate.Migration {
 				}
 			}
 
-			// 複合ユニーク制約を追加
-			if err := tx.Exec(
-				"ALTER TABLE v2_game_versions ADD CONSTRAINT unique_game_version_per_game UNIQUE (game_id, name)",
-			).Error; err != nil {
-				return err
-			}
-
 			if err := tx.AutoMigrate(&gameVersionTable2V15{}); err != nil {
 				return err
 			}
