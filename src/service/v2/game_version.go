@@ -95,15 +95,15 @@ func (gameVersion *GameVersion) CreateGameVersion(
 		}
 
 		// 既存のゲームバージョンの名前と一致していた場合はエラーを返す
-		_, currentGameVersions, err := gameVersion.gameVersionRepository.GetGameVersions(ctx, gameID, 0, 0, repository.LockTypeNone)
-		if err != nil {
-			return fmt.Errorf("failed to get game versions: %w", err)
-		}
-		for _, currentGameVersion := range currentGameVersions {
-			if currentGameVersion.GetName() == name {
-				return service.ErrDuplicateGameVersion
-			}
-		}
+		// _, currentGameVersions, err := gameVersion.gameVersionRepository.GetGameVersions(ctx, gameID, 0, 0, repository.LockTypeNone)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to get game versions: %w", err)
+		// }
+		// for _, currentGameVersion := range currentGameVersions {
+		// 	if currentGameVersion.GetName() == name {
+		// return service.ErrDuplicateGameVersion
+		// 	}
+		// }
 
 		gameImage, err := gameVersion.gameImageRepository.GetGameImage(ctx, imageID, repository.LockTypeRecord)
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -163,7 +163,11 @@ func (gameVersion *GameVersion) CreateGameVersion(
 		}
 
 		err = gameVersion.gameVersionRepository.CreateGameVersion(ctx, gameID, imageID, videoID, assets.URL, fileIDs, version)
+		// 既存のゲームバージョンの名前と一致していた場合はエラーを返す
 		if err != nil {
+			if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+				return service.ErrDuplicateGameVersion
+			}
 			return err
 		}
 
