@@ -29,6 +29,7 @@ type GameVersionV2 interface {
 	// ErrInvalidImageID、ErrInvalidVideoID、ErrInvalidFileIDを返す。
 	// fileの種類が誤っている場合、ErrInvalidFileTypeを返す。
 	// url、fileのいずれも空の場合、ErrNoAssetを返す。
+	// gameIDとnameが同一の組み合わせが既に存在する場合、ErrDuplicateGameVersionを返す。
 	CreateGameVersion(
 		ctx context.Context,
 		gameID values.GameID,
