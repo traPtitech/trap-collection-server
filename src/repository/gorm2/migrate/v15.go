@@ -136,10 +136,6 @@ func v15() *gormigrate.Migration {
 			).Error; err != nil {
 				return err
 			}
-			// テーブル定義をロールバック
-			if err := tx.Migrator().DropTable(&gameVersionTable2V15{}); err != nil {
-				return err
-			}
 			return nil
 		},
 	}
