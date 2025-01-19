@@ -317,7 +317,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description: "同名のバージョンが存在してもエラーなし",
+			description: "同名のバージョンが存在するのでエラー",
 			gameID:      gameID4,
 			imageID:     imageID6,
 			videoID:     videoID6,
@@ -358,16 +358,6 @@ func TestCreateGameVersionV2(t *testing.T) {
 			},
 			expectGameVersions: []migrate.GameVersionTable2{
 				{
-					ID:          uuid.UUID(gameVersionID5),
-					GameID:      uuid.UUID(gameID4),
-					GameImageID: uuid.UUID(imageID6),
-					GameVideoID: uuid.UUID(videoID6),
-					Name:        "v1.0.0",
-					Description: "アップデート",
-					URL:         "https://example.com",
-					CreatedAt:   now,
-				},
-				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
 					GameImageID: uuid.UUID(imageID7),
@@ -378,6 +368,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 					CreatedAt:   now.Add(-time.Hour),
 				},
 			},
+			isErr: true,
+			err:   repository.ErrDuplicatedUniqueKey,
 		},
 		{
 			description: "バージョン名が32文字でもエラーなし",
