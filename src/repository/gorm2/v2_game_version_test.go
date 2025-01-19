@@ -369,6 +369,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				},
 			},
 			isErr: true,
+			err:   repository.ErrDuplicatedUniqueKey,
 		},
 		{
 			description: "バージョン名が32文字でもエラーなし",

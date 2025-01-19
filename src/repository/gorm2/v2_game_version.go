@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -57,6 +58,11 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 			GameImageID: uuid.UUID(imageID),
 			GameVideoID: uuid.UUID(videoID),
 		}).Error
+	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+		if mysqlErr.Number == 1062 {
+			return repository.ErrDuplicatedUniqueKey
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("failed to create game version: %w", err)
 	}
