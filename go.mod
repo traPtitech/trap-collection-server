@@ -6,7 +6,7 @@ toolchain go1.23.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.33.0
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.53
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.54
 	github.com/cosmtrek/air v1.52.1
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/dgraph-io/ristretto v0.2.0
@@ -53,9 +53,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.4.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.24.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.24.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.9 // indirect
 	github.com/aws/smithy-go v1.22.1 // indirect
 	github.com/bep/godartsass/v2 v2.3.2 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
