@@ -3,6 +3,7 @@ package v2
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -68,8 +69,19 @@ func (u *User) GetUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	botParam := c.QueryParam("bot")
+	includeBot := true
+	if botParam != "" {
+		includeBot, err = strconv.ParseBool(botParam)
+		if err != nil {
+			log.Printf("error: invalid query parameter 'bot': %v\n", err)
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+	}
+
 	users := make([]*openapi.User, 0, len(userInfos))
 	for _, userInfo := range userInfos {
+		// ここにbot除外ロジックを書く
 		users = append(users, &openapi.User{
 			Id:   uuid.UUID(userInfo.GetID()),
 			Name: string(userInfo.GetName()),
