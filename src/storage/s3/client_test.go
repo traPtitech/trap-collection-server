@@ -268,7 +268,7 @@ func TestCreateTempURL(t *testing.T) {
 		name        string
 		isFileExist bool
 		expiresIn   time.Duration
-		content     *bytes.Buffer
+		content     []byte
 		isErr       bool
 		err         error
 	}
@@ -279,7 +279,7 @@ func TestCreateTempURL(t *testing.T) {
 			isFileExist: true,
 			name:        "a",
 			expiresIn:   2 * time.Second,
-			content:     bytes.NewBufferString("a"),
+			content:     []byte{0},
 		},
 		{
 			description: "ファイルが存在しないのでErrNotFound",
@@ -293,27 +293,30 @@ func TestCreateTempURL(t *testing.T) {
 			name:        "d",
 			isFileExist: true,
 			expiresIn:   2 * time.Second,
-			content:     bytes.NewBufferString(strings.Repeat("d", 1024*1024*10)),
+			content:     bytes.Repeat([]byte{'d'}, 1024*1024*10),
 		},
 		{
 			description: "名前に/が含まれていても取得できる",
 			isFileExist: true,
 			name:        "f/g",
 			expiresIn:   2 * time.Second,
-			content:     bytes.NewBufferString("f"),
+			content:     []byte("f"),
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			var expectBytes []byte
 			if testCase.isFileExist {
-				expectBytes = testCase.content.Bytes()
+				expectBytes = testCase.content
 
+				body := bytes.NewReader(testCase.content)
 				_, err := testClient.client.PutObject(ctx, &s3.PutObjectInput{
 					Bucket: &testClient.bucket,
 					Key:    &testCase.name,
-					Body:   testCase.content,
+					Body:   body,
 				}, s3.WithAPIOptions(
 					v4.SwapComputePayloadSHA256ForUnsignedPayloadMiddleware,
 				))
