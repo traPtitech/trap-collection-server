@@ -48,7 +48,7 @@ type (
 	GameFileTable2          = gameFileTable2V5
 	GameImageTable2         = gameImageTable2V2
 	GameVideoTable2         = gameVideoTable2V2
-	EditionTable2           = editionTableV6
+	EditionTable2           = editionTableV15
 	ProductKeyTable2        = productKeyTableV6
 	ProductKeyStatusTable2  = productKeyStatusTableV6
 	AccessTokenTable2       = accessTokenTableV2
