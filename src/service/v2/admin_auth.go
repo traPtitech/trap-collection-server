@@ -40,7 +40,8 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 		for _, activeUser := range activeUsers {
 			activeUsersMap[activeUser.GetID()] = activeUser
 		}
-		if _, ok := activeUsersMap[userID]; !ok {
+		newAdminInfo, ok := activeUsersMap[userID]
+		if !ok {
 			return service.ErrInvalidUserID
 		}
 
@@ -68,7 +69,7 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 			}
 			adminInfos = append(adminInfos, activeAdmin)
 		}
-		adminInfos = append(adminInfos, activeUsersMap[userID])
+		adminInfos = append(adminInfos, newAdminInfo)
 		return nil
 	})
 
