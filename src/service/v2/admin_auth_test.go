@@ -54,6 +54,7 @@ func TestAddAdmin(t *testing.T) {
 	userID1 := values.NewTrapMemberID(uuid.New())
 	userID2 := values.NewTrapMemberID(uuid.New())
 	userID3 := values.NewTrapMemberID(uuid.New())
+	userID4 := values.NewTrapMemberID(uuid.New()) // 凍結済みユーザー
 
 	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
 	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive)
@@ -71,6 +72,18 @@ func TestAddAdmin(t *testing.T) {
 			userID:           userID1,
 			executeGetAdmins: true,
 			beforeAdmins:     []values.TraPMemberID{userID2},
+			executeAddAdmin:  true,
+			expectedAdmins:   []*service.UserInfo{userInfo2, userInfo1},
+		},
+		{
+			description: "GetAdminsの結果に凍結済みユーザーがいてもエラー無し",
+			authSession: domain.NewOIDCSession(
+				"access token",
+				time.Now().Add(time.Hour),
+			),
+			userID:           userID1,
+			executeGetAdmins: true,
+			beforeAdmins:     []values.TraPMemberID{userID2, userID4},
 			executeAddAdmin:  true,
 			expectedAdmins:   []*service.UserInfo{userInfo2, userInfo1},
 		},
