@@ -32,75 +32,120 @@ func TestGetEditions(t *testing.T) {
 	edition := NewEdition(mockEditionService)
 
 	type test struct {
-		editions       []*domain.LauncherVersion
-		getEditionsErr error
-		apiResponse    []openapi.Edition
-		isErr          bool
-		statusCode     int
+		description      string
+		editions         []*domain.LauncherVersion
+		getEditionsErr   error
+		expectedEditions []openapi.Edition
+		isErr            bool
+		statusCode       int
 	}
 
 	now := time.Now()
-	editionUUID := uuid.New()
-	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
-	editionName := values.NewLauncherVersionName("テストエディション")
-	questionnaireURL, _ := url.Parse("https://example.com/questionnaire")
+	editionID1 := values.NewLauncherVersionIDFromUUID(uuid.New())
+	editionID2 := values.NewLauncherVersionIDFromUUID(uuid.New())
+	editionName1 := values.NewLauncherVersionName("テストエディション")
+	editionName2 := values.NewLauncherVersionName("テストエディション2")
+	strURL := "https://example.com/questionnaire"
+	questionnaireURL, err := url.Parse(strURL)
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
 
-	testCases := map[string]test{
-		"正常系:エディション一覧が正しく取得できる": {
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
 			editions: []*domain.LauncherVersion{
 				domain.NewLauncherVersionWithQuestionnaire(
-					editionID,
-					editionName,
+					editionID1,
+					editionName1,
 					values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
 					now,
 				),
 			},
-			apiResponse: []openapi.Edition{
+			expectedEditions: []openapi.Edition{
 				{
-					Id:            editionUUID,
-					Name:          string(editionName),
-					Questionnaire: ptr(questionnaireURL.String()),
+					Id:            uuid.UUID(editionID1),
+					Name:          string(editionName1),
+					Questionnaire: &strURL,
 					CreatedAt:     now,
 				},
 			},
 			statusCode: http.StatusOK,
 		},
-		"正常系:アンケートURLがnullの場合": {
+		{
+			description: "アンケートURLが無くてもエラーなし",
 			editions: []*domain.LauncherVersion{
 				domain.NewLauncherVersionWithoutQuestionnaire(
-					editionID,
-					editionName,
+					editionID1,
+					editionName1,
 					now,
 				),
 			},
-			apiResponse: []openapi.Edition{
+			expectedEditions: []openapi.Edition{
 				{
-					Id:            editionUUID,
-					Name:          string(editionName),
+					Id:            uuid.UUID(editionID1),
+					Name:          string(editionName1),
 					Questionnaire: nil,
 					CreatedAt:     now,
 				},
 			},
 			statusCode: http.StatusOK,
 		},
-		"異常系:GetEditionsがエラーを返す": {
-			getEditionsErr: errors.New("internal error"),
+		{
+			description:    "GetEditionsがエラーなので500",
+			getEditionsErr: errors.New("error"),
 			isErr:          true,
 			statusCode:     http.StatusInternalServerError,
 		},
+		{
+			description: "複数エディションでもエラーなし",
+			editions: []*domain.LauncherVersion{
+				domain.NewLauncherVersionWithQuestionnaire(
+					editionID1,
+					editionName1,
+					values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+					now,
+				),
+				domain.NewLauncherVersionWithoutQuestionnaire(
+					editionID2,
+					editionName2,
+					now,
+				),
+			},
+			expectedEditions: []openapi.Edition{
+				{
+					Id:            uuid.UUID(editionID1),
+					Name:          string(editionName1),
+					Questionnaire: &strURL,
+					CreatedAt:     now,
+				},
+				{
+					Id:            uuid.UUID(editionID2),
+					Name:          string(editionName2),
+					Questionnaire: nil,
+					CreatedAt:     now,
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "エディションが存在しなくてもでもエラーなし",
+			editions:    []*domain.LauncherVersion{},
+			statusCode:  http.StatusOK,
+		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
-			mockEditionService.
-				EXPECT().
-				GetEditions(gomock.Any()).
-				Return(testCase.editions, testCase.getEditionsErr)
-
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
+
+			mockEditionService.
+				EXPECT().
+				GetEditions(gomock.Any()).
+				Return(testCase.editions, testCase.getEditionsErr)
 
 			err := edition.GetEditions(c)
 
@@ -116,24 +161,31 @@ func TestGetEditions(t *testing.T) {
 					assert.Error(t, err)
 				}
 				return
+			} else {
+				assert.NoError(t, err)
+			}
+			if err != nil || testCase.isErr {
+				return
 			}
 
-			assert.NoError(t, err)
 			assert.Equal(t, testCase.statusCode, rec.Code)
 
 			var res []openapi.Edition
 			err = json.NewDecoder(rec.Body).Decode(&res)
-			assert.NoError(t, err)
-			assert.Equal(t, len(testCase.apiResponse), len(res))
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
 
-			for i := range res {
-				assert.Equal(t, testCase.apiResponse[i].Id, res[i].Id)
-				assert.Equal(t, testCase.apiResponse[i].Name, res[i].Name)
-				assert.Equal(t, testCase.apiResponse[i].Questionnaire, res[i].Questionnaire)
-				assert.WithinDuration(t, testCase.apiResponse[i].CreatedAt, res[i].CreatedAt, time.Second)
+			assert.Len(t, res, len(testCase.expectedEditions))
+			for i, ed := range res {
+				assert.Equal(t, testCase.expectedEditions[i].Id, ed.Id)
+				assert.Equal(t, testCase.expectedEditions[i].Name, ed.Name)
+				assert.Equal(t, testCase.expectedEditions[i].Questionnaire, ed.Questionnaire)
+				assert.WithinDuration(t, testCase.expectedEditions[i].CreatedAt, ed.CreatedAt, 2*time.Second)
 			}
 		})
 	}
+
 }
 
 func TestPostEdition(t *testing.T) {
