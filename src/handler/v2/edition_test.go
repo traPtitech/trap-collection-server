@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/traPtitech/trap-collection-server/pkg/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -198,56 +201,79 @@ func TestPostEdition(t *testing.T) {
 	edition := NewEdition(mockEditionService)
 
 	type test struct {
-		reqBody          *openapi.NewEdition
-		invalidBody      bool
-		createEditionErr error
-		resultEdition    *domain.LauncherVersion
-		isErr            bool
-		statusCode       int
-		expectedRes      *openapi.Edition
+		description          string
+		reqBody              *openapi.NewEdition
+		invalidBody          bool
+		executeCreateEdition bool
+		name                 values.LauncherVersionName
+		questionnaireURL     types.Option[values.LauncherVersionQuestionnaireURL]
+		gameVersionIDs       []values.GameVersionID
+		createEditionErr     error
+		resultEdition        *domain.LauncherVersion
+		isErr                bool
+		statusCode           int
+		expectEdition        *openapi.Edition
 	}
 
 	now := time.Now()
 	editionUUID := uuid.New()
 	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
-	questionnaireURL := "https://example.com/questionnaire"
-	parsedURL, _ := url.Parse(questionnaireURL)
+	strURL := "https://example.com/questionnaire"
+	invalidURL := " https://example.com/questionnaire"
+	longName := strings.Repeat("あ", 33)
+	questionnaireURL, err := url.Parse(strURL)
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
 	gameVersionUUID1 := uuid.New()
 	gameVersionUUID2 := uuid.New()
 
-	testCases := map[string]test{
-		"正常系:アンケートURLありでエディションが作成できる": {
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
 			reqBody: &openapi.NewEdition{
 				Name:          editionName,
-				Questionnaire: &questionnaireURL,
+				Questionnaire: &strURL,
 				GameVersions:  []uuid.UUID{gameVersionUUID1, gameVersionUUID2},
+			},
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
+			gameVersionIDs: []values.GameVersionID{
+				values.NewGameVersionIDFromUUID(gameVersionUUID1),
+				values.NewGameVersionIDFromUUID(gameVersionUUID2),
 			},
 			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
 				editionID,
 				values.NewLauncherVersionName(editionName),
-				values.NewLauncherVersionQuestionnaireURL(parsedURL),
+				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
 				now,
 			),
-			expectedRes: &openapi.Edition{
+			expectEdition: &openapi.Edition{
 				Id:            editionUUID,
 				Name:          editionName,
-				Questionnaire: &questionnaireURL,
+				Questionnaire: &strURL,
 				CreatedAt:     now,
 			},
 			statusCode: http.StatusCreated,
 		},
-		"正常系:アンケートURLなしでエディションが作成できる": {
+		{
+			description: "アンケートURLがなくてもエラーなし",
 			reqBody: &openapi.NewEdition{
 				Name:         editionName,
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
 				editionID,
 				values.NewLauncherVersionName(editionName),
 				now,
 			),
-			expectedRes: &openapi.Edition{
+			expectEdition: &openapi.Edition{
 				Id:            editionUUID,
 				Name:          editionName,
 				Questionnaire: nil,
@@ -255,79 +281,113 @@ func TestPostEdition(t *testing.T) {
 			},
 			statusCode: http.StatusCreated,
 		},
-		"異常系:不正なリクエストボディ": {
-			invalidBody: true,
-			isErr:       true,
-			statusCode:  http.StatusBadRequest,
-		},
-		"異常系:無効なゲームバージョンID": {
+		{
+			description: "Edition名が空文字なので400",
 			reqBody: &openapi.NewEdition{
-				Name:         editionName,
+				Name:         "",
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
-			createEditionErr: service.ErrInvalidGameVersionID,
-			isErr:            true,
-			statusCode:       http.StatusBadRequest,
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
-		"異常系:重複したゲームバージョン": {
+		{
+			description: "Edition名が長すぎるので400",
+			reqBody: &openapi.NewEdition{
+				Name:         longName,
+				GameVersions: []uuid.UUID{gameVersionUUID1},
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "URLが正しくないので400",
+			reqBody: &openapi.NewEdition{
+				Name:          editionName,
+				Questionnaire: &invalidURL,
+				GameVersions:  []uuid.UUID{gameVersionUUID1},
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			description: "ゲームバージョンが重複しているので400",
 			reqBody: &openapi.NewEdition{
 				Name:         editionName,
 				GameVersions: []uuid.UUID{gameVersionUUID1, gameVersionUUID1},
+			},
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			gameVersionIDs: []values.GameVersionID{
+				values.NewGameVersionIDFromUUID(gameVersionUUID1),
+				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 			},
 			createEditionErr: service.ErrDuplicateGameVersion,
 			isErr:            true,
 			statusCode:       http.StatusBadRequest,
 		},
-		"異常系:重複したゲーム": {
-			reqBody: &openapi.NewEdition{
-				Name:         editionName,
-				GameVersions: []uuid.UUID{gameVersionUUID1, gameVersionUUID2},
-			},
-			createEditionErr: service.ErrDuplicateGame,
-			isErr:            true,
-			statusCode:       http.StatusBadRequest,
-		},
-		"異常系:サービス層でエラー": {
+		{
+			description: "無効なゲームバージョンIDが含まれているので400",
 			reqBody: &openapi.NewEdition{
 				Name:         editionName,
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
-			createEditionErr: errors.New("internal error"),
-			isErr:            true,
-			statusCode:       http.StatusInternalServerError,
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
+			createEditionErr:     service.ErrInvalidGameVersionID,
+			isErr:                true,
+			statusCode:           http.StatusBadRequest,
+		},
+		{
+			description: "サービス層でエラーが発生したので500",
+			reqBody: &openapi.NewEdition{
+				Name:         editionName,
+				GameVersions: []uuid.UUID{gameVersionUUID1},
+			},
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
+			createEditionErr:     errors.New("internal error"),
+			isErr:                true,
+			statusCode:           http.StatusInternalServerError,
 		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
-			if !testCase.invalidBody {
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			e := echo.New()
+			var req *http.Request
+			if testCase.invalidBody {
+				reqBody := bytes.NewBuffer([]byte("invalid"))
+				req = httptest.NewRequest(http.MethodPost, "/api/v2/editions", reqBody)
+				req.Header.Set("Content-Type", echo.MIMETextPlain)
+			} else {
+				reqBody := bytes.NewBuffer(nil)
+				if err := json.NewEncoder(reqBody).Encode(testCase.reqBody); err != nil {
+					t.Fatalf("failed to encode request body: %v", err)
+				}
+				req = httptest.NewRequest(http.MethodPost, "/api/v2/editions", reqBody)
+				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			}
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if testCase.executeCreateEdition {
 				mockEditionService.
 					EXPECT().
 					CreateEdition(
 						gomock.Any(),
-						values.NewLauncherVersionName(testCase.reqBody.Name),
-						gomock.Any(),
-						gomock.Any(),
+						testCase.name,
+						testCase.questionnaireURL,
+						testCase.gameVersionIDs,
 					).
 					Return(testCase.resultEdition, testCase.createEditionErr)
 			}
 
-			var reqBody []byte
-			var err error
-			if !testCase.invalidBody {
-				reqBody, err = json.Marshal(testCase.reqBody)
-				assert.NoError(t, err)
-			} else {
-				reqBody = []byte("invalid json")
-			}
-
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/api/v2/editions", bytes.NewReader(reqBody))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-
-			err = edition.PostEdition(c)
+			err := edition.PostEdition(c)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -335,7 +395,7 @@ func TestPostEdition(t *testing.T) {
 					if errors.As(err, &httpErr) {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
 					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
+						t.Errorf("error is not *echo.HTTPError")
 					}
 				} else {
 					assert.Error(t, err)
@@ -346,15 +406,16 @@ func TestPostEdition(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.statusCode, rec.Code)
 
-			if testCase.expectedRes != nil {
+			if testCase.expectEdition != nil {
 				var res openapi.Edition
-				err = json.NewDecoder(rec.Body).Decode(&res)
-				assert.NoError(t, err)
+				if err := json.NewDecoder(rec.Body).Decode(&res); err != nil {
+					t.Fatalf("failed to decode response body: %v", err)
+				}
 
-				assert.Equal(t, testCase.expectedRes.Id, res.Id)
-				assert.Equal(t, testCase.expectedRes.Name, res.Name)
-				assert.Equal(t, testCase.expectedRes.Questionnaire, res.Questionnaire)
-				assert.WithinDuration(t, testCase.expectedRes.CreatedAt, res.CreatedAt, time.Second)
+				assert.Equal(t, testCase.expectEdition.Id, res.Id)
+				assert.Equal(t, testCase.expectEdition.Name, res.Name)
+				assert.Equal(t, testCase.expectEdition.Questionnaire, res.Questionnaire)
+				assert.WithinDuration(t, testCase.expectEdition.CreatedAt, res.CreatedAt, time.Second)
 			}
 		})
 	}
