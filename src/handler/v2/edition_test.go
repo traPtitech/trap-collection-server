@@ -35,12 +35,12 @@ func TestGetEditions(t *testing.T) {
 	edition := NewEdition(mockEditionService)
 
 	type test struct {
-		description      string
-		editions         []*domain.LauncherVersion
-		getEditionsErr   error
-		expectedEditions []openapi.Edition
-		isErr            bool
-		statusCode       int
+		description    string
+		editions       []*domain.LauncherVersion
+		getEditionsErr error
+		expectEditions []openapi.Edition
+		isErr          bool
+		statusCode     int
 	}
 
 	now := time.Now()
@@ -65,7 +65,7 @@ func TestGetEditions(t *testing.T) {
 					now,
 				),
 			},
-			expectedEditions: []openapi.Edition{
+			expectEditions: []openapi.Edition{
 				{
 					Id:            uuid.UUID(editionID1),
 					Name:          string(editionName1),
@@ -84,7 +84,7 @@ func TestGetEditions(t *testing.T) {
 					now,
 				),
 			},
-			expectedEditions: []openapi.Edition{
+			expectEditions: []openapi.Edition{
 				{
 					Id:            uuid.UUID(editionID1),
 					Name:          string(editionName1),
@@ -115,7 +115,7 @@ func TestGetEditions(t *testing.T) {
 					now,
 				),
 			},
-			expectedEditions: []openapi.Edition{
+			expectEditions: []openapi.Edition{
 				{
 					Id:            uuid.UUID(editionID1),
 					Name:          string(editionName1),
@@ -179,16 +179,15 @@ func TestGetEditions(t *testing.T) {
 				t.Fatalf("failed to decode response body: %v", err)
 			}
 
-			assert.Len(t, res, len(testCase.expectedEditions))
+			assert.Len(t, res, len(testCase.expectEditions))
 			for i, ed := range res {
-				assert.Equal(t, testCase.expectedEditions[i].Id, ed.Id)
-				assert.Equal(t, testCase.expectedEditions[i].Name, ed.Name)
-				assert.Equal(t, testCase.expectedEditions[i].Questionnaire, ed.Questionnaire)
-				assert.WithinDuration(t, testCase.expectedEditions[i].CreatedAt, ed.CreatedAt, 2*time.Second)
+				assert.Equal(t, testCase.expectEditions[i].Id, ed.Id)
+				assert.Equal(t, testCase.expectEditions[i].Name, ed.Name)
+				assert.Equal(t, testCase.expectEditions[i].Questionnaire, ed.Questionnaire)
+				assert.WithinDuration(t, testCase.expectEditions[i].CreatedAt, ed.CreatedAt, 2*time.Second)
 			}
 		})
 	}
-
 }
 
 func TestPostEdition(t *testing.T) {
