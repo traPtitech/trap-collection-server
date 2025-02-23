@@ -867,3 +867,534 @@ func TestPatchEdition(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEditionGames(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEditionService := mock.NewMockEdition(ctrl)
+	edition := NewEdition(mockEditionService)
+
+	type test struct {
+		description        string
+		editionID          openapi.EditionIDInPath
+		gameVersions       []*service.GameVersionWithGame
+		getEditionGamesErr error
+		expectGames        []openapi.EditionGameResponse
+		isErr              bool
+		statusCode         int
+	}
+
+	now := time.Now()
+	editionUUID := uuid.New()
+	gameID := values.NewGameID()
+	gameID2 := values.NewGameID()
+	gameVersionID := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+	imageID := values.NewGameImageID()
+	videoID := values.NewGameVideoID()
+	fileID1 := values.NewGameFileID()
+	fileID2 := values.NewGameFileID()
+	fileID1UUID := uuid.UUID(fileID1)
+	fileID2UUID := uuid.UUID(fileID2)
+	strURL := "https://example.com"
+	urlLink, err := url.Parse(strURL)
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
+	urlValue := values.NewGameURLLink(urlLink)
+
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							URL: types.NewOption(urlValue),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Url:         &strURL,
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "ゲームURLとプラットフォームファイルがnullでもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypeLimited,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets:  &service.Assets{},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "windowsでもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							Windows: types.NewOption(fileID1),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Files: &openapi.GameVersionFiles{
+							Win32: &fileID1UUID,
+						},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "macでもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							Mac: types.NewOption(fileID1),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Files: &openapi.GameVersionFiles{
+							Darwin: &fileID1UUID,
+						},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "jarでもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							Jar: types.NewOption(fileID1),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Files: &openapi.GameVersionFiles{
+							Jar: &fileID1UUID,
+						},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "ファイルが複数あってももエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							Jar:     types.NewOption(fileID1),
+							Windows: types.NewOption(fileID2),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Files: &openapi.GameVersionFiles{
+							Jar:   &fileID1UUID,
+							Win32: &fileID2UUID,
+						},
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "ファイルとurlが両方あってもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム"),
+						values.NewGameDescription("テスト説明"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							Windows: types.NewOption(fileID1),
+							URL:     types.NewOption(urlValue),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム",
+					Description: "テスト説明",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Files: &openapi.GameVersionFiles{
+							Win32: &fileID1UUID,
+						},
+						Url: &strURL,
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "2つ以上のゲームがリストに含まれていてもエラーなし",
+			editionID:   editionUUID,
+			gameVersions: []*service.GameVersionWithGame{
+				{
+					Game: domain.NewGame(
+						gameID,
+						values.NewGameName("テストゲーム1"),
+						values.NewGameDescription("テスト説明1"),
+						values.GameVisibilityTypePublic,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							URL: types.NewOption(urlValue),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+				{
+					Game: domain.NewGame(
+						gameID2,
+						values.NewGameName("テストゲーム2"),
+						values.NewGameDescription("テスト説明2"),
+						values.GameVisibilityTypePrivate,
+						now,
+					),
+					GameVersion: service.GameVersionInfo{
+						GameVersion: domain.NewGameVersion(
+							gameVersionID2,
+							values.NewGameVersionName("v1.0.0"),
+							values.NewGameVersionDescription("リリース"),
+							now,
+						),
+						Assets: &service.Assets{
+							URL: types.NewOption(urlValue),
+						},
+						ImageID: imageID,
+						VideoID: videoID,
+					},
+				},
+			},
+			expectGames: []openapi.EditionGameResponse{
+				{
+					Id:          uuid.UUID(gameID),
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Url:         &strURL,
+					},
+				},
+				{
+					Id:          uuid.UUID(gameID2),
+					Name:        "テストゲーム2",
+					Description: "テスト説明2",
+					CreatedAt:   now,
+					Version: openapi.GameVersion{
+						Id:          uuid.UUID(gameVersionID2),
+						Name:        "v1.0.0",
+						Description: "リリース",
+						CreatedAt:   now,
+						ImageID:     uuid.UUID(imageID),
+						VideoID:     uuid.UUID(videoID),
+						Url:         &strURL,
+					},
+				},
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description:        "不正なeditionIDなので400",
+			editionID:          editionUUID,
+			getEditionGamesErr: service.ErrInvalidEditionID,
+			isErr:              true,
+			statusCode:         http.StatusBadRequest,
+		},
+		{
+			description:        "サービス層でエラーが発生したので500",
+			editionID:          editionUUID,
+			getEditionGamesErr: errors.New("internal error"),
+			isErr:              true,
+			statusCode:         http.StatusInternalServerError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			mockEditionService.
+				EXPECT().
+				GetEditionGameVersions(
+					gomock.Any(),
+					values.NewLauncherVersionIDFromUUID(testCase.editionID),
+				).
+				Return(testCase.gameVersions, testCase.getEditionGamesErr)
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			err := edition.GetEditionGames(c, testCase.editionID)
+
+			if testCase.isErr {
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					if errors.As(err, &httpErr) {
+						assert.Equal(t, testCase.statusCode, httpErr.Code)
+					} else {
+						t.Errorf("error should be *echo.HTTPError, but got %T", err)
+					}
+				} else {
+					assert.Error(t, err)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, rec.Code)
+
+			var res []openapi.EditionGameResponse
+			err = json.NewDecoder(rec.Body).Decode(&res)
+			if err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+
+			assert.Len(t, res, len(testCase.expectGames))
+			for i, game := range res {
+				assert.Equal(t, testCase.expectGames[i].Id, game.Id)
+				assert.Equal(t, testCase.expectGames[i].Name, game.Name)
+				assert.Equal(t, testCase.expectGames[i].Description, game.Description)
+				assert.WithinDuration(t, testCase.expectGames[i].CreatedAt, game.CreatedAt, 2*time.Second)
+
+				assert.Equal(t, testCase.expectGames[i].Version.Id, game.Version.Id)
+				assert.Equal(t, testCase.expectGames[i].Version.Name, game.Version.Name)
+				assert.Equal(t, testCase.expectGames[i].Version.Description, game.Version.Description)
+				assert.WithinDuration(t, testCase.expectGames[i].Version.CreatedAt, game.Version.CreatedAt, 2*time.Second)
+				assert.Equal(t, testCase.expectGames[i].Version.Url, game.Version.Url)
+				assert.Equal(t, testCase.expectGames[i].Version.Files, game.Version.Files)
+				assert.Equal(t, testCase.expectGames[i].Version.ImageID, game.Version.ImageID)
+				assert.Equal(t, testCase.expectGames[i].Version.VideoID, game.Version.VideoID)
+			}
+		})
+	}
+}
