@@ -637,98 +637,185 @@ func TestPatchEdition(t *testing.T) {
 	edition := NewEdition(mockEditionService)
 
 	type test struct {
-		editionID        openapi.EditionIDInPath
-		reqBody          *openapi.PatchEdition
-		invalidBody      bool
-		updateEditionErr error
-		resultEdition    *domain.LauncherVersion
-		isErr            bool
-		statusCode       int
-		expectedRes      *openapi.Edition
+		description       string
+		editionID         openapi.EditionIDInPath
+		reqBody           *openapi.PatchEdition
+		invalidBody       bool
+		executeUpdateMock bool
+		launcherVersionID values.LauncherVersionID
+		name              values.LauncherVersionName
+		questionnaireURL  types.Option[values.LauncherVersionQuestionnaireURL]
+		updateEditionErr  error
+		resultEdition     *domain.LauncherVersion
+		isErr             bool
+		statusCode        int
+		expectedRes       *openapi.Edition
 	}
 
 	now := time.Now()
 	editionUUID := uuid.New()
 	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
-	questionnaireURL := "https://example.com/questionnaire"
-	parsedURL, _ := url.Parse(questionnaireURL)
+	strURL := "https://example.com/questionnaire"
+	invalidURL := " https://example.com/questionnaire"
+	longName := strings.Repeat("あ", 33)
+	questionnaireURL, err := url.Parse(strURL)
+	if err != nil {
+		t.Fatalf("failed to parse url: %v", err)
+	}
 
-	testCases := map[string]test{
-		"正常系:エディションが更新できる": {
-			editionID: editionUUID,
+	testCases := []test{
+		{
+			description: "特に問題ないのでエラーなし",
+			editionID:   editionUUID,
 			reqBody: &openapi.PatchEdition{
 				Name:          editionName,
-				Questionnaire: &questionnaireURL,
+				Questionnaire: &strURL,
 			},
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
 			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
 				editionID,
 				values.NewLauncherVersionName(editionName),
-				values.NewLauncherVersionQuestionnaireURL(parsedURL),
+				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
 				now,
 			),
 			expectedRes: &openapi.Edition{
 				Id:            editionUUID,
 				Name:          editionName,
-				Questionnaire: &questionnaireURL,
+				Questionnaire: &strURL,
 				CreatedAt:     now,
 			},
 			statusCode: http.StatusOK,
 		},
-		"異常系:不正なリクエストボディ": {
+		{
+			description: "URLがなくてもエラーなし",
+			editionID:   editionUUID,
+			reqBody: &openapi.PatchEdition{
+				Name: editionName,
+			},
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
+				editionID,
+				values.NewLauncherVersionName(editionName),
+				now,
+			),
+			expectedRes: &openapi.Edition{
+				Id:            editionUUID,
+				Name:          editionName,
+				Questionnaire: nil,
+				CreatedAt:     now,
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			description: "リクエストボディが不正なので400",
 			editionID:   editionUUID,
 			invalidBody: true,
 			isErr:       true,
 			statusCode:  http.StatusBadRequest,
 		},
-		"異常系:存在しないエディションID": {
-			editionID: editionUUID,
+		{
+			description: "名前が空文字なので400",
+			editionID:   editionUUID,
 			reqBody: &openapi.PatchEdition{
-				Name: editionName,
+				Name: "",
 			},
-			updateEditionErr: service.ErrInvalidEditionID,
-			isErr:            true,
-			statusCode:       http.StatusBadRequest,
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
-		"異常系:重複したゲームバージョン": {
-			editionID: editionUUID,
+		{
+			description: "名前が長すぎるので400",
+			editionID:   editionUUID,
 			reqBody: &openapi.PatchEdition{
-				Name: editionName,
+				Name: longName,
 			},
-			updateEditionErr: service.ErrDuplicateGameVersion,
-			isErr:            true,
-			statusCode:       http.StatusInternalServerError,
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
-		"異常系:重複したゲーム": {
-			editionID: editionUUID,
+		{
+			description: "URLが正しくないので400",
+			editionID:   editionUUID,
 			reqBody: &openapi.PatchEdition{
-				Name: editionName,
+				Name:          editionName,
+				Questionnaire: &invalidURL,
 			},
-			updateEditionErr: service.ErrDuplicateGame,
-			isErr:            true,
-			statusCode:       http.StatusInternalServerError,
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
 		},
-		"異常系:サービス層でエラー": {
-			editionID: editionUUID,
+		{
+			description: "ErrInvalidEditionIDなので400",
+			editionID:   editionUUID,
 			reqBody: &openapi.PatchEdition{
 				Name: editionName,
 			},
-			updateEditionErr: errors.New("internal error"),
-			isErr:            true,
-			statusCode:       http.StatusInternalServerError,
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			updateEditionErr:  service.ErrInvalidEditionID,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
+		},
+		{
+			description: "ErrDuplicateGameVersionなので500",
+			editionID:   editionUUID,
+			reqBody: &openapi.PatchEdition{
+				Name: editionName,
+			},
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			updateEditionErr:  service.ErrDuplicateGameVersion,
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+		{
+			description: "ErrDuplicateGameなので500",
+			editionID:   editionUUID,
+			reqBody: &openapi.PatchEdition{
+				Name: editionName,
+			},
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			updateEditionErr:  service.ErrDuplicateGame,
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
+		},
+		{
+			description: "サービス層でエラーなので500",
+			editionID:   editionUUID,
+			reqBody: &openapi.PatchEdition{
+				Name: editionName,
+			},
+			executeUpdateMock: true,
+			launcherVersionID: editionID,
+			name:              values.NewLauncherVersionName(editionName),
+			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			updateEditionErr:  errors.New("internal error"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
 		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
-			if !testCase.invalidBody {
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if !testCase.invalidBody && testCase.executeUpdateMock {
 				mockEditionService.
 					EXPECT().
 					UpdateEdition(
 						gomock.Any(),
-						values.NewLauncherVersionIDFromUUID(testCase.editionID),
-						values.NewLauncherVersionName(testCase.reqBody.Name),
-						gomock.Any(),
+						testCase.launcherVersionID,
+						testCase.name,
+						testCase.questionnaireURL,
 					).
 					Return(testCase.resultEdition, testCase.updateEditionErr)
 			}
