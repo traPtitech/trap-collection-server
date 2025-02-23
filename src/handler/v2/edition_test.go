@@ -429,37 +429,54 @@ func TestDeleteEdition(t *testing.T) {
 	mockEditionService := mock.NewMockEdition(ctrl)
 	edition := NewEdition(mockEditionService)
 
+	editionID := uuid.New()
+
 	type test struct {
-		editionID        openapi.EditionIDInPath
-		deleteEditionErr error
-		isErr            bool
-		statusCode       int
+		description       string
+		editionID         openapi.EditionIDInPath
+		executeDeleteMock bool
+		launcherVersionID values.LauncherVersionID
+		deleteEditionErr  error
+		isErr             bool
+		statusCode        int
 	}
 
-	testCases := map[string]test{
-		"正常系:特に問題ないのでエラー無し": {
-			editionID: uuid.New(),
+	testCases := []test{
+		{
+			description:       "特に問題ないのでエラー無し",
+			editionID:         editionID,
+			executeDeleteMock: true,
+			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			statusCode:        http.StatusOK,
 		},
-		"異常系:存在しないエディションIDなので400": {
-			editionID:        uuid.New(),
-			deleteEditionErr: service.ErrInvalidEditionID,
-			isErr:            true,
-			statusCode:       http.StatusBadRequest,
+		{
+			description:       "存在しないエディションIDなので400",
+			editionID:         editionID,
+			executeDeleteMock: true,
+			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			deleteEditionErr:  service.ErrInvalidEditionID,
+			isErr:             true,
+			statusCode:        http.StatusBadRequest,
 		},
-		"異常系:DeleteEditionがエラーなのでエラー": {
-			editionID:        uuid.New(),
-			deleteEditionErr: errors.New("internal error"),
-			isErr:            true,
-			statusCode:       http.StatusInternalServerError,
+		{
+			description:       "DeleteEditionがエラーなので500",
+			editionID:         editionID,
+			executeDeleteMock: true,
+			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			deleteEditionErr:  errors.New("internal error"),
+			isErr:             true,
+			statusCode:        http.StatusInternalServerError,
 		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
-			mockEditionService.
-				EXPECT().
-				DeleteEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
-				Return(testCase.deleteEditionErr)
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.executeDeleteMock {
+				mockEditionService.
+					EXPECT().
+					DeleteEdition(gomock.Any(), testCase.launcherVersionID).
+					Return(testCase.deleteEditionErr)
+			}
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
