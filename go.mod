@@ -170,3 +170,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/plugin/prometheus v0.1.0
 )
+
+tool go.uber.org/mock/mockgen
