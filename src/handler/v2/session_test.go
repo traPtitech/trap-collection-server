@@ -6,11 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"go.uber.org/mock/gomock"
 )
 
 // テスト用のレスポンスのSet-CookieヘッダーをCookieヘッダーに移す関数

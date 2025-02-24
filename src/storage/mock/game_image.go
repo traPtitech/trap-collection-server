@@ -7,9 +7,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "github.com/golang/mock/gomock"
 	domain "github.com/traPtitech/trap-collection-server/src/domain"
 	values "github.com/traPtitech/trap-collection-server/src/domain/values"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // GameImage is a mock of GameImage interface.
