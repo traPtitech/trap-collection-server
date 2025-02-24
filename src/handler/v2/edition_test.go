@@ -164,9 +164,8 @@ func TestGetEditions(t *testing.T) {
 					assert.Error(t, err)
 				}
 				return
-			} else {
-				assert.NoError(t, err)
 			}
+			assert.NoError(t, err)
 			if err != nil || testCase.isErr {
 				return
 			}
