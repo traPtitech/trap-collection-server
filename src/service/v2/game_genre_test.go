@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetGameGenres(t *testing.T) {

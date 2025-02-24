@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetOIDCSession(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	mockAuth "github.com/traPtitech/trap-collection-server/src/auth/mock"
@@ -15,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/service"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetMe(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"path"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSetupDirectory(t *testing.T) {

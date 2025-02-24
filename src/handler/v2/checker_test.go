@@ -10,7 +10,6 @@ import (
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +19,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
+	"go.uber.org/mock/gomock"
 )
 
 func setEchoContext(ctx context.Context, c echo.Context) context.Context {

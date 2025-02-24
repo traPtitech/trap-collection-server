@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	mockAuth "github.com/traPtitech/trap-collection-server/src/auth/mock"
@@ -16,6 +15,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
+	"go.uber.org/mock/gomock"
 )
 
 func TestAddAdmin(t *testing.T) {

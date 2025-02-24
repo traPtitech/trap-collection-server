@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 type EditionAuth interface {
 	// GenerateProductKey
