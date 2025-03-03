@@ -153,10 +153,8 @@ func TestGetEditions(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
@@ -483,10 +481,8 @@ func TestDeleteEdition(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
@@ -595,10 +591,8 @@ func TestGetEdition(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
@@ -833,10 +827,8 @@ func TestPatchEdition(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
@@ -1351,10 +1343,8 @@ func TestGetEditionGames(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
@@ -1878,10 +1868,8 @@ func TestPatchEditionGame(t *testing.T) {
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
 					var httpErr *echo.HTTPError
-					if errors.As(err, &httpErr) {
+					if assert.ErrorAs(t, err, &httpErr, "error should be *echo.HTTPError") {
 						assert.Equal(t, testCase.statusCode, httpErr.Code)
-					} else {
-						t.Errorf("error should be *echo.HTTPError, but got %T", err)
 					}
 				} else {
 					assert.Error(t, err)
