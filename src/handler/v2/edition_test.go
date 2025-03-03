@@ -508,7 +508,7 @@ func TestGetEdition(t *testing.T) {
 		description   string
 		editionID     openapi.EditionIDInPath
 		resultEdition *domain.LauncherVersion
-		getEditionErr error
+		GetEditionErr error
 		expectEdition *openapi.Edition
 		isErr         bool
 		statusCode    int
@@ -561,14 +561,14 @@ func TestGetEdition(t *testing.T) {
 		{
 			description:   "存在しないエディションIDなので400",
 			editionID:     editionUUID,
-			getEditionErr: service.ErrInvalidEditionID,
+			GetEditionErr: service.ErrInvalidEditionID,
 			isErr:         true,
 			statusCode:    http.StatusBadRequest,
 		},
 		{
 			description:   "GetEditionがエラーなので500",
 			editionID:     editionUUID,
-			getEditionErr: errors.New("internal error"),
+			GetEditionErr: errors.New("internal error"),
 			isErr:         true,
 			statusCode:    http.StatusInternalServerError,
 		},
@@ -579,7 +579,7 @@ func TestGetEdition(t *testing.T) {
 			mockEditionService.
 				EXPECT().
 				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
-				Return(testCase.resultEdition, testCase.getEditionErr)
+				Return(testCase.resultEdition, testCase.GetEditionErr)
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
