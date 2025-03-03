@@ -552,7 +552,7 @@ func TestPostGameVersion(t *testing.T) {
 	fileID2 := values.NewGameFileID()
 	fileID1UUID := uuid.UUID(fileID1)
 	fileID2UUID := uuid.UUID(fileID2)
-	invalidURL := " https://example.com"
+	invalidURL := " https://example.com with spaces"
 	strURL := "https://example.com"
 	urlLink, err := url.Parse(strURL)
 	if err != nil {

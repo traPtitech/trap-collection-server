@@ -213,7 +213,7 @@ func TestPostEdition(t *testing.T) {
 	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
 	strURL := "https://example.com/questionnaire"
-	invalidURL := " https://example.com/questionnaire"
+	invalidURL := " https://example.com/questionnaire with spaces"
 	longName := strings.Repeat("あ", 33)
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
@@ -644,7 +644,7 @@ func TestPatchEdition(t *testing.T) {
 	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
 	strURL := "https://example.com/questionnaire"
-	invalidURL := " https://example.com/questionnaire"
+	invalidURL := "https://example.com/questionnaire with spaces"
 	longName := strings.Repeat("あ", 33)
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
