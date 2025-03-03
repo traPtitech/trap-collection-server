@@ -938,7 +938,7 @@ func TestGetEditionGames(t *testing.T) {
 			statusCode: http.StatusOK,
 		},
 		{
-			description: "ゲームURLとプラットフォームファイルがnullでもエラーなし",
+			description: "ゲームURLとゲームファイルがnullでもエラーなし",
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
