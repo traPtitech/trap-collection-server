@@ -179,7 +179,7 @@ func TestGetEditions(t *testing.T) {
 				assert.Equal(t, testCase.expectEditions[i].Id, ed.Id)
 				assert.Equal(t, testCase.expectEditions[i].Name, ed.Name)
 				assert.Equal(t, testCase.expectEditions[i].Questionnaire, ed.Questionnaire)
-				assert.WithinDuration(t, testCase.expectEditions[i].CreatedAt, ed.CreatedAt, 2*time.Second)
+				assert.WithinDuration(t, testCase.expectEditions[i].CreatedAt, ed.CreatedAt, time.Second)
 			}
 		})
 	}
