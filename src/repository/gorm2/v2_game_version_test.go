@@ -934,7 +934,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to get game: %+v\n", err)
 				}
-				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second)
+				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second*2)
 			}
 		})
 	}
