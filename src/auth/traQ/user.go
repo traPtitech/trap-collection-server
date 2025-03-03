@@ -98,6 +98,7 @@ type getUsersResponse struct {
 	ID    uuid.UUID `json:"id"`
 	Name  string    `json:"name"`
 	State int       `json:"state"`
+	Bot   bool      `json:"bot"`
 }
 
 // GetAllActiveUsers
@@ -147,7 +148,6 @@ func (u *User) GetAllActiveUsers(ctx context.Context, session *domain.OIDCSessio
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
 			values.NewTrapMemberName(user.Name),

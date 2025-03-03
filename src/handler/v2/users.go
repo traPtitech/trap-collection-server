@@ -63,12 +63,6 @@ func (u *User) GetUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession)
-	if err != nil {
-		log.Printf("error: failed to get user info: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
 	botParam := c.QueryParam("bot")
 	includeBot := true
 	if botParam != "" {
@@ -79,9 +73,14 @@ func (u *User) GetUsers(c echo.Context) error {
 		}
 	}
 
+	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession, includeBot)
+	if err != nil {
+		log.Printf("error: failed to get user info: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	users := make([]*openapi.User, 0, len(userInfos))
 	for _, userInfo := range userInfos {
-		// ここにbot除外ロジックを書く
 		users = append(users, &openapi.User{
 			Id:   uuid.UUID(userInfo.GetID()),
 			Name: string(userInfo.GetName()),
