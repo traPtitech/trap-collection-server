@@ -883,6 +883,40 @@ func TestGetEditionGames(t *testing.T) {
 	fileID2 := values.NewGameFileID()
 	fileID1UUID := uuid.UUID(fileID1)
 	fileID2UUID := uuid.UUID(fileID2)
+	game1 := domain.NewGame(
+		gameID,
+		values.NewGameName("テストゲーム1"),
+		values.NewGameDescription("テスト説明1"),
+		values.GameVisibilityTypePublic,
+		now,
+	)
+	game2 := domain.NewGame(
+		gameID2,
+		values.NewGameName("テストゲーム2"),
+		values.NewGameDescription("テスト説明2"),
+		values.GameVisibilityTypePrivate,
+		now,
+	)
+	gameLimited := domain.NewGame(
+		gameID,
+		values.NewGameName("テストゲーム"),
+		values.NewGameDescription("テスト説明"),
+		values.GameVisibilityTypeLimited,
+		now,
+	)
+	gameVersion := domain.NewGameVersion(
+		gameVersionID,
+		values.NewGameVersionName("v1.0.0"),
+		values.NewGameVersionDescription("リリース"),
+		now,
+	)
+	gameVersion2 := domain.NewGameVersion(
+		gameVersionID2,
+		values.NewGameVersionName("v1.0.0"),
+		values.NewGameVersionDescription("リリース"),
+		now,
+	)
+
 	strURL := "https://example.com"
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
@@ -896,20 +930,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							URL: types.NewOption(urlValue),
 						},
@@ -921,8 +944,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -942,23 +965,12 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypeLimited,
-						now,
-					),
+					Game: gameLimited,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
-						Assets:  &service.Assets{},
-						ImageID: imageID,
-						VideoID: videoID,
+						GameVersion: gameVersion,
+						Assets:      &service.Assets{},
+						ImageID:     imageID,
+						VideoID:     videoID,
 					},
 				},
 			},
@@ -985,20 +997,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Windows: types.NewOption(fileID1),
 						},
@@ -1010,8 +1011,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -1033,20 +1034,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Mac: types.NewOption(fileID1),
 						},
@@ -1058,8 +1048,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -1081,20 +1071,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Jar: types.NewOption(fileID1),
 						},
@@ -1106,8 +1085,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -1129,20 +1108,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Jar:     types.NewOption(fileID1),
 							Windows: types.NewOption(fileID2),
@@ -1155,8 +1123,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -1179,20 +1147,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Windows: types.NewOption(fileID1),
 							URL:     types.NewOption(urlValue),
@@ -1205,8 +1162,8 @@ func TestGetEditionGames(t *testing.T) {
 			expectGames: []openapi.EditionGameResponse{
 				{
 					Id:          uuid.UUID(gameID),
-					Name:        "テストゲーム",
-					Description: "テスト説明",
+					Name:        "テストゲーム1",
+					Description: "テスト説明1",
 					CreatedAt:   now,
 					Version: openapi.GameVersion{
 						Id:          uuid.UUID(gameVersionID),
@@ -1229,20 +1186,9 @@ func TestGetEditionGames(t *testing.T) {
 			editionID:   editionUUID,
 			gameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム1"),
-						values.NewGameDescription("テスト説明1"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game1,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							URL: types.NewOption(urlValue),
 						},
@@ -1251,20 +1197,9 @@ func TestGetEditionGames(t *testing.T) {
 					},
 				},
 				{
-					Game: domain.NewGame(
-						gameID2,
-						values.NewGameName("テストゲーム2"),
-						values.NewGameDescription("テスト説明2"),
-						values.GameVisibilityTypePrivate,
-						now,
-					),
+					Game: game2,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID2,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion2,
 						Assets: &service.Assets{
 							URL: types.NewOption(urlValue),
 						},
@@ -1415,6 +1350,20 @@ func TestPatchEditionGame(t *testing.T) {
 	fileID2UUID := uuid.UUID(fileID2)
 	imageID := values.NewGameImageID()
 	videoID := values.NewGameVideoID()
+	game := domain.NewGame(
+		gameID,
+		values.NewGameName("テストゲーム"),
+		values.NewGameDescription("テスト説明"),
+		values.GameVisibilityTypePublic,
+		now,
+	)
+	gameVersion := domain.NewGameVersion(
+		gameVersionID1,
+		values.NewGameVersionName("v1.0.0"),
+		values.NewGameVersionDescription("リリース"),
+		now,
+	)
+
 	strURL := "https://example.com"
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
@@ -1440,23 +1389,12 @@ func TestPatchEditionGame(t *testing.T) {
 			},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
-						Assets:  &service.Assets{},
-						ImageID: imageID,
-						VideoID: videoID,
+						GameVersion: gameVersion,
+						Assets:      &service.Assets{},
+						ImageID:     imageID,
+						VideoID:     videoID,
 					},
 				},
 			},
@@ -1570,20 +1508,9 @@ func TestPatchEditionGame(t *testing.T) {
 			},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Windows: types.NewOption(fileID1),
 						},
@@ -1624,20 +1551,9 @@ func TestPatchEditionGame(t *testing.T) {
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Mac: types.NewOption(fileID2),
 						},
@@ -1678,20 +1594,9 @@ func TestPatchEditionGame(t *testing.T) {
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Jar: types.NewOption(fileID1),
 						},
@@ -1732,20 +1637,9 @@ func TestPatchEditionGame(t *testing.T) {
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							Windows: types.NewOption(fileID1),
 							Mac:     types.NewOption(fileID2),
@@ -1788,20 +1682,9 @@ func TestPatchEditionGame(t *testing.T) {
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
-					Game: domain.NewGame(
-						gameID,
-						values.NewGameName("テストゲーム"),
-						values.NewGameDescription("テスト説明"),
-						values.GameVisibilityTypePublic,
-						now,
-					),
+					Game: game,
 					GameVersion: service.GameVersionInfo{
-						GameVersion: domain.NewGameVersion(
-							gameVersionID1,
-							values.NewGameVersionName("v1.0.0"),
-							values.NewGameVersionDescription("リリース"),
-							now,
-						),
+						GameVersion: gameVersion,
 						Assets: &service.Assets{
 							URL:     types.NewOption(urlValue),
 							Windows: types.NewOption(fileID1),
