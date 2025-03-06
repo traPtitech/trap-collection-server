@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -683,6 +684,111 @@ func TestPostEditionAuthorize(t *testing.T) {
 
 			assert.Equal(t, string(validAccessToken.GetAccessToken()), resAccessToken.AccessToken)
 			assert.WithinDuration(t, validAccessToken.GetExpiresAt(), resAccessToken.ExpiresAt, 0)
+		})
+	}
+}
+func TestGetEditionInfo(t *testing.T) {
+	t.Parallel()
+
+	editionID := uuid.New()
+	editionName := "Test Edition"
+	createdAt := time.Now()
+
+	edition := domain.NewLauncherVersionWithoutQuestionnaire(
+		values.NewLauncherVersionIDFromUUID(editionID),
+		values.NewLauncherVersionName(editionName),
+		createdAt,
+	)
+
+	questionnaireURLStr := "https://example.com/questionnaire"
+	questionnaireURL, err := url.Parse(questionnaireURLStr)
+	require.NoError(t, err)
+
+	editionID2 := uuid.New()
+	editionName2 := "Test Edition2"
+	createdAt2 := time.Now()
+	editionWithQ := domain.NewLauncherVersionWithQuestionnaire(
+		values.NewLauncherVersionIDFromUUID(editionID2),
+		values.NewLauncherVersionName(editionName2),
+		questionnaireURL,
+		createdAt2,
+	)
+
+	openapiEdition := openapi.Edition{
+		Id:        openapi.EditionID(edition.GetID()),
+		Name:      openapi.EditionName(edition.GetName()),
+		CreatedAt: edition.GetCreatedAt(),
+	}
+	openapiEditionWithQ := openapi.Edition{
+		Id:            openapi.EditionID(editionWithQ.GetID()),
+		Name:          openapi.EditionName(editionWithQ.GetName()),
+		Questionnaire: &questionnaireURLStr,
+		CreatedAt:     editionWithQ.GetCreatedAt(),
+	}
+
+	testCases := map[string]struct {
+		edition    *domain.LauncherVersion
+		resEdition openapi.Edition
+		isErr      bool
+		err        error
+		statusCode int
+	}{
+		"特に問題なし": {
+			edition:    edition,
+			resEdition: openapiEdition,
+		},
+		"アンケートURLがあっても問題なし": {
+			edition:    editionWithQ,
+			resEdition: openapiEditionWithQ,
+		},
+		"contextにeditionが入ってないので500": {
+			edition:    nil,
+			isErr:      true,
+			statusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			editionAuth := NewEditionAuth(NewContext(), nil)
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions/info", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			c.Set(editionContextKey, testCase.edition)
+
+			err := editionAuth.GetEditionInfo(c)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+
+				var httpErr *echo.HTTPError
+				assert.ErrorAs(t, err, &httpErr)
+				assert.Equal(t, testCase.statusCode, httpErr.Code)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			var resEdition openapi.Edition
+			err = json.NewDecoder(rec.Body).Decode(&resEdition)
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.resEdition.Id, resEdition.Id)
+			assert.Equal(t, testCase.resEdition.Name, resEdition.Name)
+			assert.Equal(t, testCase.resEdition.Questionnaire, resEdition.Questionnaire)
+			assert.WithinDuration(t, testCase.resEdition.CreatedAt, resEdition.CreatedAt, 0)
 		})
 	}
 }
