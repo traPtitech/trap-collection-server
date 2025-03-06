@@ -335,3 +335,115 @@ func TestPostProductKey(t *testing.T) {
 		})
 	}
 }
+func TestPostActivateProductKey(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	productKeyID := uuid.New()
+
+	activeProductKey := domain.NewProductKey(
+		values.NewLauncherUserIDFromUUID(productKeyID),
+		values.NewLauncherUserProductKeyFromString("key"),
+		values.LauncherUserStatusActive,
+		time.Now(),
+	)
+
+	openapiActiveProductKey := openapi.ProductKey{
+		Id:        openapi.ProductKeyID(activeProductKey.GetID()),
+		Key:       openapi.ProductKeyValue(activeProductKey.GetProductKey()),
+		Status:    openapi.Active,
+		CreatedAt: activeProductKey.GetCreatedAt(),
+	}
+
+	testCases := map[string]struct {
+		productKeyID              openapi.ProductKeyIDInPath
+		executeActivateProductKey bool
+		productKey                *domain.LauncherUser
+		ActivateProductKeyErr     error
+		resProductKey             openapi.ProductKey
+		isErr                     bool
+		err                       error
+		statusCode                int
+	}{
+		"特に問題なし": {
+			productKeyID:              productKeyID,
+			executeActivateProductKey: true,
+			productKey:                activeProductKey,
+			resProductKey:             openapiActiveProductKey,
+		},
+		"ErrInvalidProductKeyなので400": {
+			productKeyID:              productKeyID,
+			executeActivateProductKey: true,
+			ActivateProductKeyErr:     service.ErrInvalidProductKey,
+			isErr:                     true,
+			statusCode:                http.StatusBadRequest,
+		},
+		"ErrKeyAlreadyActivatedなので404": {
+			productKeyID:              productKeyID,
+			executeActivateProductKey: true,
+			ActivateProductKeyErr:     service.ErrKeyAlreadyActivated,
+			isErr:                     true,
+			statusCode:                http.StatusNotFound,
+		},
+		"エラーが発生して500": {
+			productKeyID:              productKeyID,
+			executeActivateProductKey: true,
+			ActivateProductKeyErr:     errors.New("error"),
+			isErr:                     true,
+			statusCode:                http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
+			editionAuth := NewEditionAuth(NewContext(), mockEditionAuthService)
+
+			if testCase.executeActivateProductKey {
+				mockEditionAuthService.
+					EXPECT().
+					ActivateProductKey(gomock.Any(), values.NewLauncherUserIDFromUUID(testCase.productKeyID)).
+					Return(testCase.productKey, testCase.ActivateProductKeyErr)
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/activate", testCase.productKeyID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			err := editionAuth.PostActivateProductKey(c, openapi.EditionIDInPath{}, testCase.productKeyID)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					assert.ErrorAs(t, err, &httpErr)
+					assert.Equal(t, testCase.statusCode, httpErr.Code)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			var resProductKey openapi.ProductKey
+			err = json.NewDecoder(rec.Body).Decode(&resProductKey)
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.resProductKey.Id, resProductKey.Id)
+			assert.Equal(t, testCase.resProductKey.Key, resProductKey.Key)
+			assert.Equal(t, testCase.resProductKey.Status, resProductKey.Status)
+			assert.WithinDuration(t, testCase.resProductKey.CreatedAt, resProductKey.CreatedAt, 0)
+		})
+	}
+}
