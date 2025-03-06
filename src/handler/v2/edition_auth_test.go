@@ -199,3 +199,139 @@ func TestGetProductKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestPostProductKey(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	editionID := uuid.New()
+	num := 5
+
+	productKey1 := domain.NewProductKey(
+		values.NewLauncherUserID(),
+		values.NewLauncherUserProductKeyFromString("key1"),
+		values.LauncherUserStatusActive,
+		time.Now(),
+	)
+	productKey2 := domain.NewProductKey(
+		values.NewLauncherUserID(),
+		values.NewLauncherUserProductKeyFromString("key2"),
+		values.LauncherUserStatusActive,
+		time.Now(),
+	)
+
+	openapiProductKey1 := openapi.ProductKey{
+		Id:        openapi.ProductKeyID(productKey1.GetID()),
+		Key:       openapi.ProductKeyValue(productKey1.GetProductKey()),
+		Status:    openapi.Active,
+		CreatedAt: productKey1.GetCreatedAt(),
+	}
+
+	openapiProductKey2 := openapi.ProductKey{
+		Id:        openapi.ProductKeyID(productKey2.GetID()),
+		Key:       openapi.ProductKeyValue(productKey2.GetProductKey()),
+		Status:    openapi.Active,
+		CreatedAt: productKey2.GetCreatedAt(),
+	}
+
+	testCases := map[string]struct {
+		editionID             openapi.EditionIDInPath
+		params                openapi.PostProductKeyParams
+		executeGetProductKeys bool
+		productKeys           []*domain.LauncherUser
+		GenerateProductKeyErr error
+		resProductKeys        []openapi.ProductKey
+		isErr                 bool
+		err                   error
+		statusCode            int
+	}{
+		"特に問題なし": {
+			editionID:             editionID,
+			params:                openapi.PostProductKeyParams{Num: num},
+			executeGetProductKeys: true,
+			productKeys:           []*domain.LauncherUser{productKey1, productKey2},
+			resProductKeys:        []openapi.ProductKey{openapiProductKey1, openapiProductKey2},
+		},
+		"ErrInvalidEditionIDなので400": {
+			editionID:             editionID,
+			params:                openapi.PostProductKeyParams{Num: num},
+			executeGetProductKeys: true,
+			GenerateProductKeyErr: service.ErrInvalidEditionID,
+			isErr:                 true,
+			statusCode:            http.StatusBadRequest,
+		},
+		"ErrInvalidKeyNumなので400": {
+			editionID:             editionID,
+			params:                openapi.PostProductKeyParams{Num: num},
+			executeGetProductKeys: true,
+			GenerateProductKeyErr: service.ErrInvalidKeyNum,
+			isErr:                 true,
+			statusCode:            http.StatusBadRequest,
+		},
+		"エラーが発生して500": {
+			editionID:             editionID,
+			params:                openapi.PostProductKeyParams{Num: num},
+			executeGetProductKeys: true,
+			GenerateProductKeyErr: errors.New("error"),
+			isErr:                 true,
+			statusCode:            http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
+			editionAuth := NewEditionAuth(NewContext(), mockEditionAuthService)
+
+			if testCase.executeGetProductKeys {
+				mockEditionAuthService.
+					EXPECT().
+					GenerateProductKey(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID), uint(testCase.params.Num)).
+					Return(testCase.productKeys, testCase.GenerateProductKeyErr)
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/%s/keys", testCase.editionID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			err := editionAuth.PostProductKey(c, testCase.editionID, testCase.params)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					assert.ErrorAs(t, err, &httpErr)
+					assert.Equal(t, testCase.statusCode, httpErr.Code)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			var resProductKeys []openapi.ProductKey
+			err = json.NewDecoder(rec.Body).Decode(&resProductKeys)
+			require.NoError(t, err)
+
+			assert.Len(t, resProductKeys, len(testCase.resProductKeys))
+			for i, productKey := range resProductKeys {
+				expectedProductKey := testCase.resProductKeys[i]
+				assert.Equal(t, expectedProductKey.Id, productKey.Id)
+				assert.Equal(t, expectedProductKey.Key, productKey.Key)
+				assert.Equal(t, expectedProductKey.Status, productKey.Status)
+				assert.WithinDuration(t, expectedProductKey.CreatedAt, productKey.CreatedAt, 0)
+			}
+		})
+	}
+}
