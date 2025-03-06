@@ -1,11 +1,14 @@
 package v2
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -444,6 +447,242 @@ func TestPostActivateProductKey(t *testing.T) {
 			assert.Equal(t, testCase.resProductKey.Key, resProductKey.Key)
 			assert.Equal(t, testCase.resProductKey.Status, resProductKey.Status)
 			assert.WithinDuration(t, testCase.resProductKey.CreatedAt, resProductKey.CreatedAt, 0)
+		})
+	}
+}
+func TestPostRevokeProductKey(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	productKeyID := uuid.New()
+
+	revokedProductKey := domain.NewProductKey(
+		values.NewLauncherUserIDFromUUID(productKeyID),
+		values.NewLauncherUserProductKeyFromString("key"),
+		values.LauncherUserStatusInactive,
+		time.Now(),
+	)
+
+	openapiRevokedProductKey := openapi.ProductKey{
+		Id:        openapi.ProductKeyID(revokedProductKey.GetID()),
+		Key:       openapi.ProductKeyValue(revokedProductKey.GetProductKey()),
+		Status:    openapi.Revoked,
+		CreatedAt: revokedProductKey.GetCreatedAt(),
+	}
+
+	testCases := map[string]struct {
+		productKeyID            openapi.ProductKeyIDInPath
+		executeRevokeProductKey bool
+		productKey              *domain.LauncherUser
+		RevokeProductKeyErr     error
+		resProductKey           openapi.ProductKey
+		isErr                   bool
+		err                     error
+		statusCode              int
+	}{
+		"特に問題なし": {
+			productKeyID:            productKeyID,
+			executeRevokeProductKey: true,
+			productKey:              revokedProductKey,
+			resProductKey:           openapiRevokedProductKey,
+		},
+		"ErrInvalidProductKeyなので400": {
+			productKeyID:            productKeyID,
+			executeRevokeProductKey: true,
+			RevokeProductKeyErr:     service.ErrInvalidProductKey,
+			isErr:                   true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"ErrKeyAlreadyRevokedなので404": {
+			productKeyID:            productKeyID,
+			executeRevokeProductKey: true,
+			RevokeProductKeyErr:     service.ErrKeyAlreadyRevoked,
+			isErr:                   true,
+			statusCode:              http.StatusNotFound,
+		},
+		"エラーが発生して500": {
+			productKeyID:            productKeyID,
+			executeRevokeProductKey: true,
+			RevokeProductKeyErr:     errors.New("error"),
+			isErr:                   true,
+			statusCode:              http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
+			editionAuth := NewEditionAuth(NewContext(), mockEditionAuthService)
+
+			if testCase.executeRevokeProductKey {
+				mockEditionAuthService.
+					EXPECT().
+					RevokeProductKey(gomock.Any(), values.NewLauncherUserIDFromUUID(testCase.productKeyID)).
+					Return(testCase.productKey, testCase.RevokeProductKeyErr)
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/revoke", testCase.productKeyID), nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			err := editionAuth.PostRevokeProductKey(c, openapi.EditionIDInPath{}, testCase.productKeyID)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					assert.ErrorAs(t, err, &httpErr)
+					assert.Equal(t, testCase.statusCode, httpErr.Code)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			var resProductKey openapi.ProductKey
+			err = json.NewDecoder(rec.Body).Decode(&resProductKey)
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.resProductKey.Id, resProductKey.Id)
+			assert.Equal(t, testCase.resProductKey.Key, resProductKey.Key)
+			assert.Equal(t, testCase.resProductKey.Status, resProductKey.Status)
+			assert.WithinDuration(t, testCase.resProductKey.CreatedAt, resProductKey.CreatedAt, 0)
+		})
+	}
+}
+func TestPostEditionAuthorize(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	validKey, err := values.NewLauncherUserProductKey()
+	require.NoError(t, err)
+	validKeyStr := string(validKey)
+	invalidKeyFormat := "invalidKeyFormat"
+
+	validAccessToken := domain.NewLauncherSession(
+		values.NewLauncherSessionID(),
+		values.NewLauncherSessionAccessTokenFromString("accessToken"),
+		time.Now().Add(time.Hour),
+	)
+
+	validRequestBody := func(t *testing.T) io.Reader {
+		body, err := json.Marshal(openapi.EditionAuthorizeRequest{Key: string(validKeyStr)})
+		require.NoError(t, err)
+		return bytes.NewBuffer(body)
+	}
+
+	testCases := map[string]struct {
+		requestBody             func(t *testing.T) io.Reader
+		executeAuthorizeEdition bool
+		authorizeEditionKey     values.LauncherUserProductKey
+		authorizeEditionToken   *domain.LauncherSession
+		authorizeEditionErr     error
+		isErr                   bool
+		err                     error
+		statusCode              int
+	}{
+		"特に問題なし": {
+			requestBody:             validRequestBody,
+			executeAuthorizeEdition: true,
+			authorizeEditionKey:     values.NewLauncherUserProductKeyFromString(validKeyStr),
+			authorizeEditionToken:   validAccessToken,
+		},
+		"リクエストボディが無効なので400": {
+			requestBody: func(_ *testing.T) io.Reader {
+				body := `{"invalid": "body"}`
+				return strings.NewReader(body)
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		"プロダクトキーが無効な形式なので400": {
+			requestBody: func(t *testing.T) io.Reader {
+				body, err := json.Marshal(openapi.EditionAuthorizeRequest{Key: invalidKeyFormat})
+				require.NoError(t, err)
+				return bytes.NewBuffer(body)
+			},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
+		"AuthorizeEditionがErrInvalidProductKeyなので400": {
+			requestBody:             validRequestBody,
+			executeAuthorizeEdition: true,
+			authorizeEditionKey:     values.NewLauncherUserProductKeyFromString(validKeyStr),
+			authorizeEditionErr:     service.ErrInvalidProductKey,
+			isErr:                   true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"AuthorizeEditionがエラーなので500": {
+			requestBody:             validRequestBody,
+			executeAuthorizeEdition: true,
+			authorizeEditionKey:     values.NewLauncherUserProductKeyFromString(validKeyStr),
+			authorizeEditionErr:     errors.New("error"),
+			isErr:                   true,
+			statusCode:              http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			mockEditionAuthService := mock.NewMockEditionAuth(ctrl)
+			editionAuth := NewEditionAuth(NewContext(), mockEditionAuthService)
+
+			if testCase.executeAuthorizeEdition {
+				mockEditionAuthService.
+					EXPECT().
+					AuthorizeEdition(gomock.Any(), testCase.authorizeEditionKey).
+					Return(testCase.authorizeEditionToken, testCase.authorizeEditionErr)
+			}
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/api/v2/editions/authorize", testCase.requestBody(t))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			err := editionAuth.PostEditionAuthorize(c)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				} else {
+					assert.Error(t, err)
+				}
+
+				if testCase.statusCode != 0 {
+					var httpErr *echo.HTTPError
+					assert.ErrorAs(t, err, &httpErr)
+					assert.Equal(t, testCase.statusCode, httpErr.Code)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			var resAccessToken openapi.EditionAccessToken
+			err = json.NewDecoder(rec.Body).Decode(&resAccessToken)
+			require.NoError(t, err)
+
+			assert.Equal(t, string(validAccessToken.GetAccessToken()), resAccessToken.AccessToken)
+			assert.WithinDuration(t, validAccessToken.GetExpiresAt(), resAccessToken.ExpiresAt, 0)
 		})
 	}
 }
