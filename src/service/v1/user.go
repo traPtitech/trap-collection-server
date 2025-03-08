@@ -26,8 +26,8 @@ func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service
 	return u.userUtils.getMe(ctx, session)
 }
 
-func (u *User) GetAllActiveUser(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
-	return u.userUtils.getAllActiveUser(ctx, session)
+func (u *User) GetAllActiveUser(ctx context.Context, session *domain.OIDCSession, includeBot bool) ([]*service.UserInfo, error) {
+	return u.userUtils.getAllActiveUser(ctx, session, includeBot)
 }
 
 // UserUtils
@@ -70,7 +70,7 @@ func (uu *UserUtils) getMe(ctx context.Context, session *domain.OIDCSession) (*s
 	return user, nil
 }
 
-func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
+func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCSession, includeBot bool) ([]*service.UserInfo, error) {
 	users, err := uu.userCache.GetAllActiveUsers(ctx)
 	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
 		// cacheからの取り出しに失敗してもauthからとって来れれば良いので、returnはしない
@@ -78,6 +78,14 @@ func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCS
 	}
 	// cacheから取り出した場合はそれを返す
 	if err == nil {
+		filteredUsers := make([]*service.UserInfo, 0, len(users))
+		for _, user := range users {
+			if !includeBot && user.GetBot() {
+				continue
+			}
+			filteredUsers = append(filteredUsers, user)
+		}
+		users = filteredUsers
 		return users, nil
 	}
 
