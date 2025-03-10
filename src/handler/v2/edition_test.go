@@ -138,6 +138,7 @@ func TestGetEditions(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions", nil)
 			rec := httptest.NewRecorder()
@@ -351,6 +352,7 @@ func TestPostEdition(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
 			e := echo.New()
 			var req *http.Request
 			if testCase.invalidBody {
@@ -471,6 +473,7 @@ func TestDeleteEdition(t *testing.T) {
 					Return(testCase.deleteEditionErr)
 			}
 
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -581,6 +584,7 @@ func TestGetEdition(t *testing.T) {
 				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
 				Return(testCase.resultEdition, testCase.GetEditionErr)
 
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -816,6 +820,7 @@ func TestPatchEdition(t *testing.T) {
 				reqBody = []byte("invalid json")
 			}
 
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), bytes.NewReader(reqBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -1268,6 +1273,7 @@ func TestGetEditionGames(t *testing.T) {
 				).
 				Return(testCase.gameVersions, testCase.getEditionGamesErr)
 
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -1729,6 +1735,7 @@ func TestPatchEditionGame(t *testing.T) {
 				reqBody = []byte("invalid json")
 			}
 
+			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), bytes.NewReader(reqBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
