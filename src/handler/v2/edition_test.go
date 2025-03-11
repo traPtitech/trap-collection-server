@@ -28,10 +28,6 @@ import (
 func TestGetEditions(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
-
 	type test struct {
 		description    string
 		editions       []*domain.LauncherVersion
@@ -137,8 +133,14 @@ func TestGetEditions(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions", nil)
 			rec := httptest.NewRecorder()
@@ -188,11 +190,6 @@ func TestGetEditions(t *testing.T) {
 
 func TestPostEdition(t *testing.T) {
 	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
 
 	type test struct {
 		description          string
@@ -351,8 +348,14 @@ func TestPostEdition(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			e := echo.New()
 			var req *http.Request
 			if testCase.invalidBody {
@@ -419,11 +422,6 @@ func TestPostEdition(t *testing.T) {
 func TestDeleteEdition(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
-
 	editionID := uuid.New()
 
 	type test struct {
@@ -465,7 +463,12 @@ func TestDeleteEdition(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			if testCase.executeDeleteMock {
 				mockEditionService.
 					EXPECT().
@@ -501,11 +504,6 @@ func TestDeleteEdition(t *testing.T) {
 
 func TestGetEdition(t *testing.T) {
 	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
 
 	type test struct {
 		description   string
@@ -579,12 +577,16 @@ func TestGetEdition(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			mockEditionService.
 				EXPECT().
 				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
 				Return(testCase.resultEdition, testCase.GetEditionErr)
 
-			t.Parallel()
+			// t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -621,11 +623,6 @@ func TestGetEdition(t *testing.T) {
 
 func TestPatchEdition(t *testing.T) {
 	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
 
 	type test struct {
 		description       string
@@ -799,6 +796,10 @@ func TestPatchEdition(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			if !testCase.invalidBody && testCase.executeUpdateMock {
 				mockEditionService.
 					EXPECT().
@@ -860,11 +861,6 @@ func TestPatchEdition(t *testing.T) {
 
 func TestGetEditionGames(t *testing.T) {
 	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
 
 	type test struct {
 		description        string
@@ -1265,6 +1261,10 @@ func TestGetEditionGames(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			mockEditionService.
 				EXPECT().
 				GetEditionGameVersions(
@@ -1273,7 +1273,7 @@ func TestGetEditionGames(t *testing.T) {
 				).
 				Return(testCase.gameVersions, testCase.getEditionGamesErr)
 
-			t.Parallel()
+			// t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -1324,11 +1324,6 @@ func TestGetEditionGames(t *testing.T) {
 
 func TestPatchEditionGame(t *testing.T) {
 	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-
-	mockEditionService := mock.NewMockEdition(ctrl)
-	edition := NewEdition(mockEditionService)
 
 	type test struct {
 		description           string
@@ -1726,6 +1721,10 @@ func TestPatchEditionGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockEditionService := mock.NewMockEdition(ctrl)
+			edition := NewEdition(mockEditionService)
+
 			var reqBody []byte
 			var err error
 			if !testCase.invalidBody {
