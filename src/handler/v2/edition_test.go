@@ -138,7 +138,6 @@ func TestGetEditions(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -371,7 +370,6 @@ func TestPostEdition(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -487,7 +485,6 @@ func TestDeleteEdition(t *testing.T) {
 		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -600,7 +597,6 @@ func TestGetEdition(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -820,7 +816,6 @@ func TestPatchEdition(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -1286,7 +1281,6 @@ func TestGetEditionGames(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
@@ -1747,7 +1741,6 @@ func TestPatchEditionGame(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
