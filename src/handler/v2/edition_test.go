@@ -484,6 +484,8 @@ func TestDeleteEdition(t *testing.T) {
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
@@ -495,7 +497,6 @@ func TestDeleteEdition(t *testing.T) {
 					Return(testCase.deleteEditionErr)
 			}
 
-			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -596,6 +597,8 @@ func TestGetEdition(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
@@ -605,7 +608,6 @@ func TestGetEdition(t *testing.T) {
 				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
 				Return(testCase.resultEdition, testCase.GetEditionErr)
 
-			// t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -815,6 +817,8 @@ func TestPatchEdition(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
@@ -840,7 +844,6 @@ func TestPatchEdition(t *testing.T) {
 				reqBody = []byte("invalid json")
 			}
 
-			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), bytes.NewReader(reqBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -1280,6 +1283,8 @@ func TestGetEditionGames(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
@@ -1292,7 +1297,6 @@ func TestGetEditionGames(t *testing.T) {
 				).
 				Return(testCase.gameVersions, testCase.getEditionGamesErr)
 
-			// t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
 			rec := httptest.NewRecorder()
@@ -1740,6 +1744,8 @@ func TestPatchEditionGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
@@ -1753,7 +1759,6 @@ func TestPatchEditionGame(t *testing.T) {
 				reqBody = []byte("invalid json")
 			}
 
-			t.Parallel()
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), bytes.NewReader(reqBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
