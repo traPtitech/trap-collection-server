@@ -1353,7 +1353,7 @@ func TestPatchEditionGame(t *testing.T) {
 		editionID             openapi.EditionIDInPath
 		reqBody               *openapi.PatchEditionGameRequest
 		invalidBody           bool
-		executeMock           bool
+		executeUpdateMock     bool
 		launcherVersionID     values.LauncherVersionID
 		gameVersionIDs        []values.GameVersionID
 		updateEditionGamesErr error
@@ -1405,7 +1405,7 @@ func TestPatchEditionGame(t *testing.T) {
 					uuid.UUID(gameVersionID2),
 				},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs: []values.GameVersionID{
 				gameVersionID1,
@@ -1446,7 +1446,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{},
 			},
-			executeMock:        true,
+			executeUpdateMock:  true,
 			launcherVersionID:  values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:     []values.GameVersionID{},
 			resultGameVersions: []*service.GameVersionWithGame{},
@@ -1466,7 +1466,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:           true,
+			executeUpdateMock:     true,
 			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: service.ErrInvalidEditionID,
@@ -1482,7 +1482,7 @@ func TestPatchEditionGame(t *testing.T) {
 					uuid.UUID(gameVersionID1),
 				},
 			},
-			executeMock:           true,
+			executeUpdateMock:     true,
 			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1, gameVersionID1},
 			updateEditionGamesErr: service.ErrDuplicateGameVersion,
@@ -1495,7 +1495,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:           true,
+			executeUpdateMock:     true,
 			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: service.ErrDuplicateGame,
@@ -1508,7 +1508,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:           true,
+			executeUpdateMock:     true,
 			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: errors.New("internal error"),
@@ -1524,7 +1524,7 @@ func TestPatchEditionGame(t *testing.T) {
 					uuid.UUID(gameVersionID2),
 				},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs: []values.GameVersionID{
 				gameVersionID1,
@@ -1570,7 +1570,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
@@ -1613,7 +1613,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
@@ -1656,7 +1656,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
@@ -1701,7 +1701,7 @@ func TestPatchEditionGame(t *testing.T) {
 			reqBody: &openapi.PatchEditionGameRequest{
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
-			executeMock:       true,
+			executeUpdateMock: true,
 			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
@@ -1765,7 +1765,7 @@ func TestPatchEditionGame(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			if testCase.executeMock {
+			if testCase.executeUpdateMock {
 				mockEditionService.
 					EXPECT().
 					UpdateEditionGameVersions(
