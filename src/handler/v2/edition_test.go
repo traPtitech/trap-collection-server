@@ -318,6 +318,23 @@ func TestPostEdition(t *testing.T) {
 			statusCode:       http.StatusBadRequest,
 		},
 		{
+			description: "ゲームが重複しているので400",
+			reqBody: &openapi.NewEdition{
+				Name:         editionName,
+				GameVersions: []uuid.UUID{gameVersionUUID1, gameVersionUUID2},
+			},
+			executeCreateEdition: true,
+			name:                 values.NewLauncherVersionName(editionName),
+			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			gameVersionIDs: []values.GameVersionID{
+				values.NewGameVersionIDFromUUID(gameVersionUUID1),
+				values.NewGameVersionIDFromUUID(gameVersionUUID2),
+			},
+			createEditionErr: service.ErrDuplicateGame,
+			isErr:            true,
+			statusCode:       http.StatusBadRequest,
+		},
+		{
 			description: "無効なゲームバージョンIDが含まれているので400",
 			reqBody: &openapi.NewEdition{
 				Name:         editionName,
@@ -403,6 +420,8 @@ func TestPostEdition(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.statusCode, rec.Code)
+			t.Logf("テストケース: %s", testCase.description)
+			t.Logf("レスポンスコード: %d", rec.Code)
 
 			if testCase.expectEdition != nil {
 				var res openapi.Edition
