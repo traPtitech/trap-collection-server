@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"go.uber.org/mock/gomock"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
