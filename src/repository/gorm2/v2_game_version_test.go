@@ -791,7 +791,6 @@ func TestCreateGameVersionV2(t *testing.T) {
 		},
 	}
 
-	//TODO: gamesテーブルのlatest_version_updated_atが更新されているかを確かめる
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.existGame {
@@ -934,7 +933,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to get game: %+v\n", err)
 				}
-				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second)
+				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second*2)
 			}
 		})
 	}

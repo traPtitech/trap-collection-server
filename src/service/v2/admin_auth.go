@@ -40,7 +40,8 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 		for _, activeUser := range activeUsers {
 			activeUsersMap[activeUser.GetID()] = activeUser
 		}
-		if _, ok := activeUsersMap[userID]; !ok {
+		newAdminInfo, ok := activeUsersMap[userID]
+		if !ok {
 			return service.ErrInvalidUserID
 		}
 
@@ -62,11 +63,13 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, session *domain.OIDCSession, 
 
 		adminInfos = make([]*service.UserInfo, 0, len(adminIDs)+1)
 		for _, adminID := range adminIDs {
-			if activeUsersMap[adminID].GetStatus() == values.TrapMemberStatusActive {
-				adminInfos = append(adminInfos, activeUsersMap[adminID])
+			activeAdmin, ok := activeUsersMap[adminID]
+			if !ok {
+				continue
 			}
+			adminInfos = append(adminInfos, activeAdmin)
 		}
-		adminInfos = append(adminInfos, activeUsersMap[userID])
+		adminInfos = append(adminInfos, newAdminInfo)
 		return nil
 	})
 

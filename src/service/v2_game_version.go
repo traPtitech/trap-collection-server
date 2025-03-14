@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 // mockgenがgenericsに対応するまでの暫定対応
 // interface内にgenericsの構文が出なければ問題ないのを利用している

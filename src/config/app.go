@@ -1,6 +1,6 @@
 package config
 
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 type AppStatus int8
 

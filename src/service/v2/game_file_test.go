@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -22,6 +21,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
 	"github.com/traPtitech/trap-collection-server/testdata"
+	"go.uber.org/mock/gomock"
 )
 
 func Test_checkZip(t *testing.T) {

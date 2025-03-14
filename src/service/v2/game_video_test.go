@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -20,6 +19,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 	mockStorage "github.com/traPtitech/trap-collection-server/src/storage/mock"
 	"github.com/traPtitech/trap-collection-server/testdata"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSaveGameVideo(t *testing.T) {

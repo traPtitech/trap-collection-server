@@ -165,3 +165,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mvdan.cc/sh/v3 v3.11.0 // indirect
 )
+
+tool go.uber.org/mock/mockgen
