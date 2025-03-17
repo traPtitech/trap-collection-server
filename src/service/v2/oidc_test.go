@@ -322,6 +322,7 @@ func TestGetMe(t *testing.T) {
 		values.NewTrapMemberID(uuid.New()),
 		values.NewTrapMemberName("mazrean"),
 		values.TrapMemberStatusActive,
+		false,
 	)
 
 	testCases := []test{
@@ -447,6 +448,7 @@ func TestGetActiveUsers(t *testing.T) {
 			values.NewTrapMemberID(uuid.New()),
 			values.NewTrapMemberName("mazrean"),
 			values.TrapMemberStatusActive,
+			false,
 		),
 	}
 

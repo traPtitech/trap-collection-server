@@ -93,6 +93,18 @@ func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCS
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
+	if err == nil {
+		filteredUsers := make([]*service.UserInfo, 0, len(users))
+		for _, user := range users {
+			if !includeBot && user.GetBot() {
+				continue
+			}
+			filteredUsers = append(filteredUsers, user)
+		}
+		users = filteredUsers
+		return users, nil
+	}
+
 
 	err = uu.userCache.SetAllActiveUsers(ctx, users)
 	if err != nil {

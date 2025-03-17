@@ -55,9 +55,9 @@ func TestAddAdmin(t *testing.T) {
 	userID2 := values.NewTrapMemberID(uuid.New())
 	userID3 := values.NewTrapMemberID(uuid.New())
 
-	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
-	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive)
-	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive)
+	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false)
+	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive, false)
+	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive, false)
 
 	activeUsers := []*service.UserInfo{userInfo1, userInfo2, userInfo3}
 
@@ -221,9 +221,9 @@ func TestGetAdmins(t *testing.T) {
 	userID2 := values.NewTrapMemberID(uuid.New())
 	userID3 := values.NewTrapMemberID(uuid.New())
 
-	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
-	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive)
-	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive)
+	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false)
+	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive, false)
+	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive, false)
 
 	activeUsers := []*service.UserInfo{userInfo1, userInfo2, userInfo3}
 
@@ -348,9 +348,9 @@ func TestDeleteAdmin(t *testing.T) {
 	userID2 := values.NewTrapMemberID(uuid.New())
 	userID3 := values.NewTrapMemberID(uuid.New())
 
-	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
-	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive)
-	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive)
+	userInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false)
+	userInfo2 := service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive, false)
+	userInfo3 := service.NewUserInfo(userID3, "pikachu", values.TrapMemberStatusActive, false)
 
 	activeUsers := []*service.UserInfo{userInfo1, userInfo2, userInfo3}
 
@@ -565,8 +565,8 @@ func TestAdminAuthorize(t *testing.T) {
 	userID2 := values.NewTrapMemberID(uuid.New())
 	userID3 := values.NewTrapMemberID(uuid.New())
 
-	myInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive)
-	myInfo3 := service.NewUserInfo(userID3, "mazrean", values.TrapMemberStatusActive)
+	myInfo1 := service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false)
+	myInfo3 := service.NewUserInfo(userID3, "mazrean", values.TrapMemberStatusActive, false)
 
 	adminIDs := []values.TraPMemberID{userID1, userID2}
 
