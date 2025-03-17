@@ -88,12 +88,7 @@ func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service
 		return nil, fmt.Errorf("unexpected state: %d", response.State)
 	}
 
-	var bot bool
-	if response.Bot  {
-		bot = true
-	} else {
-		bot = false
-	}
+	var bot bool = response.Bot
 
 	return service.NewUserInfo(
 		values.NewTrapMemberID(response.ID),
@@ -157,12 +152,7 @@ func (u *User) GetAllActiveUsers(ctx context.Context, session *domain.OIDCSessio
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-		var bot bool
-		if user.Bot  {
-			bot = true
-		} else {
-			bot = false
-		}
+		var bot bool = user.Bot
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
 			values.NewTrapMemberName(user.Name),
@@ -219,12 +209,7 @@ func (u *User) GetActiveUsers(ctx context.Context, session *domain.OIDCSession) 
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-		var bot bool
-		if user.Bot  {
-			bot = true
-		} else {
-			bot = false
-		}
+		var bot bool = user.Bot
 
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
