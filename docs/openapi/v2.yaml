@@ -1565,7 +1565,7 @@ paths:
         - edition
       security:
         - AdminAuth: []
-      operationId: postEditionGame
+      operationId: patchEditionGame
       requestBody:
         content:
           application/json:

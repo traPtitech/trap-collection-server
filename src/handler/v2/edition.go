@@ -299,7 +299,7 @@ func (edition *Edition) GetEditionGames(ctx echo.Context, editionID openapi.Edit
 
 // エディションのゲームの変更
 // (PATCH /editions/{editionID}/games)
-func (edition *Edition) PostEditionGame(c echo.Context, editionID openapi.EditionIDInPath) error {
+func (edition *Edition) PatchEditionGame(c echo.Context, editionID openapi.EditionIDInPath) error {
 	var req openapi.PatchEditionGameRequest
 	err := c.Bind(&req)
 	if err != nil {
