@@ -1776,7 +1776,7 @@ func TestPatchEditionGame(t *testing.T) {
 					Return(testCase.resultGameVersions, testCase.updateEditionGamesErr)
 			}
 
-			err = edition.PostEditionGame(c, testCase.editionID)
+			err = edition.PatchEditionGame(c, testCase.editionID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
