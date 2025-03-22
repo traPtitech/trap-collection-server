@@ -49,6 +49,7 @@ func TestGetMe(t *testing.T) {
 		values.NewTrapMemberID(uuid.New()),
 		values.NewTrapMemberName("mazrean"),
 		values.TrapMemberStatusActive,
+		false,
 	)
 
 	testCases := []test{
@@ -165,6 +166,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			values.NewTrapMemberID(uuid.New()),
 			values.NewTrapMemberName("mazrean"),
 			values.TrapMemberStatusActive,
+			false,
 		),
 	}
 
@@ -211,6 +213,7 @@ func TestGetAllActiveUser(t *testing.T) {
 				values.NewOIDCAccessToken("access token"),
 				time.Now(),
 			)
+			includeBot := true
 
 			mockUserCache.
 				EXPECT().
@@ -229,7 +232,7 @@ func TestGetAllActiveUser(t *testing.T) {
 				}
 			}
 
-			users, err := userService.GetAllActiveUser(ctx, session)
+			users, err := userService.GetAllActiveUser(ctx, session, includeBot)
 
 			if testCase.isErr {
 				if testCase.err == nil {

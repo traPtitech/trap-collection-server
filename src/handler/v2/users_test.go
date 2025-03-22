@@ -78,6 +78,7 @@ func TestGetMe(t *testing.T) {
 				values.NewTrapMemberID(id1),
 				"mazrean",
 				values.TrapMemberStatusActive,
+				false,
 			),
 			user: &openapi.User{
 				Id:   id1,
@@ -239,6 +240,7 @@ func TestGetUsers(t *testing.T) {
 					values.NewTrapMemberID(id1),
 					"mazrean",
 					values.TrapMemberStatusActive,
+					false,
 				),
 			},
 			users: []*openapi.User{
@@ -260,11 +262,13 @@ func TestGetUsers(t *testing.T) {
 					values.NewTrapMemberID(id1),
 					"mazrean",
 					values.TrapMemberStatusActive,
+					false,
 				),
 				service.NewUserInfo(
 					values.NewTrapMemberID(id2),
 					"mazrean2",
 					values.TrapMemberStatusActive,
+					false,
 				),
 			},
 			users: []*openapi.User{
@@ -312,6 +316,10 @@ func TestGetUsers(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/users/me", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
+			bot := true
+			params := openapi.GetUsersParams{
+				Bot: &bot,
+			}
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -335,11 +343,11 @@ func TestGetUsers(t *testing.T) {
 			if testCase.executeGetAllActiveUser {
 				mockUserService.
 					EXPECT().
-					GetAllActiveUser(gomock.Any(), gomock.Any()).
+					GetAllActiveUser(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
 			}
 
-			err := userHandler.GetUsers(c)
+			err := userHandler.GetUsers(c, params)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
