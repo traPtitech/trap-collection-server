@@ -147,7 +147,7 @@ type LauncherVersionTable struct {
 	LauncherUsers    []LauncherUserTable `gorm:"foreignKey:LauncherVersionID"`
 	// gormigrateを使用していなかったv1との互換性のため、
 	// joinForeignKey、joinReferencesを指定している
-	Games []GameTable2V15 `gorm:"many2many:launcher_version_game_relations"`
+	Games []GameTable2 `gorm:"many2many:launcher_version_game_relations;joinForeignKey:LauncherVersionTableID;joinReferences:GameTableID"`
 }
 
 func (*LauncherVersionTable) TableName() string {
