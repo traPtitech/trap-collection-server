@@ -32,6 +32,8 @@ services:
     extends:
       file: ../base/compose.yaml
       service: mariadb
+    ports:
+      - 3306:3306
     volumes:
       - ../../mysql/data:/var/lib/mysql
   adminer:
