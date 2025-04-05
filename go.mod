@@ -6,8 +6,8 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.13
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.66
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.69
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.71
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.1
 	github.com/cosmtrek/air v1.61.2
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/dgraph-io/ristretto v0.2.0
