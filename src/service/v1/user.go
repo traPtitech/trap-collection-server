@@ -45,7 +45,7 @@ func NewUserUtils(userAuth auth.User, userCache cache.User) *UserUtils {
 	}
 }
 
-func FilteringUsers(users []*service.UserInfo, includeBot bool){
+func filteringUsers(users []*service.UserInfo, includeBot bool) []*service.UserInfo {
 	filteredUsers := make([]*service.UserInfo, 0, len(users))
 	for _, user := range users {
 		if !includeBot && user.GetBot() {
@@ -53,7 +53,7 @@ func FilteringUsers(users []*service.UserInfo, includeBot bool){
 		}
 		filteredUsers = append(filteredUsers, user)
 	}
-	users = filteredUsers
+	return filteredUsers
 }
 
 func (uu *UserUtils) getMe(ctx context.Context, session *domain.OIDCSession) (*service.UserInfo, error) {
@@ -89,7 +89,7 @@ func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCS
 	}
 	// cacheから取り出した場合はそれを返す
 	if err == nil {
-		FilteringUsers(users, includeBot)
+		users = filteringUsers(users, includeBot)
 		return users, nil
 	}
 
@@ -98,13 +98,13 @@ func (uu *UserUtils) getAllActiveUser(ctx context.Context, session *domain.OIDCS
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	FilteringUsers(users, includeBot)
-
 	err = uu.userCache.SetAllActiveUsers(ctx, users)
 	if err != nil {
 		// cacheの設定に失敗してもreturnはしない
 		log.Printf("error: failed to set user info: %v\n", err)
 	}
+
+	users = filteringUsers(users, includeBot)
 
 	return users, nil
 }
