@@ -159,6 +159,7 @@ func TestGetAllActiveUser(t *testing.T) {
 		users                        []*service.UserInfo
 		isErr                        bool
 		err                          error
+		includeBot                   bool
 	}
 
 	users := []*service.UserInfo{
@@ -175,6 +176,18 @@ func TestGetAllActiveUser(t *testing.T) {
 			description: "cacheがhitするのでエラーなし",
 			cacheUsers:  users,
 			users:       users,
+		},
+		{
+			description: "botを含む設定にしても動く",
+			cacheUsers:  users,
+			users:       users,
+			includeBot:  true,
+		},
+		{
+			description: "botを含まない設定にしても動く",
+			cacheUsers:  users,
+			users:       users,
+			includeBot:  false,
 		},
 		{
 			description:                  "cacheがhitしないがauthからの取り出しに成功するのでエラーなし",
@@ -213,7 +226,7 @@ func TestGetAllActiveUser(t *testing.T) {
 				values.NewOIDCAccessToken("access token"),
 				time.Now(),
 			)
-			includeBot := true
+			includeBot := testCase.includeBot
 
 			mockUserCache.
 				EXPECT().

@@ -222,6 +222,7 @@ func TestGetUsers(t *testing.T) {
 		isErr                   bool
 		err                     error
 		statusCode              int
+		bot                     bool
 	}
 
 	id1 := uuid.New()
@@ -283,6 +284,52 @@ func TestGetUsers(t *testing.T) {
 			},
 		},
 		{
+			description:             "botがtrueでも正しく動く",
+			sessionExist:            true,
+			authSessionExist:        true,
+			accessToken:             "accessToken",
+			expiresAt:               time.Now(),
+			executeGetAllActiveUser: true,
+			bot:                     true,
+			userInfos: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(id1),
+					"w4ma",
+					values.TrapMemberStatusActive,
+					false,
+				),
+			},
+			users: []*openapi.User{
+				{
+					Id:   id1,
+					Name: "w4ma",
+				},
+			},
+		},
+		{
+			description:             "botがfalseでも正しく動く",
+			sessionExist:            true,
+			authSessionExist:        true,
+			accessToken:             "accessToken",
+			expiresAt:               time.Now(),
+			executeGetAllActiveUser: true,
+			bot:                     false,
+			userInfos: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(id1),
+					"w4ma",
+					values.TrapMemberStatusActive,
+					false,
+				),
+			},
+			users: []*openapi.User{
+				{
+					Id:   id1,
+					Name: "w4ma",
+				},
+			},
+		},
+		{
 			// 実際にはmiddlewareで弾かれるが、念の為確認
 			description:  "sessionが存在しないのでauthSessionも存在せず500",
 			sessionExist: false,
@@ -316,9 +363,8 @@ func TestGetUsers(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/users/me", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			bot := true
 			params := openapi.GetUsersParams{
-				Bot: &bot,
+				Bot: &testCase.bot,
 			}
 
 			if testCase.sessionExist {

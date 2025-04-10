@@ -68,7 +68,6 @@ func (u *User) GetUsers(c echo.Context, params openapi.GetUsersParams) error {
 	if botParam != "" {
 		includeBot, err = strconv.ParseBool(botParam)
 		if err != nil {
-			log.Printf("error: invalid query parameter 'bot': %v\n", err)
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 	}
