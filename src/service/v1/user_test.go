@@ -170,24 +170,46 @@ func TestGetAllActiveUser(t *testing.T) {
 			false,
 		),
 	}
+	
+	users2 := []*service.UserInfo{
+		service.NewUserInfo(
+			values.NewTrapMemberID(uuid.New()),
+			values.NewTrapMemberName("w4ma"),
+			values.TrapMemberStatusActive,
+			false,
+		),
+		service.NewUserInfo(
+			values.NewTrapMemberID(uuid.New()),
+			values.NewTrapMemberName("w4mabot"),
+			values.TrapMemberStatusActive,
+			true,
+		),
+	}
 
 	testCases := []test{
 		{
 			description: "cacheがhitするのでエラーなし",
 			cacheUsers:  users,
 			users:       users,
-		},
-		{
-			description: "botを含む設定にしても動く",
-			cacheUsers:  users,
-			users:       users,
 			includeBot:  true,
 		},
 		{
-			description: "botを含まない設定にしても動く",
-			cacheUsers:  users,
-			users:       users,
+			description: "botを除外する設定でcacheUsersにbotが含まれる",
+			cacheUsers:  users2,
+			users:       []*service.UserInfo{
+				users2[0],
+			},
 			includeBot:  false,
+		},
+		{
+			description:                  "botを除外する設定でcacheがhitしないがauthからbotを含むユーザー情報を取り出す",
+			cacheGetAllActiveUsersErr:    cache.ErrCacheMiss,
+			executeAuthGetAllActiveUsers: true,
+			authUsers:                    users2,
+			users:                        []*service.UserInfo{
+				users2[0],
+			},
+			includeBot:                   false,
 		},
 		{
 			description:                  "cacheがhitしないがauthからの取り出しに成功するのでエラーなし",
@@ -195,6 +217,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authUsers:                    users,
 			users:                        users,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがエラー(ErrCacheMiss以外)でもauthからの取り出しに成功するのでエラーなし",
@@ -202,6 +225,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authUsers:                    users,
 			users:                        users,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがhitせずauthからの取り出しがエラーなのでエラー",
@@ -209,6 +233,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authGetAllActiveUsersErr:     errors.New("auth error"),
 			isErr:                        true,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがhitしないがauthからの取り出しに成功するのでcache設定に失敗してもエラーなし",
@@ -217,6 +242,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			authUsers:                    users,
 			cacheSetAllActiveUsersErr:    errors.New("cache error"),
 			users:                        users,
+			includeBot:                   true,
 		},
 	}
 
