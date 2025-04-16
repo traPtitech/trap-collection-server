@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/pkg/types"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -15,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	mockRepository "github.com/traPtitech/trap-collection-server/src/repository/mock"
 	"github.com/traPtitech/trap-collection-server/src/service"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCreateGameVersion(t *testing.T) {
@@ -49,6 +49,7 @@ func TestCreateGameVersion(t *testing.T) {
 		imageID                  values.GameImageID
 		videoID                  values.GameVideoID
 		assets                   *service.Assets
+		fileIDs                  []values.GameFileID
 		executeGetGame           bool
 		getGameErr               error
 		executeGetGameImage      bool
@@ -60,8 +61,9 @@ func TestCreateGameVersion(t *testing.T) {
 		executeGetGameFile       bool
 		files                    []*repository.GameFileInfo
 		getGameFilesErr          error
+		versions                 []*repository.GameVersionInfo
+		getGameVersionsErr       error
 		executeCreateGameVersion bool
-		fileIDs                  []values.GameFileID
 		createGameVersionErr     error
 		isErr                    bool
 		err                      error
@@ -91,6 +93,7 @@ func TestCreateGameVersion(t *testing.T) {
 	gameID17 := values.NewGameID()
 	gameID18 := values.NewGameID()
 	gameID19 := values.NewGameID()
+	gameID20 := values.NewGameID()
 
 	imageID1 := values.NewGameImageID()
 	imageID2 := values.NewGameImageID()
@@ -112,6 +115,7 @@ func TestCreateGameVersion(t *testing.T) {
 	imageID18 := values.NewGameImageID()
 	imageID19 := values.NewGameImageID()
 	imageID20 := values.NewGameImageID()
+	imageID21 := values.NewGameImageID()
 
 	videoID1 := values.NewGameVideoID()
 	videoID2 := values.NewGameVideoID()
@@ -133,6 +137,7 @@ func TestCreateGameVersion(t *testing.T) {
 	videoID18 := values.NewGameVideoID()
 	videoID19 := values.NewGameVideoID()
 	videoID20 := values.NewGameVideoID()
+	videoID21 := values.NewGameVideoID()
 
 	fileID1 := values.NewGameFileID()
 	fileID2 := values.NewGameFileID()
@@ -786,6 +791,54 @@ func TestCreateGameVersion(t *testing.T) {
 			},
 			isErr: true,
 			err:   service.ErrInvalidGameFileID,
+		},
+		{
+			description:        "同名のバージョンが存在するのでエラー",
+			gameID:             gameID20,
+			versionName:        values.NewGameVersionName("v1.0.0"),
+			versionDescription: values.NewGameVersionDescription("アップデート"),
+			imageID:            imageID21,
+			videoID:            videoID21,
+			assets: &service.Assets{
+				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+			},
+			executeGetGame:           true,
+			executeGetGameImage:      true,
+			executeGetGameVideo:      true,
+			executeCreateGameVersion: true,
+			image: &repository.GameImageInfo{
+				GameImage: domain.NewGameImage(
+					imageID21,
+					values.GameImageTypeJpeg,
+					now,
+				),
+				GameID: gameID20,
+			},
+			video: &repository.GameVideoInfo{
+				GameVideo: domain.NewGameVideo(
+					videoID21,
+					values.GameVideoTypeMp4,
+					now,
+				),
+				GameID: gameID20,
+			},
+			versions: []*repository.GameVersionInfo{
+				{
+					GameVersion: domain.NewGameVersion(
+						values.NewGameVersionID(),
+						"v1.0.0",
+						"version description",
+						now,
+					),
+					ImageID: imageID21,
+					VideoID: videoID21,
+					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+				},
+			},
+			fileIDs:              []values.GameFileID{},
+			getGameVersionsErr:   nil,
+			isErr:                true,
+			createGameVersionErr: service.ErrDuplicateGameVersion,
 		},
 	}
 

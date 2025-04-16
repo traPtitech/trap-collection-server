@@ -152,7 +152,11 @@ func (gameVersion *GameVersion) CreateGameVersion(
 		}
 
 		err = gameVersion.gameVersionRepository.CreateGameVersion(ctx, gameID, imageID, videoID, assets.URL, fileIDs, version)
+		// 既存のゲームバージョンの名前と一致していた場合はエラーを返す
 		if err != nil {
+			if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+				return service.ErrDuplicateGameVersion
+			}
 			return err
 		}
 

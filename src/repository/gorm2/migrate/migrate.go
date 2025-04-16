@@ -23,6 +23,7 @@ var (
 		v12(), // ゲームジャンルとゲームの関係を後方参照に変更
 		v13(), // gamesテーブルにバージョンの最終更新日時(latest_version_updated_at)カラムを追加
 		v14(), // game_video_typesにmkvとm4vを追加
+		v15(), // v2_game_versionsのnameカラムにunique制約を追加
 	}
 )
 

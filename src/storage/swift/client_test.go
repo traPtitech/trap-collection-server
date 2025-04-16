@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/ncw/swift/v2"
 	"github.com/ncw/swift/v2/swifttest"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
+	"go.uber.org/mock/gomock"
 )
 
 var testServer *swifttest.SwiftServer

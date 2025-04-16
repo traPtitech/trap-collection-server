@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 // mockgenがgenericsに対応するまでの暫定対応
 // interface内にgenericsの構文が出なければ問題ないのを利用している
@@ -29,6 +29,7 @@ type GameVersionV2 interface {
 	// ErrInvalidImageID、ErrInvalidVideoID、ErrInvalidFileIDを返す。
 	// fileの種類が誤っている場合、ErrInvalidFileTypeを返す。
 	// url、fileのいずれも空の場合、ErrNoAssetを返す。
+	// gameIDとnameが同一の組み合わせが既に存在する場合、ErrDuplicateGameVersionを返す。
 	CreateGameVersion(
 		ctx context.Context,
 		gameID values.GameID,

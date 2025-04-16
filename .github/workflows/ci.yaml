@@ -34,7 +34,7 @@ jobs:
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.1.2
+        uses: codecov/codecov-action@v5.4.0
         with:
           files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -53,7 +53,7 @@ jobs:
           go-version-file: go.mod
       - run: go generate ./...
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.7
+        uses: reviewdog/action-golangci-lint@v2.8
         with:
           go_version_file: go.mod
           reporter: github-pr-check

@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +20,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetGameVersion(t *testing.T) {
@@ -552,7 +552,7 @@ func TestPostGameVersion(t *testing.T) {
 	fileID2 := values.NewGameFileID()
 	fileID1UUID := uuid.UUID(fileID1)
 	fileID2UUID := uuid.UUID(fileID2)
-	invalidURL := " https://example.com"
+	invalidURL := " https://example.com with spaces"
 	strURL := "https://example.com"
 	urlLink, err := url.Parse(strURL)
 	if err != nil {
@@ -1075,6 +1075,28 @@ func TestPostGameVersion(t *testing.T) {
 				Windows: types.NewOption(fileID1),
 			},
 			CreateGameVersionErr: service.ErrInvalidGameFileType,
+			isErr:                true,
+			statusCode:           http.StatusBadRequest,
+		},
+		{
+			description: "CreateGameVersionがErrDuplicateGameVersionなので400",
+			apiGameVersion: &openapi.NewGameVersion{
+				Name:        "v1.0.0",
+				Description: "リリース",
+				ImageID:     uuid.UUID(imageID),
+				VideoID:     uuid.UUID(videoID),
+				Url:         &strURL,
+			},
+			executeCreateGameVersion: true,
+			gameID:                   gameID,
+			gameVersionName:          values.NewGameVersionName("v1.0.0"),
+			gameVersionDescription:   values.NewGameVersionDescription("リリース"),
+			imageID:                  imageID,
+			videoID:                  videoID,
+			assets: &service.Assets{
+				URL: types.NewOption(urlValue),
+			},
+			CreateGameVersionErr: service.ErrDuplicateGameVersion,
 			isErr:                true,
 			statusCode:           http.StatusBadRequest,
 		},
