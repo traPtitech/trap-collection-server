@@ -80,7 +80,7 @@ func TestGetAdmins(t *testing.T) {
 			),
 			executeGetAdmins: true,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(adminID1, "ikura-hamu", values.TrapMemberStatusActive),
+				service.NewUserInfo(adminID1, "ikura-hamu", values.TrapMemberStatusActive, false),
 			},
 			GetAdminsErr: nil,
 			apiAdmins: []*openapi.User{
@@ -122,8 +122,8 @@ func TestGetAdmins(t *testing.T) {
 			executeGetAdmins: true,
 			GetAdminsErr:     nil,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(adminID1, "ikura-hamu", values.TrapMemberStatusActive),
-				service.NewUserInfo(adminID2, "mazrean", values.TrapMemberStatusActive),
+				service.NewUserInfo(adminID1, "ikura-hamu", values.TrapMemberStatusActive, false),
+				service.NewUserInfo(adminID2, "mazrean", values.TrapMemberStatusActive, false),
 			},
 			apiAdmins: []*openapi.User{
 				{Id: uuid.UUID(adminID1), Name: "ikura-hamu"},
@@ -270,7 +270,7 @@ func TestPostAdmins(t *testing.T) {
 			),
 			executeAddAdmin: true,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive),
+				service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false),
 			},
 			apiAdmins: []*openapi.User{
 				{Id: uuid.UUID(userID1), Name: "ikura-hamu"},
@@ -348,8 +348,8 @@ func TestPostAdmins(t *testing.T) {
 			),
 			executeAddAdmin: true,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive),
-				service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive),
+				service.NewUserInfo(userID2, "mazrean", values.TrapMemberStatusActive, false),
+				service.NewUserInfo(userID1, "ikura-hamu", values.TrapMemberStatusActive, false),
 			},
 			apiAdmins: []*openapi.User{
 				{Id: uuid.UUID(userID2), Name: "mazrean"},
@@ -506,7 +506,7 @@ func TestDeleteAdmin(t *testing.T) {
 			),
 			executeDeleteAdmin: true,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive),
+				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive, false),
 			},
 			apiAdmins: []*openapi.User{
 				{Id: userID2, Name: "ikura-hamu"},
@@ -586,8 +586,8 @@ func TestDeleteAdmin(t *testing.T) {
 			adminID:            userID1,
 			executeDeleteAdmin: true,
 			adminInfos: []*service.UserInfo{
-				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive),
-				service.NewUserInfo(values.TraPMemberID(userID3), "mazrean", values.TrapMemberStatusActive),
+				service.NewUserInfo(values.TraPMemberID(userID2), "ikura-hamu", values.TrapMemberStatusActive, false),
+				service.NewUserInfo(values.TraPMemberID(userID3), "mazrean", values.TrapMemberStatusActive, false),
 			},
 			apiAdmins: []*openapi.User{
 				{Id: userID2, Name: "ikura-hamu"},

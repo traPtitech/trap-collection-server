@@ -31,8 +31,8 @@ func TestPatchGameRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	game := domain.NewGame(values.NewGameID(), "game1", "game1 description", values.GameVisibilityTypePrivate, time.Now())
-	user := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user1", values.TrapMemberStatusActive)
-	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user2", values.TrapMemberStatusActive)
+	user := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user1", values.TrapMemberStatusActive, false)
+	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user2", values.TrapMemberStatusActive, false)
 	genre := domain.NewGameGenre(values.NewGameGenreID(), "genre1", time.Now())
 
 	var (
@@ -442,8 +442,8 @@ func TestDeleteGameRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	game := domain.NewGame(values.NewGameID(), "game1", "game1 description", values.GameVisibilityTypePrivate, time.Now())
-	user := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user1", values.TrapMemberStatusActive)
-	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user2", values.TrapMemberStatusActive)
+	user := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user1", values.TrapMemberStatusActive, false)
+	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), "user2", values.TrapMemberStatusActive, false)
 	genre1 := domain.NewGameGenre(values.NewGameGenreID(), "genre1", time.Now())
 
 	validAuthSession := domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))

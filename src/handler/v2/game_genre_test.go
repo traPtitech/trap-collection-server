@@ -354,8 +354,8 @@ func TestPutGameGenres(t *testing.T) {
 
 	userNameStr1 := "ikura-hamu"
 	userNameStr2 := "mazrean"
-	user1 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName(userNameStr1), values.TrapMemberStatusActive)
-	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName(userNameStr2), values.TrapMemberStatusActive)
+	user1 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName(userNameStr1), values.TrapMemberStatusActive, false)
+	user2 := service.NewUserInfo(values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName(userNameStr2), values.TrapMemberStatusActive, false)
 
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {

@@ -614,11 +614,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -626,6 +628,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -731,11 +734,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -743,6 +748,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -788,11 +794,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -800,6 +808,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{},
@@ -880,11 +889,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -892,6 +903,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -1059,11 +1071,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1071,6 +1085,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -1117,11 +1132,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1129,6 +1146,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -1175,11 +1193,13 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"mazrean",
 						values.TrapMemberStatusActive,
+						false,
 					),
 					service.NewUserInfo(
 						values.NewTrapMemberID(uuid.New()),
 						"ikura-hamu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1187,6 +1207,7 @@ func TestPostGame(t *testing.T) {
 						values.NewTrapMemberID(uuid.New()),
 						"pikachu",
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -1536,6 +1557,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1543,6 +1565,7 @@ func TestGetGame(t *testing.T) {
 						userID2,
 						values.NewTrapMemberName("pikachu"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{
@@ -1582,6 +1605,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{},
@@ -1623,6 +1647,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1630,6 +1655,7 @@ func TestGetGame(t *testing.T) {
 						userID2,
 						values.NewTrapMemberName("pikachu"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{},
@@ -1668,6 +1694,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1675,6 +1702,7 @@ func TestGetGame(t *testing.T) {
 						userID2,
 						values.NewTrapMemberName("pikachu"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{},
@@ -1713,6 +1741,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1720,6 +1749,7 @@ func TestGetGame(t *testing.T) {
 						userID2,
 						values.NewTrapMemberName("pikachu"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{},
@@ -1758,6 +1788,7 @@ func TestGetGame(t *testing.T) {
 						userID1,
 						values.NewTrapMemberName("mazrean"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Maintainers: []*service.UserInfo{
@@ -1765,6 +1796,7 @@ func TestGetGame(t *testing.T) {
 						userID2,
 						values.NewTrapMemberName("pikachu"),
 						values.TrapMemberStatusActive,
+						false,
 					),
 				},
 				Genres: []*domain.GameGenre{},
