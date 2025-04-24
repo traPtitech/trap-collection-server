@@ -49,7 +49,7 @@ func (u *User) GetMe(c echo.Context) error {
 	})
 }
 
-func (u *User) GetUsers(c echo.Context, params openapi.GetUsersParams) error {
+func (u *User) GetUsers(c echo.Context, _ openapi.GetUsersParams) error {
 	session, err := u.session.get(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)

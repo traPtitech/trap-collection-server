@@ -170,7 +170,6 @@ func TestGetAllActiveUser(t *testing.T) {
 			false,
 		),
 	}
-	
 	users2 := []*service.UserInfo{
 		service.NewUserInfo(
 			values.NewTrapMemberID(uuid.New()),
@@ -196,9 +195,7 @@ func TestGetAllActiveUser(t *testing.T) {
 		{
 			description: "botを除外する設定でcacheUsersにbotが含まれる",
 			cacheUsers:  users2,
-			users:       []*service.UserInfo{
-				users2[0],
-			},
+			users:       []*service.UserInfo{users2[0]},
 			includeBot:  false,
 		},
 		{
@@ -206,9 +203,7 @@ func TestGetAllActiveUser(t *testing.T) {
 			cacheGetAllActiveUsersErr:    cache.ErrCacheMiss,
 			executeAuthGetAllActiveUsers: true,
 			authUsers:                    users2,
-			users:                        []*service.UserInfo{
-				users2[0],
-			},
+			users:                        []*service.UserInfo{users2[0]},
 			includeBot:                   false,
 		},
 		{

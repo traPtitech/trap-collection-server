@@ -209,7 +209,7 @@ func (u *User) GetActiveUsers(ctx context.Context, session *domain.OIDCSession) 
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-		var bot bool = user.Bot
+		bot := user.Bot
 
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
