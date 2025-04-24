@@ -16,6 +16,8 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
+FROM arigaio/atlas:0.32.1 AS atlas
+
 FROM alpine:3.21.3
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
@@ -28,6 +30,8 @@ RUN apk --update --no-cache add tzdata \
 RUN apk --update --no-cache add ca-certificates \
   && update-ca-certificates \
   && apk del ca-certificates
+
+COPY --from=atlas --chown=root:root atlas /usr/local/bin/atlas
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/collection ./collection
 
