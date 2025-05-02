@@ -263,8 +263,8 @@ github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/me
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0/go.mod h1:fyg7847qk6SyHyPtNmDHnmrv/HOrqktSC+C9fM+CJOE=
 github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1vB6EwHI=
 github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZiAzKg9hl15HA8=
-github.com/go-task/task/v3 v3.43.2 h1:5HlzVI0J3TaC46zkhI5OdraNvhCHGut7hP0cEEZrv04=
-github.com/go-task/task/v3 v3.43.2/go.mod h1:EHa6zF2EjQJTVblOe4vXld/jM22JIoC5VwNrftmTF4g=
+github.com/go-task/task/v3 v3.43.3 h1:2BksRltL1mSq8GJBG8/RY42D9XySg4hBq+GTokBnBbk=
+github.com/go-task/task/v3 v3.43.3/go.mod h1:EHa6zF2EjQJTVblOe4vXld/jM22JIoC5VwNrftmTF4g=
 github.com/go-task/template v0.1.0 h1:ym/r2G937RZA1bsgiWedNnY9e5kxDT+3YcoAnuIetTE=
 github.com/go-task/template v0.1.0/go.mod h1:RgwRaZK+kni/hJJ7/AaOE2lPQFPbAdji/DyhC6pxo4k=
 github.com/go-test/deep v1.0.8 h1:TDsG77qcSprGbC6vTN8OuXp5g+J+b5Pcguhf7Zt61VM=
