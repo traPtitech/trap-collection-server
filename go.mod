@@ -11,7 +11,7 @@ require (
 	github.com/cosmtrek/air v1.61.2
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/dgraph-io/ristretto v0.2.0
-	github.com/getkin/kin-openapi v0.131.0
+	github.com/getkin/kin-openapi v0.132.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/go-task/task/v3 v3.43.3
