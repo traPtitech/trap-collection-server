@@ -14,8 +14,8 @@ CREATE TABLE `v2_game_videos` (
   `video_type_id` tinyint(4) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `fk_v2_game_videos_game_video_type` (`video_type_id`),
   KEY `fk_games_game_video2s` (`game_id`),
+  KEY `fk_v2_game_videos_game_video_type` (`video_type_id`),
   CONSTRAINT `fk_games_game_video2s` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
   CONSTRAINT `fk_v2_game_videos_game_video_type` FOREIGN KEY (`video_type_id`) REFERENCES `game_video_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
