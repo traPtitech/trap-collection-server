@@ -36,7 +36,7 @@ env "ci" {
 
   lint {
     git {
-      base = "main"
+      base = "origin/main"
     }
   }
 }

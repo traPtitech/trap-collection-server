@@ -67,6 +67,8 @@ jobs:
   migrate-lint:
     name: Migrate Lint
     runs-on: ubuntu-latest
+    # botによるPRのときは実行しない
+    if: "${{ github.event.sender.type != 'Bot' }}"
     services:
       db:
         image: mariadb:10
