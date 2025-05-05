@@ -84,3 +84,8 @@ Lint 結果の出力の意味がよく分からない場合は、公式ドキュ
 https://atlasgo.io/lint/analyzers
 
 また、Lint は GitHub Actions でも実行しています。手元で Lint が通っても、手元の main ブランチが最新でなかったり Atlas のバージョンが違ったりすると CI でエラーになることがあります。
+
+## 以前のマイグレーションからの移行
+
+Atlas 導入以前は、[gormigrate](https://github.com/go-gormigrate/gormigrate) を使っていました。このプログラムは [`src/repository/gorm2/migrate`](../src/repository/gorm2/migrate/) にあります。
+[`gorm2`](../src/repository/gorm2/)パッケージのソースコードには、まだ `migrate` パッケージの構造体を参照している部分があります。この構造体に対しては、新しい`schema` パッケージの構造体への型エイリアスが貼ってあり、実体は新しい `schema` パッケージの構造体になっています。`migrate` パッケージを参照している部分は徐々に `schema` パッケージの構造体に置き換えていく予定です。`migrate` パッケージは、Atlas に完全に移行した後も残しておく予定ですが、今後の新しいプログラムでは `schema` パッケージを使ってください。

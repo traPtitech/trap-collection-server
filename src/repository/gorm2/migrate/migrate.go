@@ -1,3 +1,7 @@
+// migrate
+//
+// Deprecated: migrate パッケージは、古いマイグレーションのコードです。
+// 代わりに [github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema] パッケージを使用してください。
 package migrate
 
 import (
