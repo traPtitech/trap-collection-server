@@ -29,6 +29,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@v0
+
       - run: go generate ./...
       - run: mkdir -p /tmp/coverage
       - name: Run test
@@ -102,6 +106,8 @@ jobs:
             </details>"
           exit $LINT_EXIT_CODE
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   spectral:
     name: Spectral
