@@ -13,7 +13,7 @@ bin = "tmp/main"
 # Customize binary.
 full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
 # Watch these filename extensions.
-include_ext = ["go"]
+include_ext = ["go", "sql"]
 # Ignore these filename extensions or directories.
 exclude_dir = [".github", "badger", "dev"]
 # Watch these directories if you specified.
