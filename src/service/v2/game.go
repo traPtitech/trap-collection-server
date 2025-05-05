@@ -81,6 +81,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 					activeUsersMap[owner],
 					owner,
 					values.TrapMemberStatusActive,
+					false,
 				)
 				ownersInfo = append(ownersInfo, ownerInfo)
 
@@ -110,6 +111,7 @@ func (g *Game) CreateGame(ctx context.Context, session *domain.OIDCSession, name
 					activeUsersMap[maintainer],
 					maintainer,
 					values.TrapMemberStatusActive,
+					false,
 				)
 				maintainersInfo = append(maintainersInfo, maintainerInfo)
 
@@ -250,6 +252,7 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 						administrator.UserID,
 						ownerName,
 						values.TrapMemberStatusActive,
+						false,
 					)
 					ownersInfo = append(ownersInfo, ownerInfo)
 				}
@@ -259,6 +262,7 @@ func (g *Game) GetGame(ctx context.Context, session *domain.OIDCSession, gameID 
 						administrator.UserID,
 						maintainerName,
 						values.TrapMemberStatusActive,
+						false,
 					)
 					maintainersInfo = append(maintainersInfo, maintainerInfo)
 				}

@@ -41,6 +41,7 @@ type getUsersMeResponse struct {
 	ID    uuid.UUID `json:"id"`
 	Name  string    `json:"name"`
 	State int       `json:"state"`
+	Bot   bool      `json:"bot"`
 }
 
 func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service.UserInfo, error) {
@@ -87,10 +88,13 @@ func (u *User) GetMe(ctx context.Context, session *domain.OIDCSession) (*service
 		return nil, fmt.Errorf("unexpected state: %d", response.State)
 	}
 
+	bot := response.Bot
+
 	return service.NewUserInfo(
 		values.NewTrapMemberID(response.ID),
 		values.NewTrapMemberName(response.Name),
 		status,
+		bot,
 	), nil
 }
 
@@ -98,6 +102,7 @@ type getUsersResponse struct {
 	ID    uuid.UUID `json:"id"`
 	Name  string    `json:"name"`
 	State int       `json:"state"`
+	Bot   bool      `json:"bot"`
 }
 
 // GetAllActiveUsers
@@ -147,11 +152,12 @@ func (u *User) GetAllActiveUsers(ctx context.Context, session *domain.OIDCSessio
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-
+		bot := user.Bot
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
 			values.NewTrapMemberName(user.Name),
 			status,
+			bot,
 		))
 	}
 
@@ -203,11 +209,13 @@ func (u *User) GetActiveUsers(ctx context.Context, session *domain.OIDCSession) 
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
+		bot := user.Bot
 
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
 			values.NewTrapMemberName(user.Name),
 			status,
+			bot,
 		))
 	}
 
