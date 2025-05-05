@@ -75,3 +75,26 @@ tasks:
     dir: ../
     cmds:
       - docker compose -f docker/dev/compose.yaml build --no-cache collection-proxy
+
+  migrate:new:
+    dir: ../
+    cmd: atlas migrate diff --env local --to "env://src" {{ .CLI_ARGS }}
+
+  migrate:down:
+    dir: ../
+    cmds:
+      - atlas migrate down --env local
+      - atlas migrate rm --env local {{ .LATEST_MIGRATION }}
+    vars:
+      LATEST_MIGRATION:
+        sh: ls -1t migrations | grep -e '.sql$' | head -n1
+
+  migrate:down:down-only:
+    dir: ../
+    cmds:
+      - atlas migrate down --env local
+
+  migrate:lint:
+    dir: ../
+    cmds:
+      - atlas migrate lint --env local --git-base main

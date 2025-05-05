@@ -117,7 +117,8 @@ func InjectApp() (*App, error) {
 		return nil, err
 	}
 	repositoryGorm2 := v1.NewRepositoryGorm2()
-	db, err := gorm2.NewDB(app, repositoryGorm2)
+	migration := v1.NewMigration()
+	db, err := gorm2.NewDB(app, repositoryGorm2, migration)
 	if err != nil {
 		return nil, err
 	}

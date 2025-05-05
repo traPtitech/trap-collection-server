@@ -26,12 +26,14 @@ services:
     command:
       - -c
       - /etc/trap-collection/.air.toml
-    ports: 
+    ports:
       - 3000:3000
   mariadb:
     extends:
       file: ../base/compose.yaml
       service: mariadb
+    ports:
+      - 3306:3306
     volumes:
       - ../../mysql/data:/var/lib/mysql
   adminer:

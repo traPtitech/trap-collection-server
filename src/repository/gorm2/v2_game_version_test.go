@@ -1083,7 +1083,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      uuid.UUID(gameID1),
@@ -1141,7 +1141,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3),
 							GameID:      uuid.UUID(gameID4),
@@ -1240,7 +1240,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      uuid.UUID(gameID6),
@@ -1271,7 +1271,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      uuid.UUID(gameID7),
@@ -1322,7 +1322,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							GameID:      uuid.UUID(gameID8),
@@ -1382,7 +1382,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID8),
 							GameID:      uuid.UUID(gameID9),
@@ -1451,7 +1451,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID9),
 							GameID:      uuid.UUID(gameID10),
@@ -1526,7 +1526,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID11),
 							GameID:      uuid.UUID(gameID11),
@@ -1600,7 +1600,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID13),
 							GameID:      uuid.UUID(gameID12),
@@ -1660,7 +1660,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID15),
 							GameID:      uuid.UUID(gameID13),
@@ -1883,7 +1883,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      uuid.UUID(gameID1),
@@ -1939,7 +1939,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							GameID:      uuid.UUID(gameID3),
@@ -2024,7 +2024,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID4),
 							GameID:      uuid.UUID(gameID5),
@@ -2055,7 +2055,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      uuid.UUID(gameID6),
@@ -2103,7 +2103,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      uuid.UUID(gameID7),
@@ -2160,7 +2160,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							GameID:      uuid.UUID(gameID8),
@@ -2225,7 +2225,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID8),
 							GameID:      uuid.UUID(gameID9),
@@ -2380,7 +2380,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets1.gameInfo.name,
 					Description: assets1.gameInfo.description,
 					CreatedAt:   assets1.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      assets1.gameInfo.id,
@@ -2422,7 +2422,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets2.gameInfo.name,
 					Description: assets2.gameInfo.description,
 					CreatedAt:   assets2.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							GameID:      assets2.gameInfo.id,
@@ -2463,7 +2463,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets3_1.gameInfo.name,
 					Description: assets3_1.gameInfo.description,
 					CreatedAt:   assets3_1.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3_1),
 							GameID:      assets3_1.gameInfo.id,
@@ -2484,7 +2484,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets3_2.gameInfo.name,
 					Description: assets3_2.gameInfo.description,
 					CreatedAt:   assets3_2.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3_2),
 							GameID:      assets3_2.gameInfo.id,
@@ -2538,7 +2538,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets4.gameInfo.name,
 					Description: assets4.gameInfo.description,
 					CreatedAt:   assets4.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID4),
 							GameID:      assets4.gameInfo.id,
@@ -2582,7 +2582,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets5.gameInfo.name,
 					Description: assets5.gameInfo.description,
 					CreatedAt:   assets5.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      assets5.gameInfo.id,
@@ -2626,7 +2626,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets6.gameInfo.name,
 					Description: assets6.gameInfo.description,
 					CreatedAt:   assets6.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      assets6.gameInfo.id,
@@ -2668,7 +2668,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets7_1.gameInfo.name,
 					Description: assets7_1.gameInfo.description,
 					CreatedAt:   assets7_1.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7_1),
 							GameID:      assets7_1.gameInfo.id,
@@ -2741,7 +2741,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets9_1.gameInfo.name,
 					Description: assets9_1.gameInfo.description,
 					CreatedAt:   assets9_1.gameInfo.createdAt,
-					GameVersions: []migrate.GameVersionTable2{
+					GameVersionsV2: []migrate.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID9_1),
 							GameID:      assets9_1.gameInfo.id,

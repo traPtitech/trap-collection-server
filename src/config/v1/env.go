@@ -40,4 +40,7 @@ const (
 	envKeyDBHostName envKey = "DB_HOSTNAME"
 	envKeyDBPort     envKey = "DB_PORT"
 	envKeyDBDatabase envKey = "DB_DATABASE"
+
+	envKeyMigrationEmptyDB  envKey = "MIGRATION_EMPTY_DB"
+	envKeyMigrationBaseline envKey = "MIGRATION_BASELINE"
 )

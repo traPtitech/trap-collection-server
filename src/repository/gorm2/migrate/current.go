@@ -1,21 +1,23 @@
 package migrate
 
+import "github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+
 // アプリケーションのv1
 type (
-	GameTable                   = gameTable
-	GameVersionTable            = gameVersionTable
-	GameURLTable                = gameURLTable
-	GameFileTable               = gameFileTable
-	GameFileTypeTable           = gameFileTypeTable
-	GameImageTable              = gameImageTable
-	GameImageTypeTable          = gameImageTypeTable
-	GameVideoTable              = gameVideoTable
-	GameVideoTypeTable          = gameVideoTypeTable
-	GameManagementRoleTable     = gameManagementRoleTable
-	GameManagementRoleTypeTable = gameManagementRoleTypeTable
-	LauncherVersionTable        = launcherVersionTable
-	LauncherUserTable           = launcherUserTable
-	LauncherSessionTable        = launcherSessionTable
+	GameTable                   = schema.GameTable2
+	GameVersionTable            = schema.GameVersionTable
+	GameURLTable                = schema.GameURLTable
+	GameFileTable               = schema.GameFileTable
+	GameFileTypeTable           = schema.GameFileTypeTable
+	GameImageTable              = schema.GameImageTable
+	GameImageTypeTable          = schema.GameImageTypeTable
+	GameVideoTable              = schema.GameVideoTable
+	GameVideoTypeTable          = schema.GameVideoTypeTable
+	GameManagementRoleTable     = schema.GameManagementRoleTable
+	GameManagementRoleTypeTable = schema.GameManagementRoleTypeTable
+	LauncherVersionTable        = schema.LauncherVersionTable
+	LauncherUserTable           = schema.LauncherUserTable
+	LauncherSessionTable        = schema.LauncherSessionTable
 )
 
 const (
@@ -43,20 +45,20 @@ const (
 
 // アプリケーションのv2
 type (
-	GameTable2              = gameTable2V15 // 実際に使用されるテーブルはv1のGameTableと同一
-	GameVersionTable2       = gameVersionTable2V15
-	GameFileTable2          = gameFileTable2V5
-	GameImageTable2         = gameImageTable2V2
-	GameVideoTable2         = gameVideoTable2V2
-	EditionTable2           = editionTableV15
-	ProductKeyTable2        = productKeyTableV6
-	ProductKeyStatusTable2  = productKeyStatusTableV6
-	AccessTokenTable2       = accessTokenTableV2
-	AdminTable              = adminTable
-	SeatTable2              = seatTableV9
-	SeatStatusTable2        = seatStatusTableV9
-	GameGenreTable          = gameGenreTableV15
-	GameVisibilityTypeTable = gameVisibilityTypeTableV11
+	GameTable2              = schema.GameTable2 // 実際に使用されるテーブルはv1のGameTableと同一
+	GameVersionTable2       = schema.GameVersionTable2
+	GameFileTable2          = schema.GameFileTable2
+	GameImageTable2         = schema.GameImageTable2
+	GameVideoTable2         = schema.GameVideoTable2
+	EditionTable2           = schema.EditionTable
+	ProductKeyTable2        = schema.ProductKeyTable
+	ProductKeyStatusTable2  = schema.ProductKeyStatusTable
+	AccessTokenTable2       = schema.AccessTokenTable
+	AdminTable              = schema.AdminTable
+	SeatTable2              = schema.SeatTable
+	SeatStatusTable2        = schema.SeatStatusTable
+	GameGenreTable          = schema.GameGenreTable
+	GameVisibilityTypeTable = schema.GameVisibilityTypeTable
 )
 
 const (

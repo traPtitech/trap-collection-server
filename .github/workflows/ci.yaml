@@ -29,6 +29,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@v0
+
       - run: go generate ./...
       - run: mkdir -p /tmp/coverage
       - name: Run test
@@ -59,6 +63,54 @@ jobs:
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_level: any
+
+  migrate-lint:
+    name: Migrate Lint
+    runs-on: ubuntu-latest
+    # botによるPRのときは実行しない
+    if: "${{ github.event.sender.type != 'Bot' }}"
+    services:
+      db:
+        image: mariadb:10
+        env:
+          MYSQL_ROOT_PASSWORD: pass
+          MYSQL_DATABASE: trap_collection
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@v0
+
+      - name: Atlas Lint
+        run: |
+          set +e
+          LINT_OUTPUT=$(atlas migrate lint --env ci 2>&1)
+          LINT_EXIT_CODE=$?
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "Migrate lint
+            <details>
+            <summary>Lint output</summary>
+
+            \`\`\`text
+            $LINT_OUTPUT
+            \`\`\`
+
+            </details>"
+          exit $LINT_EXIT_CODE
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
