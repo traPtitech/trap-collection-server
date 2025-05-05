@@ -6,6 +6,7 @@
 | ---- | ------- | ------- | ---- |
 | [access_tokens](access_tokens.md) | 6 | アクセストークンテーブル(v2) | BASE TABLE |
 | [admins](admins.md) | 1 |  | BASE TABLE |
+| [atlas_schema_revisions](atlas_schema_revisions.md) | 12 |  | BASE TABLE |
 | [editions](editions.md) | 5 | エディションテーブル(v2) | BASE TABLE |
 | [edition_game_version_relations](edition_game_version_relations.md) | 2 | エディションとゲームバージョンの関係テーブル(v2) | BASE TABLE |
 | [games](games.md) | 7 | ゲームテーブル | BASE TABLE |

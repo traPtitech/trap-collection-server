@@ -6,6 +6,10 @@ on:
       - "main"
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     name: Build
@@ -121,3 +125,19 @@ jobs:
         with:
           file_glob: docs/openapi/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+  tbls:
+    name: tbls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tbls
+        run: docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
+      
+      - name: Check diff
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
+            exit 1
+          fi
+        shell: bash
