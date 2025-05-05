@@ -333,3 +333,45 @@ CREATE TABLE `seats` (
   INDEX `fk_seats_seat_status` (`status_id`),
   CONSTRAINT `fk_seats_seat_status` FOREIGN KEY (`status_id`) REFERENCES `seat_statuses` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+
+--
+
+INSERT INTO `game_file_types` (`id`, `name`, `active`) 
+VALUES
+  (1,	'jar',	1),
+  (2,	'windows',	1),
+  (3,	'mac',	1);
+
+INSERT INTO `game_image_types` (`id`, `name`, `active`) 
+VALUES
+  (1,	'jpeg',	1),
+  (2,	'png',	1),
+  (3,	'gif',	1);
+
+INSERT INTO `game_management_role_types` (`id`, `name`, `active`)
+VALUES
+  (1,	'administrator',	1),
+  (2,	'collaborator',	1);
+
+INSERT INTO `game_video_types` (`id`, `name`, `active`)
+VALUES
+  (1,	'mp4',	1),
+  (2,	'mkv',	1),
+  (3,	'm4v',	1);
+
+INSERT INTO `game_visibility_types` (`id`, `name`)
+VALUES
+  (1,	'public'),
+  (2,	'limited'),
+  (3,	'private');
+
+INSERT INTO `product_key_statuses` (`id`, `name`, `active`)
+VALUES
+  (1,	'active',	1),
+  (2,	'inactive',	1);
+
+INSERT INTO `seat_statuses` (`id`, `name`, `active`) 
+VALUES
+  (1,	'none',	1),
+  (2,	'empty',	1),
+  (3,	'in_use',	1);

@@ -90,9 +90,5 @@ func Migrate(ctx context.Context, dbConf config.RepositoryGorm2, migrationConf c
 
 	db.Logger.Info(ctx, "migrate apply result: %+v", res)
 
-	if err := createMasterData(ctx, db); err != nil {
-		return fmt.Errorf("create master data: %w", err)
-	}
-
 	return nil
 }
