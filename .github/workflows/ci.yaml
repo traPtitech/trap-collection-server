@@ -42,7 +42,7 @@ jobs:
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.4.2
+        uses: codecov/codecov-action@v5.4.3
         with:
           files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
