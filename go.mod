@@ -39,7 +39,7 @@ require (
 )
 
 require (
-	ariga.io/atlas-go-sdk v0.7.0
+	ariga.io/atlas-go-sdk v0.7.1
 	ariga.io/atlas-provider-gorm v0.5.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
