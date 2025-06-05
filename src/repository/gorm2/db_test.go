@@ -85,7 +85,6 @@ func TestMain(m *testing.M) {
 
 	mockMigrationConf.EXPECT().EmptyDB().Return(true, nil).AnyTimes()
 	mockMigrationConf.EXPECT().Baseline().Return("", nil).AnyTimes()
-	
 
 	if err := pool.Retry(func() (err error) {
 		defer func() {
