@@ -83,44 +83,45 @@ golangci-lint の設定は、[.golangci.yaml](.golangci.yaml) を参照してく
 
 ### game
 
-ゲーム
+ゲーム。
+タイトルと説明が紐づけられている。
 
 ### game file
 
-ゲームのファイル。実体は zip ファイル。1つのゲームに複数のゲームファイルが存在する。
-Windows用のexeファイルを含むもの、Mac OS用のアプリケーションを含むもの、JVM用のjarファイルを含むものがある。
+ゲームを動かすためのファイル。実体は zip ファイル。1つのゲームに複数のゲームファイルが存在する。
+Windows 用の exe ファイルを含むもの、Mac OS 用のアプリケーションを含むもの、JVM 用の jar ファイルを含むものがある。
 
 ### game video
 
-ゲームの動画。1つのゲームに複数のゲーム動画が存在する。
+ゲームの動画。1つの game に複数の game video が存在する。
 
 ### game image
 
-ゲームの画像。1つのゲームに複数のゲーム画像が存在する。
+ゲームの画像。1つの game に複数の game image が存在する。
 
 ### game version
 
-ゲームのバージョン。1つのゲームに複数のバージョンが存在する。
-1つのバージョンには、1つ以上のゲームファイルまたはURL、1つのゲームの動画、1つのゲームの画像が含まれる。
+ゲームのバージョン。1つの game に複数の game version が存在する。
+1つのバージョンには、1つ以上の game file または URL、1つの game video、1つの game image が含まれる。
 
 ### edition
 
-ランチャーのエディション。複数のgame versionをまとめたもの。
-エディションは、ゲームのバージョンをまとめて配布するためのもの。
+ランチャーのエディション。複数の game version をまとめたもの。
+エディションは、 game version をまとめて配布するためのもの。
 例えば、x年のコミケ用のエディション、y年の工大祭用のエディションなど。
 以前は Launcher Version と呼ばれており、一部にその名前が残っている。
 
 ### game role
 
-ゲームに対する権限。
+game に対する権限。
 
-- owner: ゲームの所有者。ゲームの編集、削除、game roleの変更、削除、game fileのアップロード、game videoのアップロード、game imageのアップロード、game versionの作成ができる。
-- maintainer: ゲームの管理者。ゲームの編集、game roleの変更、game fileのアップロード、game videoのアップロード、game imageのアップロード、game versionの作成ができる。
+- owner: game の所有者。game の編集、削除、game roleの変更、削除、game fileのアップロード、game videoのアップロード、game imageのアップロード、game versionの作成ができる。
+- maintainer: game の管理者。game の編集、game roleの変更、game fileのアップロード、game videoのアップロード、game imageのアップロード、game versionの作成ができる。
 
 ### admin
 
 traP Collection の管理者。
-edition を作成できるほか、全てのゲームについて操作を行うことができる。
+edition を作成できるほか、全ての game について操作を行うことができる。
 
 ### seat
 
@@ -131,7 +132,7 @@ edition を作成できるほか、全てのゲームについて操作を行う
 
 ゲームの公開状態を表す。`public`、`limited`、`private` の3つの値をとる。
 
-| 公開状態 | ゲームのファイル         | ゲームの説明、画像、動画 |
+| 公開状態 | game file         | game のタイトル、説明、game image、game video |
 | -------- | ------------------------ | ------------------------ |
 | public   | 誰でもダウンロード可能   | 誰でも閲覧可能           |
 | limited  | 部員のみダウンロード可能 | 誰でも閲覧可能           |
