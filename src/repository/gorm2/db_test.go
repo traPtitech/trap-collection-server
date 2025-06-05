@@ -86,7 +86,15 @@ func TestMain(m *testing.M) {
 	mockMigrationConf.EXPECT().EmptyDB().Return(true, nil).AnyTimes()
 	mockMigrationConf.EXPECT().Baseline().Return("", nil).AnyTimes()
 
-	if err := pool.Retry(func() error {
+	if err := pool.Retry(func() (err error) {
+		defer func() {
+			recoverErr := recover()
+			if recoverErr != nil {
+				log.Printf("Failed to connect to database: %v", recoverErr)
+				err = fmt.Errorf("failed to connect to database: %v", recoverErr)
+				return
+			}
+		}()
 		testDB, err = NewDB(mockAppConf, mockRepositoryConf, mockMigrationConf)
 		if err != nil {
 			return err
