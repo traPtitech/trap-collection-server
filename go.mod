@@ -33,7 +33,7 @@ require (
 	go.uber.org/mock v0.5.2
 	golang.org/x/mod v0.24.0
 	golang.org/x/sync v0.14.0
-	gorm.io/driver/mysql v1.5.7
+	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.30.0
 	gorm.io/plugin/prometheus v0.1.0
 )
