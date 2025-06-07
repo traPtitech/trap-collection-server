@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
 
 FROM arigaio/atlas:0.34.0 AS atlas
 
-FROM alpine:3.21.3
+FROM alpine:3.22.0
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
