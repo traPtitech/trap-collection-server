@@ -1,5 +1,7 @@
 package service
 
+//go:generate go tool mockgen -typed -source=seat.go -destination=mock/seat.go -package=mock Seat
+
 import (
 	"context"
 
