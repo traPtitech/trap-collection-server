@@ -120,17 +120,19 @@ func TestPostSeat(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		req                openapi.PostSeatRequest
-		seats              []*domain.Seat
-		UpdateSeatNumError error
-		resSeat            []*openapi.Seat
-		isError            bool
-		resStatus          int
+		req                  openapi.PostSeatRequest
+		executeUpdateSeatNum bool
+		seats                []*domain.Seat
+		UpdateSeatNumError   error
+		resSeat              []*openapi.Seat
+		isError              bool
+		resStatus            int
 	}{
 		"正しく変更できる": {
 			req: openapi.PostSeatRequest{
 				Num: 3,
 			},
+			executeUpdateSeatNum: true,
 			seats: []*domain.Seat{
 				domain.NewSeat(1, values.SeatStatusEmpty),
 				domain.NewSeat(2, values.SeatStatusInUse),
@@ -156,17 +158,25 @@ func TestPostSeat(t *testing.T) {
 			req: openapi.PostSeatRequest{
 				Num: 3,
 			},
-			UpdateSeatNumError: assert.AnError,
-			isError:            true,
-			resStatus:          http.StatusInternalServerError,
+			executeUpdateSeatNum: true,
+			UpdateSeatNumError:   assert.AnError,
+			isError:              true,
+			resStatus:            http.StatusInternalServerError,
 		},
 		"UpdateSeatNumで0を指定した場合": {
 			req: openapi.PostSeatRequest{
 				Num: 0,
 			},
-			seats:     []*domain.Seat{},
-			resSeat:   []*openapi.Seat{},
-			resStatus: http.StatusOK,
+			executeUpdateSeatNum: true,
+			seats:                []*domain.Seat{},
+			resSeat:              []*openapi.Seat{},
+			resStatus:            http.StatusOK,
+		},
+		"UpdateSeatNumが負のとき400": {
+			req: openapi.PostSeatRequest{
+				Num: -1,
+			},
+			resStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -189,8 +199,11 @@ func TestPostSeat(t *testing.T) {
 
 			c.SetPath("/seats")
 
-			seatMock.EXPECT().UpdateSeatNum(gomock.Any(), uint(testCase.req.Num)).
-				Return(testCase.seats, testCase.UpdateSeatNumError)
+			if testCase.executeUpdateSeatNum {
+				seatMock.EXPECT().UpdateSeatNum(gomock.Any(), uint(testCase.req.Num)).
+					Return(testCase.seats, testCase.UpdateSeatNumError)
+			}
+
 			err = seatHandler.PostSeat(c)
 			if testCase.isError {
 				assert.Error(t, err)
