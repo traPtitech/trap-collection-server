@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -103,6 +104,105 @@ func TestGetSeats(t *testing.T) {
 			err = json.NewDecoder(rec.Body).Decode(&res)
 			assert.NoError(t, err)
 
+			assert.Equal(t, len(testCase.resSeat), len(res))
+			for i, seat := range res {
+				assert.Equal(t, testCase.resSeat[i].Id, seat.Id)
+				assert.Equal(t, testCase.resSeat[i].Status, seat.Status)
+			}
+		})
+	}
+}
+
+func TestPostSeat(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		req                openapi.PostSeatRequest
+		seats              []*domain.Seat
+		UpdateSeatNumError error
+		resSeat            []*openapi.Seat
+		isError            bool
+		resStatus          int
+	}{
+		"正しく変更できる": {
+			req: openapi.PostSeatRequest{
+				Num: 3,
+			},
+			seats: []*domain.Seat{
+				domain.NewSeat(1, values.SeatStatusEmpty),
+				domain.NewSeat(2, values.SeatStatusInUse),
+				domain.NewSeat(3, values.SeatStatusEmpty),
+			},
+			resSeat: []*openapi.Seat{
+				{
+					Id:     openapi.SeatID(1),
+					Status: openapi.Empty,
+				},
+				{
+					Id:     openapi.SeatID(2),
+					Status: openapi.InUse,
+				},
+				{
+					Id:     openapi.SeatID(3),
+					Status: openapi.Empty,
+				},
+			},
+			resStatus: http.StatusOK,
+		},
+		"UpdateSeatNumがエラーなので500": {
+			req: openapi.PostSeatRequest{
+				Num: 3,
+			},
+			UpdateSeatNumError: assert.AnError,
+			isError:            true,
+			resStatus:          http.StatusInternalServerError,
+		},
+		"UpdateSeatNumで0を指定した場合": {
+			req: openapi.PostSeatRequest{
+				Num: 0,
+			},
+			seats:     []*domain.Seat{},
+			resSeat:   []*openapi.Seat{},
+			resStatus: http.StatusOK,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			seatMock := mock.NewMockSeat(ctrl)
+			seatHandler := NewSeat(seatMock)
+
+			reqBody, err := json.Marshal(testCase.req)
+			assert.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodPost, "/seats", bytes.NewBuffer(reqBody))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			rec := httptest.NewRecorder()
+			c := echo.New().NewContext(req, rec)
+
+			c.SetPath("/seats")
+
+			seatMock.EXPECT().UpdateSeatNum(gomock.Any(), uint(testCase.req.Num)).
+				Return(testCase.seats, testCase.UpdateSeatNumError)
+			err = seatHandler.PostSeat(c)
+			if testCase.isError {
+				assert.Error(t, err)
+				var httpErr *echo.HTTPError
+				if errors.As(err, &httpErr) {
+					assert.Equal(t, testCase.resStatus, httpErr.Code)
+				}
+			}
+			if err != nil {
+				return
+			}
+			assert.Equal(t, testCase.resStatus, rec.Code)
+			var res []openapi.Seat
+			err = json.NewDecoder(rec.Body).Decode(&res)
+			assert.NoError(t, err)
 			assert.Equal(t, len(testCase.resSeat), len(res))
 			for i, seat := range res {
 				assert.Equal(t, testCase.resSeat[i].Id, seat.Id)
