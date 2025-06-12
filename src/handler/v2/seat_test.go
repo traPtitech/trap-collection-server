@@ -176,6 +176,7 @@ func TestPostSeat(t *testing.T) {
 			req: openapi.PostSeatRequest{
 				Num: -1,
 			},
+			isError:   true,
 			resStatus: http.StatusBadRequest,
 		},
 	}
