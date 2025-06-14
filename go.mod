@@ -14,7 +14,7 @@ require (
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-sql-driver/mysql v1.9.2
-	github.com/go-task/task/v3 v3.43.3
+	github.com/go-task/task/v3 v3.44.0
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.6.0
 	github.com/gorilla/sessions v1.4.0
@@ -49,7 +49,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
-	github.com/alecthomas/chroma/v2 v2.16.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.18.0 // indirect
 	github.com/alecthomas/kong v0.7.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
