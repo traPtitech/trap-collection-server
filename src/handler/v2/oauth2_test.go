@@ -3,7 +3,6 @@ package v2
 import (
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -134,10 +133,7 @@ func TestGetCallback(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/callback", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -332,10 +328,7 @@ func TestGetCode(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/callback", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -498,10 +491,7 @@ func TestPostLogout(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/logout", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/logout", nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)

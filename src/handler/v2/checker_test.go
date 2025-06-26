@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -99,9 +98,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := echo.New().NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/", nil)
 
 			var traPAuthErr error
 			if testCase.isOk {
@@ -265,10 +262,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/", nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -456,10 +450,7 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
 
 			sess, err := session.New(req)
 			if err != nil {
@@ -618,10 +609,7 @@ func TestGameFileVisibilityChecker(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
 
 			sess, err := session.New(req)
 			if err != nil {

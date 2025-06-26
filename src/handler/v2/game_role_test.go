@@ -1,12 +1,10 @@
 package v2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -320,20 +318,12 @@ func TestPatchGameRole(t *testing.T) {
 				return
 			}
 
-			bodyBytes, err := json.Marshal(testCase.reqBody)
-			require.NoError(t, err)
-
-			buf := bytes.NewBuffer(bodyBytes)
-
-			e := echo.New()
-			req := httptest.NewRequest(
+			c, req, rec := setupTestRequest(
+				t,
 				http.MethodPatch,
 				fmt.Sprintf("/api/v2/games/%s/role", testCase.gameID.String()),
-				buf,
+				withJSONBody(t, testCase.reqBody),
 			)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -605,14 +595,12 @@ func TestDeleteGameRole(t *testing.T) {
 				return
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(
+			c, req, rec := setupTestRequest(
+				t,
 				http.MethodDelete,
 				fmt.Sprintf("/api/v2/games/%s/role/%s", testCase.gameID.String(), testCase.userID.String()),
 				nil,
 			)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)

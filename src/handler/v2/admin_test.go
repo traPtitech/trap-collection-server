@@ -1,13 +1,10 @@
 package v2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -135,10 +132,7 @@ func TestGetAdmins(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/admins", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/admins", nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -360,22 +354,14 @@ func TestPostAdmins(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			reqBody := new(bytes.Buffer)
-			if !testCase.isBadRequestBody {
-				err = json.NewEncoder(reqBody).Encode(testCase.newAdminID)
-				if err != nil {
-					log.Printf("failed to create request body")
-					t.Fatal(err)
-				}
-			} else {
-				reqBody = bytes.NewBufferString("bad requset body")
+			var bodyOpt bodyOpt
+			if testCase.isBadRequestBody {
+				bodyOpt = withStringBody(t, "bad request body")
+			} else if testCase.newAdminID != nil {
+				bodyOpt = withJSONBody(t, testCase.newAdminID)
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/api/v2/admins", reqBody)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/api/v2/admins", bodyOpt)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)
@@ -598,10 +584,7 @@ func TestDeleteAdmin(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/admins/v2/%s", testCase.adminID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodDelete, fmt.Sprintf("/api/admins/v2/%s", testCase.adminID), nil)
 
 			if testCase.sessionExist {
 				sess, err := session.New(req)

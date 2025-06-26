@@ -1,12 +1,10 @@
 package v2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"strconv"
 	"testing"
 
@@ -80,9 +78,7 @@ func TestGetSeats(t *testing.T) {
 			seatMock := mock.NewMockSeat(ctrl)
 			seatHandler := NewSeat(seatMock)
 
-			req := httptest.NewRequest(http.MethodGet, "/seats", nil)
-			rec := httptest.NewRecorder()
-			c := echo.New().NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, "/seats", nil)
 
 			seatMock.EXPECT().GetSeats(gomock.Any()).
 				Return(testCase.seats, testCase.GetSeatsError)
@@ -189,14 +185,7 @@ func TestPostSeat(t *testing.T) {
 			seatMock := mock.NewMockSeat(ctrl)
 			seatHandler := NewSeat(seatMock)
 
-			reqBody, err := json.Marshal(testCase.req)
-			assert.NoError(t, err)
-
-			req := httptest.NewRequest(http.MethodPost, "/seats", bytes.NewBuffer(reqBody))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
-			rec := httptest.NewRecorder()
-			c := echo.New().NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, "/seats", withJSONBody(t, testCase.req))
 
 			c.SetPath("/seats")
 
@@ -205,7 +194,7 @@ func TestPostSeat(t *testing.T) {
 					Return(testCase.seats, testCase.UpdateSeatNumError)
 			}
 
-			err = seatHandler.PostSeat(c)
+			err := seatHandler.PostSeat(c)
 			if testCase.isError {
 				assert.Error(t, err)
 				var httpErr *echo.HTTPError
@@ -326,14 +315,7 @@ func TestPatchSeatStatus(t *testing.T) {
 			seatMock := mock.NewMockSeat(ctrl)
 			seatHandler := NewSeat(seatMock)
 
-			reqBody, err := json.Marshal(testCase.req)
-			assert.NoError(t, err)
-
-			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/seats/%d", testCase.seatID), bytes.NewBuffer(reqBody))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
-			rec := httptest.NewRecorder()
-			c := echo.New().NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/seats/%d", testCase.seatID), withJSONBody(t, testCase.req))
 
 			c.SetPath("/seats/:seatID")
 			c.SetParamNames("seatID")
@@ -353,7 +335,7 @@ func TestPatchSeatStatus(t *testing.T) {
 					Return(testCase.seat, testCase.UpdateSeatStatusError)
 			}
 
-			err = seatHandler.PatchSeatStatus(c, openapi.SeatIDInPath(testCase.seatID))
+			err := seatHandler.PatchSeatStatus(c, openapi.SeatIDInPath(testCase.seatID))
 			if testCase.isError {
 				assert.Error(t, err)
 				var httpErr *echo.HTTPError
