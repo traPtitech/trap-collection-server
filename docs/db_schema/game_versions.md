@@ -15,8 +15,8 @@ CREATE TABLE `game_versions` (
   `description` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `fk_games_game_versions` (`game_id`),
-  CONSTRAINT `fk_games_game_versions` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
+  KEY `fk_games_game_versions_v1` (`game_id`),
+  CONSTRAINT `fk_games_game_versions_v1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -36,14 +36,14 @@ CREATE TABLE `game_versions` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_games_game_versions | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
+| fk_games_game_versions_v1 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| fk_games_game_versions | KEY fk_games_game_versions (game_id) USING BTREE |
+| fk_games_game_versions_v1 | KEY fk_games_game_versions_v1 (game_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

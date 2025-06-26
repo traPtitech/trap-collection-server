@@ -71,6 +71,7 @@ func TestMain(m *testing.M) {
 	defer ctrl.Finish()
 	mockAppConf := mock.NewMockApp(ctrl)
 	mockRepositoryConf := mock.NewMockRepositoryGorm2(ctrl)
+	mockMigrationConf := mock.NewMockMigration(ctrl)
 
 	// pool.Retryで繰り返すため、AnyTimesをつける
 	mockAppConf.EXPECT().FeatureV2().Return(true).AnyTimes()
@@ -82,8 +83,19 @@ func TestMain(m *testing.M) {
 	mockRepositoryConf.EXPECT().User().Return(mysqlUser, nil).AnyTimes()
 	mockRepositoryConf.EXPECT().Port().Return(port, nil).AnyTimes()
 
-	if err := pool.Retry(func() error {
-		testDB, err = NewDB(mockAppConf, mockRepositoryConf)
+	mockMigrationConf.EXPECT().EmptyDB().Return(true, nil).AnyTimes()
+	mockMigrationConf.EXPECT().Baseline().Return("", nil).AnyTimes()
+
+	if err := pool.Retry(func() (err error) {
+		defer func() {
+			recoverErr := recover()
+			if recoverErr != nil {
+				log.Printf("Failed to connect to database: %v", recoverErr)
+				err = fmt.Errorf("failed to connect to database: %v", recoverErr)
+				return
+			}
+		}()
+		testDB, err = NewDB(mockAppConf, mockRepositoryConf, mockMigrationConf)
 		if err != nil {
 			return err
 		}

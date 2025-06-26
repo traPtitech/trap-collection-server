@@ -9,7 +9,7 @@ import (
 	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -21,7 +21,7 @@ type DB struct {
 	db *gorm.DB
 }
 
-func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
+func NewDB(appConf config.App, conf config.RepositoryGorm2, migrationConf config.Migration) (*DB, error) {
 	appStatus, err := appConf.Status()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get app status: %w", err)
@@ -77,10 +77,15 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2) (*DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	err = migrate.Migrate(db, appConf.FeatureV2())
+	err = schema.Migrate(context.Background(), conf, migrationConf, db)
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate: %w", err)
+		return nil, fmt.Errorf("migrate: %w", err)
 	}
+
+	// err = migrate.Migrate(db, appConf.FeatureV2())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to migrate: %w", err)
+	// }
 
 	var collector prometheus.MetricsCollector
 	if appConf.FeatureV2() {

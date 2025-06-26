@@ -12,9 +12,9 @@ CREATE TABLE `edition_game_version_relations` (
   `edition_id` varchar(36) NOT NULL,
   `game_version_id` varchar(36) NOT NULL,
   PRIMARY KEY (`edition_id`,`game_version_id`),
-  KEY `fk_edition_game_version_relations_game_version_table2_v2` (`game_version_id`),
-  CONSTRAINT `fk_edition_game_version_relations_edition_table_v2` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
-  CONSTRAINT `fk_edition_game_version_relations_game_version_table2_v2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
+  KEY `fk_edition_game_version_relations_game_version_table2` (`game_version_id`),
+  CONSTRAINT `fk_edition_game_version_relations_edition_table` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
+  CONSTRAINT `fk_edition_game_version_relations_game_version_table2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `edition_game_version_relations` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_edition_game_version_relations_edition_table_v2 | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
-| fk_edition_game_version_relations_game_version_table2_v2 | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id) |
+| fk_edition_game_version_relations_edition_table | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
+| fk_edition_game_version_relations_game_version_table2 | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (edition_id, game_version_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| fk_edition_game_version_relations_game_version_table2_v2 | KEY fk_edition_game_version_relations_game_version_table2_v2 (game_version_id) USING BTREE |
+| fk_edition_game_version_relations_game_version_table2 | KEY fk_edition_game_version_relations_game_version_table2 (game_version_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (edition_id, game_version_id) USING BTREE |
 
 ## Relations

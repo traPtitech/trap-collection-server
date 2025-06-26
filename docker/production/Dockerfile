@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.24.2-alpine AS build
+FROM golang:1.24.4-alpine AS build
 
 RUN apk add --update --no-cache git
 
@@ -16,7 +16,9 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM alpine:3.21.3
+FROM arigaio/atlas:0.35.0 AS atlas
+
+FROM alpine:3.22.0
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
@@ -28,6 +30,8 @@ RUN apk --update --no-cache add tzdata \
 RUN apk --update --no-cache add ca-certificates \
   && update-ca-certificates \
   && apk del ca-certificates
+
+COPY --from=atlas --chown=root:root atlas /usr/local/bin/atlas
 
 COPY --from=build /go/src/github.com/traPtitech/trap-collection-server/collection ./collection
 

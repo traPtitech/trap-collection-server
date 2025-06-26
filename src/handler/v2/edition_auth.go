@@ -85,6 +85,10 @@ func (editionAuth *EditionAuth) GetProductKeys(c echo.Context, editionID openapi
 // プロダクトキーの生成
 // (POST /editions/{editionID}/keys)
 func (editionAuth *EditionAuth) PostProductKey(c echo.Context, editionID openapi.EditionIDInPath, params openapi.PostProductKeyParams) error {
+	if params.Num < 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid key num")
+	}
+
 	productKey, err := editionAuth.editionAuthService.GenerateProductKey(
 		c.Request().Context(),
 		values.NewLauncherVersionIDFromUUID(editionID),

@@ -41,4 +41,7 @@ var configSet = wire.NewSet(
 
 	wire.Bind(new(config.StorageS3), new(*v1.StorageS3)),
 	v1.NewStorageS3,
+
+	wire.Bind(new(config.Migration), new(*v1.Migration)),
+	v1.NewMigration,
 )

@@ -281,6 +281,12 @@ func TestPostProductKey(t *testing.T) {
 			isErr:                 true,
 			statusCode:            http.StatusInternalServerError,
 		},
+		"Numが負なので400": {
+			editionID:  editionID,
+			params:     openapi.PostProductKeyParams{Num: -1},
+			isErr:      true,
+			statusCode: http.StatusBadRequest,
+		},
 	}
 
 	for name, testCase := range testCases {

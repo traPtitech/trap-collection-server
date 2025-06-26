@@ -11,16 +11,10 @@
 CREATE TABLE `game_genre_relations` (
   `genre_id` varchar(36) NOT NULL,
   `game_id` varchar(36) NOT NULL,
-  PRIMARY KEY (`genre_id`,`game_id`),
-  KEY `fk_game_genre_relations_game_table2_v13` (`game_id`),
-  CONSTRAINT `fk_game_genre_relations_game_genre_table_v10` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_genre_table_v11` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_genre_table_v12` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_genre_table_v13` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_table2_v11` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_table2_v12` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_table2_v13` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
-  CONSTRAINT `fk_game_genre_relations_game_table2_v5` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
+  PRIMARY KEY (`game_id`,`genre_id`),
+  KEY `fk_game_genre_relations_game_genre_table` (`genre_id`),
+  CONSTRAINT `fk_game_genre_relations_game_genre_table` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
+  CONSTRAINT `fk_game_genre_relations_game_table2` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -37,22 +31,16 @@ CREATE TABLE `game_genre_relations` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_game_genre_relations_game_genre_table_v10 | FOREIGN KEY | FOREIGN KEY (genre_id) REFERENCES game_genres (id) |
-| fk_game_genre_relations_game_genre_table_v11 | FOREIGN KEY | FOREIGN KEY (genre_id) REFERENCES game_genres (id) |
-| fk_game_genre_relations_game_genre_table_v12 | FOREIGN KEY | FOREIGN KEY (genre_id) REFERENCES game_genres (id) |
-| fk_game_genre_relations_game_genre_table_v13 | FOREIGN KEY | FOREIGN KEY (genre_id) REFERENCES game_genres (id) |
-| fk_game_genre_relations_game_table2_v11 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
-| fk_game_genre_relations_game_table2_v12 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
-| fk_game_genre_relations_game_table2_v13 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
-| fk_game_genre_relations_game_table2_v5 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
-| PRIMARY | PRIMARY KEY | PRIMARY KEY (genre_id, game_id) |
+| fk_game_genre_relations_game_genre_table | FOREIGN KEY | FOREIGN KEY (genre_id) REFERENCES game_genres (id) |
+| fk_game_genre_relations_game_table2 | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
+| PRIMARY | PRIMARY KEY | PRIMARY KEY (game_id, genre_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| fk_game_genre_relations_game_table2_v13 | KEY fk_game_genre_relations_game_table2_v13 (game_id) USING BTREE |
-| PRIMARY | PRIMARY KEY (genre_id, game_id) USING BTREE |
+| fk_game_genre_relations_game_genre_table | KEY fk_game_genre_relations_game_genre_table (genre_id) USING BTREE |
+| PRIMARY | PRIMARY KEY (game_id, genre_id) USING BTREE |
 
 ## Relations
 

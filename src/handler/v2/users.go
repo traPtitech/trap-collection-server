@@ -3,6 +3,7 @@ package v2
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -48,7 +49,7 @@ func (u *User) GetMe(c echo.Context) error {
 	})
 }
 
-func (u *User) GetUsers(c echo.Context) error {
+func (u *User) GetUsers(c echo.Context, _ openapi.GetUsersParams) error {
 	session, err := u.session.get(c)
 	if err != nil {
 		log.Printf("error: failed to get session: %v\n", err)
@@ -62,7 +63,16 @@ func (u *User) GetUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession)
+	botParam := c.QueryParam("bot")
+	includeBot := true
+	if botParam != "" {
+		includeBot, err = strconv.ParseBool(botParam)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+	}
+
+	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession, includeBot)
 	if err != nil {
 		log.Printf("error: failed to get user info: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

@@ -14,8 +14,8 @@ CREATE TABLE `v2_game_images` (
   `image_type_id` tinyint(4) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `fk_v2_game_images_game_image_type` (`image_type_id`),
   KEY `fk_games_game_image2s` (`game_id`),
+  KEY `fk_v2_game_images_game_image_type` (`image_type_id`),
   CONSTRAINT `fk_games_game_image2s` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
   CONSTRAINT `fk_v2_game_images_game_image_type` FOREIGN KEY (`image_type_id`) REFERENCES `game_image_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

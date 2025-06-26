@@ -15,8 +15,11 @@ services:
       S3_ENDPOINT: http://s3:9000
       S3_USE_PATH_STYLE: false
       PORT: :3000
+      MIGRATION_EMPTY_DB: true
+      # MIGRATION_BASELINE: "20250327121655" DBが空じゃないときのbaseline。基本的にコメントアウトしたままでよい
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/metrics"]
+      test:
+        ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/metrics"]
       timeout: 5m
       interval: 1s
       retries: 1000
@@ -32,7 +35,7 @@ services:
     expose:
       - 3306
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1", "-ppass"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppass"]
       timeout: 5m
       interval: 1s
       retries: 1000

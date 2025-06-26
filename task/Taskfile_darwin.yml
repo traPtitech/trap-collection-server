@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 includes:
   unix:
@@ -53,3 +53,19 @@ tasks:
   update-frontend:
     cmds:
       - task: unix:update-frontend
+
+  migrate:new:
+    cmds:
+      - task: unix:migrate:new
+
+  migrate:down:
+    cmds:
+      - task: unix:migrate:down
+
+  migrate:down:down-only:
+    cmds:
+      - task: unix:migrate:down:down-only
+
+  migrate:lint:
+    cmds:
+      - task: unix:migrate:lint
