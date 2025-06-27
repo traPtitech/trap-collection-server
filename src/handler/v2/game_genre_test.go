@@ -219,29 +219,7 @@ func TestGetGameGenres(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/genres", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			err := gameGenre.GetGameGenres(c)
@@ -502,29 +480,7 @@ func TestPutGameGenres(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPut, fmt.Sprintf("/api/v2/game/%s/genres", testCase.gameID), bodyOpt)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			err = gameGenreHandler.PutGameGenres(c, testCase.gameID)
@@ -715,29 +671,8 @@ func TestPatchGameGenre(t *testing.T) {
 
 			c, req, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/api/v2/genres/%s", testCase.gameGenreID), bodyOpt)
 
-			sess, err := session.New(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			authSession := domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))
-
-			sess.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
-			sess.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
-
-			err = sess.Save(req, rec)
-			if err != nil {
-				t.Fatalf("failed to save session: %v", err)
-			}
-
-			setCookieHeader(c)
-
-			sess, err = session.Get(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			c.Set("session", sess)
+			setTestSession(t, c, req, rec, session, authSession)
 
 			if testCase.executeUpdateGame {
 				mockGameGenreService.

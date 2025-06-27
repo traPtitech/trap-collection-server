@@ -135,29 +135,7 @@ func TestGetAdmins(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/admins", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeGetAdmins {
@@ -364,29 +342,7 @@ func TestPostAdmins(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPost, "/api/v2/admins", bodyOpt)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeAddAdmin {
@@ -587,29 +543,7 @@ func TestDeleteAdmin(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodDelete, fmt.Sprintf("/api/admins/v2/%s", testCase.adminID), nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeDeleteAdmin {

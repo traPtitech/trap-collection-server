@@ -326,29 +326,7 @@ func TestPatchGameRole(t *testing.T) {
 			)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			mockGameRoleService := mock.NewMockGameRoleV2(ctrl)
@@ -603,29 +581,7 @@ func TestDeleteGameRole(t *testing.T) {
 			)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			mockGameRoleService := mock.NewMockGameRoleV2(ctrl)

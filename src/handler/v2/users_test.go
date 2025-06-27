@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -117,22 +118,11 @@ func TestGetMe(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPost, "/users/me", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeGetMe {
@@ -361,22 +351,11 @@ func TestGetUsers(t *testing.T) {
 			}
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeGetAllActiveUser {

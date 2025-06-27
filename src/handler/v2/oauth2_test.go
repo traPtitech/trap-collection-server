@@ -494,22 +494,11 @@ func TestPostLogout(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/logout", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeLogout {
