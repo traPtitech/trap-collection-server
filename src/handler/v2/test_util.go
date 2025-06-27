@@ -12,6 +12,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 )
 
 // setupTestRequestは、テスト用にEchoのContextを用意する。
@@ -128,4 +129,30 @@ func withMultipartFormDataBody(t *testing.T, formDatas []testFormData) bodyOpt {
 			req.Header.Set(echo.HeaderContentType, fmt.Sprintf("%s; boundary=%s", echo.MIMEMultipartForm, boundary))
 		}
 	}
+}
+
+// setTestSessionは、テスト用にCookieにセッションを設定する。
+// authSessionがnilでなければ、OIDCセッションのアクセストークンと有効期限をセッションに保存する。
+func setTestSession(t *testing.T, c echo.Context, req *http.Request, rec *httptest.ResponseRecorder, session *Session, authSession *domain.OIDCSession) {
+	t.Helper()
+
+	sess, err := session.New(req)
+	require.NoError(t, err, "create new session")
+
+	if authSession != nil {
+		sess.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
+		sess.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
+	}
+
+	err = sess.Save(req, rec)
+	require.NoError(t, err, "save session")
+
+	cookie := c.Response().Header().Get("Set-Cookie")
+	c.Response().Header().Del("Set-Cookie")
+	c.Request().Header.Set("Cookie", cookie)
+
+	sess, err = session.Get(req)
+	require.NoError(t, err, "get session")
+
+	c.Set("session", sess)
 }
