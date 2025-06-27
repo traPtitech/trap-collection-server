@@ -136,21 +136,14 @@ func TestGetCallback(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				values := make([]sessionValue, 0)
 				if testCase.codeVerifierExist {
-					sess.Values[codeVerifierSessionKey] = testCase.codeVerifier
+					values = append(values, sessionValue{
+						key:   codeVerifierSessionKey,
+						value: testCase.codeVerifier,
+					})
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, nil, values...)
 			}
 
 			if testCase.executeCallback {
@@ -331,17 +324,7 @@ func TestGetCode(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, nil)
 			}
 
 			mockOIDCService.

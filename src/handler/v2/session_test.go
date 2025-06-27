@@ -67,17 +67,7 @@ func TestGetSession(t *testing.T) {
 			c, req, rec := setupTestRequest(t, http.MethodGet, "/", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, nil)
 			}
 
 			_, err := session.get(c)
