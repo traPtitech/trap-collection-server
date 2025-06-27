@@ -141,10 +141,7 @@ func TestGetEditions(t *testing.T) {
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, "/api/v2/editions", nil)
 
 			mockEditionService.
 				EXPECT().
@@ -373,22 +370,13 @@ func TestPostEdition(t *testing.T) {
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
-			e := echo.New()
-			var req *http.Request
+			var c echo.Context
+			var rec *httptest.ResponseRecorder
 			if testCase.invalidBody {
-				reqBody := bytes.NewBuffer([]byte("invalid"))
-				req = httptest.NewRequest(http.MethodPost, "/api/v2/editions", reqBody)
-				req.Header.Set("Content-Type", echo.MIMETextPlain)
+				c, _, rec = setupTestRequest(t, http.MethodPost, "/api/v2/editions", withStringBody(t, "invalid"))
 			} else {
-				reqBody := bytes.NewBuffer(nil)
-				if err := json.NewEncoder(reqBody).Encode(testCase.reqBody); err != nil {
-					t.Fatalf("failed to encode request body: %v", err)
-				}
-				req = httptest.NewRequest(http.MethodPost, "/api/v2/editions", reqBody)
-				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+				c, _, rec = setupTestRequest(t, http.MethodPost, "/api/v2/editions", withJSONBody(t, testCase.reqBody))
 			}
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
 
 			if testCase.executeCreateEdition {
 				mockEditionService.
@@ -497,10 +485,7 @@ func TestDeleteEdition(t *testing.T) {
 					Return(testCase.deleteEditionErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodDelete, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 
 			err := edition.DeleteEdition(c, testCase.editionID)
 
@@ -608,10 +593,7 @@ func TestGetEdition(t *testing.T) {
 				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
 				Return(testCase.resultEdition, testCase.GetEditionErr)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
 
 			err := edition.GetEdition(c, testCase.editionID)
 
@@ -844,11 +826,7 @@ func TestPatchEdition(t *testing.T) {
 				reqBody = []byte("invalid json")
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), bytes.NewReader(reqBody))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), withReaderBody(t, bytes.NewReader(reqBody), echo.MIMEApplicationJSON))
 
 			err = edition.PatchEdition(c, testCase.editionID)
 
@@ -1297,10 +1275,7 @@ func TestGetEditionGames(t *testing.T) {
 				).
 				Return(testCase.gameVersions, testCase.getEditionGamesErr)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), nil)
 
 			err := edition.GetEditionGames(c, testCase.editionID)
 
@@ -1750,20 +1725,14 @@ func TestPatchEditionGame(t *testing.T) {
 			mockEditionService := mock.NewMockEdition(ctrl)
 			edition := NewEdition(mockEditionService)
 
-			var reqBody []byte
-			var err error
+			var bodyOpt bodyOpt
 			if !testCase.invalidBody {
-				reqBody, err = json.Marshal(testCase.reqBody)
-				assert.NoError(t, err)
+				bodyOpt = withJSONBody(t, testCase.reqBody)
 			} else {
-				reqBody = []byte("invalid json")
+				bodyOpt = withStringBody(t, "invalid json")
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), bytes.NewReader(reqBody))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/api/v2/editions/%s/games", testCase.editionID), bodyOpt)
 
 			if testCase.executeUpdateMock {
 				mockEditionService.
@@ -1776,7 +1745,7 @@ func TestPatchEditionGame(t *testing.T) {
 					Return(testCase.resultGameVersions, testCase.updateEditionGamesErr)
 			}
 
-			err = edition.PatchEditionGame(c, testCase.editionID)
+			err := edition.PatchEditionGame(c, testCase.editionID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -1795,7 +1764,7 @@ func TestPatchEditionGame(t *testing.T) {
 
 			if testCase.expectGames != nil {
 				var res []openapi.EditionGameResponse
-				err = json.NewDecoder(rec.Body).Decode(&res)
+				err := json.NewDecoder(rec.Body).Decode(&res)
 				assert.NoError(t, err)
 
 				assert.Len(t, res, len(testCase.expectGames))

@@ -1,12 +1,10 @@
 package v2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -89,10 +87,7 @@ func TestDeleteGameGenre(t *testing.T) {
 				DeleteGameGenre(gomock.Any(), values.GameGenreIDFromUUID(testCase.genreID)).
 				Return(testCase.DeleteGameGenreErr)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v2/genres/%s", testCase.genreID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodDelete, fmt.Sprintf("/api/v2/genres/%s", testCase.genreID), nil)
 
 			err := gameGenre.DeleteGameGenre(c, testCase.genreID)
 
@@ -221,35 +216,10 @@ func TestGetGameGenres(t *testing.T) {
 				GetGameGenres(gomock.Any(), testCase.sessionExist).
 				Return(testCase.gameGenreInfos, testCase.GetGameGenresErr)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/genres", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/genres", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			err := gameGenre.GetGameGenres(c)
@@ -500,49 +470,17 @@ func TestPutGameGenres(t *testing.T) {
 					Return(testCase.GetGameResult, testCase.GetGameErr)
 			}
 
-			reqBody := new(bytes.Buffer)
+			var bodyOpt bodyOpt
 			if !testCase.invalidRequestBody {
-				err := json.NewEncoder(reqBody).Encode(testCase.newGameGenreNames)
-				if err != nil {
-					t.Fatalf("failed to encode request body: %v", err)
-				}
+				bodyOpt = withJSONBody(t, testCase.newGameGenreNames)
 			} else {
-				_, err := strings.NewReader("invalid request body").WriteTo(reqBody)
-				if err != nil {
-					t.Fatalf("failed to write to request body: %v", err)
-				}
+				bodyOpt = withStringBody(t, "invalid request body")
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v2/game/%s/genres", testCase.gameID), reqBody)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPut, fmt.Sprintf("/api/v2/game/%s/genres", testCase.gameID), bodyOpt)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			err = gameGenreHandler.PutGameGenres(c, testCase.gameID)
@@ -724,48 +662,17 @@ func TestPatchGameGenre(t *testing.T) {
 
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
-			reqBody := new(bytes.Buffer)
+			var bodyOpt bodyOpt
 			if !testCase.invalidRequestBody {
-				err := json.NewEncoder(reqBody).Encode(testCase.req)
-				if err != nil {
-					t.Fatalf("failed to encode request body: %v", err)
-				}
+				bodyOpt = withJSONBody(t, testCase.req)
 			} else {
-				_, err := strings.NewReader("invalid request body").WriteTo(reqBody)
-				if err != nil {
-					t.Fatalf("failed to write to request body: %v", err)
-				}
+				bodyOpt = withStringBody(t, "invalid request body")
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v2/genres/%s", testCase.gameGenreID), reqBody)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-
-			sess, err := session.New(req)
-			if err != nil {
-				t.Fatal(err)
-			}
+			c, req, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/api/v2/genres/%s", testCase.gameGenreID), bodyOpt)
 
 			authSession := domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))
-
-			sess.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
-			sess.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
-
-			err = sess.Save(req, rec)
-			if err != nil {
-				t.Fatalf("failed to save session: %v", err)
-			}
-
-			setCookieHeader(c)
-
-			sess, err = session.Get(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			c.Set("session", sess)
+			setTestSession(t, c, req, rec, session, authSession)
 
 			if testCase.executeUpdateGame {
 				mockGameGenreService.

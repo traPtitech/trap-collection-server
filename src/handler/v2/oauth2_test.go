@@ -3,7 +3,6 @@ package v2
 import (
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -134,27 +133,17 @@ func TestGetCallback(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/callback", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				values := make([]sessionValue, 0)
 				if testCase.codeVerifierExist {
-					sess.Values[codeVerifierSessionKey] = testCase.codeVerifier
+					values = append(values, sessionValue{
+						key:   codeVerifierSessionKey,
+						value: testCase.codeVerifier,
+					})
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, nil, values...)
 			}
 
 			if testCase.executeCallback {
@@ -332,23 +321,10 @@ func TestGetCode(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/callback", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/callback", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, nil)
 			}
 
 			mockOIDCService.
@@ -498,28 +474,14 @@ func TestPostLogout(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/oauth2/logout", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/oauth2/logout", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeLogout {

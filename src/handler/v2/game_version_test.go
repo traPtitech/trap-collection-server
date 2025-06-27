@@ -1,12 +1,10 @@
 package v2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -457,10 +455,7 @@ func TestGetGameVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/games/%s/versions", uuid.UUID(testCase.gameID)), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/v2/games/%s/versions", uuid.UUID(testCase.gameID)), nil)
 
 			mockGameVersionService.
 				EXPECT().
@@ -1104,23 +1099,13 @@ func TestPostGameVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			var req *http.Request
+			var bodyOpt bodyOpt
 			if testCase.invalidRequest {
-				reqBody := bytes.NewBuffer([]byte("invalid"))
-				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/games/%s/versions", uuid.UUID(testCase.gameID)), reqBody)
-				req.Header.Set("Content-Type", echo.MIMETextPlain)
+				bodyOpt = withStringBody(t, "invalid")
 			} else {
-				reqBody := bytes.NewBuffer(nil)
-				err := json.NewEncoder(reqBody).Encode(testCase.apiGameVersion)
-				if err != nil {
-					t.Fatalf("failed to encode request body: %v", err)
-				}
-				req = httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/games/%s/versions", uuid.UUID(testCase.gameID)), reqBody)
-				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+				bodyOpt = withJSONBody(t, testCase.apiGameVersion)
 			}
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/games/%s/versions", uuid.UUID(testCase.gameID)), bodyOpt)
 
 			if testCase.executeCreateGameVersion {
 				mockGameVersionService.
@@ -1411,10 +1396,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/games/%s/versions/latest", uuid.UUID(testCase.gameID)), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/games/%s/versions/latest", uuid.UUID(testCase.gameID)), nil)
 
 			mockGameVersionService.
 				EXPECT().
