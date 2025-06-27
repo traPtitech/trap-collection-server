@@ -608,7 +608,7 @@ func TestGameFileVisibilityChecker(t *testing.T) {
 				},
 			}
 
-			err = checker.GameFileVisibilityChecker(ctx, &ai)
+			err := checker.GameFileVisibilityChecker(ctx, &ai)
 
 			if !testCase.isError {
 				assert.NoError(t, err)

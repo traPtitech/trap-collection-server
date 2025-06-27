@@ -1745,7 +1745,7 @@ func TestPatchEditionGame(t *testing.T) {
 					Return(testCase.resultGameVersions, testCase.updateEditionGamesErr)
 			}
 
-			err = edition.PatchEditionGame(c, testCase.editionID)
+			err := edition.PatchEditionGame(c, testCase.editionID)
 
 			if testCase.isErr {
 				if testCase.statusCode != 0 {
@@ -1764,7 +1764,7 @@ func TestPatchEditionGame(t *testing.T) {
 
 			if testCase.expectGames != nil {
 				var res []openapi.EditionGameResponse
-				err = json.NewDecoder(rec.Body).Decode(&res)
+				err := json.NewDecoder(rec.Body).Decode(&res)
 				assert.NoError(t, err)
 
 				assert.Len(t, res, len(testCase.expectGames))
