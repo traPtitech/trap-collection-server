@@ -131,17 +131,27 @@ func withMultipartFormDataBody(t *testing.T, formDatas []testFormData) bodyOpt {
 	}
 }
 
+type sessionValue struct {
+	key   string
+	value any
+}
+
 // setTestSessionは、テスト用にCookieにセッションを設定する。
 // authSessionがnilでなければ、OIDCセッションのアクセストークンと有効期限をセッションに保存する。
-func setTestSession(t *testing.T, c echo.Context, req *http.Request, rec *httptest.ResponseRecorder, session *Session, authSession *domain.OIDCSession) {
+func setTestSession(t *testing.T, c echo.Context, req *http.Request, rec *httptest.ResponseRecorder,
+	session *Session, authSession *domain.OIDCSession, sessionValues ...sessionValue) {
 	t.Helper()
 
-	sess, err := session.New(req)
+	sess, err := session.New(t, req)
 	require.NoError(t, err, "create new session")
 
 	if authSession != nil {
 		sess.Values[accessTokenSessionKey] = string(authSession.GetAccessToken())
 		sess.Values[expiresAtSessionKey] = authSession.GetExpiresAt()
+	}
+
+	for _, sv := range sessionValues {
+		sess.Values[sv.key] = sv.value
 	}
 
 	err = sess.Save(req, rec)
@@ -151,7 +161,7 @@ func setTestSession(t *testing.T, c echo.Context, req *http.Request, rec *httpte
 	c.Response().Header().Del("Set-Cookie")
 	c.Request().Header.Set("Cookie", cookie)
 
-	sess, err = session.Get(req)
+	sess, err = session.Get(t, req)
 	require.NoError(t, err, "get session")
 
 	c.Set("session", sess)
