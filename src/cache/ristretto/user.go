@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -15,8 +15,8 @@ import (
 )
 
 type User struct {
-	meCache        *ristretto.Cache
-	activeUsers    *ristretto.Cache
+	meCache        *ristretto.Cache[string, any]
+	activeUsers    *ristretto.Cache[string, any]
 	activeUsersTTL time.Duration
 }
 
@@ -30,7 +30,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to get activeUsersTTL: %w", err)
 	}
 
-	meCache, err := ristretto.NewCache(&ristretto.Config{
+	meCache, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
 		// NumCounters
 		// アクセス頻度を保持する要素の数。
 		// 一般的には最大で格納される要素数の10倍程度が良いらしいが、
@@ -47,7 +47,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to create meCache: %v", err)
 	}
 
-	activeUsers, err := ristretto.NewCache(&ristretto.Config{
+	activeUsers, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
