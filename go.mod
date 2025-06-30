@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.82.0
 	github.com/cosmtrek/air v1.61.2
 	github.com/deepmap/oapi-codegen v1.16.3
-	github.com/dgraph-io/ristretto v0.2.0
+	github.com/dgraph-io/ristretto/v2 v2.2.0
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-sql-driver/mysql v1.9.3
@@ -170,7 +170,6 @@ require (
 	github.com/alecthomas/kong v0.7.1 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
-	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
