@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 )
 
 type Seat struct {
-	activeSeats    *ristretto.Cache
+	activeSeats    *ristretto.Cache[string, any]
 	activeSeatsTTL time.Duration
 }
 
@@ -23,7 +23,7 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 		return nil, fmt.Errorf("failed to get active seats ttl: %w", err)
 	}
 
-	activeSeats, err := ristretto.NewCache(&ristretto.Config{
+	activeSeats, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
