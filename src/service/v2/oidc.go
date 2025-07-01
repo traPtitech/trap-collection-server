@@ -21,7 +21,6 @@ type OIDC struct {
 	client   *domain.OIDCClient
 	user     *User
 	oidcAuth auth.OIDC
-	includeBot bool
 }
 
 func NewOIDC(conf config.ServiceV2, user *User, oidc auth.OIDC) (*OIDC, error) {
