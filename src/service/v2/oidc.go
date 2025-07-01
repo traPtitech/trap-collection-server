@@ -91,7 +91,10 @@ func (o *OIDC) GetActiveUsers(ctx context.Context, session *domain.OIDCSession, 
 	if err != nil {
 		return nil, err
 	}
-	// includeBotがfalseの場合、botユーザーを除外する
+	if includeBot {
+		return users, nil
+	}
+	// includeBotがfalseの場合はbotユーザーを除外する
 	filteredUsers := make([]*service.UserInfo, 0, len(users))
 	for _, user := range users {
 		if !includeBot && user.GetBot() {
