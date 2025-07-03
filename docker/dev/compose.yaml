@@ -35,7 +35,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ../../mysql/data:/var/lib/mysql
+      - trap_collection_mysql_data:/var/lib/mysql
   adminer:
     image: adminer:latest
     restart: always
@@ -43,3 +43,6 @@ services:
       ADMINER_DEFAULT_SERVER: mariadb
     ports:
       - 8081:8080
+
+volumes:
+  trap_collection_mysql_data:
