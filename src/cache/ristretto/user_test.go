@@ -37,7 +37,6 @@ func TestGetMe(t *testing.T) {
 	type test struct {
 		description string
 		keyExist    bool
-		valueBroken bool
 		userInfo    *service.UserInfo
 		isErr       bool
 		err         error
@@ -60,30 +59,16 @@ func TestGetMe(t *testing.T) {
 			isErr:       true,
 			err:         cache.ErrCacheMiss,
 		},
-		{
-			// 実際には発生しないが念の為確認
-			description: "値が壊れているのでエラー",
-			keyExist:    true,
-			valueBroken: true,
-			isErr:       true,
-		},
 	}
 
 	for i, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			accessToken := values.NewOIDCAccessToken(fmt.Sprintf("access token%d", i))
 			if testCase.keyExist {
-				if testCase.valueBroken {
-					ok := userCache.meCache.Set(string(accessToken), "broken", 8)
-					assert.True(t, ok)
+				ok := userCache.meCache.Set(string(accessToken), testCase.userInfo, 8)
+				assert.True(t, ok)
 
-					userCache.meCache.Wait()
-				} else {
-					ok := userCache.meCache.Set(string(accessToken), testCase.userInfo, 8)
-					assert.True(t, ok)
-
-					userCache.meCache.Wait()
-				}
+				userCache.meCache.Wait()
 			}
 
 			user, err := userCache.GetMe(ctx, accessToken)
@@ -230,7 +215,6 @@ func TestGetAllActiveUsers(t *testing.T) {
 	type test struct {
 		description string
 		keyExist    bool
-		valueBroken bool
 		users       []*service.UserInfo
 		isErr       bool
 		err         error
@@ -260,25 +244,13 @@ func TestGetAllActiveUsers(t *testing.T) {
 			isErr:       true,
 			err:         cache.ErrCacheMiss,
 		},
-		{
-			// 実際には発生しないが念の為確認
-			description: "値が壊れているのでエラー",
-			keyExist:    true,
-			valueBroken: true,
-			isErr:       true,
-		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				if testCase.valueBroken {
-					ok := userCache.activeUsers.Set(activeUsersKey, "broken", 8)
-					assert.True(t, ok)
-				} else {
-					ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
-					assert.True(t, ok)
-				}
+				ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
+				assert.True(t, ok)
 
 				userCache.activeUsers.Wait()
 				defer userCache.activeUsers.Clear()
@@ -396,10 +368,8 @@ func TestSetAllActiveUsers(t *testing.T) {
 			userCache.activeUsers.Wait()
 
 			// OIDCSessionの期限前なのでキャッシュされている
-			value, ok := userCache.activeUsers.Get(activeUsersKey)
+			actualUsers, ok := userCache.activeUsers.Get(activeUsersKey)
 			assert.True(t, ok)
-			assert.IsType(t, []*service.UserInfo{}, value)
-			actualUsers := value.([]*service.UserInfo)
 
 			for i, user := range testCase.users {
 				if user == nil {
@@ -432,7 +402,6 @@ func TestGetActiveUsers(t *testing.T) {
 	type test struct {
 		description string
 		keyExist    bool
-		valueBroken bool
 		users       []*service.UserInfo
 		isErr       bool
 		err         error
@@ -462,25 +431,13 @@ func TestGetActiveUsers(t *testing.T) {
 			isErr:       true,
 			err:         cache.ErrCacheMiss,
 		},
-		{
-			// 実際には発生しないが念の為確認
-			description: "値が壊れているのでエラー",
-			keyExist:    true,
-			valueBroken: true,
-			isErr:       true,
-		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				if testCase.valueBroken {
-					ok := userCache.activeUsers.Set(activeUsersKey, "broken", 8)
-					assert.True(t, ok)
-				} else {
-					ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
-					assert.True(t, ok)
-				}
+				ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
+				assert.True(t, ok)
 
 				userCache.activeUsers.Wait()
 				defer userCache.activeUsers.Clear()
@@ -598,10 +555,8 @@ func TestSetActiveUsers(t *testing.T) {
 			userCache.activeUsers.Wait()
 
 			// OIDCSessionの期限前なのでキャッシュされている
-			value, ok := userCache.activeUsers.Get(activeUsersKey)
+			actualUsers, ok := userCache.activeUsers.Get(activeUsersKey)
 			assert.True(t, ok)
-			assert.IsType(t, []*service.UserInfo{}, value)
-			actualUsers := value.([]*service.UserInfo)
 
 			for i, user := range testCase.users {
 				if user == nil {
