@@ -69,7 +69,7 @@ tasks:
   clean:db:
     dir: ../
     cmds:
-      - rm -rf mysql/data
+      - docker volume rm dev_trap_collection_mysql_data
 
   update-frontend:
     dir: ../
