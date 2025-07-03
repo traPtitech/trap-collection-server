@@ -13,7 +13,7 @@ import (
 )
 
 type Seat struct {
-	activeSeats    *ristretto.Cache[string, any]
+	activeSeats    *ristretto.Cache[string, []*domain.Seat]
 	activeSeatsTTL time.Duration
 }
 
@@ -23,7 +23,7 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 		return nil, fmt.Errorf("failed to get active seats ttl: %w", err)
 	}
 
-	activeSeats, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
+	activeSeats, err := ristretto.NewCache[string, []*domain.Seat](&ristretto.Config[string, []*domain.Seat]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -44,15 +44,9 @@ func (seat *Seat) GetActiveSeats(_ context.Context) ([]*domain.Seat, error) {
 		hitCount.WithLabelValues("active_seats", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
-
-	seats, ok := iSeats.([]*domain.Seat)
-	if !ok {
-		hitCount.WithLabelValues("active_seats", "miss").Inc()
-		return nil, fmt.Errorf("failed to cast activeUsers: %v", iSeats)
-	}
 	hitCount.WithLabelValues("active_seats", "hit").Inc()
 
-	return seats, nil
+	return iSeats, nil
 }
 
 func (seat *Seat) SetActiveSeats(_ context.Context, seats []*domain.Seat) error {

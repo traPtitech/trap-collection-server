@@ -15,8 +15,8 @@ import (
 )
 
 type User struct {
-	meCache        *ristretto.Cache[string, any]
-	activeUsers    *ristretto.Cache[string, any]
+	meCache        *ristretto.Cache[string, *service.UserInfo]
+	activeUsers    *ristretto.Cache[string, []*service.UserInfo]
 	activeUsersTTL time.Duration
 }
 
@@ -30,7 +30,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to get activeUsersTTL: %w", err)
 	}
 
-	meCache, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
+	meCache, err := ristretto.NewCache[string, *service.UserInfo](&ristretto.Config[string, *service.UserInfo]{
 		// NumCounters
 		// アクセス頻度を保持する要素の数。
 		// 一般的には最大で格納される要素数の10倍程度が良いらしいが、
@@ -47,7 +47,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to create meCache: %v", err)
 	}
 
-	activeUsers, err := ristretto.NewCache[string, any](&ristretto.Config[string, any]{
+	activeUsers, err := ristretto.NewCache[string, []*service.UserInfo](&ristretto.Config[string, []*service.UserInfo]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -69,15 +69,9 @@ func (u *User) GetMe(_ context.Context, accessToken values.OIDCAccessToken) (*se
 		hitCount.WithLabelValues("me", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
-
-	user, ok := iUser.(*service.UserInfo)
-	if !ok {
-		hitCount.WithLabelValues("me", "miss").Inc()
-		return nil, fmt.Errorf("failed to cast meCache: %v", iUser)
-	}
 	hitCount.WithLabelValues("me", "hit").Inc()
 
-	return user, nil
+	return iUser, nil
 }
 
 func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *service.UserInfo) error {
@@ -104,15 +98,9 @@ func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error)
 		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
-
-	users, ok := iUsers.([]*service.UserInfo)
-	if !ok {
-		hitCount.WithLabelValues("active_users", "miss").Inc()
-		return nil, fmt.Errorf("failed to cast activeUsers: %v", iUsers)
-	}
 	hitCount.WithLabelValues("active_users", "hit").Inc()
 
-	return users, nil
+	return iUsers, nil
 }
 
 // SetAllActiveUsers
@@ -138,12 +126,7 @@ func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
 		return nil, cache.ErrCacheMiss
 	}
 
-	users, ok := iUsers.([]*service.UserInfo)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast activeUsers: %v", iUsers)
-	}
-
-	return users, nil
+	return iUsers, nil
 }
 
 func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) error {
