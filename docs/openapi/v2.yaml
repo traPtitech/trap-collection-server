@@ -1905,11 +1905,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/PostGamePlayLogStartResponse'
         "400":
-          $ref: '#/components/responses/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストパラメータが不正な場合に返されます。
         "401":
-          $ref: '#/components/responses/Unauthorized'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            認証に失敗した場合に返されます。
         "404":
-          $ref: '#/components/responses/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したエディション、ゲーム、またはゲームバージョンが存在しない場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲーム起動ログの記録
@@ -1936,11 +1951,26 @@ paths:
         "200":
           description: ゲームプレイログの終了記録が正常に更新されました
         "400":
-          $ref: '#/components/responses/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストパラメータが不正な場合に返されます。
         "401":
-          $ref: '#/components/responses/Unauthorized'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            認証に失敗した場合に返されます。
         "404":
-          $ref: '#/components/responses/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したプレイログIDが存在しない場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲーム終了ログの記録
@@ -1970,13 +2000,23 @@ paths:
                   - $ref: '#/components/schemas/GamePlayStats'
                   - $ref: '#/components/schemas/GameVersionPlayStats'
         "400":
-          $ref: '#/components/responses/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストパラメータが不正な場合に返されます。
         "401":
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/TraPUnauthorized'
         "403":
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/GameInfoForbidden'
         "404":
-          $ref: '#/components/responses/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したゲームまたはゲームバージョンが存在しない場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: ゲームのプレイ統計取得
@@ -1992,7 +2032,7 @@ paths:
         - gamePlayLog
       operationId: getEditionPlayStats
       security:
-        - EditionIDAuth: []
+        - TrapMemberAuth: []
       parameters:
         - $ref: '#/components/parameters/editionIDInPath'
         - $ref: '#/components/parameters/periodStartInQuery'
@@ -2005,13 +2045,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/EditionPlayStats'
         "400":
-          $ref: '#/components/responses/BadRequest'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストパラメータが不正な場合に返されます。
         "401":
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/EditionForbidden'
         "403":
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/EditionForbidden'
         "404":
-          $ref: '#/components/responses/NotFound'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したエディションが存在しない場合に返されます。
         "500":
           $ref: '#/components/responses/InternalServerError'
       summary: エディションのプレイ統計取得
