@@ -13,13 +13,13 @@ import (
 
 type User struct {
 	session     *Session
-	userService service.User
+	oidcService service.OIDCV2
 }
 
-func NewUser(session *Session, userService service.User) *User {
+func NewUser(session *Session, oidcService service.OIDCV2) *User {
 	return &User{
 		session:     session,
-		userService: userService,
+		oidcService: oidcService,
 	}
 }
 
@@ -37,7 +37,7 @@ func (u *User) GetMe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	userInfo, err := u.userService.GetMe(c.Request().Context(), authSession)
+	userInfo, err := u.oidcService.GetMe(c.Request().Context(), authSession)
 	if err != nil {
 		log.Printf("error: failed to get user info: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -72,7 +72,7 @@ func (u *User) GetUsers(c echo.Context, _ openapi.GetUsersParams) error {
 		}
 	}
 
-	userInfos, err := u.userService.GetAllActiveUser(c.Request().Context(), authSession, includeBot)
+	userInfos, err := u.oidcService.GetActiveUsers(c.Request().Context(), authSession, includeBot)
 	if err != nil {
 		log.Printf("error: failed to get user info: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

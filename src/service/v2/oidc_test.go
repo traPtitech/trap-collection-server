@@ -439,6 +439,7 @@ func TestGetActiveUsers(t *testing.T) {
 		authGetAllActiveUsersErr     error
 		cacheSetAllActiveUsersErr    error
 		users                        []*service.UserInfo
+		includeBot                   bool
 		isErr                        bool
 		err                          error
 	}
@@ -450,6 +451,12 @@ func TestGetActiveUsers(t *testing.T) {
 			values.TrapMemberStatusActive,
 			false,
 		),
+		service.NewUserInfo(
+			values.NewTrapMemberID(uuid.New()),
+			values.NewTrapMemberName("bot"),
+			values.TrapMemberStatusActive,
+			true,
+		),
 	}
 
 	testCases := []test{
@@ -457,6 +464,7 @@ func TestGetActiveUsers(t *testing.T) {
 			description: "cacheがhitするのでエラーなし",
 			cacheUsers:  users,
 			users:       users,
+			includeBot:  true,
 		},
 		{
 			description:                  "cacheがhitしないがauthからの取り出しに成功するのでエラーなし",
@@ -464,6 +472,7 @@ func TestGetActiveUsers(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authUsers:                    users,
 			users:                        users,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがエラー(ErrCacheMiss以外)でもauthからの取り出しに成功するのでエラーなし",
@@ -471,6 +480,7 @@ func TestGetActiveUsers(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authUsers:                    users,
 			users:                        users,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがhitせずauthからの取り出しがエラーなのでエラー",
@@ -478,6 +488,7 @@ func TestGetActiveUsers(t *testing.T) {
 			executeAuthGetAllActiveUsers: true,
 			authGetAllActiveUsersErr:     errors.New("auth error"),
 			isErr:                        true,
+			includeBot:                   true,
 		},
 		{
 			description:                  "cacheがhitしないがauthからの取り出しに成功するのでcache設定に失敗してもエラーなし",
@@ -486,6 +497,19 @@ func TestGetActiveUsers(t *testing.T) {
 			authUsers:                    users,
 			cacheSetAllActiveUsersErr:    errors.New("cache error"),
 			users:                        users,
+			includeBot:                   true,
+		},
+		{
+			description: "includeBotがtrueなのでbotユーザーも含まれる",
+			cacheUsers:  users,
+			users:       users,
+			includeBot:  true,
+		},
+		{
+			description: "includeBotがfalseなのでbotユーザーは除外される",
+			cacheUsers:  users,
+			users:       users[:1], // botユーザーを除外したusers
+			includeBot:  false,
 		},
 	}
 
@@ -513,7 +537,7 @@ func TestGetActiveUsers(t *testing.T) {
 				}
 			}
 
-			users, err := oidcService.GetActiveUsers(ctx, session)
+			users, err := oidcService.GetActiveUsers(ctx, session, testCase.includeBot)
 
 			if testCase.isErr {
 				if testCase.err == nil {

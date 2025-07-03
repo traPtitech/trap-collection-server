@@ -85,8 +85,22 @@ func (o *OIDC) GetMe(ctx context.Context, session *domain.OIDCSession) (*service
 	return o.user.getMe(ctx, session)
 }
 
-func (o *OIDC) GetActiveUsers(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
-	return o.user.getActiveUsers(ctx, session)
+func (o *OIDC) GetActiveUsers(ctx context.Context, session *domain.OIDCSession, includeBot bool) ([]*service.UserInfo, error) {
+	users, err := o.user.getActiveUsers(ctx, session)
+	if err != nil {
+		return nil, err
+	}
+	if includeBot {
+		return users, nil
+	}
+	filteredUsers := make([]*service.UserInfo, 0, len(users))
+	for _, user := range users {
+		if user.GetBot() {
+			continue
+		}
+		filteredUsers = append(filteredUsers, user)
+	}
+	return filteredUsers, nil
 }
 
 // User

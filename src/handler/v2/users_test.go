@@ -26,7 +26,7 @@ func TestGetMe(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserService := mock.NewMockUser(ctrl)
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -47,7 +47,7 @@ func TestGetMe(t *testing.T) {
 		return
 	}
 
-	userHandler := NewUser(session, mockUserService)
+	userHandler := NewUser(session, mockOIDCService)
 
 	type test struct {
 		description      string
@@ -126,7 +126,7 @@ func TestGetMe(t *testing.T) {
 			}
 
 			if testCase.executeGetMe {
-				mockUserService.
+				mockOIDCService.
 					EXPECT().
 					GetMe(gomock.Any(), gomock.Any()).
 					Return(testCase.userInfo, testCase.GetMeErr)
@@ -172,7 +172,7 @@ func TestGetUsers(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserService := mock.NewMockUser(ctrl)
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -193,7 +193,7 @@ func TestGetUsers(t *testing.T) {
 		return
 	}
 
-	userHandler := NewUser(session, mockUserService)
+	userHandler := NewUser(session, mockOIDCService)
 
 	type test struct {
 		description             string
@@ -359,9 +359,9 @@ func TestGetUsers(t *testing.T) {
 			}
 
 			if testCase.executeGetAllActiveUser {
-				mockUserService.
+				mockOIDCService.
 					EXPECT().
-					GetAllActiveUser(gomock.Any(), gomock.Any(), gomock.Any()).
+					GetActiveUsers(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
 			}
 
