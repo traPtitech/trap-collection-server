@@ -465,3 +465,10 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
+
+// ゲームのプレイ統計取得
+// (GET /games/{gameID}/play-stats)
+func (g *Game) GetGamePlayStats(ctx echo.Context, gameID openapi.GameIDInPath, params openapi.GetGamePlayStatsParams) error {
+	// TODO: 実装が必要
+	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
+}
