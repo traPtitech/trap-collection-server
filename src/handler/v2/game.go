@@ -468,7 +468,7 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 
 // ゲームのプレイ統計取得
 // (GET /games/{gameID}/play-stats)
-func (g *Game) GetGamePlayStats(ctx echo.Context, gameID openapi.GameIDInPath, params openapi.GetGamePlayStatsParams) error {
+func (g *Game) GetGamePlayStats(_ echo.Context, _ openapi.GameIDInPath, _ openapi.GetGamePlayStatsParams) error {
 	// TODO: 実装が必要
 	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
 }

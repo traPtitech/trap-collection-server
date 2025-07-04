@@ -383,7 +383,7 @@ func (edition *Edition) PatchEditionGame(c echo.Context, editionID openapi.Editi
 
 // エディションのプレイ統計取得
 // (GET /editions/{editionID}/play-stats)
-func (edition *Edition) GetEditionPlayStats(c echo.Context, editionID openapi.EditionIDInPath, params openapi.GetEditionPlayStatsParams) error {
+func (edition *Edition) GetEditionPlayStats(_ echo.Context, _ openapi.EditionIDInPath, _ openapi.GetEditionPlayStatsParams) error {
 	// TODO: 実装が必要
 	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
 }
