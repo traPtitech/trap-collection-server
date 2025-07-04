@@ -5,10 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -173,10 +170,7 @@ func TestGetGameVideos(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
 
 			mockGameVideoService.
 				EXPECT().
@@ -347,35 +341,17 @@ func TestPostGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-
-			reqBody := bytes.NewBuffer(nil)
-			var boundary string
-			func() {
-				mw := multipart.NewWriter(reqBody)
-				defer mw.Close()
-
-				if testCase.reader != nil {
-					w, err := mw.CreateFormFile("content", "content")
-					if err != nil {
-						t.Fatalf("failed to create form field: %v", err)
-						return
-					}
-
-					_, err = io.Copy(w, testCase.reader)
-					if err != nil {
-						t.Fatalf("failed to copy: %v", err)
-						return
-					}
-				}
-
-				boundary = mw.Boundary()
-			}()
-
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), reqBody)
-			req.Header.Set(echo.HeaderContentType, fmt.Sprintf("multipart/form-data; boundary=%s", boundary))
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			formDatas := []testFormData{}
+			if testCase.reader != nil {
+				formDatas = append(formDatas, testFormData{
+					fieldName: "content",
+					fileName:  "content",
+					body:      testCase.reader,
+					isFile:    true,
+				})
+			}
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID),
+				withMultipartFormDataBody(t, formDatas))
 
 			if testCase.executeSaveGameVideo {
 				mockGameVideoService.
@@ -483,10 +459,7 @@ func TestGetGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
 
 			mockGameVideoService.
 				EXPECT().
@@ -626,10 +599,7 @@ func TestGetGameVideoMeta(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/games/%s/videos", testCase.gameID), nil)
 
 			mockGameVideoService.
 				EXPECT().

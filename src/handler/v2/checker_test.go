@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -99,9 +98,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := echo.New().NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/", nil)
 
 			var traPAuthErr error
 			if testCase.isOk {
@@ -113,20 +110,8 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 			}
 
 			accessToken := "access token"
-			sess, err := session.New(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			sess.Values[accessTokenSessionKey] = accessToken
-			sess.Values[expiresAtSessionKey] = time.Now()
-
-			err = sess.Save(req, rec)
-			if err != nil {
-				t.Fatalf("failed to save session: %v", err)
-			}
-
-			setCookieHeader(c)
+			authSession := domain.NewOIDCSession(values.NewOIDCAccessToken(accessToken), time.Now())
+			setTestSession(t, c, req, rec, session, authSession)
 
 			ctx := setEchoContext(context.Background(), c)
 
@@ -265,28 +250,14 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeTraPAuth {
@@ -456,27 +427,13 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
 
-			sess, err := session.New(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
+			var authSession *domain.OIDCSession
 			if !testCase.noToken {
-				sess.Values[accessTokenSessionKey] = "token"
-				sess.Values[expiresAtSessionKey] = time.Now().Add(time.Hour)
+				authSession = domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))
 			}
-
-			err = sess.Save(req, rec)
-			if err != nil {
-				t.Fatalf("failed to save session: %v", err)
-			}
-
-			setCookieHeader(c)
+			setTestSession(t, c, req, rec, session, authSession)
 
 			if testCase.executeAuthenticate {
 				mockOIDCService.
@@ -618,27 +575,13 @@ func TestGameFileVisibilityChecker(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+testCase.gameID, nil)
 
-			sess, err := session.New(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-
+			var authSession *domain.OIDCSession
 			if testCase.hasToken {
-				sess.Values[accessTokenSessionKey] = "token"
-				sess.Values[expiresAtSessionKey] = time.Now().Add(time.Hour)
+				authSession = domain.NewOIDCSession(values.NewOIDCAccessToken("token"), time.Now().Add(time.Hour))
 			}
-
-			err = sess.Save(req, rec)
-			if err != nil {
-				t.Fatalf("failed to save session: %v", err)
-			}
-
-			setCookieHeader(c)
+			setTestSession(t, c, req, rec, session, authSession)
 
 			if testCase.executeAuthenticate {
 				mockOIDCService.
@@ -665,7 +608,7 @@ func TestGameFileVisibilityChecker(t *testing.T) {
 				},
 			}
 
-			err = checker.GameFileVisibilityChecker(ctx, &ai)
+			err := checker.GameFileVisibilityChecker(ctx, &ai)
 
 			if !testCase.isError {
 				assert.NoError(t, err)

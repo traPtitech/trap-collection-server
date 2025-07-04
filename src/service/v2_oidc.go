@@ -38,5 +38,5 @@ type OIDCV2 interface {
 	GetMe(ctx context.Context, session *domain.OIDCSession) (*UserInfo, error)
 	// GetActiveUsers
 	// traQの全アクティブユーザー(凍結されていないユーザー)情報を取得する
-	GetActiveUsers(ctx context.Context, session *domain.OIDCSession) ([]*UserInfo, error)
+	GetActiveUsers(ctx context.Context, session *domain.OIDCSession, includeBot bool) ([]*UserInfo, error)
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/handler/v2"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
-	v1_2 "github.com/traPtitech/trap-collection-server/src/service/v1"
 	v2_2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"github.com/traPtitech/trap-collection-server/src/storage/local"
@@ -141,9 +140,7 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	userUtils := v1_2.NewUserUtils(user, ristrettoUser)
-	v1User := v1_2.NewUser(userUtils)
-	user2 := v2.NewUser(v2Session, v1User)
+	user2 := v2.NewUser(v2Session, v2OIDC)
 	admin := v2.NewAdmin(v2AdminAuth, v2Session)
 	v2Game := v2.NewGame(v2Session, game)
 	v2GameRole := v2.NewGameRole(gameRole, game, v2Session)

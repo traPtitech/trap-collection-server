@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/common"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -26,7 +26,7 @@ func TestGetMe(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserService := mock.NewMockUser(ctrl)
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -47,7 +47,7 @@ func TestGetMe(t *testing.T) {
 		return
 	}
 
-	userHandler := NewUser(session, mockUserService)
+	userHandler := NewUser(session, mockOIDCService)
 
 	type test struct {
 		description      string
@@ -115,32 +115,18 @@ func TestGetMe(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/users/me", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/users/me", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeGetMe {
-				mockUserService.
+				mockOIDCService.
 					EXPECT().
 					GetMe(gomock.Any(), gomock.Any()).
 					Return(testCase.userInfo, testCase.GetMeErr)
@@ -186,7 +172,7 @@ func TestGetUsers(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserService := mock.NewMockUser(ctrl)
+	mockOIDCService := mock.NewMockOIDCV2(ctrl)
 	mockConf := mockConfig.NewMockHandler(ctrl)
 	mockConf.
 		EXPECT().
@@ -207,7 +193,7 @@ func TestGetUsers(t *testing.T) {
 		return
 	}
 
-	userHandler := NewUser(session, mockUserService)
+	userHandler := NewUser(session, mockOIDCService)
 
 	type test struct {
 		description             string
@@ -359,37 +345,23 @@ func TestGetUsers(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/users/me", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/users/me", nil)
 			params := openapi.GetUsersParams{
 				Bot: &testCase.bot,
 			}
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				var authSession *domain.OIDCSession
 				if testCase.authSessionExist {
-					sess.Values[accessTokenSessionKey] = testCase.accessToken
-					sess.Values[expiresAtSessionKey] = testCase.expiresAt
+					authSession = domain.NewOIDCSession(values.NewOIDCAccessToken(testCase.accessToken), testCase.expiresAt)
 				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
+				setTestSession(t, c, req, rec, session, authSession)
 			}
 
 			if testCase.executeGetAllActiveUser {
-				mockUserService.
+				mockOIDCService.
 					EXPECT().
-					GetAllActiveUser(gomock.Any(), gomock.Any(), gomock.Any()).
+					GetActiveUsers(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(testCase.userInfos, testCase.GetAllActiveUserErr)
 			}
 

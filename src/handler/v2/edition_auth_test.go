@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -163,10 +162,7 @@ func TestGetProductKeys(t *testing.T) {
 					Return(testCase.productKeys, testCase.GetProductKeysErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/keys", testCase.editionID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/editions/%s/keys", testCase.editionID), nil)
 
 			err := editionAuth.GetProductKeys(c, testCase.editionID, testCase.params)
 
@@ -303,10 +299,7 @@ func TestPostProductKey(t *testing.T) {
 					Return(testCase.productKeys, testCase.GenerateProductKeyErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/%s/keys", testCase.editionID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/v2/editions/%s/keys", testCase.editionID), nil)
 
 			err := editionAuth.PostProductKey(c, testCase.editionID, testCase.params)
 
@@ -419,10 +412,7 @@ func TestPostActivateProductKey(t *testing.T) {
 					Return(testCase.productKey, testCase.ActivateProductKeyErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/activate", testCase.productKeyID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/activate", testCase.productKeyID), nil)
 
 			err := editionAuth.PostActivateProductKey(c, openapi.EditionIDInPath{}, testCase.productKeyID)
 
@@ -531,10 +521,7 @@ func TestPostRevokeProductKey(t *testing.T) {
 					Return(testCase.productKey, testCase.RevokeProductKeyErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/revoke", testCase.productKeyID), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, fmt.Sprintf("/api/v2/editions/keys/%s/revoke", testCase.productKeyID), nil)
 
 			err := editionAuth.PostRevokeProductKey(c, openapi.EditionIDInPath{}, testCase.productKeyID)
 
@@ -656,11 +643,8 @@ func TestPostEditionAuthorize(t *testing.T) {
 					Return(testCase.authorizeEditionToken, testCase.authorizeEditionErr)
 			}
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/api/v2/editions/authorize", testCase.requestBody(t))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPost, "/api/v2/editions/authorize",
+				withReaderBody(t, testCase.requestBody(t), echo.MIMEApplicationJSON))
 
 			err := editionAuth.PostEditionAuthorize(c)
 
@@ -760,10 +744,7 @@ func TestGetEditionInfo(t *testing.T) {
 
 			editionAuth := NewEditionAuth(NewContext(), nil)
 
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/v2/editions/info", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodGet, "/api/v2/editions/info", nil)
 
 			c.Set(editionContextKey, testCase.edition)
 

@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -66,16 +65,4 @@ func (s *Session) Save(c echo.Context, session *sessions.Session) error {
 
 func (s *Session) Revoke(session *sessions.Session) {
 	session.Options.MaxAge = -1
-}
-
-// New
-// テスト用の関数。
-func (s *Session) New(req *http.Request) (*sessions.Session, error) {
-	return s.store.New(req, s.key)
-}
-
-// Get
-// テスト用の関数。
-func (s *Session) Get(req *http.Request) (*sessions.Session, error) {
-	return s.store.Get(req, s.key)
 }

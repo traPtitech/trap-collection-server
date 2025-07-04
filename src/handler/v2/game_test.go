@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -423,35 +422,10 @@ func TestGetGames(t *testing.T) {
 
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, "/api/games", nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, "/api/games", nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeGetGames {
@@ -1247,7 +1221,7 @@ func TestPostGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
+			// e := echo.New()
 
 			reqBody := new(bytes.Buffer)
 			if !testCase.isBadRequestBody {
@@ -1260,35 +1234,10 @@ func TestPostGame(t *testing.T) {
 				reqBody = bytes.NewBufferString("bad requset body")
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/api/game", reqBody)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodPost, "/api/game", withReaderBody(t, reqBody, "application/json"))
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeCreateGame {
@@ -1447,10 +1396,8 @@ func TestDeleteGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+
+			c, _, _ := setupTestRequest(t, http.MethodDelete, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
 
 			if testCase.executeDeleteGame {
 				mockGameService.
@@ -1867,35 +1814,10 @@ func TestGetGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, req, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/game/%s", testCase.gameIDInPath), nil)
 
 			if testCase.sessionExist {
-				sess, err := session.New(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if testCase.authSession != nil {
-					sess.Values[accessTokenSessionKey] = string(testCase.authSession.GetAccessToken())
-					sess.Values[expiresAtSessionKey] = testCase.authSession.GetExpiresAt()
-				}
-
-				err = sess.Save(req, rec)
-				if err != nil {
-					t.Fatalf("failed to save session: %v", err)
-				}
-
-				setCookieHeader(c)
-
-				sess, err = session.Get(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				c.Set("session", sess)
+				setTestSession(t, c, req, rec, session, testCase.authSession)
 			}
 
 			if testCase.executeGetGame {
@@ -2125,7 +2047,7 @@ func TestPatchGame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			e := echo.New()
+			// e := echo.New()
 
 			reqBody := new(bytes.Buffer)
 			if !testCase.isBadRequestBody {
@@ -2138,16 +2060,7 @@ func TestPatchGame(t *testing.T) {
 				reqBody = bytes.NewBufferString("bad request body")
 			}
 
-			err = json.NewEncoder(reqBody).Encode(testCase.newGame)
-			if err != nil {
-				log.Printf("failed to create request body")
-				t.Fatal(err)
-			}
-
-			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/game/%s", uuid.UUID(gameID)), reqBody)
-			req.Header.Set(echo.HeaderContentType, "application/json")
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
+			c, _, rec := setupTestRequest(t, http.MethodPatch, fmt.Sprintf("/api/game/%s", uuid.UUID(testCase.gameID)), withReaderBody(t, reqBody, "application/json"))
 
 			if testCase.executeUpdateGame {
 				var visibility *values.GameVisibility
