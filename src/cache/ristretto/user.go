@@ -64,14 +64,14 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 }
 
 func (u *User) GetMe(_ context.Context, accessToken values.OIDCAccessToken) (*service.UserInfo, error) {
-	iUser, ok := u.meCache.Get(string(accessToken))
+	user, ok := u.meCache.Get(string(accessToken))
 	if !ok {
 		hitCount.WithLabelValues("me", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
 	hitCount.WithLabelValues("me", "hit").Inc()
 
-	return iUser, nil
+	return user, nil
 }
 
 func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *service.UserInfo) error {
@@ -93,14 +93,14 @@ func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *servi
 // GetAllActiveUsers
 // deprecated: v1 API廃止時に削除する
 func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	iUsers, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
 	hitCount.WithLabelValues("active_users", "hit").Inc()
 
-	return iUsers, nil
+	return users, nil
 }
 
 // SetAllActiveUsers
@@ -121,12 +121,12 @@ func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) e
 }
 
 func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	iUsers, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.activeUsers.Get(activeUsersKey)
 	if !ok {
 		return nil, cache.ErrCacheMiss
 	}
 
-	return iUsers, nil
+	return users, nil
 }
 
 func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) error {

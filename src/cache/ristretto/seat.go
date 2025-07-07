@@ -39,14 +39,14 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 }
 
 func (seat *Seat) GetActiveSeats(_ context.Context) ([]*domain.Seat, error) {
-	iSeats, ok := seat.activeSeats.Get(activeUsersKey)
+	seats, ok := seat.activeSeats.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_seats", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
 	hitCount.WithLabelValues("active_seats", "hit").Inc()
 
-	return iSeats, nil
+	return seats, nil
 }
 
 func (seat *Seat) SetActiveSeats(_ context.Context, seats []*domain.Seat) error {
