@@ -1884,13 +1884,16 @@ paths:
         アクセストークンをもとにエディションの情報を取得します。
 
   # game play logs
-  /game-play-logs/start:
+  /editions/{editionID}/games/{gameID}/plays/start:
     post:
       tags:
         - gamePlayLog
       operationId: postGamePlayLogStart
       security:
-        - TrapMemberAuth: []
+        - EditionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/gameIDInPath'
       requestBody:
         required: true
         content:
@@ -1918,6 +1921,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             認証に失敗した場合に返されます。
+        "403":
+          $ref: '#/components/responses/EditionForbidden'
         "404":
           content:
             application/json:
@@ -1932,14 +1937,16 @@ paths:
         ランチャーからゲーム起動時に呼び出されるAPIです。
         ゲームの起動時刻と関連情報を記録し、playLogIDを返却します。
 
-  /game-play-logs/{playLogID}/end:
+  /editions/{editionID}/games/{gameID}/plays/{playLogID}/end:
     patch:
       tags:
         - gamePlayLog
       operationId: patchGamePlayLogEnd
       security:
-        - TrapMemberAuth: []
+        - EditionAuth: []
       parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/gameIDInPath'
         - $ref: '#/components/parameters/playLogIDInPath'
       requestBody:
         required: true
@@ -1964,6 +1971,8 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             認証に失敗した場合に返されます。
+        "403":
+          $ref: '#/components/responses/EditionForbidden'
         "404":
           content:
             application/json:

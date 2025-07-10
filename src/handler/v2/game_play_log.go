@@ -14,15 +14,15 @@ func NewGamePlayLog() *GamePlayLog {
 }
 
 // ゲーム起動ログの記録
-// (POST /game-play-logs/start)
-func (gpl *GamePlayLog) PostGamePlayLogStart(_ echo.Context) error {
+// (POST /editions/{editionID}/games/{gameID}/plays/start)
+func (gpl *GamePlayLog) PostGamePlayLogStart(_ echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath) error {
 	// TODO: 実装が必要
 	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
 }
 
 // ゲーム終了ログの記録
-// (PATCH /game-play-logs/{playLogID}/end)
-func (gpl *GamePlayLog) PatchGamePlayLogEnd(_ echo.Context, _ openapi.PlayLogIDInPath) error {
+// (PATCH /editions/{editionID}/games/{gameID}/plays/{playLogID}/end)
+func (gpl *GamePlayLog) PatchGamePlayLogEnd(_ echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath, _ openapi.PlayLogIDInPath) error {
 	// TODO: 実装が必要
 	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
 }
