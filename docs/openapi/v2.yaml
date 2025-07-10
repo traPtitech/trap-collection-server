@@ -1910,7 +1910,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            リクエストボディが不正な返されます。
+            リクエストボディが不正な場合に返されます。
         "401":
           content:
             application/json:
@@ -2005,7 +2005,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            リクエストボディが不正な場合返されます。
+            リクエストボディやパラメータが不正な場合に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "403":
@@ -2050,7 +2050,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            リクエストボディが返されます。
+            リクエストボディやパラメータが不正な場合に返されます。
         "401":
           $ref: '#/components/responses/EditionForbidden'
         "403":
