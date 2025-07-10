@@ -2034,6 +2034,11 @@ paths:
         gameVersionIDを指定しない場合は、すべてのバージョンを合わせた統計データを取得します。
         gameVersionIDを指定した場合は、その特定バージョンの統計データを取得します。
         gameVersionIDを指定しない場合はゲームの管理画面で、指定する場合はゲームバージョン管理画面で使用します。
+        ## 期間の指定について
+        - startとendを両方指定しない場合：現在時刻から24*7時間前までの統計データを返します
+        - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
+        - startとendを両方指定した場合：指定された期間の統計データを返します
+        統計データは1時間ごとに区切られており、各時間帯の開始・終了時刻と統計値が含まれます。
 
   /editions/{editionID}/play-stats:
     get:
@@ -2077,6 +2082,12 @@ paths:
       description: |
         指定期間における特定エディションに含まれるゲームの起動回数と起動時間の統計データを取得します。
         エディション管理画面で使用されます。
+
+        ## 期間の指定について
+        - startとendを両方指定しない場合：現在時刻から24*7時間前までの統計データを返します
+        - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
+        - startとendを両方指定した場合：指定された期間の統計データを返します
+        統計データは1時間ごとに区切られており、各時間帯の開始・終了時刻と統計値が含まれます。
 
   #seat
   /seats:
@@ -2571,7 +2582,8 @@ components:
         format: date-time
       description: |
         統計データ取得の開始日時を示すクエリパラメータです。
-        指定がない場合は制限なしになります。
+        - 指定しない場合：現在時刻から24*7時間前がデフォルトの開始時刻になります
+        - 指定した場合：指定された時刻から統計データを取得します
     periodEndInQuery:
       name: end
       in: query
@@ -2581,7 +2593,8 @@ components:
         format: date-time
       description: |
         統計データ取得の終了日時を示すクエリパラメータです。
-        指定がない場合は制限なしになります。
+        - 指定しない場合：現在時刻がデフォルトの終了時刻になります
+        - 指定した場合：指定された時刻まで統計データを取得します
   schemas:
     Error:
       type: object
@@ -3508,16 +3521,16 @@ components:
         totalPlaySeconds:
           type: integer
           description: 指定期間内の総プレイ時間（秒）です。
-        dailyStats:
+        hourlyStats:
           type: array
           items:
-            $ref: '#/components/schemas/DailyPlayStats'
-          description: 日別の統計データです。
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分返します。
       required:
         - gameID
         - totalPlayCount
         - totalPlaySeconds
-        - dailyStats
+        - hourlyStats
       additionalProperties: false
       description: ゲームのプレイ統計データです。
     GameVersionPlayStats:
@@ -3536,18 +3549,18 @@ components:
         totalPlaySeconds:
           type: integer
           description: 指定期間内の総プレイ時間（秒）です。
-        dailyStats:
+        hourlyStats:
           type: array
           items:
-            $ref: '#/components/schemas/DailyPlayStats'
-          description: 日別の統計データです。
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分（168時間分）返します。
       required:
         - gameVersionID
         - gameID
         - versionName
         - totalPlayCount
         - totalPlaySeconds
-        - dailyStats
+        - hourlyStats
       additionalProperties: false
       description: ゲームバージョンのプレイ統計データです。
     EditionPlayStats:
@@ -3569,18 +3582,18 @@ components:
           items:
             $ref: '#/components/schemas/GamePlayStatsInEdition'
           description: エディションに含まれるゲームごとの統計データです。
-        dailyStats:
+        hourlyStats:
           type: array
           items:
-            $ref: '#/components/schemas/DailyPlayStats'
-          description: 日別の統計データです。
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分返します。
       required:
         - editionID
         - editionName
         - totalPlayCount
         - totalPlaySeconds
         - gameStats
-        - dailyStats
+        - hourlyStats
       additionalProperties: false
       description: エディションのプレイ統計データです。
     GamePlayStatsInEdition:
@@ -3601,23 +3614,28 @@ components:
         - playTime
       additionalProperties: false
       description: エディション内のゲームプレイ統計データです。
-    DailyPlayStats:
-      title: DailyPlayStats
+    HourlyPlayStats:
+      title: HourlyPlayStats
       type: object
       properties:
-        date:
+        startTime:
           type: string
-          format: date
-          description: 日付です。YYYY-MM-DD形式です。
+          format: date-time
+          description: この統計データの対象期間の開始時刻です。
+        endTime:
+          type: string
+          format: date-time
+          description: この統計データの対象期間の終了時刻です。
         playCount:
           type: integer
-          description: その日のプレイ回数です。
+          description: この時間帯のプレイ回数です。
         playTime:
           type: integer
-          description: その日のプレイ時間（秒）です。
+          description: この時間帯のプレイ時間（秒）です。
       required:
-        - date
+        - startTime
+        - endTime
         - playCount
         - playTime
       additionalProperties: false
-      description: 日別のプレイ統計データです。
+      description: 時間別のプレイ統計データです。1時間ごとの統計を返します。
