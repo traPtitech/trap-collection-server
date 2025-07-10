@@ -3505,7 +3505,7 @@ components:
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
-        totalPlayTime:
+        totalPlaySeconds:
           type: integer
           description: 指定期間内の総プレイ時間（秒）です。
         dailyStats:
@@ -3516,7 +3516,7 @@ components:
       required:
         - gameID
         - totalPlayCount
-        - totalPlayTime
+        - totalPlaySeconds
         - dailyStats
       additionalProperties: false
       description: ゲームのプレイ統計データです。
@@ -3533,7 +3533,7 @@ components:
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
-        totalPlayTime:
+        totalPlaySeconds:
           type: integer
           description: 指定期間内の総プレイ時間（秒）です。
         dailyStats:
@@ -3546,7 +3546,7 @@ components:
         - gameID
         - versionName
         - totalPlayCount
-        - totalPlayTime
+        - totalPlaySeconds
         - dailyStats
       additionalProperties: false
       description: ゲームバージョンのプレイ統計データです。
@@ -3561,7 +3561,7 @@ components:
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
-        totalPlayTime:
+        totalPlaySeconds:
           type: integer
           description: 指定期間内の総プレイ時間（秒）です。
         gameStats:
@@ -3578,7 +3578,7 @@ components:
         - editionID
         - editionName
         - totalPlayCount
-        - totalPlayTime
+        - totalPlaySeconds
         - gameStats
         - dailyStats
       additionalProperties: false
