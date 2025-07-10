@@ -3502,8 +3502,6 @@ components:
       properties:
         gameID:
           $ref: '#/components/schemas/GameID'
-        gameName:
-          $ref: '#/components/schemas/GameName'
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
@@ -3517,7 +3515,6 @@ components:
           description: 日別の統計データです。
       required:
         - gameID
-        - gameName
         - totalPlayCount
         - totalPlayTime
         - dailyStats
@@ -3531,8 +3528,6 @@ components:
           $ref: '#/components/schemas/GameVersionID'
         gameID:
           $ref: '#/components/schemas/GameID'
-        gameName:
-          $ref: '#/components/schemas/GameName'
         versionName:
           $ref: '#/components/schemas/GameVersionName'
         totalPlayCount:
@@ -3549,7 +3544,6 @@ components:
       required:
         - gameVersionID
         - gameID
-        - gameName
         - versionName
         - totalPlayCount
         - totalPlayTime
@@ -3595,8 +3589,6 @@ components:
       properties:
         gameID:
           $ref: '#/components/schemas/GameID'
-        gameName:
-          $ref: '#/components/schemas/GameName'
         playCount:
           type: integer
           description: 指定期間内のプレイ回数です。
@@ -3605,7 +3597,6 @@ components:
           description: 指定期間内のプレイ時間（秒）です。
       required:
         - gameID
-        - gameName
         - playCount
         - playTime
       additionalProperties: false
