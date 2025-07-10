@@ -1930,7 +1930,7 @@ paths:
       summary: ゲーム起動ログの記録
       description: |
         ランチャーからゲーム起動時に呼び出されるAPIです。
-        ゲームの起動時刻と関連情報を記録し、プレイセッションIDを返却します。
+        ゲームの起動時刻と関連情報を記録し、playLogIDを返却します。
 
   /game-play-logs/{playLogID}/end:
     patch:
