@@ -3458,17 +3458,11 @@ components:
       type: object
       properties:
         editionID:
-          type: string
-          format: uuid
-          description: エディションのID(UUID)です。
+          $ref: '#/components/schemas/EditionID'
         gameID:
-          type: string
-          format: uuid
-          description: ゲームのID(UUID)です。
+          $ref: '#/components/schemas/GameID'
         gameVersionID:
-          type: string
-          format: uuid
-          description: ゲームバージョンのID(UUID)です。
+          $ref: '#/components/schemas/GameVersionID'
         startTime:
           type: string
           format: date-time
@@ -3507,12 +3501,9 @@ components:
       type: object
       properties:
         gameID:
-          type: string
-          format: uuid
-          description: ゲームのID(UUID)です。
+          $ref: '#/components/schemas/GameID'
         gameName:
-          type: string
-          description: ゲーム名です。
+          $ref: '#/components/schemas/GameName'
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
@@ -3537,19 +3528,13 @@ components:
       type: object
       properties:
         gameVersionID:
-          type: string
-          format: uuid
-          description: ゲームバージョンのID(UUID)です。
+          $ref: '#/components/schemas/GameVersionID'
         gameID:
-          type: string
-          format: uuid
-          description: ゲームのID(UUID)です。
+          $ref: '#/components/schemas/GameID'
         gameName:
-          type: string
-          description: ゲーム名です。
+          $ref: '#/components/schemas/GameName'
         versionName:
-          type: string
-          description: バージョン名です。
+          $ref: '#/components/schemas/GameVersionName'
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
@@ -3576,12 +3561,9 @@ components:
       type: object
       properties:
         editionID:
-          type: string
-          format: uuid
-          description: エディションのID(UUID)です。
+          $ref: '#/components/schemas/EditionID'
         editionName:
-          type: string
-          description: エディション名です。
+          $ref: '#/components/schemas/EditionName'
         totalPlayCount:
           type: integer
           description: 指定期間内の総プレイ回数です。
@@ -3612,12 +3594,9 @@ components:
       type: object
       properties:
         gameID:
-          type: string
-          format: uuid
-          description: ゲームのID(UUID)です。
+          $ref: '#/components/schemas/GameID'
         gameName:
-          type: string
-          description: ゲーム名です。
+          $ref: '#/components/schemas/GameName'
         playCount:
           type: integer
           description: 指定期間内のプレイ回数です。
