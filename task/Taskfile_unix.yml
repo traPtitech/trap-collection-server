@@ -51,6 +51,14 @@ tasks:
     cmds:
       - go test ./src/... -v -race -vet=off
 
+  lint:
+    dir: ../
+    cmd: golangci-lint run --new-from-merge-base main
+
+  lint:fix:
+    dir: ../
+    cmd: golangci-lint run --new-from-merge-base main --fix
+
   tbls:
     dir: ../
     cmds:

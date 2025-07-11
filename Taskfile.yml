@@ -55,6 +55,16 @@ tasks:
     deps:
       - generate
 
+  lint:
+    cmds:
+      - task: os:lint
+    desc: golangci-lint を実行し、mainブランチとの差分の中に良くないコードが無いかをチェックする
+
+  lint:fix:
+    cmds:
+      - task: os:lint:fix
+    desc: golangci-lint を実行し、mainブランチとの差分の中に良くないコードが無いかをチェックし、可能な限り自動修正する
+
   tbls:
     cmds:
       - task: os:tbls
