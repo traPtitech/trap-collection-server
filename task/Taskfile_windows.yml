@@ -51,6 +51,20 @@ tasks:
     cmds:
       - go test .\src\... -v -race -vet=off
 
+  lint:
+    dir: ../
+    cmd: golangci-lint run --new-from-merge-base {{ .CURRENT_BRANCH }}
+    vars:
+      CURRENT_BRANCH:
+        sh: git branch --show-current
+
+  lint:fix:
+    dir: ../
+    cmd: golangci-lint run --new-from-merge-base {{ .CURRENT_BRANCH }} --fix
+    vars:
+      CURRENT_BRANCH:
+        sh: git branch --show-current
+
   tbls:
     dir: ..\
     cmds:

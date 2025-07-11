@@ -38,6 +38,14 @@ tasks:
     cmds:
       - task: unix:test
 
+  lint:
+    cmds:
+      - task: unix:lint
+
+  lint:fix:
+    cmds:
+      - task: unix:lint:fix
+
   tbls:
     cmds:
       - task: unix:tbls
