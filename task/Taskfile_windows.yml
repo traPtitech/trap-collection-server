@@ -53,17 +53,11 @@ tasks:
 
   lint:
     dir: ../
-    cmd: golangci-lint run --new-from-merge-base {{ .CURRENT_BRANCH }}
-    vars:
-      CURRENT_BRANCH:
-        sh: git branch --show-current
+    cmd: golangci-lint run --new-from-merge-base main
 
   lint:fix:
     dir: ../
-    cmd: golangci-lint run --new-from-merge-base {{ .CURRENT_BRANCH }} --fix
-    vars:
-      CURRENT_BRANCH:
-        sh: git branch --show-current
+    cmd: golangci-lint run --new-from-merge-base main --fix
 
   tbls:
     dir: ..\
