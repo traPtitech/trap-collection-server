@@ -2035,10 +2035,10 @@ paths:
         gameVersionIDを指定した場合は、その特定バージョンの統計データを取得します。
         gameVersionIDを指定しない場合はゲームの管理画面で、指定する場合はゲームバージョン管理画面で使用します。
         ## 期間の指定について
-        - startとendを両方指定しない場合：現在時刻から24*7時間前までの統計データを返します
+        - startとendを両方指定しない場合：現在時刻から24時間前までの統計データを返します
         - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
         - startとendを両方指定した場合：指定された期間の統計データを返します
-        統計データは1時間ごとに区切られており、各時間帯の開始・終了時刻と統計値が含まれます。
+        統計データは時台ごとに区切られており、各時台（例：14時台は14:00:00〜14:59:59）の統計値が含まれます。
 
   /editions/{editionID}/play-stats:
     get:
@@ -2084,10 +2084,10 @@ paths:
         エディション管理画面で使用されます。
 
         ## 期間の指定について
-        - startとendを両方指定しない場合：現在時刻から24*7時間前までの統計データを返します
+        - startとendを両方指定しない場合：現在時刻から24時間前までの統計データを返します
         - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
         - startとendを両方指定した場合：指定された期間の統計データを返します
-        統計データは1時間ごとに区切られており、各時間帯の開始・終了時刻と統計値が含まれます。
+        統計データは時台ごとに区切られており、各時台（例：14時台は14:00:00〜14:59:59）の統計値が含まれます。
 
   #seat
   /seats:
@@ -2582,7 +2582,7 @@ components:
         format: date-time
       description: |
         統計データ取得の開始日時を示すクエリパラメータです。
-        - 指定しない場合：現在時刻から24*7時間前がデフォルトの開始時刻になります
+        - 指定しない場合：現在時刻から24時間前がデフォルトの開始時刻になります
         - 指定した場合：指定された時刻から統計データを取得します
     periodEndInQuery:
       name: end
@@ -3525,7 +3525,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HourlyPlayStats'
-          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分返します。
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
       required:
         - gameID
         - totalPlayCount
@@ -3553,7 +3553,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HourlyPlayStats'
-          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分（168時間分）返します。
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
       required:
         - gameVersionID
         - gameID
@@ -3586,7 +3586,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HourlyPlayStats'
-          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24*7時間分返します。
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
       required:
         - editionID
         - editionName
@@ -3621,21 +3621,16 @@ components:
         startTime:
           type: string
           format: date-time
-          description: この統計データの対象期間の開始時刻です。
-        endTime:
-          type: string
-          format: date-time
-          description: この統計データの対象期間の終了時刻です。
+          description: この統計データの対象時台の開始時刻です（例：2025-01-01の14時台の場合は2025-01-01T14:00:00+09:00）。
         playCount:
           type: integer
-          description: この時間帯のプレイ回数です。
+          description: この時台のプレイ回数です。
         playTime:
           type: integer
-          description: この時間帯のプレイ時間（秒）です。
+          description: この時台のプレイ時間（秒）です。
       required:
         - startTime
-        - endTime
         - playCount
         - playTime
       additionalProperties: false
-      description: 時間別のプレイ統計データです。1時間ごとの統計を返します。
+      description: 時台別のプレイ統計データです。各時台（例：2025-01-01の14時台の場合は2025-01-01T14:00:00+09:00-2025-01-01の14時台の場合は2025-01-01T14:59:59+09:00）の統計を返します。
