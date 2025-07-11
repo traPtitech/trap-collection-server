@@ -80,3 +80,14 @@ task tbls
 ## マイグレーションについて
 
 [docs/migration.md](docs/migration.md)を参照してください。
+
+## API スキーマについて
+
+OpenAPI を使っています。APIスキーマは、 [docs/openapi/v2.yaml](docs/openapi/v2.yaml) に書かれており、このファイルを元に [src/handler/v2/openapi](src/handler/v2/openapi) 以下にコードが生成されます。
+また、OpenAPI スキーマのドキュメントは [traP API ドキュメント](https://apis.trap.jp/?urls.primaryName=traP%20Collection%20v2%20API) で参照できます。
+
+## その他ドキュメント
+
+アプリの中で出てくる概念(game, editionなど)の定義やディレクトリ構成の説明は、部内のwikiの他、[.github/copilot-instructions.md](.github/copilot-instructions.md) にも書かれています。
+
+DeepWiki というサービスでAIによって生成されたドキュメントを閲覧し、AIに質問することもできます([https://deepwiki.com/traPtitech/trap-collection-server](https://deepwiki.com/traPtitech/trap-collection-server))。ただし、このドキュメントは最新のものを参照しているとは限らないので注意してください。
