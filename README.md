@@ -5,6 +5,7 @@
 [![OpenAPI(v1)](https://img.shields.io/badge/OpenAPI(v1)-docs-brightgreen)](https://apis.trap.jp/?urls.primaryName=traP%20Collection%20v1%20API)
 [![OpenAPI(v2)](https://img.shields.io/badge/OpenAPI(v2)-docs-brightgreen)](https://apis.trap.jp/?urls.primaryName=traP%20Collection%20v2%20API)
 [![go report](https://goreportcard.com/badge/traPtitech/trap-collection-server)](https://goreportcard.com/report/traPtitech/trap-collection-server)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/traPtitech/trap-collection-server)
 
 traPのゲームランチャーtraP Collectionのサーバーサイドです。
 
