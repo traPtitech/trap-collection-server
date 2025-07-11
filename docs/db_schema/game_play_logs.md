@@ -13,13 +13,15 @@ CREATE TABLE `game_play_logs` (
   `game_version_id` varchar(36) NOT NULL,
   `start_time` datetime NOT NULL DEFAULT current_timestamp(),
   `end_time` datetime DEFAULT NULL,
-  `duration` int(11) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_game_play_logs_edition_id` (`edition_id`),
   KEY `idx_game_play_logs_game_id` (`game_id`),
-  KEY `idx_game_play_logs_game_version_id` (`game_version_id`)
+  KEY `idx_game_play_logs_game_version_id` (`game_version_id`),
+  CONSTRAINT `fk_editions_game_play_logs` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
+  CONSTRAINT `fk_games_game_play_logs` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),
+  CONSTRAINT `fk_v2_game_versions_game_play_logs` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -30,12 +32,11 @@ CREATE TABLE `game_play_logs` (
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | varchar(36) |  | false |  |  |  |  |
-| edition_id | varchar(36) |  | false |  |  |  |  |
-| game_id | varchar(36) |  | false |  |  |  |  |
-| game_version_id | varchar(36) |  | false |  |  |  |  |
+| edition_id | varchar(36) |  | false |  |  | [editions](editions.md) |  |
+| game_id | varchar(36) |  | false |  |  | [games](games.md) |  |
+| game_version_id | varchar(36) |  | false |  |  | [v2_game_versions](v2_game_versions.md) |  |
 | start_time | datetime | current_timestamp() | false |  |  |  |  |
 | end_time | datetime | NULL | true |  |  |  |  |
-| duration | int(11) | NULL | true |  |  |  |  |
 | created_at | datetime | current_timestamp() | false |  |  |  |  |
 | updated_at | datetime | current_timestamp() | false | on update current_timestamp() |  |  |  |
 
@@ -43,6 +44,9 @@ CREATE TABLE `game_play_logs` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| fk_editions_game_play_logs | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
+| fk_games_game_play_logs | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
+| fk_v2_game_versions_game_play_logs | FOREIGN KEY | FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes

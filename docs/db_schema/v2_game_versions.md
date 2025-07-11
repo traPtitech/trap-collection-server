@@ -33,7 +33,7 @@ CREATE TABLE `v2_game_versions` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false | [edition_game_version_relations](edition_game_version_relations.md) [game_version_game_file_relations](game_version_game_file_relations.md) |  | ゲームバージョンUUID |
+| id | varchar(36) |  | false | [edition_game_version_relations](edition_game_version_relations.md) [game_play_logs](game_play_logs.md) [game_version_game_file_relations](game_version_game_file_relations.md) |  | ゲームバージョンUUID |
 | game_id | varchar(36) |  | false |  | [games](games.md) | ゲームUUID |
 | game_image_id | varchar(36) |  | false |  | [v2_game_images](v2_game_images.md) | ゲーム画像UUID |
 | game_video_id | varchar(36) |  | false |  | [v2_game_videos](v2_game_videos.md) | ゲーム動画UUID |
