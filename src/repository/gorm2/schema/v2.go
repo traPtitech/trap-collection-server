@@ -212,7 +212,6 @@ type GamePlayLogTable struct {
 	GameVersionID uuid.UUID      `gorm:"type:varchar(36);not null;index"`
 	StartTime     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	EndTime       sql.NullTime   `gorm:"type:datetime;default:NULL"`
-	Duration      sql.NullInt32  `gorm:"type:int;default:NULL"`
 	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 	Edition     EditionTable      `gorm:"foreignKey:EditionID"`
