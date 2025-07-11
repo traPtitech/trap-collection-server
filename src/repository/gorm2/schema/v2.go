@@ -29,7 +29,7 @@ type GameTable2 struct {
 	// GameGenres
 	// 後方参照を使っているためポインタになっている。
 	// 参考: https://gorm.io/ja_JP/docs/many_to_many.html#%E5%BE%8C%E6%96%B9%E5%8F%82%E7%85%A7%EF%BC%88Back-Reference%EF%BC%89
-	GameGenres []*GameGenreTable `gorm:"many2many:game_genre_relations;joinForeignKey:GameID;joinReferences:GenreID"`
+	GameGenres   []*GameGenreTable  `gorm:"many2many:game_genre_relations;joinForeignKey:GameID;joinReferences:GenreID"`
 	GamePlayLogs []GamePlayLogTable `gorm:"foreignKey:GameID"`
 
 	//v1のなごり
@@ -53,9 +53,9 @@ type GameVersionTable2 struct {
 	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	// migrationのv2以降でも不自然でないように、
 	// joinForeignKey、joinReferencesを指定している
-	GameFiles []GameFileTable2 `gorm:"many2many:game_version_game_file_relations;joinForeignKey:GameVersionID;joinReferences:GameFileID"`
-	GameImage GameImageTable2  `gorm:"foreignKey:GameImageID"`
-	GameVideo GameVideoTable2  `gorm:"foreignKey:GameVideoID"`
+	GameFiles    []GameFileTable2   `gorm:"many2many:game_version_game_file_relations;joinForeignKey:GameVersionID;joinReferences:GameFileID"`
+	GameImage    GameImageTable2    `gorm:"foreignKey:GameImageID"`
+	GameVideo    GameVideoTable2    `gorm:"foreignKey:GameVideoID"`
 	GamePlayLogs []GamePlayLogTable `gorm:"foreignKey:GameVersionID"`
 }
 
@@ -206,17 +206,17 @@ func (*GameVisibilityTypeTable) TableName() string {
 }
 
 type GamePlayLogTable struct {
-	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
-	EditionID     uuid.UUID      `gorm:"type:varchar(36);not null;index"`
-	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index"`
-	GameVersionID uuid.UUID      `gorm:"type:varchar(36);not null;index"`
-	StartTime     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	EndTime       sql.NullTime   `gorm:"type:datetime;default:NULL"`
-	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	UpdatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
-	Edition     EditionTable      `gorm:"foreignKey:EditionID"`
-	Game        GameTable2        `gorm:"foreignKey:GameID"`
-	GameVersion GameVersionTable2 `gorm:"foreignKey:GameVersionID"`
+	ID            uuid.UUID         `gorm:"type:varchar(36);not null;primaryKey"`
+	EditionID     uuid.UUID         `gorm:"type:varchar(36);not null;index"`
+	GameID        uuid.UUID         `gorm:"type:varchar(36);not null;index"`
+	GameVersionID uuid.UUID         `gorm:"type:varchar(36);not null;index"`
+	StartTime     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	EndTime       sql.NullTime      `gorm:"type:datetime;default:NULL"`
+	CreatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
+	Edition       EditionTable      `gorm:"foreignKey:EditionID"`
+	Game          GameTable2        `gorm:"foreignKey:GameID"`
+	GameVersion   GameVersionTable2 `gorm:"foreignKey:GameVersionID"`
 }
 
 func (*GamePlayLogTable) TableName() string {

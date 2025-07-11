@@ -75,7 +75,7 @@ func NewDB(appConf config.App, conf config.RepositoryGorm2, migrationConf config
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	
+
 	db = db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
 
 	err = schema.Migrate(context.Background(), conf, migrationConf, db)
