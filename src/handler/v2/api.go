@@ -27,6 +27,7 @@ type API struct {
 	*GameFile
 	*GameImage
 	*GameVideo
+	*GamePlayLog
 	*Edition
 	*EditionAuth
 	*Seat
@@ -45,6 +46,7 @@ func NewAPI(
 	gameFile *GameFile,
 	gameImage *GameImage,
 	gameVideo *GameVideo,
+	gamePlayLog *GamePlayLog,
 	edition *Edition,
 	editionAuth *EditionAuth,
 	seat *Seat,
@@ -62,6 +64,7 @@ func NewAPI(
 		GameFile:    gameFile,
 		GameImage:   gameImage,
 		GameVideo:   gameVideo,
+		GamePlayLog: gamePlayLog,
 		Edition:     edition,
 		EditionAuth: editionAuth,
 		Seat:        seat,

@@ -48,6 +48,7 @@ var (
 		v2.NewGameFile,
 		v2.NewGameImage,
 		v2.NewGameVideo,
+		v2.NewGamePlayLog,
 		v2.NewEdition,
 		v2.NewEditionAuth,
 		v2.NewSeat,
