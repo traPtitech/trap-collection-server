@@ -380,4 +380,3 @@ func (edition *Edition) PatchEditionGame(c echo.Context, editionID openapi.Editi
 
 	return c.JSON(http.StatusOK, res)
 }
-

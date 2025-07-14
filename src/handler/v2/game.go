@@ -465,4 +465,3 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 
 	return ctx.JSON(http.StatusOK, res)
 }
-
