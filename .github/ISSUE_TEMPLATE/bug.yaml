@@ -1,0 +1,33 @@
+name: Bug
+description: バグ修正の Issue。バグの内容や再現手順など
+labels:
+  - bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: バグの内容を詳しく書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: 修正方針
+      description: バグを修正するための具体的な方法や手順を書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 注意点
+      description: バグ修正にあたっての注意点や、特に考慮すべき点があれば書いてください
+    validations:
+      required: false
+  - type: textarea
+    id: other
+    attributes:
+      label: その他
+      description: その他
+    validations:
+      required: false
