@@ -1,0 +1,26 @@
+name: Feature
+description: 新規の実装を行う Issue
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: 新しい実装によって実現されるべきことを書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 注意点
+      description: 実装にあたっての注意点や、特に考慮すべき点があれば書いてください
+    validations:
+      required: false
+  - type: textarea
+    id: other
+    attributes:
+      label: その他
+      description: その他
+    validations:
+      required: false
