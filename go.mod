@@ -26,7 +26,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.4
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
-	github.com/oapi-codegen/runtime v1.1.1
+	github.com/oapi-codegen/runtime v1.1.2
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0

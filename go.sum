@@ -568,8 +568,8 @@ github.com/oapi-codegen/echo-middleware v1.0.2 h1:oNBqiE7jd/9bfGNk/bpbX2nqWrtPc+
 github.com/oapi-codegen/echo-middleware v1.0.2/go.mod h1:5J6MFcGqrpWLXpbKGZtRPZViLIHyyyUHlkqg6dT2R4E=
 github.com/oapi-codegen/oapi-codegen/v2 v2.4.1 h1:ykgG34472DWey7TSjd8vIfNykXgjOgYJZoQbKfEeY/Q=
 github.com/oapi-codegen/oapi-codegen/v2 v2.4.1/go.mod h1:N5+lY1tiTDV3V1BeHtOxeWXHoPVeApvsvjJqegfoaz8=
-github.com/oapi-codegen/runtime v1.1.1 h1:EXLHh0DXIJnWhdRPN2w4MXAzFyE4CskzhNLUmtpMYro=
-github.com/oapi-codegen/runtime v1.1.1/go.mod h1:SK9X900oXmPWilYR5/WKPzt3Kqxn/uS/+lbpREv+eCg=
+github.com/oapi-codegen/runtime v1.1.2 h1:P2+CubHq8fO4Q6fV1tqDBZHCwpVpvPg7oKiYzQgXIyI=
+github.com/oapi-codegen/runtime v1.1.2/go.mod h1:SK9X900oXmPWilYR5/WKPzt3Kqxn/uS/+lbpREv+eCg=
 github.com/oapi-codegen/testutil v1.0.0 h1:1GI2IiMMLh2vDHr1OkNacaYU/VaApKdcmfgl4aeXAa8=
 github.com/oapi-codegen/testutil v1.0.0/go.mod h1:ttCaYbHvJtHuiyeBF0tPIX+4uhEPTeizXKx28okijLw=
 github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 h1:G7ERwszslrBzRxj//JalHPu/3yz+De2J+4aLtSRlHiY=
