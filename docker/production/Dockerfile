@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM arigaio/atlas:0.35.0 AS atlas
+FROM arigaio/atlas:0.36.0 AS atlas
 
 FROM alpine:3.22.1
 
