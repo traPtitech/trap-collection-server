@@ -2,7 +2,7 @@
 
 FROM arigaio/atlas:0.36.0 AS atlas
 
-FROM golang:1.24.5-alpine AS build
+FROM golang:1.24.6-alpine AS build
 
 RUN --mount=type=cache,target=/var/cache/apk \
   apk --update add tzdata git && \
