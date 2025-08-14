@@ -51,6 +51,9 @@ tags:
   - name: seat
     description: |
       席管理関連のAPIです。
+  - name: gamePlayLog
+    description: |
+      ゲームプレイログ関連のAPIです。ランチャーからのゲーム起動・終了の記録とその統計データの取得を行います。
 
 paths:
   # oauth2
@@ -1880,6 +1883,212 @@ paths:
       description: |
         アクセストークンをもとにエディションの情報を取得します。
 
+  # game play logs
+  /editions/{editionID}/games/{gameID}/plays/start:
+    post:
+      tags:
+        - gamePlayLog
+      operationId: postGamePlayLogStart
+      security:
+        - EditionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGamePlayLogStartRequest'
+      responses:
+        "201":
+          description: ゲームプレイログの開始記録が正常に作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostGamePlayLogStartResponse'
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストボディが不正な場合に返されます。
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            認証に失敗した場合に返されます。
+        "403":
+          $ref: '#/components/responses/EditionForbidden'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したエディション、ゲーム、またはゲームバージョンが存在しない場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム起動ログの記録
+      description: |
+        ランチャーからゲーム起動時に呼び出されるAPIです。
+        ゲームの起動時刻と関連情報を記録し、playLogIDを返却します。
+
+  /editions/{editionID}/games/{gameID}/plays/{playLogID}/end:
+    patch:
+      tags:
+        - gamePlayLog
+      operationId: patchGamePlayLogEnd
+      security:
+        - EditionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/playLogIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchGamePlayLogEndRequest'
+      responses:
+        "200":
+          description: ゲームプレイログの終了記録が正常に更新されました
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストボディやパラメータが不正な場合に返されます。
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            認証に失敗した場合に返されます。
+        "403":
+          $ref: '#/components/responses/EditionForbidden'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したプレイログIDが存在しない場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲーム終了ログの記録
+      description: |
+        ランチャーからゲーム終了時に呼び出されるAPIです。
+        ゲームの終了時刻を記録し、プレイ時間を自動計算します。
+
+  /games/{gameID}/play-stats:
+    get:
+      tags:
+        - gamePlayLog
+      operationId: getGamePlayStats
+      security:
+        - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/gameVersionIDInQuery'
+        - $ref: '#/components/parameters/periodStartInQuery'
+        - $ref: '#/components/parameters/periodEndInQuery'
+      responses:
+        "200":
+          description: ゲームの統計データが正常に取得されました
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GamePlayStats'
+                  - $ref: '#/components/schemas/GameVersionPlayStats'
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストボディやパラメータが不正な場合に返されます。
+        "401":
+          $ref: '#/components/responses/TraPUnauthorized'
+        "403":
+          $ref: '#/components/responses/GameInfoForbidden'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したゲームまたはゲームバージョンが存在しない場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: ゲームのプレイ統計取得
+      description: |
+        指定期間における特定ゲームの起動回数と起動時間の統計データを取得します。
+        gameVersionIDを指定しない場合は、すべてのバージョンを合わせた統計データを取得します。
+        gameVersionIDを指定した場合は、その特定バージョンの統計データを取得します。
+        gameVersionIDを指定しない場合はゲームの管理画面で、指定する場合はゲームバージョン管理画面で使用します。
+        ## 期間の指定について
+        - startとendを両方指定しない場合：現在時刻から24時間前までの統計データを返します
+        - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
+        - startとendを両方指定した場合：指定された期間の統計データを返します
+        統計データは時台ごとに区切られており、各時台（例：14時台は14:00:00〜14:59:59）の統計値が含まれます。
+
+  /editions/{editionID}/play-stats:
+    get:
+      tags:
+        - gamePlayLog
+      operationId: getEditionPlayStats
+      security:
+        - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/periodStartInQuery'
+        - $ref: '#/components/parameters/periodEndInQuery'
+      responses:
+        "200":
+          description: エディションの統計データが正常に取得されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditionPlayStats'
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            リクエストボディやパラメータが不正な場合に返されます。
+        "401":
+          $ref: '#/components/responses/EditionForbidden'
+        "403":
+          $ref: '#/components/responses/EditionForbidden'
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したエディションが存在しない場合に返されます。
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      summary: エディションのプレイ統計取得
+      description: |
+        指定期間における特定エディションに含まれるゲームの起動回数と起動時間の統計データを取得します。
+        エディション管理画面で使用されます。
+
+        ## 期間の指定について
+        - startとendを両方指定しない場合：現在時刻から24時間前までの統計データを返します
+        - startのみ指定した場合：指定された開始時刻から現在時刻までの統計データを返します
+        - startとendを両方指定した場合：指定された期間の統計データを返します
+        統計データは時台ごとに区切られており、各時台（例：14時台は14:00:00〜14:59:59）の統計値が含まれます。
+
   #seat
   /seats:
     post:
@@ -2337,6 +2546,56 @@ components:
         type: string
         format: uuid
       description: ジャンルを示すID(UUID)です。
+    playLogIDInPath:
+      name: playLogID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ゲームプレイログのIDを示すパスパラメータです。
+    gameVersionIDInPath:
+      name: gameVersionID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ゲームバージョンのIDを示すパスパラメータです。
+    gameVersionIDInQuery:
+      name: gameVersionID
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: |
+        ゲームバージョンのIDを示すクエリパラメータです。
+        指定した場合は特定バージョンの統計データを取得し、指定しない場合は全バージョンの統計データを取得します。
+    periodStartInQuery:
+      name: start
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: |
+        統計データ取得の開始日時を示すクエリパラメータです。
+        - 指定しない場合：現在時刻から24時間前がデフォルトの開始時刻になります
+        - 指定した場合：指定された時刻から統計データを取得します
+    periodEndInQuery:
+      name: end
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: |
+        統計データ取得の終了日時を示すクエリパラメータです。
+        - 指定しない場合：現在時刻がデフォルトの終了時刻になります
+        - 指定した場合：指定された時刻まで統計データを取得します
   schemas:
     Error:
       type: object
@@ -3202,4 +3461,178 @@ components:
       title: GameGenreCreatedAt
       type: string
       format: date-time
-      description: ジャンルが作成された日時です
+
+    # ゲームプレイログ
+    GamePlayLogID:
+      title: GamePlayLogID
+      type: string
+      format: uuid
+      description: ゲームプレイログのID(UUID)です。
+    PostGamePlayLogStartRequest:
+      title: PostGamePlayLogStartRequest
+      type: object
+      properties:
+        editionID:
+          $ref: '#/components/schemas/EditionID'
+        gameID:
+          $ref: '#/components/schemas/GameID'
+        gameVersionID:
+          $ref: '#/components/schemas/GameVersionID'
+        startTime:
+          type: string
+          format: date-time
+          description: ゲーム起動時刻です。
+      required:
+        - editionID
+        - gameID
+        - gameVersionID
+        - startTime
+      additionalProperties: false
+      description: ゲーム起動ログの記録リクエストです。
+    PostGamePlayLogStartResponse:
+      title: PostGamePlayLogStartResponse
+      type: object
+      properties:
+        playLogID:
+          $ref: '#/components/schemas/GamePlayLogID'
+      required:
+        - playLogID
+      additionalProperties: false
+      description: ゲーム起動ログのレスポンスです。PlayLogIDを返却します。
+    PatchGamePlayLogEndRequest:
+      title: PatchGamePlayLogEndRequest
+      type: object
+      properties:
+        endTime:
+          type: string
+          format: date-time
+          description: ゲーム終了時刻です。
+      required:
+        - endTime
+      additionalProperties: false
+      description: ゲーム終了ログの記録リクエストです。
+    GamePlayStats:
+      title: GamePlayStats
+      type: object
+      properties:
+        gameID:
+          $ref: '#/components/schemas/GameID'
+        totalPlayCount:
+          type: integer
+          description: 指定期間内の総プレイ回数です。
+        totalPlaySeconds:
+          type: integer
+          description: 指定期間内の総プレイ時間（秒）です。
+        hourlyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
+      required:
+        - gameID
+        - totalPlayCount
+        - totalPlaySeconds
+        - hourlyStats
+      additionalProperties: false
+      description: ゲームのプレイ統計データです。
+    GameVersionPlayStats:
+      title: GameVersionPlayStats
+      type: object
+      properties:
+        gameVersionID:
+          $ref: '#/components/schemas/GameVersionID'
+        gameID:
+          $ref: '#/components/schemas/GameID'
+        versionName:
+          $ref: '#/components/schemas/GameVersionName'
+        totalPlayCount:
+          type: integer
+          description: 指定期間内の総プレイ回数です。
+        totalPlaySeconds:
+          type: integer
+          description: 指定期間内の総プレイ時間（秒）です。
+        hourlyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
+      required:
+        - gameVersionID
+        - gameID
+        - versionName
+        - totalPlayCount
+        - totalPlaySeconds
+        - hourlyStats
+      additionalProperties: false
+      description: ゲームバージョンのプレイ統計データです。
+    EditionPlayStats:
+      title: EditionPlayStats
+      type: object
+      properties:
+        editionID:
+          $ref: '#/components/schemas/EditionID'
+        editionName:
+          $ref: '#/components/schemas/EditionName'
+        totalPlayCount:
+          type: integer
+          description: 指定期間内の総プレイ回数です。
+        totalPlaySeconds:
+          type: integer
+          description: 指定期間内の総プレイ時間（秒）です。
+        gameStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/GamePlayStatsInEdition'
+          description: エディションに含まれるゲームごとの統計データです。
+        hourlyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyPlayStats'
+          description: 時間別の統計データです。デフォルトでは1時間ごとの統計を24時間分返します。
+      required:
+        - editionID
+        - editionName
+        - totalPlayCount
+        - totalPlaySeconds
+        - gameStats
+        - hourlyStats
+      additionalProperties: false
+      description: エディションのプレイ統計データです。
+    GamePlayStatsInEdition:
+      title: GamePlayStatsInEdition
+      type: object
+      properties:
+        gameID:
+          $ref: '#/components/schemas/GameID'
+        playCount:
+          type: integer
+          description: 指定期間内のプレイ回数です。
+        playTime:
+          type: integer
+          description: 指定期間内のプレイ時間（秒）です。
+      required:
+        - gameID
+        - playCount
+        - playTime
+      additionalProperties: false
+      description: エディション内のゲームプレイ統計データです。
+    HourlyPlayStats:
+      title: HourlyPlayStats
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: この統計データの対象時台の開始時刻です（例：2025-01-01の14時台の場合は2025-01-01T14:00:00+09:00）。
+        playCount:
+          type: integer
+          description: この時台のプレイ回数です。
+        playTime:
+          type: integer
+          description: この時台のプレイ時間（秒）です。
+      required:
+        - startTime
+        - playCount
+        - playTime
+      additionalProperties: false
+      description: 時台別のプレイ統計データです。各時台（例：2025-01-01の14時台の場合は2025-01-01T14:00:00+09:00から2025-01-01T14:59:59+09:00）の統計を返します。

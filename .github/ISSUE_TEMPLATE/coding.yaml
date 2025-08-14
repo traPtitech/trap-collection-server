@@ -1,0 +1,26 @@
+name: Coding
+description: 新規実装やバグ修正以外のコードを書くような Issue
+labels:
+  - coding
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 説明
+      description: Issueの内容や目的を詳しく書いてください
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 注意点
+      description: コーディングにあたっての注意点や、特に考慮すべき点があれば書いてください
+    validations:
+      required: false
+  - type: textarea
+    id: other
+    attributes:
+      label: その他
+      description: その他
+    validations:
+      required: false
