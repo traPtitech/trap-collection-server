@@ -175,6 +175,22 @@ func TestPostSeat(t *testing.T) {
 			isError:   true,
 			resStatus: http.StatusBadRequest,
 		},
+		"UpdateSeatNumで1000を指定した場合": {
+			req: openapi.PostSeatRequest{
+				Num: 1000,
+			},
+			executeUpdateSeatNum: true,
+			seats:                []*domain.Seat{},
+			resSeat:              []*openapi.Seat{},
+			resStatus:            http.StatusOK,
+		},
+		"UpdateSeatNumで1000を超えたとき400": {
+			req: openapi.PostSeatRequest{
+				Num: 1001,
+			},
+			isError:   true,
+			resStatus: http.StatusBadRequest,
+		},
 	}
 
 	for name, testCase := range testCases {

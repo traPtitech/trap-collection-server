@@ -2122,6 +2122,7 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             リクエストが不正である場合に返されます。
+            席数が負の数または1000を超えた際に返されます。
         "401":
           $ref: '#/components/responses/TraPUnauthorized'
         "500":
@@ -2708,6 +2709,7 @@ components:
       properties:
         num:
           type: integer
+          maximum: 1000
           minimum: 1
           description: |
             席数です。

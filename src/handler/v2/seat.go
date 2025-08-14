@@ -62,7 +62,7 @@ func (seat *Seat) PostSeat(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "failed to bind request")
 	}
 
-	if req.Num < 0 {
+	if req.Num < 0 || req.Num > 1000 {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid seat number")
 	}
 
