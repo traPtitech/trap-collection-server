@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM arigaio/atlas:0.36.0 AS atlas
+FROM arigaio/atlas:0.36.2 AS atlas
 
 FROM golang:1.24.6-alpine AS build
 
