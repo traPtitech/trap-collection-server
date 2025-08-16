@@ -229,7 +229,7 @@ func TestCreatePlayLog(t *testing.T) {
 				mockGamePlayLogRepository.
 					EXPECT().
 					CreateGamePlayLog(ctx, gomock.Any()).
-					DoAndReturn(func(ctx context.Context, playLog *domain.GamePlayLog) error {
+					DoAndReturn(func(_ context.Context, playLog *domain.GamePlayLog) error {
 						assert.Equal(t, testCase.editionID, playLog.EditionID)
 						assert.Equal(t, testCase.gameID, playLog.GameID)
 						assert.Equal(t, testCase.gameVersionID, playLog.GameVersionID)
