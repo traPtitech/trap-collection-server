@@ -230,14 +230,14 @@ func TestCreatePlayLog(t *testing.T) {
 					EXPECT().
 					CreateGamePlayLog(ctx, gomock.Any()).
 					DoAndReturn(func(_ context.Context, playLog *domain.GamePlayLog) error {
-						assert.Equal(t, testCase.editionID, playLog.EditionID)
-						assert.Equal(t, testCase.gameID, playLog.GameID)
-						assert.Equal(t, testCase.gameVersionID, playLog.GameVersionID)
-						assert.Equal(t, testCase.startTime, playLog.StartTime)
-						assert.Nil(t, playLog.EndTime)
-						assert.NotEqual(t, uuid.Nil, playLog.ID)
-						assert.WithinDuration(t, time.Now(), playLog.CreatedAt, time.Second)
-						assert.WithinDuration(t, time.Now(), playLog.UpdatedAt, time.Second)
+						assert.Equal(t, testCase.editionID, playLog.GetEditionID())
+						assert.Equal(t, testCase.gameID, playLog.GetGameID())
+						assert.Equal(t, testCase.gameVersionID, playLog.GetGameVersionID())
+						assert.Equal(t, testCase.startTime, playLog.GetStartTime())
+						assert.Nil(t, playLog.GetEndTime())
+						assert.NotEqual(t, uuid.Nil, playLog.GetID())
+						assert.WithinDuration(t, time.Now(), playLog.GetCreatedAt(), time.Second)
+						assert.WithinDuration(t, time.Now(), playLog.GetUpdatedAt(), time.Second)
 						return testCase.createGamePlayLogErr
 					})
 			}
@@ -259,11 +259,11 @@ func TestCreatePlayLog(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, playLog)
-				assert.Equal(t, testCase.editionID, playLog.EditionID)
-				assert.Equal(t, testCase.gameID, playLog.GameID)
-				assert.Equal(t, testCase.gameVersionID, playLog.GameVersionID)
-				assert.Equal(t, testCase.startTime, playLog.StartTime)
-				assert.Nil(t, playLog.EndTime)
+				assert.Equal(t, testCase.editionID, playLog.GetEditionID())
+				assert.Equal(t, testCase.gameID, playLog.GetGameID())
+				assert.Equal(t, testCase.gameVersionID, playLog.GetGameVersionID())
+				assert.Equal(t, testCase.startTime, playLog.GetStartTime())
+				assert.Nil(t, playLog.GetEndTime())
 			}
 		})
 	}
@@ -314,16 +314,16 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 	gameVersionID := values.NewGameVersionID()
 
 	// プレイ中のログ（EndTimeがnil）
-	activePlayLog := &domain.GamePlayLog{
-		ID:            playLogID,
-		EditionID:     editionID,
-		GameID:        gameID,
-		GameVersionID: gameVersionID,
-		StartTime:     now.Add(-time.Hour),
-		EndTime:       nil,
-		CreatedAt:     now.Add(-time.Hour),
-		UpdatedAt:     now.Add(-time.Hour),
-	}
+	activePlayLog := domain.NewGamePlayLog(
+		playLogID,
+		editionID,
+		gameID,
+		gameVersionID,
+		now.Add(-time.Hour),
+		nil,
+		now.Add(-time.Hour),
+		now.Add(-time.Hour),
+	)
 
 	testCases := []test{
 		{
@@ -374,7 +374,7 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 		{
 			description:                     "開始時刻と同じ時刻でも正常に終了できる",
 			playLogID:                       playLogID,
-			endTime:                         activePlayLog.StartTime,
+			endTime:                         activePlayLog.GetStartTime(),
 			executeGetGamePlayLog:           true,
 			getGamePlayLogResult:            activePlayLog,
 			executeUpdateGamePlayLogEndTime: true,

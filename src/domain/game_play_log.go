@@ -18,21 +18,24 @@ type GamePlayLog struct {
 }
 
 func NewGamePlayLog(
+	id values.GamePlayLogID,
 	editionID values.LauncherVersionID,
 	gameID values.GameID,
 	gameVersionID values.GameVersionID,
 	startTime time.Time,
+	endTime *time.Time,
+	createdAt time.Time,
+	updatedAt time.Time,
 ) *GamePlayLog {
-	now := time.Now()
 	return &GamePlayLog{
-		id:            values.NewGamePlayLogID(),
+		id:            id,
 		editionID:     editionID,
 		gameID:        gameID,
 		gameVersionID: gameVersionID,
 		startTime:     startTime,
-		endTime:       nil,
-		createdAt:     now,
-		updatedAt:     now,
+		endTime:       endTime,
+		createdAt:     createdAt,
+		updatedAt:     updatedAt,
 	}
 }
 
