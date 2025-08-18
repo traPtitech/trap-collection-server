@@ -7,14 +7,14 @@ import (
 )
 
 type GamePlayLog struct {
-	ID            values.GamePlayLogID
-	EditionID     values.LauncherVersionID
-	GameID        values.GameID
-	GameVersionID values.GameVersionID
-	StartTime     time.Time
-	EndTime       *time.Time
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	id            values.GamePlayLogID
+	editionID     values.LauncherVersionID
+	gameID        values.GameID
+	gameVersionID values.GameVersionID
+	startTime     time.Time
+	endTime       *time.Time
+	createdAt     time.Time
+	updatedAt     time.Time
 }
 
 func NewGamePlayLog(
@@ -25,62 +25,62 @@ func NewGamePlayLog(
 ) *GamePlayLog {
 	now := time.Now()
 	return &GamePlayLog{
-		ID:            values.NewGamePlayLogID(),
-		EditionID:     editionID,
-		GameID:        gameID,
-		GameVersionID: gameVersionID,
-		StartTime:     startTime,
-		EndTime:       nil,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		id:            values.NewGamePlayLogID(),
+		editionID:     editionID,
+		gameID:        gameID,
+		gameVersionID: gameVersionID,
+		startTime:     startTime,
+		endTime:       nil,
+		createdAt:     now,
+		updatedAt:     now,
 	}
 }
 
 func (g *GamePlayLog) GetID() values.GamePlayLogID {
-	return g.ID
+	return g.id
 }
 
 func (g *GamePlayLog) GetEditionID() values.LauncherVersionID {
-	return g.EditionID
+	return g.editionID
 }
 
 func (g *GamePlayLog) GetGameID() values.GameID {
-	return g.GameID
+	return g.gameID
 }
 
 func (g *GamePlayLog) GetGameVersionID() values.GameVersionID {
-	return g.GameVersionID
+	return g.gameVersionID
 }
 
 func (g *GamePlayLog) GetStartTime() time.Time {
-	return g.StartTime
+	return g.startTime
 }
 
 func (g *GamePlayLog) GetEndTime() *time.Time {
-	return g.EndTime
+	return g.endTime
 }
 
 func (g *GamePlayLog) SetEndTime(endTime time.Time) {
-	g.EndTime = &endTime
-	g.UpdatedAt = time.Now()
+	g.endTime = &endTime
+	g.updatedAt = time.Now()
 }
 
 func (g *GamePlayLog) GetCreatedAt() time.Time {
-	return g.CreatedAt
+	return g.createdAt
 }
 
 func (g *GamePlayLog) GetUpdatedAt() time.Time {
-	return g.UpdatedAt
+	return g.updatedAt
 }
 
 func (g *GamePlayLog) GetPlayDuration() *time.Duration {
-	if g.EndTime == nil {
+	if g.endTime == nil {
 		return nil
 	}
-	duration := g.EndTime.Sub(g.StartTime)
+	duration := g.endTime.Sub(g.startTime)
 	return &duration
 }
 
 func (g *GamePlayLog) IsPlaying() bool {
-	return g.EndTime == nil
+	return g.endTime == nil
 }
