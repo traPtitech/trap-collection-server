@@ -61,7 +61,17 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 		return nil, service.ErrInvalidGameVersion
 	}
 
-	playLog := domain.NewGamePlayLog(editionID, gameID, gameVersionID, startTime)
+	now := time.Now()
+	playLog := domain.NewGamePlayLog(
+		values.NewGamePlayLogID(),
+		editionID,
+		gameID,
+		gameVersionID,
+		startTime,
+		nil,
+		now,
+		now,
+	)
 
 	err = g.gamePlayLogRepository.CreateGamePlayLog(ctx, playLog)
 	if err != nil {
@@ -80,7 +90,7 @@ func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values
 		return fmt.Errorf("failed to get game play log: %w", err)
 	}
 
-	if endTime.Before(playLog.StartTime) {
+	if endTime.Before(playLog.GetStartTime()) {
 		return service.ErrInvalidEndTime
 	}
 
