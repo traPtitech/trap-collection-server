@@ -484,17 +484,17 @@ func TestGetGamePlayStats(t *testing.T) {
 	sampleStats := &domain.GamePlayStats{
 		GameID:           gameID,
 		TotalPlayCount:   10,
-		TotalPlaySeconds: 3600,
+		TotalPlaySeconds: 3600 * time.Second,
 		HourlyStats: []*domain.HourlyPlayStats{
 			{
 				StartTime: now.Add(-2 * time.Hour).Truncate(time.Hour),
 				PlayCount: 5,
-				PlayTime:  1800,
+				PlayTime:  1800 * time.Second,
 			},
 			{
 				StartTime: now.Add(-1 * time.Hour).Truncate(time.Hour),
 				PlayCount: 5,
-				PlayTime:  1800,
+				PlayTime:  1800 * time.Second,
 			},
 		},
 	}
@@ -709,34 +709,34 @@ func TestGetEditionPlayStats(t *testing.T) {
 		EditionID:        editionID,
 		EditionName:      values.NewLauncherVersionName(""), // これは後でサービスが設定する
 		TotalPlayCount:   15,
-		TotalPlaySeconds: 5400,
+		TotalPlaySeconds: 5400 * time.Second,
 		GameStats: []*domain.GamePlayStatsInEdition{
 			{
 				GameID:    gameID1,
 				PlayCount: 8,
-				PlayTime:  3200,
+				PlayTime:  3200 * time.Second,
 			},
 			{
 				GameID:    gameID2,
 				PlayCount: 7,
-				PlayTime:  2200,
+				PlayTime:  2200 * time.Second,
 			},
 		},
 		HourlyStats: []*domain.HourlyPlayStats{
 			{
 				StartTime: now.Add(-3 * time.Hour).Truncate(time.Hour),
 				PlayCount: 5,
-				PlayTime:  1800,
+				PlayTime:  1800 * time.Second,
 			},
 			{
 				StartTime: now.Add(-2 * time.Hour).Truncate(time.Hour),
 				PlayCount: 5,
-				PlayTime:  1800,
+				PlayTime:  1800 * time.Second,
 			},
 			{
 				StartTime: now.Add(-1 * time.Hour).Truncate(time.Hour),
 				PlayCount: 5,
-				PlayTime:  1800,
+				PlayTime:  1800 * time.Second,
 			},
 		},
 	}
