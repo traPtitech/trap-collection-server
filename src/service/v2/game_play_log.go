@@ -53,12 +53,12 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 		return nil, fmt.Errorf("failed to get game: %w", err)
 	}
 
-	gameVersions, err := g.gameVersionRepository.GetGameVersionsByIDs(ctx, []values.GameVersionID{gameVersionID}, repository.LockTypeNone)
+	_, err = g.gameVersionRepository.GetGameVersionByID(ctx, gameVersionID, repository.LockTypeNone)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, service.ErrInvalidGameVersion
+		}
 		return nil, fmt.Errorf("failed to get game version: %w", err)
-	}
-	if len(gameVersions) != 1 {
-		return nil, service.ErrInvalidGameVersion
 	}
 
 	now := time.Now()
@@ -112,12 +112,12 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 	}
 
 	if gameVersionID != nil {
-		gameVersions, err := g.gameVersionRepository.GetGameVersionsByIDs(ctx, []values.GameVersionID{*gameVersionID}, repository.LockTypeNone)
+		_, err := g.gameVersionRepository.GetGameVersionByID(ctx, *gameVersionID, repository.LockTypeNone)
 		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				return nil, service.ErrInvalidGameVersion
+			}
 			return nil, fmt.Errorf("failed to get game version: %w", err)
-		}
-		if len(gameVersions) != 1 {
-			return nil, service.ErrInvalidGameVersion
 		}
 	}
 
