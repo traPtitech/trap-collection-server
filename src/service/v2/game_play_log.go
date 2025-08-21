@@ -82,24 +82,26 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 }
 
 func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
-	playLog, err := g.gamePlayLogRepository.GetGamePlayLog(ctx, playLogID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return service.ErrInvalidPlayLogID
+	return g.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		playLog, err := g.gamePlayLogRepository.GetGamePlayLog(ctx, playLogID)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				return service.ErrInvalidPlayLogID
+			}
+			return fmt.Errorf("failed to get game play log: %w", err)
 		}
-		return fmt.Errorf("failed to get game play log: %w", err)
-	}
 
-	if endTime.Before(playLog.GetStartTime()) {
-		return service.ErrInvalidEndTime
-	}
+		if endTime.Before(playLog.GetStartTime()) {
+			return service.ErrInvalidEndTime
+		}
 
-	err = g.gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, playLogID, endTime)
-	if err != nil {
-		return fmt.Errorf("failed to update game play log end time: %w", err)
-	}
+		err = g.gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, playLogID, endTime)
+		if err != nil {
+			return fmt.Errorf("failed to update game play log end time: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
