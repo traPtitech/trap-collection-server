@@ -684,11 +684,11 @@ func TestUpdateEditionGameVersions(t *testing.T) {
         {uuid.UUID(editionID1), uuid.UUID(gameVersionID1)},
         {uuid.UUID(editionID1), uuid.UUID(gameVersionID2)},
     },
-    afterGameVersions: []migrate.GameVersionTable2{}, // 空配列（関連クリア）
+    afterGameVersions: []migrate.GameVersionTable2{}, 
 		},
 		{
 				description: "存在しないエディションIDでエラー",
-				editionID:   values.NewLauncherVersionID(), // 存在しないID
+				editionID:   values.NewLauncherVersionID(), 
 				gameVersionIDs: []values.GameVersionID{gameVersionID1},
 				beforeGameVersions: []migrate.GameVersionTable2{
 					{
@@ -708,19 +708,16 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			defer func() {
-					// 関連テーブルのクリーンアップ
 					err := db.Exec("DELETE FROM edition_game_version_relations").Error
 					if err != nil {
 							t.Fatalf("failed to clean up relations: %+v\n", err)
 					}
 					
-					// ゲームバージョンのクリーンアップ
 					err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameVersionTable2{}).Error
 					if err != nil {
 							t.Fatalf("failed to delete game versions: %+v\n", err)
 					}
 					
-					// エディションのクリーンアップ
 					err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.EditionTable2{}).Error
 					if err != nil {
 							t.Fatalf("failed to delete edition: %+v\n", err)
@@ -749,7 +746,6 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				}
 			}
 
-			// 直接SQLで関連を作成
 			for _, relation := range testCase.beforeRelations {
 				err := db.Exec(`
 					INSERT INTO edition_game_version_relations (edition_id, game_version_id)
@@ -787,19 +783,16 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				t.Fatalf("failed to get edition-game version relations: %+v", err)
 			}
 
-			// 期待される関連IDを準備
 			expectedIDs := make([]uuid.UUID, len(testCase.afterGameVersions))
 			for i, gv := range testCase.afterGameVersions {
 				expectedIDs[i] = gv.ID
 			}
 
-			// 実際の関連IDを準備
 			actualIDs := make([]uuid.UUID, len(relations))
 			for i, r := range relations {
 				actualIDs[i] = r.GameVersionID
 			}
 
-			// 関連数の確認
 			assert.Len(t, relations, len(testCase.afterGameVersions))
 			if len(testCase.afterGameVersions) > 0 {
 				assert.ElementsMatch(t, expectedIDs, actualIDs)
