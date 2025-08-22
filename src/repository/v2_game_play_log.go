@@ -11,6 +11,7 @@ import (
 //go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
 
 type GamePlayLogV2 interface {
+	// TODO: 説明を書く
 	CreateGamePlayLog(ctx context.Context, playLog *domain.GamePlayLog) error
 	GetGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) (*domain.GamePlayLog, error)
 	UpdateGamePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error

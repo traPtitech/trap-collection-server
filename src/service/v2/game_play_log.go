@@ -132,20 +132,13 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 }
 
 func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
-	edition, err := g.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
+	stats, err := g.gamePlayLogRepository.GetEditionPlayStats(ctx, editionID, start, end)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidEdition
 		}
-		return nil, fmt.Errorf("getting edition: %w", err)
-	}
-
-	stats, err := g.gamePlayLogRepository.GetEditionPlayStats(ctx, editionID, start, end)
-	if err != nil {
 		return nil, fmt.Errorf("getting edition play stats: %w", err)
 	}
-
-	stats.EditionName = edition.GetName()
 
 	return stats, nil
 }
