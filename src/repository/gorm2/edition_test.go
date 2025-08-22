@@ -689,6 +689,13 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			description:    "存在しないエディションIDでエラー",
 			editionID:      values.NewLauncherVersionID(),
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
+			beforeEditions: []migrate.EditionTable2{
+        {
+            ID:        uuid.UUID(editionID1),
+            Name:      "dummy edition",
+            CreatedAt: time.Now(),
+        },
+    },
 			beforeGameVersions: []migrate.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID1),
@@ -701,8 +708,8 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				},
 			},
 			beforeRelations: [][2]uuid.UUID{},
-			isErr: true,
-			err:   repository.ErrNoRecordUpdated,
+			isErr:           true,
+			err:             repository.ErrNoRecordUpdated,
 		},
 	}
 	// テストケースの実行
