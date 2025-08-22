@@ -708,13 +708,26 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			defer func() {
-				// 関連テーブルのクリーンアップ
+				// 1. 関連テーブルのクリーンアップ
 				err := db.Exec("DELETE FROM edition_game_version_relations WHERE edition_id = ?",
 					uuid.UUID(testCase.editionID)).Error
 				if err != nil {
 					t.Fatalf("failed to clean up relations: %+v\n", err)
 				}
 
+				// 2. ゲームバージョンのクリーンアップ（画像・動画より先に削除）
+				if len(testCase.beforeGameVersions) > 0 {
+					ids := make([]uuid.UUID, len(testCase.beforeGameVersions))
+					for i, gv := range testCase.beforeGameVersions {
+						ids[i] = gv.ID
+					}
+					err = db.Unscoped().Where("id IN ?", ids).Delete(&migrate.GameVersionTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game versions: %+v\n", err)
+					}
+				}
+
+				// 3. ゲーム画像・動画のクリーンアップ（ゲームバージョン削除後）
 				if len(testCase.beforeGameVersions) > 0 {
 					err = db.Unscoped().Where("id = ?", uuid.UUID(gameImageID1)).Delete(&migrate.GameImageTable2{}).Error
 					if err != nil {
@@ -727,29 +740,18 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					}
 				}
 
-				// ゲームバージョンのクリーンアップ（テストケースで使用したもののみ）
-				if len(testCase.beforeGameVersions) > 0 {
-					ids := make([]uuid.UUID, len(testCase.beforeGameVersions))
-					for i, gv := range testCase.beforeGameVersions {
-						ids[i] = gv.ID
-					}
-					err = db.Unscoped().Where("id IN ?", ids).Delete(&migrate.GameVersionTable2{}).Error
-					if err != nil {
-						t.Fatalf("failed to delete game versions: %+v\n", err)
-					}
+				// 4. ゲームのクリーンアップ
+				err = db.Unscoped().Where("id = ?", uuid.UUID(gameID1)).Delete(&migrate.GameTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
 				}
 
-				// エディションのクリーンアップ
+				// 5. エディションのクリーンアップ
 				if len(testCase.beforeEditions) > 0 {
 					err = db.Unscoped().Where("id = ?", uuid.UUID(testCase.editionID)).Delete(&migrate.EditionTable2{}).Error
 					if err != nil {
 						t.Fatalf("failed to delete edition: %+v\n", err)
 					}
-				}
-
-				err = db.Unscoped().Where("id = ?", uuid.UUID(gameID1)).Delete(&migrate.GameTable2{}).Error
-				if err != nil {
-					t.Fatalf("failed to delete game: %+v\n", err)
 				}
 			}()
 
