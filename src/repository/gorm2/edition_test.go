@@ -707,29 +707,34 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	// テストケースの実行
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func(editionID uuid.UUID, gvIDs []values.GameVersionID) {
-				// 関連のみ削除（対象エディションに限定）
-				if err := db.Where("edition_id = ?", editionID).Delete(&struct {
-					EditionID     uuid.UUID `gorm:"column:edition_id"`
-					GameVersionID uuid.UUID `gorm:"column:game_version_id"`
-				}{}).Error; err != nil {
+			defer func() {
+				// 関連テーブルのクリーンアップ
+				err := db.Exec("DELETE FROM edition_game_version_relations WHERE edition_id = ?",
+					uuid.UUID(testCase.editionID)).Error
+				if err != nil {
 					t.Fatalf("failed to clean up relations: %+v\n", err)
 				}
-				// 対象のゲームバージョンのみ削除
-				if len(gvIDs) > 0 {
-					ids := make([]uuid.UUID, 0, len(gvIDs))
-					for _, id := range gvIDs {
-						ids = append(ids, uuid.UUID(id))
+
+				// ゲームバージョンのクリーンアップ（テストケースで使用したもののみ）
+				if len(testCase.beforeGameVersions) > 0 {
+					ids := make([]uuid.UUID, len(testCase.beforeGameVersions))
+					for i, gv := range testCase.beforeGameVersions {
+						ids[i] = gv.ID
 					}
-					if err := db.Unscoped().Where("id IN ?", ids).Delete(&migrate.GameVersionTable2{}).Error; err != nil {
+					err = db.Unscoped().Where("id IN ?", ids).Delete(&migrate.GameVersionTable2{}).Error
+					if err != nil {
 						t.Fatalf("failed to delete game versions: %+v\n", err)
 					}
 				}
-				// 対象エディションのみ削除
-				if err := db.Unscoped().Where("id = ?", editionID).Delete(&migrate.EditionTable2{}).Error; err != nil {
-					t.Fatalf("failed to delete edition: %+v\n", err)
+
+				// エディションのクリーンアップ
+				if len(testCase.beforeEditions) > 0 {
+					err = db.Unscoped().Where("id = ?", uuid.UUID(testCase.editionID)).Delete(&migrate.EditionTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete edition: %+v\n", err)
+					}
 				}
-			}(uuid.UUID(testCase.editionID), testCase.gameVersionIDs)
+			}()
 
 			if len(testCase.beforeEditions) != 0 {
 				err := db.
