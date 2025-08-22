@@ -22,23 +22,6 @@ func TestCreatePlayLog(t *testing.T) {
 
 	ctx := context.Background()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
-	mockEditionRepository := mockRepository.NewMockEdition(ctrl)
-	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
-	mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
-
-	gamePlayLogService := NewGamePlayLog(
-		mockDB,
-		mockGamePlayLogRepository,
-		mockEditionRepository,
-		mockGameRepository,
-		mockGameVersionRepository,
-	)
-
 	type test struct {
 		description   string
 		editionID     values.LauncherVersionID
@@ -204,6 +187,25 @@ func TestCreatePlayLog(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				mockDB,
+				mockGamePlayLogRepository,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+			)
+
 			if testCase.executeGetEdition {
 				mockEditionRepository.
 					EXPECT().
@@ -273,23 +275,6 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
-	mockEditionRepository := mockRepository.NewMockEdition(ctrl)
-	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
-	mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
-
-	gamePlayLogService := NewGamePlayLog(
-		mockDB,
-		mockGamePlayLogRepository,
-		mockEditionRepository,
-		mockGameRepository,
-		mockGameVersionRepository,
-	)
 
 	type test struct {
 		description string
@@ -384,6 +369,25 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				mockDB,
+				mockGamePlayLogRepository,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+			)
+
 			if testCase.executeGetGamePlayLog {
 				mockGamePlayLogRepository.
 					EXPECT().
@@ -421,23 +425,6 @@ func TestGetGamePlayStats(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
-	mockEditionRepository := mockRepository.NewMockEdition(ctrl)
-	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
-	mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
-
-	gamePlayLogService := NewGamePlayLog(
-		mockDB,
-		mockGamePlayLogRepository,
-		mockEditionRepository,
-		mockGameRepository,
-		mockGameVersionRepository,
-	)
 
 	type test struct {
 		description   string
@@ -605,6 +592,25 @@ func TestGetGamePlayStats(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				mockDB,
+				mockGamePlayLogRepository,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+			)
+
 			if testCase.executeGetGame {
 				mockGameRepository.
 					EXPECT().
@@ -657,32 +663,11 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	ctx := context.Background()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB := mockRepository.NewMockDB(ctrl)
-	mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
-	mockEditionRepository := mockRepository.NewMockEdition(ctrl)
-	mockGameRepository := mockRepository.NewMockGameV2(ctrl)
-	mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
-
-	gamePlayLogService := NewGamePlayLog(
-		mockDB,
-		mockGamePlayLogRepository,
-		mockEditionRepository,
-		mockGameRepository,
-		mockGameVersionRepository,
-	)
-
 	type test struct {
 		description string
 		editionID   values.LauncherVersionID
 		start       time.Time
 		end         time.Time
-
-		executeGetEdition bool
-		getEditionResult  *domain.LauncherVersion
-		getEditionErr     error
 
 		executeGetEditionPlayStats bool
 		getEditionPlayStatsResult  *domain.EditionPlayStats
@@ -697,17 +682,9 @@ func TestGetEditionPlayStats(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
-	questionnaireURL, _ := url.Parse("https://example.com")
-	edition := domain.NewLauncherVersionWithQuestionnaire(
-		editionID,
-		values.NewLauncherVersionName("v1.0.0"),
-		values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
-		now.Add(-24*time.Hour),
-	)
-
 	sampleEditionStats := &domain.EditionPlayStats{
 		EditionID:        editionID,
-		EditionName:      values.NewLauncherVersionName(""), // これは後でサービスが設定する
+		EditionName:      values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
 		TotalPlayCount:   15,
 		TotalPlaySeconds: 5400 * time.Second,
 		GameStats: []*domain.GamePlayStatsInEdition{
@@ -747,38 +724,25 @@ func TestGetEditionPlayStats(t *testing.T) {
 			editionID:                  editionID,
 			start:                      now.Add(-24 * time.Hour),
 			end:                        now,
-			executeGetEdition:          true,
-			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult:  sampleEditionStats,
 			isErr:                      false,
 		},
 		{
-			description:       "GetEditionがErrRecordNotFoundなのでErrInvalidEdition",
-			editionID:         values.NewLauncherVersionID(),
-			start:             now.Add(-24 * time.Hour),
-			end:               now,
-			executeGetEdition: true,
-			getEditionErr:     repository.ErrRecordNotFound,
-			isErr:             true,
-			err:               service.ErrInvalidEdition,
-		},
-		{
-			description:       "GetEditionがエラーなのでエラー",
-			editionID:         editionID,
-			start:             now.Add(-24 * time.Hour),
-			end:               now,
-			executeGetEdition: true,
-			getEditionErr:     errors.New("error"),
-			isErr:             true,
+			description:                "GetEditionPlayStatsがErrRecordNotFoundなのでErrInvalidEdition",
+			editionID:                  values.NewLauncherVersionID(),
+			start:                      now.Add(-24 * time.Hour),
+			end:                        now,
+			executeGetEditionPlayStats: true,
+			getEditionPlayStatsErr:     repository.ErrRecordNotFound,
+			isErr:                      true,
+			err:                        service.ErrInvalidEdition,
 		},
 		{
 			description:                "GetEditionPlayStatsがエラーなのでエラー",
 			editionID:                  editionID,
 			start:                      now.Add(-24 * time.Hour),
 			end:                        now,
-			executeGetEdition:          true,
-			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsErr:     errors.New("error"),
 			isErr:                      true,
@@ -788,12 +752,10 @@ func TestGetEditionPlayStats(t *testing.T) {
 			editionID:                  editionID,
 			start:                      now,
 			end:                        now,
-			executeGetEdition:          true,
-			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult: &domain.EditionPlayStats{
 				EditionID:        editionID,
-				EditionName:      values.NewLauncherVersionName(""),
+				EditionName:      values.NewLauncherVersionName("v1.0.0"),
 				TotalPlayCount:   0,
 				TotalPlaySeconds: 0,
 				GameStats:        []*domain.GamePlayStatsInEdition{},
@@ -805,12 +767,24 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			if testCase.executeGetEdition {
-				mockEditionRepository.
-					EXPECT().
-					GetEdition(ctx, testCase.editionID, repository.LockTypeNone).
-					Return(testCase.getEditionResult, testCase.getEditionErr)
-			}
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				mockDB,
+				mockGamePlayLogRepository,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+			)
 
 			if testCase.executeGetEditionPlayStats {
 				mockGamePlayLogRepository.
@@ -840,8 +814,8 @@ func TestGetEditionPlayStats(t *testing.T) {
 				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlaySeconds, stats.TotalPlaySeconds)
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GameStats), len(stats.GameStats))
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.HourlyStats), len(stats.HourlyStats))
-				// サービスがエディション名を設定することを確認
-				assert.Equal(t, testCase.getEditionResult.GetName(), stats.EditionName)
+				// repositoryがエディション名を設定することを確認
+				assert.Equal(t, testCase.getEditionPlayStatsResult.EditionName, stats.EditionName)
 			}
 		})
 	}
