@@ -780,16 +780,6 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to create game: %+v\n", err)
 				}
-
-				err = db.
-					Session(&gorm.Session{
-						Logger: logger.Default.LogMode(logger.Silent),
-					}).
-					Create(&testCase.beforeGameVersions).Error
-				if err != nil {
-					t.Fatalf("failed to create game version: %+v\n", err)
-				}
-
 				// ゲームバージョンの画像と動画も作成
 				err = db.
 					Session(&gorm.Session{
@@ -817,6 +807,15 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					}).Error
 				if err != nil {
 					t.Fatalf("failed to create game video: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&testCase.beforeGameVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create game version: %+v\n", err)
 				}
 			}
 
