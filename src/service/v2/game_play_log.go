@@ -42,7 +42,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidEdition
 		}
-		return nil, fmt.Errorf("failed to get edition: %w", err)
+		return nil, fmt.Errorf("getting edition: %w", err)
 	}
 
 	_, err = g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
@@ -50,7 +50,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidGame
 		}
-		return nil, fmt.Errorf("failed to get game: %w", err)
+		return nil, fmt.Errorf("getting game: %w", err)
 	}
 
 	_, err = g.gameVersionRepository.GetGameVersionByID(ctx, gameVersionID, repository.LockTypeNone)
@@ -58,7 +58,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidGameVersion
 		}
-		return nil, fmt.Errorf("failed to get game version: %w", err)
+		return nil, fmt.Errorf("getting game version: %w", err)
 	}
 
 	now := time.Now()
@@ -75,7 +75,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 
 	err = g.gamePlayLogRepository.CreateGamePlayLog(ctx, playLog)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create game play log: %w", err)
+		return nil, fmt.Errorf("creating game play log: %w", err)
 	}
 
 	return playLog, nil
@@ -88,7 +88,7 @@ func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				return service.ErrInvalidPlayLogID
 			}
-			return fmt.Errorf("failed to get game play log: %w", err)
+			return fmt.Errorf("getting game play log: %w", err)
 		}
 
 		if endTime.Before(playLog.GetStartTime()) {
@@ -97,7 +97,7 @@ func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values
 
 		err = g.gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, playLogID, endTime)
 		if err != nil {
-			return fmt.Errorf("failed to update game play log end time: %w", err)
+			return fmt.Errorf("updating game play log end time: %w", err)
 		}
 
 		return nil
@@ -110,7 +110,7 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidGame
 		}
-		return nil, fmt.Errorf("failed to get game: %w", err)
+		return nil, fmt.Errorf("getting game: %w", err)
 	}
 
 	if gameVersionID != nil {
@@ -119,13 +119,13 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				return nil, service.ErrInvalidGameVersion
 			}
-			return nil, fmt.Errorf("failed to get game version: %w", err)
+			return nil, fmt.Errorf("getting game version: %w", err)
 		}
 	}
 
 	stats, err := g.gamePlayLogRepository.GetGamePlayStats(ctx, gameID, gameVersionID, start, end)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get game play stats: %w", err)
+		return nil, fmt.Errorf("getting game play stats: %w", err)
 	}
 
 	return stats, nil
@@ -137,12 +137,12 @@ func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidEdition
 		}
-		return nil, fmt.Errorf("failed to get edition: %w", err)
+		return nil, fmt.Errorf("getting edition: %w", err)
 	}
 
 	stats, err := g.gamePlayLogRepository.GetEditionPlayStats(ctx, editionID, start, end)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get edition play stats: %w", err)
+		return nil, fmt.Errorf("getting edition play stats: %w", err)
 	}
 
 	stats.EditionName = edition.GetName()
