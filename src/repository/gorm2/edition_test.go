@@ -715,6 +715,18 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					t.Fatalf("failed to clean up relations: %+v\n", err)
 				}
 
+				if len(testCase.beforeGameVersions) > 0 {
+					err = db.Unscoped().Where("id = ?", uuid.UUID(gameImageID1)).Delete(&migrate.GameImageTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game image: %+v\n", err)
+					}
+
+					err = db.Unscoped().Where("id = ?", uuid.UUID(gameVideoID1)).Delete(&migrate.GameVideoTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game video: %+v\n", err)
+					}
+				}
+
 				// ゲームバージョンのクリーンアップ（テストケースで使用したもののみ）
 				if len(testCase.beforeGameVersions) > 0 {
 					ids := make([]uuid.UUID, len(testCase.beforeGameVersions))
@@ -734,6 +746,11 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 						t.Fatalf("failed to delete edition: %+v\n", err)
 					}
 				}
+
+				err = db.Unscoped().Where("id = ?", uuid.UUID(gameID1)).Delete(&migrate.GameTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
 			}()
 
 			if len(testCase.beforeEditions) != 0 {
@@ -752,9 +769,54 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					Session(&gorm.Session{
 						Logger: logger.Default.LogMode(logger.Silent),
 					}).
+					Create(&migrate.GameTable2{
+						ID:                     uuid.UUID(gameID1),
+						Name:                   "Test Game",
+						Description:            "Test game description",
+						VisibilityTypeID:       1,
+						CreatedAt:              time.Now(),
+						LatestVersionUpdatedAt: time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
 					Create(&testCase.beforeGameVersions).Error
 				if err != nil {
 					t.Fatalf("failed to create game version: %+v\n", err)
+				}
+
+				// ゲームバージョンの画像と動画も作成
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&migrate.GameImageTable2{
+						ID:          uuid.UUID(gameImageID1),
+						GameID:      uuid.UUID(gameID1),
+						ImageTypeID: 1,
+						CreatedAt:   time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game image: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&migrate.GameVideoTable2{
+						ID:          uuid.UUID(gameVideoID1),
+						GameID:      uuid.UUID(gameID1),
+						VideoTypeID: 1,
+						CreatedAt:   time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game video: %+v\n", err)
 				}
 			}
 
