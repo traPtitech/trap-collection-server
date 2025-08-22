@@ -700,6 +700,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					Description: "test description",
 				},
 			},
+			beforeRelations: [][2]uuid.UUID{},
 			isErr: true,
 			err:   repository.ErrNoRecordUpdated,
 		},
