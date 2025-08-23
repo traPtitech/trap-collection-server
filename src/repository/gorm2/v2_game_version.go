@@ -295,3 +295,20 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 
 	return gameVersionInfos, nil
 }
+
+func (gameVersion *GameVersionV2) GetGameVersionByID(
+	ctx context.Context,
+	gameVersionID values.GameVersionID,
+	lockType repository.LockType,
+) (*repository.GameVersionInfoWithGameID, error) {
+	// TODO: 正しい実装を行う
+	// 仮実装: GetGameVersionsByIDsを使って1件取得
+	gameVersionInfos, err := gameVersion.GetGameVersionsByIDs(ctx, []values.GameVersionID{gameVersionID}, lockType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get game version by id: %w", err)
+	}
+	if len(gameVersionInfos) == 0 {
+		return nil, repository.ErrRecordNotFound
+	}
+	return gameVersionInfos[0], nil
+}
