@@ -13,10 +13,10 @@ type HourlyPlayStats struct {
 }
 
 type GamePlayStats struct {
-	GameID           values.GameID
-	TotalPlayCount   int
-	TotalPlaySeconds time.Duration
-	HourlyStats      []*HourlyPlayStats
+	GameID         values.GameID
+	TotalPlayCount int
+	TotalPlayTime  time.Duration
+	HourlyStats    []*HourlyPlayStats
 }
 
 type GamePlayStatsInEdition struct {
@@ -26,10 +26,10 @@ type GamePlayStatsInEdition struct {
 }
 
 type EditionPlayStats struct {
-	EditionID        values.LauncherVersionID
-	EditionName      values.LauncherVersionName
-	TotalPlayCount   int
-	TotalPlaySeconds time.Duration
-	GameStats        []*GamePlayStatsInEdition
-	HourlyStats      []*HourlyPlayStats
+	EditionID      values.LauncherVersionID
+	EditionName    values.LauncherVersionName
+	TotalPlayCount int
+	TotalPlayTime  time.Duration
+	GameStats      []*GamePlayStatsInEdition
+	HourlyStats    []*HourlyPlayStats
 }

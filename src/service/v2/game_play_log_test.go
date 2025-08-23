@@ -497,9 +497,9 @@ func TestGetGamePlayStats(t *testing.T) {
 	)
 
 	sampleStats := &domain.GamePlayStats{
-		GameID:           gameID,
-		TotalPlayCount:   10,
-		TotalPlaySeconds: 3600 * time.Second,
+		GameID:         gameID,
+		TotalPlayCount: 10,
+		TotalPlayTime:  3600 * time.Second,
 		HourlyStats: []*domain.HourlyPlayStats{
 			{
 				StartTime: now.Add(-2 * time.Hour).Truncate(time.Hour),
@@ -612,10 +612,10 @@ func TestGetGamePlayStats(t *testing.T) {
 			getGameResult:           game,
 			executeGetGamePlayStats: true,
 			getGamePlayStatsResult: &domain.GamePlayStats{
-				GameID:           gameID,
-				TotalPlayCount:   0,
-				TotalPlaySeconds: 0,
-				HourlyStats:      []*domain.HourlyPlayStats{},
+				GameID:         gameID,
+				TotalPlayCount: 0,
+				TotalPlayTime:  0,
+				HourlyStats:    []*domain.HourlyPlayStats{},
 			},
 			isErr: false,
 		},
@@ -681,7 +681,7 @@ func TestGetGamePlayStats(t *testing.T) {
 				assert.NotNil(t, stats)
 				assert.Equal(t, testCase.getGamePlayStatsResult.GameID, stats.GameID)
 				assert.Equal(t, testCase.getGamePlayStatsResult.TotalPlayCount, stats.TotalPlayCount)
-				assert.Equal(t, testCase.getGamePlayStatsResult.TotalPlaySeconds, stats.TotalPlaySeconds)
+				assert.Equal(t, testCase.getGamePlayStatsResult.TotalPlayTime, stats.TotalPlayTime)
 				assert.Equal(t, len(testCase.getGamePlayStatsResult.HourlyStats), len(stats.HourlyStats))
 			}
 		})
@@ -713,10 +713,10 @@ func TestGetEditionPlayStats(t *testing.T) {
 	gameID2 := values.NewGameID()
 
 	sampleEditionStats := &domain.EditionPlayStats{
-		EditionID:        editionID,
-		EditionName:      values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
-		TotalPlayCount:   15,
-		TotalPlaySeconds: 5400 * time.Second,
+		EditionID:      editionID,
+		EditionName:    values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
+		TotalPlayCount: 15,
+		TotalPlayTime:  5400 * time.Second,
 		GameStats: []*domain.GamePlayStatsInEdition{
 			{
 				GameID:    gameID1,
@@ -785,10 +785,10 @@ func TestGetEditionPlayStats(t *testing.T) {
 			end:                        now,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult: &domain.EditionPlayStats{
-				EditionID:        editionID,
-				EditionName:      values.NewLauncherVersionName("v1.0.0"),
-				TotalPlayCount:   0,
-				TotalPlaySeconds: 0,
+				EditionID:      editionID,
+				EditionName:    values.NewLauncherVersionName("v1.0.0"),
+				TotalPlayCount: 0,
+				TotalPlayTime:  0,
 				GameStats:        []*domain.GamePlayStatsInEdition{},
 				HourlyStats:      []*domain.HourlyPlayStats{},
 			},
@@ -841,7 +841,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 				assert.NotNil(t, stats)
 				assert.Equal(t, testCase.editionID, stats.EditionID)
 				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlayCount, stats.TotalPlayCount)
-				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlaySeconds, stats.TotalPlaySeconds)
+				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlayTime, stats.TotalPlayTime)
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GameStats), len(stats.GameStats))
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.HourlyStats), len(stats.HourlyStats))
 				// repositoryがエディション名を設定することを確認
