@@ -194,7 +194,6 @@ func TestCreatePlayLog(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDB := mockRepository.NewMockDB(ctrl)
 			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
@@ -402,7 +401,6 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDB := mockRepository.NewMockDB(ctrl)
 			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
@@ -628,7 +626,6 @@ func TestGetGamePlayStats(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDB := mockRepository.NewMockDB(ctrl)
 			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
@@ -804,7 +801,6 @@ func TestGetEditionPlayStats(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockDB := mockRepository.NewMockDB(ctrl)
 			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
