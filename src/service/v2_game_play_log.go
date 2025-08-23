@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-//go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/${GOFILE} -package=mock -typed
 
 type GamePlayLogV2 interface {
 	CreatePlayLog(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, gameVersionID values.GameVersionID, startTime time.Time) (*domain.GamePlayLog, error)
