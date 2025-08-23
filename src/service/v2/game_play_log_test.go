@@ -368,7 +368,7 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 		{
 			description:           "終了時刻が開始時刻より前なのでErrInvalidEndTime",
 			playLogID:             playLogID,
-			endTime:               now.Add(-2 * time.Hour), // StartTimeより前
+			endTime:               activePlayLog.GetStartTime().Add(-time.Hour), // StartTimeより前
 			executeGetGamePlayLog: true,
 			getGamePlayLogResult:  activePlayLog,
 			isErr:                 true,
