@@ -234,18 +234,42 @@ func TestCreatePlayLog(t *testing.T) {
 			if testCase.executeCreateGamePlayLog {
 				mockGamePlayLogRepository.
 					EXPECT().
-					CreateGamePlayLog(ctx, gomock.Any()).
-					DoAndReturn(func(_ context.Context, playLog *domain.GamePlayLog) error {
-						assert.Equal(t, testCase.editionID, playLog.GetEditionID())
-						assert.Equal(t, testCase.gameID, playLog.GetGameID())
-						assert.Equal(t, testCase.gameVersionID, playLog.GetGameVersionID())
-						assert.Equal(t, testCase.startTime, playLog.GetStartTime())
-						assert.Nil(t, playLog.GetEndTime())
-						assert.NotEqual(t, uuid.Nil, playLog.GetID())
-						assert.WithinDuration(t, time.Now(), playLog.GetCreatedAt(), time.Second)
-						assert.WithinDuration(t, time.Now(), playLog.GetUpdatedAt(), time.Second)
-						return testCase.createGamePlayLogErr
-					})
+					CreateGamePlayLog(ctx, gomock.Cond(func(playLog *domain.GamePlayLog) bool {
+						if playLog.GetEditionID() != testCase.editionID {
+							t.Errorf("EditionID: expected %v, got %v", testCase.editionID, playLog.GetEditionID())
+							return false
+						}
+						if playLog.GetGameID() != testCase.gameID {
+							t.Errorf("GameID: expected %v, got %v", testCase.gameID, playLog.GetGameID())
+							return false
+						}
+						if playLog.GetGameVersionID() != testCase.gameVersionID {
+							t.Errorf("GameVersionID: expected %v, got %v", testCase.gameVersionID, playLog.GetGameVersionID())
+							return false
+						}
+						if !playLog.GetStartTime().Equal(testCase.startTime) {
+							t.Errorf("StartTime: expected %v, got %v", testCase.startTime, playLog.GetStartTime())
+							return false
+						}
+						if playLog.GetEndTime() != nil {
+							t.Errorf("EndTime: expected nil, got %v", playLog.GetEndTime())
+							return false
+						}
+						if playLog.GetID() == values.GamePlayLogID(uuid.Nil) {
+							t.Error("ID should not be nil")
+							return false
+						}
+						if time.Since(playLog.GetCreatedAt()) > time.Second {
+							t.Errorf("CreatedAt should be recent: %v", playLog.GetCreatedAt())
+							return false
+						}
+						if time.Since(playLog.GetUpdatedAt()) > time.Second {
+							t.Errorf("UpdatedAt should be recent: %v", playLog.GetUpdatedAt())
+							return false
+						}
+						return true
+					})).
+					Return(testCase.createGamePlayLogErr)
 			}
 
 			playLog, err := gamePlayLogService.CreatePlayLog(
