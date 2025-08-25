@@ -496,23 +496,23 @@ func TestGetGamePlayStats(t *testing.T) {
 		now.Add(-24*time.Hour),
 	)
 
-	sampleStats := &domain.GamePlayStats{
-		GameID:         gameID,
-		TotalPlayCount: 10,
-		TotalPlayTime:  3600 * time.Second,
-		HourlyStats: []*domain.HourlyPlayStats{
-			{
-				StartTime: now.Add(-2 * time.Hour).Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  1800 * time.Second,
-			},
-			{
-				StartTime: now.Add(-1 * time.Hour).Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  1800 * time.Second,
-			},
+	sampleStats := domain.NewGamePlayStats(
+		gameID,
+		10,
+		3600*time.Second,
+		[]*domain.HourlyPlayStats{
+			domain.NewHourlyPlayStats(
+				now.Add(-2*time.Hour).Truncate(time.Hour),
+				5,
+				1800*time.Second,
+			),
+			domain.NewHourlyPlayStats(
+				now.Add(-1*time.Hour).Truncate(time.Hour),
+				5,
+				1800*time.Second,
+			),
 		},
-	}
+	)
 
 	testCases := []test{
 		{
@@ -611,12 +611,12 @@ func TestGetGamePlayStats(t *testing.T) {
 			executeGetGame:          true,
 			getGameResult:           game,
 			executeGetGamePlayStats: true,
-			getGamePlayStatsResult: &domain.GamePlayStats{
-				GameID:         gameID,
-				TotalPlayCount: 0,
-				TotalPlayTime:  0,
-				HourlyStats:    []*domain.HourlyPlayStats{},
-			},
+			getGamePlayStatsResult: domain.NewGamePlayStats(
+				gameID,
+				0,
+				0,
+				[]*domain.HourlyPlayStats{},
+			),
 			isErr: false,
 		},
 	}
@@ -679,10 +679,10 @@ func TestGetGamePlayStats(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, stats)
-				assert.Equal(t, testCase.getGamePlayStatsResult.GameID, stats.GameID)
-				assert.Equal(t, testCase.getGamePlayStatsResult.TotalPlayCount, stats.TotalPlayCount)
-				assert.Equal(t, testCase.getGamePlayStatsResult.TotalPlayTime, stats.TotalPlayTime)
-				assert.Equal(t, len(testCase.getGamePlayStatsResult.HourlyStats), len(stats.HourlyStats))
+				assert.Equal(t, testCase.getGamePlayStatsResult.GetGameID(), stats.GetGameID())
+				assert.Equal(t, testCase.getGamePlayStatsResult.GetTotalPlayCount(), stats.GetTotalPlayCount())
+				assert.Equal(t, testCase.getGamePlayStatsResult.GetTotalPlayTime(), stats.GetTotalPlayTime())
+				assert.Equal(t, len(testCase.getGamePlayStatsResult.GetHourlyStats()), len(stats.GetHourlyStats()))
 			}
 		})
 	}
@@ -712,41 +712,41 @@ func TestGetEditionPlayStats(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
-	sampleEditionStats := &domain.EditionPlayStats{
-		EditionID:      editionID,
-		EditionName:    values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
-		TotalPlayCount: 15,
-		TotalPlayTime:  5400 * time.Second,
-		GameStats: []*domain.GamePlayStatsInEdition{
-			{
-				GameID:    gameID1,
-				PlayCount: 8,
-				PlayTime:  3200 * time.Second,
-			},
-			{
-				GameID:    gameID2,
-				PlayCount: 7,
-				PlayTime:  2200 * time.Second,
-			},
+	sampleEditionStats := domain.NewEditionPlayStats(
+		editionID,
+		values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
+		15,
+		5400*time.Second,
+		[]*domain.GamePlayStatsInEdition{
+			domain.NewGamePlayStatsInEdition(
+				gameID1,
+				8,
+				3200*time.Second,
+			),
+			domain.NewGamePlayStatsInEdition(
+				gameID2,
+				7,
+				2200*time.Second,
+			),
 		},
-		HourlyStats: []*domain.HourlyPlayStats{
-			{
-				StartTime: now.Add(-3 * time.Hour).Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  1800 * time.Second,
-			},
-			{
-				StartTime: now.Add(-2 * time.Hour).Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  1800 * time.Second,
-			},
-			{
-				StartTime: now.Add(-1 * time.Hour).Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  1800 * time.Second,
-			},
+		[]*domain.HourlyPlayStats{
+			domain.NewHourlyPlayStats(
+				now.Add(-3*time.Hour).Truncate(time.Hour),
+				5,
+				1800*time.Second,
+			),
+			domain.NewHourlyPlayStats(
+				now.Add(-2*time.Hour).Truncate(time.Hour),
+				5,
+				1800*time.Second,
+			),
+			domain.NewHourlyPlayStats(
+				now.Add(-1*time.Hour).Truncate(time.Hour),
+				5,
+				1800*time.Second,
+			),
 		},
-	}
+	)
 
 	testCases := []test{
 		{
@@ -784,14 +784,14 @@ func TestGetEditionPlayStats(t *testing.T) {
 			start:                      now,
 			end:                        now,
 			executeGetEditionPlayStats: true,
-			getEditionPlayStatsResult: &domain.EditionPlayStats{
-				EditionID:      editionID,
-				EditionName:    values.NewLauncherVersionName("v1.0.0"),
-				TotalPlayCount: 0,
-				TotalPlayTime:  0,
-				GameStats:      []*domain.GamePlayStatsInEdition{},
-				HourlyStats:    []*domain.HourlyPlayStats{},
-			},
+			getEditionPlayStatsResult: domain.NewEditionPlayStats(
+				editionID,
+				values.NewLauncherVersionName("v1.0.0"),
+				0,
+				0,
+				[]*domain.GamePlayStatsInEdition{},
+				[]*domain.HourlyPlayStats{},
+			),
 			isErr: false,
 		},
 	}
@@ -839,13 +839,13 @@ func TestGetEditionPlayStats(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, stats)
-				assert.Equal(t, testCase.editionID, stats.EditionID)
-				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlayCount, stats.TotalPlayCount)
-				assert.Equal(t, testCase.getEditionPlayStatsResult.TotalPlayTime, stats.TotalPlayTime)
-				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GameStats), len(stats.GameStats))
-				assert.Equal(t, len(testCase.getEditionPlayStatsResult.HourlyStats), len(stats.HourlyStats))
+				assert.Equal(t, testCase.editionID, stats.GetEditionID())
+				assert.Equal(t, testCase.getEditionPlayStatsResult.GetTotalPlayCount(), stats.GetTotalPlayCount())
+				assert.Equal(t, testCase.getEditionPlayStatsResult.GetTotalPlayTime(), stats.GetTotalPlayTime())
+				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GetGameStats()), len(stats.GetGameStats()))
+				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GetHourlyStats()), len(stats.GetHourlyStats()))
 				// repositoryがエディション名を設定することを確認
-				assert.Equal(t, testCase.getEditionPlayStatsResult.EditionName, stats.EditionName)
+				assert.Equal(t, testCase.getEditionPlayStatsResult.GetEditionName(), stats.GetEditionName())
 			}
 		})
 	}
