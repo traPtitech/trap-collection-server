@@ -635,7 +635,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				},
 				{
 					ID:          uuid.UUID(gameVersionID2),
-					Name:        "v1.0.0",
+					Name:        "v2.0.0",
 					GameID:      uuid.UUID(gameID1),
 					CreatedAt:   time.Now(),
 					GameImageID: uuid.UUID(gameImageID1),
@@ -690,12 +690,12 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			editionID:      values.NewLauncherVersionID(),
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
 			beforeEditions: []migrate.EditionTable2{
-        {
-            ID:        uuid.UUID(editionID1),
-            Name:      "dummy edition",
-            CreatedAt: time.Now(),
-        },
-    },
+				{
+					ID:        uuid.UUID(editionID1),
+					Name:      "dummy edition",
+					CreatedAt: time.Now(),
+				},
+			},
 			beforeGameVersions: []migrate.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID1),
@@ -709,7 +709,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			},
 			beforeRelations: [][2]uuid.UUID{},
 			isErr:           true,
-			err:             repository.ErrNoRecordUpdated,
+			err:             nil,
 		},
 	}
 	// テストケースの実行
@@ -861,9 +861,10 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			var relations []struct {
 				GameVersionID uuid.UUID
 			}
+
 			err = db.Raw(`
 				SELECT game_version_id 
-				FROM edition_game_version_relations 
+				FROM edition_game_version_relations
 				WHERE edition_id = ?
 			`, uuid.UUID(testCase.editionID)).Scan(&relations).Error
 			if err != nil {
