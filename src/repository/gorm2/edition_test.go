@@ -578,3 +578,313 @@ func TestDeleteEdition(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateEditionGameVersions(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := testDB.getDB(ctx)
+	if err != nil {
+		t.Fatalf("failed to get db: %+v\n", err)
+	}
+	editionID1 := values.NewLauncherVersionID()
+
+	gameVersionID1 := values.NewGameVersionID()
+	gameVersionID2 := values.NewGameVersionID()
+
+	gameID1 := values.NewGameID()
+
+	gameImageID1 := values.NewGameImageID()
+	gameVideoID1 := values.NewGameVideoID()
+
+	type test struct {
+		description        string
+		editionID          values.LauncherVersionID
+		gameVersionIDs     []values.GameVersionID
+		beforeGameVersions []migrate.GameVersionTable2
+		beforeEditions     []migrate.EditionTable2
+		afterGameVersions  []migrate.GameVersionTable2
+		beforeRelations    [][2]uuid.UUID
+		isErr              bool
+		err                error
+	}
+	editionRepository := NewEdition(testDB)
+
+	testCases := []test{
+		{description: "特に問題ないのでエラー無し",
+			editionID:      editionID1,
+			gameVersionIDs: []values.GameVersionID{gameVersionID1, gameVersionID2},
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:        uuid.UUID(editionID1),
+					Name:      "test1",
+					CreatedAt: time.Now(),
+				},
+			},
+			beforeRelations: [][2]uuid.UUID{
+				{uuid.UUID(editionID1), uuid.UUID(gameVersionID1)},
+			},
+			beforeGameVersions: []migrate.GameVersionTable2{
+				{
+					ID:          uuid.UUID(gameVersionID1),
+					Name:        "v1.0.0",
+					GameID:      uuid.UUID(gameID1),
+					CreatedAt:   time.Now(),
+					GameImageID: uuid.UUID(gameImageID1),
+					GameVideoID: uuid.UUID(gameVideoID1),
+					Description: "test description",
+				},
+				{
+					ID:          uuid.UUID(gameVersionID2),
+					Name:        "v2.0.0",
+					GameID:      uuid.UUID(gameID1),
+					CreatedAt:   time.Now(),
+					GameImageID: uuid.UUID(gameImageID1),
+					GameVideoID: uuid.UUID(gameVideoID1),
+					Description: "test description",
+				},
+			},
+			afterGameVersions: []migrate.GameVersionTable2{
+				{ID: uuid.UUID(gameVersionID1)},
+				{ID: uuid.UUID(gameVersionID2)},
+			},
+		},
+		{
+			description:    "空配列で全ての関連をクリア",
+			editionID:      editionID1,
+			gameVersionIDs: []values.GameVersionID{},
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:        uuid.UUID(editionID1),
+					Name:      "test1",
+					CreatedAt: time.Now(),
+				},
+			},
+			beforeGameVersions: []migrate.GameVersionTable2{
+				{
+					ID:          uuid.UUID(gameVersionID1),
+					Name:        "v1.0.0",
+					GameID:      uuid.UUID(gameID1),
+					CreatedAt:   time.Now(),
+					GameImageID: uuid.UUID(gameImageID1),
+					GameVideoID: uuid.UUID(gameVideoID1),
+					Description: "test description",
+				},
+				{
+					ID:          uuid.UUID(gameVersionID2),
+					Name:        "v2.0.0",
+					GameID:      uuid.UUID(gameID1),
+					CreatedAt:   time.Now(),
+					GameImageID: uuid.UUID(gameImageID1),
+					GameVideoID: uuid.UUID(gameVideoID1),
+					Description: "test description",
+				},
+			},
+			beforeRelations: [][2]uuid.UUID{
+				{uuid.UUID(editionID1), uuid.UUID(gameVersionID1)},
+				{uuid.UUID(editionID1), uuid.UUID(gameVersionID2)},
+			},
+			afterGameVersions: []migrate.GameVersionTable2{},
+		},
+		{
+			description:    "存在しないエディションIDでエラー",
+			editionID:      values.NewLauncherVersionID(),
+			gameVersionIDs: []values.GameVersionID{gameVersionID1},
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:        uuid.UUID(editionID1),
+					Name:      "dummy edition",
+					CreatedAt: time.Now(),
+				},
+			},
+			beforeGameVersions: []migrate.GameVersionTable2{
+				{
+					ID:          uuid.UUID(gameVersionID1),
+					Name:        "v1.0.0",
+					GameID:      uuid.UUID(gameID1),
+					CreatedAt:   time.Now(),
+					GameImageID: uuid.UUID(gameImageID1),
+					GameVideoID: uuid.UUID(gameVideoID1),
+					Description: "test description",
+				},
+			},
+			beforeRelations: [][2]uuid.UUID{},
+			isErr:           true,
+			err:             nil,
+		},
+	}
+	// テストケースの実行
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			defer func() {
+				// 1. 関連テーブルのクリーンアップ
+				err := db.Exec("DELETE FROM edition_game_version_relations WHERE edition_id = ?",
+					uuid.UUID(testCase.editionID)).Error
+				if err != nil {
+					t.Fatalf("failed to clean up relations: %+v\n", err)
+				}
+
+				// 2. ゲームバージョンのクリーンアップ（画像・動画より先に削除）
+				if len(testCase.beforeGameVersions) > 0 {
+					ids := make([]uuid.UUID, len(testCase.beforeGameVersions))
+					for i, gv := range testCase.beforeGameVersions {
+						ids[i] = gv.ID
+					}
+					err = db.Unscoped().Where("id IN ?", ids).Delete(&migrate.GameVersionTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game versions: %+v\n", err)
+					}
+				}
+
+				// 3. ゲーム画像・動画のクリーンアップ（ゲームバージョン削除後）
+				if len(testCase.beforeGameVersions) > 0 {
+					err = db.Unscoped().Where("id = ?", uuid.UUID(gameImageID1)).Delete(&migrate.GameImageTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game image: %+v\n", err)
+					}
+
+					err = db.Unscoped().Where("id = ?", uuid.UUID(gameVideoID1)).Delete(&migrate.GameVideoTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete game video: %+v\n", err)
+					}
+				}
+
+				// 4. ゲームのクリーンアップ
+				err = db.Unscoped().Where("id = ?", uuid.UUID(gameID1)).Delete(&migrate.GameTable2{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete game: %+v\n", err)
+				}
+
+				// 5. エディションのクリーンアップ
+				if len(testCase.beforeEditions) > 0 {
+					err = db.Unscoped().Where("id = ?", uuid.UUID(testCase.editionID)).Delete(&migrate.EditionTable2{}).Error
+					if err != nil {
+						t.Fatalf("failed to delete edition: %+v\n", err)
+					}
+				}
+			}()
+
+			if len(testCase.beforeEditions) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&testCase.beforeEditions).Error
+				if err != nil {
+					t.Fatalf("failed to create edition: %+v\n", err)
+				}
+			}
+
+			if len(testCase.beforeGameVersions) != 0 {
+				err := db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&migrate.GameTable2{
+						ID:                     uuid.UUID(gameID1),
+						Name:                   "Test Game",
+						Description:            "Test game description",
+						VisibilityTypeID:       1,
+						CreatedAt:              time.Now(),
+						LatestVersionUpdatedAt: time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game: %+v\n", err)
+				}
+				// ゲームバージョンの画像と動画も作成
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&migrate.GameImageTable2{
+						ID:          uuid.UUID(gameImageID1),
+						GameID:      uuid.UUID(gameID1),
+						ImageTypeID: 1,
+						CreatedAt:   time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game image: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&migrate.GameVideoTable2{
+						ID:          uuid.UUID(gameVideoID1),
+						GameID:      uuid.UUID(gameID1),
+						VideoTypeID: 1,
+						CreatedAt:   time.Now(),
+					}).Error
+				if err != nil {
+					t.Fatalf("failed to create game video: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						Logger: logger.Default.LogMode(logger.Silent),
+					}).
+					Create(&testCase.beforeGameVersions).Error
+				if err != nil {
+					t.Fatalf("failed to create game version: %+v\n", err)
+				}
+			}
+
+			for _, relation := range testCase.beforeRelations {
+				err := db.Exec(`
+					INSERT INTO edition_game_version_relations (edition_id, game_version_id)
+					VALUES (?, ?)
+				`, relation[0], relation[1]).Error
+				if err != nil {
+					t.Fatalf("failed to create edition-game version relation: %+v\n", err)
+				}
+			}
+
+			err := editionRepository.UpdateEditionGameVersions(ctx, testCase.editionID, testCase.gameVersionIDs)
+
+			if testCase.isErr {
+				if testCase.err != nil {
+					if !errors.Is(err, testCase.err) {
+						t.Fatalf("expected error %v, got %v", testCase.err, err)
+					}
+				} else {
+					assert.Error(t, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+			if err != nil {
+				return
+			}
+
+			var relations []struct {
+				GameVersionID uuid.UUID
+			}
+
+			err = db.Raw(`
+				SELECT game_version_id 
+				FROM edition_game_version_relations
+				WHERE edition_id = ?
+			`, uuid.UUID(testCase.editionID)).Scan(&relations).Error
+			if err != nil {
+				t.Fatalf("failed to get edition-game version relations: %+v", err)
+			}
+
+			expectedIDs := make([]uuid.UUID, len(testCase.afterGameVersions))
+			for i, gv := range testCase.afterGameVersions {
+				expectedIDs[i] = gv.ID
+			}
+
+			actualIDs := make([]uuid.UUID, len(relations))
+			for i, r := range relations {
+				actualIDs[i] = r.GameVersionID
+			}
+
+			assert.Len(t, relations, len(testCase.afterGameVersions))
+			if len(testCase.afterGameVersions) > 0 {
+				assert.ElementsMatch(t, expectedIDs, actualIDs)
+			}
+		})
+	}
+}
