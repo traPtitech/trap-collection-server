@@ -32,6 +32,7 @@ type GamePlayLogV2 interface {
 	// GetEditionPlayStats
 	// 指定されたエディションと期間のプレイ統計を取得する。
 	// start〜endの期間でフィルタリングする。
-	// 該当するエディションが存在しない場合，ErrRecordNotFoundを返す
+	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
+	// editionNameも含めて返すため、editionsテーブルとのJOINが必要
 	GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error)
 }

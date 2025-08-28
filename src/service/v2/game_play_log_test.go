@@ -699,6 +699,10 @@ func TestGetEditionPlayStats(t *testing.T) {
 		start       time.Time
 		end         time.Time
 
+		executeGetEdition bool
+		getEditionResult  *domain.LauncherVersion
+		getEditionErr     error
+
 		executeGetEditionPlayStats bool
 		getEditionPlayStatsResult  *domain.EditionPlayStats
 		getEditionPlayStatsErr     error
@@ -712,9 +716,17 @@ func TestGetEditionPlayStats(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
+	questionnaireURL, _ := url.Parse("https://example.com")
+	edition := domain.NewLauncherVersionWithQuestionnaire(
+		editionID,
+		values.NewLauncherVersionName("v1.0.0"),
+		values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+		now,
+	)
+
 	sampleEditionStats := domain.NewEditionPlayStats(
 		editionID,
-		values.NewLauncherVersionName("v1.0.0"), // repositoryが設定する
+		values.NewLauncherVersionName("v1.0.0"),
 		15,
 		5400*time.Second,
 		[]*domain.GamePlayStatsInEdition{
@@ -754,25 +766,39 @@ func TestGetEditionPlayStats(t *testing.T) {
 			editionID:                  editionID,
 			start:                      now.Add(-24 * time.Hour),
 			end:                        now,
+			executeGetEdition:          true,
+			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult:  sampleEditionStats,
 			isErr:                      false,
 		},
 		{
-			description:                "GetEditionPlayStatsがErrRecordNotFoundなのでErrInvalidEdition",
-			editionID:                  values.NewLauncherVersionID(),
-			start:                      now.Add(-24 * time.Hour),
-			end:                        now,
-			executeGetEditionPlayStats: true,
-			getEditionPlayStatsErr:     repository.ErrRecordNotFound,
-			isErr:                      true,
-			err:                        service.ErrInvalidEdition,
+			description:       "GetEditionがErrRecordNotFoundなのでErrInvalidEdition",
+			editionID:         values.NewLauncherVersionID(),
+			start:             now.Add(-24 * time.Hour),
+			end:               now,
+			executeGetEdition: true,
+			getEditionErr:     repository.ErrRecordNotFound,
+			isErr:             true,
+			err:               service.ErrInvalidEdition,
+		},
+		{
+			description:       "GetEditionがエラーなのでエラー",
+			editionID:         editionID,
+			start:             now.Add(-24 * time.Hour),
+			end:               now,
+			executeGetEdition: true,
+			getEditionErr:     assert.AnError,
+			isErr:             true,
+			err:               assert.AnError,
 		},
 		{
 			description:                "GetEditionPlayStatsがエラーなのでエラー",
 			editionID:                  editionID,
 			start:                      now.Add(-24 * time.Hour),
 			end:                        now,
+			executeGetEdition:          true,
+			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsErr:     assert.AnError,
 			isErr:                      true,
@@ -783,6 +809,8 @@ func TestGetEditionPlayStats(t *testing.T) {
 			editionID:                  editionID,
 			start:                      now,
 			end:                        now,
+			executeGetEdition:          true,
+			getEditionResult:           edition,
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult: domain.NewEditionPlayStats(
 				editionID,
@@ -816,6 +844,13 @@ func TestGetEditionPlayStats(t *testing.T) {
 				mockGameVersionRepository,
 			)
 
+			if testCase.executeGetEdition {
+				mockEditionRepository.
+					EXPECT().
+					GetEdition(ctx, testCase.editionID, repository.LockTypeNone).
+					Return(testCase.getEditionResult, testCase.getEditionErr)
+			}
+
 			if testCase.executeGetEditionPlayStats {
 				mockGamePlayLogRepository.
 					EXPECT().
@@ -840,12 +875,11 @@ func TestGetEditionPlayStats(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, stats)
 				assert.Equal(t, testCase.editionID, stats.GetEditionID())
+				assert.Equal(t, testCase.getEditionPlayStatsResult.GetEditionName(), stats.GetEditionName())
 				assert.Equal(t, testCase.getEditionPlayStatsResult.GetTotalPlayCount(), stats.GetTotalPlayCount())
 				assert.Equal(t, testCase.getEditionPlayStatsResult.GetTotalPlayTime(), stats.GetTotalPlayTime())
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GetGameStats()), len(stats.GetGameStats()))
 				assert.Equal(t, len(testCase.getEditionPlayStatsResult.GetHourlyStats()), len(stats.GetHourlyStats()))
-				// repositoryがエディション名を設定することを確認
-				assert.Equal(t, testCase.getEditionPlayStatsResult.GetEditionName(), stats.GetEditionName())
 			}
 		})
 	}
