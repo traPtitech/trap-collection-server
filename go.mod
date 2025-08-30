@@ -11,7 +11,7 @@ require (
 	github.com/cosmtrek/air v1.61.2
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/dgraph-io/ristretto/v2 v2.2.0
-	github.com/getkin/kin-openapi v0.132.0
+	github.com/getkin/kin-openapi v0.133.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.4
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-task/task/v3 v3.44.1
@@ -183,6 +183,7 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
