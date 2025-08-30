@@ -29,7 +29,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/prometheus/client_golang v1.23.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 	golang.org/x/mod v0.27.0
 	golang.org/x/sync v0.16.0
