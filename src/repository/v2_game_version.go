@@ -45,6 +45,14 @@ type GameVersionV2 interface {
 		gameVersionIDs []values.GameVersionID,
 		lockType LockType,
 	) ([]*GameVersionInfoWithGameID, error)
+	// GetGameVersionByID
+	// ゲームバージョンIDからゲームバージョンを取得。
+	// TODO: まだ実装が不正確(エラーを出さないために仮実装をおいている)ので，後で実装する
+	GetGameVersionByID(
+		ctx context.Context,
+		gameVersionID values.GameVersionID,
+		lockType LockType,
+	) (*GameVersionInfoWithGameID, error)
 	// GetLatestGameVersion
 	// ゲームに対応する最新のゲームバージョンの取得。
 	GetLatestGameVersion(
