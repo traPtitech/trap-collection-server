@@ -34,7 +34,7 @@ require (
 	golang.org/x/mod v0.27.0
 	golang.org/x/sync v0.16.0
 	gorm.io/driver/mysql v1.6.0
-	gorm.io/gorm v1.30.3
+	gorm.io/gorm v1.31.0
 	gorm.io/plugin/prometheus v0.1.0
 )
 
@@ -121,7 +121,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.17 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/microsoft/go-mssqldb v1.6.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -163,7 +163,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.5.2 // indirect
-	gorm.io/driver/sqlite v1.5.2 // indirect
+	gorm.io/driver/sqlite v1.6.0 // indirect
 	gorm.io/driver/sqlserver v1.5.2 // indirect
 	mvdan.cc/sh/v3 v3.12.0 // indirect
 )
