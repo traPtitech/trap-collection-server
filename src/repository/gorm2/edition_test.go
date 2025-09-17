@@ -627,7 +627,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		cleanupCtx := context.Background()
+		cleanupCtx := context.Background() //この時点でtは終了しているので新しいコンテキストを作成
 
 		err := db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameVersionTable2{}).Error
 		require.NoError(t, err)
@@ -797,16 +797,16 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			// テストケースの削除
 			t.Cleanup(func() {
-				// 1. テストで作成したEditionを取得
+				//テストで作成したEditionを取得
 				var editions []migrate.EditionTable2
 				err := db.Find(&editions).Error
 				require.NoError(t, err)
-				// 2. 各EditionのGameVersionsとの関連を解除
+				//各EditionのGameVersionsとの関連を解除
 				for _, edition := range editions {
 					err = db.Model(&edition).Association("GameVersions").Clear()
 					require.NoError(t, err)
 				}
-				// 2. 親テーブルのデータを削除
+				//親テーブルのデータを削除
 				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.EditionTable2{}).Error
 				require.NoError(t, err)
 			})
