@@ -101,6 +101,7 @@ jobs:
           LINT_OUTPUT=$(atlas migrate lint --env ci 2>&1)
           LINT_EXIT_CODE=$?
           gh pr comment ${{ github.event.pull_request.number }} \
+            --edit-last --create-if-none \
             --body "Migrate lint
             <details>
             <summary>Lint output</summary>
