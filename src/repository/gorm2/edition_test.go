@@ -587,6 +587,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	editionID1 := values.NewLauncherVersionID()
+	editionID2 := values.NewLauncherVersionID()
 
 	gameVersionID1 := values.NewGameVersionID()
 	gameVersionID2 := values.NewGameVersionID()
@@ -596,7 +597,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	gameImageID1 := values.NewGameImageID()
 	gameVideoID1 := values.NewGameVideoID()
 
-	// テスト用のゲーム、画像、動画を定義
+	// テスト用のゲーム、画像、動画、ゲームバージョンを定義
 	testGame := migrate.GameTable2{
 		ID:                     uuid.UUID(gameID1),
 		Name:                   "test game",
@@ -617,6 +618,24 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		VideoTypeID: 1,
 		CreatedAt:   time.Now(),
 	}
+	testGameVersion1 := migrate.GameVersionTable2{
+		ID:          uuid.UUID(gameVersionID1),
+		Name:        "v1.0.0",
+		GameID:      uuid.UUID(gameID1),
+		CreatedAt:   time.Now(),
+		GameImageID: uuid.UUID(gameImageID1),
+		GameVideoID: uuid.UUID(gameVideoID1),
+		Description: "test description",
+	}
+	testGameVersion2 := migrate.GameVersionTable2{
+		ID:          uuid.UUID(gameVersionID2),
+		Name:        "v2.0.0",
+		GameID:      uuid.UUID(gameID1),
+		CreatedAt:   time.Now(),
+		GameImageID: uuid.UUID(gameImageID1),
+		GameVideoID: uuid.UUID(gameVideoID1),
+		Description: "test description",
+	}
 
 	// テスト全体の開始前にデータを作成し、終了後に削除
 	err = db.Create(&testGame).Error
@@ -624,6 +643,10 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	err = db.Create(&testGameImage).Error
 	require.NoError(t, err)
 	err = db.Create(&testGameVideo).Error
+	require.NoError(t, err)
+	err = db.Create(&testGameVersion1).Error
+	require.NoError(t, err)
+	err = db.Create(&testGameVersion2).Error
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -663,56 +686,18 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			},
 			beforeEditions: []migrate.EditionTable2{
 				{
-					ID:        uuid.UUID(editionID1),
-					Name:      "test1",
-					CreatedAt: time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
-						{
-							ID:          uuid.UUID(gameVersionID1),
-							Name:        "v1.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-						{
-							ID:          uuid.UUID(gameVersionID2),
-							Name:        "v2.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-					},
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
 				},
 			},
 			afterEditions: []migrate.EditionTable2{
 				{
-					ID:        uuid.UUID(editionID1),
-					Name:      "test1",
-					CreatedAt: time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
-						{
-							ID:          uuid.UUID(gameVersionID1),
-							Name:        "v1.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-						{
-							ID:          uuid.UUID(gameVersionID2),
-							Name:        "v2.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-					},
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1, testGameVersion2},
 				},
 			},
 		},
@@ -722,20 +707,10 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			gameVersionIDs: []values.GameVersionID{},
 			beforeEditions: []migrate.EditionTable2{
 				{
-					ID:        uuid.UUID(editionID1),
-					Name:      "test1",
-					CreatedAt: time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
-						{
-							ID:          uuid.UUID(gameVersionID1),
-							Name:        "v1.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-					},
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
 				},
 			},
 			afterEditions: []migrate.EditionTable2{
@@ -753,42 +728,58 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
 			beforeEditions: []migrate.EditionTable2{
 				{
-					ID:        uuid.UUID(editionID1),
-					Name:      "dummy edition",
-					CreatedAt: time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
-						{
-							ID:          uuid.UUID(gameVersionID1),
-							Name:        "v1.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-					},
+					ID:           uuid.UUID(editionID1),
+					Name:         "dummy edition",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
 				},
 			},
 			afterEditions: []migrate.EditionTable2{
 				{
-					ID:        uuid.UUID(editionID1),
-					Name:      "test1",
-					CreatedAt: time.Now(),
-					GameVersions: []migrate.GameVersionTable2{
-						{
-							ID:          uuid.UUID(gameVersionID1),
-							Name:        "v1.0.0",
-							GameID:      uuid.UUID(gameID1),
-							CreatedAt:   time.Now(),
-							GameImageID: uuid.UUID(gameImageID1),
-							GameVideoID: uuid.UUID(gameVideoID1),
-							Description: "test description",
-						},
-					},
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
 				},
 			},
 			isErr: true,
 			err:   nil,
+		},
+		{
+			description: "editionが複数あっても問題なし", //edition1 2のうち、edition1だけ更新されることを確認
+			editionID:   editionID1,
+			gameVersionIDs: []values.GameVersionID{
+				gameVersionID1,
+				gameVersionID2,
+			},
+			beforeEditions: []migrate.EditionTable2{
+				{
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+				},
+				{
+					ID:           uuid.UUID(editionID2),
+					Name:         "test2",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+				},
+			},
+			afterEditions: []migrate.EditionTable2{
+				{
+					ID:           uuid.UUID(editionID1),
+					Name:         "test1",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1, testGameVersion2},
+				},
+				{
+					ID:           uuid.UUID(editionID2),
+					Name:         "test2",
+					CreatedAt:    time.Now(),
+					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+				},
+			},
 		},
 	}
 
@@ -813,9 +804,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 
 			if len(testCase.beforeEditions) != 0 {
 				err = db.
-					Session(&gorm.Session{
-						Logger: logger.Default.LogMode(logger.Silent),
-					}).
+					Session(&gorm.Session{}).
 					Create(&testCase.beforeEditions).Error
 				require.NoError(t, err)
 			}
@@ -837,29 +826,29 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				return
 			}
 
-			var edition migrate.EditionTable2
-
-			err = db.Where("id = ?", uuid.UUID(testCase.editionID)).
-				Preload("GameVersions").
-				First(&edition).Error
+			//editionは複数あるケースを想定して、配列で定義
+			var editions []migrate.EditionTable2
+			err = db.Preload("GameVersions").Find(&editions).Error
 			require.NoError(t, err)
 
-			var expectedGameVersionIDs []uuid.UUID
-			if len(testCase.afterEditions) > 0 {
-				expectedGameVersionIDs = make([]uuid.UUID, len(testCase.afterEditions[0].GameVersions))
-				for i, gv := range testCase.afterEditions[0].GameVersions {
-					expectedGameVersionIDs[i] = gv.ID
+			// afterEditionsをマップに
+			expectedMap := map[uuid.UUID][]uuid.UUID{}
+			for _, e := range testCase.afterEditions {
+				ids := make([]uuid.UUID, len(e.GameVersions))
+				for i, gv := range e.GameVersions {
+					ids[i] = gv.ID
 				}
+				expectedMap[e.ID] = ids
 			}
 
-			actualIDs := make([]uuid.UUID, len(edition.GameVersions))
-			for i, r := range edition.GameVersions {
-				actualIDs[i] = r.ID
-			}
-
-			assert.Len(t, edition.GameVersions, len(testCase.afterEditions[0].GameVersions))
-			if len(testCase.afterEditions[0].GameVersions) > 0 {
-				assert.ElementsMatch(t, expectedGameVersionIDs, actualIDs)
+			for _, edition := range editions {
+				expectedIDs, ok := expectedMap[edition.ID]
+				require.True(t, ok, "unexpected edition ID: %s", edition.ID)
+				actualIDs := make([]uuid.UUID, len(edition.GameVersions))
+				for i, gv := range edition.GameVersions {
+					actualIDs[i] = gv.ID
+				}
+				assert.ElementsMatch(t, expectedIDs, actualIDs)
 			}
 		})
 	}
