@@ -64,7 +64,7 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2.8
         with:
           go_version_file: go.mod
-          reporter: github-pr-check
+          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-review' || 'github-check' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_level: any
 
