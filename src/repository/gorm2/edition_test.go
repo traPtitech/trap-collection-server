@@ -843,7 +843,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 
 			for _, edition := range editions {
 				expectedIDs, ok := expectedMap[edition.ID]
-				require.True(t, ok, "unexpected edition ID: %s", edition.ID)
+				assert.True(t, ok, "unexpected edition ID: %s", edition.ID)
 				actualIDs := make([]uuid.UUID, len(edition.GameVersions))
 				for i, gv := range edition.GameVersions {
 					actualIDs[i] = gv.ID
