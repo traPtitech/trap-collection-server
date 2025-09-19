@@ -56,7 +56,7 @@
 Table Driven Test を採用する。
 
 ```go
-testCasess := []struct{ 
+testCases := []struct{ 
     name string
     input X
     wantErr bool
@@ -70,7 +70,7 @@ for _, testCase := range testCases { t.Run(testCase.name, func(t *testing.T) { /
 または
 
 ```go
-testCasess := map[string]struct{ 
+testCases := map[string]struct{ 
     input X
     wantErr bool 
   }{
