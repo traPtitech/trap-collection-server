@@ -18,5 +18,5 @@ RUN go mod download
 
 ENV GOFLAGS -buildvcs=false
 
-ENTRYPOINT ["go", "run", "github.com/cosmtrek/air"]
+ENTRYPOINT ["go", "tool", "air"]
 CMD ["-c", ".air.toml"]
