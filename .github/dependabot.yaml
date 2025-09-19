@@ -11,43 +11,9 @@ updates:
       default-days: 7
 
   - package-ecosystem: docker
-    directory: "/docker/dev"
-    schedule:
-      interval: weekly
-      day: saturday
-      time: "00:00"
-      timezone: Asia/Tokyo
-    ignore:
-      - dependency-name: golang
-        versions:
-          - 1.15.7.pre.alpine
-          - 1.15.8.pre.alpine
-          - 1.16.0.pre.alpine
-          - 1.16.1.pre.alpine
-          - 1.16.2.pre.alpine
-    cooldown:
-      default-days: 7
-
-  - package-ecosystem: docker
-    directory: "/docker/production"
-    schedule:
-      interval: weekly
-      day: saturday
-      time: "00:00"
-      timezone: Asia/Tokyo
-    ignore:
-      - dependency-name: golang
-        versions:
-          - 1.15.7.pre.alpine
-          - 1.15.8.pre.alpine
-          - 1.16.0.pre.alpine
-          - 1.16.1.pre.alpine
-          - 1.16.2.pre.alpine
-    cooldown:
-      default-days: 7
-
-  - package-ecosystem: docker
-    directory: "/docker/test"
+    directories:
+      - "/docker/dev"
+      - "/docker/production"
     schedule:
       interval: weekly
       day: saturday
@@ -73,4 +39,3 @@ updates:
       timezone: Asia/Tokyo
     cooldown:
       default-days: 7
-  
