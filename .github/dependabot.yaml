@@ -9,6 +9,16 @@ updates:
       timezone: Asia/Tokyo
     cooldown:
       default-days: 7
+    groups:
+      aws-sdk:
+        patterns:
+          - "^github.com/aws/aws-sdk-go-v2"
+        update-types:
+          - minor
+          - patch
+      golang.org:
+        patterns:
+          - "^golang.org/x/"
 
   - package-ecosystem: docker
     directories:
@@ -29,6 +39,13 @@ updates:
           - 1.16.2.pre.alpine
     cooldown:
       default-days: 7
+    groups:
+      golang:
+        patterns:
+          - "^golang"
+      atlas:
+        patterns:
+          - "^arigaio/atlas"
 
   - package-ecosystem: github-actions
     directory: "/"
