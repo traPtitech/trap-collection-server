@@ -54,22 +54,22 @@ func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.G
 	return nil
 }
 
-func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) (*domain.GamePlayLog, error) {
+func (g *GamePlayLogV2) GetGamePlayLog(_ context.Context, playLogID values.GamePlayLogID) (*domain.GamePlayLog, error) {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
+func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
+func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
+func (g *GamePlayLogV2) GetEditionPlayStats(_ context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
