@@ -332,10 +332,10 @@ func TestCreateGamePlayLog(t *testing.T) {
 			if len(testCase.beforeGameVersions) != 0 {
 				for _, version := range testCase.beforeGameVersions {
 					image := schema.GameImageTable2{
-						ID:            version.GameImageID,
-						GameID:        version.GameID,
-						ImageTypeID:   gameImageType.ID,
-						CreatedAt:     now,
+						ID:          version.GameImageID,
+						GameID:      version.GameID,
+						ImageTypeID: gameImageType.ID,
+						CreatedAt:   now,
 					}
 					err := db.Session(&gorm.Session{}).Create(&image).Error
 					if err != nil {
@@ -413,21 +413,21 @@ func TestGetGamePlayLog(t *testing.T) {
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
 	type test struct {
-		description  string
-		playLogID    values.GamePlayLogID
-		expectedLog  *domain.GamePlayLog
-		isErr        bool
-		err          error
+		description string
+		playLogID   values.GamePlayLogID
+		expectedLog *domain.GamePlayLog
+		isErr       bool
+		err         error
 	}
 
 	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description:  "TODO: add test case",
-			playLogID:    values.NewGamePlayLogID(),
-			expectedLog:  nil,
-			isErr:        true,
-			err:          repository.ErrRecordNotFound,
+			description: "TODO: add test case",
+			playLogID:   values.NewGamePlayLogID(),
+			expectedLog: nil,
+			isErr:       true,
+			err:         repository.ErrRecordNotFound,
 		},
 	}
 
@@ -500,26 +500,26 @@ func TestGetGamePlayStats(t *testing.T) {
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
 	type test struct {
-		description     string
-		gameID          values.GameID
-		gameVersionID   *values.GameVersionID
-		start           time.Time
-		end             time.Time
-		expectedStats   *domain.GamePlayStats
-		isErr           bool
-		err             error
+		description   string
+		gameID        values.GameID
+		gameVersionID *values.GameVersionID
+		start         time.Time
+		end           time.Time
+		expectedStats *domain.GamePlayStats
+		isErr         bool
+		err           error
 	}
 
 	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description:     "TODO: add test case",
-			gameID:          values.NewGameID(),
-			gameVersionID:   nil,
-			start:           time.Now().Add(-24 * time.Hour),
-			end:             time.Now(),
-			expectedStats:   nil,
-			isErr:           false,
+			description:   "TODO: add test case",
+			gameID:        values.NewGameID(),
+			gameVersionID: nil,
+			start:         time.Now().Add(-24 * time.Hour),
+			end:           time.Now(),
+			expectedStats: nil,
+			isErr:         false,
 		},
 	}
 
