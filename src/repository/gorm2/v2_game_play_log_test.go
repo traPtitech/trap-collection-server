@@ -659,7 +659,7 @@ func TestGetGamePlayStats(t *testing.T) {
 	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
