@@ -63,6 +63,8 @@ func TestGetGamePlayLog(t *testing.T) {
 	db, err := testDB.getDB(ctx)
 	require.NoError(t, err)
 
+	now := time.Now()
+
 	edition1 := schema.EditionTable{
 		ID:   uuid.New(),
 		Name: "Test",
@@ -90,14 +92,6 @@ func TestGetGamePlayLog(t *testing.T) {
 		Name:        "Test",
 		Description: "test",
 	}
-	require.NoError(t, db.Create(&edition1).Error)
-	require.NoError(t, db.Create(&game1).Error)
-	require.NoError(t, db.Create(&gameImage1).Error)
-	require.NoError(t, db.Create(&gameVideo1).Error)
-	require.NoError(t, db.Create(&gameVersion1).Error)
-
-	now := time.Now()
-
 	gamePlayLog1 := schema.GamePlayLogTable{
 		ID:            uuid.New(),
 		EditionID:     edition1.ID,
@@ -117,6 +111,12 @@ func TestGetGamePlayLog(t *testing.T) {
 		CreatedAt:     now.Add(-1 * time.Hour),
 		UpdatedAt:     now,
 	}
+
+	require.NoError(t, db.Create(&edition1).Error)
+	require.NoError(t, db.Create(&game1).Error)
+	require.NoError(t, db.Create(&gameImage1).Error)
+	require.NoError(t, db.Create(&gameVideo1).Error)
+	require.NoError(t, db.Create(&gameVersion1).Error)
 	require.NoError(t, db.Create(&gamePlayLog1).Error)
 	require.NoError(t, db.Create(&gamePlayLog2).Error)
 
