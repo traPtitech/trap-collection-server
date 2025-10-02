@@ -141,7 +141,7 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 func TestGetGamePlayStats(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 

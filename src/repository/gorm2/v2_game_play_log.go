@@ -30,6 +30,13 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 
 func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
 	// TODO: interfaceのコメントを参考に実装を行う
+	// GetGamePlayStats
+	// 指定されたゲームと期間のプレイ統計を取得する。
+	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
+	// start〜endの期間でフィルタリングする。
+	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
+
+	
 	panic("not implemented")
 }
 
