@@ -199,7 +199,6 @@ func TestGetGamePlayLog(t *testing.T) {
 	}
 }
 
-
 func TestUpdateGamePlayLogEndTime(t *testing.T) {
 	t.Parallel()
 
@@ -251,26 +250,26 @@ func TestGetGamePlayStats(t *testing.T) {
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
 	type test struct {
-		description     string
-		gameID          values.GameID
-		gameVersionID   *values.GameVersionID
-		start           time.Time
-		end             time.Time
-		expectedStats   *domain.GamePlayStats
-		isErr           bool
-		err             error
+		description   string
+		gameID        values.GameID
+		gameVersionID *values.GameVersionID
+		start         time.Time
+		end           time.Time
+		expectedStats *domain.GamePlayStats
+		isErr         bool
+		err           error
 	}
 
 	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description:     "TODO: add test case",
-			gameID:          values.NewGameID(),
-			gameVersionID:   nil,
-			start:           time.Now().Add(-24 * time.Hour),
-			end:             time.Now(),
-			expectedStats:   nil,
-			isErr:           false,
+			description:   "TODO: add test case",
+			gameID:        values.NewGameID(),
+			gameVersionID: nil,
+			start:         time.Now().Add(-24 * time.Hour),
+			end:           time.Now(),
+			expectedStats: nil,
+			isErr:         false,
 		},
 	}
 
