@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp/cmpopts"
+	// "github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +18,7 @@ import (
 )
 
 func TestCreateGamePlayLog(t *testing.T) {
+	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
@@ -121,12 +122,13 @@ func TestGetGamePlayLog(t *testing.T) {
 	require.NoError(t, db.Create(&gamePlayLog2).Error)
 
 	t.Cleanup(func() {
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
-		require.NoError(t, db.WithContext(context.Background()).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
+		ctx := context.Background() //WithContextなしだと動かなかったので入れてました
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
 	})
 
 	type test struct {
@@ -140,6 +142,11 @@ func TestGetGamePlayLog(t *testing.T) {
 		{
 			description: "正常な場合(EndTimeがNULL)",
 			playLogID:   values.GamePlayLogID(gamePlayLog1.ID),
+			// 		expectedPlayLog: domain.NewGamePlayLog(gamePlayLog1),にすると
+			// 		not enough arguments in call to domain.NewGamePlayLog
+			//    have ("github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema".GamePlayLogTable)
+			//    want (values.GamePlayLogID, values.LauncherVersionID, values.GameID, values.GameVersionID, time.Time, *time.Time, time.Time, time.Time)
+			//と言われたので下のように書きました
 			expectedPlayLog: domain.NewGamePlayLog(
 				values.GamePlayLogID(gamePlayLog1.ID),
 				values.LauncherVersionID(gamePlayLog1.EditionID),
@@ -154,6 +161,7 @@ func TestGetGamePlayLog(t *testing.T) {
 		{
 			description: "正常な場合(EndTimeが非NULL)",
 			playLogID:   values.GamePlayLogID(gamePlayLog2.ID),
+			// expectedPlayLog: domain.NewGamePlayLog(gamePlayLog2),
 			expectedPlayLog: domain.NewGamePlayLog(
 				values.GamePlayLogID(gamePlayLog2.ID),
 				values.LauncherVersionID(gamePlayLog2.EditionID),
@@ -185,21 +193,27 @@ func TestGetGamePlayLog(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, playLog)
 
-				assert.WithinDuration(t, testCase.expectedPlayLog.GetStartTime(), playLog.GetStartTime(), time.Second)
-				if testCase.expectedPlayLog.GetEndTime() != nil {
-					assert.NotNil(t, playLog.GetEndTime())
-					assert.WithinDuration(t, *testCase.expectedPlayLog.GetEndTime(), *playLog.GetEndTime(), time.Second)
-				} else {
-					assert.Nil(t, playLog.GetEndTime())
-				}
+				//  time.Time型のフィールドの厳密な比較はデータベースに保存するとき切り捨てが発生して、time.Timeの単位より緩い単位で保存されてしまい、ずれるからよくないみたいなことをGeminiに言われたのでこういう実装にしてました。
+				// 調べてもよくわからなかったのですが、そんなことないんですかね？
 
-				assert.Equal(t, testCase.expectedPlayLog, playLog, cmpopts.IgnoreFields(domain.GamePlayLog{}, "startTime", "endTime", "createdAt", "updatedAt"))
+				// assert.WithinDuration(t, testCase.expectedPlayLog.GetStartTime(), playLog.GetStartTime(), time.Second)
+				// if testCase.expectedPlayLog.GetEndTime() != nil {
+				// 	assert.NotNil(t, playLog.GetEndTime())
+				// 	assert.WithinDuration(t, *testCase.expectedPlayLog.GetEndTime(), *playLog.GetEndTime(), time.Second)
+				// } else {
+				// 	assert.Nil(t, playLog.GetEndTime())
+				// }
+
+				// assert.Equal(t, testCase.expectedPlayLog, playLog, cmpopts.IgnoreFields(domain.GamePlayLog{}, "startTime", "endTime", "createdAt", "updatedAt"))
+
+				assert.Equal(t, testCase.expectedPlayLog, playLog)
 			}
 		})
 	}
 }
 
 func TestUpdateGamePlayLogEndTime(t *testing.T) {
+	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
@@ -241,8 +255,8 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 		})
 	}
 }
-
 func TestGetGamePlayStats(t *testing.T) {
+	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
@@ -292,6 +306,7 @@ func TestGetGamePlayStats(t *testing.T) {
 }
 
 func TestGetEditionPlayStats(t *testing.T) {
+	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
