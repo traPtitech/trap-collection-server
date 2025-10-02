@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -35,8 +36,8 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 
 	var gamePlayLog schema.GamePlayLogTable //migrateではなくschemaに定義されている構造体を使う
 	err = db.
-		Where("id = ?", playLogID). //playLogIDに合致したレコードを取得
-		First(&gamePlayLog).Error //1件を取得
+		Where("id = ?", uuid.UUID(playLogID)). //playLogIDに合致したレコードを取得
+		First(&gamePlayLog).Error              //1件を取得
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repository.ErrRecordNotFound
@@ -44,7 +45,7 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 		return nil, err
 	}
 
-	var endTime *time.Time // endTimeはNULL許容なのでポインタで扱う 
+	var endTime *time.Time // endTimeはNULL許容なのでポインタで扱う
 	if gamePlayLog.EndTime.Valid {
 		endTime = &gamePlayLog.EndTime.Time
 	}
