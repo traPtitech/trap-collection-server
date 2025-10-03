@@ -59,9 +59,21 @@ func (g *GamePlayLogV2) GetGamePlayLog(_ context.Context, _ values.GamePlayLogID
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.GamePlayLogID, _ time.Time) error {
-	// TODO: interfaceのコメントを参考に実装を行う
-	panic("not implemented")
+func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(ctx context.Context, ID values.GamePlayLogID, time time.Time) error {
+
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	err = db.
+		Model(&schema.GamePlayLogTable{}).Where("id = ?", ID).Update("end_time", time).Error
+
+	if err != nil {
+		return fmt.Errorf("update end_time: %w", err)
+	}
+
+	return nil
 }
 
 func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, _ values.GameID, _ *values.GameVersionID, _, _ time.Time) (*domain.GamePlayStats, error) {
