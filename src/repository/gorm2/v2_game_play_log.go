@@ -44,8 +44,8 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
 	// start〜endの期間でフィルタリングする。
 	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
-	// プレイ中でも含めたい カウントに含め プレイ時間にも含める
-	// 時間はdb.goみたらAsiaだったのでJSTに揃えました
+	// ログはプレイ中でも含めたい カウントに含め プレイ時間にも含める
+	// 時間はdb.goみたらAsiaだったのでJSTに揃える
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
