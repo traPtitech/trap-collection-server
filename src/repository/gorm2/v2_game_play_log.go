@@ -32,6 +32,12 @@ func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.G
 	}
 
 	var endTime sql.NullTime
+	if playLog.GetEndTime() != nil {
+		endTime = sql.NullTime{
+			Time:  *playLog.GetEndTime(),
+			Valid: true,
+		}
+	}
 
 	gamePlayLogTable := schema.GamePlayLogTable{
 		ID:            uuid.UUID(playLog.GetID()),
