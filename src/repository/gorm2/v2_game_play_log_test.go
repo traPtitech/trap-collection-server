@@ -425,7 +425,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					Where("id = ?", expectedLog.ID).
 					First(&actualLog).Error
 
-				assert.NoError(t, err, "expected log with ID %v not found", expectedLog.ID)
+				assert.NoErrorf(t, err, "expected log with ID %v not found", expectedLog.ID)
 				assert.Equal(t, expectedLog.EditionID, actualLog.EditionID)
 				assert.Equal(t, expectedLog.GameID, actualLog.GameID)
 				assert.Equal(t, expectedLog.GameVersionID, actualLog.GameVersionID)
