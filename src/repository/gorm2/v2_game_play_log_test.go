@@ -22,7 +22,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 
 	db, err := testDB.getDB(ctx)
 	if err != nil {
-		t.Fatalf("failed to get db: %+v\n", err)
+		t.Fatalf("get db: %+v\n", err)
 	}
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
@@ -31,9 +31,9 @@ func TestCreateGamePlayLog(t *testing.T) {
 		description          string
 		playLog              *domain.GamePlayLog
 		beforeGamePlayLogs   []schema.GamePlayLogTable
-		beforeGames          []schema.GameTable2
-		beforeGameVersions   []schema.GameVersionTable2
-		beforeEditions       []schema.EditionTable
+		games                []schema.GameTable2
+		gameVersions         []schema.GameVersionTable2
+		editions             []schema.EditionTable
 		expectedGamePlayLogs []schema.GamePlayLogTable
 		isErr                bool
 		err                  error
@@ -79,7 +79,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameVisibilityTypeTable{Name: "public"}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
-		t.Fatalf("failed to get game visibility: %v\n", err)
+		t.Fatalf("get game visibility: %v\n", err)
 	}
 
 	var gameImageType schema.GameImageTypeTable
@@ -88,7 +88,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameImageTypeTable{Name: "jpeg"}).
 		Find(&gameImageType).Error
 	if err != nil {
-		t.Fatalf("failed to get game image type: %v\n", err)
+		t.Fatalf("get game image type: %v\n", err)
 	}
 
 	var gameVideoType schema.GameVideoTypeTable
@@ -97,7 +97,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameVideoTypeTable{Name: "mp4"}).
 		Find(&gameVideoType).Error
 	if err != nil {
-		t.Fatalf("failed to get game video type: %v\n", err)
+		t.Fatalf("get game video type: %v\n", err)
 	}
 
 	testCases := []test{
@@ -113,7 +113,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 				now,
 				now,
 			),
-			beforeGames: []schema.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test game 1",
@@ -122,7 +122,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			beforeGameVersions: []schema.GameVersionTable2{
+			gameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					GameID:      uuid.UUID(gameID1),
@@ -133,7 +133,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			beforeEditions: []schema.EditionTable{
+			editions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID1),
 					Name:             "test edition 1",
@@ -177,7 +177,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:     now,
 				},
 			},
-			beforeGames: []schema.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID2),
 					Name:             "test game 2",
@@ -186,7 +186,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			beforeGameVersions: []schema.GameVersionTable2{
+			gameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					GameID:      uuid.UUID(gameID2),
@@ -197,7 +197,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			beforeEditions: []schema.EditionTable{
+			editions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID2),
 					Name:             "test edition 2",
@@ -242,7 +242,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:     now,
 				},
 			},
-			beforeGames: []schema.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID3),
 					Name:             "test game 3 existing",
@@ -258,7 +258,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			beforeGameVersions: []schema.GameVersionTable2{
+			gameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID3),
@@ -278,7 +278,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			beforeEditions: []schema.EditionTable{
+			editions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID3),
 					Name:             "test edition 3",
@@ -311,26 +311,26 @@ func TestCreateGamePlayLog(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
 
-			if len(testCase.beforeGames) != 0 {
+			if len(testCase.games) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.beforeGames).Error
+					Create(&testCase.games).Error
 				if err != nil {
-					t.Fatalf("failed to create before games: %+v\n", err)
+					t.Fatalf("create games: %+v\n", err)
 				}
 			}
 
-			if len(testCase.beforeEditions) != 0 {
+			if len(testCase.editions) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.beforeEditions).Error
+					Create(&testCase.editions).Error
 				if err != nil {
-					t.Fatalf("failed to create before editions: %+v\n", err)
+					t.Fatalf("create editions: %+v\n", err)
 				}
 			}
 
-			if len(testCase.beforeGameVersions) != 0 {
-				for _, version := range testCase.beforeGameVersions {
+			if len(testCase.gameVersions) != 0 {
+				for _, version := range testCase.gameVersions {
 					image := schema.GameImageTable2{
 						ID:          version.GameImageID,
 						GameID:      version.GameID,
@@ -339,7 +339,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					}
 					err := db.Session(&gorm.Session{}).Create(&image).Error
 					if err != nil {
-						t.Fatalf("failed to create game image: %+v\n", err)
+						t.Fatalf("create game image: %+v\n", err)
 					}
 
 					video := schema.GameVideoTable2{
@@ -350,15 +350,15 @@ func TestCreateGamePlayLog(t *testing.T) {
 					}
 					err = db.Session(&gorm.Session{}).Create(&video).Error
 					if err != nil {
-						t.Fatalf("failed to create game video: %+v\n", err)
+						t.Fatalf("create game video: %+v\n", err)
 					}
 				}
 
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.beforeGameVersions).Error
+					Create(&testCase.gameVersions).Error
 				if err != nil {
-					t.Fatalf("failed to create before game versions: %+v\n", err)
+					t.Fatalf("create game versions: %+v\n", err)
 				}
 			}
 
@@ -367,7 +367,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					Session(&gorm.Session{}).
 					Create(&testCase.beforeGamePlayLogs).Error
 				if err != nil {
-					t.Fatalf("failed to create before game play logs: %+v\n", err)
+					t.Fatalf("create before game play logs: %+v\n", err)
 				}
 			}
 
