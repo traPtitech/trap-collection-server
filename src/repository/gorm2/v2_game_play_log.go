@@ -28,7 +28,7 @@ func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.G
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get db: %w", err)
+		return fmt.Errorf("get db: %w", err)
 	}
 
 	var endTime sql.NullTime
@@ -49,7 +49,7 @@ func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.G
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
 			return repository.ErrDuplicatedUniqueKey
 		}
-		return fmt.Errorf("failed to create game play log: %w", err)
+		return fmt.Errorf("create game play log: %w", err)
 	}
 	return nil
 }
