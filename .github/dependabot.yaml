@@ -1,61 +1,58 @@
 version: 2
 updates:
-- package-ecosystem: gomod
-  directory: "/"
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "00:00"
-    timezone: Asia/Tokyo
-- package-ecosystem: docker
-  directory: "/docker/dev"
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "00:00"
-    timezone: Asia/Tokyo
-  ignore:
-  - dependency-name: golang
-    versions:
-    - 1.15.7.pre.alpine
-    - 1.15.8.pre.alpine
-    - 1.16.0.pre.alpine
-    - 1.16.1.pre.alpine
-    - 1.16.2.pre.alpine
-- package-ecosystem: docker
-  directory: "/docker/production"
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "00:00"
-    timezone: Asia/Tokyo
-  ignore:
-  - dependency-name: golang
-    versions:
-    - 1.15.7.pre.alpine
-    - 1.15.8.pre.alpine
-    - 1.16.0.pre.alpine
-    - 1.16.1.pre.alpine
-    - 1.16.2.pre.alpine
-- package-ecosystem: docker
-  directory: "/docker/test"
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "00:00"
-    timezone: Asia/Tokyo
-  ignore:
-  - dependency-name: golang
-    versions:
-    - 1.15.7.pre.alpine
-    - 1.15.8.pre.alpine
-    - 1.16.0.pre.alpine
-    - 1.16.1.pre.alpine
-    - 1.16.2.pre.alpine
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "00:00"
-    timezone: Asia/Tokyo
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "00:00"
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+    groups:
+      aws-sdk:
+        patterns:
+          - "^github.com/aws/aws-sdk-go-v2"
+        update-types:
+          - minor
+          - patch
+      golang.org:
+        patterns:
+          - "^golang.org/x/"
+
+  - package-ecosystem: docker
+    directories:
+      - "/docker/dev"
+      - "/docker/production"
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "00:00"
+      timezone: Asia/Tokyo
+    ignore:
+      - dependency-name: golang
+        versions:
+          - 1.15.7.pre.alpine
+          - 1.15.8.pre.alpine
+          - 1.16.0.pre.alpine
+          - 1.16.1.pre.alpine
+          - 1.16.2.pre.alpine
+    cooldown:
+      default-days: 7
+    groups:
+      golang:
+        patterns:
+          - "^golang"
+      atlas:
+        patterns:
+          - "^arigaio/atlas"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "00:00"
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7

@@ -1,8 +1,8 @@
 # syntax = docker/dockerfile:1
 
-FROM arigaio/atlas:0.36.2 AS atlas
+FROM arigaio/atlas:0.37.0 AS atlas
 
-FROM golang:1.25.0-alpine AS build
+FROM golang:1.25.1-alpine AS build
 
 RUN --mount=type=cache,target=/var/cache/apk \
   apk --update add tzdata git && \
@@ -18,5 +18,5 @@ RUN go mod download
 
 ENV GOFLAGS -buildvcs=false
 
-ENTRYPOINT ["go", "run", "github.com/cosmtrek/air"]
+ENTRYPOINT ["go", "tool", "air"]
 CMD ["-c", ".air.toml"]
