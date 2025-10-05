@@ -311,6 +311,41 @@ func TestCreateGamePlayLog(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
 
+			// 並列実行対応のため，テストケースごとにレコード単位で削除
+			t.Cleanup(func() {
+				if testCase.playLog != nil {
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", uuid.UUID(testCase.playLog.GetID())).
+						Delete(&schema.GamePlayLogTable{})
+				}
+				for _, log := range testCase.beforeGamePlayLogs {
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", log.ID).
+						Delete(&schema.GamePlayLogTable{})
+				}
+				for _, version := range testCase.gameVersions {
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", version.ID).
+						Delete(&schema.GameVersionTable2{})
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", version.GameImageID).
+						Delete(&schema.GameImageTable2{})
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", version.GameVideoID).
+						Delete(&schema.GameVideoTable2{})
+				}
+				for _, game := range testCase.games {
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", game.ID).
+						Delete(&schema.GameTable2{})
+				}
+				for _, edition := range testCase.editions {
+					db.Session(&gorm.Session{}).Unscoped().
+						Where("id = ?", edition.ID).
+						Delete(&schema.EditionTable{})
+				}
+			})
+
 			if len(testCase.games) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
