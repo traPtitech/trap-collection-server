@@ -314,35 +314,59 @@ func TestCreateGamePlayLog(t *testing.T) {
 
 			// 並列実行対応のため，テストケースごとにレコード単位で削除
 			t.Cleanup(func() {
+				var playLogIDs []uuid.UUID
 				if testCase.playLog != nil {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", uuid.UUID(testCase.playLog.GetID())).
-						Delete(&schema.GamePlayLogTable{})
+					playLogIDs = append(playLogIDs, uuid.UUID(testCase.playLog.GetID()))
 				}
 				for _, log := range testCase.beforeGamePlayLogs {
+					playLogIDs = append(playLogIDs, log.ID)
+				}
+
+				var versionIDs, imageIDs, videoIDs []uuid.UUID
+				for _, version := range testCase.gameVersions {
+					versionIDs = append(versionIDs, version.ID)
+					imageIDs = append(imageIDs, version.GameImageID)
+					videoIDs = append(videoIDs, version.GameVideoID)
+				}
+
+				var gameIDs []uuid.UUID
+				for _, game := range testCase.games {
+					gameIDs = append(gameIDs, game.ID)
+				}
+
+				var editionIDs []uuid.UUID
+				for _, edition := range testCase.editions {
+					editionIDs = append(editionIDs, edition.ID)
+				}
+
+				if len(playLogIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", log.ID).
+						Where("id IN ?", playLogIDs).
 						Delete(&schema.GamePlayLogTable{})
 				}
-				for _, version := range testCase.gameVersions {
+				if len(versionIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", version.ID).
+						Where("id IN ?", versionIDs).
 						Delete(&schema.GameVersionTable2{})
+				}
+				if len(imageIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", version.GameImageID).
+						Where("id IN ?", imageIDs).
 						Delete(&schema.GameImageTable2{})
+				}
+				if len(videoIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", version.GameVideoID).
+						Where("id IN ?", videoIDs).
 						Delete(&schema.GameVideoTable2{})
 				}
-				for _, game := range testCase.games {
+				if len(gameIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", game.ID).
+						Where("id IN ?", gameIDs).
 						Delete(&schema.GameTable2{})
 				}
-				for _, edition := range testCase.editions {
+				if len(editionIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
-						Where("id = ?", edition.ID).
+						Where("id IN ?", editionIDs).
 						Delete(&schema.EditionTable{})
 				}
 			})
@@ -366,30 +390,42 @@ func TestCreateGamePlayLog(t *testing.T) {
 			}
 
 			if len(testCase.gameVersions) != 0 {
+				// Collect all images and videos for batch creation
+				var images []schema.GameImageTable2
+				var videos []schema.GameVideoTable2
+
 				for _, version := range testCase.gameVersions {
-					image := schema.GameImageTable2{
+					images = append(images, schema.GameImageTable2{
 						ID:          version.GameImageID,
 						GameID:      version.GameID,
 						ImageTypeID: gameImageType.ID,
 						CreatedAt:   now,
-					}
-					err := db.Session(&gorm.Session{}).Create(&image).Error
-					if err != nil {
-						t.Fatalf("create game image: %+v\n", err)
-					}
-
-					video := schema.GameVideoTable2{
+					})
+					videos = append(videos, schema.GameVideoTable2{
 						ID:          version.GameVideoID,
 						GameID:      version.GameID,
 						VideoTypeID: gameVideoType.ID,
 						CreatedAt:   now,
-					}
-					err = db.Session(&gorm.Session{}).Create(&video).Error
+					})
+				}
+
+				// Batch create images
+				if len(images) > 0 {
+					err := db.Session(&gorm.Session{}).Create(&images).Error
 					if err != nil {
-						t.Fatalf("create game video: %+v\n", err)
+						t.Fatalf("create game images: %+v\n", err)
 					}
 				}
 
+				// Batch create videos
+				if len(videos) > 0 {
+					err := db.Session(&gorm.Session{}).Create(&videos).Error
+					if err != nil {
+						t.Fatalf("create game videos: %+v\n", err)
+					}
+				}
+
+				// Create versions
 				err := db.
 					Session(&gorm.Session{}).
 					Create(&testCase.gameVersions).Error
