@@ -2,9 +2,12 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -23,9 +26,40 @@ func NewGamePlayLogV2(db *DB) *GamePlayLogV2 {
 	}
 }
 
-func (g *GamePlayLogV2) CreateGamePlayLog(_ context.Context, _ *domain.GamePlayLog) error {
-	// TODO: interfaceのコメントを参考に実装を行う
-	panic("not implemented")
+func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.GamePlayLog) error {
+
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	var endTime sql.NullTime
+	if playLog.GetEndTime() != nil {
+		endTime = sql.NullTime{
+			Time:  *playLog.GetEndTime(),
+			Valid: true,
+		}
+	}
+
+	gamePlayLogTable := schema.GamePlayLogTable{
+		ID:            uuid.UUID(playLog.GetID()),
+		EditionID:     uuid.UUID(playLog.GetEditionID()),
+		GameID:        uuid.UUID(playLog.GetGameID()),
+		GameVersionID: uuid.UUID(playLog.GetGameVersionID()),
+		StartTime:     playLog.GetStartTime(),
+		EndTime:       endTime,
+		CreatedAt:     playLog.GetCreatedAt(),
+		UpdatedAt:     playLog.GetUpdatedAt(),
+	}
+
+	err = db.Create(&gamePlayLogTable).Error
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
+			return repository.ErrDuplicatedUniqueKey
+		}
+		return fmt.Errorf("create game play log: %w", err)
+	}
+	return nil
 }
 
 func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) (*domain.GamePlayLog, error) {
@@ -67,12 +101,12 @@ func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.Gam
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, _ values.GameID, _ *values.GameVersionID, _ time.Time, _ time.Time) (*domain.GamePlayStats, error) {
+func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, _ values.GameID, _ *values.GameVersionID, _, _ time.Time) (*domain.GamePlayStats, error) {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetEditionPlayStats(_ context.Context, _ values.LauncherVersionID, _ time.Time, _ time.Time) (*domain.EditionPlayStats, error) {
+func (g *GamePlayLogV2) GetEditionPlayStats(_ context.Context, _ values.LauncherVersionID, _, _ time.Time) (*domain.EditionPlayStats, error) {
 	// TODO: interfaceのコメントを参考に実装を行う
 	panic("not implemented")
 }
