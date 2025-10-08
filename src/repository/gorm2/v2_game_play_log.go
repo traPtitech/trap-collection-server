@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	"fmt"
 
 	"github.com/google/uuid"
 	"database/sql"
@@ -79,6 +80,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
+		err := fmt.Errorf("%s", "DB接続の取得に失敗")
 		return nil, err
 	}
 
@@ -104,11 +106,13 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 		Order("start_time").
 		Scan(&hourlyResults).Error
 	if err != nil {
+		err := fmt.Errorf("%s", "時間ごとのプレイ統計の取得に失敗")
 		return nil, err
 	}
 
 	jst, err := time.LoadLocation("Asia/Tokyo") //time.ParseInLocationで使うタイムゾーンを示すtime.Location型を作成
 	if err != nil {
+		err := fmt.Errorf("%s", "JSTのロケーションの取得に失敗")
 		return nil, err
 	}
 
@@ -120,6 +124,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	for _, result := range hourlyResults {
 		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", result.StartTime, jst) //jstにパース
 		if err != nil {
+			err := fmt.Errorf("%s", "時間ごとのプレイ統計の開始時間のJSTへのパースに失敗")
 			return nil, err
 		}
 
