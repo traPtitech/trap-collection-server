@@ -104,7 +104,6 @@ func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.Gam
 }
 
 func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
-	// TODO: interfaceのコメントを参考に実装を行う
 	// GetGamePlayStats
 	// 指定されたゲームと期間のプレイ統計を取得する。
 	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。

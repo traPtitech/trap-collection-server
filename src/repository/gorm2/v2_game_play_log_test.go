@@ -661,7 +661,7 @@ func TestGetGamePlayStats(t *testing.T) {
 	db, err := testDB.getDB(ctx)
 	require.NoError(t, err)
 
-	testGameID := values.NewGameID()
+	unExistGameID := values.NewGameID()
 
 	edition1 := schema.EditionTable{
 		ID:   uuid.New(),
@@ -761,7 +761,7 @@ func TestGetGamePlayStats(t *testing.T) {
 		UpdatedAt:     time.Now(),
 	}
 
-	// gamePlayLog5: 18時台のまだ終わっていないログ
+	// gamePlayLog5: 18時台のまだ終わっていないログ プレイ中のログ
 	startTime5 := baseTime.Add(18 * time.Hour) // 2025-09-03 18:00:00
 	gamePlayLog5 := schema.GamePlayLogTable{
 		ID:            uuid.New(),
@@ -883,6 +883,26 @@ func TestGetGamePlayStats(t *testing.T) {
 			isErr: false,
 		},
 		{
+			description:   "時間を跨ぐようなログの取得",
+			gameID:        values.GameID(game1.ID),
+			gameVersionID: &gameVersion1ID,
+			start:         baseTime.Add(14*time.Hour + 30*time.Minute), // 2025-10-03 14:30:00
+			end:           baseTime.Add(16 * time.Hour),                // 2025-10-03 16:00:00
+			expectedStats: domain.NewGamePlayStats(
+				values.GameID(game1.ID),
+				2,
+				30*time.Minute,
+				[]*domain.HourlyPlayStats{
+					domain.NewHourlyPlayStats(
+						baseTime.Add(15*time.Hour), // 15時台の開始時刻
+						2,                          // 15時台のプレイ回数
+						30*time.Minute,             // 15時台のプレイ時間
+					),
+				},
+			),
+			isErr: false,
+		},
+		{
 			description:   "バージョンID無しで取得 (全バージョン集計)",
 			gameID:        values.GameID(game1.ID),
 			gameVersionID: nil,
@@ -919,12 +939,12 @@ func TestGetGamePlayStats(t *testing.T) {
 		},
 		{
 			description:   "存在しないゲームIDで取得",
-			gameID:        testGameID,
+			gameID:        unExistGameID,
 			gameVersionID: &gameVersion1ID,
 			start:         baseTime,
 			end:           baseTime.Add(24 * time.Hour),
 			expectedStats: domain.NewGamePlayStats(
-				testGameID,
+				unExistGameID,
 				0,
 				0,
 				[]*domain.HourlyPlayStats{},
