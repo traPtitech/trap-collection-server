@@ -26,7 +26,7 @@ func TestPostGamePlayLogStart(t *testing.T) {
 	editionID := values.NewLauncherVersionID()
 	gameID := values.NewGameID()
 	gameVersionID := values.NewGameVersionID()
-	gameStartTime := time.Now().Round(0) // monotonic clockによる差分を無くして比較しやすくする
+	gameStartTime := time.Now()
 	reqBody := openapi.PostGamePlayLogStartRequest{
 		GameVersionID: openapi.GameVersionID(gameVersionID),
 		EditionID:     openapi.EditionID(editionID),
@@ -106,7 +106,7 @@ func TestPostGamePlayLogStart(t *testing.T) {
 					testCase.editionID,
 					testCase.gameID,
 					gameVersionID,
-					testCase.reqBody.StartTime,
+					gomock.Cond(func(startTime time.Time) bool { return startTime.Sub(testCase.reqBody.StartTime).Abs() < time.Second }), // JSONのエンコードとデコードで精度がずれるため
 				).
 				Return(testCase.playLog, testCase.CreatePlayLogErr)
 
