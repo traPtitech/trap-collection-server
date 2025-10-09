@@ -903,6 +903,26 @@ func TestGetGamePlayStats(t *testing.T) {
 			isErr: false,
 		},
 		{
+			description:   "endtimeがNULLでスタートが指定時間より前のログの取得",
+			gameID:        values.GameID(game1.ID),
+			gameVersionID: &gameVersion1ID,
+			start:         baseTime.Add(18*time.Hour + 30*time.Minute), // 2025-10-03 18:30:00
+			end:           baseTime.Add(18*time.Hour + 50*time.Minute), // 2025-10-03 18:50:00
+			expectedStats: domain.NewGamePlayStats(
+				values.GameID(game1.ID),
+				1,
+				50*time.Minute,
+				[]*domain.HourlyPlayStats{
+					domain.NewHourlyPlayStats(
+						baseTime.Add(18*time.Hour), // 18時台の開始時刻
+						1,                          // 18時台のプレイ回数
+						50*time.Minute,             // 18時台のプレイ時間
+					),
+				},
+			),
+			isErr: false,
+		},
+		{
 			description:   "バージョンID無しで取得 (全バージョン集計)",
 			gameID:        values.GameID(game1.ID),
 			gameVersionID: nil,
