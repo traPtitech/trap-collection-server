@@ -98,12 +98,73 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 
 func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.GamePlayLogID, _ time.Time) error {
 	// TODO: interfaceのコメントを参考に実装を行う
+
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, _ values.GameID, _ *values.GameVersionID, _, _ time.Time) (*domain.GamePlayStats, error) {
-	// TODO: interfaceのコメントを参考に実装を行う
-	panic("not implemented")
+func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
+	// 指定されたゲームと期間のプレイ統計を取得する。
+	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
+	// start〜endの期間でフィルタリングする。
+	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
+	// ログはプレイ中でも含めたい カウント,プレイ時間にも含める
+
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		err := fmt.Errorf("%s", "DB接続の取得に失敗")
+		return nil, err
+	}
+
+	//Statsを取得して変数に入れる endtimeがNULLのものも含める
+	stats := db.Where("game_id = ?", uuid.UUID(gameID)).
+		Where("(start_time < ? AND end_time > ?) OR (start_time < ? AND end_time IS NULL)", end, start, end)
+
+	//gameVersionIDがnilでなければ絞り込み
+	if gameVersionID != nil {
+		stats = stats.Where("game_version_id = ?", uuid.UUID(*gameVersionID))
+	}
+
+	type hourlyResult struct {
+		HourTime  time.Time
+		PlayCount int           //時間ごとのプレイ回数 あとで合計をとる
+		PlayTime  sql.NullInt64 //時間ごとのプレイ時間(秒) あとでtime.Durationに変換して合計をとる
+	}
+	var hourlyResults []*hourlyResult //時間ごとのプレイ統計を入れるスライス
+	//日付と時間を別々に取得して、start_timeを計算 play_countを計算 play_timeはifNullで計算
+	err = stats.Model(&schema.GamePlayLogTable{}).
+		Select("DATE_ADD(DATE(start_time), INTERVAL HOUR(start_time) HOUR) as hour_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
+		Group("hour_time").
+		Order("hour_time").
+		Scan(&hourlyResults).Error
+	if err != nil {
+		err := fmt.Errorf("%s", "時間ごとのプレイ統計の取得に失敗")
+		return nil, err
+	}
+
+	//合計回数と時間も出す
+	var totalPlayCount int          // 全体のプレイ回数
+	var totalPlayTime time.Duration // 全体のプレイ時間
+	hourlyStats := make([]*domain.HourlyPlayStats, 0, len(hourlyResults))
+
+	for _, result := range hourlyResults {
+		playTime := time.Duration(result.PlayTime.Int64) * time.Second //time.Durationはナノ秒単位なので秒に変換
+		totalPlayCount += result.PlayCount                             //プレイ回数合計を計算
+		totalPlayTime += playTime                                      //プレイ時間合計を計算
+
+		stats := domain.NewHourlyPlayStats(
+			result.HourTime,
+			result.PlayCount,
+			playTime,
+		)
+		hourlyStats = append(hourlyStats, stats)
+	}
+
+	return domain.NewGamePlayStats(
+		gameID,
+		totalPlayCount,
+		totalPlayTime,
+		hourlyStats), nil
+
 }
 
 func (g *GamePlayLogV2) GetEditionPlayStats(_ context.Context, _ values.LauncherVersionID, _, _ time.Time) (*domain.EditionPlayStats, error) {
