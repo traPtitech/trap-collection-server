@@ -106,13 +106,11 @@ func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.Gam
 }
 
 func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
-	// GetGamePlayStats
 	// 指定されたゲームと期間のプレイ統計を取得する。
 	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
 	// start〜endの期間でフィルタリングする。
 	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
-	// ログはプレイ中でも含めたい カウントに含め プレイ時間にも含める
-	// 時間はdb.goみたらAsiaだったのでJSTに揃える
+	// ログはプレイ中でも含めたい カウント,プレイ時間にも含める
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
@@ -130,14 +128,14 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	}
 
 	type hourlyResult struct {
-		StartTime string        //DATE_FORMATの形的にstringでないと受け取れない
+		StartTime time.Time     //DATE_FORMATの形的にstringでないと受け取れない
 		PlayCount int           //時間ごとのプレイ回数 あとで合計をとる
 		PlayTime  sql.NullInt64 //時間ごとのプレイ時間(秒) あとでtime.Durationに変換して合計をとる
 	}
 	var hourlyResults []*hourlyResult //時間ごとのプレイ統計を入れるスライス
-	//日付を時間単位で丸め込み play_countを計算 play_timeはifNullで計算
+	//日付と時間を別々に取得して、start_timeを計算 play_countを計算 play_timeはifNullで計算
 	err = stats.Model(&schema.GamePlayLogTable{}).
-		Select("DATE_FORMAT(start_time, '%Y-%m-%d %H:00:00') as start_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
+		Select("DATE_ADD(DATE(start_time), INTERVAL HOUR(start_time) HOUR) as start_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
 		Group("DATE_FORMAT(start_time, '%Y-%m-%d %H:00:00')").
 		Order("start_time").
 		Scan(&hourlyResults).Error
@@ -146,30 +144,18 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 		return nil, err
 	}
 
-	jst, err := time.LoadLocation("Asia/Tokyo") //time.ParseInLocationで使うタイムゾーンを示すtime.Location型を作成
-	if err != nil {
-		err := fmt.Errorf("%s", "JSTのロケーションの取得に失敗")
-		return nil, err
-	}
-
-	//forで時間ごとの統計をtime.Timeに変換して、hourlyStatsを要求されている形に整理 ついでに合計回数と時間も出す
+	//合計回数と時間も出す
 	var totalPlayCount int          // 全体のプレイ回数
 	var totalPlayTime time.Duration // 全体のプレイ時間
 	hourlyStats := make([]*domain.HourlyPlayStats, 0, len(hourlyResults))
 
 	for _, result := range hourlyResults {
-		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", result.StartTime, jst) //jstにパース
-		if err != nil {
-			err := fmt.Errorf("%s", "時間ごとのプレイ統計の開始時間のJSTへのパースに失敗")
-			return nil, err
-		}
-
 		playTime := time.Duration(result.PlayTime.Int64) * time.Second //time.Durationはナノ秒単位なので秒に変換
-		totalPlayCount += result.PlayCount                             //合計を計算
-		totalPlayTime += playTime                                      //合計を計算
+		totalPlayCount += result.PlayCount                             //プレイ回数合計を計算
+		totalPlayTime += playTime                                      //プレイ時間合計を計算
 
 		stats := domain.NewHourlyPlayStats(
-			startTime,
+			result.StartTime,
 			result.PlayCount,
 			playTime,
 		)
