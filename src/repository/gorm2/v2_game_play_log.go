@@ -120,7 +120,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 
 	//Statsを取得して変数に入れる endtimeがNULLのものも含める
 	stats := db.Where("game_id = ?", uuid.UUID(gameID)).
-		Where("(start_time < ? AND end_time > ?) OR (start_time >= ? AND start_time < ? AND end_time IS NULL)", end, start, start, end)
+		Where("(start_time < ? AND end_time > ?) OR (start_time < ? AND end_time IS NULL)", end, start, end)
 
 	//gameVersionIDがnilでなければ絞り込み
 	if gameVersionID != nil {
