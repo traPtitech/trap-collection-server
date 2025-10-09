@@ -3,11 +3,11 @@ package gorm2
 import (
 	"context"
 	"errors"
-	"time"
 	"fmt"
+	"time"
 
-	"github.com/google/uuid"
 	"database/sql"
+	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -66,6 +66,7 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 
 func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(_ context.Context, _ values.GamePlayLogID, _ time.Time) error {
 	// TODO: interfaceのコメントを参考に実装を行う
+
 	panic("not implemented")
 }
 
