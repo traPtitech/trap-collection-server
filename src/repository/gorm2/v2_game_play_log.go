@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
