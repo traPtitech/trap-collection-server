@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.25.0-alpine AS build
+FROM golang:1.25.1-alpine AS build
 
 RUN apk add --update --no-cache git
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/cache \
   go generate ./... \
   && go build -o collection -ldflags "-s -w"
 
-FROM arigaio/atlas:0.36.2 AS atlas
+FROM arigaio/atlas:0.37.0 AS atlas
 
 FROM alpine:3.22.1
 

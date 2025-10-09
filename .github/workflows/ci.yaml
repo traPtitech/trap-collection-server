@@ -15,56 +15,59 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: go.mod
       - run: go build -o collection
   test:
     name: Test
     runs-on: ubuntu-latest
+    needs: build
+    if: ${{ always() }}
     services:
       dind:
         image: docker:23.0-rc-dind-rootless
         ports:
           - 2375:2375
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: go.mod
 
       - name: Setup Atlas
-        uses: ariga/setup-atlas@v0
+        uses: ariga/setup-atlas@4240bd74ba9f13319a21de2b6e497f2b6d184d76 # v0
 
       - run: go generate ./...
       - run: mkdir -p /tmp/coverage
       - name: Run test
         run: go test ./src/... -v -coverprofile=/tmp/coverage/coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5.5.0
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage.txt
           path: /tmp/coverage/coverage.txt
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       # go generate用に、golangci-lintの前にGoのinstallをする
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version-file: go.mod
       - run: go generate ./...
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.8
+        uses: reviewdog/action-golangci-lint@f9bba13753278f6a73b27a56a3ffb1bfda90ed71 # v2.8.0
         with:
           go_version_file: go.mod
-          reporter: github-pr-check
+          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-review' || 'github-check' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_level: any
 
@@ -88,28 +91,53 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
       - name: Setup Atlas
-        uses: ariga/setup-atlas@v0
+        uses: ariga/setup-atlas@4240bd74ba9f13319a21de2b6e497f2b6d184d76 # v0
 
       - name: Atlas Lint
         run: |
           set +e
-          LINT_OUTPUT=$(atlas migrate lint --env ci 2>&1)
+
+          LINT_OUTPUT="$(atlas migrate lint --env ci 2>&1)"
           LINT_EXIT_CODE=$?
+
+          if [ "$LINT_EXIT_CODE" -eq 0 ]; then
+            STATUS_ICON="✅"
+          else
+            STATUS_ICON="✘"
+          fi
+
+          {
+            echo "Migrate lint ${STATUS_ICON}"
+            echo "<details>"
+            echo "<summary>Lint output</summary>"
+            echo
+            echo '```text'
+            printf '%s\n' "$LINT_OUTPUT"
+            echo '```'
+            echo
+            echo "</details>"
+          } > body.txt
+
+          # Exit early when not a pull_request event (e.g., push) since we cannot comment on a PR
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            exit $LINT_EXIT_CODE
+          fi
+
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body "Migrate lint
-            <details>
-            <summary>Lint output</summary>
+            --edit-last --create-if-none \
+            --body-file body.txt
+          GH_COMMENT_EXIT=$?
 
-            \`\`\`text
-            $LINT_OUTPUT
-            \`\`\`
+          if [ $GH_COMMENT_EXIT -ne 0 ]; then
+            echo "Failed to post PR comment" >&2
+            exit 1
+          fi
 
-            </details>"
           exit $LINT_EXIT_CODE
         shell: bash
         env:
@@ -119,9 +147,9 @@ jobs:
     name: Spectral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.13
+        uses: stoplightio/spectral-action@6416fd018ae38e60136775066eb3e98172143141 # v0.8.13
         with:
           file_glob: docs/openapi/*.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -130,10 +158,10 @@ jobs:
     name: tbls
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run tbls
         run: docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
-      
+
       - name: Check diff
         run: |
           if [[ -n $(git status --porcelain) ]]; then
