@@ -828,7 +828,7 @@ func TestGetGamePlayStats(t *testing.T) {
 
 	testCases := []test{
 		{
-			description:   "gameVersion1を指定して取得",
+			description:   "普通の取得",
 			gameID:        values.GameID(game1.ID),
 			gameVersionID: &gameVersion1ID,
 			start:         baseTime.Add(15 * time.Hour), // 2025-10-03 15:00:00

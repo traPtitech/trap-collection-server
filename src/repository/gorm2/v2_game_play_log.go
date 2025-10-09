@@ -128,16 +128,16 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	}
 
 	type hourlyResult struct {
-		StartTime time.Time
+		HourTime time.Time
 		PlayCount int           //時間ごとのプレイ回数 あとで合計をとる
 		PlayTime  sql.NullInt64 //時間ごとのプレイ時間(秒) あとでtime.Durationに変換して合計をとる
 	}
 	var hourlyResults []*hourlyResult //時間ごとのプレイ統計を入れるスライス
 	//日付と時間を別々に取得して、start_timeを計算 play_countを計算 play_timeはifNullで計算
 	err = stats.Model(&schema.GamePlayLogTable{}).
-		Select("DATE_ADD(DATE(start_time), INTERVAL HOUR(start_time) HOUR) as start_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
-		Group("DATE_FORMAT(start_time, '%Y-%m-%d %H:00:00')").
-		Order("start_time").
+		Select("DATE_ADD(DATE(start_time), INTERVAL HOUR(start_time) HOUR) as hour_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
+		Group("hour_time").
+		Order("hour_time").
 		Scan(&hourlyResults).Error
 	if err != nil {
 		err := fmt.Errorf("%s", "時間ごとのプレイ統計の取得に失敗")
@@ -155,7 +155,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 		totalPlayTime += playTime                                      //プレイ時間合計を計算
 
 		stats := domain.NewHourlyPlayStats(
-			result.StartTime,
+			result.HourTime,
 			result.PlayCount,
 			playTime,
 		)
