@@ -128,7 +128,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	}
 
 	type hourlyResult struct {
-		StartTime time.Time     //DATE_FORMATの形的にstringでないと受け取れない
+		StartTime time.Time
 		PlayCount int           //時間ごとのプレイ回数 あとで合計をとる
 		PlayTime  sql.NullInt64 //時間ごとのプレイ時間(秒) あとでtime.Durationに変換して合計をとる
 	}
