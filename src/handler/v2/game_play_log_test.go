@@ -37,53 +37,67 @@ func TestPostGamePlayLogStart(t *testing.T) {
 	playLogID := values.NewGamePlayLogID()
 
 	testCases := map[string]struct {
-		editionID        values.LauncherVersionID
-		gameID           values.GameID
-		reqBody          openapi.PostGamePlayLogStartRequest
-		playLog          *domain.GamePlayLog
-		CreatePlayLogErr error
-		isError          bool
-		statusCode       int
-		resBody          openapi.PostGamePlayLogStartResponse
+		editionID            values.LauncherVersionID
+		gameID               values.GameID
+		invalidReqBody       bool
+		reqBody              openapi.PostGamePlayLogStartRequest
+		executeCreatePlayLog bool
+		playLog              *domain.GamePlayLog
+		CreatePlayLogErr     error
+		isError              bool
+		statusCode           int
+		resBody              openapi.PostGamePlayLogStartResponse
 	}{
+		"request bodyが不正なのでエラー": {
+			editionID:      editionID,
+			gameID:         gameID,
+			invalidReqBody: true,
+			isError:        true,
+			statusCode:     http.StatusBadRequest,
+		},
 		"CreatePlayLogがErrInvalidEditionなので404": {
-			editionID:        editionID,
-			gameID:           gameID,
-			reqBody:          reqBody,
-			CreatePlayLogErr: service.ErrInvalidEdition,
-			isError:          true,
-			statusCode:       http.StatusNotFound,
+			editionID:            editionID,
+			gameID:               gameID,
+			reqBody:              reqBody,
+			executeCreatePlayLog: true,
+			CreatePlayLogErr:     service.ErrInvalidEdition,
+			isError:              true,
+			statusCode:           http.StatusNotFound,
 		},
 		"CreatePlayLogがErrInvalidGameなので404": {
-			editionID:        editionID,
-			gameID:           gameID,
-			reqBody:          reqBody,
-			CreatePlayLogErr: service.ErrInvalidGame,
-			isError:          true,
-			statusCode:       http.StatusNotFound,
+			editionID:            editionID,
+			gameID:               gameID,
+			reqBody:              reqBody,
+			executeCreatePlayLog: true,
+			CreatePlayLogErr:     service.ErrInvalidGame,
+			isError:              true,
+			statusCode:           http.StatusNotFound,
 		},
 		"CreatePlayLogがErrInvalidGameVersionなので404": {
-			editionID:        editionID,
-			gameID:           gameID,
-			reqBody:          reqBody,
-			CreatePlayLogErr: service.ErrInvalidGameVersion,
-			isError:          true,
-			statusCode:       http.StatusNotFound,
+			editionID:            editionID,
+			gameID:               gameID,
+			reqBody:              reqBody,
+			executeCreatePlayLog: true,
+			CreatePlayLogErr:     service.ErrInvalidGameVersion,
+			isError:              true,
+			statusCode:           http.StatusNotFound,
 		},
 		"CreatePlayLogがその他のエラーなので500": {
-			editionID:        editionID,
-			gameID:           gameID,
-			reqBody:          reqBody,
-			CreatePlayLogErr: assert.AnError,
-			isError:          true,
-			statusCode:       http.StatusInternalServerError,
+			editionID:            editionID,
+			gameID:               gameID,
+			reqBody:              reqBody,
+			executeCreatePlayLog: true,
+			CreatePlayLogErr:     assert.AnError,
+			isError:              true,
+			statusCode:           http.StatusInternalServerError,
 		},
 		"CreatePlayLogが成功するので201": {
-			editionID:  editionID,
-			gameID:     gameID,
-			reqBody:    reqBody,
-			playLog:    domain.NewGamePlayLog(playLogID, editionID, gameID, gameVersionID, gameStartTime, nil, time.Now(), time.Now()),
-			statusCode: http.StatusCreated,
+			editionID:            editionID,
+			gameID:               gameID,
+			reqBody:              reqBody,
+			executeCreatePlayLog: true,
+			playLog:              domain.NewGamePlayLog(playLogID, editionID, gameID, gameVersionID, gameStartTime, nil, time.Now(), time.Now()),
+			statusCode:           http.StatusCreated,
 			resBody: openapi.PostGamePlayLogStartResponse{
 				PlayLogID: openapi.GamePlayLogID(playLogID),
 			},
@@ -99,21 +113,29 @@ func TestPostGamePlayLogStart(t *testing.T) {
 
 			gameVersionID := values.NewGameVersionIDFromUUID(testCase.reqBody.GameVersionID)
 
-			serviceMock.
-				EXPECT().
-				CreatePlayLog(
-					gomock.Any(),
-					testCase.editionID,
-					testCase.gameID,
-					gameVersionID,
-					gomock.Cond(func(startTime time.Time) bool { return startTime.Sub(testCase.reqBody.StartTime).Abs() < time.Second }), // JSONのエンコードとデコードで精度がずれるため
-				).
-				Return(testCase.playLog, testCase.CreatePlayLogErr)
+			if testCase.executeCreatePlayLog {
+				serviceMock.
+					EXPECT().
+					CreatePlayLog(
+						gomock.Any(),
+						testCase.editionID,
+						testCase.gameID,
+						gameVersionID,
+						gomock.Cond(func(startTime time.Time) bool { return startTime.Sub(testCase.reqBody.StartTime).Abs() < time.Second }), // JSONのエンコードとデコードで精度がずれるため
+					).
+					Return(testCase.playLog, testCase.CreatePlayLogErr)
+			}
 
-			c, _, rec := setupTestRequest(t, http.MethodPost,
-				fmt.Sprintf("/editions/%s/games/%s/plays/start",
-					uuid.UUID(testCase.editionID).String(), uuid.UUID(testCase.gameID).String()),
-				withJSONBody(t, testCase.reqBody))
+			var body bodyOpt
+			if testCase.invalidReqBody {
+				body = withStringBody(t, "invalid")
+			} else {
+				body = withJSONBody(t, testCase.reqBody)
+			}
+
+			url := fmt.Sprintf("/editions/%s/games/%s/plays/start",
+				uuid.UUID(testCase.editionID).String(), uuid.UUID(testCase.gameID).String())
+			c, _, rec := setupTestRequest(t, http.MethodPost, url, body)
 
 			err := h.PostGamePlayLogStart(c, openapi.EditionIDInPath(testCase.editionID), openapi.GameIDInPath(testCase.gameID))
 
