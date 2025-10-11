@@ -104,6 +104,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	// 空のpathのgroupを作成し、oapiMiddleware.OapiRequestValidatorを設定する
 	apiGroup := e.Group("")
 	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
+		Skipper: fileUploadSkipper,
 		Options: openapi3filter.Options{
 			AuthenticationFunc: api.Checker.check,
 			// validate時にデータがメモリに乗るため、
@@ -113,6 +114,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 			ExcludeResponseBody: true,
 		},
 	}))
+	apiGroup.Use(api.fileUploadAuthMiddleware)
 	openapi.RegisterHandlersWithBaseURL(apiGroup, api, "/api/v2")
 
 	return nil
