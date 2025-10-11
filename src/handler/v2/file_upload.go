@@ -30,11 +30,8 @@ func isFileUploadRequest(c echo.Context) bool {
 	}
 
 	reqPath := path.Clean(c.Request().URL.Path)
-	if slices.Contains(targetPaths, reqPath) {
-		return true
-	}
 
-	return false
+	return slices.Contains(targetPaths, reqPath)
 }
 
 // fileUploadSkipper はファイルをアップロードするエンドポイントについてバリデーションをスキップする。
@@ -57,7 +54,7 @@ func (checker *Checker) fileUploadAuthMiddleware(next echo.HandlerFunc) echo.Han
 
 		// ref: [github.com/oapi-codegen/echo-middleware.GetEchoContext]
 		// ここで echo.Context を context.Context に詰め込んでおかないと、GameMaintainerAuthChecker 内で取得できない。
-		ctx := context.WithValue(c.Request().Context(), echomiddleware.EchoContextKey, c)
+		ctx := context.WithValue(c.Request().Context(), echomiddleware.EchoContextKey, c) //nolint:staticcheck
 
 		err := checker.GameMaintainerAuthChecker(ctx, nil)
 		if err != nil {
