@@ -42,7 +42,7 @@ updates:
     groups:
       golang:
         patterns:
-          - "golang*"
+          - "golang"
       atlas:
         patterns:
           - "arigaio/atlas*"
