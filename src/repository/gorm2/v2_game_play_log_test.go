@@ -542,12 +542,13 @@ func TestGetGamePlayLog(t *testing.T) {
 
 	t.Cleanup(func() {
 		ctx := context.Background()
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog2).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameVersion1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameVideo1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameImage1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&game1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&edition1).Error)
 	})
 
 	type test struct {
@@ -836,12 +837,16 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	t.Cleanup(func() {
 		ctx := context.Background()
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog2).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog3).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog4).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gamePlayLog5).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameVersion1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameVideo1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&gameImage1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&game1).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&edition1).Error)
 	})
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
