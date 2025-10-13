@@ -705,10 +705,144 @@ func TestGetGamePlayStats(t *testing.T) {
 }
 
 func TestGetEditionPlayStats(t *testing.T) {
-	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+
+	edition1 := schema.EditionTable{
+		ID:        uuid.New(),
+		Name:      "edition1 for GetEditionPlayStats",
+		CreatedAt: time.Now(),
+	}
+
+	unExistEditionID := values.NewLauncherVersionID()
+
+	game1 := schema.GameTable2{
+		ID:               uuid.New(),
+		Name:             "Test Game 1",
+		Description:      "Test Description",
+		VisibilityTypeID: 1,
+		CreatedAt:        time.Now(),
+	}
+
+	gameImage1 := schema.GameImageTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		ImageTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+
+	gameVideo1 := schema.GameVideoTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		VideoTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+
+	gameVersion1 := schema.GameVersionTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		GameImageID: gameImage1.ID,
+		GameVideoID: gameVideo1.ID,
+		Name:        "Version 1.0",
+		Description: "First version",
+		CreatedAt:   time.Now(),
+	}
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	require.NoError(t, err)
+	baseTime := time.Date(2025, 10, 1, 0, 0, 0, 0, jst)
+	// gamePlayLog1: 13時台の1つ目のログ 15分
+	startTime1 := baseTime.Add(13*time.Hour + 10*time.Minute)
+	endTime1 := startTime1.Add(15 * time.Minute)
+	gamePlayLog1 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime1,
+		EndTime:       sql.NullTime{Time: endTime1, Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog2: 13時台の2つ目のログ 20分
+	startTime2 := baseTime.Add(13*time.Hour + 40*time.Minute)
+	endTime2 := startTime2.Add(20 * time.Minute)
+	gamePlayLog2 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime2,
+		EndTime:       sql.NullTime{Time: endTime2, Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog3: 14時台のログ 30分
+	startTime3 := baseTime.Add(14*time.Hour + 15*time.Minute)
+	endTime3 := startTime3.Add(30 * time.Minute)
+	gamePlayLog3 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime3,
+		EndTime:       sql.NullTime{Time: endTime3, Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog4: 15時台のログ 25分
+	startTime4 := baseTime.Add(15*time.Hour + 20*time.Minute)
+	endTime4 := startTime4.Add(25 * time.Minute)
+	gamePlayLog4 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime4,
+		EndTime:       sql.NullTime{Time: endTime4, Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog5: 16時台のまだ終わっていないログ（進行中）
+	startTime5 := baseTime.Add(16*time.Hour + 30*time.Minute)
+	gamePlayLog5 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime5,
+		EndTime:       sql.NullTime{Valid: false},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	require.NoError(t, db.Create(&edition1).Error)
+	require.NoError(t, db.Create(&game1).Error)
+	require.NoError(t, db.Create(&gameImage1).Error)
+	require.NoError(t, db.Create(&gameVideo1).Error)
+	require.NoError(t, db.Create(&gameVersion1).Error)
+	require.NoError(t, db.Create(&gamePlayLog1).Error)
+	require.NoError(t, db.Create(&gamePlayLog2).Error)
+	require.NoError(t, db.Create(&gamePlayLog3).Error)
+	require.NoError(t, db.Create(&gamePlayLog4).Error)
+	require.NoError(t, db.Create(&gamePlayLog5).Error)
+
+	t.Cleanup(func() {
+		ctx := context.Background()
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
+	})
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
@@ -722,15 +856,118 @@ func TestGetEditionPlayStats(t *testing.T) {
 		err           error
 	}
 
-	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description:   "TODO: add test case",
-			editionID:     values.NewLauncherVersionID(),
-			start:         time.Now().Add(-24 * time.Hour),
-			end:           time.Now(),
-			expectedStats: nil,
-			isErr:         false,
+			description: "正常に取得できる",
+			editionID:   values.LauncherVersionID(edition1.ID),
+			start:       baseTime.Add(13 * time.Hour),
+			end:         baseTime.Add(15 * time.Hour),
+			expectedStats: domain.NewEditionPlayStats(
+				values.LauncherVersionID(edition1.ID),
+				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				3,
+				65*time.Minute,
+				[]*domain.GamePlayStatsInEdition{
+					domain.NewGamePlayStatsInEdition(
+						values.GameID(game1.ID),
+						3,
+						65*time.Minute,
+					),
+				},
+				[]*domain.HourlyPlayStats{
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 13, 0, 0, 0, jst),
+						2,
+						35*time.Minute,
+					),
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 14, 0, 0, 0, jst),
+						1,
+						30*time.Minute,
+					),
+				},
+			),
+			isErr: false,
+		},
+		{
+			description: "プレイ中のログも含めて正常に取得できる",
+			editionID:   values.LauncherVersionID(edition1.ID),
+			start:       baseTime.Add(15 * time.Hour),
+			end:         baseTime.Add(17 * time.Hour),
+			expectedStats: domain.NewEditionPlayStats(
+				values.LauncherVersionID(edition1.ID),
+				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				2,
+				55*time.Minute,
+				[]*domain.GamePlayStatsInEdition{
+					domain.NewGamePlayStatsInEdition(
+						values.GameID(game1.ID),
+						2,
+						55*time.Minute,
+					),
+				},
+				[]*domain.HourlyPlayStats{
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 15, 0, 0, 0, jst),
+						1,
+						25*time.Minute,
+					),
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 16, 0, 0, 0, jst),
+						1,
+						30*time.Minute,
+					),
+				},
+			),
+			isErr: false,
+		},
+		{
+			description: "endTimeがNULLで進行中のプレイログの取得",
+			editionID:   values.LauncherVersionID(edition1.ID),
+			start:       baseTime.Add(16*time.Hour + 15*time.Minute),
+			end:         baseTime.Add(17*time.Hour + 15*time.Minute),
+			expectedStats: domain.NewEditionPlayStats(
+				values.LauncherVersionID(edition1.ID),
+				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				1,
+				45*time.Minute,
+				[]*domain.GamePlayStatsInEdition{
+					domain.NewGamePlayStatsInEdition(
+						values.GameID(game1.ID),
+						1,
+						45*time.Minute,
+					),
+				},
+				[]*domain.HourlyPlayStats{
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 16, 0, 0, 0, jst),
+						1,
+						30*time.Minute,
+					),
+					domain.NewHourlyPlayStats(
+						time.Date(2025, 10, 1, 17, 0, 0, 0, jst),
+						0,
+						15*time.Minute,
+					),
+				},
+			),
+			isErr: false,
+		},
+		{
+			description: "存在しないeditionIDで取得しようとするとErrRecordNotFound",
+			editionID:   unExistEditionID,
+			start:       baseTime,
+			end:         baseTime.Add(24 * time.Hour),
+			expectedStats: domain.NewEditionPlayStats(
+				unExistEditionID,
+				values.NewLauncherVersionName(""),
+				0,
+				0,
+				[]*domain.GamePlayStatsInEdition{},
+				[]*domain.HourlyPlayStats{},
+			),
+			isErr: true,
+			err:   repository.ErrRecordNotFound,
 		},
 	}
 
@@ -739,14 +976,40 @@ func TestGetEditionPlayStats(t *testing.T) {
 			stats, err := gamePlayLogRepository.GetEditionPlayStats(ctx, testCase.editionID, testCase.start, testCase.end)
 
 			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else {
-					assert.ErrorIs(t, err, testCase.err)
+				assert.Error(t, err)
+				if testCase.err != nil {
+					assert.Equal(t, testCase.err, err)
 				}
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, testCase.expectedStats, stats)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.NotNil(t, stats)
+
+			assert.Equal(t, testCase.expectedStats.GetEditionID(), stats.GetEditionID())
+			assert.Equal(t, testCase.expectedStats.GetEditionName(), stats.GetEditionName())
+
+			assert.Equal(t, testCase.expectedStats.GetTotalPlayCount(), stats.GetTotalPlayCount())
+			assert.Equal(t, testCase.expectedStats.GetTotalPlayTime(), stats.GetTotalPlayTime())
+
+			expectedGameStats := testCase.expectedStats.GetGameStats()
+			actualGameStats := stats.GetGameStats()
+			assert.Len(t, actualGameStats, len(expectedGameStats))
+
+			for i, expectedGameStat := range expectedGameStats {
+				assert.Equal(t, expectedGameStat.GetGameID(), actualGameStats[i].GetGameID())
+				assert.Equal(t, expectedGameStat.GetPlayCount(), actualGameStats[i].GetPlayCount())
+				assert.Equal(t, expectedGameStat.GetPlayTime(), actualGameStats[i].GetPlayTime())
+			}
+
+			expectedHourlyStats := testCase.expectedStats.GetHourlyStats()
+			actualHourlyStats := stats.GetHourlyStats()
+			assert.Len(t, actualHourlyStats, len(expectedHourlyStats))
+
+			for i, expectedHourlyStat := range expectedHourlyStats {
+				assert.Equal(t, expectedHourlyStat.GetStartTime(), actualHourlyStats[i].GetStartTime(), "HourlyStats[%d] start time mismatch", i)
+				assert.Equal(t, expectedHourlyStat.GetPlayCount(), actualHourlyStats[i].GetPlayCount(), "HourlyStats[%d] play count mismatch", i)
+				assert.Equal(t, expectedHourlyStat.GetPlayTime(), actualHourlyStats[i].GetPlayTime(), "HourlyStats[%d] play time mismatch", i)
 			}
 		})
 	}
