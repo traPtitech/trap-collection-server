@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -106,7 +107,133 @@ func (g *GamePlayLogV2) GetGamePlayStats(_ context.Context, _ values.GameID, _ *
 	panic("not implemented")
 }
 
-func (g *GamePlayLogV2) GetEditionPlayStats(_ context.Context, _ values.LauncherVersionID, _, _ time.Time) (*domain.EditionPlayStats, error) {
-	// TODO: interfaceのコメントを参考に実装を行う
-	panic("not implemented")
+func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get db: %w", err)
+	}
+
+	var edition schema.EditionTable
+	err = db.Where("id = ?", uuid.UUID(editionID)).First(&edition).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("get edition: %w", err)
+	}
+
+	var playLogs []schema.GamePlayLogTable
+	err = db.Model(&schema.GamePlayLogTable{}).
+		Where("edition_id = ?", uuid.UUID(editionID)).
+		Where("start_time <= ?", end).
+		Where("(end_time >= ? OR end_time IS NULL)", start).
+		Order("start_time").
+		Find(&playLogs).Error
+	if err != nil {
+		return nil, fmt.Errorf("get play logs: %w", err)
+	}
+
+	hourlyStatsMap := make(map[time.Time]struct {
+		playTime  time.Duration
+		playCount int
+	})
+
+	gameStatsMap := make(map[uuid.UUID]struct {
+		playTime  time.Duration
+		playCount int
+	})
+
+	var totalPlayCount int
+	var totalPlayTime time.Duration
+
+	for _, playLog := range playLogs {
+		logStart := playLog.StartTime
+		var logEnd time.Time
+		if playLog.EndTime.Valid {
+			logEnd = playLog.EndTime.Time
+		} else {
+			logEnd = end
+		}
+
+		// 検索期間内のプレイログを取得する
+		if logStart.Before(start) {
+			logStart = start
+		}
+		if logEnd.After(end) {
+			logEnd = end
+		}
+
+		playDuration := logEnd.Sub(logStart)
+		totalPlayCount++
+		totalPlayTime += playDuration
+
+		gameStats := gameStatsMap[playLog.GameID]
+		gameStats.playCount++
+		gameStats.playTime += playDuration
+		gameStatsMap[playLog.GameID] = gameStats
+
+		current := time.Date(logStart.Year(), logStart.Month(), logStart.Day(), logStart.Hour(), 0, 0, 0, logStart.Location())
+		isFirstHour := true
+
+		for current.Before(logEnd) {
+			hourStart := current
+			nextHour := current.Add(time.Hour)
+
+			playStart := logStart
+			if playStart.Before(hourStart) {
+				playStart = hourStart
+			}
+
+			playEnd := logEnd
+			if playEnd.After(nextHour) {
+				playEnd = nextHour
+			}
+
+			if playStart.Before(playEnd) {
+				playTimeInHour := playEnd.Sub(playStart)
+
+				hourlyStats := hourlyStatsMap[hourStart]
+				hourlyStats.playTime += playTimeInHour
+				if isFirstHour {
+					hourlyStats.playCount++
+				}
+				hourlyStatsMap[hourStart] = hourlyStats
+			}
+
+			current = nextHour
+			isFirstHour = false
+		}
+	}
+
+	hourlyStats := make([]*domain.HourlyPlayStats, 0, len(hourlyStatsMap))
+	for hourTime, stats := range hourlyStatsMap {
+		hourlyStats = append(hourlyStats, domain.NewHourlyPlayStats(
+			hourTime,
+			stats.playCount,
+			stats.playTime,
+		))
+	}
+
+	sort.Slice(hourlyStats, func(i, j int) bool {
+		return hourlyStats[i].GetStartTime().Before(hourlyStats[j].GetStartTime())
+	})
+
+	// ゲーム別統計をスライスに変換
+	gameStats := make([]*domain.GamePlayStatsInEdition, 0, len(gameStatsMap))
+	for gameID, stats := range gameStatsMap {
+		gameStats = append(gameStats, domain.NewGamePlayStatsInEdition(
+			values.GameID(gameID),
+			stats.playCount,
+			stats.playTime,
+		))
+	}
+
+	return domain.NewEditionPlayStats(
+		editionID,
+		values.NewLauncherVersionName(edition.Name),
+		totalPlayCount,
+		totalPlayTime,
+		gameStats,
+		hourlyStats,
+	), nil
 }
