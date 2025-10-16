@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -214,8 +214,8 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 		))
 	}
 
-	sort.Slice(hourlyStats, func(i, j int) bool {
-		return hourlyStats[i].GetStartTime().Before(hourlyStats[j].GetStartTime())
+	slices.SortFunc(hourlyStats, func(a, b *domain.HourlyPlayStats) int {
+		return a.GetStartTime().Compare(b.GetStartTime())
 	})
 
 	// ゲーム別統計をスライスに変換
