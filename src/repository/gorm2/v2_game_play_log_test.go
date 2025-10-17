@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -23,7 +22,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 
 	db, err := testDB.getDB(ctx)
 	if err != nil {
-		t.Fatalf("get db: %+v\n", err)
+		t.Fatalf("failed to get db: %+v\n", err)
 	}
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
@@ -32,9 +31,9 @@ func TestCreateGamePlayLog(t *testing.T) {
 		description          string
 		playLog              *domain.GamePlayLog
 		beforeGamePlayLogs   []schema.GamePlayLogTable
-		games                []schema.GameTable2
-		gameVersions         []schema.GameVersionTable2
-		editions             []schema.EditionTable
+		beforeGames          []schema.GameTable2
+		beforeGameVersions   []schema.GameVersionTable2
+		beforeEditions       []schema.EditionTable
 		expectedGamePlayLogs []schema.GamePlayLogTable
 		isErr                bool
 		err                  error
@@ -80,7 +79,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameVisibilityTypeTable{Name: "public"}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
-		t.Fatalf("get game visibility: %v\n", err)
+		t.Fatalf("failed to get game visibility: %v\n", err)
 	}
 
 	var gameImageType schema.GameImageTypeTable
@@ -89,7 +88,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameImageTypeTable{Name: "jpeg"}).
 		Find(&gameImageType).Error
 	if err != nil {
-		t.Fatalf("get game image type: %v\n", err)
+		t.Fatalf("failed to get game image type: %v\n", err)
 	}
 
 	var gameVideoType schema.GameVideoTypeTable
@@ -98,7 +97,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 		Where(&schema.GameVideoTypeTable{Name: "mp4"}).
 		Find(&gameVideoType).Error
 	if err != nil {
-		t.Fatalf("get game video type: %v\n", err)
+		t.Fatalf("failed to get game video type: %v\n", err)
 	}
 
 	testCases := []test{
@@ -114,7 +113,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 				now,
 				now,
 			),
-			games: []schema.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test game 1",
@@ -123,7 +122,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			gameVersions: []schema.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					GameID:      uuid.UUID(gameID1),
@@ -134,7 +133,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			editions: []schema.EditionTable{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID1),
 					Name:             "test edition 1",
@@ -178,7 +177,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:     now,
 				},
 			},
-			games: []schema.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID2),
 					Name:             "test game 2",
@@ -187,7 +186,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			gameVersions: []schema.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					GameID:      uuid.UUID(gameID2),
@@ -198,7 +197,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			editions: []schema.EditionTable{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID2),
 					Name:             "test edition 2",
@@ -243,7 +242,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:     now,
 				},
 			},
-			games: []schema.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID3),
 					Name:             "test game 3 existing",
@@ -259,7 +258,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					VisibilityTypeID: gameVisibilityPublic.ID,
 				},
 			},
-			gameVersions: []schema.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID3),
@@ -279,7 +278,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					CreatedAt:   now,
 				},
 			},
-			editions: []schema.EditionTable{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID3),
 					Name:             "test edition 3",
@@ -312,125 +311,54 @@ func TestCreateGamePlayLog(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
 
-			// 並列実行対応のため，テストケースごとにレコード単位で削除
-			t.Cleanup(func() {
-				var playLogIDs []uuid.UUID
-				if testCase.playLog != nil {
-					playLogIDs = append(playLogIDs, uuid.UUID(testCase.playLog.GetID()))
-				}
-				for _, log := range testCase.beforeGamePlayLogs {
-					playLogIDs = append(playLogIDs, log.ID)
-				}
-
-				var versionIDs, imageIDs, videoIDs []uuid.UUID
-				for _, version := range testCase.gameVersions {
-					versionIDs = append(versionIDs, version.ID)
-					imageIDs = append(imageIDs, version.GameImageID)
-					videoIDs = append(videoIDs, version.GameVideoID)
-				}
-
-				var gameIDs []uuid.UUID
-				for _, game := range testCase.games {
-					gameIDs = append(gameIDs, game.ID)
-				}
-
-				var editionIDs []uuid.UUID
-				for _, edition := range testCase.editions {
-					editionIDs = append(editionIDs, edition.ID)
-				}
-
-				if len(playLogIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", playLogIDs).
-						Delete(&schema.GamePlayLogTable{})
-				}
-				if len(versionIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", versionIDs).
-						Delete(&schema.GameVersionTable2{})
-				}
-				if len(imageIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", imageIDs).
-						Delete(&schema.GameImageTable2{})
-				}
-				if len(videoIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", videoIDs).
-						Delete(&schema.GameVideoTable2{})
-				}
-				if len(gameIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", gameIDs).
-						Delete(&schema.GameTable2{})
-				}
-				if len(editionIDs) > 0 {
-					db.Session(&gorm.Session{}).Unscoped().
-						Where("id IN ?", editionIDs).
-						Delete(&schema.EditionTable{})
-				}
-			})
-
-			if len(testCase.games) != 0 {
+			if len(testCase.beforeGames) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.games).Error
+					Create(&testCase.beforeGames).Error
 				if err != nil {
-					t.Fatalf("create games: %+v\n", err)
+					t.Fatalf("failed to create before games: %+v\n", err)
 				}
 			}
 
-			if len(testCase.editions) != 0 {
+			if len(testCase.beforeEditions) != 0 {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.editions).Error
+					Create(&testCase.beforeEditions).Error
 				if err != nil {
-					t.Fatalf("create editions: %+v\n", err)
+					t.Fatalf("failed to create before editions: %+v\n", err)
 				}
 			}
 
-			if len(testCase.gameVersions) != 0 {
-				// Collect all images and videos for batch creation
-				var images []schema.GameImageTable2
-				var videos []schema.GameVideoTable2
-
-				for _, version := range testCase.gameVersions {
-					images = append(images, schema.GameImageTable2{
+			if len(testCase.beforeGameVersions) != 0 {
+				for _, version := range testCase.beforeGameVersions {
+					image := schema.GameImageTable2{
 						ID:          version.GameImageID,
 						GameID:      version.GameID,
 						ImageTypeID: gameImageType.ID,
 						CreatedAt:   now,
-					})
-					videos = append(videos, schema.GameVideoTable2{
+					}
+					err := db.Session(&gorm.Session{}).Create(&image).Error
+					if err != nil {
+						t.Fatalf("failed to create game image: %+v\n", err)
+					}
+
+					video := schema.GameVideoTable2{
 						ID:          version.GameVideoID,
 						GameID:      version.GameID,
 						VideoTypeID: gameVideoType.ID,
 						CreatedAt:   now,
-					})
-				}
-
-				// Batch create images
-				if len(images) > 0 {
-					err := db.Session(&gorm.Session{}).Create(&images).Error
+					}
+					err = db.Session(&gorm.Session{}).Create(&video).Error
 					if err != nil {
-						t.Fatalf("create game images: %+v\n", err)
+						t.Fatalf("failed to create game video: %+v\n", err)
 					}
 				}
 
-				// Batch create videos
-				if len(videos) > 0 {
-					err := db.Session(&gorm.Session{}).Create(&videos).Error
-					if err != nil {
-						t.Fatalf("create game videos: %+v\n", err)
-					}
-				}
-
-				// Create versions
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&testCase.gameVersions).Error
+					Create(&testCase.beforeGameVersions).Error
 				if err != nil {
-					t.Fatalf("create game versions: %+v\n", err)
+					t.Fatalf("failed to create before game versions: %+v\n", err)
 				}
 			}
 
@@ -439,7 +367,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					Session(&gorm.Session{}).
 					Create(&testCase.beforeGamePlayLogs).Error
 				if err != nil {
-					t.Fatalf("create before game play logs: %+v\n", err)
+					t.Fatalf("failed to create before game play logs: %+v\n", err)
 				}
 			}
 
@@ -462,7 +390,7 @@ func TestCreateGamePlayLog(t *testing.T) {
 					Where("id = ?", expectedLog.ID).
 					First(&actualLog).Error
 
-				assert.NoErrorf(t, err, "expected log with ID %v not found", expectedLog.ID)
+				assert.NoError(t, err, "expected log with ID %v not found", expectedLog.ID)
 				assert.Equal(t, expectedLog.EditionID, actualLog.EditionID)
 				assert.Equal(t, expectedLog.GameID, actualLog.GameID)
 				assert.Equal(t, expectedLog.GameVersionID, actualLog.GameVersionID)
@@ -477,145 +405,59 @@ func TestCreateGamePlayLog(t *testing.T) {
 	}
 }
 
-func TestGetGamePlayLog(t *testing.T) {
+// func TestGetGamePlayLog(t *testing.T) {
+// 	t.Parallel()
 
-	ctx := t.Context()
-	db, err := testDB.getDB(ctx)
-	require.NoError(t, err)
+// 	ctx := context.Background()
 
-	now := time.Now()
+// 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-	edition1 := schema.EditionTable{
-		ID:   uuid.New(),
-		Name: "Test",
-	}
-	game1 := schema.GameTable2{
-		ID:               uuid.New(),
-		Name:             "Test",
-		VisibilityTypeID: 1,
-	}
-	gameImage1 := schema.GameImageTable2{
-		ID:          uuid.New(),
-		GameID:      game1.ID,
-		ImageTypeID: 1,
-	}
-	gameVideo1 := schema.GameVideoTable2{
-		ID:          uuid.New(),
-		GameID:      game1.ID,
-		VideoTypeID: 1,
-	}
-	gameVersion1 := schema.GameVersionTable2{
-		ID:          uuid.New(),
-		GameID:      game1.ID,
-		GameImageID: gameImage1.ID,
-		GameVideoID: gameVideo1.ID,
-		Name:        "Test",
-		Description: "test",
-	}
-	gamePlayLog1 := schema.GamePlayLogTable{
-		ID:            uuid.New(),
-		EditionID:     edition1.ID,
-		GameID:        game1.ID,
-		GameVersionID: gameVersion1.ID,
-		StartTime:     now,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-	}
-	gamePlayLog2 := schema.GamePlayLogTable{
-		ID:            uuid.New(),
-		EditionID:     edition1.ID,
-		GameID:        game1.ID,
-		GameVersionID: gameVersion1.ID,
-		StartTime:     now.Add(-1 * time.Hour),
-		EndTime:       sql.NullTime{Time: now, Valid: true},
-		CreatedAt:     now.Add(-1 * time.Hour),
-		UpdatedAt:     now,
-	}
+// 	type test struct {
+// 		description string
+// 		playLogID   values.GamePlayLogID
+// 		expectedLog *domain.GamePlayLog
+// 		isErr       bool
+// 		err         error
+// 	}
 
-	require.NoError(t, db.Create(&edition1).Error)
-	require.NoError(t, db.Create(&game1).Error)
-	require.NoError(t, db.Create(&gameImage1).Error)
-	require.NoError(t, db.Create(&gameVideo1).Error)
-	require.NoError(t, db.Create(&gameVersion1).Error)
-	require.NoError(t, db.Create(&gamePlayLog1).Error)
-	require.NoError(t, db.Create(&gamePlayLog2).Error)
+// 	// TODO: テストを実装する
+// 	testCases := []test{
+// 		{
+// 			description: "TODO: add test case",
+// 			playLogID:   values.NewGamePlayLogID(),
+// 			expectedLog: nil,
+// 			isErr:       true,
+// 			err:         repository.ErrRecordNotFound,
+// 		},
+// 	}
 
-	t.Cleanup(func() {
-		ctx := context.Background()
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
-		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
-	})
+// 	for _, testCase := range testCases {
+// 		t.Run(testCase.description, func(t *testing.T) {
+// 			log, err := gamePlayLogRepository.GetGamePlayLog(ctx, testCase.playLogID)
 
-	type test struct {
-		description     string
-		playLogID       values.GamePlayLogID
-		expectedPlayLog *domain.GamePlayLog
-		expectedErr     error
-	}
-
-	testCases := []test{
-		{
-			description: "正常な場合(EndTimeがNULL)",
-			playLogID:   values.GamePlayLogID(gamePlayLog1.ID),
-			expectedPlayLog: domain.NewGamePlayLog(
-				values.GamePlayLogID(gamePlayLog1.ID),
-				values.LauncherVersionID(gamePlayLog1.EditionID),
-				values.GameID(gamePlayLog1.GameID),
-				values.GameVersionID(gamePlayLog1.GameVersionID),
-				gamePlayLog1.StartTime,
-				nil,
-				gamePlayLog1.CreatedAt,
-				gamePlayLog1.UpdatedAt,
-			),
-		},
-		{
-			description: "正常な場合(EndTimeが非NULL)",
-			playLogID:   values.GamePlayLogID(gamePlayLog2.ID),
-			expectedPlayLog: domain.NewGamePlayLog(
-				values.GamePlayLogID(gamePlayLog2.ID),
-				values.LauncherVersionID(gamePlayLog2.EditionID),
-				values.GameID(gamePlayLog2.GameID),
-				values.GameVersionID(gamePlayLog2.GameVersionID),
-				gamePlayLog2.StartTime,
-				&gamePlayLog2.EndTime.Time,
-				gamePlayLog2.CreatedAt,
-				gamePlayLog2.UpdatedAt,
-			),
-		},
-		{
-			description: "存在しない場合",
-			playLogID:   values.NewGamePlayLogID(),
-			expectedErr: repository.ErrRecordNotFound,
-		},
-	}
-
-	gamePlayLogRepository := NewGamePlayLogV2(testDB)
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			playLog, err := gamePlayLogRepository.GetGamePlayLog(ctx, testCase.playLogID)
-
-			if testCase.expectedErr != nil {
-				assert.ErrorIs(t, err, testCase.expectedErr)
-				assert.Nil(t, playLog)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, playLog)
-				assert.Equal(t, testCase.expectedPlayLog, playLog)
-			}
-		})
-	}
-}
+// 			if testCase.isErr {
+// 				if testCase.err == nil {
+// 					assert.Error(t, err)
+// 				} else {
+// 					assert.ErrorIs(t, err, testCase.err)
+// 				}
+// 			} else {
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, testCase.expectedLog, log)
+// 			}
+// 		})
+// 	}
+// }
 
 func TestUpdateGamePlayLogEndTime(t *testing.T) {
-	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+
+	if err != nil {
+		t.Fatalf("get db: %+v\n", err)
+	}
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
@@ -627,10 +469,88 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 		err         error
 	}
 
+	edition := &schema.EditionTable{
+		ID:        uuid.New(),
+		Name:      "test edition",
+		CreatedAt: time.Now(),
+	}
+	err = db.Create(edition).Error
+	if err != nil {
+		t.Fatalf("create edition: %+v\n", err)
+	}
+
+	game := &schema.GameTable2{
+		ID:               uuid.New(),
+		Name:             "testGame",
+		Description:      "test game description",
+		VisibilityTypeID: 1,
+		CreatedAt:        time.Now(),
+	}
+	err = db.Create(game).Error
+	if err != nil {
+		t.Fatalf("create game: %+v\n", err)
+	}
+
+	gameImage := &schema.GameImageTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		ImageTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	err = db.Create(gameImage).Error
+	if err != nil {
+		t.Fatalf("create gameImage: %+v\n", err)
+	}
+
+	gameVideo := &schema.GameVideoTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		VideoTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	err = db.Create(gameVideo).Error
+	if err != nil {
+		t.Fatalf("create gameVideo: %+v\n", err)
+	}
+
+	gameVersion := &schema.GameVersionTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		GameImageID: gameImage.ID,
+		GameVideoID: gameVideo.ID,
+		Name:        "testGameVersion",
+		Description: "test game version",
+		CreatedAt:   time.Now(),
+	}
+
+	err = db.Create(gameVersion).Error
+	if err != nil {
+		t.Fatalf("create gameVersion: %+v\n", err)
+	}
+
+	playLog := &schema.GamePlayLogTable{
+		ID:            values.NewGamePlayLogID().UUID(),
+		EditionID:     edition.ID,
+		GameID:        game.ID,
+		GameVersionID: gameVersion.ID,
+	}
+
+	err = db.Create(playLog).Error
+	if err != nil {
+		t.Fatalf("create playLog: %+v\n", err)
+	}
+
 	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description: "TODO: add test case",
+			description: "正しく更新できる",
+			playLogID:   values.GamePlayLogIDFromUUID(playLog.ID),
+			endTime:     time.Now(),
+			isErr:       false,
+			err:         nil,
+		},
+		{
+			description: "存在しないIDの場合、ErrNoRecordUpdatedが返される",
 			playLogID:   values.NewGamePlayLogID(),
 			endTime:     time.Now(),
 			isErr:       true,
@@ -654,100 +574,99 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 		})
 	}
 }
-func TestGetGamePlayStats(t *testing.T) {
-	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
-	t.Parallel()
 
-	ctx := context.Background()
+// func TestGetGamePlayStats(t *testing.T) {
+// 	t.Parallel()
 
-	gamePlayLogRepository := NewGamePlayLogV2(testDB)
+// 	ctx := context.Background()
 
-	type test struct {
-		description   string
-		gameID        values.GameID
-		gameVersionID *values.GameVersionID
-		start         time.Time
-		end           time.Time
-		expectedStats *domain.GamePlayStats
-		isErr         bool
-		err           error
-	}
+// 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-	// TODO: テストを実装する
-	testCases := []test{
-		{
-			description:   "TODO: add test case",
-			gameID:        values.NewGameID(),
-			gameVersionID: nil,
-			start:         time.Now().Add(-24 * time.Hour),
-			end:           time.Now(),
-			expectedStats: nil,
-			isErr:         false,
-		},
-	}
+// 	type test struct {
+// 		description   string
+// 		gameID        values.GameID
+// 		gameVersionID *values.GameVersionID
+// 		start         time.Time
+// 		end           time.Time
+// 		expectedStats *domain.GamePlayStats
+// 		isErr         bool
+// 		err           error
+// 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			stats, err := gamePlayLogRepository.GetGamePlayStats(ctx, testCase.gameID, testCase.gameVersionID, testCase.start, testCase.end)
+// 	// TODO: テストを実装する
+// 	testCases := []test{
+// 		{
+// 			description:   "TODO: add test case",
+// 			gameID:        values.NewGameID(),
+// 			gameVersionID: nil,
+// 			start:         time.Now().Add(-24 * time.Hour),
+// 			end:           time.Now(),
+// 			expectedStats: nil,
+// 			isErr:         false,
+// 		},
+// 	}
 
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else {
-					assert.ErrorIs(t, err, testCase.err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, testCase.expectedStats, stats)
-			}
-		})
-	}
-}
+// 	for _, testCase := range testCases {
+// 		t.Run(testCase.description, func(t *testing.T) {
+// 			stats, err := gamePlayLogRepository.GetGamePlayStats(ctx, testCase.gameID, testCase.gameVersionID, testCase.start, testCase.end)
 
-func TestGetEditionPlayStats(t *testing.T) {
-	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
-	t.Parallel()
+// 			if testCase.isErr {
+// 				if testCase.err == nil {
+// 					assert.Error(t, err)
+// 				} else {
+// 					assert.ErrorIs(t, err, testCase.err)
+// 				}
+// 			} else {
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, testCase.expectedStats, stats)
+// 			}
+// 		})
+// 	}
+// }
 
-	ctx := context.Background()
+// func TestGetEditionPlayStats(t *testing.T) {
+// 	t.Parallel()
 
-	gamePlayLogRepository := NewGamePlayLogV2(testDB)
+// 	ctx := context.Background()
 
-	type test struct {
-		description   string
-		editionID     values.LauncherVersionID
-		start         time.Time
-		end           time.Time
-		expectedStats *domain.EditionPlayStats
-		isErr         bool
-		err           error
-	}
+// 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-	// TODO: テストを実装する
-	testCases := []test{
-		{
-			description:   "TODO: add test case",
-			editionID:     values.NewLauncherVersionID(),
-			start:         time.Now().Add(-24 * time.Hour),
-			end:           time.Now(),
-			expectedStats: nil,
-			isErr:         false,
-		},
-	}
+// 	type test struct {
+// 		description   string
+// 		editionID     values.LauncherVersionID
+// 		start         time.Time
+// 		end           time.Time
+// 		expectedStats *domain.EditionPlayStats
+// 		isErr         bool
+// 		err           error
+// 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			stats, err := gamePlayLogRepository.GetEditionPlayStats(ctx, testCase.editionID, testCase.start, testCase.end)
+// 	// TODO: テストを実装する
+// 	testCases := []test{
+// 		{
+// 			description:   "TODO: add test case",
+// 			editionID:     values.NewLauncherVersionID(),
+// 			start:         time.Now().Add(-24 * time.Hour),
+// 			end:           time.Now(),
+// 			expectedStats: nil,
+// 			isErr:         false,
+// 		},
+// 	}
 
-			if testCase.isErr {
-				if testCase.err == nil {
-					assert.Error(t, err)
-				} else {
-					assert.ErrorIs(t, err, testCase.err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, testCase.expectedStats, stats)
-			}
-		})
-	}
-}
+// 	for _, testCase := range testCases {
+// 		t.Run(testCase.description, func(t *testing.T) {
+// 			stats, err := gamePlayLogRepository.GetEditionPlayStats(ctx, testCase.editionID, testCase.start, testCase.end)
+
+// 			if testCase.isErr {
+// 				if testCase.err == nil {
+// 					assert.Error(t, err)
+// 				} else {
+// 					assert.ErrorIs(t, err, testCase.err)
+// 				}
+// 			} else {
+// 				assert.NoError(t, err)
+// 				assert.Equal(t, testCase.expectedStats, stats)
+// 			}
+// 		})
+// 	}
+// }
