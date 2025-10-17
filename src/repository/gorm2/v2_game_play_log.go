@@ -172,16 +172,14 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 		gameStats.playTime += playDuration
 		gameStatsMap[playLog.GameID] = gameStats
 
-		hourlyRangeStart := time.Date(logStart.Year(), logStart.Month(), logStart.Day(), logStart.Hour(), 0, 0, 0, logStart.Location())
 		isFirstHour := true
 
-		for hourlyRangeStart.Before(logEnd) {
-			hourStart := hourlyRangeStart
+		for hourlyRangeStart := time.Date(logStart.Year(), logStart.Month(), logStart.Day(), logStart.Hour(), 0, 0, 0, logStart.Location()); hourlyRangeStart.Before(logEnd); hourlyRangeStart = hourlyRangeStart.Add(time.Hour) {
 			nextHour := hourlyRangeStart.Add(time.Hour)
 
 			playStart := logStart
-			if playStart.Before(hourStart) {
-				playStart = hourStart
+			if playStart.Before(hourlyRangeStart) {
+				playStart = hourlyRangeStart
 			}
 
 			playEnd := logEnd
@@ -192,15 +190,14 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 			if playStart.Before(playEnd) {
 				playTimeInHour := playEnd.Sub(playStart)
 
-				hourlyStats := hourlyStatsMap[hourStart]
+				hourlyStats := hourlyStatsMap[hourlyRangeStart]
 				hourlyStats.playTime += playTimeInHour
 				if isFirstHour {
 					hourlyStats.playCount++
 				}
-				hourlyStatsMap[hourStart] = hourlyStats
+				hourlyStatsMap[hourlyRangeStart] = hourlyStats
 			}
 
-			hourlyRangeStart = nextHour
 			isFirstHour = false
 		}
 	}
