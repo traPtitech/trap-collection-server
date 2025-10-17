@@ -988,7 +988,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 				return
 			}
 
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			assert.NotNil(t, stats)
 
 			assert.Equal(t, testCase.expectedStats.GetEditionID(), stats.GetEditionID())
