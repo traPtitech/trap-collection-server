@@ -96,18 +96,26 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 	), nil
 }
 
-func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(ctx context.Context, ID values.GamePlayLogID, time time.Time) error {
+func (g *GamePlayLogV2) UpdateGamePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
 
-	err = db.
-		Model(&schema.GamePlayLogTable{}).Where("id = ?", ID).Update("end_time", time).Error
+	result := db.
+		Model(&schema.GamePlayLogTable{}).
+		Where("id = ?", playLogID.UUID()).
+		Update("end_time", endTime)
+
+	err = result.Error
 
 	if err != nil {
 		return fmt.Errorf("update end_time: %w", err)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordUpdated
 	}
 
 	return nil
