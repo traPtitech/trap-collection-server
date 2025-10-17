@@ -125,8 +125,8 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 	var playLogs []schema.GamePlayLogTable
 	err = db.Model(&schema.GamePlayLogTable{}).
 		Where("edition_id = ?", uuid.UUID(editionID)).
-		Where("start_time <= ?", end).
-		Where("(end_time >= ? OR end_time IS NULL)", start).
+		Where("start_time < ?", end).
+		Where("(end_time > ? OR end_time IS NULL)", start).
 		Order("start_time").
 		Find(&playLogs).Error
 	if err != nil {
