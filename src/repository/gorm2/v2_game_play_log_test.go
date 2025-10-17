@@ -983,7 +983,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 			if testCase.isErr {
 				assert.Error(t, err)
 				if testCase.err != nil {
-					assert.Equal(t, testCase.err, err)
+					assert.ErrorIs(t, err, testCase.err)
 				}
 				return
 			}
