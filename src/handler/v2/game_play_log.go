@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -58,9 +59,29 @@ func (gpl *GamePlayLog) PostGamePlayLogStart(c echo.Context, editionIDPath opena
 
 // ゲーム終了ログの記録
 // (PATCH /editions/{editionID}/games/{gameID}/plays/{playLogID}/end)
-func (gpl *GamePlayLog) PatchGamePlayLogEnd(_ echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath, _ openapi.PlayLogIDInPath) error {
-	// TODO: 実装が必要
-	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
+func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
+	ctx := c.Request().Context()
+	var body openapi.PatchGamePlayLogEndJSONRequestBody
+	if err := c.Bind(&body); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
+	}
+
+	playLogID := values.GamePlayLogIDFromUUID(uuid.UUID(playLogIDPath))
+	endTime := body.EndTime
+
+	err := gpl.gamePlayLogService.UpdatePlayLogEndTime(ctx, playLogID, endTime)
+	if errors.Is(err, service.ErrInvalidPlayLogID) {
+		return echo.NewHTTPError(http.StatusNotFound, "play log not found")
+	}
+	if errors.Is(err, service.ErrInvalidEndTime) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid end time")
+	}
+	if err != nil {
+		log.Printf("error: failed to update game play log end time: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to patch game play log end")
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 // ゲームプレイ統計の取得
