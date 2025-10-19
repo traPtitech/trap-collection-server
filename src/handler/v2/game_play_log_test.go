@@ -156,3 +156,119 @@ func TestPostGamePlayLogStart(t *testing.T) {
 	}
 
 }
+
+func TestPatchGamePlayLogEnd(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	editionID := values.NewLauncherVersionID()
+	gameID := values.NewGameID()
+	playLogID := values.NewGamePlayLogID()
+	endTime := time.Now()
+	reqBody := openapi.PatchGamePlayLogEndRequest{
+		EndTime: endTime,
+	}
+
+	testCases := map[string]struct {
+		editionID               values.LauncherVersionID
+		gameID                  values.GameID
+		playLogID               values.GamePlayLogID
+		invalidReqBody          bool
+		reqBody                 openapi.PatchGamePlayLogEndRequest
+		executeUpdatePlayLogEndTime bool
+		UpdatePlayLogEndTimeErr error
+		isError                 bool
+		statusCode              int
+	}{
+		"request bodyが不正なのでエラー": {
+			editionID:      editionID,
+			gameID:         gameID,
+			playLogID:      playLogID,
+			invalidReqBody: true,
+			isError:        true,
+			statusCode:     http.StatusBadRequest,
+		},
+		"UpdatePlayLogEndTimeがErrInvalidPlayLogIDなので404": {
+			editionID:                   editionID,
+			gameID:                      gameID,
+			playLogID:                   playLogID,
+			reqBody:                     reqBody,
+			executeUpdatePlayLogEndTime: true,
+			UpdatePlayLogEndTimeErr:     service.ErrInvalidPlayLogID,
+			isError:                     true,
+			statusCode:                  http.StatusNotFound,
+		},
+		"UpdatePlayLogEndTimeがErrInvalidEndTimeなので400": {
+			editionID:                   editionID,
+			gameID:                      gameID,
+			playLogID:                   playLogID,
+			reqBody:                     reqBody,
+			executeUpdatePlayLogEndTime: true,
+			UpdatePlayLogEndTimeErr:     service.ErrInvalidEndTime,
+			isError:                     true,
+			statusCode:                  http.StatusBadRequest,
+		},
+		"UpdatePlayLogEndTimeがその他のエラーなので500": {
+			editionID:                   editionID,
+			gameID:                      gameID,
+			playLogID:                   playLogID,
+			reqBody:                     reqBody,
+			executeUpdatePlayLogEndTime: true,
+			UpdatePlayLogEndTimeErr:     assert.AnError,
+			isError:                     true,
+			statusCode:                  http.StatusInternalServerError,
+		},
+		"UpdatePlayLogEndTimeが成功するので200": {
+			editionID:                   editionID,
+			gameID:                      gameID,
+			playLogID:                   playLogID,
+			reqBody:                     reqBody,
+			executeUpdatePlayLogEndTime: true,
+			statusCode:                  http.StatusOK,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			serviceMock := mock.NewMockGamePlayLogV2(ctrl)
+			h := NewGamePlayLog(serviceMock)
+
+			if testCase.executeUpdatePlayLogEndTime {
+				serviceMock.
+					EXPECT().
+					UpdatePlayLogEndTime(
+						gomock.Any(),
+						testCase.playLogID,
+						gomock.Cond(func(endTime time.Time) bool { return endTime.Sub(testCase.reqBody.EndTime).Abs() < time.Second }),
+					).
+					Return(testCase.UpdatePlayLogEndTimeErr)
+			}
+
+			var body bodyOpt
+			if testCase.invalidReqBody {
+				body = withStringBody(t, "invalid")
+			} else {
+				body = withJSONBody(t, testCase.reqBody)
+			}
+
+			url := fmt.Sprintf("/editions/%s/games/%s/plays/%s/end",
+				uuid.UUID(testCase.editionID).String(), uuid.UUID(testCase.gameID).String(), uuid.UUID(testCase.playLogID).String())
+			c, _, rec := setupTestRequest(t, http.MethodPatch, url, body)
+
+			err := h.PatchGamePlayLogEnd(c, openapi.EditionIDInPath(testCase.editionID), openapi.GameIDInPath(testCase.gameID), openapi.PlayLogIDInPath(testCase.playLogID))
+
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				assert.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.statusCode, httpError.Code)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, rec.Code)
+		})
+	}
+}
