@@ -171,15 +171,15 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		editionID               values.LauncherVersionID
-		gameID                  values.GameID
-		playLogID               values.GamePlayLogID
-		invalidReqBody          bool
-		reqBody                 openapi.PatchGamePlayLogEndRequest
+		editionID                   values.LauncherVersionID
+		gameID                      values.GameID
+		playLogID                   values.GamePlayLogID
+		invalidReqBody              bool
+		reqBody                     openapi.PatchGamePlayLogEndRequest
 		executeUpdatePlayLogEndTime bool
-		UpdatePlayLogEndTimeErr error
-		isError                 bool
-		statusCode              int
+		UpdatePlayLogEndTimeErr     error
+		isError                     bool
+		statusCode                  int
 	}{
 		"request bodyが不正なのでエラー": {
 			editionID:      editionID,
