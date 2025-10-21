@@ -56,4 +56,5 @@ var (
 	ErrInvalidGameVersion                = errors.New("invalid game version")
 	ErrInvalidPlayLogID                  = errors.New("invalid play log id")
 	ErrInvalidEndTime                    = errors.New("invalid end time")
+	ErrInvalidPlayLogEditionGamePair     = errors.New("invalid play log edition and game pair")
 )
