@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"slices"
 	"time"
-	"fmt"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -204,8 +202,8 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	}
 
 	// 時間順にソート
-	sort.Slice(hourlyStats, func(i, j int) bool {
-		return hourlyStats[i].GetStartTime().Before(hourlyStats[j].GetStartTime())
+	slices.SortFunc(hourlyStats, func(a, b *domain.HourlyPlayStats) int {
+		return a.GetStartTime().Compare(b.GetStartTime())
 	})
 
 	return domain.NewGamePlayStats(
