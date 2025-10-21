@@ -219,6 +219,16 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 			isError:                     true,
 			statusCode:                  http.StatusInternalServerError,
 		},
+		"UpdatePlayLogEndTimeがErrInvalidPlayLogEditionGamePairなので400": {
+			editionID:                   editionID,
+			gameID:                      gameID,
+			playLogID:                   playLogID,
+			reqBody:                     reqBody,
+			executeUpdatePlayLogEndTime: true,
+			UpdatePlayLogEndTimeErr:     service.ErrInvalidPlayLogEditionGamePair,
+			isError:                     true,
+			statusCode:                  http.StatusBadRequest,
+		},
 		"UpdatePlayLogEndTimeが成功するので200": {
 			editionID:                   editionID,
 			gameID:                      gameID,
@@ -241,6 +251,8 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 					EXPECT().
 					UpdatePlayLogEndTime(
 						gomock.Any(),
+						testCase.editionID,
+						testCase.gameID,
 						testCase.playLogID,
 						gomock.Cond(func(endTime time.Time) bool { return endTime.Sub(testCase.reqBody.EndTime).Abs() < time.Second }),
 					).

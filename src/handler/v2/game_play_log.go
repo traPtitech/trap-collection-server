@@ -59,22 +59,27 @@ func (gpl *GamePlayLog) PostGamePlayLogStart(c echo.Context, editionIDPath opena
 
 // ゲーム終了ログの記録
 // (PATCH /editions/{editionID}/games/{gameID}/plays/{playLogID}/end)
-func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
+func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
 	ctx := c.Request().Context()
 	var body openapi.PatchGamePlayLogEndJSONRequestBody
 	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
 	}
 
+	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+	gameID := values.NewGameIDFromUUID(gameIDPath)
 	playLogID := values.GamePlayLogIDFromUUID(uuid.UUID(playLogIDPath))
 	endTime := body.EndTime
 
-	err := gpl.gamePlayLogService.UpdatePlayLogEndTime(ctx, playLogID, endTime)
+	err := gpl.gamePlayLogService.UpdatePlayLogEndTime(ctx, editionID, gameID, playLogID, endTime)
 	if errors.Is(err, service.ErrInvalidPlayLogID) {
 		return echo.NewHTTPError(http.StatusNotFound, "play log not found")
 	}
 	if errors.Is(err, service.ErrInvalidEndTime) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid end time")
+	}
+	if errors.Is(err, service.ErrInvalidPlayLogEditionGamePair) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid play log edition and game pair")
 	}
 	if err != nil {
 		log.Printf("error: failed to update game play log end time: %v\n", err)
