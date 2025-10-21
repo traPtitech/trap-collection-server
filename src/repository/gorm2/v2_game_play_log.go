@@ -111,63 +111,109 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	// start〜endの期間でフィルタリングする。
 	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
 	// ログはプレイ中でも含めたい カウント,プレイ時間にも含める
+	// goで一回取得して、集計をgoで行う
+	// 00分を跨いだログは各時間帯に分割して集計する 総回数はダブってカウントしない
 
 	db, err := g.db.getDB(ctx)
 	if err != nil {
-		err := fmt.Errorf("%s", "DB接続の取得に失敗")
-		return nil, err
+		return nil, fmt.Errorf("get db: %w", err)
 	}
 
-	//Statsを取得して変数に入れる endtimeがNULLのものも含める
-	stats := db.Where("game_id = ?", uuid.UUID(gameID)).
-		Where("(start_time < ? AND end_time > ?) OR (start_time < ? AND end_time IS NULL)", end, start, end)
+	stats := db.
+		Model(&schema.GamePlayLogTable{}).
+		Where("game_id = ?", uuid.UUID(gameID))
 
-	//gameVersionIDがnilでなければ絞り込み
+	// gameVersionIDが指定されていれば絞り込み
 	if gameVersionID != nil {
 		stats = stats.Where("game_version_id = ?", uuid.UUID(*gameVersionID))
 	}
+	// start〜endの期間でフィルタリング
+	stats = stats.Where("(start_time < ? AND end_time > ?) OR (start_time < ? AND end_time IS NULL)", end, start, end)
 
-	type hourlyResult struct {
-		HourTime  time.Time
-		PlayCount int           //時間ごとのプレイ回数 あとで合計をとる
-		PlayTime  sql.NullInt64 //時間ごとのプレイ時間(秒) あとでtime.Durationに変換して合計をとる
-	}
-	var hourlyResults []*hourlyResult //時間ごとのプレイ統計を入れるスライス
-	//日付と時間を別々に取得して、start_timeを計算 play_countを計算 play_timeはifNullで計算
-	err = stats.Model(&schema.GamePlayLogTable{}).
-		Select("DATE_ADD(DATE(start_time), INTERVAL HOUR(start_time) HOUR) as hour_time, COUNT(*) as play_count, SUM(TIMESTAMPDIFF(SECOND, start_time, IFNULL(end_time, ?))) as play_time", end).
-		Group("hour_time").
-		Order("hour_time").
-		Scan(&hourlyResults).Error
-	if err != nil {
-		err := fmt.Errorf("%s", "時間ごとのプレイ統計の取得に失敗")
-		return nil, err
+	var playLogs []*schema.GamePlayLogTable
+	if err := stats.Find(&playLogs).Error; err != nil {
+		return nil, fmt.Errorf("failed to get game play logs: %w", err)
 	}
 
-	//合計回数と時間も出す
-	var totalPlayCount int          // 全体のプレイ回数
-	var totalPlayTime time.Duration // 全体のプレイ時間
-	hourlyStats := make([]*domain.HourlyPlayStats, 0, len(hourlyResults))
+	hourlyStatsMap := make(map[time.Time]*domain.HourlyPlayStats)
 
-	for _, result := range hourlyResults {
-		playTime := time.Duration(result.PlayTime.Int64) * time.Second //time.Durationはナノ秒単位なので秒に変換
-		totalPlayCount += result.PlayCount                             //プレイ回数合計を計算
-		totalPlayTime += playTime                                      //プレイ時間合計を計算
+	//ログを一件ずつ取得して処理
+	for _, log := range playLogs {
+		// 1.ログの整形
+		// ログの期間 [logStart, logEnd) を計算
+		logStart := log.StartTime
+		logEnd := end // デフォルトはクエリの終了時刻
 
-		stats := domain.NewHourlyPlayStats(
-			result.HourTime,
-			result.PlayCount,
-			playTime,
-		)
+		if log.EndTime.Valid && log.EndTime.Time.Before(end) {
+			// ログがクエリ終了時刻より前に終わっている場合は、その終了時刻を使う
+			logEnd = log.EndTime.Time
+		}
+
+		// ログがクエリ開始時刻より前に始まっている場合は、その開始時刻を使う
+		if logStart.Before(start) {
+			logStart = start
+		}
+
+		// //hourlyTimeはログの時間単位での開始時間
+		hourlyTime := logStart.Truncate(time.Hour)
+
+		// 2. ログが終了するまで1時間ずつ処理
+		for hourlyTime.Before(logEnd) {
+			nextHour := hourlyTime.Add(time.Hour)
+
+			// この時間帯でのプレイ時刻を計算
+			hourlyStartTime := logStart
+			if hourlyStartTime.Before(hourlyTime) {
+				hourlyStartTime = hourlyTime
+			}
+
+			hourlyEndTime := logEnd
+			if hourlyEndTime.After(nextHour) {
+				hourlyEndTime = nextHour
+			}
+
+			playTime := hourlyEndTime.Sub(hourlyStartTime) //時間の差の計算
+
+			stats, ok := hourlyStatsMap[hourlyTime] //00分時間でキーを指定して取得してOKがでなければ新規作成、すでにあれば追加
+			if !ok {
+				hourlyStatsMap[hourlyTime] = domain.NewHourlyPlayStats(
+					hourlyTime,
+					1,
+					playTime,
+				)
+			} else {
+				stats.AddPlayTime(playTime)
+				if log.StartTime.Truncate(time.Hour).Equal(hourlyTime) {
+					stats.AddPlayCount(1)
+				}
+
+			}
+
+			hourlyTime = nextHour
+		}
+	}
+
+	// 3. 最終的な返却形式に整形する
+	totalPlayCount := len(playLogs)
+	var totalPlayTime time.Duration
+	hourlyStats := make([]*domain.HourlyPlayStats, 0, len(hourlyStatsMap))
+
+	for _, stats := range hourlyStatsMap {
 		hourlyStats = append(hourlyStats, stats)
+		totalPlayTime += stats.GetPlayTime()
 	}
+
+	// 時間順にソート
+	sort.Slice(hourlyStats, func(i, j int) bool {
+		return hourlyStats[i].GetStartTime().Before(hourlyStats[j].GetStartTime())
+	})
 
 	return domain.NewGamePlayStats(
 		gameID,
 		totalPlayCount,
 		totalPlayTime,
-		hourlyStats), nil
-
+		hourlyStats,
+	), nil
 }
 
 func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
