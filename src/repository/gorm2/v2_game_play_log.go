@@ -108,8 +108,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
 	// start〜endの期間でフィルタリングする。
 	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
-	// ログはプレイ中でも含めたい カウント,プレイ時間にも含める
-	// goで一回取得して、集計をgoで行う
+	// ログはプレイ中でも含める カウント,プレイ時間にも含める
 	// 00分を跨いだログは各時間帯に分割して集計する 総回数はダブってカウントしない
 
 	db, err := g.db.getDB(ctx)
@@ -130,49 +129,47 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 
 	var playLogs []*schema.GamePlayLogTable
 	if err := stats.Find(&playLogs).Error; err != nil {
-		return nil, fmt.Errorf("failed to get game play logs: %w", err)
+		return nil, fmt.Errorf("get game play logs: %w", err)
 	}
 
-	hourlyStatsMap := make(map[time.Time]*domain.HourlyPlayStats)
+	hours := int(end.Sub(start)/time.Hour) + 1 // ログの期間での00分始まりの時間帯の数
+	hourlyStatsMap := make(map[time.Time]*domain.HourlyPlayStats, hours)
 
-	//ログを一件ずつ取得して処理
 	for _, log := range playLogs {
 		// 1.ログの整形
-		// ログの期間 [logStart, logEnd) を計算
+		// ログの期間 [logStart, logEnd) を計算 デフォルトはクエリの終了時刻
 		logStart := log.StartTime
-		logEnd := end // デフォルトはクエリの終了時刻
+		logEnd := end
 
+		// ログがクエリ終了時刻より前に終わっている場合は、その終了時刻を使う
 		if log.EndTime.Valid && log.EndTime.Time.Before(end) {
-			// ログがクエリ終了時刻より前に終わっている場合は、その終了時刻を使う
+
 			logEnd = log.EndTime.Time
 		}
 
-		// ログがクエリ開始時刻より前に始まっている場合は、その開始時刻を使う
+		// ログがクエリ開始時刻より前に始まっている場合は、クエリ開始時刻を使う
 		if logStart.Before(start) {
 			logStart = start
 		}
 
-		// //hourlyTimeはログの時間単位での開始時間
-		hourlyTime := logStart.Truncate(time.Hour)
+		// 2. ログが終了するまで1時間ずつ処理 hourlyTimeはログの00分時間単位での開始時間
+		for hourlyTime := logStart.Truncate(time.Hour); hourlyTime.Before(logEnd); hourlyTime = hourlyTime.Add(time.Hour) {
 
-		// 2. ログが終了するまで1時間ずつ処理
-		for hourlyTime.Before(logEnd) {
-			nextHour := hourlyTime.Add(time.Hour)
-
-			// この時間帯でのプレイ時刻を計算
+			// hourlyTimeでのプレイスタート時刻を計算
 			hourlyStartTime := logStart
 			if hourlyStartTime.Before(hourlyTime) {
 				hourlyStartTime = hourlyTime
 			}
 
+			// hourlyTimeでのプレイ終了時刻を計算
 			hourlyEndTime := logEnd
-			if hourlyEndTime.After(nextHour) {
-				hourlyEndTime = nextHour
+			if hourlyEndTime.After(hourlyTime.Add(time.Hour)) {
+				hourlyEndTime = hourlyTime.Add(time.Hour)
 			}
 
-			playTime := hourlyEndTime.Sub(hourlyStartTime) //時間の差の計算
+			playTime := hourlyEndTime.Sub(hourlyStartTime) //00分時間帯あたりのプレイ時間の計算
 
-			stats, ok := hourlyStatsMap[hourlyTime] //00分時間でキーを指定して取得してOKがでなければ新規作成、すでにあれば追加
+			stats, ok := hourlyStatsMap[hourlyTime] //hourlyTimeでキーを指定して取得してOKがでなければ新規作成、すでにあれば追加
 			if !ok {
 				hourlyStatsMap[hourlyTime] = domain.NewHourlyPlayStats(
 					hourlyTime,
@@ -180,14 +177,12 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 					playTime,
 				)
 			} else {
-				stats.AddPlayTime(playTime)
-				if log.StartTime.Truncate(time.Hour).Equal(hourlyTime) {
-					stats.AddPlayCount(1)
-				}
-
+				hourlyStatsMap[hourlyTime] = domain.NewHourlyPlayStats(
+					hourlyTime,
+					stats.GetPlayCount()+1,
+					stats.GetPlayTime()+playTime,
+				)
 			}
-
-			hourlyTime = nextHour
 		}
 	}
 

@@ -24,14 +24,6 @@ func (h *HourlyPlayStats) GetPlayTime() time.Duration {
 	return h.playTime
 }
 
-func (h *HourlyPlayStats) AddPlayTime(d time.Duration) {
-	h.playTime += d
-}
-
-func (h *HourlyPlayStats) AddPlayCount(n int) {
-	h.playCount += n
-}
-
 type GamePlayStats struct {
 	gameID         values.GameID
 	totalPlayCount int
