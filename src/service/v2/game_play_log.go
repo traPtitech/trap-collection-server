@@ -81,7 +81,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 	return playLog, nil
 }
 
-func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values.GamePlayLogID, endTime time.Time) error {
+func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, playLogID values.GamePlayLogID, endTime time.Time) error {
 	return g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		playLog, err := g.gamePlayLogRepository.GetGamePlayLog(ctx, playLogID)
 		if err != nil {
@@ -89,6 +89,10 @@ func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, playLogID values
 				return service.ErrInvalidPlayLogID
 			}
 			return fmt.Errorf("getting game play log: %w", err)
+		}
+
+		if playLog.GetEditionID() != editionID || playLog.GetGameID() != gameID {
+			return service.ErrInvalidPlayLogEditionGamePair
 		}
 
 		if endTime.Before(playLog.GetStartTime()) {
