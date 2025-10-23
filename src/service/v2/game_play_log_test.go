@@ -337,6 +337,18 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 		now.Add(-time.Hour),
 	)
 
+	// 異なるeditionIDとgameIDを持つプレイログ
+	mismatchedPlayLog := domain.NewGamePlayLog(
+		playLogID,
+		values.NewLauncherVersionID(),
+		values.NewGameID(),
+		gameVersionID,
+		now.Add(-time.Hour),
+		nil,
+		now.Add(-time.Hour),
+		now.Add(-time.Hour),
+	)
+
 	testCases := []test{
 		{
 			description:                     "正常にプレイログが終了される",
@@ -394,6 +406,16 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 			executeUpdateGamePlayLogEndTime: true,
 			isErr:                           false,
 		},
+		{
+			description:                     "プレイログがeditionIDとgameIDのペアに対応しない場合はErrInvalidPlayLogEditionGamePairエラー",
+			playLogID:                       playLogID,
+			endTime:                         now,
+			executeGetGamePlayLog:           true,
+			getGamePlayLogResult:            mismatchedPlayLog,
+			executeUpdateGamePlayLogEndTime: false,
+			isErr:                           true,
+			err:                             service.ErrInvalidPlayLogEditionGamePair,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -432,6 +454,8 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 
 			err := gamePlayLogService.UpdatePlayLogEndTime(
 				ctx,
+				editionID,
+				gameID,
 				testCase.playLogID,
 				testCase.endTime,
 			)

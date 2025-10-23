@@ -12,13 +12,13 @@ updates:
     groups:
       aws-sdk:
         patterns:
-          - "^github.com/aws/aws-sdk-go-v2"
+          - "github.com/aws/aws-sdk-go-v2/*"
         update-types:
           - minor
           - patch
       golang.org:
         patterns:
-          - "^golang.org/x/"
+          - "golang.org/x/*"
 
   - package-ecosystem: docker
     directories:
@@ -42,10 +42,10 @@ updates:
     groups:
       golang:
         patterns:
-          - "^golang"
+          - "golang"
       atlas:
         patterns:
-          - "^arigaio/atlas"
+          - "arigaio/atlas*"
 
   - package-ecosystem: github-actions
     directory: "/"

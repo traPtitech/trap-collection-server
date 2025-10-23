@@ -336,6 +336,8 @@ func (checker *Checker) GameOwnerAuthChecker(ctx context.Context, _ *openapi3fil
 
 // GameMaintainerAuthChecker
 // そのゲームのmaintainer(collaborator)であるかどうかを調べるチェッカー
+//
+// IMPORTANT: [(*Checker).FileUploadAuthMiddleware] は、この関数の第2引数が使われていないことに依存した実装になっている。
 func (checker *Checker) GameMaintainerAuthChecker(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
 	c := echomiddleware.GetEchoContext(ctx)
 	// GetEchoContextの内部実装をみるとnilがかえりうるので、
