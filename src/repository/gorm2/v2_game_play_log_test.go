@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -522,23 +523,23 @@ func TestGetGamePlayLog(t *testing.T) {
 		},
 	}
 
-// 	for _, testCase := range testCases {
-// 		t.Run(testCase.description, func(t *testing.T) {
-// 			log, err := gamePlayLogRepository.GetGamePlayLog(ctx, testCase.playLogID)
+	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-// 			if testCase.isErr {
-// 				if testCase.err == nil {
-// 					assert.Error(t, err)
-// 				} else {
-// 					assert.ErrorIs(t, err, testCase.err)
-// 				}
-// 			} else {
-// 				assert.NoError(t, err)
-// 				assert.Equal(t, testCase.expectedLog, log)
-// 			}
-// 		})
-// 	}
-// }
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			playLog, err := gamePlayLogRepository.GetGamePlayLog(ctx, testCase.playLogID)
+
+			if testCase.expectedErr != nil {
+				assert.ErrorIs(t, err, testCase.expectedErr)
+				assert.Nil(t, playLog)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, playLog)
+				assert.Equal(t, testCase.expectedPlayLog, playLog)
+			}
+		})
+	}
+}
 
 func TestUpdateGamePlayLogEndTime(t *testing.T) {
 	t.Parallel()
@@ -836,18 +837,18 @@ func TestGetGamePlayStats(t *testing.T) {
 		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
 	})
 
-// 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
+	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-// 	type test struct {
-// 		description   string
-// 		gameID        values.GameID
-// 		gameVersionID *values.GameVersionID
-// 		start         time.Time
-// 		end           time.Time
-// 		expectedStats *domain.GamePlayStats
-// 		isErr         bool
-// 		err           error
-// 	}
+	type test struct {
+		description   string
+		gameID        values.GameID
+		gameVersionID *values.GameVersionID
+		start         time.Time
+		end           time.Time
+		expectedStats *domain.GamePlayStats
+		isErr         bool
+		err           error
+	}
 
 	gameVersion1ID := values.GameVersionID(gameVersion1.ID)
 
@@ -1034,23 +1035,23 @@ func TestGetGamePlayStats(t *testing.T) {
 		},
 	}
 
-// 	for _, testCase := range testCases {
-// 		t.Run(testCase.description, func(t *testing.T) {
-// 			stats, err := gamePlayLogRepository.GetGamePlayStats(ctx, testCase.gameID, testCase.gameVersionID, testCase.start, testCase.end)
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			stats, err := gamePlayLogRepository.GetGamePlayStats(ctx, testCase.gameID, testCase.gameVersionID, testCase.start, testCase.end)
 
-// 			if testCase.isErr {
-// 				if testCase.err == nil {
-// 					assert.Error(t, err)
-// 				} else {
-// 					assert.ErrorIs(t, err, testCase.err)
-// 				}
-// 			} else {
-// 				assert.NoError(t, err)
-// 				assert.Equal(t, testCase.expectedStats, stats)
-// 			}
-// 		})
-// 	}
-// }
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else {
+					assert.ErrorIs(t, err, testCase.err)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, testCase.expectedStats, stats)
+			}
+		})
+	}
+}
 
 func TestGetEditionPlayStats(t *testing.T) {
 	t.Parallel()
@@ -1196,17 +1197,17 @@ func TestGetEditionPlayStats(t *testing.T) {
 		require.NoError(t, db.WithContext(ctx).Unscoped().Delete(&edition1).Error)
 	})
 
-// 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
+	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
-// 	type test struct {
-// 		description   string
-// 		editionID     values.LauncherVersionID
-// 		start         time.Time
-// 		end           time.Time
-// 		expectedStats *domain.EditionPlayStats
-// 		isErr         bool
-// 		err           error
-// 	}
+	type test struct {
+		description   string
+		editionID     values.LauncherVersionID
+		start         time.Time
+		end           time.Time
+		expectedStats *domain.EditionPlayStats
+		isErr         bool
+		err           error
+	}
 
 	testCases := []test{
 		{
@@ -1323,9 +1324,9 @@ func TestGetEditionPlayStats(t *testing.T) {
 		},
 	}
 
-// 	for _, testCase := range testCases {
-// 		t.Run(testCase.description, func(t *testing.T) {
-// 			stats, err := gamePlayLogRepository.GetEditionPlayStats(ctx, testCase.editionID, testCase.start, testCase.end)
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			stats, err := gamePlayLogRepository.GetEditionPlayStats(ctx, testCase.editionID, testCase.start, testCase.end)
 
 			if testCase.isErr {
 				assert.Error(t, err)
