@@ -60,7 +60,7 @@ func (gpl *GamePlayLog) PostGamePlayLogStart(c echo.Context, editionIDPath opena
 // ゲーム終了ログの記録
 // (PATCH /editions/{editionID}/games/{gameID}/plays/{playLogID}/end)
 func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
-	ctx := c.Request().Context()
+	ctx := c.Request().Context()  //コンテキスト
 	var body openapi.PatchGamePlayLogEndJSONRequestBody
 	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
