@@ -355,31 +355,31 @@ func TestGetEditionPlayStats(t *testing.T) {
 		EditionName:      editionName,
 		TotalPlayCount:   15,
 		TotalPlaySeconds: 5400,
-		GameStats:       expectedGameStats,
-		HourlyStats:     expectedHourlyStats,
+		GameStats:        expectedGameStats,
+		HourlyStats:      expectedHourlyStats,
 	}
 
 	testCases := map[string]struct {
-		editionID               values.LauncherVersionID
+		editionID              values.LauncherVersionID
 		queryParams            map[string]string
 		executeGetEditionStats bool
 		expectedStart          time.Time
 		expectedEnd            time.Time
-		editionStats          *domain.EditionPlayStats
-		getEditionStatsErr    error
-		expectedResponse      openapi.EditionPlayStats
-		isError               bool
-		statusCode            int
+		editionStats           *domain.EditionPlayStats
+		getEditionStatsErr     error
+		expectedResponse       openapi.EditionPlayStats
+		isError                bool
+		statusCode             int
 	}{
 		"クエリパラメータなしでエラーなし": {
 			editionID:              editionID,
-			queryParams:           map[string]string{},
+			queryParams:            map[string]string{},
 			executeGetEditionStats: true,
 			expectedStart:          defaultStart,
 			expectedEnd:            now,
-			editionStats:          editionStats,
-			expectedResponse: expectedEditionPlayStats,
-			statusCode: http.StatusOK,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
 		},
 		"start/endの両方を指定してもエラーなし": {
 			editionID: editionID,
@@ -390,9 +390,9 @@ func TestGetEditionPlayStats(t *testing.T) {
 			executeGetEditionStats: true,
 			expectedStart:          customStart,
 			expectedEnd:            customEnd,
-			editionStats:          editionStats,
-			expectedResponse: expectedEditionPlayStats,
-			statusCode: http.StatusOK,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
 		},
 		"startのみ指定でもエラーなし": {
 			editionID: editionID,
@@ -402,9 +402,9 @@ func TestGetEditionPlayStats(t *testing.T) {
 			executeGetEditionStats: true,
 			expectedStart:          customStart,
 			expectedEnd:            now,
-			editionStats:          editionStats,
-			expectedResponse: expectedEditionPlayStats,
-			statusCode: http.StatusOK,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
 		},
 		"endのみ指定でもエラーなし": {
 			editionID: editionID,
@@ -414,29 +414,29 @@ func TestGetEditionPlayStats(t *testing.T) {
 			executeGetEditionStats: true,
 			expectedStart:          customEnd.Add(-24 * time.Hour),
 			expectedEnd:            customEnd,
-			editionStats:          editionStats,
-			expectedResponse: expectedEditionPlayStats,
-			statusCode: http.StatusOK,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
 		},
 		"GetEditionPlayStatsがErrInvalidEditionなので404": {
 			editionID:              editionID,
-			queryParams:           map[string]string{},
+			queryParams:            map[string]string{},
 			executeGetEditionStats: true,
 			expectedStart:          defaultStart,
 			expectedEnd:            now,
-			getEditionStatsErr:    service.ErrInvalidEdition,
-			isError:               true,
-			statusCode:            http.StatusNotFound,
+			getEditionStatsErr:     service.ErrInvalidEdition,
+			isError:                true,
+			statusCode:             http.StatusNotFound,
 		},
 		"GetEditionPlayStatsがその他のエラーなので500": {
 			editionID:              editionID,
-			queryParams:           map[string]string{},
+			queryParams:            map[string]string{},
 			executeGetEditionStats: true,
 			expectedStart:          defaultStart,
 			expectedEnd:            now,
-			getEditionStatsErr:    assert.AnError,
-			isError:               true,
-			statusCode:            http.StatusInternalServerError,
+			getEditionStatsErr:     assert.AnError,
+			isError:                true,
+			statusCode:             http.StatusInternalServerError,
 		},
 	}
 

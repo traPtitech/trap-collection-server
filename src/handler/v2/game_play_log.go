@@ -127,14 +127,13 @@ func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openap
 	}
 
 	res := openapi.EditionPlayStats{
-		EditionID:      openapi.EditionID(stats.GetEditionID()),
-		EditionName:    string(stats.GetEditionName()),
-		TotalPlayCount: stats.GetTotalPlayCount(),
+		EditionID:        openapi.EditionID(stats.GetEditionID()),
+		EditionName:      string(stats.GetEditionName()),
+		TotalPlayCount:   stats.GetTotalPlayCount(),
 		TotalPlaySeconds: int(stats.GetTotalPlayTime().Seconds()),
-		GameStats:      make([]openapi.GamePlayStatsInEdition, 0, len(stats.GetGameStats())),
-		HourlyStats:    make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats())),
+		GameStats:        make([]openapi.GamePlayStatsInEdition, 0, len(stats.GetGameStats())),
+		HourlyStats:      make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats())),
 	}
-
 
 	for _, gameStat := range stats.GetGameStats() {
 		res.GameStats = append(res.GameStats, openapi.GamePlayStatsInEdition{
