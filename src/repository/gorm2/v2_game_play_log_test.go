@@ -732,7 +732,14 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, testCase.playLogID, testCase.endTime)
+			var before schema.GamePlayLogTable
+
+			if !testCase.isErr { // 存在しないIDのときは取得できないのでガード
+				err := db.First(&before, "id = ?", uuid.UUID(testCase.playLogID)).Error
+				assert.NoError(t, err)
+			}
+
+			err = gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, testCase.playLogID, testCase.endTime)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -748,6 +755,11 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 					First(&updatedLog, "id = ?", uuid.UUID(testCase.playLogID)).Error
 				assert.NoError(t, err)
 				assert.WithinDuration(t, testCase.endTime, updatedLog.EndTime.Time, time.Second)
+
+				assert.Equal(t, before.EditionID, updatedLog.EditionID)
+				assert.Equal(t, before.GameID, updatedLog.GameID)
+				assert.Equal(t, before.GameVersionID, updatedLog.GameVersionID)
+				assert.Equal(t, before.CreatedAt, updatedLog.CreatedAt)
 			}
 		})
 	}
