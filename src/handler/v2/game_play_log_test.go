@@ -457,7 +457,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 							return start.Sub(testCase.expectedStart).Abs() < time.Hour
 						}),
 						gomock.Cond(func(end time.Time) bool {
-							return end.Sub(testCase.expectedEnd).Abs() < time.Hour
+							return end.Sub(testCase.expectedEnd).Abs() < time.Second
 						}),
 					).
 					Return(testCase.editionStats, testCase.getEditionStatsErr)
