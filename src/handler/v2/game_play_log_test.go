@@ -284,3 +284,272 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEditionPlayStats(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	editionID := values.NewLauncherVersionID()
+	editionName := "Test Edition"
+	gameID1 := values.NewGameID()
+	gameID2 := values.NewGameID()
+
+	now := time.Now()
+	defaultStart := now.Add(-24 * time.Hour)
+	customStart := now.Add(-48 * time.Hour)
+	customEnd := now.Add(-24 * time.Hour)
+
+	gameStats := []*domain.GamePlayStatsInEdition{
+		domain.NewGamePlayStatsInEdition(gameID1, 10, 3600*time.Second),
+		domain.NewGamePlayStatsInEdition(gameID2, 5, 1800*time.Second),
+	}
+	hourlyStats := []*domain.HourlyPlayStats{
+		domain.NewHourlyPlayStats(customStart, 3, 900*time.Second),
+		domain.NewHourlyPlayStats(customStart.Add(time.Hour), 5, 1500*time.Second),
+		domain.NewHourlyPlayStats(customStart.Add(2*time.Hour), 7, 2000*time.Second),
+	}
+
+	editionStats := domain.NewEditionPlayStats(
+		editionID,
+		values.NewLauncherVersionName(editionName),
+		15,
+		5400*time.Second,
+		gameStats,
+		hourlyStats,
+	)
+
+	expectedGameStats := []openapi.GamePlayStatsInEdition{
+		{
+			GameID:    openapi.GameID(gameID1),
+			PlayCount: 10,
+			PlayTime:  3600,
+		},
+		{
+			GameID:    openapi.GameID(gameID2),
+			PlayCount: 5,
+			PlayTime:  1800,
+		},
+	}
+
+	expectedHourlyStats := []openapi.HourlyPlayStats{
+		{
+			StartTime: customStart,
+			PlayCount: 3,
+			PlayTime:  900,
+		},
+		{
+			StartTime: customStart.Add(time.Hour),
+			PlayCount: 5,
+			PlayTime:  1500,
+		},
+		{
+			StartTime: customStart.Add(2 * time.Hour),
+			PlayCount: 7,
+			PlayTime:  2000,
+		},
+	}
+
+	expectedEditionPlayStats := openapi.EditionPlayStats{
+		EditionID:        openapi.EditionID(editionID),
+		EditionName:      editionName,
+		TotalPlayCount:   15,
+		TotalPlaySeconds: 5400,
+		GameStats:        expectedGameStats,
+		HourlyStats:      expectedHourlyStats,
+	}
+
+	testCases := map[string]struct {
+		editionID              values.LauncherVersionID
+		queryParams            map[string]string
+		executeGetEditionStats bool
+		expectedStart          time.Time
+		expectedEnd            time.Time
+		editionStats           *domain.EditionPlayStats
+		getEditionStatsErr     error
+		expectedResponse       openapi.EditionPlayStats
+		isError                bool
+		statusCode             int
+	}{
+		"クエリパラメータなしでエラーなし": {
+			editionID:              editionID,
+			queryParams:            map[string]string{},
+			executeGetEditionStats: true,
+			expectedStart:          defaultStart,
+			expectedEnd:            now,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
+		},
+		"start/endの両方を指定してもエラーなし": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": customStart.Format(time.RFC3339),
+				"end":   customEnd.Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          customStart,
+			expectedEnd:            customEnd,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
+		},
+		"startのみ指定でもエラーなし": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": customStart.Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          customStart,
+			expectedEnd:            now,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
+		},
+		"endのみ指定でもエラーなし": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"end": customEnd.Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          customEnd.Add(-24 * time.Hour),
+			expectedEnd:            customEnd,
+			editionStats:           editionStats,
+			expectedResponse:       expectedEditionPlayStats,
+			statusCode:             http.StatusOK,
+		},
+		"GetEditionPlayStatsがErrInvalidEditionなので404": {
+			editionID:              editionID,
+			queryParams:            map[string]string{},
+			executeGetEditionStats: true,
+			expectedStart:          defaultStart,
+			expectedEnd:            now,
+			getEditionStatsErr:     service.ErrInvalidEdition,
+			isError:                true,
+			statusCode:             http.StatusNotFound,
+		},
+		"GetEditionPlayStatsがその他のエラーなので500": {
+			editionID:              editionID,
+			queryParams:            map[string]string{},
+			executeGetEditionStats: true,
+			expectedStart:          defaultStart,
+			expectedEnd:            now,
+			getEditionStatsErr:     assert.AnError,
+			isError:                true,
+			statusCode:             http.StatusInternalServerError,
+		},
+		"GetEditionPlayStatsがErrInvalidTimeRangeなので400": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": now.Format(time.RFC3339),
+				"end":   now.Add(-1 * time.Hour).Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          now,
+			expectedEnd:            now.Add(-1 * time.Hour),
+			getEditionStatsErr:     service.ErrInvalidTimeRange,
+			isError:                true,
+			statusCode:             http.StatusBadRequest,
+		},
+		"GetEditionPlayStatsがErrTimePeriodTooLongなので400": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": now.AddDate(-10, 0, -1).Format(time.RFC3339),
+				"end":   now.Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          now.AddDate(-10, 0, -1),
+			expectedEnd:            now,
+			getEditionStatsErr:     service.ErrTimePeriodTooLong,
+			isError:                true,
+			statusCode:             http.StatusBadRequest,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			serviceMock := mock.NewMockGamePlayLogV2(ctrl)
+			h := NewGamePlayLog(serviceMock)
+
+			if testCase.executeGetEditionStats {
+				serviceMock.
+					EXPECT().
+					GetEditionPlayStats(
+						gomock.Any(),
+						testCase.editionID,
+						gomock.Cond(func(start time.Time) bool {
+							return start.Sub(testCase.expectedStart).Abs() < time.Second
+						}),
+						gomock.Cond(func(end time.Time) bool {
+							return end.Sub(testCase.expectedEnd).Abs() < time.Second
+						}),
+					).
+					Return(testCase.editionStats, testCase.getEditionStatsErr)
+			}
+
+			url := fmt.Sprintf("/editions/%s/play-stats", uuid.UUID(testCase.editionID).String())
+			if len(testCase.queryParams) > 0 {
+				url += "?"
+				first := true
+				for key, value := range testCase.queryParams {
+					if !first {
+						url += "&"
+					}
+					url += fmt.Sprintf("%s=%s", key, value)
+					first = false
+				}
+			}
+
+			c, _, rec := setupTestRequest(t, http.MethodGet, url, nil)
+
+			params := openapi.GetEditionPlayStatsParams{}
+			if start, ok := testCase.queryParams["start"]; ok {
+				startTime, _ := time.Parse(time.RFC3339, start)
+				params.Start = &startTime
+			}
+			if end, ok := testCase.queryParams["end"]; ok {
+				endTime, _ := time.Parse(time.RFC3339, end)
+				params.End = &endTime
+			}
+
+			err := h.GetEditionPlayStats(c, openapi.EditionIDInPath(testCase.editionID), params)
+
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				assert.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.statusCode, httpError.Code)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, rec.Code)
+
+			if !testCase.isError {
+				var resBody openapi.EditionPlayStats
+				err = json.NewDecoder(rec.Body).Decode(&resBody)
+				assert.NoError(t, err)
+
+				assert.Equal(t, testCase.expectedResponse.EditionID, resBody.EditionID)
+				assert.Equal(t, testCase.expectedResponse.EditionName, resBody.EditionName)
+				assert.Equal(t, testCase.expectedResponse.TotalPlayCount, resBody.TotalPlayCount)
+				assert.Equal(t, testCase.expectedResponse.TotalPlaySeconds, resBody.TotalPlaySeconds)
+
+				assert.Len(t, resBody.GameStats, len(testCase.expectedResponse.GameStats))
+				for i, expectedGame := range testCase.expectedResponse.GameStats {
+					assert.Equal(t, expectedGame.GameID, resBody.GameStats[i].GameID)
+					assert.Equal(t, expectedGame.PlayCount, resBody.GameStats[i].PlayCount)
+					assert.Equal(t, expectedGame.PlayTime, resBody.GameStats[i].PlayTime)
+				}
+
+				assert.Len(t, resBody.HourlyStats, len(testCase.expectedResponse.HourlyStats))
+				for i, expectedHourly := range testCase.expectedResponse.HourlyStats {
+					assert.WithinDuration(t, expectedHourly.StartTime, resBody.HourlyStats[i].StartTime, time.Second)
+					assert.Equal(t, expectedHourly.PlayCount, resBody.HourlyStats[i].PlayCount)
+					assert.Equal(t, expectedHourly.PlayTime, resBody.HourlyStats[i].PlayTime)
+				}
+			}
+		})
+	}
+}
