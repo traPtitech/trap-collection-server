@@ -109,6 +109,15 @@ func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, editionID values
 }
 
 func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID, gameVersionID *values.GameVersionID, start, end time.Time) (*domain.GamePlayStats, error) {
+	if end.Before(start) {
+		return nil, service.ErrInvalidTimeRange
+	}
+
+	const maxYears = 10
+	if start.AddDate(maxYears, 0, 0).Before(end) {
+		return nil, service.ErrTimePeriodTooLong
+	}
+
 	_, err := g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -136,6 +145,15 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 }
 
 func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
+	if end.Before(start) {
+		return nil, service.ErrInvalidTimeRange
+	}
+
+	const maxYears = 10
+	if start.AddDate(maxYears, 0, 0).Before(end) {
+		return nil, service.ErrTimePeriodTooLong
+	}
+
 	_, err := g.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {

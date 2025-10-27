@@ -438,6 +438,32 @@ func TestGetEditionPlayStats(t *testing.T) {
 			isError:                true,
 			statusCode:             http.StatusInternalServerError,
 		},
+		"GetEditionPlayStatsがErrInvalidTimeRangeなので400": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": now.Format(time.RFC3339),
+				"end":   now.Add(-1 * time.Hour).Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          now,
+			expectedEnd:            now.Add(-1 * time.Hour),
+			getEditionStatsErr:     service.ErrInvalidTimeRange,
+			isError:                true,
+			statusCode:             http.StatusBadRequest,
+		},
+		"GetEditionPlayStatsがErrTimePeriodTooLongなので400": {
+			editionID: editionID,
+			queryParams: map[string]string{
+				"start": now.AddDate(-10, 0, -1).Format(time.RFC3339),
+				"end":   now.Format(time.RFC3339),
+			},
+			executeGetEditionStats: true,
+			expectedStart:          now.AddDate(-10, 0, -1),
+			expectedEnd:            now,
+			getEditionStatsErr:     service.ErrTimePeriodTooLong,
+			isError:                true,
+			statusCode:             http.StatusBadRequest,
+		},
 	}
 
 	for name, testCase := range testCases {
@@ -454,7 +480,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 						gomock.Any(),
 						testCase.editionID,
 						gomock.Cond(func(start time.Time) bool {
-							return start.Sub(testCase.expectedStart).Abs() < time.Hour
+							return start.Sub(testCase.expectedStart).Abs() < time.Second
 						}),
 						gomock.Cond(func(end time.Time) bool {
 							return end.Sub(testCase.expectedEnd).Abs() < time.Second

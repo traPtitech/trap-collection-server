@@ -121,6 +121,12 @@ func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openap
 	if errors.Is(err, service.ErrInvalidEdition) {
 		return echo.NewHTTPError(http.StatusNotFound, "edition not found")
 	}
+	if errors.Is(err, service.ErrInvalidTimeRange) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid time range")
+	}
+	if errors.Is(err, service.ErrTimePeriodTooLong) {
+		return echo.NewHTTPError(http.StatusBadRequest, "time period too long")
+	}
 	if err != nil {
 		log.Printf("error: failed to get edition play stats: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get edition play stats")
