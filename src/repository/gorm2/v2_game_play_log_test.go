@@ -613,10 +613,14 @@ func TestGetGamePlayLog(t *testing.T) {
 }
 
 func TestUpdateGamePlayLogEndTime(t *testing.T) {
-	t.Skip("この機能はまだ実装されていないため、テストをスキップします。")
 	t.Parallel()
 
 	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+
+	if err != nil {
+		t.Fatalf("get db: %+v\n", err)
+	}
 
 	gamePlayLogRepository := NewGamePlayLogV2(testDB)
 
@@ -628,10 +632,97 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 		err         error
 	}
 
+	edition := &schema.EditionTable{
+		ID:        uuid.New(),
+		Name:      "test edition",
+		CreatedAt: time.Now(),
+	}
+	err = db.Create(edition).Error
+	if err != nil {
+		t.Fatalf("create edition: %+v\n", err)
+	}
+
+	game := &schema.GameTable2{
+		ID:               uuid.New(),
+		Name:             "testGame",
+		Description:      "test game description",
+		VisibilityTypeID: 1,
+		CreatedAt:        time.Now(),
+	}
+	err = db.Create(game).Error
+	if err != nil {
+		t.Fatalf("create game: %+v\n", err)
+	}
+
+	gameImage := &schema.GameImageTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		ImageTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	err = db.Create(gameImage).Error
+	if err != nil {
+		t.Fatalf("create gameImage: %+v\n", err)
+	}
+
+	gameVideo := &schema.GameVideoTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		VideoTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	err = db.Create(gameVideo).Error
+	if err != nil {
+		t.Fatalf("create gameVideo: %+v\n", err)
+	}
+
+	gameVersion := &schema.GameVersionTable2{
+		ID:          uuid.New(),
+		GameID:      game.ID,
+		GameImageID: gameImage.ID,
+		GameVideoID: gameVideo.ID,
+		Name:        "testGameVersion",
+		Description: "test game version",
+		CreatedAt:   time.Now(),
+	}
+
+	err = db.Create(gameVersion).Error
+	if err != nil {
+		t.Fatalf("create gameVersion: %+v\n", err)
+	}
+
+	playLog := &schema.GamePlayLogTable{
+		ID:            values.NewGamePlayLogID().UUID(),
+		EditionID:     edition.ID,
+		GameID:        game.ID,
+		GameVersionID: gameVersion.ID,
+	}
+
+	err = db.Create(playLog).Error
+	if err != nil {
+		t.Fatalf("create playLog: %+v\n", err)
+	}
+
+	t.Cleanup(func() {
+		db.Delete(&schema.GamePlayLogTable{}, "id = ?", playLog.ID)
+		db.Delete(&schema.GameVersionTable2{}, "id = ?", gameVersion.ID)
+		db.Delete(&schema.GameVideoTable2{}, "id = ?", gameVideo.ID)
+		db.Delete(&schema.GameImageTable2{}, "id = ?", gameImage.ID)
+		db.Delete(&schema.GameTable2{}, "id = ?", game.ID)
+		db.Delete(&schema.EditionTable{}, "id = ?", edition.ID)
+	})
+
 	// TODO: テストを実装する
 	testCases := []test{
 		{
-			description: "TODO: add test case",
+			description: "正しく更新できる",
+			playLogID:   values.GamePlayLogIDFromUUID(playLog.ID),
+			endTime:     time.Now(),
+			isErr:       false,
+			err:         nil,
+		},
+		{
+			description: "存在しないIDの場合、ErrNoRecordUpdatedが返される",
 			playLogID:   values.NewGamePlayLogID(),
 			endTime:     time.Now(),
 			isErr:       true,
@@ -641,7 +732,14 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, testCase.playLogID, testCase.endTime)
+			var before schema.GamePlayLogTable
+
+			if !testCase.isErr { // 存在しないIDのときは取得できないのでガード
+				err := db.First(&before, "id = ?", uuid.UUID(testCase.playLogID)).Error
+				assert.NoError(t, err)
+			}
+
+			err = gamePlayLogRepository.UpdateGamePlayLogEndTime(ctx, testCase.playLogID, testCase.endTime)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -651,10 +749,22 @@ func TestUpdateGamePlayLogEndTime(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+				//更新が行われたことを確認
+				var updatedLog schema.GamePlayLogTable
+				err = db.
+					First(&updatedLog, "id = ?", uuid.UUID(testCase.playLogID)).Error
+				assert.NoError(t, err)
+				assert.WithinDuration(t, testCase.endTime, updatedLog.EndTime.Time, time.Second)
+
+				assert.Equal(t, before.EditionID, updatedLog.EditionID)
+				assert.Equal(t, before.GameID, updatedLog.GameID)
+				assert.Equal(t, before.GameVersionID, updatedLog.GameVersionID)
+				assert.Equal(t, before.CreatedAt, updatedLog.CreatedAt)
 			}
 		})
 	}
 }
+
 func TestGetGamePlayStats(t *testing.T) {
 
 	ctx := t.Context()

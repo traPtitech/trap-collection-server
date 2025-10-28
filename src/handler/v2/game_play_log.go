@@ -144,7 +144,62 @@ func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.Game
 
 // エディションプレイ統計の取得
 // (GET /editions/{editionID}/play-stats)
-func (gpl *GamePlayLog) GetEditionPlayStats(_ echo.Context, _ openapi.EditionIDInPath, _ openapi.GetEditionPlayStatsParams) error {
-	// TODO: 実装が必要
-	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
+func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openapi.EditionIDInPath, params openapi.GetEditionPlayStatsParams) error {
+	ctx := c.Request().Context()
+
+	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+
+	var start, end time.Time
+
+	if params.End != nil {
+		end = *params.End
+	} else {
+		end = time.Now()
+	}
+	if params.Start != nil {
+		start = *params.Start
+	} else {
+		start = end.Add(-24 * time.Hour)
+	}
+
+	stats, err := gpl.gamePlayLogService.GetEditionPlayStats(ctx, editionID, start, end)
+	if errors.Is(err, service.ErrInvalidEdition) {
+		return echo.NewHTTPError(http.StatusNotFound, "edition not found")
+	}
+	if errors.Is(err, service.ErrInvalidTimeRange) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid time range")
+	}
+	if errors.Is(err, service.ErrTimePeriodTooLong) {
+		return echo.NewHTTPError(http.StatusBadRequest, "time period too long")
+	}
+	if err != nil {
+		log.Printf("error: failed to get edition play stats: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get edition play stats")
+	}
+
+	res := openapi.EditionPlayStats{
+		EditionID:        openapi.EditionID(stats.GetEditionID()),
+		EditionName:      string(stats.GetEditionName()),
+		TotalPlayCount:   stats.GetTotalPlayCount(),
+		TotalPlaySeconds: int(stats.GetTotalPlayTime().Seconds()),
+		GameStats:        make([]openapi.GamePlayStatsInEdition, 0, len(stats.GetGameStats())),
+		HourlyStats:      make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats())),
+	}
+
+	for _, gameStat := range stats.GetGameStats() {
+		res.GameStats = append(res.GameStats, openapi.GamePlayStatsInEdition{
+			GameID:    openapi.GameID(gameStat.GetGameID()),
+			PlayCount: gameStat.GetPlayCount(),
+			PlayTime:  int(gameStat.GetPlayTime().Seconds()),
+		})
+	}
+	for _, hourlyStat := range stats.GetHourlyStats() {
+		res.HourlyStats = append(res.HourlyStats, openapi.HourlyPlayStats{
+			StartTime: hourlyStat.GetStartTime(),
+			PlayCount: hourlyStat.GetPlayCount(),
+			PlayTime:  int(hourlyStat.GetPlayTime().Seconds()),
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
