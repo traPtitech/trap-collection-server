@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -60,7 +61,7 @@ func (gpl *GamePlayLog) PostGamePlayLogStart(c echo.Context, editionIDPath opena
 // ゲーム終了ログの記録
 // (PATCH /editions/{editionID}/games/{gameID}/plays/{playLogID}/end)
 func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
-	ctx := c.Request().Context()  //コンテキスト
+	ctx := c.Request().Context()
 	var body openapi.PatchGamePlayLogEndJSONRequestBody
 	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
@@ -91,9 +92,57 @@ func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openap
 
 // ゲームプレイ統計の取得
 // (GET /games/{gameID}/play-stats)
-func (gpl *GamePlayLog) GetGamePlayStats(_ echo.Context, _ openapi.GameIDInPath, _ openapi.GetGamePlayStatsParams) error {
-	// TODO: 実装が必要
-	return echo.NewHTTPError(http.StatusNotImplemented, "not implemented yet")
+func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGamePlayStatsParams) error {
+	ctx := c.Request().Context()
+	if params.GameVersionID == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "game_version_id is required")
+	}
+	if params.Start == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "start is required")
+	}
+
+	gameID := values.NewGameIDFromUUID(gameIDPath)
+
+	var gameVersionID *values.GameVersionID
+	if params.GameVersionID != nil {
+		vID := values.NewGameVersionIDFromUUID(*params.GameVersionID)
+		gameVersionID = &vID
+	}
+
+	var start time.Time
+	if params.Start != nil {
+		start = *params.Start
+	}
+
+	var end time.Time
+	if params.End != nil {
+		end = *params.End
+	}
+
+	// Serviceの呼び出し
+	stats, err := gpl.gamePlayLogService.GetGamePlayStats(ctx, gameID, gameVersionID, start, end)
+	if err != nil {
+		log.Printf("get game play stats: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "get game play stats")
+	}
+
+	hourlyStats := make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats()))
+	for _, hourlyStat := range stats.GetHourlyStats() {
+		hourlyStats = append(hourlyStats, openapi.HourlyPlayStats{
+			StartTime: hourlyStat.GetStartTime(),
+			PlayCount: hourlyStat.GetPlayCount(),
+			PlayTime:  int(hourlyStat.GetPlayTime().Seconds()), //ここどうしよう？
+		})
+	}
+
+	res := openapi.GamePlayStats{
+		GameID:           uuid.UUID(stats.GetGameID()),
+		TotalPlayCount:   stats.GetTotalPlayCount(),
+		TotalPlaySeconds: int(stats.GetTotalPlayTime().Seconds()),
+		HourlyStats:      hourlyStats,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // エディションプレイ統計の取得

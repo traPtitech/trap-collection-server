@@ -284,3 +284,182 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGamePlayStats(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+
+	gameID := values.NewGameID()
+	gameVersionID := values.NewGameVersionID()
+	now := time.Now()
+
+	mockStats := domain.NewGamePlayStats(
+		gameID,
+		10,
+		300*time.Second, // 5分
+		[]*domain.HourlyPlayStats{
+			domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second), // 2分
+		},
+	)
+
+	expectedResponse := openapi.GamePlayStats{
+		GameID:           uuid.UUID(gameID),
+		TotalPlayCount:   10,
+		TotalPlaySeconds: 300,
+		HourlyStats: []openapi.HourlyPlayStats{
+			{
+				StartTime: now.Truncate(time.Hour),
+				PlayCount: 5,
+				PlayTime:  120,
+			},
+		},
+	}
+	expectedBody, err := json.Marshal(expectedResponse)
+	// ここはテストの前提条件なので、失敗したら進めないように t.Fatal を使うのが適切
+	if err != nil {
+		t.Fatalf("failed to marshal expected response: %v", err)
+	}
+
+	type args struct {
+		gameID        string
+		gameVersionID string
+		start         string
+		end           string
+	}
+
+	testCases := map[string]struct {
+		args                    args
+		executeGetGamePlayStats bool
+		getGamePlayStatsResult  *domain.GamePlayStats
+		getGamePlayStatsErr     error
+		isError                 bool
+		statusCode              int
+		resBody                 string
+	}{
+		"正常系": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: uuid.UUID(gameVersionID).String(),
+				start:         now.Add(-time.Hour).Format(time.RFC3339),
+				end:           now.Format(time.RFC3339),
+			},
+			executeGetGamePlayStats: true,
+			getGamePlayStatsResult:  mockStats,
+			getGamePlayStatsErr:     nil,
+			isError:                 false,
+			statusCode:              http.StatusOK,
+			resBody:                 string(expectedBody),
+		},
+		"異常系: serviceでエラー": {
+			args: args{
+				gameID: uuid.UUID(gameID).String(),
+			},
+			executeGetGamePlayStats: true,
+			getGamePlayStatsResult:  nil,
+			getGamePlayStatsErr:     assert.AnError,
+			isError:                 true,
+			statusCode:              http.StatusInternalServerError,
+		},
+		"異常系: 不正なgameID": {
+			args: args{
+				gameID: "invalid-uuid",
+			},
+			executeGetGamePlayStats: false, // serviceは呼ばれない
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+	}
+
+	for name, tt := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			serviceMock := mock.NewMockGamePlayLogV2(ctrl)
+			h := NewGamePlayLog(serviceMock)
+
+			if tt.executeGetGamePlayStats {
+				gameIDValue := values.NewGameIDFromUUID(uuid.MustParse(tt.args.gameID))
+				var gameVersionIDValue *values.GameVersionID
+				if tt.args.gameVersionID != "" {
+					v := values.NewGameVersionIDFromUUID(uuid.MustParse(tt.args.gameVersionID))
+					gameVersionIDValue = &v
+				}
+
+				serviceMock.
+					EXPECT().
+					GetGamePlayStats(
+						gomock.Any(),
+						gameIDValue,
+						gameVersionIDValue,
+						gomock.Any(),
+						gomock.Any(),
+					).
+					Return(tt.getGamePlayStatsResult, tt.getGamePlayStatsErr)
+			}
+
+			// リクエスト準備
+			url := fmt.Sprintf("/games/%s/play-stats", tt.args.gameID)
+			c, _, rec := setupTestRequest(t, http.MethodGet, url, nil)
+
+			// クエリパラメータを手動で設定
+			q := c.Request().URL.Query()
+			if tt.args.gameVersionID != "" {
+				q.Set("game_version_id", tt.args.gameVersionID)
+			}
+			if tt.args.start != "" {
+				q.Set("start", tt.args.start)
+			}
+			if tt.args.end != "" {
+				q.Set("end", tt.args.end)
+			}
+			c.Request().URL.RawQuery = q.Encode()
+
+			var handlerErr error
+			gameIDUUID, err := uuid.Parse(tt.args.gameID)
+			if err != nil {
+				handlerErr = echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			} else {
+				gameIDPath := openapi.GameIDInPath(gameIDUUID)
+				var params openapi.GetGamePlayStatsParams
+				if tt.args.gameVersionID != "" {
+					vID, err := uuid.Parse(tt.args.gameVersionID)
+					if !assert.NoError(t, err) {
+						return
+					}
+					params.GameVersionID = &vID
+				}
+				if tt.args.start != "" {
+					sTime, err := time.Parse(time.RFC3339, tt.args.start)
+					if !assert.NoError(t, err) {
+						return
+					}
+					params.Start = &sTime
+				}
+				if tt.args.end != "" {
+					eTime, err := time.Parse(time.RFC3339, tt.args.end)
+					if !assert.NoError(t, err) {
+						return
+					}
+					params.End = &eTime
+				}
+
+				handlerErr = h.GetGamePlayStats(c, gameIDPath, params)
+			}
+
+			// 検証
+			if tt.isError {
+				var httpError *echo.HTTPError
+				if assert.ErrorAs(t, handlerErr, &httpError) {
+					assert.Equal(t, tt.statusCode, httpError.Code)
+				}
+			} else {
+				if assert.NoError(t, handlerErr) {
+					assert.Equal(t, tt.statusCode, rec.Code)
+					if tt.resBody != "" {
+						assert.JSONEq(t, tt.resBody, rec.Body.String())
+					}
+				}
+			}
+		})
+	}
+}
