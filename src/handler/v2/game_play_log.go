@@ -94,9 +94,6 @@ func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openap
 // (GET /games/{gameID}/play-stats)
 func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGamePlayStatsParams) error {
 	ctx := c.Request().Context()
-	if params.GameVersionID == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "game_version_id is required")
-	}
 	if params.Start == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "start is required")
 	}
@@ -122,8 +119,8 @@ func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.Game
 	// Serviceの呼び出し
 	stats, err := gpl.gamePlayLogService.GetGamePlayStats(ctx, gameID, gameVersionID, start, end)
 	if err != nil {
-		log.Printf("get game play stats: %w", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "get game play stats")
+		c.Logger().Errorf("failed to get games: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	hourlyStats := make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats()))

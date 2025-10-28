@@ -296,9 +296,9 @@ func TestGetGamePlayStats(t *testing.T) {
 	mockStats := domain.NewGamePlayStats(
 		gameID,
 		10,
-		300*time.Second, // 5分
+		300*time.Second,
 		[]*domain.HourlyPlayStats{
-			domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second), // 2分
+			domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second),
 		},
 	)
 
@@ -315,7 +315,6 @@ func TestGetGamePlayStats(t *testing.T) {
 		},
 	}
 	expectedBody, err := json.Marshal(expectedResponse)
-	// ここはテストの前提条件なので、失敗したら進めないように t.Fatal を使うのが適切
 	if err != nil {
 		t.Fatalf("failed to marshal expected response: %v", err)
 	}
@@ -336,7 +335,7 @@ func TestGetGamePlayStats(t *testing.T) {
 		statusCode              int
 		resBody                 string
 	}{
-		"正常系": {
+		"正常系:200": {
 			args: args{
 				gameID:        uuid.UUID(gameID).String(),
 				gameVersionID: uuid.UUID(gameVersionID).String(),
@@ -350,9 +349,23 @@ func TestGetGamePlayStats(t *testing.T) {
 			statusCode:              http.StatusOK,
 			resBody:                 string(expectedBody),
 		},
-		"異常系: serviceでエラー": {
+		"正常系: game_version_idなし 200": {
 			args: args{
 				gameID: uuid.UUID(gameID).String(),
+				start:  now.Add(-time.Hour).Format(time.RFC3339),
+			},
+			executeGetGamePlayStats: true,
+			getGamePlayStatsResult:  mockStats,
+			getGamePlayStatsErr:     nil,
+			isError:                 false,
+			statusCode:              http.StatusOK,
+			resBody:                 string(expectedBody),
+		},
+		"異常系: serviceでエラー500": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: uuid.UUID(gameVersionID).String(),
+				start:         now.Add(-time.Hour).Format(time.RFC3339),
 			},
 			executeGetGamePlayStats: true,
 			getGamePlayStatsResult:  nil,
@@ -360,11 +373,51 @@ func TestGetGamePlayStats(t *testing.T) {
 			isError:                 true,
 			statusCode:              http.StatusInternalServerError,
 		},
-		"異常系: 不正なgameID": {
+		"異常系: 不正なgameIDで400": {
 			args: args{
 				gameID: "invalid-uuid",
 			},
 			executeGetGamePlayStats: false, // serviceは呼ばれない
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系: startなしで400": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: uuid.UUID(gameVersionID).String(),
+			},
+			executeGetGamePlayStats: false,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系: 不正なgame_version_idで400": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: "invalid-uuid",
+				start:         now.Add(-time.Hour).Format(time.RFC3339),
+			},
+			executeGetGamePlayStats: false,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系: 不正なstartで400": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: uuid.UUID(gameVersionID).String(),
+				start:         "invalid-time",
+			},
+			executeGetGamePlayStats: false,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系: 不正なendで400": {
+			args: args{
+				gameID:        uuid.UUID(gameID).String(),
+				gameVersionID: uuid.UUID(gameVersionID).String(),
+				start:         now.Add(-time.Hour).Format(time.RFC3339),
+				end:           "invalid-time",
+			},
+			executeGetGamePlayStats: false,
 			isError:                 true,
 			statusCode:              http.StatusBadRequest,
 		},
@@ -415,36 +468,48 @@ func TestGetGamePlayStats(t *testing.T) {
 			c.Request().URL.RawQuery = q.Encode()
 
 			var handlerErr error
-			gameIDUUID, err := uuid.Parse(tt.args.gameID)
-			if err != nil {
-				handlerErr = echo.NewHTTPError(http.StatusBadRequest, err.Error())
-			} else {
-				gameIDPath := openapi.GameIDInPath(gameIDUUID)
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						var ok bool
+						handlerErr, ok = r.(error)
+						if !ok {
+							handlerErr = fmt.Errorf("%v", r)
+						}
+					}
+				}()
+
+				gameIDUUID, err := uuid.Parse(tt.args.gameID)
+				if err != nil {
+					handlerErr = echo.NewHTTPError(http.StatusBadRequest, err.Error())
+					return
+				}
+
 				var params openapi.GetGamePlayStatsParams
 				if tt.args.gameVersionID != "" {
 					vID, err := uuid.Parse(tt.args.gameVersionID)
-					if !assert.NoError(t, err) {
-						return
+					if err != nil {
+						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid game_version_id: %s", tt.args.gameVersionID)))
 					}
 					params.GameVersionID = &vID
 				}
 				if tt.args.start != "" {
 					sTime, err := time.Parse(time.RFC3339, tt.args.start)
-					if !assert.NoError(t, err) {
-						return
+					if err != nil {
+						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid start time: %s", tt.args.start)))
 					}
 					params.Start = &sTime
 				}
 				if tt.args.end != "" {
 					eTime, err := time.Parse(time.RFC3339, tt.args.end)
-					if !assert.NoError(t, err) {
-						return
+					if err != nil {
+						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid end time: %s", tt.args.end)))
 					}
 					params.End = &eTime
 				}
 
-				handlerErr = h.GetGamePlayStats(c, gameIDPath, params)
-			}
+				handlerErr = h.GetGamePlayStats(c, openapi.GameIDInPath(gameIDUUID), params)
+			}()
 
 			// 検証
 			if tt.isError {
