@@ -561,136 +561,127 @@ func TestGetGamePlayStats(t *testing.T) {
 	gameID := values.NewGameID()
 	gameVersionID := values.NewGameVersionID()
 	now := time.Now()
+	defaultStart := now.Add(-24 * time.Hour)
+	customStart := now.Add(-48 * time.Hour)
+	customEnd := now.Add(-24 * time.Hour)
 
+	mockHourlyStats := []*domain.HourlyPlayStats{
+		domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second),
+	}
 	mockStats := domain.NewGamePlayStats(
 		gameID,
 		10,
 		300*time.Second,
-		[]*domain.HourlyPlayStats{
-			domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second),
-		},
+		mockHourlyStats,
 	)
 
-	expectedResponse := openapi.GamePlayStats{
+	expectedHourlyStats := []openapi.HourlyPlayStats{
+		{
+			StartTime: now.Truncate(time.Hour),
+			PlayCount: 5,
+			PlayTime:  120,
+		},
+	}
+	expectedGamePlayStats := openapi.GamePlayStats{
 		GameID:           uuid.UUID(gameID),
 		TotalPlayCount:   10,
 		TotalPlaySeconds: 300,
-		HourlyStats: []openapi.HourlyPlayStats{
-			{
-				StartTime: now.Truncate(time.Hour),
-				PlayCount: 5,
-				PlayTime:  120,
-			},
-		},
-	}
-	expectedBody, err := json.Marshal(expectedResponse)
-	if err != nil {
-		t.Fatalf("failed to marshal expected response: %v", err)
-	}
-
-	type args struct {
-		gameID        string
-		gameVersionID string
-		start         string
-		end           string
+		HourlyStats:      expectedHourlyStats,
 	}
 
 	testCases := map[string]struct {
-		args                    args
+		gameID                  values.GameID
+		queryParams             map[string]string
 		executeGetGamePlayStats bool
+		expectedGameVersionID   *values.GameVersionID
+		expectedStart           time.Time
+		expectedEnd             time.Time
 		getGamePlayStatsResult  *domain.GamePlayStats
 		getGamePlayStatsErr     error
+		expectedResponse        openapi.GamePlayStats
 		isError                 bool
 		statusCode              int
-		resBody                 string
 	}{
-		"正常系:200": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: uuid.UUID(gameVersionID).String(),
-				start:         now.Add(-time.Hour).Format(time.RFC3339),
-				end:           now.Format(time.RFC3339),
-			},
+		"クエリパラメータなし": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
 			executeGetGamePlayStats: true,
+			expectedGameVersionID:   nil,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
 			getGamePlayStatsResult:  mockStats,
-			getGamePlayStatsErr:     nil,
-			isError:                 false,
+			expectedResponse:        expectedGamePlayStats,
 			statusCode:              http.StatusOK,
-			resBody:                 string(expectedBody),
 		},
-		"正常系: game_version_idなし 200": {
-			args: args{
-				gameID: uuid.UUID(gameID).String(),
-				start:  now.Add(-time.Hour).Format(time.RFC3339),
+		"正常系: game_version_idあり": {
+			gameID: gameID,
+			queryParams: map[string]string{
+				"game_version_id": uuid.UUID(gameVersionID).String(),
 			},
 			executeGetGamePlayStats: true,
+			expectedGameVersionID:   &gameVersionID,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
 			getGamePlayStatsResult:  mockStats,
-			getGamePlayStatsErr:     nil,
-			isError:                 false,
+			expectedResponse:        expectedGamePlayStats,
 			statusCode:              http.StatusOK,
-			resBody:                 string(expectedBody),
 		},
-		"異常系: serviceでエラー500": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: uuid.UUID(gameVersionID).String(),
-				start:         now.Add(-time.Hour).Format(time.RFC3339),
+		"正常系: start, end指定": {
+			gameID: gameID,
+			queryParams: map[string]string{
+				"start": customStart.Format(time.RFC3339),
+				"end":   customEnd.Format(time.RFC3339),
 			},
 			executeGetGamePlayStats: true,
-			getGamePlayStatsResult:  nil,
+			expectedGameVersionID:   nil,
+			expectedStart:           customStart,
+			expectedEnd:             customEnd,
+			getGamePlayStatsResult:  mockStats,
+			expectedResponse:        expectedGamePlayStats,
+			statusCode:              http.StatusOK,
+		},
+		"異常系:404 serviceでErrInvalidGame": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrInvalidGame,
+			isError:                 true,
+			statusCode:              http.StatusNotFound,
+		},
+		"異常系: 400 serviceでErrInvalidTimeRange": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrInvalidTimeRange,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系:400 serviceでErrTimePeriodTooLong": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrTimePeriodTooLong,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系:500 serviceでその他のエラー": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
 			getGamePlayStatsErr:     assert.AnError,
 			isError:                 true,
 			statusCode:              http.StatusInternalServerError,
 		},
-		"異常系: 不正なgameIDで400": {
-			args: args{
-				gameID: "invalid-uuid",
-			},
-			executeGetGamePlayStats: false, // serviceは呼ばれない
-			isError:                 true,
-			statusCode:              http.StatusBadRequest,
-		},
-		"異常系: startなしで400": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: uuid.UUID(gameVersionID).String(),
-			},
-			executeGetGamePlayStats: false,
-			isError:                 true,
-			statusCode:              http.StatusBadRequest,
-		},
-		"異常系: 不正なgame_version_idで400": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: "invalid-uuid",
-				start:         now.Add(-time.Hour).Format(time.RFC3339),
-			},
-			executeGetGamePlayStats: false,
-			isError:                 true,
-			statusCode:              http.StatusBadRequest,
-		},
-		"異常系: 不正なstartで400": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: uuid.UUID(gameVersionID).String(),
-				start:         "invalid-time",
-			},
-			executeGetGamePlayStats: false,
-			isError:                 true,
-			statusCode:              http.StatusBadRequest,
-		},
-		"異常系: 不正なendで400": {
-			args: args{
-				gameID:        uuid.UUID(gameID).String(),
-				gameVersionID: uuid.UUID(gameVersionID).String(),
-				start:         now.Add(-time.Hour).Format(time.RFC3339),
-				end:           "invalid-time",
-			},
-			executeGetGamePlayStats: false,
-			isError:                 true,
-			statusCode:              http.StatusBadRequest,
-		},
 	}
+
 	for name, tt := range testCases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -699,98 +690,85 @@ func TestGetGamePlayStats(t *testing.T) {
 			h := NewGamePlayLog(serviceMock)
 
 			if tt.executeGetGamePlayStats {
-				gameIDValue := values.NewGameIDFromUUID(uuid.MustParse(tt.args.gameID))
-				var gameVersionIDValue *values.GameVersionID
-				if tt.args.gameVersionID != "" {
-					v := values.NewGameVersionIDFromUUID(uuid.MustParse(tt.args.gameVersionID))
-					gameVersionIDValue = &v
-				}
-
 				serviceMock.
 					EXPECT().
 					GetGamePlayStats(
 						gomock.Any(),
-						gameIDValue,
-						gameVersionIDValue,
-						gomock.Any(),
-						gomock.Any(),
+						tt.gameID,
+						tt.expectedGameVersionID,
+						gomock.Cond(func(start time.Time) bool {
+							return start.Sub(tt.expectedStart).Abs() < time.Second
+						}),
+						gomock.Cond(func(end time.Time) bool {
+							return end.Sub(tt.expectedEnd).Abs() < time.Second
+						}),
 					).
 					Return(tt.getGamePlayStatsResult, tt.getGamePlayStatsErr)
 			}
 
-			// リクエスト準備
-			url := fmt.Sprintf("/games/%s/play-stats", tt.args.gameID)
+			url := fmt.Sprintf("/games/%s/play-stats", uuid.UUID(tt.gameID).String())
+			if len(tt.queryParams) > 0 {
+				url += "?"
+				first := true
+				for key, value := range tt.queryParams {
+					if !first {
+						url += "&"
+					}
+					url += fmt.Sprintf("%s=%s", key, value)
+					first = false
+				}
+			}
+
 			c, _, rec := setupTestRequest(t, http.MethodGet, url, nil)
 
-			// クエリパラメータを手動で設定
-			q := c.Request().URL.Query()
-			if tt.args.gameVersionID != "" {
-				q.Set("game_version_id", tt.args.gameVersionID)
+			var params openapi.GetGamePlayStatsParams
+			if v, ok := tt.queryParams["game_version_id"]; ok {
+				parsed, err := uuid.Parse(v)
+				if err == nil {
+					params.GameVersionID = &parsed
+				}
 			}
-			if tt.args.start != "" {
-				q.Set("start", tt.args.start)
+			if v, ok := tt.queryParams["start"]; ok {
+				parsed, err := time.Parse(time.RFC3339, v)
+				if err == nil {
+					params.Start = &parsed
+				}
 			}
-			if tt.args.end != "" {
-				q.Set("end", tt.args.end)
+			if v, ok := tt.queryParams["end"]; ok {
+				parsed, err := time.Parse(time.RFC3339, v)
+				if err == nil {
+					params.End = &parsed
+				}
 			}
-			c.Request().URL.RawQuery = q.Encode()
 
-			var handlerErr error
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						var ok bool
-						handlerErr, ok = r.(error)
-						if !ok {
-							handlerErr = fmt.Errorf("%v", r)
-						}
-					}
-				}()
+			err := h.GetGamePlayStats(c, openapi.GameIDInPath(tt.gameID), params)
 
-				gameIDUUID, err := uuid.Parse(tt.args.gameID)
-				if err != nil {
-					handlerErr = echo.NewHTTPError(http.StatusBadRequest, err.Error())
-					return
-				}
-
-				var params openapi.GetGamePlayStatsParams
-				if tt.args.gameVersionID != "" {
-					vID, err := uuid.Parse(tt.args.gameVersionID)
-					if err != nil {
-						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid game_version_id: %s", tt.args.gameVersionID)))
-					}
-					params.GameVersionID = &vID
-				}
-				if tt.args.start != "" {
-					sTime, err := time.Parse(time.RFC3339, tt.args.start)
-					if err != nil {
-						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid start time: %s", tt.args.start)))
-					}
-					params.Start = &sTime
-				}
-				if tt.args.end != "" {
-					eTime, err := time.Parse(time.RFC3339, tt.args.end)
-					if err != nil {
-						panic(echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid end time: %s", tt.args.end)))
-					}
-					params.End = &eTime
-				}
-
-				handlerErr = h.GetGamePlayStats(c, openapi.GameIDInPath(gameIDUUID), params)
-			}()
-
-			// 検証
 			if tt.isError {
 				var httpError *echo.HTTPError
-				if assert.ErrorAs(t, handlerErr, &httpError) {
+				if assert.ErrorAs(t, err, &httpError) {
 					assert.Equal(t, tt.statusCode, httpError.Code)
 				}
-			} else {
-				if assert.NoError(t, handlerErr) {
-					assert.Equal(t, tt.statusCode, rec.Code)
-					if tt.resBody != "" {
-						assert.JSONEq(t, tt.resBody, rec.Body.String())
-					}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.statusCode, rec.Code)
+
+			if !tt.isError {
+				var resBody openapi.GamePlayStats
+				err = json.NewDecoder(rec.Body).Decode(&resBody)
+				assert.NoError(t, err)
+
+				// GameID, TotalPlayCount, TotalPlaySecondsのチェック
+				assert.Equal(t, expectedGamePlayStats.GameID, resBody.GameID)
+				assert.Equal(t, expectedGamePlayStats.TotalPlayCount, resBody.TotalPlayCount)
+				assert.Equal(t, expectedGamePlayStats.TotalPlaySeconds, resBody.TotalPlaySeconds)
+
+				assert.Len(t, resBody.HourlyStats, len(expectedGamePlayStats.HourlyStats))
+				for i, expectedHourly := range expectedGamePlayStats.HourlyStats {
+					assert.WithinDuration(t, expectedHourly.StartTime, resBody.HourlyStats[i].StartTime, time.Second)
+					assert.Equal(t, expectedHourly.PlayCount, resBody.HourlyStats[i].PlayCount)
+					assert.Equal(t, expectedHourly.PlayTime, resBody.HourlyStats[i].PlayTime)
 				}
 			}
 		})

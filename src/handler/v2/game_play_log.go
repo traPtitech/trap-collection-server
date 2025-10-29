@@ -94,9 +94,6 @@ func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openap
 // (GET /games/{gameID}/play-stats)
 func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGamePlayStatsParams) error {
 	ctx := c.Request().Context()
-	if params.Start == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "start is required")
-	}
 
 	gameID := values.NewGameIDFromUUID(gameIDPath)
 
@@ -106,21 +103,32 @@ func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.Game
 		gameVersionID = &vID
 	}
 
-	var start time.Time
-	if params.Start != nil {
-		start = *params.Start
-	}
-
-	var end time.Time
+	var start, end time.Time
 	if params.End != nil {
 		end = *params.End
+	} else {
+		end = time.Now()
+	}
+	if params.Start != nil {
+		start = *params.Start
+	} else {
+		start = end.Add(-24 * time.Hour)
 	}
 
 	// Serviceの呼び出し
 	stats, err := gpl.gamePlayLogService.GetGamePlayStats(ctx, gameID, gameVersionID, start, end)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if errors.Is(err, service.ErrInvalidTimeRange) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid time range")
+	}
+	if errors.Is(err, service.ErrTimePeriodTooLong) {
+		return echo.NewHTTPError(http.StatusBadRequest, "time period too long")
+	}
 	if err != nil {
-		c.Logger().Errorf("failed to get games: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		log.Printf("get game play stats: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "get game play stats")
 	}
 
 	hourlyStats := make([]openapi.HourlyPlayStats, 0, len(stats.GetHourlyStats()))
@@ -128,7 +136,7 @@ func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.Game
 		hourlyStats = append(hourlyStats, openapi.HourlyPlayStats{
 			StartTime: hourlyStat.GetStartTime(),
 			PlayCount: hourlyStat.GetPlayCount(),
-			PlayTime:  int(hourlyStat.GetPlayTime().Seconds()), //ここどうしよう？
+			PlayTime:  int(hourlyStat.GetPlayTime().Seconds()),
 		})
 	}
 
