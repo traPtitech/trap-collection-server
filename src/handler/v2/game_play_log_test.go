@@ -754,23 +754,22 @@ func TestGetGamePlayStats(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tt.statusCode, rec.Code)
 
-			if !tt.isError {
-				var resBody openapi.GamePlayStats
-				err = json.NewDecoder(rec.Body).Decode(&resBody)
-				assert.NoError(t, err)
+			var resBody openapi.GamePlayStats
+			err = json.NewDecoder(rec.Body).Decode(&resBody)
+			assert.NoError(t, err)
 
-				// GameID, TotalPlayCount, TotalPlaySecondsのチェック
-				assert.Equal(t, expectedGamePlayStats.GameID, resBody.GameID)
-				assert.Equal(t, expectedGamePlayStats.TotalPlayCount, resBody.TotalPlayCount)
-				assert.Equal(t, expectedGamePlayStats.TotalPlaySeconds, resBody.TotalPlaySeconds)
+			// GameID, TotalPlayCount, TotalPlaySecondsのチェック
+			assert.Equal(t, expectedGamePlayStats.GameID, resBody.GameID)
+			assert.Equal(t, expectedGamePlayStats.TotalPlayCount, resBody.TotalPlayCount)
+			assert.Equal(t, expectedGamePlayStats.TotalPlaySeconds, resBody.TotalPlaySeconds)
 
-				assert.Len(t, resBody.HourlyStats, len(expectedGamePlayStats.HourlyStats))
-				for i, expectedHourly := range expectedGamePlayStats.HourlyStats {
-					assert.WithinDuration(t, expectedHourly.StartTime, resBody.HourlyStats[i].StartTime, time.Second)
-					assert.Equal(t, expectedHourly.PlayCount, resBody.HourlyStats[i].PlayCount)
-					assert.Equal(t, expectedHourly.PlayTime, resBody.HourlyStats[i].PlayTime)
-				}
+			assert.Len(t, resBody.HourlyStats, len(expectedGamePlayStats.HourlyStats))
+			for i, expectedHourly := range expectedGamePlayStats.HourlyStats {
+				assert.WithinDuration(t, expectedHourly.StartTime, resBody.HourlyStats[i].StartTime, time.Second)
+				assert.Equal(t, expectedHourly.PlayCount, resBody.HourlyStats[i].PlayCount)
+				assert.Equal(t, expectedHourly.PlayTime, resBody.HourlyStats[i].PlayTime)
 			}
+
 		})
 	}
 }
