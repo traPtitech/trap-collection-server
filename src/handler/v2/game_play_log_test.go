@@ -553,3 +553,223 @@ func TestGetEditionPlayStats(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGamePlayStats(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+
+	gameID := values.NewGameID()
+	gameVersionID := values.NewGameVersionID()
+	now := time.Now()
+	defaultStart := now.Add(-24 * time.Hour)
+	customStart := now.Add(-48 * time.Hour)
+	customEnd := now.Add(-24 * time.Hour)
+
+	mockHourlyStats := []*domain.HourlyPlayStats{
+		domain.NewHourlyPlayStats(now.Truncate(time.Hour), 5, 120*time.Second),
+	}
+	mockStats := domain.NewGamePlayStats(
+		gameID,
+		10,
+		300*time.Second,
+		mockHourlyStats,
+	)
+
+	expectedHourlyStats := []openapi.HourlyPlayStats{
+		{
+			StartTime: now.Truncate(time.Hour),
+			PlayCount: 5,
+			PlayTime:  120,
+		},
+	}
+	expectedGamePlayStats := openapi.GamePlayStats{
+		GameID:           uuid.UUID(gameID),
+		TotalPlayCount:   10,
+		TotalPlaySeconds: 300,
+		HourlyStats:      expectedHourlyStats,
+	}
+
+	testCases := map[string]struct {
+		gameID                  values.GameID
+		queryParams             map[string]string
+		executeGetGamePlayStats bool
+		expectedGameVersionID   *values.GameVersionID
+		expectedStart           time.Time
+		expectedEnd             time.Time
+		getGamePlayStatsResult  *domain.GamePlayStats
+		getGamePlayStatsErr     error
+		expectedResponse        openapi.GamePlayStats
+		isError                 bool
+		statusCode              int
+	}{
+		"クエリパラメータなし": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedGameVersionID:   nil,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsResult:  mockStats,
+			expectedResponse:        expectedGamePlayStats,
+			statusCode:              http.StatusOK,
+		},
+		"正常系: game_version_idあり": {
+			gameID: gameID,
+			queryParams: map[string]string{
+				"game_version_id": uuid.UUID(gameVersionID).String(),
+			},
+			executeGetGamePlayStats: true,
+			expectedGameVersionID:   &gameVersionID,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsResult:  mockStats,
+			expectedResponse:        expectedGamePlayStats,
+			statusCode:              http.StatusOK,
+		},
+		"正常系: start, end指定": {
+			gameID: gameID,
+			queryParams: map[string]string{
+				"start": customStart.Format(time.RFC3339),
+				"end":   customEnd.Format(time.RFC3339),
+			},
+			executeGetGamePlayStats: true,
+			expectedGameVersionID:   nil,
+			expectedStart:           customStart,
+			expectedEnd:             customEnd,
+			getGamePlayStatsResult:  mockStats,
+			expectedResponse:        expectedGamePlayStats,
+			statusCode:              http.StatusOK,
+		},
+		"異常系:404 serviceでErrInvalidGame": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrInvalidGame,
+			isError:                 true,
+			statusCode:              http.StatusNotFound,
+		},
+		"異常系: 400 serviceでErrInvalidTimeRange": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrInvalidTimeRange,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系:400 serviceでErrTimePeriodTooLong": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     service.ErrTimePeriodTooLong,
+			isError:                 true,
+			statusCode:              http.StatusBadRequest,
+		},
+		"異常系:500 serviceでその他のエラー": {
+			gameID:                  gameID,
+			queryParams:             map[string]string{},
+			executeGetGamePlayStats: true,
+			expectedStart:           defaultStart,
+			expectedEnd:             now,
+			getGamePlayStatsErr:     assert.AnError,
+			isError:                 true,
+			statusCode:              http.StatusInternalServerError,
+		},
+	}
+
+	for name, tt := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			serviceMock := mock.NewMockGamePlayLogV2(ctrl)
+			h := NewGamePlayLog(serviceMock)
+
+			if tt.executeGetGamePlayStats {
+				serviceMock.
+					EXPECT().
+					GetGamePlayStats(
+						gomock.Any(),
+						tt.gameID,
+						tt.expectedGameVersionID,
+						gomock.Cond(func(start time.Time) bool {
+							return start.Sub(tt.expectedStart).Abs() < time.Second
+						}),
+						gomock.Cond(func(end time.Time) bool {
+							return end.Sub(tt.expectedEnd).Abs() < time.Second
+						}),
+					).
+					Return(tt.getGamePlayStatsResult, tt.getGamePlayStatsErr)
+			}
+
+			url := fmt.Sprintf("/games/%s/play-stats", uuid.UUID(tt.gameID).String())
+			if len(tt.queryParams) > 0 {
+				url += "?"
+				first := true
+				for key, value := range tt.queryParams {
+					if !first {
+						url += "&"
+					}
+					url += fmt.Sprintf("%s=%s", key, value)
+					first = false
+				}
+			}
+
+			c, _, rec := setupTestRequest(t, http.MethodGet, url, nil)
+
+			var params openapi.GetGamePlayStatsParams
+			if v, ok := tt.queryParams["game_version_id"]; ok {
+				parsed, err := uuid.Parse(v)
+				if err == nil {
+					params.GameVersionID = &parsed
+				}
+			}
+			if v, ok := tt.queryParams["start"]; ok {
+				parsed, err := time.Parse(time.RFC3339, v)
+				if err == nil {
+					params.Start = &parsed
+				}
+			}
+			if v, ok := tt.queryParams["end"]; ok {
+				parsed, err := time.Parse(time.RFC3339, v)
+				if err == nil {
+					params.End = &parsed
+				}
+			}
+
+			err := h.GetGamePlayStats(c, openapi.GameIDInPath(tt.gameID), params)
+
+			if tt.isError {
+				var httpError *echo.HTTPError
+				if assert.ErrorAs(t, err, &httpError) {
+					assert.Equal(t, tt.statusCode, httpError.Code)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.statusCode, rec.Code)
+
+			var resBody openapi.GamePlayStats
+			err = json.NewDecoder(rec.Body).Decode(&resBody)
+			assert.NoError(t, err)
+
+			// GameID, TotalPlayCount, TotalPlaySecondsのチェック
+			assert.Equal(t, expectedGamePlayStats.GameID, resBody.GameID)
+			assert.Equal(t, expectedGamePlayStats.TotalPlayCount, resBody.TotalPlayCount)
+			assert.Equal(t, expectedGamePlayStats.TotalPlaySeconds, resBody.TotalPlaySeconds)
+
+			assert.Len(t, resBody.HourlyStats, len(expectedGamePlayStats.HourlyStats))
+			for i, expectedHourly := range expectedGamePlayStats.HourlyStats {
+				assert.WithinDuration(t, expectedHourly.StartTime, resBody.HourlyStats[i].StartTime, time.Second)
+				assert.Equal(t, expectedHourly.PlayCount, resBody.HourlyStats[i].PlayCount)
+				assert.Equal(t, expectedHourly.PlayTime, resBody.HourlyStats[i].PlayTime)
+			}
+
+		})
+	}
+}
