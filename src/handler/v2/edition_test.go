@@ -30,7 +30,7 @@ func TestGetEditions(t *testing.T) {
 
 	type test struct {
 		description    string
-		editions       []*domain.LauncherVersion
+		editions       []*domain.Edition
 		getEditionsErr error
 		expectEditions []openapi.Edition
 		isErr          bool
@@ -38,10 +38,10 @@ func TestGetEditions(t *testing.T) {
 	}
 
 	now := time.Now()
-	editionID1 := values.NewLauncherVersionIDFromUUID(uuid.New())
-	editionID2 := values.NewLauncherVersionIDFromUUID(uuid.New())
-	editionName1 := values.NewLauncherVersionName("テストエディション")
-	editionName2 := values.NewLauncherVersionName("テストエディション2")
+	editionID1 := values.NewEditionIDFromUUID(uuid.New())
+	editionID2 := values.NewEditionIDFromUUID(uuid.New())
+	editionName1 := values.NewEditionName("テストエディション")
+	editionName2 := values.NewEditionName("テストエディション2")
 	strURL := "https://example.com/questionnaire"
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
@@ -51,11 +51,11 @@ func TestGetEditions(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			editions: []*domain.LauncherVersion{
-				domain.NewLauncherVersionWithQuestionnaire(
+			editions: []*domain.Edition{
+				domain.NewEditionWithQuestionnaire(
 					editionID1,
 					editionName1,
-					values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+					values.NewEditionQuestionnaireURL(questionnaireURL),
 					now,
 				),
 			},
@@ -71,8 +71,8 @@ func TestGetEditions(t *testing.T) {
 		},
 		{
 			description: "アンケートURLが無くてもエラーなし",
-			editions: []*domain.LauncherVersion{
-				domain.NewLauncherVersionWithoutQuestionnaire(
+			editions: []*domain.Edition{
+				domain.NewEditionWithoutQuestionnaire(
 					editionID1,
 					editionName1,
 					now,
@@ -96,14 +96,14 @@ func TestGetEditions(t *testing.T) {
 		},
 		{
 			description: "複数エディションでもエラーなし",
-			editions: []*domain.LauncherVersion{
-				domain.NewLauncherVersionWithQuestionnaire(
+			editions: []*domain.Edition{
+				domain.NewEditionWithQuestionnaire(
 					editionID1,
 					editionName1,
-					values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+					values.NewEditionQuestionnaireURL(questionnaireURL),
 					now,
 				),
-				domain.NewLauncherVersionWithoutQuestionnaire(
+				domain.NewEditionWithoutQuestionnaire(
 					editionID2,
 					editionName2,
 					now,
@@ -127,7 +127,7 @@ func TestGetEditions(t *testing.T) {
 		},
 		{
 			description: "エディションが存在しなくてもでもエラーなし",
-			editions:    []*domain.LauncherVersion{},
+			editions:    []*domain.Edition{},
 			statusCode:  http.StatusOK,
 		},
 	}
@@ -193,11 +193,11 @@ func TestPostEdition(t *testing.T) {
 		reqBody              *openapi.NewEdition
 		invalidBody          bool
 		executeCreateEdition bool
-		name                 values.LauncherVersionName
-		questionnaireURL     types.Option[values.LauncherVersionQuestionnaireURL]
+		name                 values.EditionName
+		questionnaireURL     types.Option[values.EditionQuestionnaireURL]
 		gameVersionIDs       []values.GameVersionID
 		createEditionErr     error
-		resultEdition        *domain.LauncherVersion
+		resultEdition        *domain.Edition
 		isErr                bool
 		statusCode           int
 		expectEdition        *openapi.Edition
@@ -205,7 +205,7 @@ func TestPostEdition(t *testing.T) {
 
 	now := time.Now()
 	editionUUID := uuid.New()
-	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
+	editionID := values.NewEditionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
 	strURL := "https://example.com/questionnaire"
 	invalidURL := " https://example.com/questionnaire with spaces"
@@ -226,16 +226,16 @@ func TestPostEdition(t *testing.T) {
 				GameVersions:  []uuid.UUID{gameVersionUUID1, gameVersionUUID2},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.NewOption(values.NewEditionQuestionnaireURL(questionnaireURL)),
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID2),
 			},
-			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
+			resultEdition: domain.NewEditionWithQuestionnaire(
 				editionID,
-				values.NewLauncherVersionName(editionName),
-				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				values.NewEditionName(editionName),
+				values.NewEditionQuestionnaireURL(questionnaireURL),
 				now,
 			),
 			expectEdition: &openapi.Edition{
@@ -253,12 +253,12 @@ func TestPostEdition(t *testing.T) {
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.Option[values.EditionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
-			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
+			resultEdition: domain.NewEditionWithoutQuestionnaire(
 				editionID,
-				values.NewLauncherVersionName(editionName),
+				values.NewEditionName(editionName),
 				now,
 			),
 			expectEdition: &openapi.Edition{
@@ -304,8 +304,8 @@ func TestPostEdition(t *testing.T) {
 				GameVersions: []uuid.UUID{gameVersionUUID1, gameVersionUUID1},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.Option[values.EditionQuestionnaireURL]{},
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
@@ -321,8 +321,8 @@ func TestPostEdition(t *testing.T) {
 				GameVersions: []uuid.UUID{gameVersionUUID1, gameVersionUUID2},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.Option[values.EditionQuestionnaireURL]{},
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID2),
@@ -338,8 +338,8 @@ func TestPostEdition(t *testing.T) {
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.Option[values.EditionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			createEditionErr:     service.ErrInvalidGameVersionID,
 			isErr:                true,
@@ -352,8 +352,8 @@ func TestPostEdition(t *testing.T) {
 				GameVersions: []uuid.UUID{gameVersionUUID1},
 			},
 			executeCreateEdition: true,
-			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:                 values.NewEditionName(editionName),
+			questionnaireURL:     types.Option[values.EditionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			createEditionErr:     errors.New("internal error"),
 			isErr:                true,
@@ -435,7 +435,7 @@ func TestDeleteEdition(t *testing.T) {
 		description       string
 		editionID         openapi.EditionIDInPath
 		executeDeleteMock bool
-		launcherVersionID values.LauncherVersionID
+		launcherVersionID values.EditionID
 		deleteEditionErr  error
 		isErr             bool
 		statusCode        int
@@ -446,14 +446,14 @@ func TestDeleteEdition(t *testing.T) {
 			description:       "特に問題ないのでエラー無し",
 			editionID:         editionID,
 			executeDeleteMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionID),
 			statusCode:        http.StatusOK,
 		},
 		{
 			description:       "存在しないエディションIDなので400",
 			editionID:         editionID,
 			executeDeleteMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionID),
 			deleteEditionErr:  service.ErrInvalidEditionID,
 			isErr:             true,
 			statusCode:        http.StatusBadRequest,
@@ -462,7 +462,7 @@ func TestDeleteEdition(t *testing.T) {
 			description:       "DeleteEditionがエラーなので500",
 			editionID:         editionID,
 			executeDeleteMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionID),
 			deleteEditionErr:  errors.New("internal error"),
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -513,7 +513,7 @@ func TestGetEdition(t *testing.T) {
 	type test struct {
 		description   string
 		editionID     openapi.EditionIDInPath
-		resultEdition *domain.LauncherVersion
+		resultEdition *domain.Edition
 		GetEditionErr error
 		expectEdition *openapi.Edition
 		isErr         bool
@@ -522,8 +522,8 @@ func TestGetEdition(t *testing.T) {
 
 	now := time.Now()
 	editionUUID := uuid.New()
-	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
-	editionName := values.NewLauncherVersionName("テストエディション")
+	editionID := values.NewEditionIDFromUUID(editionUUID)
+	editionName := values.NewEditionName("テストエディション")
 	strURL := "https://example.com/questionnaire"
 	questionnaireURL, err := url.Parse(strURL)
 	if err != nil {
@@ -534,10 +534,10 @@ func TestGetEdition(t *testing.T) {
 		{
 			description: "アンケートURLありのエディションが取得できる",
 			editionID:   editionUUID,
-			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
+			resultEdition: domain.NewEditionWithQuestionnaire(
 				editionID,
 				editionName,
-				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				values.NewEditionQuestionnaireURL(questionnaireURL),
 				now,
 			),
 			expectEdition: &openapi.Edition{
@@ -551,7 +551,7 @@ func TestGetEdition(t *testing.T) {
 		{
 			description: "アンケートURLなしのエディションが取得できる",
 			editionID:   editionUUID,
-			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
+			resultEdition: domain.NewEditionWithoutQuestionnaire(
 				editionID,
 				editionName,
 				now,
@@ -590,7 +590,7 @@ func TestGetEdition(t *testing.T) {
 
 			mockEditionService.
 				EXPECT().
-				GetEdition(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID)).
+				GetEdition(gomock.Any(), values.NewEditionIDFromUUID(testCase.editionID)).
 				Return(testCase.resultEdition, testCase.GetEditionErr)
 
 			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/api/v2/editions/%s", testCase.editionID), nil)
@@ -633,11 +633,11 @@ func TestPatchEdition(t *testing.T) {
 		reqBody           *openapi.PatchEdition
 		invalidBody       bool
 		executeUpdateMock bool
-		launcherVersionID values.LauncherVersionID
-		name              values.LauncherVersionName
-		questionnaireURL  types.Option[values.LauncherVersionQuestionnaireURL]
+		launcherVersionID values.EditionID
+		name              values.EditionName
+		questionnaireURL  types.Option[values.EditionQuestionnaireURL]
 		updateEditionErr  error
-		resultEdition     *domain.LauncherVersion
+		resultEdition     *domain.Edition
 		isErr             bool
 		statusCode        int
 		expectedRes       *openapi.Edition
@@ -645,7 +645,7 @@ func TestPatchEdition(t *testing.T) {
 
 	now := time.Now()
 	editionUUID := uuid.New()
-	editionID := values.NewLauncherVersionIDFromUUID(editionUUID)
+	editionID := values.NewEditionIDFromUUID(editionUUID)
 	editionName := "テストエディション"
 	strURL := "https://example.com/questionnaire"
 	invalidURL := " https://example.com/questionnaire with spaces"
@@ -665,12 +665,12 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
-			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.NewOption(values.NewEditionQuestionnaireURL(questionnaireURL)),
+			resultEdition: domain.NewEditionWithQuestionnaire(
 				editionID,
-				values.NewLauncherVersionName(editionName),
-				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+				values.NewEditionName(editionName),
+				values.NewEditionQuestionnaireURL(questionnaireURL),
 				now,
 			),
 			expectedRes: &openapi.Edition{
@@ -689,11 +689,11 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
-			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.Option[values.EditionQuestionnaireURL]{},
+			resultEdition: domain.NewEditionWithoutQuestionnaire(
 				editionID,
-				values.NewLauncherVersionName(editionName),
+				values.NewEditionName(editionName),
 				now,
 			),
 			expectedRes: &openapi.Edition{
@@ -747,8 +747,8 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.Option[values.EditionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrInvalidEditionID,
 			isErr:             true,
 			statusCode:        http.StatusBadRequest,
@@ -761,8 +761,8 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.Option[values.EditionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrDuplicateGameVersion,
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -775,8 +775,8 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.Option[values.EditionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrDuplicateGame,
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -789,8 +789,8 @@ func TestPatchEdition(t *testing.T) {
 			},
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
-			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			name:              values.NewEditionName(editionName),
+			questionnaireURL:  types.Option[values.EditionQuestionnaireURL]{},
 			updateEditionErr:  errors.New("internal error"),
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -1271,7 +1271,7 @@ func TestGetEditionGames(t *testing.T) {
 				EXPECT().
 				GetEditionGameVersions(
 					gomock.Any(),
-					values.NewLauncherVersionIDFromUUID(testCase.editionID),
+					values.NewEditionIDFromUUID(testCase.editionID),
 				).
 				Return(testCase.gameVersions, testCase.getEditionGamesErr)
 
@@ -1329,7 +1329,7 @@ func TestPatchEditionGame(t *testing.T) {
 		reqBody               *openapi.PatchEditionGameRequest
 		invalidBody           bool
 		executeUpdateMock     bool
-		launcherVersionID     values.LauncherVersionID
+		launcherVersionID     values.EditionID
 		gameVersionIDs        []values.GameVersionID
 		updateEditionGamesErr error
 		resultGameVersions    []*service.GameVersionWithGame
@@ -1381,7 +1381,7 @@ func TestPatchEditionGame(t *testing.T) {
 				},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs: []values.GameVersionID{
 				gameVersionID1,
 				gameVersionID2,
@@ -1422,7 +1422,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{},
 			},
 			executeUpdateMock:  true,
-			launcherVersionID:  values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID:  values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:     []values.GameVersionID{},
 			resultGameVersions: []*service.GameVersionWithGame{},
 			expectGames:        []openapi.EditionGameResponse{},
@@ -1442,7 +1442,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock:     true,
-			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID:     values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: service.ErrInvalidEditionID,
 			isErr:                 true,
@@ -1458,7 +1458,7 @@ func TestPatchEditionGame(t *testing.T) {
 				},
 			},
 			executeUpdateMock:     true,
-			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID:     values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1, gameVersionID1},
 			updateEditionGamesErr: service.ErrDuplicateGameVersion,
 			isErr:                 true,
@@ -1471,7 +1471,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock:     true,
-			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID:     values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: service.ErrDuplicateGame,
 			isErr:                 true,
@@ -1484,7 +1484,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock:     true,
-			launcherVersionID:     values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID:     values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:        []values.GameVersionID{gameVersionID1},
 			updateEditionGamesErr: errors.New("internal error"),
 			isErr:                 true,
@@ -1500,7 +1500,7 @@ func TestPatchEditionGame(t *testing.T) {
 				},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs: []values.GameVersionID{
 				gameVersionID1,
 				gameVersionID2,
@@ -1546,7 +1546,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
@@ -1589,7 +1589,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
@@ -1632,7 +1632,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{
@@ -1677,7 +1677,7 @@ func TestPatchEditionGame(t *testing.T) {
 				GameVersionIDs: []uuid.UUID{uuid.UUID(gameVersionID1)},
 			},
 			executeUpdateMock: true,
-			launcherVersionID: values.NewLauncherVersionIDFromUUID(editionUUID),
+			launcherVersionID: values.NewEditionIDFromUUID(editionUUID),
 			gameVersionIDs:    []values.GameVersionID{gameVersionID1},
 			resultGameVersions: []*service.GameVersionWithGame{
 				{

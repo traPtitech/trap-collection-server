@@ -40,10 +40,10 @@ func NewEdition(
 
 func (edition *Edition) CreateEdition(
 	ctx context.Context,
-	name values.LauncherVersionName,
-	questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL],
+	name values.EditionName,
+	questionnaireURL types.Option[values.EditionQuestionnaireURL],
 	gameVersionIDs []values.GameVersionID,
-) (*domain.LauncherVersion, error) {
+) (*domain.Edition, error) {
 	gameVersionMap := make(map[values.GameVersionID]struct{}, len(gameVersionIDs))
 	for _, gameVersionID := range gameVersionIDs {
 		if _, ok := gameVersionMap[gameVersionID]; ok {
@@ -53,11 +53,11 @@ func (edition *Edition) CreateEdition(
 		gameVersionMap[gameVersionID] = struct{}{}
 	}
 
-	var newEdition *domain.LauncherVersion
+	var newEdition *domain.Edition
 	if url, ok := questionnaireURL.Value(); ok {
-		newEdition = domain.NewLauncherVersionWithQuestionnaire(values.NewLauncherVersionID(), name, url, time.Now())
+		newEdition = domain.NewEditionWithQuestionnaire(values.NewEditionID(), name, url, time.Now())
 	} else {
-		newEdition = domain.NewLauncherVersionWithoutQuestionnaire(values.NewLauncherVersionID(), name, time.Now())
+		newEdition = domain.NewEditionWithoutQuestionnaire(values.NewEditionID(), name, time.Now())
 	}
 
 	err := edition.db.Transaction(ctx, nil, func(ctx context.Context) error {
@@ -98,7 +98,7 @@ func (edition *Edition) CreateEdition(
 	return newEdition, nil
 }
 
-func (edition *Edition) GetEditions(ctx context.Context) ([]*domain.LauncherVersion, error) {
+func (edition *Edition) GetEditions(ctx context.Context) ([]*domain.Edition, error) {
 	editions, err := edition.editionRepository.GetEditions(ctx, repository.LockTypeNone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get editions: %w", err)
@@ -107,7 +107,7 @@ func (edition *Edition) GetEditions(ctx context.Context) ([]*domain.LauncherVers
 	return editions, nil
 }
 
-func (edition *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersionID) (*domain.LauncherVersion, error) {
+func (edition *Edition) GetEdition(ctx context.Context, editionID values.EditionID) (*domain.Edition, error) {
 	editionValue, err := edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidEditionID
@@ -121,11 +121,11 @@ func (edition *Edition) GetEdition(ctx context.Context, editionID values.Launche
 
 func (edition *Edition) UpdateEdition(
 	ctx context.Context,
-	editionID values.LauncherVersionID,
-	name values.LauncherVersionName,
-	questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL],
-) (*domain.LauncherVersion, error) {
-	var editionValue *domain.LauncherVersion
+	editionID values.EditionID,
+	name values.EditionName,
+	questionnaireURL types.Option[values.EditionQuestionnaireURL],
+) (*domain.Edition, error) {
+	var editionValue *domain.Edition
 	err := edition.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		var err error
 		editionValue, err = edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeRecord)
@@ -158,7 +158,7 @@ func (edition *Edition) UpdateEdition(
 	return editionValue, nil
 }
 
-func (edition *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVersionID) error {
+func (edition *Edition) DeleteEdition(ctx context.Context, editionID values.EditionID) error {
 	err := edition.editionRepository.DeleteEdition(ctx, editionID)
 	if errors.Is(err, repository.ErrNoRecordDeleted) {
 		return service.ErrInvalidEditionID
@@ -172,7 +172,7 @@ func (edition *Edition) DeleteEdition(ctx context.Context, editionID values.Laun
 
 func (edition *Edition) UpdateEditionGameVersions(
 	ctx context.Context,
-	editionID values.LauncherVersionID,
+	editionID values.EditionID,
 	gameVersionIDs []values.GameVersionID,
 ) ([]*service.GameVersionWithGame, error) {
 	gameVersionMap := make(map[values.GameVersionID]struct{}, len(gameVersionIDs))
@@ -307,7 +307,7 @@ func (edition *Edition) UpdateEditionGameVersions(
 	return gameVersions, nil
 }
 
-func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID values.LauncherVersionID) ([]*service.GameVersionWithGame, error) {
+func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID values.EditionID) ([]*service.GameVersionWithGame, error) {
 	_, err := edition.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidEditionID

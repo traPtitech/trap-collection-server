@@ -24,7 +24,7 @@ func NewLauncherUser(db *DB) *LauncherUser {
 	}
 }
 
-func (lu *LauncherUser) CreateLauncherUsers(ctx context.Context, launcherVersionID values.LauncherVersionID, launcherUsers []*domain.LauncherUser) ([]*domain.LauncherUser, error) {
+func (lu *LauncherUser) CreateLauncherUsers(ctx context.Context, editionID values.EditionID, launcherUsers []*domain.LauncherUser) ([]*domain.LauncherUser, error) {
 	if len(launcherUsers) == 0 {
 		return []*domain.LauncherUser{}, nil
 	}
@@ -38,7 +38,7 @@ func (lu *LauncherUser) CreateLauncherUsers(ctx context.Context, launcherVersion
 	for _, launcherUser := range launcherUsers {
 		dbLauncherUsers = append(dbLauncherUsers, &migrate.LauncherUserTable{
 			ID:                uuid.UUID(launcherUser.GetID()),
-			LauncherVersionID: uuid.UUID(launcherVersionID),
+			LauncherVersionID: uuid.UUID(editionID),
 			ProductKey:        string(launcherUser.GetProductKey()),
 			CreatedAt:         time.Now(),
 		})

@@ -11,14 +11,14 @@ import (
 )
 
 type (
-	LauncherVersionID               uuid.UUID
-	LauncherVersionName             string
-	LauncherVersionQuestionnaireURL *url.URL
-	LauncherUserID                  uuid.UUID
-	LauncherUserProductKey          string
-	LauncherUserStatus              int
-	LauncherSessionID               uuid.UUID
-	LauncherSessionAccessToken      string
+	EditionID                  uuid.UUID
+	EditionName                string
+	EditionQuestionnaireURL    *url.URL
+	LauncherUserID             uuid.UUID
+	LauncherUserProductKey     string
+	LauncherUserStatus         int
+	LauncherSessionID          uuid.UUID
+	LauncherSessionAccessToken string
 )
 
 const (
@@ -26,39 +26,39 @@ const (
 	LauncherUserStatusInactive
 )
 
-func NewLauncherVersionID() LauncherVersionID {
-	return LauncherVersionID(uuid.New())
+func NewEditionID() EditionID {
+	return EditionID(uuid.New())
 }
 
-func NewLauncherVersionIDFromUUID(id uuid.UUID) LauncherVersionID {
-	return LauncherVersionID(id)
+func NewEditionIDFromUUID(id uuid.UUID) EditionID {
+	return EditionID(id)
 }
 
-func NewLauncherVersionName(name string) LauncherVersionName {
-	return LauncherVersionName(name)
+func NewEditionName(name string) EditionName {
+	return EditionName(name)
 }
 
 var (
-	ErrLauncherVersionNameEmpty   = errors.New("launcher version name is empty")
-	ErrLauncherVersionNameTooLong = errors.New("version name is too long")
+	ErrEditionNameEmpty   = errors.New("launcher version name is empty")
+	ErrEditionNameTooLong = errors.New("version name is too long")
 )
 
-func (lvn LauncherVersionName) Validate() error {
+func (lvn EditionName) Validate() error {
 	// バージョン名は空ではない
 	if len(lvn) == 0 {
-		return ErrLauncherVersionNameEmpty
+		return ErrEditionNameEmpty
 	}
 
 	// バージョン名は32文字以内
 	if utf8.RuneCountInString(string(lvn)) > 32 {
-		return ErrLauncherVersionNameTooLong
+		return ErrEditionNameTooLong
 	}
 
 	return nil
 }
 
-func NewLauncherVersionQuestionnaireURL(url *url.URL) LauncherVersionQuestionnaireURL {
-	return LauncherVersionQuestionnaireURL(url)
+func NewEditionQuestionnaireURL(url *url.URL) EditionQuestionnaireURL {
+	return EditionQuestionnaireURL(url)
 }
 
 func NewLauncherUserID() LauncherUserID {

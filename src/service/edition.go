@@ -15,7 +15,7 @@ import (
 // ref: https://github.com/golang/mock/pull/640
 // TODO: mockgenのv1.7.0がリリースされ次第削除する
 type (
-	OptionQuestionnaireURL = types.Option[values.LauncherVersionQuestionnaireURL]
+	OptionQuestionnaireURL = types.Option[values.EditionQuestionnaireURL]
 )
 
 type Edition interface {
@@ -26,17 +26,17 @@ type Edition interface {
 	// ゲームが重複している場合はErrDuplicateGameを返す。
 	CreateEdition(
 		ctx context.Context,
-		name values.LauncherVersionName,
+		name values.EditionName,
 		questionnaireURL OptionQuestionnaireURL,
 		gameVersionIDs []values.GameVersionID,
-	) (*domain.LauncherVersion, error)
+	) (*domain.Edition, error)
 	// GetEditions
 	// エディションの一覧の取得。
-	GetEditions(ctx context.Context) ([]*domain.LauncherVersion, error)
+	GetEditions(ctx context.Context) ([]*domain.Edition, error)
 	// GetEdition
 	// エディションの取得。
 	// エディションが存在しない場合はErrInvalidEditionIDを返す。
-	GetEdition(ctx context.Context, editionID values.LauncherVersionID) (*domain.LauncherVersion, error)
+	GetEdition(ctx context.Context, editionID values.EditionID) (*domain.Edition, error)
 	// UpdateEdition
 	// エディション情報の更新。
 	// エディションが存在しない場合はErrInvalidEditionIDを返す。
@@ -44,27 +44,27 @@ type Edition interface {
 	// ゲームが重複している場合はErrDuplicateGameを返す。
 	UpdateEdition(
 		ctx context.Context,
-		editionID values.LauncherVersionID,
-		name values.LauncherVersionName,
+		editionID values.EditionID,
+		name values.EditionName,
 		questionnaireURL OptionQuestionnaireURL,
-	) (*domain.LauncherVersion, error)
+	) (*domain.Edition, error)
 	// DeleteEdition
 	// エディションの削除。
 	// エディションが存在しない場合はErrInvalidEditionIDを返す。
-	DeleteEdition(ctx context.Context, editionID values.LauncherVersionID) error
+	DeleteEdition(ctx context.Context, editionID values.EditionID) error
 	// UpdateEditionGameVersions
 	// エディションに含まれるゲームバージョンの更新。
 	// エディションが存在しない場合はErrInvalidEditionIDを返す。
 	// ゲームバージョンが存在しない場合はErrInvalidGameVersionIDを返す。
 	UpdateEditionGameVersions(
 		ctx context.Context,
-		editionID values.LauncherVersionID,
+		editionID values.EditionID,
 		gameVersionIDs []values.GameVersionID,
 	) ([]*GameVersionWithGame, error)
 	// GetEditionGameVersions
 	// エディションに含まれるゲームバージョンの取得。
 	// エディションが存在しない場合はErrInvalidEditionIDを返す。
-	GetEditionGameVersions(ctx context.Context, editionID values.LauncherVersionID) ([]*GameVersionWithGame, error)
+	GetEditionGameVersions(ctx context.Context, editionID values.EditionID) ([]*GameVersionWithGame, error)
 }
 
 type GameVersionWithGame struct {

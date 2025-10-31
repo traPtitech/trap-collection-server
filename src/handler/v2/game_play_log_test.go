@@ -23,7 +23,7 @@ func TestPostGamePlayLogStart(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID := values.NewGameID()
 	gameVersionID := values.NewGameVersionID()
 	gameStartTime := time.Now()
@@ -37,7 +37,7 @@ func TestPostGamePlayLogStart(t *testing.T) {
 	playLogID := values.NewGamePlayLogID()
 
 	testCases := map[string]struct {
-		editionID            values.LauncherVersionID
+		editionID            values.EditionID
 		gameID               values.GameID
 		invalidReqBody       bool
 		reqBody              openapi.PostGamePlayLogStartRequest
@@ -162,7 +162,7 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID := values.NewGameID()
 	playLogID := values.NewGamePlayLogID()
 	endTime := time.Now()
@@ -171,7 +171,7 @@ func TestPatchGamePlayLogEnd(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		editionID                   values.LauncherVersionID
+		editionID                   values.EditionID
 		gameID                      values.GameID
 		playLogID                   values.GamePlayLogID
 		invalidReqBody              bool
@@ -290,7 +290,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	editionName := "Test Edition"
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
@@ -312,7 +312,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	editionStats := domain.NewEditionPlayStats(
 		editionID,
-		values.NewLauncherVersionName(editionName),
+		values.NewEditionName(editionName),
 		15,
 		5400*time.Second,
 		gameStats,
@@ -360,7 +360,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		editionID              values.LauncherVersionID
+		editionID              values.EditionID
 		queryParams            map[string]string
 		executeGetEditionStats bool
 		expectedStart          time.Time

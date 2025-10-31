@@ -8,7 +8,7 @@ import (
 
 type GamePlayLog struct {
 	id            values.GamePlayLogID
-	editionID     values.LauncherVersionID
+	editionID     values.EditionID
 	gameID        values.GameID
 	gameVersionID values.GameVersionID
 	startTime     time.Time
@@ -19,7 +19,7 @@ type GamePlayLog struct {
 
 func NewGamePlayLog(
 	id values.GamePlayLogID,
-	editionID values.LauncherVersionID,
+	editionID values.EditionID,
 	gameID values.GameID,
 	gameVersionID values.GameVersionID,
 	startTime time.Time,
@@ -43,7 +43,7 @@ func (g *GamePlayLog) GetID() values.GamePlayLogID {
 	return g.id
 }
 
-func (g *GamePlayLog) GetEditionID() values.LauncherVersionID {
+func (g *GamePlayLog) GetEditionID() values.EditionID {
 	return g.editionID
 }
 

@@ -37,7 +37,7 @@ var (
 	ErrNoGameFile                        = errors.New("no game file")
 	ErrNoGameURL                         = errors.New("no game url")
 	ErrNoSeat                            = errors.New("no seat")
-	ErrNoLauncherVersion                 = errors.New("no launcher version")
+	ErrNoEdition                         = errors.New("no launcher version")
 	ErrGameFileAlreadyExists             = errors.New("game file already exists")
 	ErrGameURLAlreadyExists              = errors.New("game url already exists")
 	ErrDuplicateGame                     = errors.New("duplicate game")

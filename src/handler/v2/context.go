@@ -29,12 +29,12 @@ func (context *Context) GetProductKey(c echo.Context) (*domain.LauncherUser, err
 	return productKey, nil
 }
 
-func (context *Context) SetEdition(c echo.Context, edition *domain.LauncherVersion) {
+func (context *Context) SetEdition(c echo.Context, edition *domain.Edition) {
 	c.Set(editionContextKey, edition)
 }
 
-func (context *Context) GetEdition(c echo.Context) (*domain.LauncherVersion, error) {
-	edition, ok := c.Get(editionContextKey).(*domain.LauncherVersion)
+func (context *Context) GetEdition(c echo.Context) (*domain.Edition, error) {
+	edition, ok := c.Get(editionContextKey).(*domain.Edition)
 	if !ok || edition == nil {
 		return nil, ErrNoValue
 	}

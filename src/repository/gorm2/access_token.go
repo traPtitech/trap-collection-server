@@ -124,23 +124,23 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 		dbProductKey.CreatedAt,
 	)
 
-	var edition *domain.LauncherVersion
+	var edition *domain.Edition
 	if dbEdition.QuestionnaireURL.Valid {
 		questionnaireURL, err := url.Parse(dbEdition.QuestionnaireURL.String)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse questionnaire url: %w", err)
 		}
 
-		edition = domain.NewLauncherVersionWithQuestionnaire(
-			values.NewLauncherVersionIDFromUUID(dbEdition.ID),
-			values.NewLauncherVersionName(dbEdition.Name),
-			values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+		edition = domain.NewEditionWithQuestionnaire(
+			values.NewEditionIDFromUUID(dbEdition.ID),
+			values.NewEditionName(dbEdition.Name),
+			values.NewEditionQuestionnaireURL(questionnaireURL),
 			dbEdition.CreatedAt,
 		)
 	} else {
-		edition = domain.NewLauncherVersionWithoutQuestionnaire(
-			values.NewLauncherVersionIDFromUUID(dbEdition.ID),
-			values.NewLauncherVersionName(dbEdition.Name),
+		edition = domain.NewEditionWithoutQuestionnaire(
+			values.NewEditionIDFromUUID(dbEdition.ID),
+			values.NewEditionName(dbEdition.Name),
 			dbEdition.CreatedAt,
 		)
 	}

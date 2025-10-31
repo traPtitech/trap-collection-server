@@ -555,9 +555,9 @@ paths:
                   $ref: '#/components/schemas/Version'
         "500":
           description: 失敗
-  /versions/{launcherVersionID}:
+  /versions/{editionID}:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
+      - $ref: '#/components/parameters/editionID'
     get:
       tags:
         - version
@@ -577,9 +577,9 @@ paths:
                 $ref: '#/components/schemas/VersionDetails'
         "500":
           description: 失敗
-  /versions/{launcherVersionID}/game:
+  /versions/{editionID}/game:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
+      - $ref: '#/components/parameters/editionID'
     post:
       tags:
         - version
@@ -605,9 +605,9 @@ paths:
                 $ref: '#/components/schemas/VersionDetails'
         "500":
           description: 失敗
-  /versions/{launcherVersionID}/keys:
+  /versions/{editionID}/keys:
     parameters:
-      - $ref: '#/components/parameters/launcherVersionID'
+      - $ref: '#/components/parameters/editionID'
     get:
       tags:
         - launcherAuth
@@ -921,8 +921,8 @@ components:
       required: true
       schema:
         type: string
-    launcherVersionID:
-      name: launcherVersionID
+    editionID:
+      name: editionID
       in: path
       description: ランチャーのバージョンのID
       required: true

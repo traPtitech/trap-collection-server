@@ -24,8 +24,8 @@ func TestCreateEdition(t *testing.T) {
 	ctx := context.Background()
 
 	type args struct {
-		name             values.LauncherVersionName
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+		name             values.EditionName
+		questionnaireURL types.Option[values.EditionQuestionnaireURL]
 		gameVersionIDs   []values.GameVersionID
 	}
 	type mockInfo struct {
@@ -44,7 +44,7 @@ func TestCreateEdition(t *testing.T) {
 		description     string
 		args            args
 		mockInfo        mockInfo
-		expectedEdition *domain.LauncherVersion
+		expectedEdition *domain.Edition
 		isErr           bool
 		err             error
 	}
@@ -55,7 +55,7 @@ func TestCreateEdition(t *testing.T) {
 		t.Fatalf("failed to parse url: %v", err)
 	}
 
-	name := values.LauncherVersionName("v1.0.0")
+	name := values.EditionName("v1.0.0")
 	now := time.Now()
 
 	gameVersionIDs1, gameVersions1 := generateGameVersionsForEditionTests(t, 1)
@@ -71,7 +71,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs1,
 			},
 			mockInfo: mockInfo{
@@ -81,13 +81,13 @@ func TestCreateEdition(t *testing.T) {
 				executeSaveEdition:               true,
 				executeUpdateEditionGameVersions: true,
 			},
-			expectedEdition: domain.NewLauncherVersionWithQuestionnaire(values.NewLauncherVersionID(), name, values.NewLauncherVersionQuestionnaireURL(urlLink), now),
+			expectedEdition: domain.NewEditionWithQuestionnaire(values.NewEditionID(), name, values.NewEditionQuestionnaireURL(urlLink), now),
 		},
 		{
 			description: "URLなしだがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.Option[values.LauncherVersionQuestionnaireURL]{},
+				questionnaireURL: types.Option[values.EditionQuestionnaireURL]{},
 				gameVersionIDs:   gameVersionIDs2,
 			},
 			mockInfo: mockInfo{
@@ -97,13 +97,13 @@ func TestCreateEdition(t *testing.T) {
 				executeSaveEdition:               true,
 				executeUpdateEditionGameVersions: true,
 			},
-			expectedEdition: domain.NewLauncherVersionWithoutQuestionnaire(values.NewLauncherVersionID(), name, now),
+			expectedEdition: domain.NewEditionWithoutQuestionnaire(values.NewEditionID(), name, now),
 		},
 		{
 			description: "gameVersionIDsの要素が複数だがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs3,
 			},
 			mockInfo: mockInfo{
@@ -113,13 +113,13 @@ func TestCreateEdition(t *testing.T) {
 				executeSaveEdition:               true,
 				executeUpdateEditionGameVersions: true,
 			},
-			expectedEdition: domain.NewLauncherVersionWithQuestionnaire(values.NewLauncherVersionID(), name, values.NewLauncherVersionQuestionnaireURL(urlLink), now),
+			expectedEdition: domain.NewEditionWithQuestionnaire(values.NewEditionID(), name, values.NewEditionQuestionnaireURL(urlLink), now),
 		},
 		{
 			description: "gameVersionIDsが空だがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   []values.GameVersionID{},
 			},
 			mockInfo: mockInfo{
@@ -129,13 +129,13 @@ func TestCreateEdition(t *testing.T) {
 				executeSaveEdition:               true,
 				executeUpdateEditionGameVersions: true,
 			},
-			expectedEdition: domain.NewLauncherVersionWithQuestionnaire(values.NewLauncherVersionID(), name, values.NewLauncherVersionQuestionnaireURL(urlLink), now),
+			expectedEdition: domain.NewEditionWithQuestionnaire(values.NewEditionID(), name, values.NewEditionQuestionnaireURL(urlLink), now),
 		},
 		{
 			description: "GetGameVersionsByIDsがエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs5,
 			},
 			mockInfo: mockInfo{
@@ -151,7 +151,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "gameVersionsの数が違うのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs6, // 要素数1
 			},
 			mockInfo: mockInfo{
@@ -168,7 +168,7 @@ func TestCreateEdition(t *testing.T) {
 			description: " SaveEditionでエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs7,
 			},
 			mockInfo: mockInfo{
@@ -186,7 +186,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "  UpdateEditionGameVersionsでエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: types.NewOption[values.EditionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs8,
 			},
 			mockInfo: mockInfo{
@@ -278,7 +278,7 @@ func TestGetEditions(t *testing.T) {
 	ctx := context.Background()
 
 	type mockInfo struct {
-		editions []*domain.LauncherVersion
+		editions []*domain.Edition
 
 		errGetEditions error
 	}
@@ -286,7 +286,7 @@ func TestGetEditions(t *testing.T) {
 	type test struct {
 		description      string
 		mockInfo         mockInfo
-		expectedEditions []*domain.LauncherVersion
+		expectedEditions []*domain.Edition
 		isErr            bool
 		err              error
 	}
@@ -393,10 +393,10 @@ func TestGetEdition(t *testing.T) {
 	ctx := context.Background()
 
 	type args struct {
-		editionID values.LauncherVersionID
+		editionID values.EditionID
 	}
 	type mockInfo struct {
-		edition *domain.LauncherVersion
+		edition *domain.Edition
 
 		errGetEdition error
 	}
@@ -405,7 +405,7 @@ func TestGetEdition(t *testing.T) {
 		description     string
 		args            args
 		mockInfo        mockInfo
-		expectedEdition *domain.LauncherVersion
+		expectedEdition *domain.Edition
 		isErr           bool
 		err             error
 	}
@@ -520,13 +520,13 @@ func TestUpdateEdition(t *testing.T) {
 	ctx := context.Background()
 
 	type args struct {
-		editionID        values.LauncherVersionID
-		name             values.LauncherVersionName
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+		editionID        values.EditionID
+		name             values.EditionName
+		questionnaireURL types.Option[values.EditionQuestionnaireURL]
 	}
 	type mockInfo struct {
-		edition        *domain.LauncherVersion
-		updatedEdition *domain.LauncherVersion
+		edition        *domain.Edition
+		updatedEdition *domain.Edition
 
 		executeUpdateEdition bool
 
@@ -538,17 +538,17 @@ func TestUpdateEdition(t *testing.T) {
 		description     string
 		args            args
 		mockInfo        mockInfo
-		expectedEdition *domain.LauncherVersion
+		expectedEdition *domain.Edition
 		isErr           bool
 		err             error
 	}
 
-	newName := values.NewLauncherVersionName("v2.0.0")
+	newName := values.NewEditionName("v2.0.0")
 	newURL, err := url.Parse("https://example.com/new")
 	if err != nil {
 		t.Fatalf("failed to parse url: %v", err)
 	}
-	newOptionalURL := types.NewOption[values.LauncherVersionQuestionnaireURL](newURL)
+	newOptionalURL := types.NewOption[values.EditionQuestionnaireURL](newURL)
 
 	editionID1, edition1 := generateEdition(t, true)
 	updatedEdition1 := copyEdition(t, edition1)
@@ -561,7 +561,7 @@ func TestUpdateEdition(t *testing.T) {
 
 	editionID3, edition3 := generateEdition(t, true)
 	updatedEdition3 := copyEdition(t, edition3)
-	updatedEdition3.SetName(values.NewLauncherVersionName(""))
+	updatedEdition3.SetName(values.NewEditionName(""))
 	updatedEdition3.SetQuestionnaireURL(newURL)
 
 	editionID4, edition4 := generateEdition(t, true)
@@ -622,7 +622,7 @@ func TestUpdateEdition(t *testing.T) {
 			description: "nameが空文字列だがエラーなし",
 			args: args{
 				editionID:        editionID3,
-				name:             values.NewLauncherVersionName(""),
+				name:             values.NewEditionName(""),
 				questionnaireURL: newOptionalURL,
 			},
 			mockInfo: mockInfo{
@@ -668,7 +668,7 @@ func TestUpdateEdition(t *testing.T) {
 			args: args{
 				editionID:        editionID6,
 				name:             newName,
-				questionnaireURL: types.Option[values.LauncherVersionQuestionnaireURL]{},
+				questionnaireURL: types.Option[values.EditionQuestionnaireURL]{},
 			},
 			mockInfo: mockInfo{
 				edition:        edition6,
@@ -810,10 +810,10 @@ func generateGameVersionsForEditionTests(t *testing.T, count int) ([]values.Game
 	return gameVersionIDs, gameVersions
 }
 
-func generateEdition(t *testing.T, haveQuestionnaire bool) (editionID values.LauncherVersionID, edition *domain.LauncherVersion) {
+func generateEdition(t *testing.T, haveQuestionnaire bool) (editionID values.EditionID, edition *domain.Edition) {
 	t.Helper()
 
-	editionID = values.NewLauncherVersionID()
+	editionID = values.NewEditionID()
 
 	if haveQuestionnaire {
 		urlStr := "https://example.com"
@@ -822,18 +822,18 @@ func generateEdition(t *testing.T, haveQuestionnaire bool) (editionID values.Lau
 			t.Fatalf("failed to parse url: %v", err)
 		}
 
-		edition = domain.NewLauncherVersionWithQuestionnaire(editionID, values.NewLauncherVersionName("v1.0.0"), values.NewLauncherVersionQuestionnaireURL(urlLink), time.Now())
+		edition = domain.NewEditionWithQuestionnaire(editionID, values.NewEditionName("v1.0.0"), values.NewEditionQuestionnaireURL(urlLink), time.Now())
 	} else {
-		edition = domain.NewLauncherVersionWithoutQuestionnaire(editionID, values.NewLauncherVersionName("v1.0.0"), time.Now())
+		edition = domain.NewEditionWithoutQuestionnaire(editionID, values.NewEditionName("v1.0.0"), time.Now())
 	}
 
 	return editionID, edition
 }
 
-func generateEditions(t *testing.T, haveQuestionnaire bool, count int) []*domain.LauncherVersion {
+func generateEditions(t *testing.T, haveQuestionnaire bool, count int) []*domain.Edition {
 	t.Helper()
 
-	editions := make([]*domain.LauncherVersion, 0, count)
+	editions := make([]*domain.Edition, 0, count)
 	for i := 0; i < count; i++ {
 		_, edition := generateEdition(t, haveQuestionnaire)
 		editions = append(editions, edition)
@@ -844,12 +844,12 @@ func generateEditions(t *testing.T, haveQuestionnaire bool, count int) []*domain
 
 // UpdateEdition用
 // 主にUpdateEdition内で変更される要素を対象にしたhard copyをする
-func copyEdition(t *testing.T, base *domain.LauncherVersion) *domain.LauncherVersion {
+func copyEdition(t *testing.T, base *domain.Edition) *domain.Edition {
 	t.Helper()
 
-	var newEdition *domain.LauncherVersion
+	var newEdition *domain.Edition
 
-	name := values.NewLauncherVersionName(strings.Clone(string(base.GetName())))
+	name := values.NewEditionName(strings.Clone(string(base.GetName())))
 
 	// UpdateEdition内での変更対象ではないのでhard copyでなくてよい
 	editionID := base.GetID()
@@ -857,7 +857,7 @@ func copyEdition(t *testing.T, base *domain.LauncherVersion) *domain.LauncherVer
 
 	questionnaireURL, _ := base.GetQuestionnaireURL()
 	if questionnaireURL == nil {
-		newEdition = domain.NewLauncherVersionWithoutQuestionnaire(editionID, name, createdAt)
+		newEdition = domain.NewEditionWithoutQuestionnaire(editionID, name, createdAt)
 	} else {
 		urlStr := (*url.URL)(questionnaireURL).String()
 		urlLink, err := url.Parse(urlStr)
@@ -865,7 +865,7 @@ func copyEdition(t *testing.T, base *domain.LauncherVersion) *domain.LauncherVer
 			t.Fatalf("failed to parse url: %v", err)
 		}
 
-		newEdition = domain.NewLauncherVersionWithQuestionnaire(editionID, name, values.NewLauncherVersionQuestionnaireURL(urlLink), createdAt)
+		newEdition = domain.NewEditionWithQuestionnaire(editionID, name, values.NewEditionQuestionnaireURL(urlLink), createdAt)
 	}
 
 	return newEdition

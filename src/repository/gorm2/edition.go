@@ -28,7 +28,7 @@ func NewEdition(db *DB) *Edition {
 	}
 }
 
-func (e *Edition) SaveEdition(ctx context.Context, edition *domain.LauncherVersion) error {
+func (e *Edition) SaveEdition(ctx context.Context, edition *domain.Edition) error {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -65,7 +65,7 @@ func (e *Edition) SaveEdition(ctx context.Context, edition *domain.LauncherVersi
 	return nil
 }
 
-func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.LauncherVersion) error {
+func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.Edition) error {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -106,7 +106,7 @@ func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.LauncherVer
 	return nil
 }
 
-func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVersionID) error {
+func (e *Edition) DeleteEdition(ctx context.Context, editionID values.EditionID) error {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get db: %w", err)
@@ -126,7 +126,7 @@ func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVe
 	return nil
 }
 
-func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*domain.LauncherVersion, error) {
+func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*domain.Edition, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -139,25 +139,25 @@ func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*do
 		return nil, fmt.Errorf("failed to get editions: %w", err)
 	}
 
-	var result []*domain.LauncherVersion
+	var result []*domain.Edition
 	for _, edition := range editions {
-		var domainEdition *domain.LauncherVersion
+		var domainEdition *domain.Edition
 		if edition.QuestionnaireURL.Valid {
 			questionnaireURL, err := url.Parse(edition.QuestionnaireURL.String)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse questionnaire url: %w", err)
 			}
 
-			domainEdition = domain.NewLauncherVersionWithQuestionnaire(
-				values.NewLauncherVersionIDFromUUID(edition.ID),
-				values.NewLauncherVersionName(edition.Name),
-				values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+			domainEdition = domain.NewEditionWithQuestionnaire(
+				values.NewEditionIDFromUUID(edition.ID),
+				values.NewEditionName(edition.Name),
+				values.NewEditionQuestionnaireURL(questionnaireURL),
 				edition.CreatedAt,
 			)
 		} else {
-			domainEdition = domain.NewLauncherVersionWithoutQuestionnaire(
-				values.NewLauncherVersionIDFromUUID(edition.ID),
-				values.NewLauncherVersionName(edition.Name),
+			domainEdition = domain.NewEditionWithoutQuestionnaire(
+				values.NewEditionIDFromUUID(edition.ID),
+				values.NewEditionName(edition.Name),
 				edition.CreatedAt,
 			)
 		}
@@ -168,7 +168,7 @@ func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*do
 	return result, nil
 }
 
-func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersionID, lockType repository.LockType) (*domain.LauncherVersion, error) {
+func (e *Edition) GetEdition(ctx context.Context, editionID values.EditionID, lockType repository.LockType) (*domain.Edition, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -190,23 +190,23 @@ func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersi
 		return nil, fmt.Errorf("failed to get edition: %w", err)
 	}
 
-	var domainEdition *domain.LauncherVersion
+	var domainEdition *domain.Edition
 	if edition.QuestionnaireURL.Valid {
 		questionnaireURL, err := url.Parse(edition.QuestionnaireURL.String)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse questionnaire url: %w", err)
 		}
 
-		domainEdition = domain.NewLauncherVersionWithQuestionnaire(
-			values.NewLauncherVersionIDFromUUID(edition.ID),
-			values.NewLauncherVersionName(edition.Name),
-			values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+		domainEdition = domain.NewEditionWithQuestionnaire(
+			values.NewEditionIDFromUUID(edition.ID),
+			values.NewEditionName(edition.Name),
+			values.NewEditionQuestionnaireURL(questionnaireURL),
 			edition.CreatedAt,
 		)
 	} else {
-		domainEdition = domain.NewLauncherVersionWithoutQuestionnaire(
-			values.NewLauncherVersionIDFromUUID(edition.ID),
-			values.NewLauncherVersionName(edition.Name),
+		domainEdition = domain.NewEditionWithoutQuestionnaire(
+			values.NewEditionIDFromUUID(edition.ID),
+			values.NewEditionName(edition.Name),
 			edition.CreatedAt,
 		)
 	}
@@ -216,7 +216,7 @@ func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersi
 
 func (e *Edition) UpdateEditionGameVersions(
 	ctx context.Context,
-	editionID values.LauncherVersionID,
+	editionID values.EditionID,
 	gameVersionIDs []values.GameVersionID,
 ) error {
 	db, err := e.db.getDB(ctx)
@@ -244,7 +244,7 @@ func (e *Edition) UpdateEditionGameVersions(
 	return nil
 }
 
-func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.LauncherVersionID, lockType repository.LockType) ([]*repository.GameVersionInfoWithGameID, error) {
+func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.EditionID, lockType repository.LockType) ([]*repository.GameVersionInfoWithGameID, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -306,7 +306,7 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 	return result, nil
 }
 
-func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.LauncherVersionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.EditionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -337,7 +337,7 @@ func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.La
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.LauncherVersionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.EditionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -367,7 +367,7 @@ func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.L
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.LauncherVersionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.EditionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -397,7 +397,7 @@ func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.L
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.LauncherVersionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.EditionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
