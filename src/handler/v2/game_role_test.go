@@ -34,8 +34,8 @@ func TestPatchGameRole(t *testing.T) {
 	genre := domain.NewGameGenre(values.NewGameGenreID(), "genre1", time.Now())
 
 	var (
-		roleTypeOwner      openapi.GameRoleType = openapi.Owner
-		roleTypeMaintainer openapi.GameRoleType = openapi.Maintainer
+		roleTypeOwner                           = openapi.Owner
+		roleTypeMaintainer                      = openapi.Maintainer
 		roleTypeInvalid    openapi.GameRoleType = "invalid"
 	)
 

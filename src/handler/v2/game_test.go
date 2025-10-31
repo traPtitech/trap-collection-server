@@ -548,10 +548,10 @@ func TestPostGame(t *testing.T) {
 	}
 
 	var (
-		visibilityPublic  openapi.GameVisibility = openapi.Public
-		visibilityLimited openapi.GameVisibility = openapi.Limited
-		visibilityPrivate openapi.GameVisibility = openapi.Private
-		invalidVisibility openapi.GameVisibility = openapi.GameVisibility("invalid")
+		visibilityPublic  = openapi.Public
+		visibilityLimited = openapi.Limited
+		visibilityPrivate = openapi.Private
+		invalidVisibility = openapi.GameVisibility("invalid")
 	)
 
 	gameID := values.NewGameID()
