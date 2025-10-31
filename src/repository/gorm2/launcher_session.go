@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 )
 
 type LauncherSession struct {
@@ -27,7 +27,7 @@ func (ls *LauncherSession) CreateLauncherSession(ctx context.Context, launcherUs
 		return nil, err
 	}
 
-	dbLauncherSession := migrate.LauncherSessionTable{
+	dbLauncherSession := schema.LauncherSessionTable{
 		ID:             uuid.UUID(launcherSession.GetID()),
 		LauncherUserID: uuid.UUID(launcherUserID),
 		AccessToken:    string(launcherSession.GetAccessToken()),
