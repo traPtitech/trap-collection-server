@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +47,7 @@ func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameI
 		return errors.New("invalid role")
 	}
 
-	var roleType migrate.GameManagementRoleTypeTable
+	var roleType schema.GameManagementRoleTypeTable
 	err = gormDB.
 		Where("name = ?", roleTypeName).
 		Select("id").
@@ -57,9 +57,9 @@ func (gmr *GameManagementRole) AddGameManagementRoles(ctx context.Context, gameI
 	}
 	roleTypeID := roleType.ID
 
-	gameManagementRoles := make([]*migrate.GameManagementRoleTable, 0, len(userIDs))
+	gameManagementRoles := make([]*schema.GameManagementRoleTable, 0, len(userIDs))
 	for _, userID := range userIDs {
-		gameManagementRoles = append(gameManagementRoles, &migrate.GameManagementRoleTable{
+		gameManagementRoles = append(gameManagementRoles, &schema.GameManagementRoleTable{
 			GameID:     uuid.UUID(gameID),
 			UserID:     uuid.UUID(userID),
 			RoleTypeID: roleTypeID,
@@ -90,7 +90,7 @@ func (gmr *GameManagementRole) UpdateGameManagementRole(ctx context.Context, gam
 		return errors.New("invalid role")
 	}
 
-	var roleType migrate.GameManagementRoleTypeTable
+	var roleType schema.GameManagementRoleTypeTable
 	err = gormDB.
 		Session(&gorm.Session{}).
 		Where("name = ?", roleTypeName).
@@ -101,7 +101,7 @@ func (gmr *GameManagementRole) UpdateGameManagementRole(ctx context.Context, gam
 	}
 	roleTypeID := roleType.ID
 
-	gameManagementRole := migrate.GameManagementRoleTable{
+	gameManagementRole := schema.GameManagementRoleTable{
 		GameID:     uuid.UUID(gameID),
 		UserID:     uuid.UUID(userID),
 		RoleTypeID: roleTypeID,
@@ -132,7 +132,7 @@ func (gmr *GameManagementRole) RemoveGameManagementRole(ctx context.Context, gam
 
 	result := gormDB.
 		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).
-		Delete(&migrate.GameManagementRoleTable{})
+		Delete(&schema.GameManagementRoleTable{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to delete game management role: %w", err)
@@ -151,7 +151,7 @@ func (gmr *GameManagementRole) GetGameManagersByGameID(ctx context.Context, game
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var gameManagementRoles []migrate.GameManagementRoleTable
+	var gameManagementRoles []schema.GameManagementRoleTable
 	err = gormDB.
 		Joins("RoleTypeTable").
 		Where("game_id = ?", uuid.UUID(gameID)).
@@ -192,7 +192,7 @@ func (gmr *GameManagementRole) GetGameManagementRole(ctx context.Context, gameID
 		return 0, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameManagementRole migrate.GameManagementRoleTable
+	var gameManagementRole schema.GameManagementRoleTable
 	err = gormDB.
 		Joins("RoleTypeTable").
 		Where("game_id = ? AND user_id = ?", uuid.UUID(gameID), uuid.UUID(userID)).
