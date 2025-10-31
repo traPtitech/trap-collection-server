@@ -136,7 +136,7 @@ func (gameVersion *GameVersion) CreateGameVersion(
 					return service.ErrInvalidGameFileID
 				}
 
-				gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+				gameFileMap[gameFile.GetID()] = gameFile.GameFile
 			}
 
 			for id, fileType := range fileTypeMap {
@@ -218,7 +218,7 @@ func (gameVersion *GameVersion) GetGameVersions(ctx context.Context, gameID valu
 		}
 
 		for _, gameFile := range gameFiles {
-			gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+			gameFileMap[gameFile.GetID()] = gameFile.GameFile
 		}
 	}
 
@@ -298,7 +298,7 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx context.Context, gameID
 		}
 
 		for _, gameFile := range gameFiles {
-			gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+			gameFileMap[gameFile.GetID()] = gameFile.GameFile
 		}
 	}
 

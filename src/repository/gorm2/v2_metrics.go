@@ -109,32 +109,32 @@ func (mc *MetricsCollectorV2) collect(p *gormPrometheus.Prometheus) {
 
 	err := mc.collectAccessTokenMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect access token metrics", err)
+		p.Logger.Error(ctx, "failed to collect access token metrics", err)
 	}
 
 	err = mc.collectGameMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game metrics", err)
+		p.Logger.Error(ctx, "failed to collect game metrics", err)
 	}
 
 	err = mc.collectGameImageMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game image metrics", err)
+		p.Logger.Error(ctx, "failed to collect game image metrics", err)
 	}
 
 	err = mc.collectGameVideoMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game video metrics", err)
+		p.Logger.Error(ctx, "failed to collect game video metrics", err)
 	}
 
 	err = mc.collectGameFileMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game file metrics", err)
+		p.Logger.Error(ctx, "failed to collect game file metrics", err)
 	}
 
 	err = mc.collectSeatMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect seat metrics", err)
+		p.Logger.Error(ctx, "failed to collect seat metrics", err)
 	}
 }
 

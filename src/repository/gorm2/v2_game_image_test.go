@@ -487,9 +487,9 @@ func TestGetGameImage(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.expectImage.GameImage.GetID(), image.GameImage.GetID())
-			assert.Equal(t, testCase.expectImage.GameImage.GetType(), image.GameImage.GetType())
-			assert.WithinDuration(t, testCase.expectImage.GameImage.GetCreatedAt(), image.GameImage.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.expectImage.GetID(), image.GetID())
+			assert.Equal(t, testCase.expectImage.GetType(), image.GetType())
+			assert.WithinDuration(t, testCase.expectImage.GetCreatedAt(), image.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectImage.GameID, image.GameID)
 		})
 	}

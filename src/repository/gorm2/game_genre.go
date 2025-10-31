@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
-	
 	"gorm.io/gorm"
 )
 

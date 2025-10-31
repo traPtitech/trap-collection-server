@@ -624,9 +624,9 @@ func TestGetGameVideoMeta(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.video.GameVideo.GetID(), gameVideo.GetID())
-			assert.Equal(t, testCase.video.GameVideo.GetType(), gameVideo.GetType())
-			assert.Equal(t, testCase.video.GameVideo.GetCreatedAt(), gameVideo.GetCreatedAt())
+			assert.Equal(t, testCase.video.GetID(), gameVideo.GetID())
+			assert.Equal(t, testCase.video.GetType(), gameVideo.GetType())
+			assert.Equal(t, testCase.video.GetCreatedAt(), gameVideo.GetCreatedAt())
 		})
 	}
 }

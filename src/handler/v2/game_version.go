@@ -221,9 +221,9 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameVersion{
-		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
-		Name:        string(gameVersionInfo.GameVersion.GetName()),
-		Description: string(gameVersionInfo.GameVersion.GetDescription()),
+		Id:          openapi.GameVersionID(gameVersionInfo.GetID()),
+		Name:        string(gameVersionInfo.GetName()),
+		Description: string(gameVersionInfo.GetDescription()),
 		CreatedAt:   gameVersionInfo.GetCreatedAt(),
 		ImageID:     openapi.GameImageID(gameVersionInfo.ImageID),
 		VideoID:     openapi.GameVideoID(gameVersionInfo.VideoID),
@@ -281,9 +281,9 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx echo.Context, gameID op
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.GameVersion{
-		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
-		Name:        string(gameVersionInfo.GameVersion.GetName()),
-		Description: string(gameVersionInfo.GameVersion.GetDescription()),
+		Id:          openapi.GameVersionID(gameVersionInfo.GetID()),
+		Name:        string(gameVersionInfo.GetName()),
+		Description: string(gameVersionInfo.GetDescription()),
 		CreatedAt:   gameVersionInfo.GetCreatedAt(),
 		ImageID:     openapi.GameImageID(gameVersionInfo.ImageID),
 		VideoID:     openapi.GameVideoID(gameVersionInfo.VideoID),

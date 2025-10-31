@@ -486,9 +486,9 @@ func TestGetGameVideo(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.expectVideo.GameVideo.GetID(), video.GameVideo.GetID())
-			assert.Equal(t, testCase.expectVideo.GameVideo.GetType(), video.GameVideo.GetType())
-			assert.WithinDuration(t, testCase.expectVideo.GameVideo.GetCreatedAt(), video.GameVideo.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.expectVideo.GetID(), video.GetID())
+			assert.Equal(t, testCase.expectVideo.GetType(), video.GetType())
+			assert.WithinDuration(t, testCase.expectVideo.GetCreatedAt(), video.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectVideo.GameID, video.GameID)
 		})
 	}

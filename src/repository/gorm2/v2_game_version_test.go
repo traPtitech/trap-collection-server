@@ -1739,10 +1739,10 @@ func TestGetGameVersionsV2(t *testing.T) {
 			for i, expectVersion := range testCase.expectGameVersionInfo {
 				actualVersion := gameVersions[i]
 
-				assert.Equal(t, expectVersion.GameVersion.GetID(), actualVersion.GameVersion.GetID())
-				assert.Equal(t, expectVersion.GameVersion.GetName(), actualVersion.GameVersion.GetName())
-				assert.Equal(t, expectVersion.GameVersion.GetDescription(), actualVersion.GameVersion.GetDescription())
-				assert.WithinDuration(t, expectVersion.GameVersion.GetCreatedAt(), actualVersion.GameVersion.GetCreatedAt(), 2*time.Second)
+				assert.Equal(t, expectVersion.GetID(), actualVersion.GetID())
+				assert.Equal(t, expectVersion.GetName(), actualVersion.GetName())
+				assert.Equal(t, expectVersion.GetDescription(), actualVersion.GetDescription())
+				assert.WithinDuration(t, expectVersion.GetCreatedAt(), actualVersion.GetCreatedAt(), 2*time.Second)
 				assert.Equal(t, expectVersion.ImageID, actualVersion.ImageID)
 				assert.Equal(t, expectVersion.VideoID, actualVersion.VideoID)
 				assert.Equal(t, expectVersion.URL, actualVersion.URL)
@@ -2295,10 +2295,10 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 			}
 
 			expectVersion := testCase.expectGameVersionInfo
-			assert.Equal(t, expectVersion.GameVersion.GetID(), actualVersion.GameVersion.GetID())
-			assert.Equal(t, expectVersion.GameVersion.GetName(), actualVersion.GameVersion.GetName())
-			assert.Equal(t, expectVersion.GameVersion.GetDescription(), actualVersion.GameVersion.GetDescription())
-			assert.WithinDuration(t, expectVersion.GameVersion.GetCreatedAt(), actualVersion.GameVersion.GetCreatedAt(), 2*time.Second)
+			assert.Equal(t, expectVersion.GetID(), actualVersion.GetID())
+			assert.Equal(t, expectVersion.GetName(), actualVersion.GetName())
+			assert.Equal(t, expectVersion.GetDescription(), actualVersion.GetDescription())
+			assert.WithinDuration(t, expectVersion.GetCreatedAt(), actualVersion.GetCreatedAt(), 2*time.Second)
 			assert.Equal(t, expectVersion.ImageID, actualVersion.ImageID)
 			assert.Equal(t, expectVersion.VideoID, actualVersion.VideoID)
 			assert.Equal(t, expectVersion.URL, actualVersion.URL)
@@ -2812,19 +2812,19 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 
 			gotVersionInfoMap := make(map[values.GameVersionID]*repository.GameVersionInfoWithGameID)
 			for _, gotVersionInfo := range gotVersionInfos {
-				gotVersionInfoMap[gotVersionInfo.GameVersion.GetID()] = gotVersionInfo
+				gotVersionInfoMap[gotVersionInfo.GetID()] = gotVersionInfo
 			}
 
 			for _, expected := range testCase.expectedGameVersionInfos {
-				got, ok := gotVersionInfoMap[expected.GameVersion.GetID()]
+				got, ok := gotVersionInfoMap[expected.GetID()]
 				if !assert.True(t, ok) {
 					continue
 				}
 
-				assert.Equal(t, expected.GameVersion.GetID(), expected.GameVersion.GetID())
-				assert.Equal(t, expected.GameVersion.GetName(), got.GameVersion.GetName())
-				assert.Equal(t, expected.GameVersion.GetDescription(), got.GameVersion.GetDescription())
-				assert.WithinDuration(t, expected.GameVersion.GetCreatedAt(), got.GameVersion.GetCreatedAt(), 2*time.Second)
+				assert.Equal(t, expected.GetID(), got.GetID())
+				assert.Equal(t, expected.GetName(), got.GetName())
+				assert.Equal(t, expected.GetDescription(), got.GetDescription())
+				assert.WithinDuration(t, expected.GetCreatedAt(), got.GetCreatedAt(), 2*time.Second)
 				assert.Equal(t, expected.GameID, got.GameID)
 				assert.Equal(t, expected.ImageID, got.ImageID)
 				assert.Equal(t, expected.VideoID, got.VideoID)

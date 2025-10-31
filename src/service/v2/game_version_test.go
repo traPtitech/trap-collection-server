@@ -1918,9 +1918,9 @@ func TestGetGameVersions(t *testing.T) {
 
 			assert.Equal(t, testCase.num, num)
 			for i, gameVersion := range gameVersions {
-				assert.Equal(t, testCase.gameVersionInfos[i].GameVersion.GetName(), gameVersion.GameVersion.GetName())
-				assert.Equal(t, testCase.gameVersionInfos[i].GameVersion.GetDescription(), gameVersion.GameVersion.GetDescription())
-				assert.WithinDuration(t, testCase.gameVersionInfos[i].GameVersion.GetCreatedAt(), gameVersion.GameVersion.GetCreatedAt(), 2*time.Second)
+				assert.Equal(t, testCase.gameVersionInfos[i].GetName(), gameVersion.GetName())
+				assert.Equal(t, testCase.gameVersionInfos[i].GetDescription(), gameVersion.GetDescription())
+				assert.WithinDuration(t, testCase.gameVersionInfos[i].GetCreatedAt(), gameVersion.GetCreatedAt(), 2*time.Second)
 				assert.Equal(t, testCase.gameVersionInfos[i].ImageID, gameVersion.ImageID)
 				assert.Equal(t, testCase.gameVersionInfos[i].VideoID, gameVersion.VideoID)
 				if assert.NotNil(t, gameVersion.Assets) {

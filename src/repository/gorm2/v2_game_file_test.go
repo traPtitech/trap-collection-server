@@ -857,11 +857,11 @@ func TestGetGameFile(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.expectFile.GameFile.GetID(), file.GameFile.GetID())
-			assert.Equal(t, testCase.expectFile.GameFile.GetFileType(), file.GameFile.GetFileType())
-			assert.Equal(t, testCase.expectFile.GameFile.GetEntryPoint(), file.GameFile.GetEntryPoint())
-			assert.Equal(t, testCase.expectFile.GameFile.GetHash(), file.GameFile.GetHash())
-			assert.WithinDuration(t, testCase.expectFile.GameFile.GetCreatedAt(), file.GameFile.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.expectFile.GetID(), file.GetID())
+			assert.Equal(t, testCase.expectFile.GetFileType(), file.GetFileType())
+			assert.Equal(t, testCase.expectFile.GetEntryPoint(), file.GetEntryPoint())
+			assert.Equal(t, testCase.expectFile.GetHash(), file.GetHash())
+			assert.WithinDuration(t, testCase.expectFile.GetCreatedAt(), file.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectFile.GameID, file.GameID)
 		})
 	}
