@@ -37,7 +37,7 @@ func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID val
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var productKeyStatus []migrate.ProductKeyStatusTable2
+	var productKeyStatus []schema.ProductKeyStatusTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("active = ?", true).
@@ -58,14 +58,14 @@ func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID val
 		}
 	}
 
-	dbProductKeys := make([]*migrate.ProductKeyTable2, 0, len(productKeys))
+	dbProductKeys := make([]*schema.ProductKeyTable, 0, len(productKeys))
 	for _, key := range productKeys {
 		statusID, ok := statusMap[key.GetStatus()]
 		if !ok {
 			return fmt.Errorf("invalid product key status: %d", key.GetStatus())
 		}
 
-		dbProductKeys = append(dbProductKeys, &migrate.ProductKeyTable2{
+		dbProductKeys = append(dbProductKeys, &schema.ProductKeyTable{
 			ID:         uuid.UUID(key.GetID()),
 			EditionID:  uuid.UUID(editionID),
 			StatusID:   statusID,
@@ -98,7 +98,7 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 		return fmt.Errorf("invalid product key status: %d", key.GetStatus())
 	}
 
-	var productKeyStatus migrate.ProductKeyStatusTable2
+	var productKeyStatus schema.ProductKeyStatusTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", dbStatus).
@@ -109,7 +109,7 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 
 	result := db.
 		Where("id = ?", uuid.UUID(key.GetID())).
-		Updates(&migrate.ProductKeyTable2{
+		Updates(&schema.ProductKeyTable{
 			ProductKey: string(key.GetProductKey()),
 			StatusID:   productKeyStatus.ID,
 		})
@@ -147,7 +147,7 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 		}
 	}
 
-	var dbProductKeys []migrate.ProductKeyTable2
+	var dbProductKeys []schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("edition_id = ?", uuid.UUID(editionID)).
@@ -193,7 +193,7 @@ func (productKey *ProductKey) GetProductKey(ctx context.Context, productKeyID va
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbProductKey migrate.ProductKeyTable2
+	var dbProductKey schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("product_keys.id = ?", uuid.UUID(productKeyID)).
@@ -236,7 +236,7 @@ func (productKey *ProductKey) GetProductKeyByKey(ctx context.Context, productKey
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbProductKey migrate.ProductKeyTable2
+	var dbProductKey schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("product_key = ?", string(productKeyID)).
