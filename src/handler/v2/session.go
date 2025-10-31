@@ -33,7 +33,7 @@ func NewSession(session *common.Session) (*Session, error) {
 //
 //nolint:unused
 func (s *Session) get(c echo.Context) (*sessions.Session, error) {
-	return s.Session.GetSession(c)
+	return s.GetSession(c)
 }
 
 // save
@@ -43,7 +43,7 @@ func (s *Session) get(c echo.Context) (*sessions.Session, error) {
 //
 //nolint:unused
 func (s *Session) save(c echo.Context, session *sessions.Session) error {
-	return s.Session.Save(c, session)
+	return s.Save(c, session)
 }
 
 // revoke
@@ -53,7 +53,7 @@ func (s *Session) save(c echo.Context, session *sessions.Session) error {
 //
 //nolint:unused
 func (s *Session) revoke(session *sessions.Session) {
-	s.Session.Revoke(session)
+	s.Revoke(session)
 }
 
 var (
