@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -52,7 +52,7 @@ func (e *Edition) SaveEdition(ctx context.Context, edition *domain.LauncherVersi
 	}
 
 	err = db.
-		Create(&migrate.EditionTable2{
+		Create(&schema.EditionTable{
 			ID:               uuid.UUID(edition.GetID()),
 			Name:             string(edition.GetName()),
 			QuestionnaireURL: strQuestionnaireURL,
@@ -88,10 +88,10 @@ func (e *Edition) UpdateEdition(ctx context.Context, edition *domain.LauncherVer
 		}
 	}
 
-	result := db.Model(&migrate.EditionTable2{}).
+	result := db.Model(&schema.EditionTable{}).
 		Select("name", "questionnaire_url").
 		Where("id = ?", uuid.UUID(edition.GetID())).
-		Updates(migrate.EditionTable2{
+		Updates(schema.EditionTable{
 			Name:             string(edition.GetName()),
 			QuestionnaireURL: strQuestionnaireURL,
 		})
@@ -114,7 +114,7 @@ func (e *Edition) DeleteEdition(ctx context.Context, editionID values.LauncherVe
 
 	result := db.
 		Where("id = ?", uuid.UUID(editionID)).
-		Delete(&migrate.EditionTable2{})
+		Delete(&schema.EditionTable{})
 	if result.Error != nil {
 		return fmt.Errorf("failed to delete edition: %w", result.Error)
 	}
@@ -132,7 +132,7 @@ func (e *Edition) GetEditions(ctx context.Context, _ repository.LockType) ([]*do
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var editions []*migrate.EditionTable2
+	var editions []*schema.EditionTable
 	err = db.
 		Find(&editions).Error
 	if err != nil {
@@ -179,7 +179,7 @@ func (e *Edition) GetEdition(ctx context.Context, editionID values.LauncherVersi
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var edition migrate.EditionTable2
+	var edition schema.EditionTable
 	err = db.
 		Where("id = ?", uuid.UUID(editionID)).
 		Take(&edition).Error
@@ -224,15 +224,15 @@ func (e *Edition) UpdateEditionGameVersions(
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameVersions := make([]migrate.GameVersionTable2, 0, len(gameVersionIDs))
+	gameVersions := make([]schema.GameVersionTable, 0, len(gameVersionIDs))
 	for _, gameVersionID := range gameVersionIDs {
-		gameVersions = append(gameVersions, migrate.GameVersionTable2{
+		gameVersions = append(gameVersions, schema.GameVersionTable{
 			ID: uuid.UUID(gameVersionID),
 		})
 	}
 
 	err = db.
-		Model(&migrate.EditionTable2{
+		Model(&schema.EditionTable{
 			ID: uuid.UUID(editionID),
 		}).
 		Association("GameVersions").
@@ -255,10 +255,10 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersions []*migrate.GameVersionTable2
+	var gameVersions []*schema.GameVersionTable2
 	err = db.
 		Session(&gorm.Session{}).
-		Model(&migrate.EditionTable2{
+		Model(&schema.EditionTable{
 			ID: uuid.UUID(editionID),
 		}).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
@@ -317,7 +317,7 @@ func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.La
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersion migrate.GameVersionTable2
+	var gameVersion schema.GameVersionTable2
 	err = db.
 		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
 		Where("v2_game_versions.game_id = ?", uuid.UUID(gameID)).
@@ -348,7 +348,7 @@ func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.L
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersion migrate.GameVersionTable2
+	var gameVersion schema.GameVersionTable2
 	err = db.
 		Where("game_image_id = ?", uuid.UUID(imageID)).
 		Take(&gameVersion).Error
@@ -378,7 +378,7 @@ func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.L
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersion migrate.GameVersionTable2
+	var gameVersion schema.GameVersionTable2
 	err = db.
 		Where("game_video_id = ?", uuid.UUID(videoID)).
 		Take(&gameVersion).Error
@@ -408,7 +408,7 @@ func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.La
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var gameVersion migrate.GameVersionTable2
+	var gameVersion schema.GameVersionTable2
 	err = db.
 		Joins("INNER JOIN game_version_game_file_relations ON game_version_game_file_relations.game_version_id = v2_game_versions.id").
 		Where("game_version_game_file_relations.game_file_id = ?", uuid.UUID(fileID)).
