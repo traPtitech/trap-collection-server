@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +30,7 @@ func (s *Seat) CreateSeats(ctx context.Context, seats []*domain.Seat) error {
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var status []migrate.SeatStatusTable2
+	var status []schema.SeatStatusTable
 	err = db.
 		Where("active = true").
 		Find(&status).Error
@@ -42,7 +43,7 @@ func (s *Seat) CreateSeats(ctx context.Context, seats []*domain.Seat) error {
 		statusMap[s.Name] = s.ID
 	}
 
-	dbSeats := make([]migrate.SeatTable2, 0, len(seats))
+	dbSeats := make([]schema.SeatTable, 0, len(seats))
 	for _, seat := range seats {
 		var (
 			status uint8
@@ -62,7 +63,7 @@ func (s *Seat) CreateSeats(ctx context.Context, seats []*domain.Seat) error {
 			return fmt.Errorf("invalid seat status: %d", seat.Status())
 		}
 
-		dbSeats = append(dbSeats, migrate.SeatTable2{
+		dbSeats = append(dbSeats, schema.SeatTable{
 			ID:       uint(seat.ID()),
 			StatusID: status,
 		})
@@ -95,7 +96,7 @@ func (s *Seat) UpdateSeatsStatus(ctx context.Context, seatIDs []values.SeatID, s
 		return fmt.Errorf("invalid seat status: %d", status)
 	}
 
-	var dbStatus migrate.SeatStatusTable2
+	var dbStatus schema.SeatStatusTable
 	err = db.
 		Where("active = true").
 		Where("name = ?", dbStatusName).
@@ -105,7 +106,7 @@ func (s *Seat) UpdateSeatsStatus(ctx context.Context, seatIDs []values.SeatID, s
 	}
 
 	result := db.
-		Model(&migrate.SeatTable2{}).
+		Model(&schema.SeatTable{}).
 		Where("id IN ?", seatIDs).
 		Update("status_id", dbStatus.ID)
 	if result.Error != nil {
@@ -129,7 +130,7 @@ func (s *Seat) GetActiveSeats(ctx context.Context, lockType repository.LockType)
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbSeats []migrate.SeatTable2
+	var dbSeats []schema.SeatTable
 	err = db.
 		Joins("SeatStatus").
 		Order("seats.id").
@@ -172,7 +173,7 @@ func (s *Seat) GetSeats(ctx context.Context, lockType repository.LockType) ([]*d
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbSeats []migrate.SeatTable2
+	var dbSeats []schema.SeatTable
 	err = db.
 		Joins("SeatStatus").
 		Order("seats.id").
@@ -217,7 +218,7 @@ func (s *Seat) GetSeat(ctx context.Context, seatID values.SeatID, lockType repos
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbSeat migrate.SeatTable2
+	var dbSeat schema.SeatTable
 	err = db.
 		Joins("SeatStatus").
 		Where("seats.id = ?", uint(seatID)).
