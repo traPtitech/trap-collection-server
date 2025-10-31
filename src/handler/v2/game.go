@@ -414,12 +414,12 @@ func (g *Game) PatchGame(ctx echo.Context, gameID openapi.GameIDInPath) error {
 	var visibility *values.GameVisibility
 	if req.Visibility != nil {
 		var vis values.GameVisibility
-		switch {
-		case *req.Visibility == openapi.Public:
+		switch *req.Visibility {
+		case openapi.Public:
 			vis = values.GameVisibilityTypePublic
-		case *req.Visibility == openapi.Limited:
+		case openapi.Limited:
 			vis = values.GameVisibilityTypeLimited
-		case *req.Visibility == openapi.Private:
+		case openapi.Private:
 			vis = values.GameVisibilityTypePrivate
 		default:
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid visibility")
