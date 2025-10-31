@@ -95,9 +95,9 @@ func (gameVersion *GameVersion) GetGameVersion(c echo.Context, gameID openapi.Ga
 		}
 
 		resVersions = append(resVersions, openapi.GameVersion{
-			Id:          openapi.GameVersionID(version.GameVersion.GetID()),
-			Name:        string(version.GameVersion.GetName()),
-			Description: string(version.GameVersion.GetDescription()),
+			Id:          openapi.GameVersionID(version.GetID()),
+			Name:        string(version.GetName()),
+			Description: string(version.GetDescription()),
 			CreatedAt:   version.GetCreatedAt(),
 			ImageID:     openapi.GameImageID(version.ImageID),
 			VideoID:     openapi.GameVideoID(version.VideoID),
