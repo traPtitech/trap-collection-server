@@ -10,7 +10,7 @@ import (
 )
 
 type LauncherUser interface {
-	CreateLauncherUsers(context.Context, values.LauncherVersionID, []*domain.LauncherUser) ([]*domain.LauncherUser, error)
+	CreateLauncherUsers(context.Context, values.EditionID, []*domain.LauncherUser) ([]*domain.LauncherUser, error)
 	DeleteLauncherUser(context.Context, values.LauncherUserID) error
 	GetLauncherUserByProductKey(context.Context, values.LauncherUserProductKey) (*domain.LauncherUser, error)
 }

@@ -66,19 +66,19 @@ func (g *GamePlayStatsInEdition) GetPlayTime() time.Duration {
 }
 
 type EditionPlayStats struct {
-	editionID      values.LauncherVersionID
-	editionName    values.LauncherVersionName
+	editionID      values.EditionID
+	editionName    values.EditionName
 	totalPlayCount int
 	totalPlayTime  time.Duration
 	gameStats      []*GamePlayStatsInEdition
 	hourlyStats    []*HourlyPlayStats
 }
 
-func (e *EditionPlayStats) GetEditionID() values.LauncherVersionID {
+func (e *EditionPlayStats) GetEditionID() values.EditionID {
 	return e.editionID
 }
 
-func (e *EditionPlayStats) GetEditionName() values.LauncherVersionName {
+func (e *EditionPlayStats) GetEditionName() values.EditionName {
 	return e.editionName
 }
 
@@ -123,7 +123,7 @@ func NewGamePlayStatsInEdition(gameID values.GameID, playCount int, playTime tim
 	}
 }
 
-func NewEditionPlayStats(editionID values.LauncherVersionID, editionName values.LauncherVersionName, totalPlayCount int, totalPlayTime time.Duration, gameStats []*GamePlayStatsInEdition, hourlyStats []*HourlyPlayStats) *EditionPlayStats {
+func NewEditionPlayStats(editionID values.EditionID, editionName values.EditionName, totalPlayCount int, totalPlayTime time.Duration, gameStats []*GamePlayStatsInEdition, hourlyStats []*HourlyPlayStats) *EditionPlayStats {
 	return &EditionPlayStats{
 		editionID:      editionID,
 		editionName:    editionName,

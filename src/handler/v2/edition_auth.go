@@ -45,7 +45,7 @@ func (editionAuth *EditionAuth) GetProductKeys(c echo.Context, editionID openapi
 
 	productKeys, err := editionAuth.editionAuthService.GetProductKeys(
 		c.Request().Context(),
-		values.NewLauncherVersionIDFromUUID(editionID),
+		values.NewEditionIDFromUUID(editionID),
 		service.GetProductKeysParams{
 			Status: status,
 		},
@@ -91,7 +91,7 @@ func (editionAuth *EditionAuth) PostProductKey(c echo.Context, editionID openapi
 
 	productKey, err := editionAuth.editionAuthService.GenerateProductKey(
 		c.Request().Context(),
-		values.NewLauncherVersionIDFromUUID(editionID),
+		values.NewEditionIDFromUUID(editionID),
 		uint(params.Num),
 	)
 	if errors.Is(err, service.ErrInvalidEditionID) {

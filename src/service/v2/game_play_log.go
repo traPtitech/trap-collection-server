@@ -36,7 +36,7 @@ func NewGamePlayLog(
 	}
 }
 
-func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, gameVersionID values.GameVersionID, startTime time.Time) (*domain.GamePlayLog, error) {
+func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.EditionID, gameID values.GameID, gameVersionID values.GameVersionID, startTime time.Time) (*domain.GamePlayLog, error) {
 	_, err := g.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -81,7 +81,7 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Launch
 	return playLog, nil
 }
 
-func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, playLogID values.GamePlayLogID, endTime time.Time) error {
+func (g *GamePlayLog) UpdatePlayLogEndTime(ctx context.Context, editionID values.EditionID, gameID values.GameID, playLogID values.GamePlayLogID, endTime time.Time) error {
 	return g.db.Transaction(ctx, nil, func(ctx context.Context) error {
 		playLog, err := g.gamePlayLogRepository.GetGamePlayLog(ctx, playLogID)
 		if err != nil {
@@ -144,7 +144,7 @@ func (g *GamePlayLog) GetGamePlayStats(ctx context.Context, gameID values.GameID
 	return stats, nil
 }
 
-func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
+func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.EditionID, start, end time.Time) (*domain.EditionPlayStats, error) {
 	if end.Before(start) {
 		return nil, service.ErrInvalidTimeRange
 	}

@@ -87,7 +87,7 @@ func (g *GamePlayLogV2) GetGamePlayLog(ctx context.Context, playLogID values.Gam
 
 	return domain.NewGamePlayLog(
 		values.GamePlayLogID(gamePlayLog.ID),
-		values.LauncherVersionID(gamePlayLog.EditionID),
+		values.EditionID(gamePlayLog.EditionID),
 		values.GameID(gamePlayLog.GameID),
 		values.GameVersionID(gamePlayLog.GameVersionID),
 		gamePlayLog.StartTime,
@@ -228,7 +228,7 @@ func (g *GamePlayLogV2) GetGamePlayStats(ctx context.Context, gameID values.Game
 	), nil
 }
 
-func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error) {
+func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID values.EditionID, start, end time.Time) (*domain.EditionPlayStats, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get db: %w", err)
@@ -348,7 +348,7 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 
 	return domain.NewEditionPlayStats(
 		editionID,
-		values.NewLauncherVersionName(edition.Name),
+		values.NewEditionName(edition.Name),
 		totalPlayCount,
 		totalPlayTime,
 		gameStats,

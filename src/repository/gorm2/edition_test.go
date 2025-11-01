@@ -33,7 +33,7 @@ func TestSaveEdition(t *testing.T) {
 
 	type test struct {
 		description     string
-		edition         *domain.LauncherVersion
+		edition         *domain.Edition
 		beforeEditions  []migrate.EditionTable2
 		noQuestionnaire bool
 		isErr           bool
@@ -48,13 +48,13 @@ func TestSaveEdition(t *testing.T) {
 	}
 	//questionnaireURL := values.NewLauncherVersionQuestionnaireURL(urlLink)
 
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
-				values.NewLauncherVersionID(),
+			edition: domain.NewEditionWithQuestionnaire(
+				values.NewEditionID(),
 				"test1",
 				urlLink,
 				now,
@@ -62,8 +62,8 @@ func TestSaveEdition(t *testing.T) {
 		},
 		{
 			description: "別のバージョンが存在してもエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
-				values.NewLauncherVersionID(),
+			edition: domain.NewEditionWithQuestionnaire(
+				values.NewEditionID(),
 				"test2",
 				urlLink,
 				now,
@@ -79,8 +79,8 @@ func TestSaveEdition(t *testing.T) {
 		},
 		{
 			description: "アンケートが無くてもエラーなし",
-			edition: domain.NewLauncherVersionWithoutQuestionnaire(
-				values.NewLauncherVersionID(),
+			edition: domain.NewEditionWithoutQuestionnaire(
+				values.NewEditionID(),
 				"test4",
 				now,
 			),
@@ -88,7 +88,7 @@ func TestSaveEdition(t *testing.T) {
 		},
 		{
 			description: "同じバージョンIDが存在するのでエラー",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID,
 				"test5",
 				urlLink,
@@ -172,12 +172,12 @@ func TestUpdateEdition(t *testing.T) {
 		t.Fatalf("failed to encode url: %v", err)
 	}
 
-	editionID1 := values.NewLauncherVersionID()
-	editionID2 := values.NewLauncherVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
 
 	type test struct {
 		description    string
-		edition        *domain.LauncherVersion
+		edition        *domain.Edition
 		beforeEditions []migrate.EditionTable2
 		afterEditions  []migrate.EditionTable2
 		isErr          bool
@@ -187,7 +187,7 @@ func TestUpdateEdition(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID1,
 				"test2",
 				urlLink2,
@@ -218,7 +218,7 @@ func TestUpdateEdition(t *testing.T) {
 		},
 		{
 			description: "別のエディションが存在してもエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID1,
 				"test3",
 				urlLink2,
@@ -267,7 +267,7 @@ func TestUpdateEdition(t *testing.T) {
 		},
 		{
 			description: "アンケートURLが存在しなくなってもエラーなし",
-			edition: domain.NewLauncherVersionWithoutQuestionnaire(
+			edition: domain.NewEditionWithoutQuestionnaire(
 				editionID1,
 				"test2",
 				now,
@@ -296,7 +296,7 @@ func TestUpdateEdition(t *testing.T) {
 		},
 		{
 			description: "アンケートURLが存在するようになってもエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID1,
 				"test2",
 				urlLink1,
@@ -326,7 +326,7 @@ func TestUpdateEdition(t *testing.T) {
 		},
 		{
 			description: "アンケートURLが変わってもエラーなし",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID1,
 				"test2",
 				urlLink2,
@@ -357,7 +357,7 @@ func TestUpdateEdition(t *testing.T) {
 		},
 		{
 			description: "エディションが無いのでErrNoRecordUpdated",
-			edition: domain.NewLauncherVersionWithQuestionnaire(
+			edition: domain.NewEditionWithQuestionnaire(
 				editionID1,
 				"test2",
 				urlLink1,
@@ -452,12 +452,12 @@ func TestDeleteEdition(t *testing.T) {
 		t.Fatalf("failed to encode url: %v", err)
 	}
 
-	editionID1 := values.NewLauncherVersionID()
-	editionID2 := values.NewLauncherVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
 
 	type test struct {
 		description    string
-		editionID      values.LauncherVersionID
+		editionID      values.EditionID
 		beforeEditions []migrate.EditionTable2
 		afterEditions  []migrate.EditionTable2
 		isErr          bool
@@ -586,8 +586,8 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	db, err := testDB.getDB(ctx)
 	require.NoError(t, err)
 
-	editionID1 := values.NewLauncherVersionID()
-	editionID2 := values.NewLauncherVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
 
 	gameVersionID1 := values.NewGameVersionID()
 	gameVersionID2 := values.NewGameVersionID()
@@ -665,7 +665,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	//テスト用の構造体
 	type test struct {
 		description    string
-		editionID      values.LauncherVersionID
+		editionID      values.EditionID
 		gameVersionIDs []values.GameVersionID
 		beforeEditions []migrate.EditionTable2
 		afterEditions  []migrate.EditionTable2
@@ -724,7 +724,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		},
 		{
 			description:    "存在しないエディションIDでエラー",
-			editionID:      values.NewLauncherVersionID(),
+			editionID:      values.NewEditionID(),
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
 			beforeEditions: []migrate.EditionTable2{
 				{

@@ -55,10 +55,10 @@ func TestCreateGamePlayLog(t *testing.T) {
 	gameVersionID3 := values.NewGameVersionID()
 	gameVersionID4 := values.NewGameVersionID()
 
-	editionID1 := values.NewLauncherVersionID()
-	editionID2 := values.NewLauncherVersionID()
-	editionID3 := values.NewLauncherVersionID()
-	editionID4 := values.NewLauncherVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
+	editionID3 := values.NewEditionID()
+	editionID4 := values.NewEditionID()
 
 	imageID1 := values.NewGameImageID()
 	imageID2 := values.NewGameImageID()
@@ -564,7 +564,7 @@ func TestGetGamePlayLog(t *testing.T) {
 			playLogID:   values.GamePlayLogID(gamePlayLog1.ID),
 			expectedPlayLog: domain.NewGamePlayLog(
 				values.GamePlayLogID(gamePlayLog1.ID),
-				values.LauncherVersionID(gamePlayLog1.EditionID),
+				values.EditionID(gamePlayLog1.EditionID),
 				values.GameID(gamePlayLog1.GameID),
 				values.GameVersionID(gamePlayLog1.GameVersionID),
 				gamePlayLog1.StartTime,
@@ -578,7 +578,7 @@ func TestGetGamePlayLog(t *testing.T) {
 			playLogID:   values.GamePlayLogID(gamePlayLog2.ID),
 			expectedPlayLog: domain.NewGamePlayLog(
 				values.GamePlayLogID(gamePlayLog2.ID),
-				values.LauncherVersionID(gamePlayLog2.EditionID),
+				values.EditionID(gamePlayLog2.EditionID),
 				values.GameID(gamePlayLog2.GameID),
 				values.GameVersionID(gamePlayLog2.GameVersionID),
 				gamePlayLog2.StartTime,
@@ -1165,7 +1165,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 
-	unExistEditionID := values.NewLauncherVersionID()
+	unExistEditionID := values.NewEditionID()
 
 	game1 := schema.GameTable2{
 		ID:               uuid.New(),
@@ -1300,7 +1300,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	type test struct {
 		description   string
-		editionID     values.LauncherVersionID
+		editionID     values.EditionID
 		start         time.Time
 		end           time.Time
 		expectedStats *domain.EditionPlayStats
@@ -1311,12 +1311,12 @@ func TestGetEditionPlayStats(t *testing.T) {
 	testCases := []test{
 		{
 			description: "正常に取得できる",
-			editionID:   values.LauncherVersionID(edition1.ID),
+			editionID:   values.EditionID(edition1.ID),
 			start:       baseTime.Add(13 * time.Hour),
 			end:         baseTime.Add(15 * time.Hour),
 			expectedStats: domain.NewEditionPlayStats(
-				values.LauncherVersionID(edition1.ID),
-				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				values.EditionID(edition1.ID),
+				values.NewEditionName("edition1 for GetEditionPlayStats"),
 				3,
 				65*time.Minute,
 				[]*domain.GamePlayStatsInEdition{
@@ -1343,12 +1343,12 @@ func TestGetEditionPlayStats(t *testing.T) {
 		},
 		{
 			description: "プレイ中のログも含めて正常に取得できる",
-			editionID:   values.LauncherVersionID(edition1.ID),
+			editionID:   values.EditionID(edition1.ID),
 			start:       baseTime.Add(15 * time.Hour),
 			end:         baseTime.Add(17 * time.Hour),
 			expectedStats: domain.NewEditionPlayStats(
-				values.LauncherVersionID(edition1.ID),
-				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				values.EditionID(edition1.ID),
+				values.NewEditionName("edition1 for GetEditionPlayStats"),
 				2,
 				55*time.Minute,
 				[]*domain.GamePlayStatsInEdition{
@@ -1375,12 +1375,12 @@ func TestGetEditionPlayStats(t *testing.T) {
 		},
 		{
 			description: "endTimeがNULLで進行中のプレイログの取得",
-			editionID:   values.LauncherVersionID(edition1.ID),
+			editionID:   values.EditionID(edition1.ID),
 			start:       baseTime.Add(16*time.Hour + 15*time.Minute),
 			end:         baseTime.Add(17*time.Hour + 15*time.Minute),
 			expectedStats: domain.NewEditionPlayStats(
-				values.LauncherVersionID(edition1.ID),
-				values.NewLauncherVersionName("edition1 for GetEditionPlayStats"),
+				values.EditionID(edition1.ID),
+				values.NewEditionName("edition1 for GetEditionPlayStats"),
 				1,
 				45*time.Minute,
 				[]*domain.GamePlayStatsInEdition{
@@ -1412,7 +1412,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 			end:         baseTime.Add(24 * time.Hour),
 			expectedStats: domain.NewEditionPlayStats(
 				unExistEditionID,
-				values.NewLauncherVersionName(""),
+				values.NewEditionName(""),
 				0,
 				0,
 				[]*domain.GamePlayStatsInEdition{},

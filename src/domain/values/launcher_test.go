@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLauncherVersionNameValidate(t *testing.T) {
+func TestEditionNameValidate(t *testing.T) {
 	t.Parallel()
 
 	type test struct {
@@ -33,7 +33,7 @@ func TestLauncherVersionNameValidate(t *testing.T) {
 			description: "英数字33字でエラー",
 			versionName: "abcdefghijklmnopqrstuvwxyz0123456",
 			isErr:       true,
-			err:         ErrLauncherVersionNameTooLong,
+			err:         ErrEditionNameTooLong,
 		},
 		{
 			description: "マルチバイト文字32字でもエラーなし",
@@ -44,19 +44,19 @@ func TestLauncherVersionNameValidate(t *testing.T) {
 			description: "マルチバイト文字33字でエラー",
 			versionName: "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむ",
 			isErr:       true,
-			err:         ErrLauncherVersionNameTooLong,
+			err:         ErrEditionNameTooLong,
 		},
 		{
 			description: "空文字でエラー",
 			versionName: "",
 			isErr:       true,
-			err:         ErrLauncherVersionNameEmpty,
+			err:         ErrEditionNameEmpty,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := LauncherVersionName(testCase.versionName).Validate()
+			err := EditionName(testCase.versionName).Validate()
 
 			if testCase.isErr {
 				if testCase.err == nil {

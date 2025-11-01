@@ -12,14 +12,14 @@ import (
 type ProductKey interface {
 	// SaveProductKeys
 	// プロダクトキーの保存。
-	SaveProductKeys(ct context.Context, editionID values.LauncherVersionID, productKeys []*domain.LauncherUser) error
+	SaveProductKeys(ct context.Context, editionID values.EditionID, productKeys []*domain.LauncherUser) error
 	// UpdateProductKey
 	// プロダクトキーの更新。
 	UpdateProductKey(ctx context.Context, productKey *domain.LauncherUser) error
 	// GetProductKeys
 	// プロダクトキー一覧の取得。
 	// ステータスに関わらず取得可能。
-	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, statuses []values.LauncherUserStatus, lockType LockType) ([]*domain.LauncherUser, error)
+	GetProductKeys(ctx context.Context, editionID values.EditionID, statuses []values.LauncherUserStatus, lockType LockType) ([]*domain.LauncherUser, error)
 	// GetProductKey
 	// プロダクトキーの取得。
 	// ステータスに関わらず取得可能。

@@ -7,26 +7,26 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-// LauncherVersion
+// Edition
 // ランチャーのバージョンを表すドメイン。
 // 現在の仕様では、バージョン名、アンケートURLの変更はできないため、
 // SetName、SetQuestionnaireURLは使われない。
 // 工大祭などのイベント用ランチャーバージョンではアンケートを持つが、
 // コミケでの販売用ランチャーバージョンではアンケートを持たない。
-type LauncherVersion struct {
-	id                values.LauncherVersionID
-	name              values.LauncherVersionName
+type Edition struct {
+	id                values.EditionID
+	name              values.EditionName
 	haveQuestionnaire bool
-	questionnaireURL  values.LauncherVersionQuestionnaireURL
+	questionnaireURL  values.EditionQuestionnaireURL
 	createdAt         time.Time
 }
 
-func NewLauncherVersionWithoutQuestionnaire(
-	id values.LauncherVersionID,
-	name values.LauncherVersionName,
+func NewEditionWithoutQuestionnaire(
+	id values.EditionID,
+	name values.EditionName,
 	createdAt time.Time,
-) *LauncherVersion {
-	return &LauncherVersion{
+) *Edition {
+	return &Edition{
 		id:                id,
 		name:              name,
 		haveQuestionnaire: false,
@@ -34,13 +34,13 @@ func NewLauncherVersionWithoutQuestionnaire(
 	}
 }
 
-func NewLauncherVersionWithQuestionnaire(
-	id values.LauncherVersionID,
-	name values.LauncherVersionName,
-	questionnaireURL values.LauncherVersionQuestionnaireURL,
+func NewEditionWithQuestionnaire(
+	id values.EditionID,
+	name values.EditionName,
+	questionnaireURL values.EditionQuestionnaireURL,
 	createdAt time.Time,
-) *LauncherVersion {
-	return &LauncherVersion{
+) *Edition {
+	return &Edition{
 		id:                id,
 		name:              name,
 		haveQuestionnaire: true,
@@ -49,15 +49,15 @@ func NewLauncherVersionWithQuestionnaire(
 	}
 }
 
-func (lv *LauncherVersion) GetID() values.LauncherVersionID {
+func (lv *Edition) GetID() values.EditionID {
 	return lv.id
 }
 
-func (lv *LauncherVersion) GetName() values.LauncherVersionName {
+func (lv *Edition) GetName() values.EditionName {
 	return lv.name
 }
 
-func (lv *LauncherVersion) SetName(name values.LauncherVersionName) {
+func (lv *Edition) SetName(name values.EditionName) {
 	lv.name = name
 }
 
@@ -65,7 +65,7 @@ var (
 	ErrNoQuestionnaire = errors.New("no questionnaire")
 )
 
-func (lv *LauncherVersion) GetQuestionnaireURL() (values.LauncherVersionQuestionnaireURL, error) {
+func (lv *Edition) GetQuestionnaireURL() (values.EditionQuestionnaireURL, error) {
 	if !lv.haveQuestionnaire {
 		return nil, ErrNoQuestionnaire
 	}
@@ -73,16 +73,16 @@ func (lv *LauncherVersion) GetQuestionnaireURL() (values.LauncherVersionQuestion
 	return lv.questionnaireURL, nil
 }
 
-func (lv *LauncherVersion) SetQuestionnaireURL(questionnaireURL values.LauncherVersionQuestionnaireURL) {
+func (lv *Edition) SetQuestionnaireURL(questionnaireURL values.EditionQuestionnaireURL) {
 	lv.questionnaireURL = questionnaireURL
 	lv.haveQuestionnaire = true
 }
 
-func (lv *LauncherVersion) UnsetQuestionnaireURL() {
+func (lv *Edition) UnsetQuestionnaireURL() {
 	lv.questionnaireURL = nil
 	lv.haveQuestionnaire = false
 }
 
-func (lv *LauncherVersion) GetCreatedAt() time.Time {
+func (lv *Edition) GetCreatedAt() time.Time {
 	return lv.createdAt
 }

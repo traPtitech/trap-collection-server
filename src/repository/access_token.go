@@ -21,5 +21,5 @@ type AccessToken interface {
 type AccessTokenInfo struct {
 	AccessToken *domain.LauncherSession
 	ProductKey  *domain.LauncherUser
-	Edition     *domain.LauncherVersion
+	Edition     *domain.Edition
 }
