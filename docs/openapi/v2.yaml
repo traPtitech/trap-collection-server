@@ -1986,6 +1986,39 @@ paths:
       description: |
         ランチャーからゲーム終了時に呼び出されるAPIです。
         ゲームの終了時刻を記録し、プレイ時間を自動計算します。
+  
+  /editions/{editionID}/games/{gameID}/plays/{playLogID}:
+    delete:
+      tags:
+        - gamePlayLog
+      operationId: deleteGamePlayLog
+      security:
+        - AdminAuth: []
+      parameters:
+        - $ref: '#/components/parameters/editionIDInPath'
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/playLogIDInPath'
+      responses:
+        '200':
+          description: playLogの削除に成功した際に返されます。
+        '400':
+          description: リクエストが不正である場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '404':
+          description: 指定したIDのジャンルが存在しない、または削除されている場合に返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /games/{gameID}/play-stats:
     get:
