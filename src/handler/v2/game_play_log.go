@@ -211,3 +211,7 @@ func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openap
 
 	return c.JSON(http.StatusOK, res)
 }
+
+func (gpl *GamePlayLog) DeleteGamePlayLog(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
+	return nil
+}

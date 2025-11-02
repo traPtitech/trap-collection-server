@@ -355,3 +355,7 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 		hourlyStats,
 	), nil
 }
+
+func (g *GamePlayLogV2) DeleteGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) error {
+	return nil
+}

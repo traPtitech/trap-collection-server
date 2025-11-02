@@ -967,3 +967,126 @@ func TestGetEditionPlayStats(t *testing.T) {
 		})
 	}
 }
+
+func TestDeletGamePlayLog(t *testing.T) {
+	t.Parallel()
+
+	editionID := values.NewLauncherVersionID()
+	gameID := values.NewGameID()
+	playLogID := values.NewGamePlayLogID()
+	playLog := domain.NewGamePlayLog(
+		playLogID,
+		editionID,
+		gameID,
+		values.NewGameVersionID(),
+		time.Now().Add(-2*time.Hour),
+		nil,
+		time.Now().Add(-2*time.Hour),
+		time.Now().Add(-2*time.Hour),
+	)
+
+	testCases := map[string]struct {
+		editionID                values.LauncherVersionID
+		gameID                   values.GameID
+		playLogID                values.GamePlayLogID
+		GetGamePlayLogErr        error
+		executeDeleteGamePlayLog bool
+		deleteGamePlayLogErr     error
+		playLog                  *domain.GamePlayLog
+		err                      error
+	}{
+		"GetGamePlayLogがErrRecordNotFoundなのでErrInvalidPlayLogID": {
+			editionID:         values.NewLauncherVersionID(),
+			gameID:            values.NewGameID(),
+			playLogID:         values.NewGamePlayLogID(),
+			GetGamePlayLogErr: repository.ErrRecordNotFound,
+			err:               service.ErrInvalidPlayLogID,
+		},
+		"GetGamePlayLogがエラーなのでエラー": {
+			editionID:         values.NewLauncherVersionID(),
+			gameID:            values.NewGameID(),
+			playLogID:         values.NewGamePlayLogID(),
+			GetGamePlayLogErr: assert.AnError,
+			err:               assert.AnError,
+		},
+		"editionIDとgameIDのペアが異なるのでErrInvalidPlayLogID": {
+			editionID: values.NewLauncherVersionID(),
+			gameID:    values.NewGameID(),
+			playLogID: playLogID,
+			playLog:   playLog,
+			err:       service.ErrInvalidPlayLogID,
+		},
+		"DeletGamePlayLogがErrNoRecordDeletedなのでErrInvalidPlayLogID": {
+			editionID:                editionID,
+			gameID:                   gameID,
+			playLogID:                playLogID,
+			playLog:                  playLog,
+			executeDeleteGamePlayLog: true,
+			deleteGamePlayLogErr:     repository.ErrNoRecordDeleted,
+			err:                      service.ErrInvalidPlayLogID,
+		},
+		"DeleteGamePlayLogがエラーなのでエラー": {
+			editionID:                editionID,
+			gameID:                   gameID,
+			playLogID:                playLogID,
+			playLog:                  playLog,
+			executeDeleteGamePlayLog: true,
+			deleteGamePlayLogErr:     assert.AnError,
+			err:                      assert.AnError,
+		},
+		"正常にプレイログが削除される": {
+			editionID:                editionID,
+			gameID:                   gameID,
+			playLogID:                playLogID,
+			playLog:                  playLog,
+			executeDeleteGamePlayLog: true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+			mockEditionRepository := mockRepository.NewMockEdition(ctrl)
+			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+
+			playLog := NewGamePlayLog(
+				mockDB,
+				mockGamePlayLogRepository,
+				mockEditionRepository,
+				mockGameRepository,
+				mockGameVersionRepository,
+			)
+
+			mockGamePlayLogRepository.
+				EXPECT().
+				GetGamePlayLog(gomock.Any(), testCase.playLogID).
+				Return(testCase.playLog, testCase.GetGamePlayLogErr)
+			if testCase.executeDeleteGamePlayLog {
+				mockGamePlayLogRepository.
+					EXPECT().
+					DeleteGamePlayLog(gomock.Any(), testCase.playLogID).
+					Return(testCase.deleteGamePlayLogErr)
+			}
+
+			err := playLog.DeleteGamePlayLog(
+				t.Context(),
+				testCase.editionID,
+				testCase.gameID,
+				testCase.playLogID,
+			)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
