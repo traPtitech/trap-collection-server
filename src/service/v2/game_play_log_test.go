@@ -968,7 +968,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 	}
 }
 
-func TestDeletGamePlayLog(t *testing.T) {
+func TestDeleteGamePlayLog(t *testing.T) {
 	t.Parallel()
 
 	editionID := values.NewLauncherVersionID()
