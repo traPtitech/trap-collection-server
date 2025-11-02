@@ -1016,7 +1016,7 @@ func TestDeleteGamePlayLog(t *testing.T) {
 			playLog:   playLog,
 			err:       service.ErrInvalidPlayLogID,
 		},
-		"DeletGamePlayLogがErrNoRecordDeletedなのでErrInvalidPlayLogID": {
+		"DeleteGamePlayLogがErrNoRecordDeletedなのでErrInvalidPlayLogID": {
 			editionID:                editionID,
 			gameID:                   gameID,
 			playLogID:                playLogID,
