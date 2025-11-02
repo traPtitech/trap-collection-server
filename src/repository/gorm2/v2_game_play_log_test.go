@@ -1575,7 +1575,7 @@ func TestDeleteGamePlayLog(t *testing.T) {
 
 			var resultAfterPlayLogs []*schema.GamePlayLogTable
 			beforePlayLogIDs := make([]uuid.UUID, len(testCase.beforePlayLogs))
-			for i, log := range testCase.afterPlayLogs {
+			for i, log := range testCase.beforePlayLogs {
 				beforePlayLogIDs[i] = log.ID
 			}
 			err = db.Where("id IN ?", beforePlayLogIDs).Find(&resultAfterPlayLogs).Error
