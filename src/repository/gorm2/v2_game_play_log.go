@@ -357,5 +357,19 @@ func (g *GamePlayLogV2) GetEditionPlayStats(ctx context.Context, editionID value
 }
 
 func (g *GamePlayLogV2) DeleteGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	result := db.Unscoped().
+		Delete(&schema.GamePlayLogTable{}, "id = ?", uuid.UUID(playLogID))
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+	if result.Error != nil {
+		return fmt.Errorf("delete game play log: %w", result.Error)
+	}
+
 	return nil
 }
