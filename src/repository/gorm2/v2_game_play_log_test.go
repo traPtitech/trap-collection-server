@@ -1466,3 +1466,123 @@ func TestGetEditionPlayStats(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGamePlayLog(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+
+	playLogID := values.NewGamePlayLogID()
+
+	game1 := &schema.GameTable2{
+		ID:                     uuid.New(),
+		Name:                   "Test Game for DeleteGamePlayLog",
+		Description:            "description",
+		VisibilityTypeID:       1,
+		CreatedAt:              time.Now(),
+		LatestVersionUpdatedAt: time.Now(),
+	}
+	gameImage1 := &schema.GameImageTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		ImageTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	gameVideo1 := &schema.GameVideoTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		VideoTypeID: 1,
+		CreatedAt:   time.Now(),
+	}
+	gameVersion1 := &schema.GameVersionTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		GameImageID: gameImage1.ID,
+		GameVideoID: gameVideo1.ID,
+		Name:        "v1.0",
+		Description: "First version",
+		CreatedAt:   time.Now(),
+	}
+	edition1 := &schema.EditionTable{
+		ID:        uuid.New(),
+		Name:      "Edition for DeleteGamePlayLog",
+		CreatedAt: time.Now(),
+	}
+	require.NoError(t, db.Create(game1).Error)
+	t.Cleanup(func() { require.NoError(t, testDB.db.Session(&gorm.Session{}).Unscoped().Delete(game1).Error) })
+	require.NoError(t, db.Create(gameImage1).Error)
+	t.Cleanup(func() { require.NoError(t, testDB.db.Session(&gorm.Session{}).Unscoped().Delete(gameImage1).Error) })
+	require.NoError(t, db.Create(gameVideo1).Error)
+	t.Cleanup(func() { require.NoError(t, testDB.db.Session(&gorm.Session{}).Unscoped().Delete(gameVideo1).Error) })
+	require.NoError(t, db.Create(gameVersion1).Error)
+	t.Cleanup(func() { require.NoError(t, testDB.db.Session(&gorm.Session{}).Unscoped().Delete(gameVersion1).Error) })
+	require.NoError(t, db.Create(edition1).Error)
+	t.Cleanup(func() { require.NoError(t, testDB.db.Session(&gorm.Session{}).Unscoped().Delete(edition1).Error) })
+
+	playLog1 := &schema.GamePlayLogTable{
+		ID:            playLogID.UUID(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     time.Now().Add(-10 * time.Minute),
+		EndTime:       sql.NullTime{Time: time.Now(), Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	testCases := map[string]struct {
+		playLogID      values.GamePlayLogID
+		beforePlayLogs []*schema.GamePlayLogTable
+		afterPlayLogs  []*schema.GamePlayLogTable
+		err            error
+	}{
+		"正しく削除できる": {
+			playLogID:      playLogID,
+			beforePlayLogs: []*schema.GamePlayLogTable{playLog1},
+			afterPlayLogs:  []*schema.GamePlayLogTable{},
+		},
+		"存在しないIDを指定した場合ErrNoRecordDeletedが返る": {
+			playLogID:      values.NewGamePlayLogID(),
+			beforePlayLogs: []*schema.GamePlayLogTable{playLog1},
+			afterPlayLogs:  []*schema.GamePlayLogTable{playLog1},
+			err:            repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+
+			err := db.Create(testCase.beforePlayLogs).Error
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				err := db.Unscoped().Delete(testCase.beforePlayLogs).Error
+				require.NoError(t, err)
+			})
+
+			gamePlayLogRepository := NewGamePlayLogV2(testDB)
+
+			err = gamePlayLogRepository.DeleteGamePlayLog(t.Context(), testCase.playLogID)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			var resultAfterPlayLogs []*schema.GamePlayLogTable
+			beforePlayLogIDs := make([]uuid.UUID, len(testCase.beforePlayLogs))
+			for i, log := range testCase.beforePlayLogs {
+				beforePlayLogIDs[i] = log.ID
+			}
+			err = db.Where("id IN ?", beforePlayLogIDs).Find(&resultAfterPlayLogs).Error
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.afterPlayLogs, resultAfterPlayLogs)
+
+		})
+	}
+}

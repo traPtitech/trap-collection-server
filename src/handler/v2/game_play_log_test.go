@@ -773,3 +773,70 @@ func TestGetGamePlayStats(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGamePlayLog(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+
+	testCases := map[string]struct {
+		editionID            values.LauncherVersionID
+		gameID               values.GameID
+		playLogID            values.GamePlayLogID
+		DeleteGamePlayLogErr error
+		isError              bool
+		statusCode           int
+	}{
+		"正常系": {
+			editionID:  values.NewLauncherVersionID(),
+			gameID:     values.NewGameID(),
+			playLogID:  values.NewGamePlayLogID(),
+			statusCode: http.StatusOK,
+		},
+		"ErrInvalidPlayLogIDなので404": {
+			editionID:            values.NewLauncherVersionID(),
+			gameID:               values.NewGameID(),
+			playLogID:            values.NewGamePlayLogID(),
+			DeleteGamePlayLogErr: service.ErrInvalidPlayLogID,
+			isError:              true,
+			statusCode:           http.StatusNotFound,
+		},
+		"その他のエラーなので500": {
+			editionID:            values.NewLauncherVersionID(),
+			gameID:               values.NewGameID(),
+			playLogID:            values.NewGamePlayLogID(),
+			DeleteGamePlayLogErr: assert.AnError,
+			isError:              true,
+			statusCode:           http.StatusInternalServerError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			serviceMock := mock.NewMockGamePlayLogV2(ctrl)
+			h := NewGamePlayLog(serviceMock)
+
+			serviceMock.EXPECT().
+				DeleteGamePlayLog(gomock.Any(), testCase.editionID, testCase.gameID, testCase.playLogID).
+				Return(testCase.DeleteGamePlayLogErr)
+
+			url := fmt.Sprintf("/editions/%s/games/%s/plays/%s",
+				uuid.UUID(testCase.editionID).String(), uuid.UUID(testCase.gameID).String(), uuid.UUID(testCase.playLogID).String())
+			c, _, rec := setupTestRequest(t, http.MethodDelete, url, nil)
+
+			err := h.DeleteGamePlayLog(c, openapi.EditionIDInPath(testCase.editionID), openapi.GameIDInPath(testCase.gameID), openapi.PlayLogIDInPath(testCase.playLogID))
+
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				assert.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.statusCode, httpError.Code)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, rec.Code)
+		})
+	}
+}
