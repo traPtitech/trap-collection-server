@@ -169,3 +169,35 @@ func (g *GamePlayLog) GetEditionPlayStats(ctx context.Context, editionID values.
 
 	return stats, nil
 }
+
+func (g *GamePlayLog) DeleteGamePlayLog(ctx context.Context, editionID values.EditionID, gameID values.GameID, playLogID values.GamePlayLogID) error {
+	err := g.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		playLog, err := g.gamePlayLogRepository.GetGamePlayLog(ctx, playLogID)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidPlayLogID
+		}
+		if err != nil {
+			return fmt.Errorf("get game play log: %w", err)
+		}
+
+		if playLog.GetEditionID() != editionID || playLog.GetGameID() != gameID {
+			return service.ErrInvalidPlayLogID
+		}
+
+		err = g.gamePlayLogRepository.DeleteGamePlayLog(ctx, playLogID)
+		if errors.Is(err, repository.ErrNoRecordDeleted) {
+			return service.ErrInvalidPlayLogID
+		}
+		if err != nil {
+			return fmt.Errorf("delete game play log: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

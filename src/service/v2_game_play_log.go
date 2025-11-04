@@ -33,4 +33,8 @@ type GamePlayLogV2 interface {
 	// 指定されたエディションと期間のプレイ統計を取得する。
 	// エディションが存在しない場合、ErrInvalidEditionを返す。
 	GetEditionPlayStats(ctx context.Context, editionID values.EditionID, start, end time.Time) (*domain.EditionPlayStats, error)
+	// DeleteGamePlayLog
+	// 指定されたプレイログを削除する。
+	// 条件に当てはまるプレイログが存在しない場合、ErrInvalidPlayLogIDを返す。
+	DeleteGamePlayLog(ctx context.Context, editionID values.EditionID, gameID values.GameID, playLogID values.GamePlayLogID) error
 }

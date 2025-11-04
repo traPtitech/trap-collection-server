@@ -211,3 +211,20 @@ func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openap
 
 	return c.JSON(http.StatusOK, res)
 }
+
+func (gpl *GamePlayLog) DeleteGamePlayLog(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
+	editionID := values.NewEditionIDFromUUID(editionIDPath)
+	gameID := values.NewGameIDFromUUID(gameIDPath)
+	playLogID := values.GamePlayLogIDFromUUID(playLogIDPath)
+
+	err := gpl.gamePlayLogService.DeleteGamePlayLog(c.Request().Context(), editionID, gameID, playLogID)
+	if errors.Is(err, service.ErrInvalidPlayLogID) {
+		return echo.NewHTTPError(http.StatusNotFound, "play log not found")
+	}
+	if err != nil {
+		log.Printf("error: failed to delete game play log: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete game play log")
+	}
+
+	return c.NoContent(http.StatusOK)
+}
