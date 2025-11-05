@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -43,7 +44,7 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 		return fmt.Errorf("invalid file type: %d", file.GetFileType())
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Where("name = ?", fileTypeName).
 		Select("id").
@@ -54,7 +55,7 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 	fileTypeID := fileType.ID
 
 	err = db.
-		Create(&migrate.GameFileTable2{
+		Create(&schema.GameFileTable2{
 			ID:         uuid.UUID(file.GetID()),
 			GameID:     uuid.UUID(gameID),
 			EntryPoint: string(file.GetEntryPoint()),
@@ -80,7 +81,7 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var file migrate.GameFileTable2
+	var file schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("v2_game_files.id = ?", uuid.UUID(gameFileID)).
@@ -132,7 +133,7 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var files []migrate.GameFileTable2
+	var files []schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("game_id = ?", uuid.UUID(gameID)).
@@ -195,7 +196,7 @@ func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileID
 		uuidFileIDs = append(uuidFileIDs, uuid.UUID(fileID))
 	}
 
-	var gameFiles []*migrate.GameFileTable2
+	var gameFiles []*schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("v2_game_files.id IN ?", uuidFileIDs).

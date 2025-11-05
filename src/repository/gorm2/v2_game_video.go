@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -54,7 +55,7 @@ func (gameVideo *GameVideoV2) SaveGameVideo(ctx context.Context, gameID values.G
 		return fmt.Errorf("invalid video type: %d", video.GetType())
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Where("name = ?", videoTypeName).
 		Where("active = ?", true).
@@ -66,7 +67,7 @@ func (gameVideo *GameVideoV2) SaveGameVideo(ctx context.Context, gameID values.G
 	videoTypeID := videoType.ID
 
 	err = db.
-		Create(&migrate.GameVideoTable2{
+		Create(&schema.GameVideoTable2{
 			ID:          uuid.UUID(video.GetID()),
 			GameID:      uuid.UUID(gameID),
 			VideoTypeID: videoTypeID,
@@ -90,7 +91,7 @@ func (gameVideo *GameVideoV2) GetGameVideo(ctx context.Context, gameVideoID valu
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var video migrate.GameVideoTable2
+	var video schema.GameVideoTable2
 	err = db.
 		Joins("GameVideoType").
 		Where("v2_game_videos.id = ?", uuid.UUID(gameVideoID)).
@@ -128,7 +129,7 @@ func (gameVideo *GameVideoV2) GetGameVideos(ctx context.Context, gameID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var videos []migrate.GameVideoTable2
+	var videos []schema.GameVideoTable2
 	err = db.
 		Joins("GameVideoType").
 		Where("game_id = ?", uuid.UUID(gameID)).

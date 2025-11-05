@@ -13,7 +13,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +48,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 
 	err = db.
 		Session(&gorm.Session{}).
-		Create(&migrate.GameVersionTable2{
+		Create(&schema.GameVersionTable2{
 			ID:          uuid.UUID(version.GetID()),
 			Name:        string(version.GetName()),
 			Description: string(version.GetDescription()),
@@ -67,15 +67,15 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 		return fmt.Errorf("failed to create game version: %w", err)
 	}
 
-	files := make([]*migrate.GameFileTable2, 0, len(fileIDs))
+	files := make([]*schema.GameFileTable2, 0, len(fileIDs))
 	for _, fileID := range fileIDs {
-		files = append(files, &migrate.GameFileTable2{
+		files = append(files, &schema.GameFileTable2{
 			ID: uuid.UUID(fileID),
 		})
 	}
 
 	err = db.
-		Model(&migrate.GameVersionTable2{
+		Model(&schema.GameVersionTable2{
 			ID: uuid.UUID(version.GetID()),
 		}).
 		Association("GameFiles").
@@ -85,7 +85,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 	}
 
 	err = db.
-		Model(&migrate.GameTable2{ID: uuid.UUID(gameID)}).
+		Model(&schema.GameTable2{ID: uuid.UUID(gameID)}).
 		Update("latest_version_updated_at", version.GetCreatedAt()).
 		Error
 	if err != nil {
@@ -113,7 +113,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 	var count int64
 	err = query.
 		Session(&gorm.Session{}).
-		Model(&migrate.GameVersionTable2{}).
+		Model(&schema.GameVersionTable2{}).
 		Count(&count).Error
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to count game versions: %w", err)
@@ -129,7 +129,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 
 	query = query.Order("created_at DESC")
 
-	var gameVersions []*migrate.GameVersionTable2
+	var gameVersions []*schema.GameVersionTable2
 	err = query.
 		Session(&gorm.Session{}).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
@@ -186,7 +186,7 @@ func (gameVersion *GameVersionV2) GetLatestGameVersion(
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var gameVersionTable migrate.GameVersionTable2
+	var gameVersionTable schema.GameVersionTable2
 	err = db.
 		Where("game_id = ?", uuid.UUID(gameID)).
 		Order("created_at DESC").
@@ -250,7 +250,7 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 		uuidGameVersionIDs = append(uuidGameVersionIDs, uuid.UUID(gameVersionID))
 	}
 
-	var gameVersionTables []*migrate.GameVersionTable2
+	var gameVersionTables []*schema.GameVersionTable2
 	err = db.
 		Where("id IN ?", uuidGameVersionIDs).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {

@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -31,7 +32,7 @@ func TestSaveGameV2(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []migrate.GameTable2
+		beforeGames []schema.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -43,10 +44,10 @@ func TestSaveGameV2(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -73,7 +74,7 @@ func TestSaveGameV2(t *testing.T) {
 				values.GameVisibilityTypeLimited,
 				now,
 			),
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID3),
 					Name:             "test",
@@ -92,7 +93,7 @@ func TestSaveGameV2(t *testing.T) {
 				values.GameVisibilityTypeLimited,
 				now,
 			),
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID4),
 					Name:             "test",
@@ -131,7 +132,7 @@ func TestSaveGameV2(t *testing.T) {
 				return
 			}
 
-			var game migrate.GameTable2
+			var game schema.GameTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Where("id = ?", uuid.UUID(testCase.game.GetID())).
@@ -161,8 +162,8 @@ func TestUpdateGameV2(t *testing.T) {
 	type test struct {
 		description string
 		game        *domain.Game
-		beforeGames []migrate.GameTable2
-		afterGames  []migrate.GameTable2
+		beforeGames []schema.GameTable2
+		afterGames  []schema.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -172,7 +173,7 @@ func TestUpdateGameV2(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityTypes []migrate.GameVisibilityTypeTable
+	var gameVisibilityTypes []schema.GameVisibilityTypeTable
 	err = db.
 		Find(&gameVisibilityTypes).Error
 	if err != nil {
@@ -206,7 +207,7 @@ func TestUpdateGameV2(t *testing.T) {
 				values.GameVisibilityTypeLimited,
 				now,
 			),
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test1",
@@ -215,7 +216,7 @@ func TestUpdateGameV2(t *testing.T) {
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
-			afterGames: []migrate.GameTable2{
+			afterGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test2",
@@ -234,7 +235,7 @@ func TestUpdateGameV2(t *testing.T) {
 				values.GameVisibilityTypeLimited,
 				now,
 			),
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test1",
@@ -250,7 +251,7 @@ func TestUpdateGameV2(t *testing.T) {
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
-			afterGames: []migrate.GameTable2{
+			afterGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test3",
@@ -276,8 +277,8 @@ func TestUpdateGameV2(t *testing.T) {
 				values.GameVisibilityTypeLimited,
 				now,
 			),
-			beforeGames: []migrate.GameTable2{},
-			afterGames:  []migrate.GameTable2{},
+			beforeGames: []schema.GameTable2{},
+			afterGames:  []schema.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrNoRecordUpdated,
 		},
@@ -291,7 +292,7 @@ func TestUpdateGameV2(t *testing.T) {
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
 					}).
-					Delete(&migrate.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
+					Delete(&schema.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -323,7 +324,7 @@ func TestUpdateGameV2(t *testing.T) {
 				return
 			}
 
-			var games []migrate.GameTable2
+			var games []schema.GameTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Order("created_at desc").
@@ -358,8 +359,8 @@ func TestRemoveGameV2(t *testing.T) {
 	type test struct {
 		description string
 		gameID      values.GameID
-		beforeGames []migrate.GameTable2
-		afterGames  []migrate.GameTable2
+		beforeGames []schema.GameTable2
+		afterGames  []schema.GameTable2
 		isErr       bool
 		err         error
 	}
@@ -369,10 +370,10 @@ func TestRemoveGameV2(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -383,7 +384,7 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test1",
@@ -392,7 +393,7 @@ func TestRemoveGameV2(t *testing.T) {
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
-			afterGames: []migrate.GameTable2{
+			afterGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -409,7 +410,7 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "別のゲームが存在してもエラーなし",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test1",
@@ -425,7 +426,7 @@ func TestRemoveGameV2(t *testing.T) {
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
 				},
 			},
-			afterGames: []migrate.GameTable2{
+			afterGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test1",
@@ -449,8 +450,8 @@ func TestRemoveGameV2(t *testing.T) {
 		{
 			description: "ゲームが存在しないのでErrNoRecordDeleted",
 			gameID:      gameID1,
-			beforeGames: []migrate.GameTable2{},
-			afterGames:  []migrate.GameTable2{},
+			beforeGames: []schema.GameTable2{},
+			afterGames:  []schema.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrNoRecordDeleted,
 		},
@@ -464,7 +465,7 @@ func TestRemoveGameV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
+					Delete(&schema.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
@@ -496,7 +497,7 @@ func TestRemoveGameV2(t *testing.T) {
 				return
 			}
 
-			var games []migrate.GameTable2
+			var games []schema.GameTable2
 			err = db.
 				Unscoped().
 				Session(&gorm.Session{}).
@@ -536,7 +537,7 @@ func TestGetGameV2(t *testing.T) {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		GameTable   []migrate.GameTable2
+		GameTable   []schema.GameTable2
 		game        *domain.Game
 		isErr       bool
 		err         error
@@ -550,10 +551,10 @@ func TestGetGameV2(t *testing.T) {
 
 	now := time.Now()
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -565,7 +566,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			GameTable: []migrate.GameTable2{
+			GameTable: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test",
@@ -586,7 +587,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "行ロックでもエラーなし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeRecord,
-			GameTable: []migrate.GameTable2{
+			GameTable: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID2),
 					Name:             "test",
@@ -607,7 +608,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ロックの種類が不正なのでエラー",
 			gameID:      gameID5,
 			lockType:    100,
-			GameTable: []migrate.GameTable2{
+			GameTable: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID5),
 					Name:             "test",
@@ -629,7 +630,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ゲームが存在しないのでErrRecordNotFound",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			GameTable:   []migrate.GameTable2{},
+			GameTable:   []schema.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -637,7 +638,7 @@ func TestGetGameV2(t *testing.T) {
 			description: "ゲームが削除済みなのでErrRecordNotFound",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeNone,
-			GameTable: []migrate.GameTable2{
+			GameTable: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
@@ -720,7 +721,7 @@ func TestGetGamesV2(t *testing.T) {
 
 		// テストデータ
 
-		beforeGames []migrate.GameTable2
+		beforeGames []schema.GameTable2
 
 		// 返り値
 
@@ -757,7 +758,7 @@ func TestGetGamesV2(t *testing.T) {
 	memberUUID2 := uuid.New()
 	trapMemberID1 := values.NewTrapMemberID(memberUUID1)
 
-	var gameVisibilityTypes []migrate.GameVisibilityTypeTable
+	var gameVisibilityTypes []schema.GameVisibilityTypeTable
 	err = db.
 		Find(&gameVisibilityTypes).Error
 	if err != nil {
@@ -781,7 +782,7 @@ func TestGetGamesV2(t *testing.T) {
 		}
 	}
 
-	var gameRoleTypes []migrate.GameManagementRoleTypeTable
+	var gameRoleTypes []schema.GameManagementRoleTypeTable
 	err = db.Find(&gameRoleTypes).Error
 	if err != nil {
 		t.Fatalf("failed to get game management role type: %v\n", err)
@@ -810,14 +811,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -835,14 +836,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -854,7 +855,7 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -875,14 +876,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -894,7 +895,7 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -914,7 +915,7 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:                     uuid.UUID(gameID1),
 					Name:                   string(gameName1),
@@ -922,7 +923,7 @@ func TestGetGamesV2(t *testing.T) {
 					CreatedAt:              now.Add(-time.Hour * 2),
 					LatestVersionUpdatedAt: now,
 					VisibilityTypeID:       gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -935,7 +936,7 @@ func TestGetGamesV2(t *testing.T) {
 					CreatedAt:              now.Add(-time.Hour),
 					LatestVersionUpdatedAt: now.Add(-time.Hour),
 					VisibilityTypeID:       gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -956,14 +957,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -975,7 +976,7 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -988,7 +989,7 @@ func TestGetGamesV2(t *testing.T) {
 					CreatedAt:              now.Add(-time.Hour),
 					LatestVersionUpdatedAt: now.Add(-time.Hour),
 					VisibilityTypeID:       gameVisibilityTypeIDPrivate,
-					GameGenres: []*migrate.GameGenreTable{
+					GameGenres: []*schema.GameGenreTable{
 						{
 							ID:        uuid.UUID(gameGenreID2),
 							Name:      string(gameGenreName2),
@@ -1015,19 +1016,19 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       &trapMemberID1,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
 					}},
-					GameManagementRoles: []migrate.GameManagementRoleTable{
+					GameManagementRoles: []schema.GameManagementRoleTable{
 						{
 							GameID:     uuid.UUID(gameID1),
 							UserID:     memberUUID1,
@@ -1041,12 +1042,12 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
 					}},
-					GameManagementRoles: []migrate.GameManagementRoleTable{
+					GameManagementRoles: []schema.GameManagementRoleTable{
 						{
 							GameID:     uuid.UUID(gameID2),
 							UserID:     memberUUID2,
@@ -1068,14 +1069,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   []values.GameGenreID{gameGenreID1},
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
 						CreatedAt: now.Add(-time.Hour),
@@ -1087,7 +1088,7 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -1107,14 +1108,14 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   []values.GameGenreID{gameGenreID1, gameGenreID2},
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour * 2),
 					VisibilityTypeID: gameVisibilityTypeIDPublic,
-					GameGenres: []*migrate.GameGenreTable{
+					GameGenres: []*schema.GameGenreTable{
 						{
 							ID:        uuid.UUID(gameGenreID1),
 							Name:      string(gameGenreName1),
@@ -1133,7 +1134,7 @@ func TestGetGamesV2(t *testing.T) {
 					Description:      "test",
 					CreatedAt:        now.Add(-time.Hour),
 					VisibilityTypeID: gameVisibilityTypeIDLimited,
-					GameGenres: []*migrate.GameGenreTable{{
+					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
@@ -1153,7 +1154,7 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "テスト",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
@@ -1190,7 +1191,7 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   []values.GameGenreID{gameGenreID1},
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
@@ -1210,7 +1211,7 @@ func TestGetGamesV2(t *testing.T) {
 			userID:       nil,
 			gameGenres:   nil,
 			gameName:     "",
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             string(gameName1),
@@ -1255,8 +1256,8 @@ func TestGetGamesV2(t *testing.T) {
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
 			defer func() {
-				var gameIDs []migrate.GameTable2
-				err := db.Model(&migrate.GameTable2{}).Select("id").Find(&gameIDs).Error
+				var gameIDs []schema.GameTable2
+				err := db.Model(&schema.GameTable2{}).Select("id").Find(&gameIDs).Error
 				if err != nil {
 					t.Fatalf("failed to get game ids: %+v\n", err)
 				}
@@ -1346,7 +1347,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 		description   string
 		gameIDs       []values.GameID
 		lockType      repository.LockType
-		beforeGames   []migrate.GameTable2
+		beforeGames   []schema.GameTable2
 		expectedGames []*domain.Game
 		isErr         bool
 		err           error
@@ -1364,7 +1365,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 
 	now := time.Now()
 
-	var roleTypes []*migrate.GameManagementRoleTypeTable
+	var roleTypes []*schema.GameManagementRoleTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&roleTypes).Error
@@ -1377,10 +1378,10 @@ func TestGetGamesByIDsV2(t *testing.T) {
 		roleTypeMap[roleType.Name] = roleType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1392,7 +1393,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			gameIDs:     []values.GameID{gameID1},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID1),
 					Name:             "test1",
@@ -1409,7 +1410,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description: "gameIDが複数でもエラーなし",
 			gameIDs:     []values.GameID{gameID2, gameID3},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID2),
 					Name:             "test2",
@@ -1434,7 +1435,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description: "違うgameIDのゲームは取らない",
 			gameIDs:     []values.GameID{gameID4},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID4),
 					Name:             "test4",
@@ -1458,7 +1459,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description: "削除されたゲームは取らない",
 			gameIDs:     []values.GameID{gameID6},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test6",
@@ -1477,14 +1478,14 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description:   "ゲームが存在しなくても問題なし",
 			gameIDs:       []values.GameID{gameID7},
 			lockType:      repository.LockTypeNone,
-			beforeGames:   []migrate.GameTable2{},
+			beforeGames:   []schema.GameTable2{},
 			expectedGames: []*domain.Game{},
 		},
 		{
 			description: "lockTypeがrecordでも問題なし",
 			gameIDs:     []values.GameID{gameID8},
 			lockType:    repository.LockTypeRecord,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID8),
 					Name:             "test8",
@@ -1501,7 +1502,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 			description: "lockTypeが無効",
 			gameIDs:     []values.GameID{gameID9},
 			lockType:    100,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID9),
 					Name:             "test9",
@@ -1568,32 +1569,32 @@ func Test_getVisibility(t *testing.T) {
 
 	type test struct {
 		visibility values.GameVisibility
-		want       migrate.GameVisibilityTypeTable
+		want       schema.GameVisibilityTypeTable
 		isErr      bool
 	}
 
 	testCases := map[string]test{
 		"public": {
 			visibility: values.GameVisibilityTypePublic,
-			want: migrate.GameVisibilityTypeTable{
+			want: schema.GameVisibilityTypeTable{
 				Name: migrate.GameVisibilityTypePublic,
 			},
 		},
 		"limited": {
 			visibility: values.GameVisibilityTypeLimited,
-			want: migrate.GameVisibilityTypeTable{
+			want: schema.GameVisibilityTypeTable{
 				Name: migrate.GameVisibilityTypeLimited,
 			},
 		},
 		"private": {
 			visibility: values.GameVisibilityTypePrivate,
-			want: migrate.GameVisibilityTypeTable{
+			want: schema.GameVisibilityTypeTable{
 				Name: migrate.GameVisibilityTypePrivate,
 			},
 		},
 		"invalid": {
 			visibility: values.GameVisibility(-1),
-			want:       migrate.GameVisibilityTypeTable{},
+			want:       schema.GameVisibilityTypeTable{},
 			isErr:      true,
 		},
 	}

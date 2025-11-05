@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -41,7 +42,7 @@ func (g *GameV2) SaveGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("invalid visibility type: %d", game.GetVisibility())
 	}
 
-	var visibilityType migrate.GameVisibilityTypeTable
+	var visibilityType schema.GameVisibilityTypeTable
 	err = db.
 		Where("name = ?", visibilityTypeName).
 		Select("id").Take(&visibilityType).Error
@@ -50,7 +51,7 @@ func (g *GameV2) SaveGame(ctx context.Context, game *domain.Game) error {
 	}
 	visibilityTypeID := visibilityType.ID
 
-	gameTable := migrate.GameTable2{
+	gameTable := schema.GameTable2{
 		ID:               uuid.UUID(game.GetID()),
 		Name:             string(game.GetName()),
 		Description:      string(game.GetDescription()),
@@ -77,7 +78,7 @@ func (g *GameV2) UpdateGame(ctx context.Context, game *domain.Game) error {
 		return fmt.Errorf("failed to get visibility: %w", err)
 	}
 
-	gameTable := migrate.GameTable2{
+	gameTable := schema.GameTable2{
 		Name:             string(game.GetName()),
 		Description:      string(game.GetDescription()),
 		VisibilityTypeID: visibility.ID,
@@ -106,7 +107,7 @@ func (g *GameV2) RemoveGame(ctx context.Context, gameID values.GameID) error {
 
 	result := db.
 		Where("id = ?", uuid.UUID(gameID)).
-		Delete(&migrate.GameTable2{})
+		Delete(&schema.GameTable2{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to remove game: %w", err)
@@ -130,7 +131,7 @@ func (g *GameV2) GetGame(ctx context.Context, gameID values.GameID, lockType rep
 		return nil, fmt.Errorf("failed to set lock type: %w", err)
 	}
 
-	var game migrate.GameTable2
+	var game schema.GameTable2
 	err = db.
 		Joins("GameVisibilityType").
 		Where("games.id = ?", uuid.UUID(gameID)).
@@ -209,10 +210,10 @@ func (g *GameV2) GetGames(
 		}
 	}
 
-	var games []migrate.GameTable2
+	var games []schema.GameTable2
 
 	tx := db.
-		Model(&migrate.GameTable2{}).
+		Model(&schema.GameTable2{}).
 		Preload("GameGenres").
 		Preload("GameVisibilityType").
 		Joins("JOIN game_visibility_types ON game_visibility_types.id = games.visibility_type_id").
@@ -317,9 +318,9 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 		uuidGameIDs = append(uuidGameIDs, uuid.UUID(gameID))
 	}
 
-	var games []migrate.GameTable2
+	var games []schema.GameTable2
 	err = db.
-		Model(&migrate.GameTable2{}).
+		Model(&schema.GameTable2{}).
 		Preload("GameVisibilityType").
 		Where("id IN ?", uuidGameIDs).
 		Find(&games).Error
@@ -353,7 +354,7 @@ func (g *GameV2) GetGamesByIDs(ctx context.Context, gameIDs []values.GameID, loc
 	return gamesDomains, nil
 }
 
-func (g *GameV2) getVisibility(ctx context.Context, visibility values.GameVisibility) (*migrate.GameVisibilityTypeTable, error) {
+func (g *GameV2) getVisibility(ctx context.Context, visibility values.GameVisibility) (*schema.GameVisibilityTypeTable, error) {
 	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -364,7 +365,7 @@ func (g *GameV2) getVisibility(ctx context.Context, visibility values.GameVisibi
 		return nil, fmt.Errorf("failed to convert visibility type: %w", err)
 	}
 
-	var visibilityType migrate.GameVisibilityTypeTable
+	var visibilityType schema.GameVisibilityTypeTable
 	err = db.
 		Where("name = ?", visibilityTypeName).
 		Take(&visibilityType).Error

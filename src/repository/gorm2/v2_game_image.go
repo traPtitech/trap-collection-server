@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -41,7 +42,7 @@ func (gameImage *GameImageV2) SaveGameImage(ctx context.Context, gameID values.G
 		return fmt.Errorf("invalid image type: %d", image.GetType())
 	}
 
-	var imageType migrate.GameImageTypeTable
+	var imageType schema.GameImageTypeTable
 	err = db.
 		Where("name = ?", imageTypeName).
 		Select("id").
@@ -52,7 +53,7 @@ func (gameImage *GameImageV2) SaveGameImage(ctx context.Context, gameID values.G
 	imageTypeID := imageType.ID
 
 	err = db.
-		Create(&migrate.GameImageTable2{
+		Create(&schema.GameImageTable2{
 			ID:          uuid.UUID(image.GetID()),
 			GameID:      uuid.UUID(gameID),
 			ImageTypeID: imageTypeID,
@@ -76,7 +77,7 @@ func (gameImage *GameImageV2) GetGameImage(ctx context.Context, gameImageID valu
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var image migrate.GameImageTable2
+	var image schema.GameImageTable2
 	err = db.
 		Joins("GameImageType").
 		Where("v2_game_images.id = ?", uuid.UUID(gameImageID)).
@@ -121,7 +122,7 @@ func (gameImage *GameImageV2) GetGameImages(ctx context.Context, gameID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var images []migrate.GameImageTable2
+	var images []schema.GameImageTable2
 	err = db.
 		Joins("GameImageType").
 		Where("game_id = ?", uuid.UUID(gameID)).

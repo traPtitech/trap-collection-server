@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -40,9 +41,9 @@ func TestCreateGameVersionV2(t *testing.T) {
 		existGame          bool
 		existImage         bool
 		existVideo         bool
-		files              []migrate.GameFileTable2
-		beforeGameVersions []migrate.GameVersionTable2
-		expectGameVersions []migrate.GameVersionTable2
+		files              []schema.GameFileTable2
+		beforeGameVersions []schema.GameVersionTable2
+		expectGameVersions []schema.GameVersionTable2
 		isErr              bool
 		err                error
 	}
@@ -125,7 +126,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to parse url: %v", err)
 	}
 
-	var imageType migrate.GameImageTypeTable
+	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameImageTypeJpeg).
@@ -135,7 +136,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameVideoTypeMp4).
@@ -145,7 +146,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameFileTypeJar).
@@ -155,10 +156,10 @@ func TestCreateGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -184,8 +185,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID1),
 					GameID:      uuid.UUID(gameID1),
@@ -214,7 +215,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			beforeGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID3),
 					GameID:      uuid.UUID(gameID2),
@@ -224,13 +225,13 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Description: "リリース",
 					URL:         "https://example.com",
 					CreatedAt:   now.Add(-time.Hour),
-					GameImage: migrate.GameImageTable2{
+					GameImage: schema.GameImageTable2{
 						ID:          uuid.UUID(imageID3),
 						GameID:      uuid.UUID(gameID2),
 						ImageTypeID: imageType.ID,
 						CreatedAt:   now.Add(-time.Hour),
 					},
-					GameVideo: migrate.GameVideoTable2{
+					GameVideo: schema.GameVideoTable2{
 						ID:          uuid.UUID(videoID3),
 						GameID:      uuid.UUID(gameID2),
 						VideoTypeID: videoType.ID,
@@ -238,7 +239,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					},
 				},
 			},
-			expectGameVersions: []migrate.GameVersionTable2{
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID2),
 					GameID:      uuid.UUID(gameID2),
@@ -278,7 +279,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			beforeGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
@@ -288,13 +289,13 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Description: "リリース",
 					URL:         "https://example.com",
 					CreatedAt:   now.Add(-time.Hour),
-					GameImage: migrate.GameImageTable2{
+					GameImage: schema.GameImageTable2{
 						ID:          uuid.UUID(imageID5),
 						GameID:      uuid.UUID(gameID3),
 						ImageTypeID: imageType.ID,
 						CreatedAt:   now.Add(-time.Hour),
 					},
-					GameVideo: migrate.GameVideoTable2{
+					GameVideo: schema.GameVideoTable2{
 						ID:          uuid.UUID(videoID5),
 						GameID:      uuid.UUID(gameID3),
 						VideoTypeID: videoType.ID,
@@ -302,7 +303,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					},
 				},
 			},
-			expectGameVersions: []migrate.GameVersionTable2{
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID4),
 					GameID:      uuid.UUID(gameID3),
@@ -332,7 +333,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			beforeGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
@@ -342,13 +343,13 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Description: "リリース",
 					URL:         "https://example.com",
 					CreatedAt:   now.Add(-time.Hour),
-					GameImage: migrate.GameImageTable2{
+					GameImage: schema.GameImageTable2{
 						ID:          uuid.UUID(imageID7),
 						GameID:      uuid.UUID(gameID4),
 						ImageTypeID: imageType.ID,
 						CreatedAt:   now.Add(-time.Hour),
 					},
-					GameVideo: migrate.GameVideoTable2{
+					GameVideo: schema.GameVideoTable2{
 						ID:          uuid.UUID(videoID7),
 						GameID:      uuid.UUID(gameID4),
 						VideoTypeID: videoType.ID,
@@ -356,7 +357,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					},
 				},
 			},
-			expectGameVersions: []migrate.GameVersionTable2{
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID6),
 					GameID:      uuid.UUID(gameID4),
@@ -387,8 +388,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID7),
 					GameID:      uuid.UUID(gameID5),
@@ -417,8 +418,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{},
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{},
 			isErr:              true,
 		},
 		{
@@ -437,8 +438,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			),
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{},
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{},
 			isErr:              true,
 		},
 		{
@@ -458,8 +459,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID10),
 					GameID:      uuid.UUID(gameID8),
@@ -488,8 +489,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID11),
 					GameID:      uuid.UUID(gameID9),
@@ -519,8 +520,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:          true,
 			existImage:         true,
 			existVideo:         true,
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID12),
 					GameID:      uuid.UUID(gameID10),
@@ -548,7 +549,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID1),
 					GameID:     uuid.UUID(gameID11),
@@ -558,8 +559,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 					CreatedAt:  now,
 				},
 			},
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID13),
 					GameID:      uuid.UUID(gameID11),
@@ -568,7 +569,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(fileID1),
 							GameID:     uuid.UUID(gameID11),
@@ -596,7 +597,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID2),
 					GameID:     uuid.UUID(gameID12),
@@ -614,8 +615,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 					CreatedAt:  now.Add(-time.Hour),
 				},
 			},
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID14),
 					GameID:      uuid.UUID(gameID12),
@@ -624,7 +625,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(fileID2),
 							GameID:     uuid.UUID(gameID12),
@@ -661,7 +662,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID4),
 					GameID:     uuid.UUID(gameID13),
@@ -671,8 +672,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 					CreatedAt:  now,
 				},
 			},
-			beforeGameVersions: []migrate.GameVersionTable2{},
-			expectGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{},
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID15),
 					GameID:      uuid.UUID(gameID13),
@@ -682,7 +683,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Description: "リリース",
 					URL:         "https://example.com",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(fileID4),
 							GameID:     uuid.UUID(gameID13),
@@ -710,7 +711,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			existGame:  true,
 			existImage: true,
 			existVideo: true,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID5),
 					GameID:     uuid.UUID(gameID14),
@@ -720,7 +721,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					CreatedAt:  now,
 				},
 			},
-			beforeGameVersions: []migrate.GameVersionTable2{
+			beforeGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID17),
 					GameID:      uuid.UUID(gameID14),
@@ -729,26 +730,26 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
-					GameImage: migrate.GameImageTable2{
+					GameImage: schema.GameImageTable2{
 						ID:          uuid.UUID(imageID16),
 						GameID:      uuid.UUID(gameID14),
 						ImageTypeID: imageType.ID,
 						CreatedAt:   now.Add(-time.Hour),
 					},
-					GameVideo: migrate.GameVideoTable2{
+					GameVideo: schema.GameVideoTable2{
 						ID:          uuid.UUID(videoID16),
 						GameID:      uuid.UUID(gameID14),
 						VideoTypeID: videoType.ID,
 						CreatedAt:   now.Add(-time.Hour),
 					},
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID: uuid.UUID(fileID5),
 						},
 					},
 				},
 			},
-			expectGameVersions: []migrate.GameVersionTable2{
+			expectGameVersions: []schema.GameVersionTable2{
 				{
 					ID:          uuid.UUID(gameVersionID16),
 					GameID:      uuid.UUID(gameID14),
@@ -757,7 +758,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Name:        "v1.1.0",
 					Description: "アップデート",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(fileID5),
 							GameID:     uuid.UUID(gameID14),
@@ -776,7 +777,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 					Name:        "v1.0.0",
 					Description: "リリース",
 					CreatedAt:   now.Add(-time.Hour),
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(fileID5),
 							GameID:     uuid.UUID(gameID14),
@@ -796,7 +797,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 			if testCase.existGame {
 				err := db.
 					Session(&gorm.Session{}).
-					Create(&migrate.GameTable2{
+					Create(&schema.GameTable2{
 						ID:               uuid.UUID(testCase.gameID),
 						Name:             "test",
 						Description:      "test",
@@ -828,7 +829,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				if testCase.existImage {
 					err := db.
 						Session(&gorm.Session{}).
-						Create(&migrate.GameImageTable2{
+						Create(&schema.GameImageTable2{
 							ID:          uuid.UUID(testCase.imageID),
 							GameID:      uuid.UUID(testCase.gameID),
 							ImageTypeID: imageType.ID,
@@ -842,7 +843,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				if testCase.existVideo {
 					err := db.
 						Session(&gorm.Session{}).
-						Create(&migrate.GameVideoTable2{
+						Create(&schema.GameVideoTable2{
 							ID:          uuid.UUID(testCase.videoID),
 							GameID:      uuid.UUID(testCase.gameID),
 							VideoTypeID: videoType.ID,
@@ -874,7 +875,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var gameVersions []migrate.GameVersionTable2
+			var gameVersions []schema.GameVersionTable2
 			err = db.
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
 				Preload("GameFiles").
@@ -885,7 +886,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 
 			assert.Len(t, gameVersions, len(testCase.expectGameVersions))
 
-			versionMap := make(map[uuid.UUID]migrate.GameVersionTable2, len(gameVersions))
+			versionMap := make(map[uuid.UUID]schema.GameVersionTable2, len(gameVersions))
 			for _, version := range gameVersions {
 				versionMap[version.ID] = version
 			}
@@ -906,7 +907,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 
 				assert.Len(t, actualVersion.GameFiles, len(expectVersion.GameFiles))
 
-				fileMap := make(map[uuid.UUID]migrate.GameFileTable2, len(actualVersion.GameFiles))
+				fileMap := make(map[uuid.UUID]schema.GameFileTable2, len(actualVersion.GameFiles))
 				for _, file := range actualVersion.GameFiles {
 					fileMap[file.ID] = file
 				}
@@ -928,8 +929,8 @@ func TestCreateGameVersionV2(t *testing.T) {
 			}
 
 			if testCase.existGame {
-				var game migrate.GameTable2
-				err = db.Model(&migrate.GameTable2{ID: uuid.UUID(testCase.gameID)}).Find(&game).Error
+				var game schema.GameTable2
+				err = db.Model(&schema.GameTable2{ID: uuid.UUID(testCase.gameID)}).Find(&game).Error
 				if err != nil {
 					t.Fatalf("failed to get game: %+v\n", err)
 				}
@@ -957,7 +958,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 		limit                 uint
 		offset                uint
 		lockType              repository.LockType
-		games                 []migrate.GameTable2
+		games                 []schema.GameTable2
 		expectNum             uint
 		expectGameVersionInfo []*repository.GameVersionInfo
 		isErr                 bool
@@ -1026,7 +1027,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 	fileID2 := values.NewGameFileID()
 	fileID3 := values.NewGameFileID()
 
-	var imageType migrate.GameImageTypeTable
+	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameImageTypeJpeg).
@@ -1036,7 +1037,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameVideoTypeMp4).
@@ -1046,7 +1047,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameFileTypeJar).
@@ -1056,10 +1057,10 @@ func TestGetGameVersionsV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1077,13 +1078,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      uuid.UUID(gameID1),
@@ -1093,13 +1094,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID1),
 								GameID:      uuid.UUID(gameID1),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID1),
 								GameID:      uuid.UUID(gameID1),
 								VideoTypeID: videoType.ID,
@@ -1129,19 +1130,19 @@ func TestGetGameVersionsV2(t *testing.T) {
 			// 実際には発生しないが、念のため確認
 			description: "ゲームが存在しなくてもエラーなし",
 			gameID:      gameID2,
-			games:       []migrate.GameTable2{},
+			games:       []schema.GameTable2{},
 			expectNum:   0,
 		},
 		{
 			description: "バージョンが複数あってもエラーなし",
 			gameID:      gameID4,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3),
 							GameID:      uuid.UUID(gameID4),
@@ -1151,13 +1152,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "アップデート",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID2),
 								GameID:      uuid.UUID(gameID4),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID2),
 								GameID:      uuid.UUID(gameID4),
 								VideoTypeID: videoType.ID,
@@ -1173,13 +1174,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now().Add(-time.Hour),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID3),
 								GameID:      uuid.UUID(gameID4),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID3),
 								GameID:      uuid.UUID(gameID4),
 								VideoTypeID: videoType.ID,
@@ -1219,7 +1220,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "バージョンが存在しなくてもエラーなし",
 			gameID:      gameID5,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID5),
 					Name:             "test",
@@ -1234,13 +1235,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "別のゲームのバージョンが混ざることはない",
 			gameID:      gameID6,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID6),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      uuid.UUID(gameID6),
@@ -1250,13 +1251,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID4),
 								GameID:      uuid.UUID(gameID6),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID4),
 								GameID:      uuid.UUID(gameID6),
 								VideoTypeID: videoType.ID,
@@ -1271,7 +1272,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      uuid.UUID(gameID7),
@@ -1281,13 +1282,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID5),
 								GameID:      uuid.UUID(gameID7),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID5),
 								GameID:      uuid.UUID(gameID7),
 								VideoTypeID: videoType.ID,
@@ -1316,13 +1317,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "ファイルが存在してもエラーなし",
 			gameID:      gameID8,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							GameID:      uuid.UUID(gameID8),
@@ -1331,19 +1332,19 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID6),
 								GameID:      uuid.UUID(gameID8),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID6),
 								GameID:      uuid.UUID(gameID8),
 								VideoTypeID: videoType.ID,
 								CreatedAt:   now,
 							},
-							GameFiles: []migrate.GameFileTable2{
+							GameFiles: []schema.GameFileTable2{
 								{
 									ID:         uuid.UUID(fileID1),
 									GameID:     uuid.UUID(gameID8),
@@ -1376,13 +1377,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "ファイルが複数でもエラーなし",
 			gameID:      gameID9,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID9),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID8),
 							GameID:      uuid.UUID(gameID9),
@@ -1391,19 +1392,19 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID7),
 								GameID:      uuid.UUID(gameID9),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID7),
 								GameID:      uuid.UUID(gameID9),
 								VideoTypeID: videoType.ID,
 								CreatedAt:   now,
 							},
-							GameFiles: []migrate.GameFileTable2{
+							GameFiles: []schema.GameFileTable2{
 								{
 									ID:         uuid.UUID(fileID2),
 									GameID:     uuid.UUID(gameID9),
@@ -1445,13 +1446,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 			description: "limitが存在してもエラーなし",
 			gameID:      gameID10,
 			limit:       1,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID10),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID9),
 							GameID:      uuid.UUID(gameID10),
@@ -1461,13 +1462,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "アップデート",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID8),
 								GameID:      uuid.UUID(gameID10),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID8),
 								GameID:      uuid.UUID(gameID10),
 								VideoTypeID: videoType.ID,
@@ -1483,13 +1484,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now().Add(-time.Hour),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID9),
 								GameID:      uuid.UUID(gameID10),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID9),
 								GameID:      uuid.UUID(gameID10),
 								VideoTypeID: videoType.ID,
@@ -1520,13 +1521,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 			gameID:      gameID11,
 			limit:       1,
 			offset:      1,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID11),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID11),
 							GameID:      uuid.UUID(gameID11),
@@ -1536,13 +1537,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "アップデート",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID10),
 								GameID:      uuid.UUID(gameID11),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID10),
 								GameID:      uuid.UUID(gameID11),
 								VideoTypeID: videoType.ID,
@@ -1558,13 +1559,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now().Add(-time.Hour),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID11),
 								GameID:      uuid.UUID(gameID11),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID11),
 								GameID:      uuid.UUID(gameID11),
 								VideoTypeID: videoType.ID,
@@ -1594,13 +1595,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 			description: "limitなし、offsetありなのでエラー",
 			gameID:      gameID12,
 			offset:      1,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID12),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID13),
 							GameID:      uuid.UUID(gameID12),
@@ -1610,13 +1611,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "アップデート",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID12),
 								GameID:      uuid.UUID(gameID12),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID12),
 								GameID:      uuid.UUID(gameID12),
 								VideoTypeID: videoType.ID,
@@ -1632,13 +1633,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now().Add(-time.Hour),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID13),
 								GameID:      uuid.UUID(gameID12),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID13),
 								GameID:      uuid.UUID(gameID12),
 								VideoTypeID: videoType.ID,
@@ -1654,13 +1655,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 		{
 			description: "lockありでもエラーなし",
 			gameID:      gameID13,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID13),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID15),
 							GameID:      uuid.UUID(gameID13),
@@ -1670,13 +1671,13 @@ func TestGetGameVersionsV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID14),
 								GameID:      uuid.UUID(gameID13),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID14),
 								GameID:      uuid.UUID(gameID13),
 								VideoTypeID: videoType.ID,
@@ -1779,7 +1780,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		description           string
 		gameID                values.GameID
 		lockType              repository.LockType
-		games                 []migrate.GameTable2
+		games                 []schema.GameTable2
 		expectGameVersionInfo *repository.GameVersionInfo
 		isErr                 bool
 		err                   error
@@ -1826,7 +1827,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 	fileID2 := values.NewGameFileID()
 	fileID3 := values.NewGameFileID()
 
-	var imageType migrate.GameImageTypeTable
+	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameImageTypeJpeg).
@@ -1836,7 +1837,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameVideoTypeMp4).
@@ -1846,7 +1847,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameFileTypeJar).
@@ -1856,10 +1857,10 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1877,13 +1878,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			gameID:      gameID1,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      uuid.UUID(gameID1),
@@ -1893,13 +1894,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID1),
 								GameID:      uuid.UUID(gameID1),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID1),
 								GameID:      uuid.UUID(gameID1),
 								VideoTypeID: videoType.ID,
@@ -1926,20 +1927,20 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 			// 実際には発生しないが、念のため確認
 			description: "ゲームが存在しないのでRecordNotFound",
 			gameID:      gameID2,
-			games:       []migrate.GameTable2{},
+			games:       []schema.GameTable2{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
 		{
 			description: "バージョンが複数あっても最新のものを取得",
 			gameID:      gameID3,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							GameID:      uuid.UUID(gameID3),
@@ -1949,13 +1950,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "アップデート",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID2),
 								GameID:      uuid.UUID(gameID3),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID2),
 								GameID:      uuid.UUID(gameID3),
 								VideoTypeID: videoType.ID,
@@ -1971,13 +1972,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now().Add(-time.Hour),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID3),
 								GameID:      uuid.UUID(gameID3),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID3),
 								GameID:      uuid.UUID(gameID3),
 								VideoTypeID: videoType.ID,
@@ -2003,7 +2004,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "バージョンが存在しないのでRecordNotFound",
 			gameID:      gameID4,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:               uuid.UUID(gameID4),
 					Name:             "test",
@@ -2018,13 +2019,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "別のゲームのバージョンが混ざることはない",
 			gameID:      gameID5,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID4),
 							GameID:      uuid.UUID(gameID5),
@@ -2034,13 +2035,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID4),
 								GameID:      uuid.UUID(gameID5),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID4),
 								GameID:      uuid.UUID(gameID5),
 								VideoTypeID: videoType.ID,
@@ -2055,7 +2056,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      uuid.UUID(gameID6),
@@ -2065,13 +2066,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID5),
 								GameID:      uuid.UUID(gameID6),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID5),
 								GameID:      uuid.UUID(gameID6),
 								VideoTypeID: videoType.ID,
@@ -2097,13 +2098,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "ファイルが存在してもエラーなし",
 			gameID:      gameID7,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID7),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      uuid.UUID(gameID7),
@@ -2112,19 +2113,19 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID6),
 								GameID:      uuid.UUID(gameID7),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID6),
 								GameID:      uuid.UUID(gameID7),
 								VideoTypeID: videoType.ID,
 								CreatedAt:   now,
 							},
-							GameFiles: []migrate.GameFileTable2{
+							GameFiles: []schema.GameFileTable2{
 								{
 									ID:         uuid.UUID(fileID1),
 									GameID:     uuid.UUID(gameID7),
@@ -2154,13 +2155,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "ファイルが複数でもエラーなし",
 			gameID:      gameID8,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID8),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7),
 							GameID:      uuid.UUID(gameID8),
@@ -2169,19 +2170,19 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Name:        "v1.0.0",
 							Description: "リリース",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID7),
 								GameID:      uuid.UUID(gameID8),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID7),
 								GameID:      uuid.UUID(gameID8),
 								VideoTypeID: videoType.ID,
 								CreatedAt:   now,
 							},
-							GameFiles: []migrate.GameFileTable2{
+							GameFiles: []schema.GameFileTable2{
 								{
 									ID:         uuid.UUID(fileID2),
 									GameID:     uuid.UUID(gameID8),
@@ -2219,13 +2220,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 		{
 			description: "lockありでもエラーなし",
 			gameID:      gameID9,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID9),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   time.Now(),
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID8),
 							GameID:      uuid.UUID(gameID9),
@@ -2235,13 +2236,13 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 							Description: "リリース",
 							URL:         "https://example.com",
 							CreatedAt:   time.Now(),
-							GameImage: migrate.GameImageTable2{
+							GameImage: schema.GameImageTable2{
 								ID:          uuid.UUID(imageID8),
 								GameID:      uuid.UUID(gameID9),
 								ImageTypeID: imageType.ID,
 								CreatedAt:   now,
 							},
-							GameVideo: migrate.GameVideoTable2{
+							GameVideo: schema.GameVideoTable2{
 								ID:          uuid.UUID(videoID8),
 								GameID:      uuid.UUID(gameID9),
 								VideoTypeID: videoType.ID,
@@ -2334,7 +2335,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 		description              string
 		gameVersionIDs           []values.GameVersionID
 		lockType                 repository.LockType
-		games                    []migrate.GameTable2
+		games                    []schema.GameTable2
 		expectedGameVersionInfos []*repository.GameVersionInfoWithGameID
 		isErr                    bool
 		err                      error
@@ -2359,10 +2360,10 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 	gameVersionID9_1, assets9_1 := generateAssetsForGameVersion(t, db, 0, nil)
 	gameVersionID9_2, _ := generateAssetsForGameVersion(t, db, 0, nil)
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -2374,13 +2375,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "問題ないのでエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
 			lockType:       repository.LockTypeNone,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets1.gameInfo.id,
 					Name:        assets1.gameInfo.name,
 					Description: assets1.gameInfo.description,
 					CreatedAt:   assets1.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID1),
 							GameID:      assets1.gameInfo.id,
@@ -2416,13 +2417,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "lockありでもエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID2},
 			lockType:       repository.LockTypeRecord,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets2.gameInfo.id,
 					Name:        assets2.gameInfo.name,
 					Description: assets2.gameInfo.description,
 					CreatedAt:   assets2.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID2),
 							GameID:      assets2.gameInfo.id,
@@ -2457,13 +2458,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "対象が複数でもエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID3_1, gameVersionID3_2},
 			lockType:       repository.LockTypeNone,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets3_1.gameInfo.id,
 					Name:        assets3_1.gameInfo.name,
 					Description: assets3_1.gameInfo.description,
 					CreatedAt:   assets3_1.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3_1),
 							GameID:      assets3_1.gameInfo.id,
@@ -2484,7 +2485,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 					Name:        assets3_2.gameInfo.name,
 					Description: assets3_2.gameInfo.description,
 					CreatedAt:   assets3_2.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID3_2),
 							GameID:      assets3_2.gameInfo.id,
@@ -2532,13 +2533,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "ファイルがあってもエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID4},
 			lockType:       repository.LockTypeRecord,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets4.gameInfo.id,
 					Name:        assets4.gameInfo.name,
 					Description: assets4.gameInfo.description,
 					CreatedAt:   assets4.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID4),
 							GameID:      assets4.gameInfo.id,
@@ -2576,13 +2577,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "ファイルが複数でもエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID5},
 			lockType:       repository.LockTypeRecord,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets5.gameInfo.id,
 					Name:        assets5.gameInfo.name,
 					Description: assets5.gameInfo.description,
 					CreatedAt:   assets5.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID5),
 							GameID:      assets5.gameInfo.id,
@@ -2620,13 +2621,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "URLがなくてもエラーなし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID6},
 			lockType:       repository.LockTypeNone,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets6.gameInfo.id,
 					Name:        assets6.gameInfo.name,
 					Description: assets6.gameInfo.description,
 					CreatedAt:   assets6.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID6),
 							GameID:      assets6.gameInfo.id,
@@ -2662,13 +2663,13 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:    "同じゲームのバージョンがあっても問題なし",
 			gameVersionIDs: []values.GameVersionID{gameVersionID7_1, gameVersionID7_2},
 			lockType:       repository.LockTypeNone,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets7_1.gameInfo.id,
 					Name:        assets7_1.gameInfo.name,
 					Description: assets7_1.gameInfo.description,
 					CreatedAt:   assets7_1.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID7_1),
 							GameID:      assets7_1.gameInfo.id,
@@ -2728,20 +2729,20 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:              "存在しないバージョンでもエラーにならない",
 			gameVersionIDs:           []values.GameVersionID{gameVersionID8},
 			lockType:                 repository.LockTypeNone,
-			games:                    []migrate.GameTable2{},
+			games:                    []schema.GameTable2{},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{},
 		},
 		{
 			description:    "存在するバージョンと存在しないものが含まれていてもエラーにならない",
 			gameVersionIDs: []values.GameVersionID{gameVersionID9_1, gameVersionID9_2},
 			lockType:       repository.LockTypeNone,
-			games: []migrate.GameTable2{
+			games: []schema.GameTable2{
 				{
 					ID:          assets9_1.gameInfo.id,
 					Name:        assets9_1.gameInfo.name,
 					Description: assets9_1.gameInfo.description,
 					CreatedAt:   assets9_1.gameInfo.createdAt,
-					GameVersionsV2: []migrate.GameVersionTable2{
+					GameVersionsV2: []schema.GameVersionTable2{
 						{
 							ID:          uuid.UUID(gameVersionID9_1),
 							GameID:      assets9_1.gameInfo.id,
@@ -2777,7 +2778,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 			description:              "バージョン指定が空でもエラーなし",
 			gameVersionIDs:           []values.GameVersionID{},
 			lockType:                 repository.LockTypeNone,
-			games:                    []migrate.GameTable2{},
+			games:                    []schema.GameTable2{},
 			expectedGameVersionInfos: []*repository.GameVersionInfoWithGameID{},
 		},
 	}
@@ -2855,9 +2856,9 @@ type assetsForGameVersion struct {
 		description string
 		createdAt   time.Time
 	}
-	gameImage migrate.GameImageTable2
-	gameVideo migrate.GameVideoTable2
-	gameFiles []migrate.GameFileTable2
+	gameImage schema.GameImageTable2
+	gameVideo schema.GameVideoTable2
+	gameFiles []schema.GameFileTable2
 }
 
 // GameVersionが依存するテーブルの要素を作成
@@ -2866,7 +2867,7 @@ type assetsForGameVersion struct {
 func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, optionalGameID *values.GameID) (values.GameVersionID, assetsForGameVersion) {
 	t.Helper()
 
-	var imageType migrate.GameImageTypeTable
+	var imageType schema.GameImageTypeTable
 	err := db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameImageTypeJpeg).
@@ -2876,7 +2877,7 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameVideoTypeMp4).
@@ -2886,7 +2887,7 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 		t.Fatalf("failed to get role type table: %+v\n", err)
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", migrate.GameFileTypeJar).
@@ -2905,23 +2906,23 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 		gameID = values.NewGameID()
 	}
 
-	gameImage := migrate.GameImageTable2{
+	gameImage := schema.GameImageTable2{
 		ID:          uuid.UUID(values.NewGameImageID()),
 		GameID:      uuid.UUID(gameID),
 		ImageTypeID: imageType.ID,
 		CreatedAt:   now,
 	}
 
-	gameVideo := migrate.GameVideoTable2{
+	gameVideo := schema.GameVideoTable2{
 		ID:          uuid.UUID(values.NewGameVideoID()),
 		GameID:      uuid.UUID(gameID),
 		VideoTypeID: videoType.ID,
 		CreatedAt:   now,
 	}
 
-	gameFiles := make([]migrate.GameFileTable2, 0, gameFileCount)
+	gameFiles := make([]schema.GameFileTable2, 0, gameFileCount)
 	for i := 0; i < gameFileCount; i++ {
-		gameFile := migrate.GameFileTable2{
+		gameFile := schema.GameFileTable2{
 			ID:         uuid.UUID(values.NewGameFileID()),
 			GameID:     uuid.UUID(gameID),
 			FileTypeID: fileType.ID,
