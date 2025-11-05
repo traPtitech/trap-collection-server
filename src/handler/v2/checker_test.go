@@ -15,7 +15,7 @@ import (
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
 	"go.uber.org/mock/gomock"
@@ -47,7 +47,7 @@ func TestTrapMemberAuthMiddleware(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -166,7 +166,7 @@ func TestCheckTrapMemberAuth(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -306,7 +306,7 @@ func TestGameInfoVisibilityChecker(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -503,7 +503,7 @@ func TestGameFileVisibilityChecker(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return

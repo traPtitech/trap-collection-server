@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/config/v1"
 	"github.com/traPtitech/trap-collection-server/src/handler"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2"
@@ -86,12 +86,12 @@ func injectS3Storage(conf config.StorageS3) (*Storage, error) {
 func InjectApp() (*App, error) {
 	app := v1.NewApp()
 	v1Handler := v1.NewHandler()
-	session, err := common.NewSession(v1Handler)
+	sessionSession, err := session.NewSession(v1Handler)
 	if err != nil {
 		return nil, err
 	}
 	context := v2.NewContext()
-	v2Session, err := v2.NewSession(session)
+	v2Session, err := v2.NewSession(sessionSession)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func InjectApp() (*App, error) {
 	v2Seat := v2_2.NewSeat(db, seat, ristrettoSeat)
 	seat2 := v2.NewSeat(v2Seat)
 	api := v2.NewAPI(checker, v2Session, oAuth2, user2, admin, v2Game, v2GameRole, gameGenre2, v2GameVersion, gameFile2, gameImage2, gameVideo2, v2GamePlayLog, edition2, v2EditionAuth, seat2)
-	handlerAPI, err := handler.NewAPI(app, v1Handler, session, api)
+	handlerAPI, err := handler.NewAPI(app, v1Handler, sessionSession, api)
 	if err != nil {
 		return nil, err
 	}

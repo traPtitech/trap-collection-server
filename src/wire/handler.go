@@ -5,14 +5,15 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/traPtitech/trap-collection-server/src/handler"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
+
 	// v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
 	v2 "github.com/traPtitech/trap-collection-server/src/handler/v2"
 )
 
 var (
 	handlerSet = wire.NewSet(
-		common.NewSession,
+		session.NewSession,
 		handler.NewAPI,
 		// handlerV1Set,
 		handlerV2Set,

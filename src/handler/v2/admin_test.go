@@ -14,7 +14,7 @@ import (
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
 	"github.com/traPtitech/trap-collection-server/src/service/mock"
@@ -38,7 +38,7 @@ func TestGetAdmins(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -200,7 +200,7 @@ func TestPostAdmins(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
@@ -406,7 +406,7 @@ func TestDeleteAdmin(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return

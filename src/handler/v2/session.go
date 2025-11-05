@@ -9,14 +9,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 )
 
 type Session struct {
-	*common.Session
+	*session.Session
 }
 
-func NewSession(session *common.Session) (*Session, error) {
+func NewSession(session *session.Session) (*Session, error) {
 	// gorilla/sessionsの内部で使われているgobが
 	// time.Timeのエンコード・デコードをできるようにRegisterする
 	gob.Register(time.Time{})
@@ -28,8 +28,8 @@ func NewSession(session *common.Session) (*Session, error) {
 
 // getSession
 // セッションを取得する
-// v1実装削除後はcommon.Sessionを消しセッション取得をprivateな関数にしたいため、
-// common.Session.GetSessionを直接呼ばずにここでラップしておく
+// v1実装削除後はsession.Sessionを消しセッション取得をprivateな関数にしたいため、
+// session.Session.GetSessionを直接呼ばずにここでラップしておく
 //
 //nolint:unused
 func (s *Session) get(c echo.Context) (*sessions.Session, error) {
@@ -38,8 +38,8 @@ func (s *Session) get(c echo.Context) (*sessions.Session, error) {
 
 // save
 // セッションを保存する
-// v1実装削除後はcommon.Sessionを消しセッション保存をprivateな関数にしたいため、
-// common.Session.Saveを直接呼ばずにここでラップしておく
+// v1実装削除後はsession.Sessionを消しセッション保存をprivateな関数にしたいため、
+// session.Session.Saveを直接呼ばずにここでラップしておく
 //
 //nolint:unused
 func (s *Session) save(c echo.Context, session *sessions.Session) error {
@@ -48,8 +48,8 @@ func (s *Session) save(c echo.Context, session *sessions.Session) error {
 
 // revoke
 // セッションを破棄する
-// v1実装削除後はcommon.Sessionを消しセッション破棄をprivateな関数にしたいため、
-// common.Session.Revokeを直接呼ばずにここでラップしておく
+// v1実装削除後はsession.Sessionを消しセッション破棄をprivateな関数にしたいため、
+// session.Session.Revokeを直接呼ばずにここでラップしておく
 //
 //nolint:unused
 func (s *Session) revoke(session *sessions.Session) {

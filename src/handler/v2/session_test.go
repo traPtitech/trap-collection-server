@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 	"go.uber.org/mock/gomock"
 )
 
@@ -33,7 +33,7 @@ func TestGetSession(t *testing.T) {
 		EXPECT().
 		SessionSecret().
 		Return("secret", nil)
-	sess, err := common.NewSession(mockConf)
+	sess, err := session.NewSession(mockConf)
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)
 		return
