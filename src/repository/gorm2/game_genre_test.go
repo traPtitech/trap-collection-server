@@ -1078,11 +1078,6 @@ func TestUpdateGameGenre(t *testing.T) {
 				for _, afterGenre := range afterGenres {
 					if afterGenre.ID == uuid.UUID(testCase.gameGenre.GetID()) && !testCase.isErr {
 						assert.Equal(t, string(testCase.gameGenre.GetName()), afterGenre.Name)
-					} else {
-						slices.IndexFunc(testCase.currentGenres, func(g *schema.GameGenreTable) bool {
-							return g.ID == afterGenre.ID
-						})
-						assert.Equal(t, string(afterGenre.Name), afterGenre.Name)
 					}
 				}
 			}
