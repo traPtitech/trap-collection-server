@@ -224,9 +224,9 @@ func (e *Edition) UpdateEditionGameVersions(
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	gameVersions := make([]schema.GameVersionTable, 0, len(gameVersionIDs))
+	gameVersions := make([]schema.GameVersionTable2, 0, len(gameVersionIDs))
 	for _, gameVersionID := range gameVersionIDs {
-		gameVersions = append(gameVersions, schema.GameVersionTable{
+		gameVersions = append(gameVersions, schema.GameVersionTable2{
 			ID: uuid.UUID(gameVersionID),
 		})
 	}
