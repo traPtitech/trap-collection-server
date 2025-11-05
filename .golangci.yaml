@@ -1,6 +1,4 @@
 version: "2"
-issues:
-  max-same-issues: 0
 linters:
   enable:
     - revive
