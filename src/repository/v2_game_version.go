@@ -5,13 +5,13 @@ package repository
 import (
 	"context"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
 type (
-	OptionURLLink = types.Option[values.GameURLLink]
+	OptionURLLink = option.Option[values.GameURLLink]
 )
 
 type GameVersionV2 interface {

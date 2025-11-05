@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -127,32 +127,32 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %s", err.Error()))
 	}
 
-	var reqURL types.Option[values.GameURLLink]
+	var reqURL option.Option[values.GameURLLink]
 	if newGameVersion.Url != nil {
 		urlValue, err := url.Parse(*newGameVersion.Url)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid url")
 		}
 
-		reqURL = types.NewOption(values.NewGameURLLink(urlValue))
+		reqURL = option.NewOption(values.NewGameURLLink(urlValue))
 	}
 
 	var (
-		reqWindows types.Option[values.GameFileID]
-		reqMac     types.Option[values.GameFileID]
-		reqJar     types.Option[values.GameFileID]
+		reqWindows option.Option[values.GameFileID]
+		reqMac     option.Option[values.GameFileID]
+		reqJar     option.Option[values.GameFileID]
 	)
 	if newGameVersion.Files != nil {
 		if newGameVersion.Files.Win32 != nil {
-			reqWindows = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Win32))
+			reqWindows = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Win32))
 		}
 
 		if newGameVersion.Files.Darwin != nil {
-			reqMac = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Darwin))
+			reqMac = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Darwin))
 		}
 
 		if newGameVersion.Files.Jar != nil {
-			reqJar = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Jar))
+			reqJar = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Jar))
 		}
 	}
 

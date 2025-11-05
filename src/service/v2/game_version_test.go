@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -161,7 +161,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID1,
 			videoID:            videoID1,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -193,7 +193,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID2,
 			videoID:            videoID2,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID1),
+				Windows: option.NewOption(fileID1),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -238,7 +238,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID3,
 			videoID:            videoID3,
 			assets: &service.Assets{
-				Mac: types.NewOption(fileID2),
+				Mac: option.NewOption(fileID2),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -283,7 +283,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID4,
 			videoID:            videoID4,
 			assets: &service.Assets{
-				Jar: types.NewOption(fileID3),
+				Jar: option.NewOption(fileID3),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -339,7 +339,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID6,
 			videoID:            videoID6,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame: true,
 			getGameErr:     repository.ErrRecordNotFound,
@@ -354,7 +354,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID7,
 			videoID:            videoID7,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame: true,
 			getGameErr:     errors.New("error"),
@@ -368,7 +368,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID8,
 			videoID:            videoID8,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -384,7 +384,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID9,
 			videoID:            videoID9,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -399,7 +399,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID10,
 			videoID:            videoID10,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -422,7 +422,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID11,
 			videoID:            videoID11,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -447,7 +447,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID12,
 			videoID:            videoID12,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -471,7 +471,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID13,
 			videoID:            videoID13,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -503,7 +503,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID14,
 			videoID:            videoID14,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID4),
+				Windows: option.NewOption(fileID4),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -537,7 +537,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID15,
 			videoID:            videoID15,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID5),
+				Windows: option.NewOption(fileID5),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -572,7 +572,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID16,
 			videoID:            videoID16,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID6),
+				Windows: option.NewOption(fileID6),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -618,7 +618,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID17,
 			videoID:            videoID17,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -652,8 +652,8 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID18,
 			videoID:            videoID18,
 			assets: &service.Assets{
-				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
-				Windows: types.NewOption(fileID7),
+				URL:     option.NewOption(values.NewGameURLLink(urlLink)),
+				Windows: option.NewOption(fileID7),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -698,8 +698,8 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID19,
 			videoID:            videoID19,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID8),
-				Mac:     types.NewOption(fileID9),
+				Windows: option.NewOption(fileID8),
+				Mac:     option.NewOption(fileID9),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -754,7 +754,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID20,
 			videoID:            videoID20,
 			assets: &service.Assets{
-				Windows: types.NewOption(fileID10),
+				Windows: option.NewOption(fileID10),
 			},
 			executeGetGame:      true,
 			executeGetGameImage: true,
@@ -800,7 +800,7 @@ func TestCreateGameVersion(t *testing.T) {
 			imageID:            imageID21,
 			videoID:            videoID21,
 			assets: &service.Assets{
-				URL: types.NewOption(values.NewGameURLLink(urlLink)),
+				URL: option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			executeGetGame:           true,
 			executeGetGameImage:      true,
@@ -832,7 +832,7 @@ func TestCreateGameVersion(t *testing.T) {
 					),
 					ImageID: imageID21,
 					VideoID: videoID21,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			fileIDs:              []values.GameFileID{},
@@ -1058,7 +1058,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID1,
 					VideoID: videoID1,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1070,7 +1070,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID1,
 					VideoID: videoID1,
@@ -1104,7 +1104,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID2,
 					VideoID: videoID2,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 				{
 					GameVersion: domain.NewGameVersion(
@@ -1115,7 +1115,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID3,
 					VideoID: videoID3,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1127,7 +1127,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID2,
 					VideoID: videoID2,
@@ -1140,7 +1140,7 @@ func TestGetGameVersions(t *testing.T) {
 						now.Add(-time.Hour),
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID3,
 					VideoID: videoID3,
@@ -1164,7 +1164,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID4,
 					VideoID: videoID4,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 				{
 					GameVersion: domain.NewGameVersion(
@@ -1175,7 +1175,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID4,
 					VideoID: videoID5,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1187,7 +1187,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID4,
 					VideoID: videoID4,
@@ -1200,7 +1200,7 @@ func TestGetGameVersions(t *testing.T) {
 						now.Add(-time.Hour),
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID4,
 					VideoID: videoID5,
@@ -1224,7 +1224,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID5,
 					VideoID: videoID6,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 				{
 					GameVersion: domain.NewGameVersion(
@@ -1235,7 +1235,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID6,
 					VideoID: videoID6,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1247,7 +1247,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID5,
 					VideoID: videoID6,
@@ -1260,7 +1260,7 @@ func TestGetGameVersions(t *testing.T) {
 						now.Add(-time.Hour),
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID6,
 					VideoID: videoID6,
@@ -1310,7 +1310,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Windows: types.NewOption(fileID1),
+						Windows: option.NewOption(fileID1),
 					},
 					ImageID: imageID7,
 					VideoID: videoID7,
@@ -1360,7 +1360,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Mac: types.NewOption(fileID2),
+						Mac: option.NewOption(fileID2),
 					},
 					ImageID: imageID8,
 					VideoID: videoID8,
@@ -1410,7 +1410,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Jar: types.NewOption(fileID3),
+						Jar: option.NewOption(fileID3),
 					},
 					ImageID: imageID9,
 					VideoID: videoID9,
@@ -1470,7 +1470,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Windows: types.NewOption(fileID4),
+						Windows: option.NewOption(fileID4),
 					},
 					ImageID: imageID10,
 					VideoID: videoID10,
@@ -1530,7 +1530,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Mac: types.NewOption(fileID6),
+						Mac: option.NewOption(fileID6),
 					},
 					ImageID: imageID11,
 					VideoID: videoID11,
@@ -1590,7 +1590,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Jar: types.NewOption(fileID8),
+						Jar: option.NewOption(fileID8),
 					},
 					ImageID: imageID12,
 					VideoID: videoID12,
@@ -1663,7 +1663,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID14,
 					VideoID: videoID14,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1675,7 +1675,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID14,
 					VideoID: videoID14,
@@ -1703,7 +1703,7 @@ func TestGetGameVersions(t *testing.T) {
 					),
 					ImageID: imageID15,
 					VideoID: videoID15,
-					URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+					URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 			},
 			gameVersionInfos: []*service.GameVersionInfo{
@@ -1715,7 +1715,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						URL: types.NewOption(values.NewGameURLLink(urlLink)),
+						URL: option.NewOption(values.NewGameURLLink(urlLink)),
 					},
 					ImageID: imageID15,
 					VideoID: videoID15,
@@ -1811,7 +1811,7 @@ func TestGetGameVersions(t *testing.T) {
 						now,
 					),
 					Assets: &service.Assets{
-						Windows: types.NewOption(fileID13),
+						Windows: option.NewOption(fileID13),
 					},
 					ImageID: imageID17,
 					VideoID: videoID17,
@@ -1824,7 +1824,7 @@ func TestGetGameVersions(t *testing.T) {
 						now.Add(-time.Hour),
 					),
 					Assets: &service.Assets{
-						Windows: types.NewOption(fileID13),
+						Windows: option.NewOption(fileID13),
 					},
 					ImageID: imageID18,
 					VideoID: videoID18,
@@ -2038,7 +2038,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 				),
 				ImageID: imageID1,
 				VideoID: videoID1,
-				URL:     types.NewOption(values.NewGameURLLink(urlLink)),
+				URL:     option.NewOption(values.NewGameURLLink(urlLink)),
 			},
 			gameVersionInfo: &service.GameVersionInfo{
 				GameVersion: domain.NewGameVersion(
@@ -2048,7 +2048,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					URL: types.NewOption(values.NewGameURLLink(urlLink)),
+					URL: option.NewOption(values.NewGameURLLink(urlLink)),
 				},
 				ImageID: imageID1,
 				VideoID: videoID1,
@@ -2098,7 +2098,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Windows: types.NewOption(fileID1),
+					Windows: option.NewOption(fileID1),
 				},
 				ImageID: imageID2,
 				VideoID: videoID2,
@@ -2140,7 +2140,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Mac: types.NewOption(fileID2),
+					Mac: option.NewOption(fileID2),
 				},
 				ImageID: imageID3,
 				VideoID: videoID3,
@@ -2182,7 +2182,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Jar: types.NewOption(fileID3),
+					Jar: option.NewOption(fileID3),
 				},
 				ImageID: imageID4,
 				VideoID: videoID4,
@@ -2234,7 +2234,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Windows: types.NewOption(fileID4),
+					Windows: option.NewOption(fileID4),
 				},
 				ImageID: imageID5,
 				VideoID: videoID5,
@@ -2286,7 +2286,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Mac: types.NewOption(fileID6),
+					Mac: option.NewOption(fileID6),
 				},
 				ImageID: imageID6,
 				VideoID: videoID6,
@@ -2338,7 +2338,7 @@ func TestGetLatestGameVersion(t *testing.T) {
 					now,
 				),
 				Assets: &service.Assets{
-					Jar: types.NewOption(fileID8),
+					Jar: option.NewOption(fileID8),
 				},
 				ImageID: imageID7,
 				VideoID: videoID7,

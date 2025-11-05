@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -32,7 +32,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 	gameID values.GameID,
 	imageID values.GameImageID,
 	videoID values.GameVideoID,
-	optionURL types.Option[values.GameURLLink],
+	optionURL option.Option[values.GameURLLink],
 	fileIDs []values.GameFileID,
 	version *domain.GameVersion,
 ) error {
@@ -142,7 +142,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 
 	gameVersionInfos := make([]*repository.GameVersionInfo, 0, len(gameVersions))
 	for _, gameVersion := range gameVersions {
-		var optionURL types.Option[values.GameURLLink]
+		var optionURL option.Option[values.GameURLLink]
 		if len(gameVersion.URL) != 0 {
 			url, err := url.Parse(gameVersion.URL)
 			if err != nil {
@@ -151,7 +151,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 				continue
 			}
 
-			optionURL = types.NewOption(values.NewGameURLLink(url))
+			optionURL = option.NewOption(values.NewGameURLLink(url))
 		}
 
 		fileIDs := make([]values.GameFileID, 0, len(gameVersion.GameFiles))
@@ -201,14 +201,14 @@ func (gameVersion *GameVersionV2) GetLatestGameVersion(
 		return nil, fmt.Errorf("failed to find game version: %w", err)
 	}
 
-	var optionURL types.Option[values.GameURLLink]
+	var optionURL option.Option[values.GameURLLink]
 	if len(gameVersionTable.URL) != 0 {
 		url, err := url.Parse(gameVersionTable.URL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse game version url: %w", err)
 		}
 
-		optionURL = types.NewOption(values.NewGameURLLink(url))
+		optionURL = option.NewOption(values.NewGameURLLink(url))
 	}
 
 	fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))
@@ -263,14 +263,14 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 
 	gameVersionInfos := make([]*repository.GameVersionInfoWithGameID, 0, len(gameVersionTables))
 	for _, gameVersionTable := range gameVersionTables {
-		var optionURL types.Option[values.GameURLLink]
+		var optionURL option.Option[values.GameURLLink]
 		if len(gameVersionTable.URL) != 0 {
 			url, err := url.Parse(gameVersionTable.URL)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse game version url: %w", err)
 			}
 
-			optionURL = types.NewOption(values.NewGameURLLink(url))
+			optionURL = option.NewOption(values.NewGameURLLink(url))
 		}
 
 		fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))

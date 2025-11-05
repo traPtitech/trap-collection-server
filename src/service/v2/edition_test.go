@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -25,7 +25,7 @@ func TestCreateEdition(t *testing.T) {
 
 	type args struct {
 		name             values.LauncherVersionName
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+		questionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
 		gameVersionIDs   []values.GameVersionID
 	}
 	type mockInfo struct {
@@ -71,7 +71,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs1,
 			},
 			mockInfo: mockInfo{
@@ -87,7 +87,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "URLなしだがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.Option[values.LauncherVersionQuestionnaireURL]{},
+				questionnaireURL: option.Option[values.LauncherVersionQuestionnaireURL]{},
 				gameVersionIDs:   gameVersionIDs2,
 			},
 			mockInfo: mockInfo{
@@ -103,7 +103,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "gameVersionIDsの要素が複数だがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs3,
 			},
 			mockInfo: mockInfo{
@@ -119,7 +119,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "gameVersionIDsが空だがエラーなし",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   []values.GameVersionID{},
 			},
 			mockInfo: mockInfo{
@@ -135,7 +135,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "GetGameVersionsByIDsがエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs5,
 			},
 			mockInfo: mockInfo{
@@ -151,7 +151,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "gameVersionsの数が違うのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs6, // 要素数1
 			},
 			mockInfo: mockInfo{
@@ -168,7 +168,7 @@ func TestCreateEdition(t *testing.T) {
 			description: " SaveEditionでエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs7,
 			},
 			mockInfo: mockInfo{
@@ -186,7 +186,7 @@ func TestCreateEdition(t *testing.T) {
 			description: "  UpdateEditionGameVersionsでエラーなのでエラー",
 			args: args{
 				name:             name,
-				questionnaireURL: types.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
+				questionnaireURL: option.NewOption[values.LauncherVersionQuestionnaireURL](urlLink),
 				gameVersionIDs:   gameVersionIDs8,
 			},
 			mockInfo: mockInfo{
@@ -522,7 +522,7 @@ func TestUpdateEdition(t *testing.T) {
 	type args struct {
 		editionID        values.LauncherVersionID
 		name             values.LauncherVersionName
-		questionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+		questionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
 	}
 	type mockInfo struct {
 		edition        *domain.LauncherVersion
@@ -548,7 +548,7 @@ func TestUpdateEdition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse url: %v", err)
 	}
-	newOptionalURL := types.NewOption[values.LauncherVersionQuestionnaireURL](newURL)
+	newOptionalURL := option.NewOption[values.LauncherVersionQuestionnaireURL](newURL)
 
 	editionID1, edition1 := generateEdition(t, true)
 	updatedEdition1 := copyEdition(t, edition1)
@@ -638,7 +638,7 @@ func TestUpdateEdition(t *testing.T) {
 			args: args{
 				editionID:        editionID4,
 				name:             newName,
-				questionnaireURL: types.NewOption(url4),
+				questionnaireURL: option.NewOption(url4),
 			},
 			mockInfo: mockInfo{
 				edition:        edition4,
@@ -668,7 +668,7 @@ func TestUpdateEdition(t *testing.T) {
 			args: args{
 				editionID:        editionID6,
 				name:             newName,
-				questionnaireURL: types.Option[values.LauncherVersionQuestionnaireURL]{},
+				questionnaireURL: option.Option[values.LauncherVersionQuestionnaireURL]{},
 			},
 			mockInfo: mockInfo{
 				edition:        edition6,
@@ -802,7 +802,7 @@ func generateGameVersionsForEditionTests(t *testing.T, count int) ([]values.Game
 			ImageID:     values.NewGameImageID(),
 			VideoID:     values.NewGameVideoID(),
 			FileIDs:     []values.GameFileID{values.NewGameFileID()},
-			URL:         types.Option[values.GameURLLink]{},
+			URL:         option.Option[values.GameURLLink]{},
 		}
 		gameVersions = append(gameVersions, gameVersion)
 	}

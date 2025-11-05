@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -273,14 +273,14 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.L
 
 	var result []*repository.GameVersionInfoWithGameID
 	for _, gameVersion := range gameVersions {
-		var optionURL types.Option[values.GameURLLink]
+		var optionURL option.Option[values.GameURLLink]
 		if len(gameVersion.URL) != 0 {
 			url, err := url.Parse(gameVersion.URL)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse game version url: %w", err)
 			}
 
-			optionURL = types.NewOption(values.NewGameURLLink(url))
+			optionURL = option.NewOption(values.NewGameURLLink(url))
 		}
 
 		fileIDs := make([]values.GameFileID, 0, len(gameVersion.GameFiles))
