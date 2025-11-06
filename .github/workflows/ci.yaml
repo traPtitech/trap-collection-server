@@ -95,14 +95,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Atlas
-        uses: ariga/setup-atlas@4240bd74ba9f13319a21de2b6e497f2b6d184d76 # v0
+      - name: Setup Atlas community edition
+        run: |
+          curl -sSf https://atlasgo.sh | sh -s -- --community --yes
+        shell: bash
 
       - name: Atlas Lint
         run: |
           set +e
 
-          LINT_OUTPUT="$(atlas migrate lint --env ci 2>&1)"
+          LINT_OUTPUT="$(atlas migrate lint --config file://atlas.ci.hcl --env ci 2>&1)"
           LINT_EXIT_CODE=$?
 
           if [ "$LINT_EXIT_CODE" -eq 0 ]; then

@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 includes:
   os:
@@ -92,19 +92,14 @@ tasks:
   migrate:new:
     cmds:
       - task: os:migrate:new
-    desc: "マイグレーションファイルを生成する。名前を指定できる。 (task migrate:new -- <migration_name>)"
+    desc: 'マイグレーションファイルを生成する。名前を指定できる。 (task migrate:new -- <migration_name>)'
 
   migrate:down:
     cmds:
       - task: os:migrate:down
-    desc: "マイグレーションを1つ戻して、マイグレーションファイルを削除する"
+    desc: 'マイグレーションを1つ戻して、マイグレーションファイルを削除する'
 
   migrate:down:down-only:
     cmds:
       - task: os:migrate:down:down-only
-    desc: "マイグレーションを1つ戻すが、マイグレーションファイルは削除しない"
-
-  migrate:lint:
-    cmds:
-      - task: os:migrate:lint
-    desc: "マイグレーションの Lint を実行する"
+    desc: 'マイグレーションを1つ戻すが、マイグレーションファイルは削除しない'
