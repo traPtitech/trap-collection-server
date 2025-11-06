@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -41,7 +40,7 @@ func TestRemoveGameGenre(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
@@ -774,9 +773,9 @@ func TestGetGameGenres(t *testing.T) {
 	var gameVisibilityTypeIDPrivate int
 	for i := range visibilities {
 		switch visibilities[i].Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			gameVisibilityTypeIDPublic = visibilities[i].ID
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			gameVisibilityTypeIDPrivate = visibilities[i].ID
 		}
 	}
@@ -1183,7 +1182,7 @@ func TestGetGamesByGenreID(t *testing.T) {
 
 	var gameVisibilityTypeIDPublic int
 	for i := range visibilities {
-		if visibilities[i].Name == migrate.GameVisibilityTypePublic {
+		if visibilities[i].Name == schema.GameVisibilityTypePublic {
 			gameVisibilityTypeIDPublic = visibilities[i].ID
 		}
 	}

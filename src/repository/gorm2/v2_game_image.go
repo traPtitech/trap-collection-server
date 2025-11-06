@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
@@ -33,11 +32,11 @@ func (gameImage *GameImageV2) SaveGameImage(ctx context.Context, gameID values.G
 	var imageTypeName string
 	switch image.GetType() {
 	case values.GameImageTypeJpeg:
-		imageTypeName = migrate.GameImageTypeJpeg
+		imageTypeName = schema.GameImageTypeJpeg
 	case values.GameImageTypePng:
-		imageTypeName = migrate.GameImageTypePng
+		imageTypeName = schema.GameImageTypePng
 	case values.GameImageTypeGif:
-		imageTypeName = migrate.GameImageTypeGif
+		imageTypeName = schema.GameImageTypeGif
 	default:
 		return fmt.Errorf("invalid image type: %d", image.GetType())
 	}
@@ -91,11 +90,11 @@ func (gameImage *GameImageV2) GetGameImage(ctx context.Context, gameImageID valu
 
 	var imageType values.GameImageType
 	switch image.GameImageType.Name {
-	case migrate.GameImageTypeJpeg:
+	case schema.GameImageTypeJpeg:
 		imageType = values.GameImageTypeJpeg
-	case migrate.GameImageTypePng:
+	case schema.GameImageTypePng:
 		imageType = values.GameImageTypePng
-	case migrate.GameImageTypeGif:
+	case schema.GameImageTypeGif:
 		imageType = values.GameImageTypeGif
 	default:
 		return nil, fmt.Errorf("invalid image type: %s", image.GameImageType.Name)
@@ -136,11 +135,11 @@ func (gameImage *GameImageV2) GetGameImages(ctx context.Context, gameID values.G
 	for _, image := range images {
 		var imageType values.GameImageType
 		switch image.GameImageType.Name {
-		case migrate.GameImageTypeJpeg:
+		case schema.GameImageTypeJpeg:
 			imageType = values.GameImageTypeJpeg
-		case migrate.GameImageTypePng:
+		case schema.GameImageTypePng:
 			imageType = values.GameImageTypePng
-		case migrate.GameImageTypeGif:
+		case schema.GameImageTypeGif:
 			imageType = values.GameImageTypeGif
 		default:
 			return nil, fmt.Errorf("invalid image type: %s", image.GameImageType.Name)

@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -47,7 +46,7 @@ func TestSaveGameV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -186,11 +185,11 @@ func TestUpdateGameV2(t *testing.T) {
 	)
 	for i := range gameVisibilityTypes {
 		switch gameVisibilityTypes[i].Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			gameVisibilityTypeIDPublic = gameVisibilityTypes[i].ID
-		case migrate.GameVisibilityTypeLimited:
+		case schema.GameVisibilityTypeLimited:
 			gameVisibilityTypeIDLimited = gameVisibilityTypes[i].ID
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			_ = gameVisibilityTypes[i].ID
 		default:
 			t.Fatalf("unknown game visibility type: %s", gameVisibilityTypes[i].Name)
@@ -373,7 +372,7 @@ func TestRemoveGameV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -554,7 +553,7 @@ func TestGetGameV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -771,11 +770,11 @@ func TestGetGamesV2(t *testing.T) {
 	)
 	for i := range gameVisibilityTypes {
 		switch gameVisibilityTypes[i].Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			gameVisibilityTypeIDPublic = gameVisibilityTypes[i].ID
-		case migrate.GameVisibilityTypeLimited:
+		case schema.GameVisibilityTypeLimited:
 			gameVisibilityTypeIDLimited = gameVisibilityTypes[i].ID
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			gameVisibilityTypeIDPrivate = gameVisibilityTypes[i].ID
 		default:
 			t.Fatalf("unknown game visibility type: %s", gameVisibilityTypes[i].Name)
@@ -793,9 +792,9 @@ func TestGetGamesV2(t *testing.T) {
 	)
 	for i := range gameRoleTypes {
 		switch gameRoleTypes[i].Name {
-		case migrate.GameManagementRoleTypeAdministrator:
+		case schema.GameManagementRoleTypeAdministrator:
 			gameRoleTypeIDOwner = gameRoleTypes[i].ID
-		case migrate.GameManagementRoleTypeCollaborator:
+		case schema.GameManagementRoleTypeCollaborator:
 			gameRoleTypeIDCollaborator = gameRoleTypes[i].ID
 		default:
 			t.Fatalf("unknown game management role type: %s", gameRoleTypes[i].Name)
@@ -1381,7 +1380,7 @@ func TestGetGamesByIDsV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1577,19 +1576,19 @@ func Test_getVisibility(t *testing.T) {
 		"public": {
 			visibility: values.GameVisibilityTypePublic,
 			want: schema.GameVisibilityTypeTable{
-				Name: migrate.GameVisibilityTypePublic,
+				Name: schema.GameVisibilityTypePublic,
 			},
 		},
 		"limited": {
 			visibility: values.GameVisibilityTypeLimited,
 			want: schema.GameVisibilityTypeTable{
-				Name: migrate.GameVisibilityTypeLimited,
+				Name: schema.GameVisibilityTypeLimited,
 			},
 		},
 		"private": {
 			visibility: values.GameVisibilityTypePrivate,
 			want: schema.GameVisibilityTypeTable{
-				Name: migrate.GameVisibilityTypePrivate,
+				Name: schema.GameVisibilityTypePrivate,
 			},
 		},
 		"invalid": {

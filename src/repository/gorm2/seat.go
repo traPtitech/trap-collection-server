@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
@@ -51,11 +50,11 @@ func (s *Seat) CreateSeats(ctx context.Context, seats []*domain.Seat) error {
 		)
 		switch seat.Status() {
 		case values.SeatStatusNone:
-			status, ok = statusMap[migrate.SeatStatusNone]
+			status, ok = statusMap[schema.SeatStatusNone]
 		case values.SeatStatusEmpty:
-			status, ok = statusMap[migrate.SeatStatusEmpty]
+			status, ok = statusMap[schema.SeatStatusEmpty]
 		case values.SeatStatusInUse:
-			status, ok = statusMap[migrate.SeatStatusInUse]
+			status, ok = statusMap[schema.SeatStatusInUse]
 		default:
 			return fmt.Errorf("invalid seat status: %d", seat.Status())
 		}
@@ -87,11 +86,11 @@ func (s *Seat) UpdateSeatsStatus(ctx context.Context, seatIDs []values.SeatID, s
 	var dbStatusName string
 	switch status {
 	case values.SeatStatusNone:
-		dbStatusName = migrate.SeatStatusNone
+		dbStatusName = schema.SeatStatusNone
 	case values.SeatStatusEmpty:
-		dbStatusName = migrate.SeatStatusEmpty
+		dbStatusName = schema.SeatStatusEmpty
 	case values.SeatStatusInUse:
-		dbStatusName = migrate.SeatStatusInUse
+		dbStatusName = schema.SeatStatusInUse
 	default:
 		return fmt.Errorf("invalid seat status: %d", status)
 	}
@@ -134,7 +133,7 @@ func (s *Seat) GetActiveSeats(ctx context.Context, lockType repository.LockType)
 	err = db.
 		Joins("SeatStatus").
 		Order("seats.id").
-		Where("SeatStatus.name != ?", migrate.SeatStatusNone).
+		Where("SeatStatus.name != ?", schema.SeatStatusNone).
 		Find(&dbSeats).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get seats: %w", err)
@@ -144,9 +143,9 @@ func (s *Seat) GetActiveSeats(ctx context.Context, lockType repository.LockType)
 	for _, dbSeat := range dbSeats {
 		var status values.SeatStatus
 		switch dbSeat.SeatStatus.Name {
-		case migrate.SeatStatusEmpty:
+		case schema.SeatStatusEmpty:
 			status = values.SeatStatusEmpty
-		case migrate.SeatStatusInUse:
+		case schema.SeatStatusInUse:
 			status = values.SeatStatusInUse
 		default:
 			log.Printf("invalid product key status: %s\n", dbSeat.SeatStatus.Name)
@@ -186,11 +185,11 @@ func (s *Seat) GetSeats(ctx context.Context, lockType repository.LockType) ([]*d
 	for _, dbSeat := range dbSeats {
 		var status values.SeatStatus
 		switch dbSeat.SeatStatus.Name {
-		case migrate.SeatStatusNone:
+		case schema.SeatStatusNone:
 			status = values.SeatStatusNone
-		case migrate.SeatStatusEmpty:
+		case schema.SeatStatusEmpty:
 			status = values.SeatStatusEmpty
-		case migrate.SeatStatusInUse:
+		case schema.SeatStatusInUse:
 			status = values.SeatStatusInUse
 		default:
 			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
@@ -232,11 +231,11 @@ func (s *Seat) GetSeat(ctx context.Context, seatID values.SeatID, lockType repos
 
 	var status values.SeatStatus
 	switch dbSeat.SeatStatus.Name {
-	case migrate.SeatStatusNone:
+	case schema.SeatStatusNone:
 		status = values.SeatStatusNone
-	case migrate.SeatStatusEmpty:
+	case schema.SeatStatusEmpty:
 		status = values.SeatStatusEmpty
-	case migrate.SeatStatusInUse:
+	case schema.SeatStatusInUse:
 		status = values.SeatStatusInUse
 	default:
 		return nil, fmt.Errorf("invalid product key status: %s", dbSeat.SeatStatus.Name)

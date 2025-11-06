@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
@@ -129,7 +128,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameImageTypeJpeg).
+		Where("name = ?", schema.GameImageTypeJpeg).
 		Select("id").
 		Take(&imageType).Error
 	if err != nil {
@@ -139,7 +138,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameVideoTypeMp4).
+		Where("name = ?", schema.GameVideoTypeMp4).
 		Select("id").
 		Take(&videoType).Error
 	if err != nil {
@@ -149,7 +148,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameFileTypeJar).
+		Where("name = ?", schema.GameFileTypeJar).
 		Select("id").
 		Take(&fileType).Error
 	if err != nil {
@@ -159,7 +158,7 @@ func TestCreateGameVersionV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1030,7 +1029,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameImageTypeJpeg).
+		Where("name = ?", schema.GameImageTypeJpeg).
 		Select("id").
 		Take(&imageType).Error
 	if err != nil {
@@ -1040,7 +1039,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameVideoTypeMp4).
+		Where("name = ?", schema.GameVideoTypeMp4).
 		Select("id").
 		Take(&videoType).Error
 	if err != nil {
@@ -1050,7 +1049,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameFileTypeJar).
+		Where("name = ?", schema.GameFileTypeJar).
 		Select("id").
 		Take(&fileType).Error
 	if err != nil {
@@ -1060,7 +1059,7 @@ func TestGetGameVersionsV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -1830,7 +1829,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 	var imageType schema.GameImageTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameImageTypeJpeg).
+		Where("name = ?", schema.GameImageTypeJpeg).
 		Select("id").
 		Take(&imageType).Error
 	if err != nil {
@@ -1840,7 +1839,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameVideoTypeMp4).
+		Where("name = ?", schema.GameVideoTypeMp4).
 		Select("id").
 		Take(&videoType).Error
 	if err != nil {
@@ -1850,7 +1849,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameFileTypeJar).
+		Where("name = ?", schema.GameFileTypeJar).
 		Select("id").
 		Take(&fileType).Error
 	if err != nil {
@@ -1860,7 +1859,7 @@ func TestGetLatestGameVersionV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -2363,7 +2362,7 @@ func TestGetGameVersionsByIDsV2(t *testing.T) {
 	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&schema.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -2870,7 +2869,7 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 	var imageType schema.GameImageTypeTable
 	err := db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameImageTypeJpeg).
+		Where("name = ?", schema.GameImageTypeJpeg).
 		Select("id").
 		Take(&imageType).Error
 	if err != nil {
@@ -2880,7 +2879,7 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 	var videoType schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameVideoTypeMp4).
+		Where("name = ?", schema.GameVideoTypeMp4).
 		Select("id").
 		Take(&videoType).Error
 	if err != nil {
@@ -2890,7 +2889,7 @@ func generateAssetsForGameVersion(t *testing.T, db *gorm.DB, gameFileCount int, 
 	var fileType schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where("name = ?", migrate.GameFileTypeJar).
+		Where("name = ?", schema.GameFileTypeJar).
 		Select("id").
 		Take(&fileType).Error
 	if err != nil {

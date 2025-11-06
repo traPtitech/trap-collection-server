@@ -10,7 +10,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
@@ -188,11 +187,11 @@ func (gameGenre *GameGenre) GetGameGenres(ctx context.Context, visibilities []va
 		var visibilityTypeName string
 		switch visibility {
 		case values.GameVisibilityTypePublic:
-			visibilityTypeName = migrate.GameVisibilityTypePublic
+			visibilityTypeName = schema.GameVisibilityTypePublic
 		case values.GameVisibilityTypeLimited:
-			visibilityTypeName = migrate.GameVisibilityTypeLimited
+			visibilityTypeName = schema.GameVisibilityTypeLimited
 		case values.GameVisibilityTypePrivate:
-			visibilityTypeName = migrate.GameVisibilityTypePrivate
+			visibilityTypeName = schema.GameVisibilityTypePrivate
 		default:
 			return nil, fmt.Errorf("invalid game visibility: %v", visibility)
 		}
@@ -299,11 +298,11 @@ func (gameGenre *GameGenre) GetGamesByGenreID(ctx context.Context, gameGenreID v
 	for _, game := range games {
 		var visibility values.GameVisibility
 		switch game.GameVisibilityType.Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			visibility = values.GameVisibilityTypePublic
-		case migrate.GameVisibilityTypeLimited:
+		case schema.GameVisibilityTypeLimited:
 			visibility = values.GameVisibilityTypeLimited
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
 		default:
 			return nil, fmt.Errorf("invalid game visibility: %v", game.GameVisibilityType.Name)
