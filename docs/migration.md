@@ -75,7 +75,7 @@ GitHub Actions の CI では community edition を使って Lint を実行して
 以下のコマンドを実行してください。
 
 ```bash
-altas migrate lint --config file://atlas.ci.hcl --env local
+atlas migrate lint --config file://atlas.ci.hcl --env local
 ```
 
 このコマンドでは、main ブランチと比較してマイグレーションが正しいかをチェックします。
