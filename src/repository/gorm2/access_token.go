@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +35,7 @@ func (accessToken *AccessToken) SaveAccessToken(ctx context.Context, productKeyI
 	}
 
 	err = db.
-		Create(&migrate.AccessTokenTable2{
+		Create(&schema.AccessTokenTable{
 			ID:           uuid.UUID(token.GetID()),
 			ProductKeyID: uuid.UUID(productKeyID),
 			AccessToken:  string(token.GetAccessToken()),
@@ -68,9 +68,9 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 			CreatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 			DeletedAt        gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
 		} `gorm:"embedded;embeddedPrefix:edition_"`
-		ProductKey       migrate.ProductKeyTable2       `gorm:"embedded;embeddedPrefix:product_key_"`
-		ProductKeyStatus migrate.ProductKeyStatusTable2 `gorm:"embedded;embeddedPrefix:product_key_status_"`
-		AccessToken      migrate.AccessTokenTable2      `gorm:"embedded;embeddedPrefix:access_token_"`
+		ProductKey       schema.ProductKeyTable       `gorm:"embedded;embeddedPrefix:product_key_"`
+		ProductKeyStatus schema.ProductKeyStatusTable `gorm:"embedded;embeddedPrefix:product_key_status_"`
+		AccessToken      schema.AccessTokenTable      `gorm:"embedded;embeddedPrefix:access_token_"`
 	}
 	var scanStruct Edition
 
@@ -112,9 +112,9 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 
 	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
-	case migrate.ProductKeyStatusInactive:
+	case "inactive":
 		status = values.LauncherUserStatusInactive
-	case migrate.ProductKeyStatusActive:
+	case "active":
 		status = values.LauncherUserStatusActive
 	}
 	key := domain.NewProductKey(

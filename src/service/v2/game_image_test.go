@@ -702,9 +702,9 @@ func TestGetGameImageMeta(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.image.GameImage.GetID(), gameImage.GetID())
-			assert.Equal(t, testCase.image.GameImage.GetType(), gameImage.GetType())
-			assert.Equal(t, testCase.image.GameImage.GetCreatedAt(), gameImage.GetCreatedAt())
+			assert.Equal(t, testCase.image.GetID(), gameImage.GetID())
+			assert.Equal(t, testCase.image.GetType(), gameImage.GetType())
+			assert.Equal(t, testCase.image.GetCreatedAt(), gameImage.GetCreatedAt())
 		})
 	}
 }

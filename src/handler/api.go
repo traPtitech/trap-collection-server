@@ -9,18 +9,18 @@ import (
 
 	// v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/traPtitech/trap-collection-server/src/config"
-	"github.com/traPtitech/trap-collection-server/src/handler/common"
+	"github.com/traPtitech/trap-collection-server/src/handler/session"
 
 	v2 "github.com/traPtitech/trap-collection-server/src/handler/v2"
 )
 
 type API struct {
 	addr    string
-	session *common.Session
+	session *session.Session
 	v2      *v2.API
 }
 
-func NewAPI(appConf config.App, conf config.Handler, session *common.Session, v2 *v2.API) (*API, error) {
+func NewAPI(appConf config.App, conf config.Handler, session *session.Session, v2 *v2.API) (*API, error) {
 	addr, err := conf.Addr()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get addr: %w", err)

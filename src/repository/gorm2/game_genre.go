@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -32,9 +32,9 @@ func (gameGenre *GameGenre) GetGenresByGameID(ctx context.Context, gameID values
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var genres []*migrate.GameGenreTable
+	var genres []*schema.GameGenreTable
 	err = db.
-		Model(&migrate.GameGenreTable{}).
+		Model(&schema.GameGenreTable{}).
 		Joins("JOIN game_genre_relations ON game_genres.id = game_genre_relations.genre_id").
 		Where("game_genre_relations.game_id = ?", uuid.UUID(gameID)).
 		Order("`created_at` DESC").
@@ -63,7 +63,7 @@ func (gameGenre *GameGenre) RemoveGameGenre(ctx context.Context, gameGenreID val
 
 	result := db.
 		Select("Games").
-		Delete(&migrate.GameGenreTable{ID: uuid.UUID(gameGenreID)})
+		Delete(&schema.GameGenreTable{ID: uuid.UUID(gameGenreID)})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to remove game genre: %w", err)
@@ -82,7 +82,7 @@ func (gameGenre *GameGenre) GetGameGenresWithNames(ctx context.Context, gameGenr
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var genres []migrate.GameGenreTable
+	var genres []schema.GameGenreTable
 	result := db.
 		Where("name IN ?", gameGenreNames).
 		Find(&genres)
@@ -110,9 +110,9 @@ func (gameGenre *GameGenre) SaveGameGenres(ctx context.Context, gameGenres []*do
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	genres := make([]migrate.GameGenreTable, 0, len(gameGenres))
+	genres := make([]schema.GameGenreTable, 0, len(gameGenres))
 	for i := range gameGenres {
-		genres = append(genres, migrate.GameGenreTable{
+		genres = append(genres, schema.GameGenreTable{
 			ID:        uuid.UUID(gameGenres[i].GetID()),
 			Name:      string(gameGenres[i].GetName()),
 			CreatedAt: gameGenres[i].GetCreatedAt(),
@@ -140,7 +140,7 @@ func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID val
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var game migrate.GameTable2
+	var game schema.GameTable2
 
 	if err = db.First(&game, uuid.UUID(gameID)).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return repository.ErrRecordNotFound
@@ -153,7 +153,7 @@ func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID val
 		gameGenreUUIDs = append(gameGenreUUIDs, uuid.UUID(genre))
 	}
 
-	var gameGenres []migrate.GameGenreTable
+	var gameGenres []schema.GameGenreTable
 	err = db.Where("`id` IN ?", gameGenreUUIDs).Find(&gameGenres).Error
 	if err != nil {
 		return fmt.Errorf("failed to get game genres: %w", err)
@@ -172,7 +172,7 @@ func (gameGenre *GameGenre) RegisterGenresToGame(ctx context.Context, gameID val
 }
 
 type gameGenreInfo struct {
-	migrate.GameGenreTable
+	schema.GameGenreTable
 	Num int
 }
 
@@ -187,11 +187,11 @@ func (gameGenre *GameGenre) GetGameGenres(ctx context.Context, visibilities []va
 		var visibilityTypeName string
 		switch visibility {
 		case values.GameVisibilityTypePublic:
-			visibilityTypeName = migrate.GameVisibilityTypePublic
+			visibilityTypeName = schema.GameVisibilityTypePublic
 		case values.GameVisibilityTypeLimited:
-			visibilityTypeName = migrate.GameVisibilityTypeLimited
+			visibilityTypeName = schema.GameVisibilityTypeLimited
 		case values.GameVisibilityTypePrivate:
-			visibilityTypeName = migrate.GameVisibilityTypePrivate
+			visibilityTypeName = schema.GameVisibilityTypePrivate
 		default:
 			return nil, fmt.Errorf("invalid game visibility: %v", visibility)
 		}
@@ -235,11 +235,11 @@ func (gameGenre *GameGenre) UpdateGameGenre(ctx context.Context, genre *domain.G
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	newGenre := migrate.GameGenreTable{
+	newGenre := schema.GameGenreTable{
 		Name: string(genre.GetName()),
 	}
 
-	result := db.Model(&migrate.GameGenreTable{
+	result := db.Model(&schema.GameGenreTable{
 		ID: uuid.UUID(genre.GetID()),
 	}).Updates(&newGenre)
 	var mysqlErr *mysql.MySQLError
@@ -263,7 +263,7 @@ func (gameGenre *GameGenre) GetGameGenre(ctx context.Context, gameGenreID values
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var genre migrate.GameGenreTable
+	var genre schema.GameGenreTable
 	if err := db.First(&genre, uuid.UUID(gameGenreID)).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repository.ErrRecordNotFound
@@ -283,9 +283,9 @@ func (gameGenre *GameGenre) GetGamesByGenreID(ctx context.Context, gameGenreID v
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var games []migrate.GameTable2
+	var games []schema.GameTable2
 	err = db.
-		Model(&migrate.GameTable2{}).
+		Model(&schema.GameTable2{}).
 		Preload("GameVisibilityType").
 		Joins("JOIN game_genre_relations ON games.id = game_genre_relations.game_id").
 		Where("genre_id = ?", uuid.UUID(gameGenreID)).
@@ -298,11 +298,11 @@ func (gameGenre *GameGenre) GetGamesByGenreID(ctx context.Context, gameGenreID v
 	for _, game := range games {
 		var visibility values.GameVisibility
 		switch game.GameVisibilityType.Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			visibility = values.GameVisibilityTypePublic
-		case migrate.GameVisibilityTypeLimited:
+		case schema.GameVisibilityTypeLimited:
 			visibility = values.GameVisibilityTypeLimited
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			visibility = values.GameVisibilityTypePrivate
 		default:
 			return nil, fmt.Errorf("invalid game visibility: %v", game.GameVisibilityType.Name)

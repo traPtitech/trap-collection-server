@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -136,7 +136,7 @@ func (gameVersion *GameVersion) CreateGameVersion(
 					return service.ErrInvalidGameFileID
 				}
 
-				gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+				gameFileMap[gameFile.GetID()] = gameFile.GameFile
 			}
 
 			for id, fileType := range fileTypeMap {
@@ -218,7 +218,7 @@ func (gameVersion *GameVersion) GetGameVersions(ctx context.Context, gameID valu
 		}
 
 		for _, gameFile := range gameFiles {
-			gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+			gameFileMap[gameFile.GetID()] = gameFile.GameFile
 		}
 	}
 
@@ -241,21 +241,21 @@ func (gameVersion *GameVersion) GetGameVersions(ctx context.Context, gameID valu
 					continue
 				}
 
-				assets.Windows = types.NewOption(gameFile.GetID())
+				assets.Windows = option.NewOption(gameFile.GetID())
 			case values.GameFileTypeMac:
 				if _, ok := assets.Mac.Value(); ok {
 					log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
 					continue
 				}
 
-				assets.Mac = types.NewOption(gameFile.GetID())
+				assets.Mac = option.NewOption(gameFile.GetID())
 			case values.GameFileTypeJar:
 				if _, ok := assets.Jar.Value(); ok {
 					log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, gameVersion.GetID(), id)
 					continue
 				}
 
-				assets.Jar = types.NewOption(gameFile.GetID())
+				assets.Jar = option.NewOption(gameFile.GetID())
 			default:
 				log.Printf("invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameID, gameVersion.GetID(), id, gameFile.GetFileType())
 				continue
@@ -298,7 +298,7 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx context.Context, gameID
 		}
 
 		for _, gameFile := range gameFiles {
-			gameFileMap[gameFile.GameFile.GetID()] = gameFile.GameFile
+			gameFileMap[gameFile.GetID()] = gameFile.GameFile
 		}
 	}
 
@@ -319,21 +319,21 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx context.Context, gameID
 				continue
 			}
 
-			assets.Windows = types.NewOption(gameFile.GetID())
+			assets.Windows = option.NewOption(gameFile.GetID())
 		case values.GameFileTypeMac:
 			if _, ok := assets.Mac.Value(); ok {
 				log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, version.GetID(), id)
 				continue
 			}
 
-			assets.Mac = types.NewOption(gameFile.GetID())
+			assets.Mac = option.NewOption(gameFile.GetID())
 		case values.GameFileTypeJar:
 			if _, ok := assets.Jar.Value(); ok {
 				log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameID, version.GetID(), id)
 				continue
 			}
 
-			assets.Jar = types.NewOption(gameFile.GetID())
+			assets.Jar = option.NewOption(gameFile.GetID())
 		default:
 			log.Printf("invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameID, version.GetID(), id, gameFile.GetFileType())
 			continue

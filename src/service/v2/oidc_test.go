@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/auth"
-	"github.com/traPtitech/trap-collection-server/src/auth/mock"
 	mockAuth "github.com/traPtitech/trap-collection-server/src/auth/mock"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	mockCache "github.com/traPtitech/trap-collection-server/src/cache/mock"
@@ -28,7 +27,7 @@ func TestGenerateAuthState(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.
@@ -59,7 +58,7 @@ func TestCallback(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.
@@ -149,7 +148,7 @@ func TestLogout(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.
@@ -217,7 +216,7 @@ func TestAuthenticate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.
@@ -289,7 +288,7 @@ func TestGetMe(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.
@@ -414,7 +413,7 @@ func TestGetActiveUsers(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockOIDCAuth := mock.NewMockOIDC(ctrl)
+	mockOIDCAuth := mockAuth.NewMockOIDC(ctrl)
 
 	mockConf := mockConfig.NewMockServiceV1(ctrl)
 	mockConf.

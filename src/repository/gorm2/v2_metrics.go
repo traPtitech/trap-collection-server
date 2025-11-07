@@ -7,7 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	gormPrometheus "gorm.io/plugin/prometheus"
 )
@@ -109,32 +109,32 @@ func (mc *MetricsCollectorV2) collect(p *gormPrometheus.Prometheus) {
 
 	err := mc.collectAccessTokenMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect access token metrics", err)
+		p.Logger.Error(ctx, "failed to collect access token metrics", err)
 	}
 
 	err = mc.collectGameMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game metrics", err)
+		p.Logger.Error(ctx, "failed to collect game metrics", err)
 	}
 
 	err = mc.collectGameImageMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game image metrics", err)
+		p.Logger.Error(ctx, "failed to collect game image metrics", err)
 	}
 
 	err = mc.collectGameVideoMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game video metrics", err)
+		p.Logger.Error(ctx, "failed to collect game video metrics", err)
 	}
 
 	err = mc.collectGameFileMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect game file metrics", err)
+		p.Logger.Error(ctx, "failed to collect game file metrics", err)
 	}
 
 	err = mc.collectSeatMetrics(ctx, p)
 	if err != nil {
-		p.DB.Logger.Error(ctx, "failed to collect seat metrics", err)
+		p.Logger.Error(ctx, "failed to collect seat metrics", err)
 	}
 }
 
@@ -147,7 +147,7 @@ func (mc *MetricsCollectorV2) collectAccessTokenMetrics(_ context.Context, p *go
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.AccessTokenTable2{}).
+		Model(&schema.AccessTokenTable{}).
 		Select("deleted_at IS NOT NULL OR expires_at < ? AS is_deleted, count(*) as count", time.Now()).
 		Group("is_deleted").
 		Find(&accessTokenCounts).Error
@@ -181,7 +181,7 @@ func (mc *MetricsCollectorV2) collectGameMetrics(_ context.Context, p *gormProme
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.GameTable2{}).
+		Model(&schema.GameTable2{}).
 		Select("deleted_at IS NOT NULL AS is_deleted, count(*) as count").
 		Group("is_deleted").
 		Find(&gameCounts).Error
@@ -215,7 +215,7 @@ func (mc *MetricsCollectorV2) collectGameFileMetrics(_ context.Context, p *gormP
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.GameFileTable2{}).
+		Model(&schema.GameFileTable2{}).
 		Joins("JOIN game_file_types ON v2_game_files.file_type_id = game_file_types.id AND game_file_types.active").
 		Select("game_file_types.name AS type, count(*) as count").
 		Group("type").
@@ -243,7 +243,7 @@ func (mc *MetricsCollectorV2) collectGameImageMetrics(_ context.Context, p *gorm
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.GameImageTable2{}).
+		Model(&schema.GameImageTable2{}).
 		Joins("JOIN game_image_types ON v2_game_images.image_type_id = game_image_types.id AND game_image_types.active").
 		Select("game_image_types.name AS type, count(*) as count").
 		Group("type").
@@ -271,7 +271,7 @@ func (mc *MetricsCollectorV2) collectGameVideoMetrics(_ context.Context, p *gorm
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.GameVideoTable2{}).
+		Model(&schema.GameVideoTable2{}).
 		Joins("JOIN game_video_types ON v2_game_videos.video_type_id = game_video_types.id AND game_video_types.active").
 		Select("game_video_types.name AS type, count(*) as count").
 		Group("type").
@@ -299,7 +299,7 @@ func (mc *MetricsCollectorV2) collectSeatMetrics(_ context.Context, p *gormProme
 	err := p.DB.
 		Session(&gorm.Session{}).
 		Unscoped().
-		Model(&migrate.SeatTable2{}).
+		Model(&schema.SeatTable{}).
 		Joins("JOIN seat_statuses ON seats.status_id = seat_statuses.id AND seat_statuses.active").
 		Select("seat_statuses.name AS type, count(*) as count").
 		Group("type").

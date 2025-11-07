@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -74,14 +74,14 @@ func (edition *Edition) PostEdition(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
 	}
 
-	var optionQuestionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+	var optionQuestionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
 	if req.Questionnaire != nil {
 		urlValue, err := url.Parse(*req.Questionnaire)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
 		}
 
-		optionQuestionnaireURL = types.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+		optionQuestionnaireURL = option.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
 	}
 
 	gameVersionIDs := make([]values.GameVersionID, 0, len(req.GameVersions))
@@ -188,14 +188,14 @@ func (edition *Edition) PatchEdition(ctx echo.Context, editionID openapi.Edition
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
 	}
 
-	var optionQuestionnaireURL types.Option[values.LauncherVersionQuestionnaireURL]
+	var optionQuestionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
 	if req.Questionnaire != nil {
 		urlValue, err := url.Parse(*req.Questionnaire)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
 		}
 
-		optionQuestionnaireURL = types.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+		optionQuestionnaireURL = option.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
 	}
 
 	domainEdition, err := edition.editionService.UpdateEdition(

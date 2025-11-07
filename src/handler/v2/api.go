@@ -84,7 +84,7 @@ func (api *API) Start(addr string) error {
 	p.MetricsPath = "/api/metrics"
 	p.Use(e)
 
-	api.Session.Use(e)
+	api.Use(e)
 	err := api.setRoutes(e)
 	if err != nil {
 		return fmt.Errorf("failed to set routes: %w", err)
@@ -106,7 +106,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
 		Skipper: fileUploadSkipper,
 		Options: openapi3filter.Options{
-			AuthenticationFunc: api.Checker.check,
+			AuthenticationFunc: api.check,
 			// validate時にデータがメモリに乗るため、
 			// 画像・動画・ファイルのような大きなデータのアップロード時にメモリ不足にならないように、
 			// ExcludeRequestBody、ExcludeResponseBodyをtrueにする

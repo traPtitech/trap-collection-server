@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +31,8 @@ func TestSaveGameVideoV2(t *testing.T) {
 		description  string
 		gameID       values.GameID
 		video        *domain.GameVideo
-		beforeVideos []migrate.GameVideoTable2
-		expectVideos []migrate.GameVideoTable2
+		beforeVideos []schema.GameVideoTable2
+		expectVideos []schema.GameVideoTable2
 		isErr        bool
 		err          error
 	}
@@ -52,7 +52,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 	videoID6 := values.NewGameVideoID()
 	videoID7 := values.NewGameVideoID()
 
-	var videoTypes []*migrate.GameVideoTypeTable
+	var videoTypes []*schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -65,10 +65,10 @@ func TestSaveGameVideoV2(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -86,12 +86,12 @@ func TestSaveGameVideoV2(t *testing.T) {
 				values.GameVideoTypeMp4,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{},
-			expectVideos: []migrate.GameVideoTable2{
+			beforeVideos: []schema.GameVideoTable2{},
+			expectVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -104,12 +104,12 @@ func TestSaveGameVideoV2(t *testing.T) {
 				values.GameVideoTypeM4v,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{},
-			expectVideos: []migrate.GameVideoTable2{
+			beforeVideos: []schema.GameVideoTable2{},
+			expectVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID5),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeM4v],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeM4v],
 					CreatedAt:   now,
 				},
 			},
@@ -122,12 +122,12 @@ func TestSaveGameVideoV2(t *testing.T) {
 				values.GameVideoTypeMkv,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{},
-			expectVideos: []migrate.GameVideoTable2{
+			beforeVideos: []schema.GameVideoTable2{},
+			expectVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID7),
 					GameID:      uuid.UUID(gameID6),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMkv],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMkv],
 					CreatedAt:   now,
 				},
 			},
@@ -140,8 +140,8 @@ func TestSaveGameVideoV2(t *testing.T) {
 				100,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{},
-			expectVideos: []migrate.GameVideoTable2{},
+			beforeVideos: []schema.GameVideoTable2{},
+			expectVideos: []schema.GameVideoTable2{},
 			isErr:        true,
 		},
 		{
@@ -152,25 +152,25 @@ func TestSaveGameVideoV2(t *testing.T) {
 				values.GameVideoTypeMp4,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{
+			beforeVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectVideos: []migrate.GameVideoTable2{
+			expectVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -183,19 +183,19 @@ func TestSaveGameVideoV2(t *testing.T) {
 				100,
 				now,
 			),
-			beforeVideos: []migrate.GameVideoTable2{
+			beforeVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
-			expectVideos: []migrate.GameVideoTable2{
+			expectVideos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -205,7 +205,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&migrate.GameTable2{
+			err := db.Create(&schema.GameTable2{
 				ID:               uuid.UUID(testCase.gameID),
 				Name:             "test",
 				Description:      "test",
@@ -229,7 +229,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var videos []migrate.GameVideoTable2
+			var videos []schema.GameVideoTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
@@ -240,7 +240,7 @@ func TestSaveGameVideoV2(t *testing.T) {
 
 			assert.Len(t, videos, len(testCase.expectVideos))
 
-			videoMap := make(map[uuid.UUID]migrate.GameVideoTable2)
+			videoMap := make(map[uuid.UUID]schema.GameVideoTable2)
 			for _, video := range videos {
 				videoMap[video.ID] = video
 			}
@@ -275,7 +275,7 @@ func TestGetGameVideo(t *testing.T) {
 		description string
 		videoID     values.GameVideoID
 		lockType    repository.LockType
-		videos      []migrate.GameVideoTable2
+		videos      []schema.GameVideoTable2
 		expectVideo repository.GameVideoInfo
 		isErr       bool
 		err         error
@@ -295,7 +295,7 @@ func TestGetGameVideo(t *testing.T) {
 	videoID6 := values.NewGameVideoID()
 	videoID7 := values.NewGameVideoID()
 
-	var videoTypes []*migrate.GameVideoTypeTable
+	var videoTypes []*schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -308,10 +308,10 @@ func TestGetGameVideo(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -325,11 +325,11 @@ func TestGetGameVideo(t *testing.T) {
 			description: "特に問題ないので問題なし",
 			videoID:     videoID1,
 			lockType:    repository.LockTypeNone,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -346,11 +346,11 @@ func TestGetGameVideo(t *testing.T) {
 			description: "mkv問題なし",
 			videoID:     videoID6,
 			lockType:    repository.LockTypeNone,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID4),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMkv],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMkv],
 					CreatedAt:   now,
 				},
 			},
@@ -367,11 +367,11 @@ func TestGetGameVideo(t *testing.T) {
 			description: "m4v問題なし",
 			videoID:     videoID7,
 			lockType:    repository.LockTypeNone,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID7),
 					GameID:      uuid.UUID(gameID5),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeM4v],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeM4v],
 					CreatedAt:   now,
 				},
 			},
@@ -388,11 +388,11 @@ func TestGetGameVideo(t *testing.T) {
 			description: "lockTypeがRecordでも問題なし",
 			videoID:     videoID2,
 			lockType:    repository.LockTypeRecord,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -408,17 +408,17 @@ func TestGetGameVideo(t *testing.T) {
 		{
 			description: "複数の動画があっても問題なし",
 			videoID:     videoID3,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -435,7 +435,7 @@ func TestGetGameVideo(t *testing.T) {
 			description: "動画が存在しないのでRecordNotFound",
 			videoID:     videoID5,
 			lockType:    repository.LockTypeNone,
-			videos:      []migrate.GameVideoTable2{},
+			videos:      []schema.GameVideoTable2{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -443,23 +443,23 @@ func TestGetGameVideo(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			gameIDMap := map[uuid.UUID]*schema.GameTable2{}
 			for _, video := range testCase.videos {
 				if game, ok := gameIDMap[video.GameID]; ok {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
-					gameIDMap[video.GameID] = &migrate.GameTable2{
+					gameIDMap[video.GameID] = &schema.GameTable2{
 						ID:               video.GameID,
 						Name:             "test",
 						Description:      "test",
 						CreatedAt:        now,
-						GameVideo2s:      []migrate.GameVideoTable2{video},
+						GameVideo2s:      []schema.GameVideoTable2{video},
 						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
 
-			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			games := make([]schema.GameTable2, 0, len(gameIDMap))
 			for _, game := range gameIDMap {
 				games = append(games, *game)
 			}
@@ -486,9 +486,9 @@ func TestGetGameVideo(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.expectVideo.GameVideo.GetID(), video.GameVideo.GetID())
-			assert.Equal(t, testCase.expectVideo.GameVideo.GetType(), video.GameVideo.GetType())
-			assert.WithinDuration(t, testCase.expectVideo.GameVideo.GetCreatedAt(), video.GameVideo.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.expectVideo.GetID(), video.GetID())
+			assert.Equal(t, testCase.expectVideo.GetType(), video.GetType())
+			assert.WithinDuration(t, testCase.expectVideo.GetCreatedAt(), video.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectVideo.GameID, video.GameID)
 		})
 	}
@@ -510,7 +510,7 @@ func TestGetGameVideos(t *testing.T) {
 		description  string
 		gameID       values.GameID
 		lockType     repository.LockType
-		videos       []migrate.GameVideoTable2
+		videos       []schema.GameVideoTable2
 		expectVideos []*domain.GameVideo
 		isErr        bool
 		err          error
@@ -530,7 +530,7 @@ func TestGetGameVideos(t *testing.T) {
 	videoID6 := values.NewGameVideoID()
 	videoID7 := values.NewGameVideoID()
 
-	var videoTypes []*migrate.GameVideoTypeTable
+	var videoTypes []*schema.GameVideoTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&videoTypes).Error
@@ -543,10 +543,10 @@ func TestGetGameVideos(t *testing.T) {
 		videoTypeMap[videoType.Name] = videoType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -560,11 +560,11 @@ func TestGetGameVideos(t *testing.T) {
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID1),
 					GameID:      uuid.UUID(gameID1),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -580,11 +580,11 @@ func TestGetGameVideos(t *testing.T) {
 			description: "lockTypeがRecordでも問題なし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeRecord,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID2),
 					GameID:      uuid.UUID(gameID2),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 			},
@@ -599,17 +599,17 @@ func TestGetGameVideos(t *testing.T) {
 		{
 			description: "複数の動画があっても問題なし",
 			gameID:      gameID3,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID3),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID4),
 					GameID:      uuid.UUID(gameID3),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 			},
@@ -629,23 +629,23 @@ func TestGetGameVideos(t *testing.T) {
 		{
 			description: "いろんなタイプの動画があっても問題なし",
 			gameID:      gameID5,
-			videos: []migrate.GameVideoTable2{
+			videos: []schema.GameVideoTable2{
 				{
 					ID:          uuid.UUID(videoID5),
 					GameID:      uuid.UUID(gameID5),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMp4],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMp4],
 					CreatedAt:   now,
 				},
 				{
 					ID:          uuid.UUID(videoID6),
 					GameID:      uuid.UUID(gameID5),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeMkv],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeMkv],
 					CreatedAt:   now.Add(-10 * time.Hour),
 				},
 				{
 					ID:          uuid.UUID(videoID7),
 					GameID:      uuid.UUID(gameID5),
-					VideoTypeID: videoTypeMap[migrate.GameVideoTypeM4v],
+					VideoTypeID: videoTypeMap[schema.GameVideoTypeM4v],
 					CreatedAt:   now.Add(-20 * time.Hour),
 				},
 			},
@@ -671,30 +671,30 @@ func TestGetGameVideos(t *testing.T) {
 			description:  "動画が存在しなくても問題なし",
 			gameID:       gameID4,
 			lockType:     repository.LockTypeNone,
-			videos:       []migrate.GameVideoTable2{},
+			videos:       []schema.GameVideoTable2{},
 			expectVideos: []*domain.GameVideo{},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			gameIDMap := map[uuid.UUID]*schema.GameTable2{}
 			for _, video := range testCase.videos {
 				if game, ok := gameIDMap[video.GameID]; ok {
 					game.GameVideo2s = append(game.GameVideo2s, video)
 				} else {
-					gameIDMap[video.GameID] = &migrate.GameTable2{
+					gameIDMap[video.GameID] = &schema.GameTable2{
 						ID:               video.GameID,
 						Name:             "test",
 						Description:      "test",
 						CreatedAt:        now,
-						GameVideo2s:      []migrate.GameVideoTable2{video},
+						GameVideo2s:      []schema.GameVideoTable2{video},
 						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
 
-			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			games := make([]schema.GameTable2, 0, len(gameIDMap))
 			for _, game := range gameIDMap {
 				games = append(games, *game)
 			}

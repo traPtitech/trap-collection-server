@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"go.uber.org/mock/gomock"
 
 	"github.com/google/uuid"
@@ -194,7 +194,7 @@ func TestPostEdition(t *testing.T) {
 		invalidBody          bool
 		executeCreateEdition bool
 		name                 values.LauncherVersionName
-		questionnaireURL     types.Option[values.LauncherVersionQuestionnaireURL]
+		questionnaireURL     option.Option[values.LauncherVersionQuestionnaireURL]
 		gameVersionIDs       []values.GameVersionID
 		createEditionErr     error
 		resultEdition        *domain.LauncherVersion
@@ -227,7 +227,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
+			questionnaireURL:     option.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID2),
@@ -254,7 +254,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:     option.Option[values.LauncherVersionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
 				editionID,
@@ -305,7 +305,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:     option.Option[values.LauncherVersionQuestionnaireURL]{},
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
@@ -322,7 +322,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:     option.Option[values.LauncherVersionQuestionnaireURL]{},
 			gameVersionIDs: []values.GameVersionID{
 				values.NewGameVersionIDFromUUID(gameVersionUUID1),
 				values.NewGameVersionIDFromUUID(gameVersionUUID2),
@@ -339,7 +339,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:     option.Option[values.LauncherVersionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			createEditionErr:     service.ErrInvalidGameVersionID,
 			isErr:                true,
@@ -353,7 +353,7 @@ func TestPostEdition(t *testing.T) {
 			},
 			executeCreateEdition: true,
 			name:                 values.NewLauncherVersionName(editionName),
-			questionnaireURL:     types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:     option.Option[values.LauncherVersionQuestionnaireURL]{},
 			gameVersionIDs:       []values.GameVersionID{values.NewGameVersionIDFromUUID(gameVersionUUID1)},
 			createEditionErr:     errors.New("internal error"),
 			isErr:                true,
@@ -635,7 +635,7 @@ func TestPatchEdition(t *testing.T) {
 		executeUpdateMock bool
 		launcherVersionID values.LauncherVersionID
 		name              values.LauncherVersionName
-		questionnaireURL  types.Option[values.LauncherVersionQuestionnaireURL]
+		questionnaireURL  option.Option[values.LauncherVersionQuestionnaireURL]
 		updateEditionErr  error
 		resultEdition     *domain.LauncherVersion
 		isErr             bool
@@ -666,7 +666,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
+			questionnaireURL:  option.NewOption(values.NewLauncherVersionQuestionnaireURL(questionnaireURL)),
 			resultEdition: domain.NewLauncherVersionWithQuestionnaire(
 				editionID,
 				values.NewLauncherVersionName(editionName),
@@ -690,7 +690,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:  option.Option[values.LauncherVersionQuestionnaireURL]{},
 			resultEdition: domain.NewLauncherVersionWithoutQuestionnaire(
 				editionID,
 				values.NewLauncherVersionName(editionName),
@@ -748,7 +748,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:  option.Option[values.LauncherVersionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrInvalidEditionID,
 			isErr:             true,
 			statusCode:        http.StatusBadRequest,
@@ -762,7 +762,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:  option.Option[values.LauncherVersionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrDuplicateGameVersion,
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -776,7 +776,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:  option.Option[values.LauncherVersionQuestionnaireURL]{},
 			updateEditionErr:  service.ErrDuplicateGame,
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -790,7 +790,7 @@ func TestPatchEdition(t *testing.T) {
 			executeUpdateMock: true,
 			launcherVersionID: editionID,
 			name:              values.NewLauncherVersionName(editionName),
-			questionnaireURL:  types.Option[values.LauncherVersionQuestionnaireURL]{},
+			questionnaireURL:  option.Option[values.LauncherVersionQuestionnaireURL]{},
 			updateEditionErr:  errors.New("internal error"),
 			isErr:             true,
 			statusCode:        http.StatusInternalServerError,
@@ -935,7 +935,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							URL: types.NewOption(urlValue),
+							URL: option.NewOption(urlValue),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1002,7 +1002,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Windows: types.NewOption(fileID1),
+							Windows: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1039,7 +1039,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Mac: types.NewOption(fileID1),
+							Mac: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1076,7 +1076,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Jar: types.NewOption(fileID1),
+							Jar: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1113,8 +1113,8 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Jar:     types.NewOption(fileID1),
-							Windows: types.NewOption(fileID2),
+							Jar:     option.NewOption(fileID1),
+							Windows: option.NewOption(fileID2),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1152,8 +1152,8 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Windows: types.NewOption(fileID1),
-							URL:     types.NewOption(urlValue),
+							Windows: option.NewOption(fileID1),
+							URL:     option.NewOption(urlValue),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1191,7 +1191,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							URL: types.NewOption(urlValue),
+							URL: option.NewOption(urlValue),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1202,7 +1202,7 @@ func TestGetEditionGames(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion2,
 						Assets: &service.Assets{
-							URL: types.NewOption(urlValue),
+							URL: option.NewOption(urlValue),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1511,7 +1511,7 @@ func TestPatchEditionGame(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Windows: types.NewOption(fileID1),
+							Windows: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1554,7 +1554,7 @@ func TestPatchEditionGame(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Mac: types.NewOption(fileID2),
+							Mac: option.NewOption(fileID2),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1597,7 +1597,7 @@ func TestPatchEditionGame(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Jar: types.NewOption(fileID1),
+							Jar: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1640,8 +1640,8 @@ func TestPatchEditionGame(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							Windows: types.NewOption(fileID1),
-							Mac:     types.NewOption(fileID2),
+							Windows: option.NewOption(fileID1),
+							Mac:     option.NewOption(fileID2),
 						},
 						ImageID: imageID,
 						VideoID: videoID,
@@ -1685,8 +1685,8 @@ func TestPatchEditionGame(t *testing.T) {
 					GameVersion: service.GameVersionInfo{
 						GameVersion: gameVersion,
 						Assets: &service.Assets{
-							URL:     types.NewOption(urlValue),
-							Windows: types.NewOption(fileID1),
+							URL:     option.NewOption(urlValue),
+							Windows: option.NewOption(fileID1),
 						},
 						ImageID: imageID,
 						VideoID: videoID,

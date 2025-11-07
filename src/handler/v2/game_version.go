@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -95,9 +95,9 @@ func (gameVersion *GameVersion) GetGameVersion(c echo.Context, gameID openapi.Ga
 		}
 
 		resVersions = append(resVersions, openapi.GameVersion{
-			Id:          openapi.GameVersionID(version.GameVersion.GetID()),
-			Name:        string(version.GameVersion.GetName()),
-			Description: string(version.GameVersion.GetDescription()),
+			Id:          openapi.GameVersionID(version.GetID()),
+			Name:        string(version.GetName()),
+			Description: string(version.GetDescription()),
 			CreatedAt:   version.GetCreatedAt(),
 			ImageID:     openapi.GameImageID(version.ImageID),
 			VideoID:     openapi.GameVideoID(version.VideoID),
@@ -127,32 +127,32 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %s", err.Error()))
 	}
 
-	var reqURL types.Option[values.GameURLLink]
+	var reqURL option.Option[values.GameURLLink]
 	if newGameVersion.Url != nil {
 		urlValue, err := url.Parse(*newGameVersion.Url)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid url")
 		}
 
-		reqURL = types.NewOption(values.NewGameURLLink(urlValue))
+		reqURL = option.NewOption(values.NewGameURLLink(urlValue))
 	}
 
 	var (
-		reqWindows types.Option[values.GameFileID]
-		reqMac     types.Option[values.GameFileID]
-		reqJar     types.Option[values.GameFileID]
+		reqWindows option.Option[values.GameFileID]
+		reqMac     option.Option[values.GameFileID]
+		reqJar     option.Option[values.GameFileID]
 	)
 	if newGameVersion.Files != nil {
 		if newGameVersion.Files.Win32 != nil {
-			reqWindows = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Win32))
+			reqWindows = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Win32))
 		}
 
 		if newGameVersion.Files.Darwin != nil {
-			reqMac = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Darwin))
+			reqMac = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Darwin))
 		}
 
 		if newGameVersion.Files.Jar != nil {
-			reqJar = types.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Jar))
+			reqJar = option.NewOption(values.NewGameFileIDFromUUID(*newGameVersion.Files.Jar))
 		}
 	}
 
@@ -221,9 +221,9 @@ func (gameVersion *GameVersion) PostGameVersion(c echo.Context, gameID openapi.G
 	}
 
 	return c.JSON(http.StatusCreated, openapi.GameVersion{
-		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
-		Name:        string(gameVersionInfo.GameVersion.GetName()),
-		Description: string(gameVersionInfo.GameVersion.GetDescription()),
+		Id:          openapi.GameVersionID(gameVersionInfo.GetID()),
+		Name:        string(gameVersionInfo.GetName()),
+		Description: string(gameVersionInfo.GetDescription()),
 		CreatedAt:   gameVersionInfo.GetCreatedAt(),
 		ImageID:     openapi.GameImageID(gameVersionInfo.ImageID),
 		VideoID:     openapi.GameVideoID(gameVersionInfo.VideoID),
@@ -281,9 +281,9 @@ func (gameVersion *GameVersion) GetLatestGameVersion(ctx echo.Context, gameID op
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.GameVersion{
-		Id:          openapi.GameVersionID(gameVersionInfo.GameVersion.GetID()),
-		Name:        string(gameVersionInfo.GameVersion.GetName()),
-		Description: string(gameVersionInfo.GameVersion.GetDescription()),
+		Id:          openapi.GameVersionID(gameVersionInfo.GetID()),
+		Name:        string(gameVersionInfo.GetName()),
+		Description: string(gameVersionInfo.GetDescription()),
 		CreatedAt:   gameVersionInfo.GetCreatedAt(),
 		ImageID:     openapi.GameImageID(gameVersionInfo.ImageID),
 		VideoID:     openapi.GameVideoID(gameVersionInfo.VideoID),
