@@ -181,6 +181,15 @@ paths:
           description: |
             falseの場合botを除外します。
             デフォルトではbotも含めます。
+        - name: includeSuspended
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: |
+            trueの場合、凍結済みユーザーも含めます。
+            デフォルトでは凍結済みユーザーは含めません。
       security:
         - TrapMemberAuth: []
       operationId: getUsers
@@ -199,7 +208,9 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       summary: traPのメンバー一覧取得
       description: |
-        traPのアクティブメンバーの一覧を取得します。
+        traPのメンバーの一覧を取得します。
+        `includeSuspended`を`true`にした場合、凍結済みユーザーが含まれます。
+        `includeSuspended`の条件は、traQのAPIの `/api/v3/users` に準拠します。
 
   # admin
   /admins:
