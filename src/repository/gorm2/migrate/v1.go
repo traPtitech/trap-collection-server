@@ -29,7 +29,7 @@ func v1() *gormigrate.Migration {
 		&gameVideoTypeTable{},
 		&gameManagementRoleTable{},
 		&gameManagementRoleTypeTable{},
-		&editionTable{},
+		&launcherVersionTable{},
 		&launcherUserTable{},
 		&launcherSessionTable{},
 	}
@@ -325,29 +325,29 @@ func setupGameManagementRoleTypeTableV1(db *gorm.DB) error {
 	return nil
 }
 
-type editionTable struct {
+type launcherVersionTable struct {
 	ID               uuid.UUID           `gorm:"type:varchar(36);not null;primaryKey"`
 	Name             string              `gorm:"type:varchar(32);not null;unique"`
 	QuestionnaireURL sql.NullString      `gorm:"type:text;default:NULL"`
 	CreatedAt        time.Time           `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt        gorm.DeletedAt      `gorm:"type:DATETIME NULL;default:NULL"`
-	LauncherUsers    []launcherUserTable `gorm:"foreignKey:EditionID"`
+	LauncherUsers    []launcherUserTable `gorm:"foreignKey:LauncherVersionID"`
 	// gormigrateを使用していなかったv1との互換性のため、
 	// joinForeignKey、joinReferencesを指定している
 	Games []gameTable `gorm:"many2many:launcher_version_game_relations"`
 }
 
-func (*editionTable) TableName() string {
+func (*launcherVersionTable) TableName() string {
 	return "launcher_versions"
 }
 
 type launcherUserTable struct {
-	ID               uuid.UUID              `gorm:"type:varchar(36);not null;primaryKey"`
-	EditionID        uuid.UUID              `gorm:"type:varchar(36);not null"`
-	ProductKey       string                 `gorm:"type:varchar(29);not null;unique"`
-	CreatedAt        time.Time              `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt        gorm.DeletedAt         `gorm:"type:DATETIME NULL;default:NULL"`
-	LauncherSessions []launcherSessionTable `gorm:"foreignKey:LauncherUserID"`
+	ID                uuid.UUID              `gorm:"type:varchar(36);not null;primaryKey"`
+	LauncherVersionID uuid.UUID              `gorm:"type:varchar(36);not null"`
+	ProductKey        string                 `gorm:"type:varchar(29);not null;unique"`
+	CreatedAt         time.Time              `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt         gorm.DeletedAt         `gorm:"type:DATETIME NULL;default:NULL"`
+	LauncherSessions  []launcherSessionTable `gorm:"foreignKey:LauncherUserID"`
 }
 
 func (*launcherUserTable) TableName() string {

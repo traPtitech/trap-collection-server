@@ -26,6 +26,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - src/repository/gorm2/migrate/
 formatters:
   enable:
     - gofmt

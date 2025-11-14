@@ -16,7 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -145,13 +145,13 @@ func TestGetProductKeys(t *testing.T) {
 			editionAuth := NewEditionAuth(NewContext(), mockEditionAuthService)
 
 			if testCase.executeGetProductKeys {
-				var status types.Option[values.LauncherUserStatus]
+				var status option.Option[values.LauncherUserStatus]
 				if testCase.params.Status != nil {
 					switch *testCase.params.Status {
 					case openapi.Active:
-						status = types.NewOption(values.LauncherUserStatusActive)
+						status = option.NewOption(values.LauncherUserStatusActive)
 					case openapi.Revoked:
-						status = types.NewOption(values.LauncherUserStatusInactive)
+						status = option.NewOption(values.LauncherUserStatusInactive)
 					default:
 						t.Fatalf("invalid params: %+v", testCase.params)
 					}

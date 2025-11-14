@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -73,5 +73,5 @@ type GetProductKeysParams struct {
 	// Status
 	// プロダクトキーのステータス。
 	// 指定しない場合は、全てのステータスのプロダクトキーを取得します。
-	Status types.Option[values.LauncherUserStatus]
+	Status option.Option[values.LauncherUserStatus]
 }

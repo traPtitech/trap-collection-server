@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -31,16 +31,16 @@ func TestRemoveGameGenre(t *testing.T) {
 
 	type test struct {
 		genreID          values.GameGenreID
-		beforeGameGenres []migrate.GameGenreTable
-		afterGameGenres  []migrate.GameGenreTable
+		beforeGameGenres []schema.GameGenreTable
+		afterGameGenres  []schema.GameGenreTable
 		isErr            bool
 		expectedErr      error
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	gameVisibilityTypeIDPublic := gameVisibilityPublic.ID
 
@@ -59,25 +59,25 @@ func TestRemoveGameGenre(t *testing.T) {
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
 			genreID: genreID1,
-			beforeGameGenres: []migrate.GameGenreTable{
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID1),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{},
+			afterGameGenres: []schema.GameGenreTable{},
 		},
 		"該当するジャンルが存在しないのでErrNoRecordDeleted": {
 			genreID: genreID2,
-			beforeGameGenres: []migrate.GameGenreTable{
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID3),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID3),
 					Name:      "test",
@@ -89,7 +89,7 @@ func TestRemoveGameGenre(t *testing.T) {
 		},
 		"ジャンルが複数あっても問題なし": {
 			genreID: genreID4,
-			beforeGameGenres: []migrate.GameGenreTable{
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID4),
 					Name:      "test1",
@@ -101,7 +101,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					CreatedAt: now.Add(-time.Hour * 2),
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID5),
 					Name:      "test2",
@@ -111,12 +111,12 @@ func TestRemoveGameGenre(t *testing.T) {
 		},
 		"ゲームが紐づいていてもエラー無し": {
 			genreID: genreID6,
-			beforeGameGenres: []migrate.GameGenreTable{
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID6),
 					Name:      "test",
 					CreatedAt: now.Add(-time.Hour),
-					Games: []*migrate.GameTable2{
+					Games: []*schema.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -130,7 +130,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games: []*migrate.GameTable2{
+					Games: []*schema.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -141,12 +141,12 @@ func TestRemoveGameGenre(t *testing.T) {
 					},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(genreID7),
 					Name:      "test2",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games: []*migrate.GameTable2{
+					Games: []*schema.GameTable2{
 						{
 							ID:               uuid.UUID(gameID1),
 							Name:             "test",
@@ -169,7 +169,7 @@ func TestRemoveGameGenre(t *testing.T) {
 						AllowGlobalUpdate: true,
 					})
 
-				var genres []migrate.GameGenreTable
+				var genres []schema.GameGenreTable
 				err := _db.Find(&genres).Error
 				if err != nil {
 					t.Fatalf("failed to get genres")
@@ -182,7 +182,7 @@ func TestRemoveGameGenre(t *testing.T) {
 					t.Fatalf("failed to delete genres: %+v\n", err)
 				}
 
-				err = _db.Delete(&migrate.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
+				err = _db.Delete(&schema.GameTable2{VisibilityTypeID: gameVisibilityTypeIDPublic}).Error
 				if err != nil {
 					t.Fatalf("failed to delete games: %+v\n", err)
 				}
@@ -211,7 +211,7 @@ func TestRemoveGameGenre(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var genres []migrate.GameGenreTable
+			var genres []schema.GameGenreTable
 			err = db.
 				Preload("Games").
 				Find(&genres).Error
@@ -251,7 +251,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 
 	type test struct {
 		gameGenreNames     []values.GameGenreName
-		gameGenres         []migrate.GameGenreTable
+		gameGenres         []schema.GameGenreTable
 		isErr              bool
 		expectedGameGenres []*domain.GameGenre
 		expectedErr        error
@@ -265,7 +265,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
 			gameGenreNames: []values.GameGenreName{values.NewGameGenreName("ジャンル")},
-			gameGenres: []migrate.GameGenreTable{
+			gameGenres: []schema.GameGenreTable{
 				{
 					ID:        gameGenreID1,
 					Name:      "ジャンル",
@@ -281,7 +281,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 				values.NewGameGenreName("ジャンル1"),
 				values.NewGameGenreName("ジャンル2"),
 			},
-			gameGenres: []migrate.GameGenreTable{
+			gameGenres: []schema.GameGenreTable{
 				{
 					ID:        gameGenreID1,
 					Name:      "ジャンル1",
@@ -302,7 +302,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 			gameGenreNames: []values.GameGenreName{
 				values.NewGameGenreName("ジャンル1"),
 			},
-			gameGenres: []migrate.GameGenreTable{
+			gameGenres: []schema.GameGenreTable{
 				{
 					ID:        gameGenreID1,
 					Name:      "ジャンル1",
@@ -322,7 +322,7 @@ func TestGetGameGenresWithNames(t *testing.T) {
 			gameGenreNames: []values.GameGenreName{
 				values.NewGameGenreName("ジャンル1"),
 			},
-			gameGenres: []migrate.GameGenreTable{
+			gameGenres: []schema.GameGenreTable{
 				{
 					ID:        gameGenreID2,
 					Name:      "ジャンル2",
@@ -389,8 +389,8 @@ func TestSaveGameGenres(t *testing.T) {
 
 	type test struct {
 		gameGenres       []*domain.GameGenre
-		beforeGameGenres []migrate.GameGenreTable
-		afterGameGenres  []migrate.GameGenreTable
+		beforeGameGenres []schema.GameGenreTable
+		afterGameGenres  []schema.GameGenreTable
 		isErr            bool
 		expectedErr      error
 	}
@@ -406,12 +406,12 @@ func TestSaveGameGenres(t *testing.T) {
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
 			gameGenres:      []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
-			afterGameGenres: []migrate.GameGenreTable{{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now}},
+			afterGameGenres: []schema.GameGenreTable{{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now}},
 		},
 		"他にジャンルがあってもエラー無し": {
 			gameGenres:       []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
-			beforeGameGenres: []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Hour)}},
-			afterGameGenres: []migrate.GameGenreTable{
+			beforeGameGenres: []schema.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Hour)}},
+			afterGameGenres: []schema.GameGenreTable{
 				{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now},
 				{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Hour)},
 			},
@@ -421,15 +421,15 @@ func TestSaveGameGenres(t *testing.T) {
 				domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now),
 				domain.NewGameGenre(values.GameGenreID(gameGenreID2), values.GameGenreName(gameGenreName2), now.Add(-time.Second)),
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{ID: gameGenreID1, Name: gameGenreName1, CreatedAt: now},
 				{ID: gameGenreID2, Name: gameGenreName2, CreatedAt: now.Add(-time.Second)},
 			},
 		},
 		"ジャンルが重複しているのでErrDuplicatedUniqueKey": {
 			gameGenres:       []*domain.GameGenre{domain.NewGameGenre(values.GameGenreID(gameGenreID1), values.GameGenreName(gameGenreName1), now)},
-			beforeGameGenres: []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
-			afterGameGenres:  []migrate.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
+			beforeGameGenres: []schema.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
+			afterGameGenres:  []schema.GameGenreTable{{ID: gameGenreID2, Name: gameGenreName1, CreatedAt: now.Add(-time.Hour)}},
 			isErr:            true,
 			expectedErr:      repository.ErrDuplicatedUniqueKey,
 		},
@@ -458,7 +458,7 @@ func TestSaveGameGenres(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var genres []migrate.GameGenreTable
+			var genres []schema.GameGenreTable
 
 			err = db.Order("created_at desc").Find(&genres).Error
 			if err != nil {
@@ -489,16 +489,16 @@ func TestRegisterGenresToGame(t *testing.T) {
 	type test struct {
 		gameID           values.GameID
 		gameGenreIDs     []values.GameGenreID
-		games            []migrate.GameTable2
-		beforeGameGenres []migrate.GameGenreTable
-		afterGameGenres  []migrate.GameGenreTable
+		games            []schema.GameTable2
+		beforeGameGenres []schema.GameGenreTable
+		afterGameGenres  []schema.GameGenreTable
 		isErr            bool
 		expectedErr      error
 	}
 
 	gameID1 := values.NewGameID()
 
-	game1 := migrate.GameTable2{
+	game1 := schema.GameTable2{
 		ID:               uuid.UUID(gameID1),
 		Name:             "test",
 		Description:      "test",
@@ -515,108 +515,108 @@ func TestRegisterGenresToGame(t *testing.T) {
 		"特に問題ないのでエラー無し": {
 			gameID:       gameID1,
 			gameGenreIDs: []values.GameGenreID{gameGenreID1},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
 		},
 		"違うジャンルが紐づいていても問題なし": {
 			gameID:       gameID1,
 			gameGenreIDs: []values.GameGenreID{gameGenreID2},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "ジャンル2",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "ジャンル2",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
 		},
 		"ジャンルの追加でも問題なし": {
 			gameID:       gameID1,
 			gameGenreIDs: []values.GameGenreID{gameGenreID1, gameGenreID2},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "ジャンル2",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "ジャンル2",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
 		},
 		"存在しないゲームなのでエラー": {
 			gameID:       values.NewGameID(),
 			gameGenreIDs: []values.GameGenreID{gameGenreID1},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
 			isErr:       true,
@@ -625,21 +625,21 @@ func TestRegisterGenresToGame(t *testing.T) {
 		"存在しないジャンルなのでエラー": {
 			gameID:       gameID1,
 			gameGenreIDs: []values.GameGenreID{values.NewGameGenreID()},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
 			isErr:       true,
@@ -648,21 +648,21 @@ func TestRegisterGenresToGame(t *testing.T) {
 		"ジャンルが空でもエラー無し": {
 			gameID:       gameID1,
 			gameGenreIDs: []values.GameGenreID{},
-			games:        []migrate.GameTable2{game1},
-			beforeGameGenres: []migrate.GameGenreTable{
+			games:        []schema.GameTable2{game1},
+			beforeGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{&game1},
+					Games:     []*schema.GameTable2{&game1},
 				},
 			},
-			afterGameGenres: []migrate.GameGenreTable{
+			afterGameGenres: []schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "ジャンル1",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
 		},
@@ -675,7 +675,7 @@ func TestRegisterGenresToGame(t *testing.T) {
 				err := db.
 					Session(&gorm.Session{AllowGlobalUpdate: true}).
 					Unscoped().
-					Delete(&migrate.GameTable2{}).Error
+					Delete(&schema.GameTable2{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete games: %+v\n", err)
 				}
@@ -707,7 +707,7 @@ func TestRegisterGenresToGame(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var genres []migrate.GameGenreTable
+			var genres []schema.GameGenreTable
 
 			genreIDs := make([]uuid.UUID, 0, len(testCase.afterGameGenres))
 			for i := range testCase.afterGameGenres {
@@ -753,7 +753,7 @@ func TestGetGameGenres(t *testing.T) {
 
 	type test struct {
 		visibilities       []values.GameVisibility
-		gameGenres         []*migrate.GameGenreTable
+		gameGenres         []*schema.GameGenreTable
 		expectedGenresInfo []*repository.GameGenreInfo
 		isErr              bool
 		expectedErr        error
@@ -761,7 +761,7 @@ func TestGetGameGenres(t *testing.T) {
 
 	now := time.Now()
 
-	var visibilities []migrate.GameVisibilityTypeTable
+	var visibilities []schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&visibilities).Error
@@ -773,9 +773,9 @@ func TestGetGameGenres(t *testing.T) {
 	var gameVisibilityTypeIDPrivate int
 	for i := range visibilities {
 		switch visibilities[i].Name {
-		case migrate.GameVisibilityTypePublic:
+		case schema.GameVisibilityTypePublic:
 			gameVisibilityTypeIDPublic = visibilities[i].ID
-		case migrate.GameVisibilityTypePrivate:
+		case schema.GameVisibilityTypePrivate:
 			gameVisibilityTypeIDPrivate = visibilities[i].ID
 		}
 	}
@@ -783,13 +783,13 @@ func TestGetGameGenres(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
-	game1 := &migrate.GameTable2{
+	game1 := &schema.GameTable2{
 		ID:               uuid.UUID(gameID1),
 		Name:             "game1",
 		VisibilityTypeID: gameVisibilityTypeIDPublic,
 		CreatedAt:        now.Add(-time.Hour),
 	}
-	game2 := &migrate.GameTable2{
+	game2 := &schema.GameTable2{
 		ID:               uuid.UUID(gameID2),
 		Name:             "game2",
 		VisibilityTypeID: gameVisibilityTypeIDPrivate,
@@ -802,12 +802,12 @@ func TestGetGameGenres(t *testing.T) {
 	testCases := map[string]test{
 		"特に問題ないのでエラー無し": {
 			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
-			gameGenres: []*migrate.GameGenreTable{
+			gameGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "3D",
 					CreatedAt: now,
-					Games:     []*migrate.GameTable2{game1},
+					Games:     []*schema.GameTable2{game1},
 				},
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
@@ -816,23 +816,23 @@ func TestGetGameGenres(t *testing.T) {
 		},
 		"ジャンルが無くてもエラー無し": {
 			visibilities:       []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
-			gameGenres:         []*migrate.GameGenreTable{},
+			gameGenres:         []*schema.GameGenreTable{},
 			expectedGenresInfo: []*repository.GameGenreInfo{},
 		},
 		"ジャンルがたくさんあってもエラー無し": {
 			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
-			gameGenres: []*migrate.GameGenreTable{
+			gameGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "3D",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{game1},
+					Games:     []*schema.GameTable2{game1},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "2D",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games:     []*migrate.GameTable2{game2},
+					Games:     []*schema.GameTable2{game2},
 				},
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
@@ -842,18 +842,18 @@ func TestGetGameGenres(t *testing.T) {
 		},
 		"1つのジャンルにゲームがたくさんあってもエラー無し": {
 			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
-			gameGenres: []*migrate.GameGenreTable{
+			gameGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "3D",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{game1, game2},
+					Games:     []*schema.GameTable2{game1, game2},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "2D",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games:     []*migrate.GameTable2{game1, game2},
+					Games:     []*schema.GameTable2{game1, game2},
 				},
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
@@ -863,18 +863,18 @@ func TestGetGameGenres(t *testing.T) {
 		},
 		"1つのジャンルにゲームが無くてもエラー無し": {
 			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited, values.GameVisibilityTypePrivate},
-			gameGenres: []*migrate.GameGenreTable{
+			gameGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "3D",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{game1, game2},
+					Games:     []*schema.GameTable2{game1, game2},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "2D",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
@@ -883,18 +883,18 @@ func TestGetGameGenres(t *testing.T) {
 		},
 		"全てのvisibilityでなくてもok": {
 			visibilities: []values.GameVisibility{values.GameVisibilityTypePublic, values.GameVisibilityTypeLimited},
-			gameGenres: []*migrate.GameGenreTable{
+			gameGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "3D",
 					CreatedAt: now.Add(-time.Hour),
-					Games:     []*migrate.GameTable2{game1, game2},
+					Games:     []*schema.GameTable2{game1, game2},
 				},
 				{
 					ID:        uuid.UUID(gameGenreID2),
 					Name:      "2D",
 					CreatedAt: now.Add(-time.Hour * 2),
-					Games:     []*migrate.GameTable2{},
+					Games:     []*schema.GameTable2{},
 				},
 			},
 			expectedGenresInfo: []*repository.GameGenreInfo{
@@ -912,7 +912,7 @@ func TestGetGameGenres(t *testing.T) {
 			defer func() {
 				cleanupGameGenresTable(t)
 				err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).
-					Delete(&migrate.GameTable2{}).Error
+					Delete(&schema.GameTable2{}).Error
 				if err != nil {
 					t.Fatalf("failed to clean up games table: %v\n", err)
 				}
@@ -970,13 +970,13 @@ func TestUpdateGameGenre(t *testing.T) {
 	now := time.Now()
 
 	testCases := map[string]struct {
-		currentGenres []*migrate.GameGenreTable
+		currentGenres []*schema.GameGenreTable
 		gameGenre     *domain.GameGenre
 		isErr         bool
 		expectedErr   error
 	}{
 		"特に問題ないのでエラー無し": {
-			currentGenres: []*migrate.GameGenreTable{
+			currentGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "test",
@@ -986,7 +986,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
 		},
 		"他のジャンルがあってもエラー無し": {
-			currentGenres: []*migrate.GameGenreTable{
+			currentGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "test",
@@ -1001,7 +1001,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			gameGenre: domain.NewGameGenre(gameGenreID1, "test2", now),
 		},
 		"ジャンルが存在しないのでErrNoRecordUpdated": {
-			currentGenres: []*migrate.GameGenreTable{
+			currentGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "test",
@@ -1013,7 +1013,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			expectedErr: repository.ErrNoRecordUpdated,
 		},
 		"ジャンル名が存在するのでErrDuplicatedUniqueKey": {
-			currentGenres: []*migrate.GameGenreTable{
+			currentGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "test",
@@ -1030,7 +1030,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			expectedErr: repository.ErrDuplicatedUniqueKey,
 		},
 		"変更が無いのでErrNoRecordUpdated": {
-			currentGenres: []*migrate.GameGenreTable{
+			currentGenres: []*schema.GameGenreTable{
 				{
 					ID:        uuid.UUID(gameGenreID1),
 					Name:      "test",
@@ -1048,7 +1048,7 @@ func TestUpdateGameGenre(t *testing.T) {
 			require.NoError(t, db.Create(testCase.currentGenres).Error)
 			t.Cleanup(func() {
 				require.NoError(t, db.
-					Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+					Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&schema.GameGenreTable{}).Error)
 			})
 
 			err := gameGenreRepository.UpdateGameGenre(ctx, testCase.gameGenre)
@@ -1064,12 +1064,12 @@ func TestUpdateGameGenre(t *testing.T) {
 			}
 
 			{
-				var afterGenres []*migrate.GameGenreTable
+				var afterGenres []*schema.GameGenreTable
 				err := db.
-					Model(&migrate.GameGenreTable{}).Find(&afterGenres).Error
+					Model(&schema.GameGenreTable{}).Find(&afterGenres).Error
 				require.NoError(t, err)
 
-				genresMap := make(map[uuid.UUID]*migrate.GameGenreTable, len(testCase.currentGenres))
+				genresMap := make(map[uuid.UUID]*schema.GameGenreTable, len(testCase.currentGenres))
 				for _, genre := range testCase.currentGenres {
 					genresMap[genre.ID] = genre
 				}
@@ -1077,11 +1077,6 @@ func TestUpdateGameGenre(t *testing.T) {
 				for _, afterGenre := range afterGenres {
 					if afterGenre.ID == uuid.UUID(testCase.gameGenre.GetID()) && !testCase.isErr {
 						assert.Equal(t, string(testCase.gameGenre.GetName()), afterGenre.Name)
-					} else {
-						slices.IndexFunc(testCase.currentGenres, func(g *migrate.GameGenreTable) bool {
-							return g.ID == afterGenre.ID
-						})
-						assert.Equal(t, string(afterGenre.Name), afterGenre.Name)
 					}
 				}
 			}
@@ -1099,7 +1094,7 @@ func TestGetGameGenre(t *testing.T) {
 
 	gameGenreRepository := NewGameGenre(testDB)
 
-	gameGenres := []migrate.GameGenreTable{
+	gameGenres := []schema.GameGenreTable{
 		{ID: uuid.New(), Name: "test", CreatedAt: time.Now()},
 		{ID: uuid.New(), Name: "test2", CreatedAt: time.Now()},
 	}
@@ -1107,7 +1102,7 @@ func TestGetGameGenre(t *testing.T) {
 	require.NoError(t, db.Create(&gameGenres).Error)
 	t.Cleanup(func() {
 		require.NoError(t, db.
-			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameGenreTable{}).Error)
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&schema.GameGenreTable{}).Error)
 	})
 
 	testCases := map[string]struct {
@@ -1166,18 +1161,18 @@ func TestGetGamesByGenreID(t *testing.T) {
 	gameGenreID2 := values.NewGameGenreID()
 	gameGenreID3 := values.NewGameGenreID()
 
-	gameGenre1 := migrate.GameGenreTable{
+	gameGenre1 := schema.GameGenreTable{
 		ID:        uuid.UUID(gameGenreID1),
 		Name:      "ジャンル1",
 		CreatedAt: now,
 	}
-	gameGenre2 := migrate.GameGenreTable{
+	gameGenre2 := schema.GameGenreTable{
 		ID:        uuid.UUID(gameGenreID2),
 		Name:      "ジャンル2",
 		CreatedAt: now.Add(-time.Hour),
 	}
 
-	var visibilities []migrate.GameVisibilityTypeTable
+	var visibilities []schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&visibilities).Error
@@ -1187,7 +1182,7 @@ func TestGetGamesByGenreID(t *testing.T) {
 
 	var gameVisibilityTypeIDPublic int
 	for i := range visibilities {
-		if visibilities[i].Name == migrate.GameVisibilityTypePublic {
+		if visibilities[i].Name == schema.GameVisibilityTypePublic {
 			gameVisibilityTypeIDPublic = visibilities[i].ID
 		}
 	}
@@ -1195,14 +1190,14 @@ func TestGetGamesByGenreID(t *testing.T) {
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
-	games := []migrate.GameTable2{
+	games := []schema.GameTable2{
 		{
 			ID:               uuid.UUID(gameID1),
 			Name:             "test",
 			Description:      "test",
 			CreatedAt:        now,
 			VisibilityTypeID: gameVisibilityTypeIDPublic,
-			GameGenres:       []*migrate.GameGenreTable{&gameGenre1, &gameGenre2},
+			GameGenres:       []*schema.GameGenreTable{&gameGenre1, &gameGenre2},
 		},
 		{
 			ID:               uuid.UUID(gameID2),
@@ -1210,7 +1205,7 @@ func TestGetGamesByGenreID(t *testing.T) {
 			Description:      "test2",
 			CreatedAt:        now.Add(-time.Hour),
 			VisibilityTypeID: gameVisibilityTypeIDPublic,
-			GameGenres:       []*migrate.GameGenreTable{&gameGenre2},
+			GameGenres:       []*schema.GameGenreTable{&gameGenre2},
 		},
 	}
 
@@ -1218,7 +1213,7 @@ func TestGetGamesByGenreID(t *testing.T) {
 	t.Cleanup(func() {
 		cleanupGameGenresTable(t)
 		require.NoError(t, db.
-			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&migrate.GameTable2{}).Error)
+			Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(&schema.GameTable2{}).Error)
 	})
 
 	testCases := map[string]struct {
@@ -1291,7 +1286,7 @@ func cleanupGameGenresTable(t *testing.T) {
 
 	db = db.Session(&gorm.Session{AllowGlobalUpdate: true})
 
-	var genres []migrate.GameGenreTable
+	var genres []schema.GameGenreTable
 	err = db.Find(&genres).Error
 	if err != nil {
 		t.Fatalf("failed to get genres")

@@ -5,7 +5,7 @@ package service
 import (
 	"context"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
@@ -15,7 +15,7 @@ import (
 // ref: https://github.com/golang/mock/pull/640
 // TODO: mockgenのv1.7.0がリリースされ次第削除する
 type (
-	OptionQuestionnaireURL = types.Option[values.EditionQuestionnaireURL]
+	OptionQuestionnaireURL = option.Option[values.EditionQuestionnaireURL]
 )
 
 type Edition interface {

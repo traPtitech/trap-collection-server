@@ -27,7 +27,7 @@ func NewGameVersionName(name string) GameVersionName {
 }
 
 var (
-	ErrGameVersionNameInvalidSemanticVersion = errors.New("Invalid semantic version")
+	ErrGameVersionNameInvalidSemanticVersion = errors.New("invalid semantic version")
 )
 
 func (gvn GameVersionName) Validate() error {

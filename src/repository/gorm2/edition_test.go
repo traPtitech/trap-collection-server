@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -34,7 +34,7 @@ func TestSaveEdition(t *testing.T) {
 	type test struct {
 		description     string
 		edition         *domain.Edition
-		beforeEditions  []migrate.EditionTable2
+		beforeEditions  []schema.EditionTable
 		noQuestionnaire bool
 		isErr           bool
 		err             error
@@ -68,7 +68,7 @@ func TestSaveEdition(t *testing.T) {
 				urlLink,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.New(),
 					Name:             "test3",
@@ -94,7 +94,7 @@ func TestSaveEdition(t *testing.T) {
 				urlLink,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID),
 					Name:             "test6",
@@ -132,7 +132,7 @@ func TestSaveEdition(t *testing.T) {
 			return
 		}
 
-		var edition migrate.EditionTable2
+		var edition schema.EditionTable
 		err = db.
 			Session(&gorm.Session{}).
 			Where("id = ?", uuid.UUID(testCase.edition.GetID())).
@@ -178,8 +178,8 @@ func TestUpdateEdition(t *testing.T) {
 	type test struct {
 		description    string
 		edition        *domain.Edition
-		beforeEditions []migrate.EditionTable2
-		afterEditions  []migrate.EditionTable2
+		beforeEditions []schema.EditionTable
+		afterEditions  []schema.EditionTable
 		isErr          bool
 		err            error
 	}
@@ -193,7 +193,7 @@ func TestUpdateEdition(t *testing.T) {
 				urlLink2,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test1",
@@ -204,7 +204,7 @@ func TestUpdateEdition(t *testing.T) {
 					CreatedAt: now,
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test2",
@@ -224,7 +224,7 @@ func TestUpdateEdition(t *testing.T) {
 				urlLink2,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test1",
@@ -244,7 +244,7 @@ func TestUpdateEdition(t *testing.T) {
 					CreatedAt: now.Add(-time.Hour),
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test3",
@@ -272,7 +272,7 @@ func TestUpdateEdition(t *testing.T) {
 				"test2",
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test1",
@@ -283,7 +283,7 @@ func TestUpdateEdition(t *testing.T) {
 					CreatedAt: now,
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test2",
@@ -302,7 +302,7 @@ func TestUpdateEdition(t *testing.T) {
 				urlLink1,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test1",
@@ -312,7 +312,7 @@ func TestUpdateEdition(t *testing.T) {
 					CreatedAt: now,
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test2",
@@ -332,7 +332,7 @@ func TestUpdateEdition(t *testing.T) {
 				urlLink2,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test1",
@@ -343,7 +343,7 @@ func TestUpdateEdition(t *testing.T) {
 					CreatedAt: now,
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:   uuid.UUID(editionID1),
 					Name: "test2",
@@ -363,8 +363,8 @@ func TestUpdateEdition(t *testing.T) {
 				urlLink1,
 				now,
 			),
-			beforeEditions: []migrate.EditionTable2{},
-			afterEditions:  []migrate.EditionTable2{},
+			beforeEditions: []schema.EditionTable{},
+			afterEditions:  []schema.EditionTable{},
 			isErr:          true,
 			err:            repository.ErrNoRecordUpdated,
 		},
@@ -378,7 +378,7 @@ func TestUpdateEdition(t *testing.T) {
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
 					}).
-					Delete(&migrate.EditionTable2{}).Error
+					Delete(&schema.EditionTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete edition: %+v\n", err)
 				}
@@ -410,7 +410,7 @@ func TestUpdateEdition(t *testing.T) {
 				return
 			}
 
-			var editions []migrate.EditionTable2
+			var editions []schema.EditionTable
 			err = db.
 				Session(&gorm.Session{}).
 				Order("created_at desc").
@@ -458,8 +458,8 @@ func TestDeleteEdition(t *testing.T) {
 	type test struct {
 		description    string
 		editionID      values.EditionID
-		beforeEditions []migrate.EditionTable2
-		afterEditions  []migrate.EditionTable2
+		beforeEditions []schema.EditionTable
+		afterEditions  []schema.EditionTable
 		isErr          bool
 		err            error
 	}
@@ -468,7 +468,7 @@ func TestDeleteEdition(t *testing.T) {
 		{
 			description: "特に問題ないのでエラー無し",
 			editionID:   editionID1,
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID1),
 					Name:             "test1",
@@ -476,12 +476,12 @@ func TestDeleteEdition(t *testing.T) {
 					CreatedAt:        now.Add(-time.Hour),
 				},
 			},
-			afterEditions: []migrate.EditionTable2{},
+			afterEditions: []schema.EditionTable{},
 		},
 		{
 			description: "他のゲームがあっても問題なし",
 			editionID:   editionID1,
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID1),
 					Name:             "test1",
@@ -495,7 +495,7 @@ func TestDeleteEdition(t *testing.T) {
 					CreatedAt:        now.Add(-time.Hour * 2),
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID2),
 					Name:             "test2",
@@ -507,7 +507,7 @@ func TestDeleteEdition(t *testing.T) {
 		{
 			description: "エディションが存在しないのでErrNoRecordDeleted",
 			editionID:   editionID1,
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:               uuid.UUID(editionID2),
 					Name:             "test1",
@@ -528,7 +528,7 @@ func TestDeleteEdition(t *testing.T) {
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
 					}).
-					Delete(&migrate.EditionTable2{}).Error
+					Delete(&schema.EditionTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete edition: %+v\n", err)
 				}
@@ -560,7 +560,7 @@ func TestDeleteEdition(t *testing.T) {
 				return
 			}
 
-			var editions []migrate.EditionTable2
+			var editions []schema.EditionTable
 			err = db.
 				Session(&gorm.Session{}).
 				Order("created_at desc").
@@ -598,7 +598,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	gameVideoID1 := values.NewGameVideoID()
 
 	// テスト用のゲーム、画像、動画、ゲームバージョンを定義
-	testGame := migrate.GameTable2{
+	testGame := schema.GameTable2{
 		ID:                     uuid.UUID(gameID1),
 		Name:                   "test game",
 		Description:            "test description",
@@ -606,19 +606,19 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		VisibilityTypeID:       1,
 		LatestVersionUpdatedAt: time.Now(),
 	}
-	testGameImage := migrate.GameImageTable2{
+	testGameImage := schema.GameImageTable2{
 		ID:          uuid.UUID(gameImageID1),
 		GameID:      uuid.UUID(gameID1),
 		ImageTypeID: 1,
 		CreatedAt:   time.Now(),
 	}
-	testGameVideo := migrate.GameVideoTable2{
+	testGameVideo := schema.GameVideoTable2{
 		ID:          uuid.UUID(gameVideoID1),
 		GameID:      uuid.UUID(gameID1),
 		VideoTypeID: 1,
 		CreatedAt:   time.Now(),
 	}
-	testGameVersion1 := migrate.GameVersionTable2{
+	testGameVersion1 := schema.GameVersionTable2{
 		ID:          uuid.UUID(gameVersionID1),
 		Name:        "v1.0.0",
 		GameID:      uuid.UUID(gameID1),
@@ -627,7 +627,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		GameVideoID: uuid.UUID(gameVideoID1),
 		Description: "test description",
 	}
-	testGameVersion2 := migrate.GameVersionTable2{
+	testGameVersion2 := schema.GameVersionTable2{
 		ID:          uuid.UUID(gameVersionID2),
 		Name:        "v2.0.0",
 		GameID:      uuid.UUID(gameID1),
@@ -652,13 +652,13 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	t.Cleanup(func() {
 		cleanupCtx := context.Background() //この時点でtは終了しているので新しいコンテキストを作成
 
-		err := db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameVersionTable2{}).Error
+		err := db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error
 		require.NoError(t, err)
-		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameImageTable2{}).Error
+		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error
 		require.NoError(t, err)
-		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameVideoTable2{}).Error
+		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error
 		require.NoError(t, err)
-		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.GameTable2{}).Error
+		err = db.WithContext(cleanupCtx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error
 		require.NoError(t, err)
 	})
 
@@ -667,8 +667,8 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		description    string
 		editionID      values.EditionID
 		gameVersionIDs []values.GameVersionID
-		beforeEditions []migrate.EditionTable2
-		afterEditions  []migrate.EditionTable2
+		beforeEditions []schema.EditionTable
+		afterEditions  []schema.EditionTable
 		isErr          bool
 		err            error
 	}
@@ -684,20 +684,20 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				gameVersionID1,
 				gameVersionID2,
 			},
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1, testGameVersion2},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1, testGameVersion2},
 				},
 			},
 		},
@@ -705,20 +705,20 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			description:    "空配列で全ての関連をクリア",
 			editionID:      editionID1,
 			gameVersionIDs: []values.GameVersionID{},
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{},
+					GameVersions: []schema.GameVersionTable2{},
 				},
 			},
 		},
@@ -726,20 +726,20 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			description:    "存在しないエディションIDでエラー",
 			editionID:      values.NewEditionID(),
 			gameVersionIDs: []values.GameVersionID{gameVersionID1},
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "dummy edition",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
 			isErr: true,
@@ -752,32 +752,32 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 				gameVersionID1,
 				gameVersionID2,
 			},
-			beforeEditions: []migrate.EditionTable2{
+			beforeEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 				{
 					ID:           uuid.UUID(editionID2),
 					Name:         "test2",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
-			afterEditions: []migrate.EditionTable2{
+			afterEditions: []schema.EditionTable{
 				{
 					ID:           uuid.UUID(editionID1),
 					Name:         "test1",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1, testGameVersion2},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1, testGameVersion2},
 				},
 				{
 					ID:           uuid.UUID(editionID2),
 					Name:         "test2",
 					CreatedAt:    time.Now(),
-					GameVersions: []migrate.GameVersionTable2{testGameVersion1},
+					GameVersions: []schema.GameVersionTable2{testGameVersion1},
 				},
 			},
 		},
@@ -789,7 +789,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			// テストケースの削除
 			t.Cleanup(func() {
 				//テストで作成したEditionを取得
-				var editions []migrate.EditionTable2
+				var editions []schema.EditionTable
 				err := db.Find(&editions).Error
 				require.NoError(t, err)
 				//各EditionのGameVersionsとの関連を解除
@@ -798,7 +798,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 					require.NoError(t, err)
 				}
 				//親テーブルのデータを削除
-				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&migrate.EditionTable2{}).Error
+				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error
 				require.NoError(t, err)
 			})
 
@@ -827,7 +827,7 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 			}
 
 			//editionは複数あるケースを想定して、配列で定義
-			var editions []migrate.EditionTable2
+			var editions []schema.EditionTable
 			err = db.Preload("GameVersions").Find(&editions).Error
 			require.NoError(t, err)
 

@@ -998,11 +998,11 @@ func TestGetGameFileMeta(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.file.GameFile.GetID(), gameFile.GetID())
-			assert.Equal(t, testCase.file.GameFile.GetFileType(), gameFile.GetFileType())
+			assert.Equal(t, testCase.file.GetID(), gameFile.GetID())
+			assert.Equal(t, testCase.file.GetFileType(), gameFile.GetFileType())
 			assert.Equal(t, testCase.file.GetEntryPoint(), gameFile.GetEntryPoint())
 			assert.Equal(t, testCase.file.GetHash(), gameFile.GetHash())
-			assert.WithinDuration(t, testCase.file.GameFile.GetCreatedAt(), gameFile.GetCreatedAt(), time.Second)
+			assert.WithinDuration(t, testCase.file.GetCreatedAt(), gameFile.GetCreatedAt(), time.Second)
 		})
 	}
 }

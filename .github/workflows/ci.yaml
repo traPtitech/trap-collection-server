@@ -48,7 +48,7 @@ jobs:
         with:
           files: /tmp/coverage/coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: coverage.txt
           path: /tmp/coverage/coverage.txt
@@ -95,14 +95,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Atlas
-        uses: ariga/setup-atlas@4240bd74ba9f13319a21de2b6e497f2b6d184d76 # v0
+      - name: Setup Atlas community edition
+        run: |
+          curl -sSf https://atlasgo.sh | sh -s -- --community --yes
+        shell: bash
 
       - name: Atlas Lint
         run: |
           set +e
 
-          LINT_OUTPUT="$(atlas migrate lint --env ci 2>&1)"
+          LINT_OUTPUT="$(atlas migrate lint --config file://atlas.ci.hcl --env ci 2>&1)"
           LINT_EXIT_CODE=$?
 
           if [ "$LINT_EXIT_CODE" -eq 0 ]; then

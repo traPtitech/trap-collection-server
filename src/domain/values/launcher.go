@@ -109,7 +109,7 @@ func (lupk LauncherUserProductKey) Validate() error {
 			continue
 		}
 
-		if !('0' <= v && v <= '9') && !('a' <= v && v <= 'z') && !('A' <= v && v <= 'Z') {
+		if (v < '0' || v > '9') && (v < 'a' || v > 'z') && (v < 'A' || v > 'Z') {
 			return ErrLauncherUserProductKeyInvalidRune
 		}
 	}
@@ -149,7 +149,7 @@ func (lst LauncherSessionAccessToken) Validate() error {
 	}
 
 	for _, v := range lst {
-		if !('0' <= v && v <= '9') && !('a' <= v && v <= 'z') && !('A' <= v && v <= 'Z') {
+		if (v < '0' || v > '9') && (v < 'a' || v > 'z') && (v < 'A' || v > 'Z') {
 			return ErrLauncherSessionAccessTokenInvalidRune
 		}
 	}

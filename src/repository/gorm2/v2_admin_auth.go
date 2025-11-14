@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 )
 
 type AdminAuth struct {
@@ -26,7 +26,7 @@ func (aa *AdminAuth) AddAdmin(ctx context.Context, userID values.TraPMemberID) e
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	adminTable := migrate.AdminTable{
+	adminTable := schema.AdminTable{
 		UserID: uuid.UUID(userID),
 	}
 
@@ -43,7 +43,7 @@ func (aa *AdminAuth) GetAdmins(ctx context.Context) ([]values.TraPMemberID, erro
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var admins []migrate.AdminTable
+	var admins []schema.AdminTable
 	err = db.Find(&admins).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get admins: %w", err)
@@ -64,7 +64,7 @@ func (aa *AdminAuth) DeleteAdmin(ctx context.Context, userID values.TraPMemberID
 
 	result := db.
 		Where("user_id = ?", uuid.UUID(userID)).
-		Delete(&migrate.AdminTable{})
+		Delete(&schema.AdminTable{})
 	err = result.Error
 	if err != nil {
 		return fmt.Errorf("failed to remove admin: %w", err)

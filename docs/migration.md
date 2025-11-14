@@ -70,10 +70,12 @@ task migrate:down:down-only
 ## マイグレーションの Lint
 
 Atlas の Lint 機能を使って、マイグレーションファイルのチェックを行うことができます。
+ただし、通常の Atlas CLI の free plan では、Lint 機能を使うことができません。必要であれば community edition をインストールして使ってください。
+GitHub Actions の CI では community edition を使って Lint を実行しています。
 以下のコマンドを実行してください。
 
 ```bash
-task migrate:lint
+atlas migrate lint --config file://atlas.ci.hcl --env local
 ```
 
 このコマンドでは、main ブランチと比較してマイグレーションが正しいかをチェックします。

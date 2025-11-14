@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -37,7 +37,7 @@ func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID val
 		return fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var productKeyStatus []migrate.ProductKeyStatusTable2
+	var productKeyStatus []schema.ProductKeyStatusTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("active = ?", true).
@@ -49,23 +49,23 @@ func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID val
 	statusMap := make(map[values.LauncherUserStatus]int)
 	for _, status := range productKeyStatus {
 		switch status.Name {
-		case migrate.ProductKeyStatusInactive:
+		case schema.ProductKeyStatusInactive:
 			statusMap[values.LauncherUserStatusInactive] = status.ID
-		case migrate.ProductKeyStatusActive:
+		case schema.ProductKeyStatusActive:
 			statusMap[values.LauncherUserStatusActive] = status.ID
 		default:
 			log.Printf("invalid product key status: %s\n", status.Name)
 		}
 	}
 
-	dbProductKeys := make([]*migrate.ProductKeyTable2, 0, len(productKeys))
+	dbProductKeys := make([]*schema.ProductKeyTable, 0, len(productKeys))
 	for _, key := range productKeys {
 		statusID, ok := statusMap[key.GetStatus()]
 		if !ok {
 			return fmt.Errorf("invalid product key status: %d", key.GetStatus())
 		}
 
-		dbProductKeys = append(dbProductKeys, &migrate.ProductKeyTable2{
+		dbProductKeys = append(dbProductKeys, &schema.ProductKeyTable{
 			ID:         uuid.UUID(key.GetID()),
 			EditionID:  uuid.UUID(editionID),
 			StatusID:   statusID,
@@ -91,14 +91,14 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 	var dbStatus string
 	switch key.GetStatus() {
 	case values.LauncherUserStatusInactive:
-		dbStatus = migrate.ProductKeyStatusInactive
+		dbStatus = schema.ProductKeyStatusInactive
 	case values.LauncherUserStatusActive:
-		dbStatus = migrate.ProductKeyStatusActive
+		dbStatus = schema.ProductKeyStatusActive
 	default:
 		return fmt.Errorf("invalid product key status: %d", key.GetStatus())
 	}
 
-	var productKeyStatus migrate.ProductKeyStatusTable2
+	var productKeyStatus schema.ProductKeyStatusTable
 	err = db.
 		Session(&gorm.Session{}).
 		Where("name = ?", dbStatus).
@@ -109,7 +109,7 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 
 	result := db.
 		Where("id = ?", uuid.UUID(key.GetID())).
-		Updates(&migrate.ProductKeyTable2{
+		Updates(&schema.ProductKeyTable{
 			ProductKey: string(key.GetProductKey()),
 			StatusID:   productKeyStatus.ID,
 		})
@@ -139,15 +139,15 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 	for _, status := range statuses {
 		switch status {
 		case values.LauncherUserStatusInactive:
-			dbStatuses = append(dbStatuses, migrate.ProductKeyStatusInactive)
+			dbStatuses = append(dbStatuses, schema.ProductKeyStatusInactive)
 		case values.LauncherUserStatusActive:
-			dbStatuses = append(dbStatuses, migrate.ProductKeyStatusActive)
+			dbStatuses = append(dbStatuses, schema.ProductKeyStatusActive)
 		default:
 			return nil, fmt.Errorf("invalid product key status: %d", status)
 		}
 	}
 
-	var dbProductKeys []migrate.ProductKeyTable2
+	var dbProductKeys []schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("edition_id = ?", uuid.UUID(editionID)).
@@ -161,9 +161,9 @@ func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID valu
 	for _, dbProductKey := range dbProductKeys {
 		var status values.LauncherUserStatus
 		switch dbProductKey.Status.Name {
-		case migrate.ProductKeyStatusInactive:
+		case schema.ProductKeyStatusInactive:
 			status = values.LauncherUserStatusInactive
-		case migrate.ProductKeyStatusActive:
+		case schema.ProductKeyStatusActive:
 			status = values.LauncherUserStatusActive
 		default:
 			log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)
@@ -193,7 +193,7 @@ func (productKey *ProductKey) GetProductKey(ctx context.Context, productKeyID va
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbProductKey migrate.ProductKeyTable2
+	var dbProductKey schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("product_keys.id = ?", uuid.UUID(productKeyID)).
@@ -207,9 +207,9 @@ func (productKey *ProductKey) GetProductKey(ctx context.Context, productKeyID va
 
 	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
-	case migrate.ProductKeyStatusInactive:
+	case schema.ProductKeyStatusInactive:
 		status = values.LauncherUserStatusInactive
-	case migrate.ProductKeyStatusActive:
+	case schema.ProductKeyStatusActive:
 		status = values.LauncherUserStatusActive
 	default:
 		log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)
@@ -236,7 +236,7 @@ func (productKey *ProductKey) GetProductKeyByKey(ctx context.Context, productKey
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var dbProductKey migrate.ProductKeyTable2
+	var dbProductKey schema.ProductKeyTable
 	err = db.
 		Joins("Status").
 		Where("product_key = ?", string(productKeyID)).
@@ -250,9 +250,9 @@ func (productKey *ProductKey) GetProductKeyByKey(ctx context.Context, productKey
 
 	var status values.LauncherUserStatus
 	switch dbProductKey.Status.Name {
-	case migrate.ProductKeyStatusInactive:
+	case schema.ProductKeyStatusInactive:
 		status = values.LauncherUserStatusInactive
-	case migrate.ProductKeyStatusActive:
+	case schema.ProductKeyStatusActive:
 		status = values.LauncherUserStatusActive
 	default:
 		log.Printf("invalid product key status: %s\n", dbProductKey.Status.Name)

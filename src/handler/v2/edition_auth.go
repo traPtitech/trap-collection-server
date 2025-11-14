@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
@@ -31,13 +31,13 @@ func NewEditionAuth(context *Context, editionAuth service.EditionAuth) *EditionA
 // プロダクトキーの一覧の取得
 // (GET /editions/{editionID}/keys)
 func (editionAuth *EditionAuth) GetProductKeys(c echo.Context, editionID openapi.EditionIDInPath, params openapi.GetProductKeysParams) error {
-	var status types.Option[values.LauncherUserStatus]
+	var status option.Option[values.LauncherUserStatus]
 	if params.Status != nil {
 		switch *params.Status {
 		case openapi.Active:
-			status = types.NewOption(values.LauncherUserStatusActive)
+			status = option.NewOption(values.LauncherUserStatusActive)
 		case openapi.Revoked:
-			status = types.NewOption(values.LauncherUserStatusInactive)
+			status = option.NewOption(values.LauncherUserStatusInactive)
 		default:
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid status")
 		}

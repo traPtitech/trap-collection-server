@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +31,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 		description string
 		fileIDs     []values.GameFileID
 		lockType    repository.LockType
-		beforeGames []migrate.GameTable2
+		beforeGames []schema.GameTable2
 		gameFiles   []*repository.GameFileInfo
 		isErr       bool
 		err         error
@@ -53,7 +53,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 
 	now := time.Now()
 
-	var fileTypes []*migrate.GameFileTypeTable
+	var fileTypes []*schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -66,10 +66,10 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -81,17 +81,17 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 			description: "特に問題ないのでエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID1},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID1),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(gameFileID1),
 							GameID:     uuid.UUID(gameID1),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+							FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -117,17 +117,17 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 			description: "windowsでもエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID2},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID2),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(gameFileID2),
 							GameID:     uuid.UUID(gameID2),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+							FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
 							CreatedAt:  now,
@@ -153,17 +153,17 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 			description: "macでもエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID3},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID3),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(gameFileID3),
 							GameID:     uuid.UUID(gameID3),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+							FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.app",
 							CreatedAt:  now,
@@ -189,24 +189,24 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 			description: "fileIDが空でもエラーなし",
 			fileIDs:     []values.GameFileID{},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{},
+			beforeGames: []schema.GameTable2{},
 			gameFiles:   []*repository.GameFileInfo{},
 		},
 		{
 			description: "ファイルが複数でもエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID4, gameFileID5},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID4),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(gameFileID4),
 							GameID:     uuid.UUID(gameID4),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+							FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -214,7 +214,7 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 						{
 							ID:         uuid.UUID(gameFileID5),
 							GameID:     uuid.UUID(gameID4),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+							FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.exe",
 							CreatedAt:  now.Add(-time.Hour),
@@ -250,24 +250,24 @@ func TestGetGameFilesWithoutTypesV2(t *testing.T) {
 			description: "対応するファイルが存在しない場合もエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID6},
 			lockType:    repository.LockTypeNone,
-			beforeGames: []migrate.GameTable2{},
+			beforeGames: []schema.GameTable2{},
 			gameFiles:   []*repository.GameFileInfo{},
 		},
 		{
 			description: "行ロックを取ってもエラーなし",
 			fileIDs:     []values.GameFileID{gameFileID7},
 			lockType:    repository.LockTypeRecord,
-			beforeGames: []migrate.GameTable2{
+			beforeGames: []schema.GameTable2{
 				{
 					ID:          uuid.UUID(gameID5),
 					Name:        "test",
 					Description: "test",
 					CreatedAt:   now,
-					GameFiles: []migrate.GameFileTable2{
+					GameFiles: []schema.GameFileTable2{
 						{
 							ID:         uuid.UUID(gameFileID7),
 							GameID:     uuid.UUID(gameID5),
-							FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+							FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 							Hash:       "68617368",
 							EntryPoint: "/path/to/game.jar",
 							CreatedAt:  now,
@@ -346,8 +346,8 @@ func TestSaveGameFileV2(t *testing.T) {
 		description string
 		gameID      values.GameID
 		file        *domain.GameFile
-		beforeFiles []migrate.GameFileTable2
-		expectFiles []migrate.GameFileTable2
+		beforeFiles []schema.GameFileTable2
+		expectFiles []schema.GameFileTable2
 		isErr       bool
 		err         error
 	}
@@ -368,7 +368,7 @@ func TestSaveGameFileV2(t *testing.T) {
 	fileID7 := values.NewGameFileID()
 	fileID8 := values.NewGameFileID()
 
-	var fileTypes []*migrate.GameFileTypeTable
+	var fileTypes []*schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -381,10 +381,10 @@ func TestSaveGameFileV2(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -406,12 +406,12 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{},
-			expectFiles: []migrate.GameFileTable2{
+			beforeFiles: []schema.GameFileTable2{},
+			expectFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID1),
 					GameID:     uuid.UUID(gameID1),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -428,12 +428,12 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{},
-			expectFiles: []migrate.GameFileTable2{
+			beforeFiles: []schema.GameFileTable2{},
+			expectFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID2),
 					GameID:     uuid.UUID(gameID2),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -450,12 +450,12 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{},
-			expectFiles: []migrate.GameFileTable2{
+			beforeFiles: []schema.GameFileTable2{},
+			expectFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID3),
 					GameID:     uuid.UUID(gameID3),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -472,8 +472,8 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{},
-			expectFiles: []migrate.GameFileTable2{},
+			beforeFiles: []schema.GameFileTable2{},
+			expectFiles: []schema.GameFileTable2{},
 			isErr:       true,
 		},
 		{
@@ -486,21 +486,21 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{
+			beforeFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID6),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
 				},
 			},
-			expectFiles: []migrate.GameFileTable2{
+			expectFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID6),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -508,7 +508,7 @@ func TestSaveGameFileV2(t *testing.T) {
 				{
 					ID:         uuid.UUID(fileID5),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -525,21 +525,21 @@ func TestSaveGameFileV2(t *testing.T) {
 				md5Hash,
 				now,
 			),
-			beforeFiles: []migrate.GameFileTable2{
+			beforeFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID8),
 					GameID:     uuid.UUID(gameID6),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
 				},
 			},
-			expectFiles: []migrate.GameFileTable2{
+			expectFiles: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID8),
 					GameID:     uuid.UUID(gameID6),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -551,7 +551,7 @@ func TestSaveGameFileV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := db.Create(&migrate.GameTable2{
+			err := db.Create(&schema.GameTable2{
 				ID:               uuid.UUID(testCase.gameID),
 				Name:             "test",
 				Description:      "test",
@@ -575,7 +575,7 @@ func TestSaveGameFileV2(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			var files []migrate.GameFileTable2
+			var files []schema.GameFileTable2
 			err = db.
 				Session(&gorm.Session{}).
 				Where("game_id = ?", uuid.UUID(testCase.gameID)).
@@ -586,7 +586,7 @@ func TestSaveGameFileV2(t *testing.T) {
 
 			assert.Len(t, files, len(testCase.expectFiles))
 
-			fileMap := make(map[uuid.UUID]migrate.GameFileTable2)
+			fileMap := make(map[uuid.UUID]schema.GameFileTable2)
 			for _, file := range files {
 				fileMap[file.ID] = file
 			}
@@ -623,7 +623,7 @@ func TestGetGameFile(t *testing.T) {
 		description string
 		fileID      values.GameFileID
 		lockType    repository.LockType
-		files       []migrate.GameFileTable2
+		files       []schema.GameFileTable2
 		expectFile  repository.GameFileInfo
 		isErr       bool
 		err         error
@@ -643,7 +643,7 @@ func TestGetGameFile(t *testing.T) {
 	fileID6 := values.NewGameFileID()
 	fileID7 := values.NewGameFileID()
 
-	var fileTypes []*migrate.GameFileTypeTable
+	var fileTypes []*schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -656,10 +656,10 @@ func TestGetGameFile(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -675,11 +675,11 @@ func TestGetGameFile(t *testing.T) {
 			description: "特に問題ないので問題なし",
 			fileID:      fileID1,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID1),
 					GameID:     uuid.UUID(gameID1),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -700,11 +700,11 @@ func TestGetGameFile(t *testing.T) {
 			description: "windowsでも問題なし",
 			fileID:      fileID2,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID2),
 					GameID:     uuid.UUID(gameID2),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -725,11 +725,11 @@ func TestGetGameFile(t *testing.T) {
 			description: "macでも問題なし",
 			fileID:      fileID3,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID3),
 					GameID:     uuid.UUID(gameID3),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -749,11 +749,11 @@ func TestGetGameFile(t *testing.T) {
 		{
 			description: "lockTypeがRecordでも問題なし",
 			fileID:      fileID4,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID4),
 					GameID:     uuid.UUID(gameID4),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -773,11 +773,11 @@ func TestGetGameFile(t *testing.T) {
 		{
 			description: "複数の画像があっても問題なし",
 			fileID:      fileID5,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID5),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -785,7 +785,7 @@ func TestGetGameFile(t *testing.T) {
 				{
 					ID:         uuid.UUID(fileID6),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -806,7 +806,7 @@ func TestGetGameFile(t *testing.T) {
 			description: "ファイルが存在しないのでRecordNotFound",
 			fileID:      fileID7,
 			lockType:    repository.LockTypeNone,
-			files:       []migrate.GameFileTable2{},
+			files:       []schema.GameFileTable2{},
 			isErr:       true,
 			err:         repository.ErrRecordNotFound,
 		},
@@ -814,23 +814,23 @@ func TestGetGameFile(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			gameIDMap := map[uuid.UUID]*schema.GameTable2{}
 			for _, file := range testCase.files {
 				if game, ok := gameIDMap[file.GameID]; ok {
 					game.GameFiles = append(game.GameFiles, file)
 				} else {
-					gameIDMap[file.GameID] = &migrate.GameTable2{
+					gameIDMap[file.GameID] = &schema.GameTable2{
 						ID:               file.GameID,
 						Name:             "test",
 						Description:      "test",
 						CreatedAt:        now,
-						GameFiles:        []migrate.GameFileTable2{file},
+						GameFiles:        []schema.GameFileTable2{file},
 						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
 
-			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			games := make([]schema.GameTable2, 0, len(gameIDMap))
 			for _, game := range gameIDMap {
 				games = append(games, *game)
 			}
@@ -857,11 +857,11 @@ func TestGetGameFile(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, testCase.expectFile.GameFile.GetID(), file.GameFile.GetID())
-			assert.Equal(t, testCase.expectFile.GameFile.GetFileType(), file.GameFile.GetFileType())
-			assert.Equal(t, testCase.expectFile.GameFile.GetEntryPoint(), file.GameFile.GetEntryPoint())
-			assert.Equal(t, testCase.expectFile.GameFile.GetHash(), file.GameFile.GetHash())
-			assert.WithinDuration(t, testCase.expectFile.GameFile.GetCreatedAt(), file.GameFile.GetCreatedAt(), time.Second)
+			assert.Equal(t, testCase.expectFile.GetID(), file.GetID())
+			assert.Equal(t, testCase.expectFile.GetFileType(), file.GetFileType())
+			assert.Equal(t, testCase.expectFile.GetEntryPoint(), file.GetEntryPoint())
+			assert.Equal(t, testCase.expectFile.GetHash(), file.GetHash())
+			assert.WithinDuration(t, testCase.expectFile.GetCreatedAt(), file.GetCreatedAt(), time.Second)
 			assert.Equal(t, testCase.expectFile.GameID, file.GameID)
 		})
 	}
@@ -883,7 +883,7 @@ func TestGetGameFilesV2(t *testing.T) {
 		description string
 		gameID      values.GameID
 		lockType    repository.LockType
-		files       []migrate.GameFileTable2
+		files       []schema.GameFileTable2
 		expectFiles []*domain.GameFile
 		isErr       bool
 		err         error
@@ -903,7 +903,7 @@ func TestGetGameFilesV2(t *testing.T) {
 	fileID5 := values.NewGameFileID()
 	fileID6 := values.NewGameFileID()
 
-	var fileTypes []*migrate.GameFileTypeTable
+	var fileTypes []*schema.GameFileTypeTable
 	err = db.
 		Session(&gorm.Session{}).
 		Find(&fileTypes).Error
@@ -916,10 +916,10 @@ func TestGetGameFilesV2(t *testing.T) {
 		fileTypeMap[fileType.Name] = fileType.ID
 	}
 
-	var gameVisibilityPublic migrate.GameVisibilityTypeTable
+	var gameVisibilityPublic schema.GameVisibilityTypeTable
 	err = db.
 		Session(&gorm.Session{}).
-		Where(&migrate.GameVisibilityTypeTable{Name: migrate.GameVisibilityTypePublic}).
+		Where(&schema.GameVisibilityTypeTable{Name: schema.GameVisibilityTypePublic}).
 		Find(&gameVisibilityPublic).Error
 	if err != nil {
 		t.Fatalf("failed to get game visibility: %v\n", err)
@@ -935,11 +935,11 @@ func TestGetGameFilesV2(t *testing.T) {
 			description: "特に問題ないので問題なし",
 			gameID:      gameID1,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID1),
 					GameID:     uuid.UUID(gameID1),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -959,11 +959,11 @@ func TestGetGameFilesV2(t *testing.T) {
 			description: "windowsでも問題なし",
 			gameID:      gameID2,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID2),
 					GameID:     uuid.UUID(gameID2),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -983,11 +983,11 @@ func TestGetGameFilesV2(t *testing.T) {
 			description: "macでも問題なし",
 			gameID:      gameID3,
 			lockType:    repository.LockTypeNone,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID3),
 					GameID:     uuid.UUID(gameID3),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeMac],
+					FileTypeID: fileTypeMap[schema.GameFileTypeMac],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -1007,11 +1007,11 @@ func TestGetGameFilesV2(t *testing.T) {
 			description: "lockTypeがRecordでも問題なし",
 			gameID:      gameID4,
 			lockType:    repository.LockTypeRecord,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID4),
 					GameID:     uuid.UUID(gameID4),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -1030,11 +1030,11 @@ func TestGetGameFilesV2(t *testing.T) {
 		{
 			description: "複数のファイルがあっても問題なし",
 			gameID:      gameID5,
-			files: []migrate.GameFileTable2{
+			files: []schema.GameFileTable2{
 				{
 					ID:         uuid.UUID(fileID5),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeJar],
+					FileTypeID: fileTypeMap[schema.GameFileTypeJar],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now,
@@ -1042,7 +1042,7 @@ func TestGetGameFilesV2(t *testing.T) {
 				{
 					ID:         uuid.UUID(fileID6),
 					GameID:     uuid.UUID(gameID5),
-					FileTypeID: fileTypeMap[migrate.GameFileTypeWindows],
+					FileTypeID: fileTypeMap[schema.GameFileTypeWindows],
 					EntryPoint: "path/to/file",
 					Hash:       md5Hash.String(),
 					CreatedAt:  now.Add(-time.Hour),
@@ -1069,30 +1069,30 @@ func TestGetGameFilesV2(t *testing.T) {
 			description: "ファイルが存在しなくても問題なし",
 			gameID:      gameID6,
 			lockType:    repository.LockTypeNone,
-			files:       []migrate.GameFileTable2{},
+			files:       []schema.GameFileTable2{},
 			expectFiles: []*domain.GameFile{},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			gameIDMap := map[uuid.UUID]*migrate.GameTable2{}
+			gameIDMap := map[uuid.UUID]*schema.GameTable2{}
 			for _, file := range testCase.files {
 				if game, ok := gameIDMap[file.GameID]; ok {
 					game.GameFiles = append(game.GameFiles, file)
 				} else {
-					gameIDMap[file.GameID] = &migrate.GameTable2{
+					gameIDMap[file.GameID] = &schema.GameTable2{
 						ID:               file.GameID,
 						Name:             "test",
 						Description:      "test",
 						CreatedAt:        now,
-						GameFiles:        []migrate.GameFileTable2{file},
+						GameFiles:        []schema.GameFileTable2{file},
 						VisibilityTypeID: gameVisibilityTypeIDPublic,
 					}
 				}
 			}
 
-			games := make([]migrate.GameTable2, 0, len(gameIDMap))
+			games := make([]schema.GameTable2, 0, len(gameIDMap))
 			for _, game := range gameIDMap {
 				games = append(games, *game)
 			}

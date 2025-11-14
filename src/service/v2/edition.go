@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -41,7 +41,7 @@ func NewEdition(
 func (edition *Edition) CreateEdition(
 	ctx context.Context,
 	name values.EditionName,
-	questionnaireURL types.Option[values.EditionQuestionnaireURL],
+	questionnaireURL option.Option[values.EditionQuestionnaireURL],
 	gameVersionIDs []values.GameVersionID,
 ) (*domain.Edition, error) {
 	gameVersionMap := make(map[values.GameVersionID]struct{}, len(gameVersionIDs))
@@ -123,7 +123,7 @@ func (edition *Edition) UpdateEdition(
 	ctx context.Context,
 	editionID values.EditionID,
 	name values.EditionName,
-	questionnaireURL types.Option[values.EditionQuestionnaireURL],
+	questionnaireURL option.Option[values.EditionQuestionnaireURL],
 ) (*domain.Edition, error) {
 	var editionValue *domain.Edition
 	err := edition.db.Transaction(ctx, nil, func(ctx context.Context) error {
@@ -261,21 +261,21 @@ func (edition *Edition) UpdateEditionGameVersions(
 						continue
 					}
 
-					assets.Windows = types.NewOption(file.GetID())
+					assets.Windows = option.NewOption(file.GetID())
 				case values.GameFileTypeMac:
 					if _, ok := assets.Mac.Value(); ok {
 						log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
 						continue
 					}
 
-					assets.Mac = types.NewOption(file.GetID())
+					assets.Mac = option.NewOption(file.GetID())
 				case values.GameFileTypeJar:
 					if _, ok := assets.Jar.Value(); ok {
 						log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
 						continue
 					}
 
-					assets.Jar = types.NewOption(file.GetID())
+					assets.Jar = option.NewOption(file.GetID())
 				default:
 					log.Printf("error: invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameVersion.GameID, gameVersion.GetID(), id, file.GetFileType())
 					continue
@@ -372,21 +372,21 @@ func (edition *Edition) GetEditionGameVersions(ctx context.Context, editionID va
 					continue
 				}
 
-				assets.Windows = types.NewOption(file.GetID())
+				assets.Windows = option.NewOption(file.GetID())
 			case values.GameFileTypeMac:
 				if _, ok := assets.Mac.Value(); ok {
 					log.Printf("error: duplicate file type mac(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
 					continue
 				}
 
-				assets.Mac = types.NewOption(file.GetID())
+				assets.Mac = option.NewOption(file.GetID())
 			case values.GameFileTypeJar:
 				if _, ok := assets.Jar.Value(); ok {
 					log.Printf("error: duplicate file type jar(game_id=%s, game_version_id=%s, game_file_id=%s)\n", gameVersion.GameID, gameVersion.GetID(), id)
 					continue
 				}
 
-				assets.Jar = types.NewOption(file.GetID())
+				assets.Jar = option.NewOption(file.GetID())
 			default:
 				log.Printf("error: invalid game file type: game_id=%s, game_version_id=%s, game_file_id=%s, file_type=%d\n", gameVersion.GameID, gameVersion.GetID(), id, file.GetFileType())
 				continue

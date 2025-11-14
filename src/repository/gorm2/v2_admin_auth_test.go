@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +26,7 @@ func TestAddAdminV2(t *testing.T) {
 	type test struct {
 		description  string
 		userID       values.TraPMemberID
-		beforeAdmins []migrate.AdminTable
+		beforeAdmins []schema.AdminTable
 		isErr        bool
 		err          error
 	}
@@ -42,7 +42,7 @@ func TestAddAdminV2(t *testing.T) {
 		{
 			description: "既に登録されているのでエラー",
 			userID:      traPMemberID2,
-			beforeAdmins: []migrate.AdminTable{
+			beforeAdmins: []schema.AdminTable{
 				{
 					UserID: uuid.UUID(traPMemberID2),
 				},
@@ -59,7 +59,7 @@ func TestAddAdminV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.AdminTable{}).Error
+					Delete(&schema.AdminTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete admins: %+v\n", err)
 				}
@@ -87,7 +87,7 @@ func TestAddAdminV2(t *testing.T) {
 				return
 			}
 
-			var admin migrate.AdminTable
+			var admin schema.AdminTable
 			err = db.Session(&gorm.Session{}).Where("user_id = ?", uuid.UUID(testCase.userID)).First(&admin).Error
 			if err != nil {
 				t.Fatalf("failed to get admin: %+v\n", err)
@@ -110,7 +110,7 @@ func TestGetAdminsV2(t *testing.T) {
 
 	type test struct {
 		description  string
-		beforeAdmins []migrate.AdminTable
+		beforeAdmins []schema.AdminTable
 		adminsMap    map[values.TraPMemberID]struct{} // 返り値での要素の順序が定まらないため
 		isErr        bool
 		err          error
@@ -122,7 +122,7 @@ func TestGetAdminsV2(t *testing.T) {
 	testCases := []test{
 		{
 			description: "特に問題ないのでエラーなし",
-			beforeAdmins: []migrate.AdminTable{
+			beforeAdmins: []schema.AdminTable{
 				{
 					UserID: uuid.UUID(traPMemberID1),
 				},
@@ -133,12 +133,12 @@ func TestGetAdminsV2(t *testing.T) {
 		},
 		{
 			description:  "adminが存在しなくてもエラーなし",
-			beforeAdmins: []migrate.AdminTable{},
+			beforeAdmins: []schema.AdminTable{},
 			adminsMap:    map[values.TraPMemberID]struct{}{},
 		},
 		{
 			description: "adminが複数でもエラーなし",
-			beforeAdmins: []migrate.AdminTable{
+			beforeAdmins: []schema.AdminTable{
 				{
 					UserID: uuid.UUID(traPMemberID1),
 				},
@@ -161,7 +161,7 @@ func TestGetAdminsV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.AdminTable{}).Error
+					Delete(&schema.AdminTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete admins: %+v\n", err)
 				}
@@ -211,7 +211,7 @@ func TestDeleteAdminV2(t *testing.T) {
 	type test struct {
 		description   string
 		userID        values.TraPMemberID
-		beforeAdmins  []migrate.AdminTable
+		beforeAdmins  []schema.AdminTable
 		afterAdminMap map[values.TraPMemberID]struct{} // DBからの取得時の順序指定ができないため
 		isErr         bool
 		err           error
@@ -224,7 +224,7 @@ func TestDeleteAdminV2(t *testing.T) {
 		{
 			description: "特に問題ないのでエラーなし",
 			userID:      traPMemberID1,
-			beforeAdmins: []migrate.AdminTable{
+			beforeAdmins: []schema.AdminTable{
 				{
 					UserID: uuid.UUID(traPMemberID1),
 				},
@@ -234,7 +234,7 @@ func TestDeleteAdminV2(t *testing.T) {
 		{
 			description: "他のadminが存在してもエラーなし",
 			userID:      traPMemberID1,
-			beforeAdmins: []migrate.AdminTable{
+			beforeAdmins: []schema.AdminTable{
 				{
 					UserID: uuid.UUID(traPMemberID1),
 				},
@@ -249,7 +249,7 @@ func TestDeleteAdminV2(t *testing.T) {
 		{
 			description:   "adminが存在しないのでErrNoRecordDeleted",
 			userID:        traPMemberID1,
-			beforeAdmins:  []migrate.AdminTable{},
+			beforeAdmins:  []schema.AdminTable{},
 			afterAdminMap: map[values.TraPMemberID]struct{}{},
 			isErr:         true,
 			err:           repository.ErrNoRecordDeleted,
@@ -264,7 +264,7 @@ func TestDeleteAdminV2(t *testing.T) {
 						AllowGlobalUpdate: true,
 					}).
 					Unscoped().
-					Delete(&migrate.AdminTable{}).Error
+					Delete(&schema.AdminTable{}).Error
 				if err != nil {
 					t.Fatalf("failed to delete admins: %+v\n", err)
 				}
@@ -291,7 +291,7 @@ func TestDeleteAdminV2(t *testing.T) {
 				return
 			}
 
-			var admins []migrate.AdminTable
+			var admins []schema.AdminTable
 			err = db.
 				Unscoped().
 				Session(&gorm.Session{}).

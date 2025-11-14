@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -17,16 +17,16 @@ type GameVideoV2 struct {
 	db *DB
 }
 
-func convertGameVideoType(migrateGameVideoType string) (values.GameVideoType, error) {
-	switch migrateGameVideoType {
-	case migrate.GameVideoTypeMp4:
+func convertGameVideoType(schemaGameVideoType string) (values.GameVideoType, error) {
+	switch schemaGameVideoType {
+	case schema.GameVideoTypeMp4:
 		return values.GameVideoTypeMp4, nil
-	case migrate.GameVideoTypeM4v:
+	case schema.GameVideoTypeM4v:
 		return values.GameVideoTypeM4v, nil
-	case migrate.GameVideoTypeMkv:
+	case schema.GameVideoTypeMkv:
 		return values.GameVideoTypeMkv, nil
 	default:
-		return 0, fmt.Errorf("invalid video type: %s", migrateGameVideoType)
+		return 0, fmt.Errorf("invalid video type: %s", schemaGameVideoType)
 	}
 }
 
@@ -45,16 +45,16 @@ func (gameVideo *GameVideoV2) SaveGameVideo(ctx context.Context, gameID values.G
 	var videoTypeName string
 	switch video.GetType() {
 	case values.GameVideoTypeMp4:
-		videoTypeName = migrate.GameVideoTypeMp4
+		videoTypeName = schema.GameVideoTypeMp4
 	case values.GameVideoTypeM4v:
-		videoTypeName = migrate.GameVideoTypeM4v
+		videoTypeName = schema.GameVideoTypeM4v
 	case values.GameVideoTypeMkv:
-		videoTypeName = migrate.GameVideoTypeMkv
+		videoTypeName = schema.GameVideoTypeMkv
 	default:
 		return fmt.Errorf("invalid video type: %d", video.GetType())
 	}
 
-	var videoType migrate.GameVideoTypeTable
+	var videoType schema.GameVideoTypeTable
 	err = db.
 		Where("name = ?", videoTypeName).
 		Where("active = ?", true).
@@ -66,7 +66,7 @@ func (gameVideo *GameVideoV2) SaveGameVideo(ctx context.Context, gameID values.G
 	videoTypeID := videoType.ID
 
 	err = db.
-		Create(&migrate.GameVideoTable2{
+		Create(&schema.GameVideoTable2{
 			ID:          uuid.UUID(video.GetID()),
 			GameID:      uuid.UUID(gameID),
 			VideoTypeID: videoTypeID,
@@ -90,7 +90,7 @@ func (gameVideo *GameVideoV2) GetGameVideo(ctx context.Context, gameVideoID valu
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var video migrate.GameVideoTable2
+	var video schema.GameVideoTable2
 	err = db.
 		Joins("GameVideoType").
 		Where("v2_game_videos.id = ?", uuid.UUID(gameVideoID)).
@@ -128,7 +128,7 @@ func (gameVideo *GameVideoV2) GetGameVideos(ctx context.Context, gameID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var videos []migrate.GameVideoTable2
+	var videos []schema.GameVideoTable2
 	err = db.
 		Joins("GameVideoType").
 		Where("game_id = ?", uuid.UUID(gameID)).

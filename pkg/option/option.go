@@ -1,4 +1,4 @@
-package types
+package option
 
 // Option
 // optionalな値を表す型。

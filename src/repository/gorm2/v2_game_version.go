@@ -9,11 +9,11 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	"github.com/traPtitech/trap-collection-server/pkg/types"
+	"github.com/traPtitech/trap-collection-server/pkg/option"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -32,7 +32,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 	gameID values.GameID,
 	imageID values.GameImageID,
 	videoID values.GameVideoID,
-	optionURL types.Option[values.GameURLLink],
+	optionURL option.Option[values.GameURLLink],
 	fileIDs []values.GameFileID,
 	version *domain.GameVersion,
 ) error {
@@ -48,7 +48,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 
 	err = db.
 		Session(&gorm.Session{}).
-		Create(&migrate.GameVersionTable2{
+		Create(&schema.GameVersionTable2{
 			ID:          uuid.UUID(version.GetID()),
 			Name:        string(version.GetName()),
 			Description: string(version.GetDescription()),
@@ -67,15 +67,15 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 		return fmt.Errorf("failed to create game version: %w", err)
 	}
 
-	files := make([]*migrate.GameFileTable2, 0, len(fileIDs))
+	files := make([]*schema.GameFileTable2, 0, len(fileIDs))
 	for _, fileID := range fileIDs {
-		files = append(files, &migrate.GameFileTable2{
+		files = append(files, &schema.GameFileTable2{
 			ID: uuid.UUID(fileID),
 		})
 	}
 
 	err = db.
-		Model(&migrate.GameVersionTable2{
+		Model(&schema.GameVersionTable2{
 			ID: uuid.UUID(version.GetID()),
 		}).
 		Association("GameFiles").
@@ -85,7 +85,7 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 	}
 
 	err = db.
-		Model(&migrate.GameTable2{ID: uuid.UUID(gameID)}).
+		Model(&schema.GameTable2{ID: uuid.UUID(gameID)}).
 		Update("latest_version_updated_at", version.GetCreatedAt()).
 		Error
 	if err != nil {
@@ -113,7 +113,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 	var count int64
 	err = query.
 		Session(&gorm.Session{}).
-		Model(&migrate.GameVersionTable2{}).
+		Model(&schema.GameVersionTable2{}).
 		Count(&count).Error
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to count game versions: %w", err)
@@ -129,7 +129,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 
 	query = query.Order("created_at DESC")
 
-	var gameVersions []*migrate.GameVersionTable2
+	var gameVersions []*schema.GameVersionTable2
 	err = query.
 		Session(&gorm.Session{}).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
@@ -142,7 +142,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 
 	gameVersionInfos := make([]*repository.GameVersionInfo, 0, len(gameVersions))
 	for _, gameVersion := range gameVersions {
-		var optionURL types.Option[values.GameURLLink]
+		var optionURL option.Option[values.GameURLLink]
 		if len(gameVersion.URL) != 0 {
 			url, err := url.Parse(gameVersion.URL)
 			if err != nil {
@@ -151,7 +151,7 @@ func (gameVersion *GameVersionV2) GetGameVersions(
 				continue
 			}
 
-			optionURL = types.NewOption(values.NewGameURLLink(url))
+			optionURL = option.NewOption(values.NewGameURLLink(url))
 		}
 
 		fileIDs := make([]values.GameFileID, 0, len(gameVersion.GameFiles))
@@ -186,7 +186,7 @@ func (gameVersion *GameVersionV2) GetLatestGameVersion(
 		return nil, fmt.Errorf("failed to get db: %w", err)
 	}
 
-	var gameVersionTable migrate.GameVersionTable2
+	var gameVersionTable schema.GameVersionTable2
 	err = db.
 		Where("game_id = ?", uuid.UUID(gameID)).
 		Order("created_at DESC").
@@ -201,14 +201,14 @@ func (gameVersion *GameVersionV2) GetLatestGameVersion(
 		return nil, fmt.Errorf("failed to find game version: %w", err)
 	}
 
-	var optionURL types.Option[values.GameURLLink]
+	var optionURL option.Option[values.GameURLLink]
 	if len(gameVersionTable.URL) != 0 {
 		url, err := url.Parse(gameVersionTable.URL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse game version url: %w", err)
 		}
 
-		optionURL = types.NewOption(values.NewGameURLLink(url))
+		optionURL = option.NewOption(values.NewGameURLLink(url))
 	}
 
 	fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))
@@ -250,7 +250,7 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 		uuidGameVersionIDs = append(uuidGameVersionIDs, uuid.UUID(gameVersionID))
 	}
 
-	var gameVersionTables []*migrate.GameVersionTable2
+	var gameVersionTables []*schema.GameVersionTable2
 	err = db.
 		Where("id IN ?", uuidGameVersionIDs).
 		Preload("GameFiles", func(db *gorm.DB) *gorm.DB {
@@ -263,14 +263,14 @@ func (gameVersion *GameVersionV2) GetGameVersionsByIDs(
 
 	gameVersionInfos := make([]*repository.GameVersionInfoWithGameID, 0, len(gameVersionTables))
 	for _, gameVersionTable := range gameVersionTables {
-		var optionURL types.Option[values.GameURLLink]
+		var optionURL option.Option[values.GameURLLink]
 		if len(gameVersionTable.URL) != 0 {
 			url, err := url.Parse(gameVersionTable.URL)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse game version url: %w", err)
 			}
 
-			optionURL = types.NewOption(values.NewGameURLLink(url))
+			optionURL = option.NewOption(values.NewGameURLLink(url))
 		}
 
 		fileIDs := make([]values.GameFileID, 0, len(gameVersionTable.GameFiles))

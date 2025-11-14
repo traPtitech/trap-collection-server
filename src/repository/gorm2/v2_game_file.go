@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/migrate"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
 )
 
@@ -34,16 +34,16 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 	var fileTypeName string
 	switch file.GetFileType() {
 	case values.GameFileTypeJar:
-		fileTypeName = migrate.GameFileTypeJar
+		fileTypeName = schema.GameFileTypeJar
 	case values.GameFileTypeWindows:
-		fileTypeName = migrate.GameFileTypeWindows
+		fileTypeName = schema.GameFileTypeWindows
 	case values.GameFileTypeMac:
-		fileTypeName = migrate.GameFileTypeMac
+		fileTypeName = schema.GameFileTypeMac
 	default:
 		return fmt.Errorf("invalid file type: %d", file.GetFileType())
 	}
 
-	var fileType migrate.GameFileTypeTable
+	var fileType schema.GameFileTypeTable
 	err = db.
 		Where("name = ?", fileTypeName).
 		Select("id").
@@ -54,7 +54,7 @@ func (gameFile *GameFileV2) SaveGameFile(ctx context.Context, gameID values.Game
 	fileTypeID := fileType.ID
 
 	err = db.
-		Create(&migrate.GameFileTable2{
+		Create(&schema.GameFileTable2{
 			ID:         uuid.UUID(file.GetID()),
 			GameID:     uuid.UUID(gameID),
 			EntryPoint: string(file.GetEntryPoint()),
@@ -80,7 +80,7 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var file migrate.GameFileTable2
+	var file schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("v2_game_files.id = ?", uuid.UUID(gameFileID)).
@@ -94,11 +94,11 @@ func (gameFile *GameFileV2) GetGameFile(ctx context.Context, gameFileID values.G
 
 	var fileType values.GameFileType
 	switch file.GameFileType.Name {
-	case migrate.GameFileTypeJar:
+	case schema.GameFileTypeJar:
 		fileType = values.GameFileTypeJar
-	case migrate.GameFileTypeWindows:
+	case schema.GameFileTypeWindows:
 		fileType = values.GameFileTypeWindows
-	case migrate.GameFileTypeMac:
+	case schema.GameFileTypeMac:
 		fileType = values.GameFileTypeMac
 	default:
 		return nil, fmt.Errorf("invalid file type: %s", file.GameFileType.Name)
@@ -132,7 +132,7 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 
-	var files []migrate.GameFileTable2
+	var files []schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("game_id = ?", uuid.UUID(gameID)).
@@ -146,11 +146,11 @@ func (gameFile *GameFileV2) GetGameFiles(ctx context.Context, gameID values.Game
 	for _, file := range files {
 		var fileType values.GameFileType
 		switch file.GameFileType.Name {
-		case migrate.GameFileTypeJar:
+		case schema.GameFileTypeJar:
 			fileType = values.GameFileTypeJar
-		case migrate.GameFileTypeWindows:
+		case schema.GameFileTypeWindows:
 			fileType = values.GameFileTypeWindows
-		case migrate.GameFileTypeMac:
+		case schema.GameFileTypeMac:
 			fileType = values.GameFileTypeMac
 		default:
 			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
@@ -195,7 +195,7 @@ func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileID
 		uuidFileIDs = append(uuidFileIDs, uuid.UUID(fileID))
 	}
 
-	var gameFiles []*migrate.GameFileTable2
+	var gameFiles []*schema.GameFileTable2
 	err = db.
 		Joins("GameFileType").
 		Where("v2_game_files.id IN ?", uuidFileIDs).
@@ -209,11 +209,11 @@ func (gameFile *GameFileV2) GetGameFilesWithoutTypes(ctx context.Context, fileID
 	for _, gameFile := range gameFiles {
 		var fileType values.GameFileType
 		switch gameFile.GameFileType.Name {
-		case migrate.GameFileTypeWindows:
+		case schema.GameFileTypeWindows:
 			fileType = values.GameFileTypeWindows
-		case migrate.GameFileTypeMac:
+		case schema.GameFileTypeMac:
 			fileType = values.GameFileTypeMac
-		case migrate.GameFileTypeJar:
+		case schema.GameFileTypeJar:
 			fileType = values.GameFileTypeJar
 		default:
 			// 1つ不正な値が格納されるだけで機能停止すると困るので、エラーを返さずにログを出力する
