@@ -16,13 +16,13 @@ type GamePlayLogV2 interface {
 	// エディションが存在しない場合、ErrInvalidEditionを返す。
 	// ゲームが存在しない場合、ErrInvalidGameを返す。
 	// ゲームバージョンが存在しない場合、ErrInvalidGameVersionを返す。
-	CreatePlayLog(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, gameVersionID values.GameVersionID, startTime time.Time) (*domain.GamePlayLog, error)
+	CreatePlayLog(ctx context.Context, editionID values.EditionID, gameID values.GameID, gameVersionID values.GameVersionID, startTime time.Time) (*domain.GamePlayLog, error)
 	// UpdatePlayLogEndTime
 	// 指定されたプレイログの終了時刻を更新する。
 	// プレイログが存在しない場合、ErrInvalidPlayLogIDを返す。
 	// 終了時刻が開始時刻より前の場合、ErrInvalidEndTimeを返す。
 	// プレイログがeditionIDとgameIDのペアに対応しない場合、ErrInvalidPlayLogEditionGamePairを返す。
-	UpdatePlayLogEndTime(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, playLogID values.GamePlayLogID, endTime time.Time) error
+	UpdatePlayLogEndTime(ctx context.Context, editionID values.EditionID, gameID values.GameID, playLogID values.GamePlayLogID, endTime time.Time) error
 	// GetGamePlayStats
 	// 指定されたゲームと期間のプレイ統計を取得する。
 	// gameVersionIDがnilの場合、そのゲームのすべてのバージョンの統計を取得する。
@@ -32,9 +32,9 @@ type GamePlayLogV2 interface {
 	// GetEditionPlayStats
 	// 指定されたエディションと期間のプレイ統計を取得する。
 	// エディションが存在しない場合、ErrInvalidEditionを返す。
-	GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error)
+	GetEditionPlayStats(ctx context.Context, editionID values.EditionID, start, end time.Time) (*domain.EditionPlayStats, error)
 	// DeleteGamePlayLog
 	// 指定されたプレイログを削除する。
 	// 条件に当てはまるプレイログが存在しない場合、ErrInvalidPlayLogIDを返す。
-	DeleteGamePlayLog(ctx context.Context, editionID values.LauncherVersionID, gameID values.GameID, playLogID values.GamePlayLogID) error
+	DeleteGamePlayLog(ctx context.Context, editionID values.EditionID, gameID values.GameID, playLogID values.GamePlayLogID) error
 }

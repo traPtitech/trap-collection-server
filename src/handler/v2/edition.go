@@ -69,19 +69,19 @@ func (edition *Edition) PostEdition(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	name := values.NewLauncherVersionName(req.Name)
+	name := values.NewEditionName(req.Name)
 	if err := name.Validate(); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
 	}
 
-	var optionQuestionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
+	var optionQuestionnaireURL option.Option[values.EditionQuestionnaireURL]
 	if req.Questionnaire != nil {
 		urlValue, err := url.Parse(*req.Questionnaire)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
 		}
 
-		optionQuestionnaireURL = option.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+		optionQuestionnaireURL = option.NewOption(values.NewEditionQuestionnaireURL(urlValue))
 	}
 
 	gameVersionIDs := make([]values.GameVersionID, 0, len(req.GameVersions))
@@ -130,7 +130,7 @@ func (edition *Edition) PostEdition(c echo.Context) error {
 // エディションの削除
 // (DELETE /editions/{editionID})
 func (edition *Edition) DeleteEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error {
-	err := edition.editionService.DeleteEdition(ctx.Request().Context(), values.NewLauncherVersionIDFromUUID(editionID))
+	err := edition.editionService.DeleteEdition(ctx.Request().Context(), values.NewEditionIDFromUUID(editionID))
 	if errors.Is(err, service.ErrInvalidEditionID) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
 	}
@@ -145,7 +145,7 @@ func (edition *Edition) DeleteEdition(ctx echo.Context, editionID openapi.Editio
 // エディション情報の取得
 // (GET /editions/{editionID})
 func (edition *Edition) GetEdition(ctx echo.Context, editionID openapi.EditionIDInPath) error {
-	domainEdition, err := edition.editionService.GetEdition(ctx.Request().Context(), values.NewLauncherVersionIDFromUUID(editionID))
+	domainEdition, err := edition.editionService.GetEdition(ctx.Request().Context(), values.NewEditionIDFromUUID(editionID))
 	if errors.Is(err, service.ErrInvalidEditionID) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
 	}
@@ -183,24 +183,24 @@ func (edition *Edition) PatchEdition(ctx echo.Context, editionID openapi.Edition
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	name := values.NewLauncherVersionName(req.Name)
+	name := values.NewEditionName(req.Name)
 	if err := name.Validate(); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid name: %v", err.Error()))
 	}
 
-	var optionQuestionnaireURL option.Option[values.LauncherVersionQuestionnaireURL]
+	var optionQuestionnaireURL option.Option[values.EditionQuestionnaireURL]
 	if req.Questionnaire != nil {
 		urlValue, err := url.Parse(*req.Questionnaire)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid questionnaire url")
 		}
 
-		optionQuestionnaireURL = option.NewOption(values.NewLauncherVersionQuestionnaireURL(urlValue))
+		optionQuestionnaireURL = option.NewOption(values.NewEditionQuestionnaireURL(urlValue))
 	}
 
 	domainEdition, err := edition.editionService.UpdateEdition(
 		ctx.Request().Context(),
-		values.NewLauncherVersionIDFromUUID(editionID),
+		values.NewEditionIDFromUUID(editionID),
 		name,
 		optionQuestionnaireURL,
 	)
@@ -235,7 +235,7 @@ func (edition *Edition) PatchEdition(ctx echo.Context, editionID openapi.Edition
 // エディションに紐づくゲームの一覧の取得
 // (GET /editions/{editionID}/games)
 func (edition *Edition) GetEditionGames(ctx echo.Context, editionID openapi.EditionIDInPath) error {
-	gameVersions, err := edition.editionService.GetEditionGameVersions(ctx.Request().Context(), values.NewLauncherVersionIDFromUUID(editionID))
+	gameVersions, err := edition.editionService.GetEditionGameVersions(ctx.Request().Context(), values.NewEditionIDFromUUID(editionID))
 	if errors.Is(err, service.ErrInvalidEditionID) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid edition id")
 	}
@@ -313,7 +313,7 @@ func (edition *Edition) PatchEditionGame(c echo.Context, editionID openapi.Editi
 
 	gameVersions, err := edition.editionService.UpdateEditionGameVersions(
 		c.Request().Context(),
-		values.NewLauncherVersionIDFromUUID(editionID),
+		values.NewEditionIDFromUUID(editionID),
 		gameVersionIDs,
 	)
 	switch {

@@ -40,10 +40,10 @@ func TestCreateLauncherSession(t *testing.T) {
 		t.Errorf("failed to create access token: %v", err)
 	}
 
-	launcherVersionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	launcherUserID := values.NewLauncherUserID()
-	dbLauncherVersion := schema.LauncherVersionTable{
-		ID:        uuid.UUID(launcherVersionID),
+	dbEdition := schema.LauncherVersionTable{
+		ID:        uuid.UUID(editionID),
 		Name:      "TestCreateLauncherSession",
 		CreatedAt: time.Now(),
 		LauncherUsers: []schema.LauncherUserTable{
@@ -55,7 +55,7 @@ func TestCreateLauncherSession(t *testing.T) {
 		},
 	}
 
-	err = db.Create(&dbLauncherVersion).Error
+	err = db.Create(&dbEdition).Error
 	if err != nil {
 		t.Errorf("failed to create launcher version: %v", err)
 	}

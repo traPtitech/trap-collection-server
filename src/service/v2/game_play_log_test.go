@@ -24,13 +24,13 @@ func TestCreatePlayLog(t *testing.T) {
 
 	type test struct {
 		description   string
-		editionID     values.LauncherVersionID
+		editionID     values.EditionID
 		gameID        values.GameID
 		gameVersionID values.GameVersionID
 		startTime     time.Time
 
 		executeGetEdition bool
-		getEditionResult  *domain.LauncherVersion
+		getEditionResult  *domain.Edition
 		getEditionErr     error
 
 		executeGetGame bool
@@ -49,15 +49,15 @@ func TestCreatePlayLog(t *testing.T) {
 	}
 
 	now := time.Now()
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID := values.NewGameID()
 	gameVersionID := values.NewGameVersionID()
 
 	questionnaireURL, _ := url.Parse("https://example.com")
-	edition := domain.NewLauncherVersionWithQuestionnaire(
+	edition := domain.NewEditionWithQuestionnaire(
 		editionID,
-		values.NewLauncherVersionName("v1.0.0"),
-		values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+		values.NewEditionName("v1.0.0"),
+		values.NewEditionQuestionnaireURL(questionnaireURL),
 		now,
 	)
 
@@ -94,7 +94,7 @@ func TestCreatePlayLog(t *testing.T) {
 		},
 		{
 			description:       "GetEditionがErrRecordNotFoundなのでErrInvalidEdition",
-			editionID:         values.NewLauncherVersionID(),
+			editionID:         values.NewEditionID(),
 			gameID:            gameID,
 			gameVersionID:     gameVersionID,
 			startTime:         now,
@@ -321,7 +321,7 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 
 	now := time.Now()
 	playLogID := values.NewGamePlayLogID()
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID := values.NewGameID()
 	gameVersionID := values.NewGameVersionID()
 
@@ -340,7 +340,7 @@ func TestUpdatePlayLogEndTime(t *testing.T) {
 	// 異なるeditionIDとgameIDを持つプレイログ
 	mismatchedPlayLog := domain.NewGamePlayLog(
 		playLogID,
-		values.NewLauncherVersionID(),
+		values.NewEditionID(),
 		values.NewGameID(),
 		gameVersionID,
 		now.Add(-time.Hour),
@@ -749,12 +749,12 @@ func TestGetEditionPlayStats(t *testing.T) {
 
 	type test struct {
 		description string
-		editionID   values.LauncherVersionID
+		editionID   values.EditionID
 		start       time.Time
 		end         time.Time
 
 		executeGetEdition bool
-		getEditionResult  *domain.LauncherVersion
+		getEditionResult  *domain.Edition
 		getEditionErr     error
 
 		executeGetEditionPlayStats bool
@@ -766,21 +766,21 @@ func TestGetEditionPlayStats(t *testing.T) {
 	}
 
 	now := time.Now()
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 
 	questionnaireURL, _ := url.Parse("https://example.com")
-	edition := domain.NewLauncherVersionWithQuestionnaire(
+	edition := domain.NewEditionWithQuestionnaire(
 		editionID,
-		values.NewLauncherVersionName("v1.0.0"),
-		values.NewLauncherVersionQuestionnaireURL(questionnaireURL),
+		values.NewEditionName("v1.0.0"),
+		values.NewEditionQuestionnaireURL(questionnaireURL),
 		now,
 	)
 
 	sampleEditionStats := domain.NewEditionPlayStats(
 		editionID,
-		values.NewLauncherVersionName("v1.0.0"),
+		values.NewEditionName("v1.0.0"),
 		15,
 		5400*time.Second,
 		[]*domain.GamePlayStatsInEdition{
@@ -828,7 +828,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 		},
 		{
 			description:       "GetEditionがErrRecordNotFoundなのでErrInvalidEdition",
-			editionID:         values.NewLauncherVersionID(),
+			editionID:         values.NewEditionID(),
 			start:             now.Add(-24 * time.Hour),
 			end:               now,
 			executeGetEdition: true,
@@ -868,7 +868,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 			executeGetEditionPlayStats: true,
 			getEditionPlayStatsResult: domain.NewEditionPlayStats(
 				editionID,
-				values.NewLauncherVersionName("v1.0.0"),
+				values.NewEditionName("v1.0.0"),
 				0,
 				0,
 				[]*domain.GamePlayStatsInEdition{},
@@ -971,7 +971,7 @@ func TestGetEditionPlayStats(t *testing.T) {
 func TestDeleteGamePlayLog(t *testing.T) {
 	t.Parallel()
 
-	editionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	gameID := values.NewGameID()
 	playLogID := values.NewGamePlayLogID()
 	playLog := domain.NewGamePlayLog(
@@ -986,7 +986,7 @@ func TestDeleteGamePlayLog(t *testing.T) {
 	)
 
 	testCases := map[string]struct {
-		editionID                values.LauncherVersionID
+		editionID                values.EditionID
 		gameID                   values.GameID
 		playLogID                values.GamePlayLogID
 		GetGamePlayLogErr        error
@@ -996,21 +996,21 @@ func TestDeleteGamePlayLog(t *testing.T) {
 		err                      error
 	}{
 		"GetGamePlayLogがErrRecordNotFoundなのでErrInvalidPlayLogID": {
-			editionID:         values.NewLauncherVersionID(),
+			editionID:         values.NewEditionID(),
 			gameID:            values.NewGameID(),
 			playLogID:         values.NewGamePlayLogID(),
 			GetGamePlayLogErr: repository.ErrRecordNotFound,
 			err:               service.ErrInvalidPlayLogID,
 		},
 		"GetGamePlayLogがエラーなのでエラー": {
-			editionID:         values.NewLauncherVersionID(),
+			editionID:         values.NewEditionID(),
 			gameID:            values.NewGameID(),
 			playLogID:         values.NewGamePlayLogID(),
 			GetGamePlayLogErr: assert.AnError,
 			err:               assert.AnError,
 		},
 		"editionIDとgameIDのペアが異なるのでErrInvalidPlayLogID": {
-			editionID: values.NewLauncherVersionID(),
+			editionID: values.NewEditionID(),
 			gameID:    values.NewGameID(),
 			playLogID: playLogID,
 			playLog:   playLog,

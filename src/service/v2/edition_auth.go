@@ -37,7 +37,7 @@ func NewEditionAuth(
 	}
 }
 
-func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionID values.LauncherVersionID, num uint) ([]*domain.LauncherUser, error) {
+func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionID values.EditionID, num uint) ([]*domain.LauncherUser, error) {
 	if num == 0 {
 		return nil, service.ErrInvalidKeyNum
 	}
@@ -74,7 +74,7 @@ func (editionAuth *EditionAuth) GenerateProductKey(ctx context.Context, editionI
 	return productKeys, nil
 }
 
-func (editionAuth *EditionAuth) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, params service.GetProductKeysParams) ([]*domain.LauncherUser, error) {
+func (editionAuth *EditionAuth) GetProductKeys(ctx context.Context, editionID values.EditionID, params service.GetProductKeysParams) ([]*domain.LauncherUser, error) {
 	_, err := editionAuth.editionRepository.GetEdition(ctx, editionID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidLauncherVersion
@@ -184,7 +184,7 @@ func getExpiresAt() time.Time {
 	return time.Now().Add(expiresIn * time.Second)
 }
 
-func (editionAuth *EditionAuth) EditionAuth(ctx context.Context, token values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+func (editionAuth *EditionAuth) EditionAuth(ctx context.Context, token values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.Edition, error) {
 	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidAccessToken
@@ -204,7 +204,7 @@ func (editionAuth *EditionAuth) EditionAuth(ctx context.Context, token values.La
 	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
 }
 
-func (editionAuth *EditionAuth) EditionGameAuth(ctx context.Context, token values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+func (editionAuth *EditionAuth) EditionGameAuth(ctx context.Context, token values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.Edition, error) {
 	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidAccessToken
@@ -232,7 +232,7 @@ func (editionAuth *EditionAuth) EditionGameAuth(ctx context.Context, token value
 	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
 }
 
-func (editionAuth *EditionAuth) EditionImageAuth(ctx context.Context, token values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+func (editionAuth *EditionAuth) EditionImageAuth(ctx context.Context, token values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.Edition, error) {
 	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidAccessToken
@@ -260,7 +260,7 @@ func (editionAuth *EditionAuth) EditionImageAuth(ctx context.Context, token valu
 	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
 }
 
-func (editionAuth *EditionAuth) EditionVideoAuth(ctx context.Context, token values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+func (editionAuth *EditionAuth) EditionVideoAuth(ctx context.Context, token values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.Edition, error) {
 	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, token, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidAccessToken
@@ -288,7 +288,7 @@ func (editionAuth *EditionAuth) EditionVideoAuth(ctx context.Context, token valu
 	return accessTokenInfo.ProductKey, accessTokenInfo.Edition, nil
 }
 
-func (editionAuth *EditionAuth) EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.LauncherVersion, error) {
+func (editionAuth *EditionAuth) EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.Edition, error) {
 	accessTokenInfo, err := editionAuth.accessTokenRepository.GetAccessTokenInfo(ctx, accessToken, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, nil, service.ErrInvalidAccessToken

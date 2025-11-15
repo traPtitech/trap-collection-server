@@ -51,9 +51,9 @@ func TestCreateLauncherUsers(t *testing.T) {
 		t.Errorf("failed to create product key: %v", err)
 	}
 
-	launcherVersionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	dbLauncherVersion := schema.LauncherVersionTable{
-		ID:        uuid.UUID(launcherVersionID),
+		ID:        uuid.UUID(editionID),
 		Name:      "TestCreateLauncherUsers",
 		CreatedAt: time.Now(),
 	}
@@ -64,17 +64,17 @@ func TestCreateLauncherUsers(t *testing.T) {
 	}
 
 	type test struct {
-		description       string
-		launcherVersionID values.LauncherVersionID
-		launcherUsers     []*domain.LauncherUser
-		isErr             bool
-		err               error
+		description   string
+		editionID     values.EditionID
+		launcherUsers []*domain.LauncherUser
+		isErr         bool
+		err           error
 	}
 
 	testCases := []test{
 		{
-			description:       "入出力問題ないのでエラーなし",
-			launcherVersionID: launcherVersionID,
+			description: "入出力問題ないのでエラーなし",
+			editionID:   editionID,
 			launcherUsers: []*domain.LauncherUser{
 				domain.NewLauncherUser(
 					values.NewLauncherUserID(),
@@ -83,13 +83,13 @@ func TestCreateLauncherUsers(t *testing.T) {
 			},
 		},
 		{
-			description:       "ユーザーが空でもエラーなし",
-			launcherVersionID: launcherVersionID,
-			launcherUsers:     []*domain.LauncherUser{},
+			description:   "ユーザーが空でもエラーなし",
+			editionID:     editionID,
+			launcherUsers: []*domain.LauncherUser{},
 		},
 		{
-			description:       "ユーザーが複数人でもエラーなし",
-			launcherVersionID: launcherVersionID,
+			description: "ユーザーが複数人でもエラーなし",
+			editionID:   editionID,
 			launcherUsers: []*domain.LauncherUser{
 				domain.NewLauncherUser(
 					values.NewLauncherUserID(),
@@ -102,8 +102,8 @@ func TestCreateLauncherUsers(t *testing.T) {
 			},
 		},
 		{
-			description:       "プロダクトキーが同一なのでエラー",
-			launcherVersionID: launcherVersionID,
+			description: "プロダクトキーが同一なのでエラー",
+			editionID:   editionID,
 			launcherUsers: []*domain.LauncherUser{
 				domain.NewLauncherUser(
 					values.NewLauncherUserID(),
@@ -117,8 +117,8 @@ func TestCreateLauncherUsers(t *testing.T) {
 			isErr: true,
 		},
 		{
-			description:       "ランチャーバージョンが存在しないのでエラー",
-			launcherVersionID: values.NewLauncherVersionID(),
+			description: "ランチャーバージョンが存在しないのでエラー",
+			editionID:   values.NewEditionID(),
 			launcherUsers: []*domain.LauncherUser{
 				domain.NewLauncherUser(
 					values.NewLauncherUserID(),
@@ -131,7 +131,7 @@ func TestCreateLauncherUsers(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			launcherUsers, err := launcherUserRepository.CreateLauncherUsers(ctx, testCase.launcherVersionID, testCase.launcherUsers)
+			launcherUsers, err := launcherUserRepository.CreateLauncherUsers(ctx, testCase.editionID, testCase.launcherUsers)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -163,14 +163,14 @@ func TestDeleteLauncherUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	launcherVersionID := values.NewLauncherVersionID()
-	dbLauncherVersion := schema.LauncherVersionTable{
-		ID:        uuid.UUID(launcherVersionID),
+	editionID := values.NewEditionID()
+	dbEdition := schema.LauncherVersionTable{
+		ID:        uuid.UUID(editionID),
 		Name:      "TestDeleteLauncherUser",
 		CreatedAt: time.Now(),
 	}
 
-	err = db.Create(&dbLauncherVersion).Error
+	err = db.Create(&dbEdition).Error
 	if err != nil {
 		t.Errorf("failed to create launcher version: %v", err)
 	}
@@ -207,7 +207,7 @@ func TestDeleteLauncherUser(t *testing.T) {
 				dbLauncherUser := schema.LauncherUserTable{
 					ID:                uuid.UUID(launcherUserID),
 					ProductKey:        string(productKey),
-					LauncherVersionID: uuid.UUID(launcherVersionID),
+					LauncherVersionID: uuid.UUID(editionID),
 				}
 				err = db.Create(&dbLauncherUser).Error
 				if err != nil {
@@ -252,14 +252,14 @@ func TestGetLauncherUserByProductKey(t *testing.T) {
 		t.Errorf("failed to create product key: %v", err)
 	}
 
-	launcherVersionID := values.NewLauncherVersionID()
+	editionID := values.NewEditionID()
 	launcherUserID := values.NewLauncherUserID()
 	launcherUser := domain.NewLauncherUser(
 		launcherUserID,
 		productKey1,
 	)
 	dbLauncherVersion := schema.LauncherVersionTable{
-		ID:        uuid.UUID(launcherVersionID),
+		ID:        uuid.UUID(editionID),
 		Name:      "TestGetLauncherUserByProductKey",
 		CreatedAt: time.Now(),
 		LauncherUsers: []schema.LauncherUserTable{

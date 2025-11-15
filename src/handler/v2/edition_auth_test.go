@@ -158,7 +158,7 @@ func TestGetProductKeys(t *testing.T) {
 				}
 				mockEditionAuthService.
 					EXPECT().
-					GetProductKeys(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID), service.GetProductKeysParams{Status: status}).
+					GetProductKeys(gomock.Any(), values.NewEditionIDFromUUID(testCase.editionID), service.GetProductKeysParams{Status: status}).
 					Return(testCase.productKeys, testCase.GetProductKeysErr)
 			}
 
@@ -295,7 +295,7 @@ func TestPostProductKey(t *testing.T) {
 			if testCase.executeGetProductKeys {
 				mockEditionAuthService.
 					EXPECT().
-					GenerateProductKey(gomock.Any(), values.NewLauncherVersionIDFromUUID(testCase.editionID), uint(testCase.params.Num)).
+					GenerateProductKey(gomock.Any(), values.NewEditionIDFromUUID(testCase.editionID), uint(testCase.params.Num)).
 					Return(testCase.productKeys, testCase.GenerateProductKeyErr)
 			}
 
@@ -684,9 +684,9 @@ func TestGetEditionInfo(t *testing.T) {
 	editionName := "Test Edition"
 	createdAt := time.Now()
 
-	edition := domain.NewLauncherVersionWithoutQuestionnaire(
-		values.NewLauncherVersionIDFromUUID(editionID),
-		values.NewLauncherVersionName(editionName),
+	edition := domain.NewEditionWithoutQuestionnaire(
+		values.NewEditionIDFromUUID(editionID),
+		values.NewEditionName(editionName),
 		createdAt,
 	)
 
@@ -697,9 +697,9 @@ func TestGetEditionInfo(t *testing.T) {
 	editionID2 := uuid.New()
 	editionName2 := "Test Edition2"
 	createdAt2 := time.Now()
-	editionWithQ := domain.NewLauncherVersionWithQuestionnaire(
-		values.NewLauncherVersionIDFromUUID(editionID2),
-		values.NewLauncherVersionName(editionName2),
+	editionWithQ := domain.NewEditionWithQuestionnaire(
+		values.NewEditionIDFromUUID(editionID2),
+		values.NewEditionName(editionName2),
 		questionnaireURL,
 		createdAt2,
 	)
@@ -717,7 +717,7 @@ func TestGetEditionInfo(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		edition    *domain.LauncherVersion
+		edition    *domain.Edition
 		resEdition openapi.Edition
 		isErr      bool
 		err        error

@@ -568,7 +568,7 @@ func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3fi
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid editionID")
 	}
-	editionID := values.NewLauncherVersionIDFromUUID(uuidEditionID)
+	editionID := values.NewEditionIDFromUUID(uuidEditionID)
 
 	if editionID != edition.GetID() {
 		return echo.NewHTTPError(http.StatusUnauthorized, "editionID is not matched")
@@ -577,7 +577,7 @@ func (checker *Checker) EditionIDAuthChecker(ctx context.Context, ai *openapi3fi
 	return nil
 }
 
-func (checker *Checker) checkEditionAuth(c echo.Context, ai *openapi3filter.AuthenticationInput) (*domain.LauncherUser, *domain.LauncherVersion, bool, string, error) {
+func (checker *Checker) checkEditionAuth(c echo.Context, ai *openapi3filter.AuthenticationInput) (*domain.LauncherUser, *domain.Edition, bool, string, error) {
 	accessToken, ok, message := checker.getAccessToken(ai)
 	if !ok {
 		return nil, nil, false, message, nil

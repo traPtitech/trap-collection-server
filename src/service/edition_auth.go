@@ -15,11 +15,11 @@ type EditionAuth interface {
 	// 指定したエディションに対して、指定した数のプロダクトキーを生成します。
 	// エディションが存在しない場合、ErrInvalidEditionIDを返します。
 	// numが0の場合、ErrInvalidKeyNumを返します。
-	GenerateProductKey(ctx context.Context, editionID values.LauncherVersionID, num uint) ([]*domain.LauncherUser, error)
+	GenerateProductKey(ctx context.Context, editionID values.EditionID, num uint) ([]*domain.LauncherUser, error)
 	// GetProductKeys
 	// 指定したエディションのプロダクトキーを取得します。
 	// エディションが存在しない場合、ErrInvalidEditionIDを返します。
-	GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, params GetProductKeysParams) ([]*domain.LauncherUser, error)
+	GetProductKeys(ctx context.Context, editionID values.EditionID, params GetProductKeysParams) ([]*domain.LauncherUser, error)
 	// ActivateProductKey
 	// 指定したプロダクトキーを有効化します。
 	// 存在しないプロダクトキーの場合、ErrInvalidProductKeyを返します。
@@ -38,35 +38,35 @@ type EditionAuth interface {
 	// エディション情報へのアクセストークンを検証します。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
-	EditionAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	EditionAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken) (*domain.LauncherUser, *domain.Edition, error)
 	// EditionGameAuth
 	// エディション情報へのアクセストークンを検証し、
 	// ゲーム情報にアクセスできるかどうかチェックします。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	// ゲーム情報にアクセスできない、もしくはゲームが存在しない場合、ErrForbiddenを返します。
-	EditionGameAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	EditionGameAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, gameID values.GameID) (*domain.LauncherUser, *domain.Edition, error)
 	// EditionImageAuth
 	// エディション情報へのアクセストークンを検証し、
 	// イメージ情報にアクセスできるかどうかチェックします。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	// イメージ情報にアクセスできない、もしくはイメージが存在しない場合、ErrForbiddenを返します。
-	EditionImageAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	EditionImageAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, imageID values.GameImageID) (*domain.LauncherUser, *domain.Edition, error)
 	// EditionVideoAuth
 	// エディション情報へのアクセストークンを検証し、
 	// 動画情報にアクセスできるかどうかチェックします。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	// 動画情報にアクセスできない、もしくは動画が存在しない場合、ErrForbiddenを返します。
-	EditionVideoAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	EditionVideoAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, videoID values.GameVideoID) (*domain.LauncherUser, *domain.Edition, error)
 	// EditionFileAuth
 	// エディション情報へのアクセストークンを検証し、
 	// ファイル情報にアクセスできるかどうかチェックします。
 	// アクセストークンが存在しない、もしくは無効な場合、ErrInvalidAccessTokenを返します。
 	// アクセストークンが期限切れの場合、ErrExpiredAccessTokenを返します。
 	// ファイル情報にアクセスできない、もしくはファイルが存在しない場合、ErrForbiddenを返します。
-	EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.LauncherVersion, error)
+	EditionFileAuth(ctx context.Context, accessToken values.LauncherSessionAccessToken, fileID values.GameFileID) (*domain.LauncherUser, *domain.Edition, error)
 }
 
 type GetProductKeysParams struct {

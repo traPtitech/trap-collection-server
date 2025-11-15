@@ -34,7 +34,7 @@ type GamePlayLogV2 interface {
 	// start〜endの期間でフィルタリングする。
 	// 統計データが存在しない場合でも空の統計を返すようにする。エラーは発生しない
 	// editionNameも含めて返すため、editionsテーブルとのJOINが必要
-	GetEditionPlayStats(ctx context.Context, editionID values.LauncherVersionID, start, end time.Time) (*domain.EditionPlayStats, error)
+	GetEditionPlayStats(ctx context.Context, editionID values.EditionID, start, end time.Time) (*domain.EditionPlayStats, error)
 	// DeleteGamePlayLog
 	// 指定されたプレイログを削除する。
 	// 条件に当てはまるプレイログが存在しない場合、ErrNoRecordDeletedを返す。

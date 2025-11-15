@@ -32,7 +32,7 @@ func (gpl *GamePlayLog) PostGamePlayLogStart(c echo.Context, editionIDPath opena
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
 	}
 
-	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+	editionID := values.NewEditionIDFromUUID(editionIDPath)
 	gameID := values.NewGameIDFromUUID(gameIDPath)
 	gameVersionID := values.NewGameVersionIDFromUUID(body.GameVersionID)
 	startAt := body.StartTime
@@ -67,7 +67,7 @@ func (gpl *GamePlayLog) PatchGamePlayLogEnd(c echo.Context, editionIDPath openap
 		return echo.NewHTTPError(http.StatusBadRequest, "bad request body")
 	}
 
-	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+	editionID := values.NewEditionIDFromUUID(editionIDPath)
 	gameID := values.NewGameIDFromUUID(gameIDPath)
 	playLogID := values.GamePlayLogIDFromUUID(uuid.UUID(playLogIDPath))
 	endTime := body.EndTime
@@ -155,7 +155,7 @@ func (gpl *GamePlayLog) GetGamePlayStats(c echo.Context, gameIDPath openapi.Game
 func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openapi.EditionIDInPath, params openapi.GetEditionPlayStatsParams) error {
 	ctx := c.Request().Context()
 
-	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+	editionID := values.NewEditionIDFromUUID(editionIDPath)
 
 	var start, end time.Time
 
@@ -213,7 +213,7 @@ func (gpl *GamePlayLog) GetEditionPlayStats(c echo.Context, editionIDPath openap
 }
 
 func (gpl *GamePlayLog) DeleteGamePlayLog(c echo.Context, editionIDPath openapi.EditionIDInPath, gameIDPath openapi.GameIDInPath, playLogIDPath openapi.PlayLogIDInPath) error {
-	editionID := values.NewLauncherVersionIDFromUUID(editionIDPath)
+	editionID := values.NewEditionIDFromUUID(editionIDPath)
 	gameID := values.NewGameIDFromUUID(gameIDPath)
 	playLogID := values.GamePlayLogIDFromUUID(playLogIDPath)
 

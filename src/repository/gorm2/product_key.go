@@ -27,7 +27,7 @@ func NewProductKey(db *DB) *ProductKey {
 	}
 }
 
-func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID values.LauncherVersionID, productKeys []*domain.LauncherUser) error {
+func (productKey *ProductKey) SaveProductKeys(ctx context.Context, editionID values.EditionID, productKeys []*domain.LauncherUser) error {
 	if len(productKeys) == 0 {
 		return nil
 	}
@@ -124,7 +124,7 @@ func (productKey *ProductKey) UpdateProductKey(ctx context.Context, key *domain.
 	return nil
 }
 
-func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID values.LauncherVersionID, statuses []values.LauncherUserStatus, lockType repository.LockType) ([]*domain.LauncherUser, error) {
+func (productKey *ProductKey) GetProductKeys(ctx context.Context, editionID values.EditionID, statuses []values.LauncherUserStatus, lockType repository.LockType) ([]*domain.LauncherUser, error) {
 	db, err := productKey.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
