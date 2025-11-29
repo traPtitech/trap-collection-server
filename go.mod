@@ -20,7 +20,7 @@ require (
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/labstack/gommon v0.4.2
-	github.com/mazrean/formstream v1.1.2
+	github.com/mazrean/formstream v1.1.3
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.2
@@ -161,7 +161,7 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
-	google.golang.org/protobuf v1.36.8 // indirect
+	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
