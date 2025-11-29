@@ -31,7 +31,7 @@ require (
 	golang.org/x/mod v0.30.0
 	golang.org/x/sync v0.18.0
 	gorm.io/driver/mysql v1.6.0
-	gorm.io/gorm v1.31.0
+	gorm.io/gorm v1.31.1
 	gorm.io/plugin/prometheus v0.1.0
 )
 
