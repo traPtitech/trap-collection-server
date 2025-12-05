@@ -3295,10 +3295,10 @@ components:
             oneOf:
               - type: object
                 properties:
-                  kind:
-                    $ref: '#/components/schemas/GameCreatorJobKind'
+                  id:
+                    $ref: '#/components/schemas/GameCreatorJobID'
                 required:
-                  - kind
+                  - id
               - type: object
                 properties:
                   customDisplayName:
@@ -3328,8 +3328,8 @@ components:
     GameCreatorJob:
       type: object
       properties:
-        kind:
-          $ref: '#/components/schemas/GameCreatorJobKind'
+        id:
+          $ref: '#/components/schemas/GameCreatorJobID'
         displayName:
           $ref: '#/components/schemas/GameCreatorJobDisplayName'
         isCustomJob:
@@ -3347,14 +3347,15 @@ components:
         displayName: プログラマー
         isCustomJob: false
 
-    GameCreatorJobKind:
+    GameCreatorJobID:
       type: string
-      example: programmer
+      format: uuid
       description: |
-        ゲームクリエイターのjobの種類を表します。
+        ゲームクリエイターのjobのIDを表します。
 
     GameCreatorJobDisplayName:
       type: string
+      maxLength: 64
       example: プログラマー
 
     # エディション
