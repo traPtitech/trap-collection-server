@@ -230,3 +230,39 @@ type Migrations struct {
 func (*Migrations) TableName() string {
 	return "migrations"
 }
+
+type GameCreatorJobTable struct {
+	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	DisplayName string    `gorm:"type:varchar(64);not null"`
+	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+}
+
+func (*GameCreatorJobTable) TableName() string {
+	return "game_creator_jobs"
+}
+
+type GameCreatorTable struct {
+	ID        uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID    uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id;index"` // GameIDとUserIDの組み合わせをuniqueにする
+	UserID    uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id"`
+	UserName  string    `gorm:"type:varchar(32);not null"`
+	CreatedAt time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+
+	CreatorJobs       []GameCreatorJobTable       `gorm:"many2many:game_creator_job_relations;joinForeignKey:GameCreatorID;joinReferences:JobID"`
+	CustomCreatorJobs []GameCreatorCustomJobTable `gorm:"foreignKey:GameCreatorID"`
+}
+
+func (*GameCreatorTable) TableName() string {
+	return "game_creators"
+}
+
+type GameCreatorCustomJobTable struct {
+	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameCreatorID uuid.UUID `gorm:"type:varchar(36);not null;index"`
+	CustomName    string    `gorm:"type:varchar(64);not null"`
+	CreatedAt     time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+}
+
+func (*GameCreatorCustomJobTable) TableName() string {
+	return "game_creator_custom_jobs"
+}
