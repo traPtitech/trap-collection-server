@@ -28,6 +28,7 @@ type API struct {
 	*GameImage
 	*GameVideo
 	*GamePlayLog
+	*GameCreator
 	*Edition
 	*EditionAuth
 	*Seat
