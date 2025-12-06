@@ -214,6 +214,7 @@ type GamePlayLogTable struct {
 	EndTime       sql.NullTime      `gorm:"type:datetime;default:NULL"`
 	CreatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt     time.Time         `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
+	DeletedAt     gorm.DeletedAt    `gorm:"type:DATETIME NULL;default:NULL"`
 	Edition       EditionTable      `gorm:"foreignKey:EditionID"`
 	Game          GameTable2        `gorm:"foreignKey:GameID"`
 	GameVersion   GameVersionTable2 `gorm:"foreignKey:GameVersionID"`
