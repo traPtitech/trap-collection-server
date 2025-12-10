@@ -175,6 +175,7 @@ require (
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0 // indirect
 	github.com/onsi/gomega v1.34.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
