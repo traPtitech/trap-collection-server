@@ -39,4 +39,10 @@ type GamePlayLogV2 interface {
 	// 指定されたプレイログを削除する。
 	// 条件に当てはまるプレイログが存在しない場合、ErrNoRecordDeletedを返す。
 	DeleteGamePlayLog(ctx context.Context, playLogID values.GamePlayLogID) error
+	//　DeleteLongLogs
+	// 指定された時間(threshold)より長いプレイログを論理削除する。
+	// threshold: 削除対象とする閾値（この時間より長いログを削除する）
+	// 戻り値として削除したプレイログ配列を返す
+	// 該当するログがない場合は、空の配列とnilエラーを返す。
+	DeleteLongLogs(ctx context.Context, threshold time.Duration) ([]values.GamePlayLogID, error)
 }
