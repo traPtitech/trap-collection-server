@@ -1090,3 +1090,77 @@ func TestDeleteGamePlayLog(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteLongLogs(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	type test struct {
+		description          string
+		deleteLongLogsResult []values.GamePlayLogID
+		deleteLongLogsErr    error
+		expectedDeletedIDs   []values.GamePlayLogID
+		isErr                bool
+		err                  error
+	}
+
+	deletedID1 := values.NewGamePlayLogID()
+	deletedID2 := values.NewGamePlayLogID()
+
+	testCases := []test{
+		{
+			description:          "正常に削除される",
+			deleteLongLogsResult: []values.GamePlayLogID{deletedID1, deletedID2},
+			expectedDeletedIDs:   []values.GamePlayLogID{deletedID1, deletedID2},
+			isErr:                false,
+		},
+		{
+			description:          "削除対象がない場合は空の配列が返される",
+			deleteLongLogsResult: []values.GamePlayLogID{},
+			expectedDeletedIDs:   []values.GamePlayLogID{},
+			isErr:                false,
+		},
+		{
+			description:       "Repositoryがエラーを返した場合はエラー",
+			deleteLongLogsErr: assert.AnError,
+			isErr:             true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				nil,
+				mockGamePlayLogRepository,
+				nil,
+				nil,
+				nil,
+			)
+
+			mockGamePlayLogRepository.
+				EXPECT().
+				DeleteLongLogs(ctx, 3*time.Hour).
+				Return(testCase.deleteLongLogsResult, testCase.deleteLongLogsErr)
+
+			deletedIDs, err := gamePlayLogService.DeleteLongLogs(ctx)
+
+			if testCase.isErr {
+				assert.Error(t, err)
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.expectedDeletedIDs, deletedIDs)
+		})
+	}
+}
