@@ -42,5 +42,6 @@ type GamePlayLogV2 interface {
 	// threshold:　削除対象時間の閾値 ここservice層で決定する
 	// 戻り値として削除したプレイログ配列を返す
 	// 該当するログがない場合は、空の配列とnilエラーを返す。
+	// ※これはCronで定期実行されています。
 	DeleteLongLogs(ctx context.Context) ([]values.GamePlayLogID, error)
 }

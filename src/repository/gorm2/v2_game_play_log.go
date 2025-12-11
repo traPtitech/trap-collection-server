@@ -375,6 +375,45 @@ func (g *GamePlayLogV2) DeleteGamePlayLog(ctx context.Context, playLogID values.
 }
 
 func (g *GamePlayLogV2) DeleteLongLogs(ctx context.Context, threshold time.Duration) ([]values.GamePlayLogID, error) {
-	// TODO: 実装する threshold time.duration
-	panic("not implemented")
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get db: %w", err)
+	}
+
+	// thresholdより前のstart_timeを持つログを取得
+	deleteTime := time.Now().Add(-threshold)
+	var logs []schema.GamePlayLogTable
+	err = db.
+		Where("end_time IS NULL").
+		Where("start_time < ?", deleteTime).
+		Find(&logs).Error
+	if err != nil {
+		return nil, fmt.Errorf("find long play logs: %w", err)
+	}
+
+	// 該当するログがない場合は、空の配列とnilエラーを返す。
+	if len(logs) == 0 {
+		return []values.GamePlayLogID{}, nil
+	}
+
+	// 取得した該当ログからIDを抽出した配列を作成
+	deletedUUIDs := make([]uuid.UUID, 0, len(logs))
+	for _, log := range logs {
+		deletedUUIDs = append(deletedUUIDs, log.ID)
+	}
+
+	// 該当IDを削除
+	// PlayLogにはdeletedAtを採用しているため、gormの仕様でDeleteすると自動で論理削除になる
+	err = db.Delete(&schema.GamePlayLogTable{}, "id IN ?", deletedUUIDs).Error
+	if err != nil {
+		return nil, fmt.Errorf("delete long play logs: %w", err)
+	}
+
+	// 返り値用にvalues.GamePlayLogID型に変換
+	deletedIDs := make([]values.GamePlayLogID, 0, len(deletedUUIDs))
+	for _, id := range deletedUUIDs {
+		deletedIDs = append(deletedIDs, values.GamePlayLogID(id))
+	}
+
+	return deletedIDs, nil
 }
