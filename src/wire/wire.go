@@ -25,6 +25,7 @@ func newApp(api *handler.API, cronHandler *cron.Cron, db repository.DB) *App {
 
 func (app *App) Run() error {
 	defer app.DB.Close()
+	defer app.Cron.Stop()
 
 	if err := app.Cron.Start(); err != nil {
 		return err

@@ -9,9 +9,10 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-// 定期実行コードの構造体
+// Cron 定期実行ジョブを管理する構造体
 type Cron struct {
 	deletePlayLogService service.GamePlayLogV2
+	scheduler            *cron.Cron
 }
 
 func NewCron(deletePlayLogService service.GamePlayLogV2) *Cron {
@@ -21,15 +22,23 @@ func NewCron(deletePlayLogService service.GamePlayLogV2) *Cron {
 }
 
 func (c *Cron) Start() error {
-	cron := cron.New()
+	c.scheduler = cron.New()
 
-	_, err := cron.AddFunc("@hourly", c.deleteLongLogs)
+	_, err := c.scheduler.AddFunc("@hourly", c.deleteLongLogs)
 	if err != nil {
 		return err
 	}
 
-	cron.Start()
+	c.scheduler.Start()
 	return nil
+}
+
+func (c *Cron) Stop() {
+	if c.scheduler != nil {
+		ctx := c.scheduler.Stop()
+		<-ctx.Done()
+		log.Println("Cron: 停止完了")
+	}
 }
 
 func (c *Cron) deleteLongLogs() {
