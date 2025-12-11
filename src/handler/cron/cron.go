@@ -21,14 +21,14 @@ func NewCron(deletePlayLogService service.GamePlayLogV2) *Cron {
 }
 
 func (c *Cron) Start() error {
-	scheduler := cron.New()
+	cron := cron.New()
 
-	_, err := scheduler.AddFunc("@hourly", c.deleteLongLogs)
+	_, err := cron.AddFunc("@hourly", c.deleteLongLogs)
 	if err != nil {
 		return err
 	}
 
-	scheduler.Start()
+	cron.Start()
 	return nil
 }
 

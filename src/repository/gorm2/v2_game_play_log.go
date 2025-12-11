@@ -374,7 +374,7 @@ func (g *GamePlayLogV2) DeleteGamePlayLog(ctx context.Context, playLogID values.
 	return nil
 }
 
-func (g *GamePlayLogV2) DeleteLongLogs(_ context.Context, _ time.Duration) ([]values.GamePlayLogID, error) {
+func (g *GamePlayLogV2) DeleteLongLogs(ctx context.Context, threshold time.Duration) ([]values.GamePlayLogID, error) {
 	// TODO: 実装する threshold time.duration
 	panic("not implemented")
 }

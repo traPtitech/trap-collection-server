@@ -202,7 +202,7 @@ func (g *GamePlayLog) DeleteGamePlayLog(ctx context.Context, editionID values.Ed
 	return nil
 }
 
-func (g *GamePlayLog) DeleteLongLogs(_ context.Context) ([]values.GamePlayLogID, error) {
+func (g *GamePlayLog) DeleteLongLogs(ctx context.Context) ([]values.GamePlayLogID, error) {
 	// TODO: 実装する
 	panic("not implemented")
 }
