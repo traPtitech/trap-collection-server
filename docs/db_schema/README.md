@@ -18,7 +18,7 @@
 | [game_image_types](game_image_types.md) | 3 | ゲーム画像の種類のテーブル | BASE TABLE |
 | [game_management_roles](game_management_roles.md) | 3 | ゲーム管理者の権限のテーブル | BASE TABLE |
 | [game_management_role_types](game_management_role_types.md) | 3 | ゲーム管理者の権限の種類のテーブル | BASE TABLE |
-| [game_play_logs](game_play_logs.md) | 8 |  | BASE TABLE |
+| [game_play_logs](game_play_logs.md) | 9 |  | BASE TABLE |
 | [game_urls](game_urls.md) | 4 | ゲームURLテーブル(v1) | BASE TABLE |
 | [game_versions](game_versions.md) | 5 | ゲームバージョンテーブル(v1) | BASE TABLE |
 | [game_version_game_file_relations](game_version_game_file_relations.md) | 2 | ゲームバージョンとゲームファイルの関係テーブル(v2) | BASE TABLE |
