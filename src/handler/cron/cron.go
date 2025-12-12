@@ -46,13 +46,10 @@ func (c *Cron) deleteLongLogs() {
 	defer cancel()
 
 	log.Println("DeleteLongLogs: 開始")
-	deletedIDs, err := c.deletePlayLogService.DeleteLongLogs(ctx)
+	err := c.deletePlayLogService.DeleteLongLogs(ctx)
 	if err != nil {
 		log.Printf("DeleteLongLogs: エラー: %v\n", err)
 		return
 	}
-	log.Printf("DeleteLongLogs: 終了 削除件数: %d\n", len(deletedIDs))
-	for i, id := range deletedIDs {
-		log.Printf("  [%d] %s\n", i+1, id)
-	}
+	log.Printf("DeleteLongLogs: 終了\n")
 }

@@ -1096,40 +1096,22 @@ func TestDeleteLongLogs(t *testing.T) {
 
 	ctx := context.Background()
 
-	type test struct {
-		description          string
-		deleteLongLogsResult []values.GamePlayLogID
-		deleteLongLogsErr    error
-		expectedDeletedIDs   []values.GamePlayLogID
-		isErr                bool
-		err                  error
-	}
-
-	deletedID1 := values.NewGamePlayLogID()
-	deletedID2 := values.NewGamePlayLogID()
-
-	testCases := []test{
-		{
-			description:          "正常に削除される",
-			deleteLongLogsResult: []values.GamePlayLogID{deletedID1, deletedID2},
-			expectedDeletedIDs:   []values.GamePlayLogID{deletedID1, deletedID2},
-			isErr:                false,
+	testCases := map[string]struct {
+		deleteLongLogsErr error
+		isErr             bool
+	}{
+		"正常に削除される": {
+			deleteLongLogsErr: nil,
+			isErr:             false,
 		},
-		{
-			description:          "削除対象がない場合は空の配列が返される",
-			deleteLongLogsResult: []values.GamePlayLogID{},
-			expectedDeletedIDs:   []values.GamePlayLogID{},
-			isErr:                false,
-		},
-		{
-			description:       "Repositoryがエラーを返した場合はエラー",
+		"Repositoryがエラーを返した場合はエラー": {
 			deleteLongLogsErr: assert.AnError,
 			isErr:             true,
 		},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
@@ -1147,20 +1129,16 @@ func TestDeleteLongLogs(t *testing.T) {
 			mockGamePlayLogRepository.
 				EXPECT().
 				DeleteLongLogs(ctx, 3*time.Hour).
-				Return(testCase.deleteLongLogsResult, testCase.deleteLongLogsErr)
+				Return(testCase.deleteLongLogsErr)
 
-			deletedIDs, err := gamePlayLogService.DeleteLongLogs(ctx)
+			err := gamePlayLogService.DeleteLongLogs(ctx)
 
 			if testCase.isErr {
 				assert.Error(t, err)
-				if testCase.err != nil {
-					assert.ErrorIs(t, err, testCase.err)
-				}
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, testCase.expectedDeletedIDs, deletedIDs)
 		})
 	}
 }

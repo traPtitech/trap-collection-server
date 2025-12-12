@@ -1727,7 +1727,7 @@ func TestDeleteLongLogs(t *testing.T) {
 				db.Unscoped().Where("id IN ?", []uuid.UUID{gamePlayLog1.ID, gamePlayLog2.ID, gamePlayLog3.ID}).Delete(&schema.GamePlayLogTable{})
 			})
 
-			deletedIDs, err := gamePlayLogRepository.DeleteLongLogs(ctx, testCase.threshold)
+			err = gamePlayLogRepository.DeleteLongLogs(ctx, testCase.threshold)
 
 			if testCase.isErr {
 				if testCase.err == nil {
@@ -1739,13 +1739,6 @@ func TestDeleteLongLogs(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-
-			// 返り値の検証
-			deletedUUIDs := make([]uuid.UUID, 0, len(deletedIDs))
-			for _, id := range deletedIDs {
-				deletedUUIDs = append(deletedUUIDs, id.UUID())
-			}
-			assert.ElementsMatch(t, testCase.expectedDeletedIDs, deletedUUIDs)
 
 			// 削除されたログの deleted_at が設定されていることを確認
 			for _, deletedID := range testCase.expectedDeletedIDs {

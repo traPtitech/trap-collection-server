@@ -42,8 +42,6 @@ type GamePlayLogV2 interface {
 	//　DeleteLongLogs
 	// 指定された時間(threshold)より長いプレイログを論理削除する。
 	// threshold: 削除対象とする閾値（この時間より長いログを削除する）
-	// 戻り値として削除したプレイログ配列を返す
-	// 該当するログがない場合は、空の配列とnilエラーを返す。
 	// ※これはCronで定期実行している関数です。
-	DeleteLongLogs(ctx context.Context, threshold time.Duration) ([]values.GamePlayLogID, error)
+	DeleteLongLogs(ctx context.Context, threshold time.Duration) error
 }
