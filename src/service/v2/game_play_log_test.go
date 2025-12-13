@@ -1090,3 +1090,55 @@ func TestDeleteGamePlayLog(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteLongLogs(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	testCases := map[string]struct {
+		deleteLongLogsErr error
+		isErr             bool
+	}{
+		"正常に削除される": {
+			deleteLongLogsErr: nil,
+			isErr:             false,
+		},
+		"Repositoryがエラーを返した場合はエラー": {
+			deleteLongLogsErr: assert.AnError,
+			isErr:             true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			mockGamePlayLogRepository := mockRepository.NewMockGamePlayLogV2(ctrl)
+
+			gamePlayLogService := NewGamePlayLog(
+				nil,
+				mockGamePlayLogRepository,
+				nil,
+				nil,
+				nil,
+			)
+
+			mockGamePlayLogRepository.
+				EXPECT().
+				DeleteLongLogs(ctx, 3*time.Hour).
+				Return(testCase.deleteLongLogsErr)
+
+			err := gamePlayLogService.DeleteLongLogs(ctx)
+
+			if testCase.isErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}

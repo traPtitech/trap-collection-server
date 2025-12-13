@@ -5,6 +5,7 @@ package wire
 import (
 	"github.com/google/wire"
 	"github.com/traPtitech/trap-collection-server/src/handler"
+	"github.com/traPtitech/trap-collection-server/src/handler/cron"
 	"github.com/traPtitech/trap-collection-server/src/handler/session"
 
 	// v1 "github.com/traPtitech/trap-collection-server/src/handler/v1"
@@ -15,6 +16,7 @@ var (
 	handlerSet = wire.NewSet(
 		session.NewSession,
 		handler.NewAPI,
+		cron.NewCron,
 		// handlerV1Set,
 		handlerV2Set,
 	)

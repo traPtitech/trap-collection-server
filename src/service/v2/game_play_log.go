@@ -201,3 +201,14 @@ func (g *GamePlayLog) DeleteGamePlayLog(ctx context.Context, editionID values.Ed
 
 	return nil
 }
+
+func (g *GamePlayLog) DeleteLongLogs(ctx context.Context) error {
+	const threshold = 3 * time.Hour
+
+	err := g.gamePlayLogRepository.DeleteLongLogs(ctx, threshold)
+	if err != nil {
+		return fmt.Errorf("delete long logs: %w", err)
+	}
+
+	return nil
+}

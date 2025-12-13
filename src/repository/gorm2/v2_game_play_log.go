@@ -373,3 +373,22 @@ func (g *GamePlayLogV2) DeleteGamePlayLog(ctx context.Context, playLogID values.
 
 	return nil
 }
+
+func (g *GamePlayLogV2) DeleteLongLogs(ctx context.Context, threshold time.Duration) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	// thresholdより前のstart_timeを持つプレイ中ログを論理削除
+	deleteTime := time.Now().Add(-threshold)
+	err = db.
+		Where("end_time IS NULL").
+		Where("start_time < ?", deleteTime).
+		Delete(&schema.GamePlayLogTable{}).Error
+	if err != nil {
+		return fmt.Errorf("delete long play logs: %w", err)
+	}
+
+	return nil
+}

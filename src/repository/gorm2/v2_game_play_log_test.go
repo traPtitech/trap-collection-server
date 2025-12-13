@@ -1586,3 +1586,176 @@ func TestDeleteGamePlayLog(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteLongLogs(t *testing.T) {
+
+	ctx := t.Context()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+
+	edition1 := schema.EditionTable{
+		ID:   uuid.New(),
+		Name: "Test",
+	}
+	game1 := schema.GameTable2{
+		ID:               uuid.New(),
+		Name:             "Test",
+		VisibilityTypeID: 1,
+	}
+	gameImage1 := schema.GameImageTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		ImageTypeID: 1,
+	}
+	gameVideo1 := schema.GameVideoTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		VideoTypeID: 1,
+	}
+	gameVersion1 := schema.GameVersionTable2{
+		ID:          uuid.New(),
+		GameID:      game1.ID,
+		GameImageID: gameImage1.ID,
+		GameVideoID: gameVideo1.ID,
+		Name:        "Test",
+		Description: "test",
+	}
+
+	now := time.Now()
+
+	// gamePlayLog1: 正常終了しているログ
+	startTime1 := now.Add(-4 * time.Hour)
+	endTime1 := startTime1.Add(10 * time.Minute)
+	gamePlayLog1 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime1,
+		EndTime:       sql.NullTime{Time: endTime1, Valid: true},
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog2: 異常な時間動いていて閾値を超えているログ 3時間20分前に開始していて弾かれる想定のログ
+	startTime2 := now.Add(-3*time.Hour - 20*time.Minute)
+	gamePlayLog2 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime2,
+		EndTime:       sql.NullTime{Time: time.Time{}, Valid: false}, //プレイ中扱い
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// gamePlayLog3: プレイ中で閾値時間を超えていないログ　30分前に開始していて弾かれない想定のログ
+	startTime3 := now.Add(-30 * time.Minute)
+	gamePlayLog3 := schema.GamePlayLogTable{
+		ID:            uuid.New(),
+		EditionID:     edition1.ID,
+		GameID:        game1.ID,
+		GameVersionID: gameVersion1.ID,
+		StartTime:     startTime3,
+		EndTime:       sql.NullTime{Time: time.Time{}, Valid: false}, //プレイ中扱い
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	require.NoError(t, db.Create(&edition1).Error)
+	require.NoError(t, db.Create(&game1).Error)
+	require.NoError(t, db.Create(&gameImage1).Error)
+	require.NoError(t, db.Create(&gameVideo1).Error)
+	require.NoError(t, db.Create(&gameVersion1).Error)
+
+	t.Cleanup(func() {
+		ctx := context.Background()
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GamePlayLogTable{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVersionTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameVideoTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameImageTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error)
+		require.NoError(t, db.WithContext(ctx).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.EditionTable{}).Error)
+	})
+
+	gamePlayLogRepository := NewGamePlayLogV2(testDB)
+
+	type test struct {
+		description        string
+		beforeLogs         []schema.GamePlayLogTable // テスト前に作成するログ
+		threshold          time.Duration
+		expectedDeletedIDs []uuid.UUID
+		expectedKeptIDs    []uuid.UUID
+		isErr              bool
+		err                error
+	}
+
+	testCases := []test{
+		{
+			description:        "閾値を3時間に設定した場合、3時間20分前に開始したログが削除される",
+			threshold:          3 * time.Hour,
+			beforeLogs:         []schema.GamePlayLogTable{gamePlayLog1, gamePlayLog2, gamePlayLog3},
+			expectedDeletedIDs: []uuid.UUID{gamePlayLog2.ID},
+			expectedKeptIDs:    []uuid.UUID{gamePlayLog1.ID, gamePlayLog3.ID},
+			isErr:              false,
+		},
+		{
+			description:        "閾値を20分に設定した場合、3時間20分前に開始したログと30分前に開始したログが削除される",
+			threshold:          20 * time.Minute,
+			beforeLogs:         []schema.GamePlayLogTable{gamePlayLog1, gamePlayLog2, gamePlayLog3},
+			expectedDeletedIDs: []uuid.UUID{gamePlayLog2.ID, gamePlayLog3.ID},
+			expectedKeptIDs:    []uuid.UUID{gamePlayLog1.ID},
+			isErr:              false,
+		},
+		{
+			description:        "閾値を5時間に設定した場合、削除されるログはない",
+			threshold:          5 * time.Hour,
+			beforeLogs:         []schema.GamePlayLogTable{gamePlayLog1, gamePlayLog2, gamePlayLog3},
+			expectedDeletedIDs: []uuid.UUID{},
+			expectedKeptIDs:    []uuid.UUID{gamePlayLog1.ID, gamePlayLog2.ID, gamePlayLog3.ID},
+			isErr:              false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := db.Create(testCase.beforeLogs).Error
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				db.Unscoped().Where("id IN ?", []uuid.UUID{gamePlayLog1.ID, gamePlayLog2.ID, gamePlayLog3.ID}).Delete(&schema.GamePlayLogTable{})
+			})
+
+			err = gamePlayLogRepository.DeleteLongLogs(ctx, testCase.threshold)
+
+			if testCase.isErr {
+				if testCase.err == nil {
+					assert.Error(t, err)
+				} else {
+					assert.ErrorIs(t, err, testCase.err)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+
+			// 削除されたログの deleted_at が設定されていることを確認
+			for _, deletedID := range testCase.expectedDeletedIDs {
+				var log schema.GamePlayLogTable
+				err := db.Unscoped().Where("id = ?", deletedID).First(&log).Error
+				require.NoError(t, err)
+				assert.True(t, log.DeletedAt.Valid, "Expected log ID %s to have deleted_at set", deletedID)
+			}
+
+			// 削除されないべきログの deleted_at が NULL のままであることを確認
+			for _, keptID := range testCase.expectedKeptIDs {
+				var log schema.GamePlayLogTable
+				err := db.Unscoped().Where("id = ?", keptID).First(&log).Error
+				require.NoError(t, err)
+				assert.False(t, log.DeletedAt.Valid, "Expected log ID %s to have deleted_at NULL", keptID)
+			}
+		})
+	}
+
+}

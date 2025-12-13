@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/config/v1"
 	"github.com/traPtitech/trap-collection-server/src/handler"
+	"github.com/traPtitech/trap-collection-server/src/handler/cron"
 	"github.com/traPtitech/trap-collection-server/src/handler/session"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2"
 	"github.com/traPtitech/trap-collection-server/src/repository"
@@ -184,7 +185,8 @@ func InjectApp() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	wireApp := newApp(handlerAPI, db)
+	cronCron := cron.NewCron(gamePlayLog)
+	wireApp := newApp(handlerAPI, cronCron, db)
 	return wireApp, nil
 }
 
@@ -239,18 +241,25 @@ func storageSwitch(
 
 type App struct {
 	*handler.API
+	*cron.Cron
 	repository.DB
 }
 
-func newApp(api *handler.API, db repository.DB) *App {
+func newApp(api *handler.API, cronHandler *cron.Cron, db repository.DB) *App {
 	return &App{
-		API: api,
-		DB:  db,
+		API:  api,
+		Cron: cronHandler,
+		DB:   db,
 	}
 }
 
 func (app *App) Run() error {
 	defer app.DB.Close()
+	defer app.Cron.Stop()
+
+	if err := app.Cron.Start(); err != nil {
+		return err
+	}
 
 	return app.API.Start()
 }
