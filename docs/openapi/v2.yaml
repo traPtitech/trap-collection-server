@@ -1542,7 +1542,7 @@ paths:
         - TrapMemberAuth: []
       responses:
         '200':
-          description: 'ゲームクリエイターあらかじめ用意されたジョブ一覧の取得に成功した際に返されます。'
+          description: 'ゲームクリエイターのあらかじめ用意されたジョブ一覧の取得に成功した際に返されます。'
           content:
             application/json:
               schema:
