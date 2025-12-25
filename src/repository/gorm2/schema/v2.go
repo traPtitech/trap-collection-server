@@ -242,12 +242,16 @@ func (*GameCreatorJobTable) TableName() string {
 }
 
 type GameCreatorTable struct {
-	ID        uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID    uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id;index"` // GameIDとUserIDの組み合わせをuniqueにする
-	UserID    uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id"`
+	ID     uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id;index"` // GameIDとUserIDの組み合わせをuniqueにする
+	UserID uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_unique_game_id_user_id"`
+	// UserName を含めることで正規化が崩れているが、
+	// Creatorは認証を通らないAPIからも取得されるため、traQのAPIからユーザー名を持ってくることができない。
+	// Creatorの作成は必ず認証を通るので、その際にtraQから情報を取得してUserNameに含める。
 	UserName  string    `gorm:"type:varchar(32);not null"`
 	CreatedAt time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 
+	Game              GameTable2                  `gorm:"foreignKey:GameID"`
 	CreatorJobs       []GameCreatorJobTable       `gorm:"many2many:game_creator_job_relations;joinForeignKey:GameCreatorID;joinReferences:JobID"`
 	CustomCreatorJobs []GameCreatorCustomJobTable `gorm:"foreignKey:GameCreatorID"`
 }
