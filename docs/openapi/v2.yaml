@@ -3337,15 +3337,11 @@ components:
           description: |
             ユーザーが定義したカスタムjobかどうかを表します。
       required:
+        - id
         - displayName
         - isCustomJob
       description: |
         ゲームクリエイターのjob情報を表します。
-        ユーザーが独自に定義したjobの場合、kindは指定されません。
-      example:
-        kind: programmer
-        displayName: プログラマー
-        isCustomJob: false
 
     GameCreatorJobID:
       type: string
