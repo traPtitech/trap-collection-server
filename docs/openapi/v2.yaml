@@ -3291,6 +3291,11 @@ components:
           $ref: '#/components/schemas/UserID'
         jobs:
           type: array
+          description: |
+            ゲームクリエイターのjob情報の配列です。
+            配列の各要素は、既存のjobのIDを指定するか、
+            カスタムjobの表示名を指定します。
+            既存のjobのIDは重複してはいけません。
           items:
             oneOf:
               - type: object
