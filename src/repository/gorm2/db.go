@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	pkgContext "github.com/traPtitech/trap-collection-server/pkg/context"
+	"github.com/traPtitech/trap-collection-server/pkg/context"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
@@ -131,7 +131,7 @@ func (db *DB) Get() (*sql.DB, error) {
 
 func (db *DB) Transaction(ctx context.Context, txOption *sql.TxOptions, fn func(ctx context.Context) error) error {
 	fc := func(tx *gorm.DB) error {
-		ctx = context.WithValue(ctx, pkgContext.DBKey, tx)
+		ctx = context.WithValue(ctx, ctxkeys.DBKey, tx)
 
 		err := fn(ctx)
 		if err != nil {
@@ -157,7 +157,7 @@ func (db *DB) Transaction(ctx context.Context, txOption *sql.TxOptions, fn func(
 }
 
 func (db *DB) getDB(ctx context.Context) (*gorm.DB, error) {
-	iDB := ctx.Value(pkgContext.DBKey)
+	iDB := ctx.Value(ctxkeys.DBKey)
 	if iDB == nil {
 		return db.db.WithContext(ctx), nil
 	}
