@@ -10,8 +10,8 @@ import (
 type GameCreator struct{}
 
 // ゲームクリエイターのジョブ一覧の取得
-// (GET /creators/jobs)
-func (gc *GameCreator) GetGameCreatorJobs(c echo.Context) error {
+// (GET /games/{gameID}/creators/jobs)
+func (gc *GameCreator) GetGameCreatorJobs(c echo.Context, _ openapi.GameIDInPath) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
 
@@ -22,13 +22,7 @@ func (gc *GameCreator) GetGameCreators(c echo.Context, _ openapi.GameIDInPath) e
 }
 
 // ゲームクリエイター一覧の更新
-// (PATCH /games/{gameID}/creators)
-func (gc *GameCreator) PatchGameCreators(c echo.Context, _ openapi.GameIDInPath) error {
-	return c.NoContent(http.StatusNotImplemented)
-}
-
-// ゲームクリエイターの削除
-// (DELETE /games/{gameID}/creators/{userID})
-func (gc *GameCreator) DeleteGameCreator(c echo.Context, _ openapi.GameIDInPath, _ openapi.UserIDInPath) error {
+// (PUT /games/{gameID}/creators)
+func (gc *GameCreator) PutGameCreators(c echo.Context, _ openapi.GameIDInPath) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
