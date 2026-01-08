@@ -42,6 +42,16 @@ func (*GameTable2) TableName() string {
 	return "games"
 }
 
+type LatestGameVersionTime struct {
+	GameID                     uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	LatestGameVersionID				 uuid.UUID `gorm:"type:varchar(36);not null"`
+	LatestGameVersionCreatedAt time.Time `gorm:"type:datetime;not null;index:idx_game_version_stats_latest_created_at"`
+}
+
+func (*LatestGameVersionTime) TableName() string {
+	return "v2_latest_game_version_times"
+}
+
 type GameVersionTable2 struct {
 	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
 	GameID      uuid.UUID `gorm:"type:varchar(36);not null;uniqueIndex:idx_game_id_name"` // GameIDとNameの組み合わせでuniqueに
