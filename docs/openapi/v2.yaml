@@ -1494,7 +1494,7 @@ paths:
       summary: ゲームクリエイターのジョブ一覧の取得
       description: |
         ゲームクリエイターのジョブの一覧を取得します。
-        あらかじめ作られたジョブとゲームのカスタムジョブの両方が含まれます。
+        プリセットジョブとゲームのカスタムジョブの両方が含まれます。
       tags:
         - gameCreator
       security:
@@ -1503,7 +1503,7 @@ paths:
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
         '200':
-          description: 'ゲームクリエイターのあらかじめ用意されたジョブ一覧の取得に成功した際に返されます。'
+          description: 'ゲームクリエイターのプリセットジョブ一覧の取得に成功した際に返されます。'
           content:
             application/json:
               schema:
