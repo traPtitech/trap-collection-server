@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 tasks:
   download:
@@ -29,7 +29,7 @@ tasks:
     cmds:
       - go generate ./...
     sources:
-      - "**/*.go"
+      - '**/*.go'
 
   dev:v2:
     dir: ../
@@ -65,7 +65,7 @@ tasks:
       - rm -rf docs/db_schema/*
       - docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
     sources:
-      - src/repository/gorm2/migrate/*.go
+      - migrations/*.sql
     generates:
       - docs/db_schema/*
 
