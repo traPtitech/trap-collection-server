@@ -12,6 +12,7 @@
 | [games](games.md) | 7 | ゲームテーブル | BASE TABLE |
 | [game_creators](game_creators.md) | 5 |  | BASE TABLE |
 | [game_creator_custom_jobs](game_creator_custom_jobs.md) | 4 |  | BASE TABLE |
+| [game_creator_custom_job_relations](game_creator_custom_job_relations.md) | 2 |  | BASE TABLE |
 | [game_creator_jobs](game_creator_jobs.md) | 3 |  | BASE TABLE |
 | [game_creator_job_relations](game_creator_job_relations.md) | 2 |  | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |

@@ -8,12 +8,12 @@
 ```sql
 CREATE TABLE `game_creator_custom_jobs` (
   `id` varchar(36) NOT NULL,
-  `game_creator_id` varchar(36) NOT NULL,
-  `custom_name` varchar(64) NOT NULL,
+  `game_id` varchar(36) NOT NULL,
+  `display_name` varchar(64) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `idx_game_creator_custom_jobs_game_creator_id` (`game_creator_id`),
-  CONSTRAINT `fk_game_creators_custom_creator_jobs` FOREIGN KEY (`game_creator_id`) REFERENCES `game_creators` (`id`)
+  KEY `idx_game_creator_custom_jobs_game_id` (`game_id`),
+  CONSTRAINT `fk_game_creator_custom_jobs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -23,23 +23,23 @@ CREATE TABLE `game_creator_custom_jobs` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false |  |  |  |
-| game_creator_id | varchar(36) |  | false |  | [game_creators](game_creators.md) |  |
-| custom_name | varchar(64) |  | false |  |  |  |
+| id | varchar(36) |  | false | [game_creator_custom_job_relations](game_creator_custom_job_relations.md) |  |  |
+| game_id | varchar(36) |  | false |  | [games](games.md) |  |
+| display_name | varchar(64) |  | false |  |  |  |
 | created_at | datetime | current_timestamp() | false |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_game_creators_custom_creator_jobs | FOREIGN KEY | FOREIGN KEY (game_creator_id) REFERENCES game_creators (id) |
+| fk_game_creator_custom_jobs_game | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| idx_game_creator_custom_jobs_game_creator_id | KEY idx_game_creator_custom_jobs_game_creator_id (game_creator_id) USING BTREE |
+| idx_game_creator_custom_jobs_game_id | KEY idx_game_creator_custom_jobs_game_id (game_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

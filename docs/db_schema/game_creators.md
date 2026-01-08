@@ -25,7 +25,7 @@ CREATE TABLE `game_creators` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false | [game_creator_custom_jobs](game_creator_custom_jobs.md) [game_creator_job_relations](game_creator_job_relations.md) |  |  |
+| id | varchar(36) |  | false | [game_creator_custom_job_relations](game_creator_custom_job_relations.md) [game_creator_job_relations](game_creator_job_relations.md) |  |  |
 | game_id | varchar(36) |  | false |  | [games](games.md) |  |
 | user_id | varchar(36) |  | false |  |  |  |
 | user_name | varchar(32) |  | false |  |  |  |
