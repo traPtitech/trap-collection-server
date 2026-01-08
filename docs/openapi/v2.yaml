@@ -1435,11 +1435,11 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-    patch:
-      operationId: patchGameCreators
+    put:
+      operationId: putGameCreators
       summary: ゲームクリエイター一覧の更新
       description: |
-        指定したゲームIDのゲームのクリエイター一覧を更新します。
+        指定したゲームIDのゲームのクリエイター一覧を置き換えて更新します。
       tags:
         - gameCreator
       security:
@@ -1450,7 +1450,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchGameCreatorsRequest'
+              $ref: '#/components/schemas/PutGameCreatorsRequest'
       responses:
         '200':
           description: |
@@ -3279,12 +3279,12 @@ components:
       description: |
         ゲームの動画のメタ情報です。
 
-    PatchGameCreatorsRequest:
+    PutGameCreatorsRequest:
       type: array
       items:
-        $ref: '#/components/schemas/PatchGameCreatorsRequestItem'
+        $ref: '#/components/schemas/PutGameCreatorsRequestItem'
 
-    PatchGameCreatorsRequestItem:
+    PutGameCreatorsRequestItem:
       type: object
       properties:
         id:
@@ -3293,9 +3293,10 @@ components:
           type: array
           description: |
             ゲームクリエイターのjob情報の配列です。
-            配列の各要素は、既存のjobのIDを指定するか、
-            カスタムjobの表示名を指定します。
+            配列の各要素は、既存のjob（プリセットのjob+ゲームにすでにあるjob)のIDを指定するか、
+            新しいカスタムjobの表示名を指定します。
             既存のjobのIDは重複してはいけません。
+            新しいカスタムjobの表示名は、既にあるカスタムjobの表示名と重複してはいけません。
           items:
             oneOf:
               - type: object
@@ -3304,6 +3305,8 @@ components:
                     $ref: '#/components/schemas/GameCreatorJobID'
                 required:
                   - id
+                description: |
+                  既存のゲームクリエイターのjobのIDを指定します。
               - type: object
                 properties:
                   customDisplayName:
@@ -3312,6 +3315,8 @@ components:
                   - customDisplayName
                 example:
                   customDisplayName: カスタムjobName
+                description: |
+                  新しいカスタムjobの表示名を指定します。
           minItems: 1
       required:
         - id
