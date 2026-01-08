@@ -254,7 +254,7 @@ type GameCreatorTable struct {
 
 	Game              GameTable2                  `gorm:"foreignKey:GameID"`
 	CreatorJobs       []GameCreatorJobTable       `gorm:"many2many:game_creator_job_relations;joinForeignKey:GameCreatorID;joinReferences:JobID"`
-	CustomCreatorJobs []GameCreatorCustomJobTable `gorm:"foreignKey:GameCreatorID"`
+	CustomCreatorJobs []GameCreatorCustomJobTable `gorm:"many2many:game_creator_custom_job_relations;joinForeignKey:GameCreatorID;joinReferences:CustomJobID"`
 }
 
 func (*GameCreatorTable) TableName() string {
@@ -262,10 +262,12 @@ func (*GameCreatorTable) TableName() string {
 }
 
 type GameCreatorCustomJobTable struct {
-	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	GameCreatorID uuid.UUID `gorm:"type:varchar(36);not null;index"`
-	CustomName    string    `gorm:"type:varchar(64);not null"`
-	CreatedAt     time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ID          uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID      uuid.UUID `gorm:"type:varchar(36);not null;index"`
+	DisplayName string    `gorm:"type:varchar(64);not null"`
+	CreatedAt   time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+
+	Game GameTable2 `gorm:"foreignKey:GameID"`
 }
 
 func (*GameCreatorCustomJobTable) TableName() string {
