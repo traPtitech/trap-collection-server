@@ -1488,16 +1488,19 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /creators/jobs:
+  /games/{gameID}/creators/jobs:
     get:
       operationId: getGameCreatorJobs
       summary: ゲームクリエイターのジョブ一覧の取得
       description: |
-        ゲームクリエイターのあらかじめ用意されたジョブの一覧を取得します。
+        ゲームクリエイターのジョブの一覧を取得します。
+        あらかじめ作られたジョブとゲームのカスタムジョブの両方が含まれます。
       tags:
         - gameCreator
       security:
         - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
       responses:
         '200':
           description: 'ゲームクリエイターのあらかじめ用意されたジョブ一覧の取得に成功した際に返されます。'
