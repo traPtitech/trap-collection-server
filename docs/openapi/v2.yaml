@@ -1488,48 +1488,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /games/{gameID}/creators/{userID}:
-    delete:
-      operationId: deleteGameCreator
-      summary: ゲームクリエイターの削除
-      description: |
-        指定したゲームIDのゲームから指定したユーザーIDのクリエイターを削除します。
-      tags:
-        - gameCreator
-      security:
-        - GameMaintainerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/gameIDInPath'
-        - $ref: '#/components/parameters/userIDInPath'
-      responses:
-        '200':
-          description: 'ゲームクリエイターの削除に成功した際に返されます。'
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            ゲームID、またはユーザーIDが不正である場合に返されます。
-        '401':
-          $ref: '#/components/responses/TraPUnauthorized'
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            このゲームのownerもしくはmaintainerでない場合に返されます。
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: |
-            指定したIDのゲームが存在しない、または削除されている場合に返されます。
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /creators/jobs:
     get:
       operationId: getGameCreatorJobs
