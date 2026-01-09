@@ -42,7 +42,7 @@ func (api *API) Start() error {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		Skipper: func(c echo.Context) bool {
 			return c.Request().URL.Path == metricsPath
 		},
