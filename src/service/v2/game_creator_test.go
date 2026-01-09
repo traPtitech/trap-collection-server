@@ -80,7 +80,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			GetGameCreatorsErr:     nil,
 			err:                    assert.AnError,
 		},
-		"get game creators error": {
+		"GetGameCreatorsがエラーなのでエラー": {
 			gameID:                 values.NewGameID(),
 			GetGameErr:             nil,
 			executeGetGameCreators: true,
