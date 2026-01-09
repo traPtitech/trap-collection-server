@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
@@ -42,9 +43,24 @@ func (api *API) Start() error {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		Skipper: func(c echo.Context) bool {
 			return c.Request().URL.Path == metricsPath
+		},
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogLatency:  true,
+		LogRemoteIP: true,
+		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
+			slog.Info("request",
+				slog.String("method", v.Method),
+				slog.String("uri", v.URI),
+				slog.Int("status", v.Status),
+				slog.Duration("latency", v.Latency),
+				slog.String("remote_ip", v.RemoteIP),
+			)
+			return nil
 		},
 	}))
 
