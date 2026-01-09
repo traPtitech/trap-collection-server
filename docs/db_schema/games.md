@@ -28,7 +28,7 @@ CREATE TABLE `games` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false | [game_genre_relations](game_genre_relations.md) [game_images](game_images.md) [game_management_roles](game_management_roles.md) [game_play_logs](game_play_logs.md) [game_versions](game_versions.md) [game_videos](game_videos.md) [launcher_version_game_relations](launcher_version_game_relations.md) [v2_game_files](v2_game_files.md) [v2_game_images](v2_game_images.md) [v2_game_versions](v2_game_versions.md) [v2_game_videos](v2_game_videos.md) |  | ゲームUUID |
+| id | varchar(36) |  | false | [game_creators](game_creators.md) [game_creator_custom_jobs](game_creator_custom_jobs.md) [game_genre_relations](game_genre_relations.md) [game_images](game_images.md) [game_management_roles](game_management_roles.md) [game_play_logs](game_play_logs.md) [game_versions](game_versions.md) [game_videos](game_videos.md) [launcher_version_game_relations](launcher_version_game_relations.md) [v2_game_files](v2_game_files.md) [v2_game_images](v2_game_images.md) [v2_game_versions](v2_game_versions.md) [v2_game_videos](v2_game_videos.md) |  | ゲームUUID |
 | name | varchar(256) |  | false |  |  | ゲーム名 |
 | description | text |  | false |  |  | ゲームの説明 |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
