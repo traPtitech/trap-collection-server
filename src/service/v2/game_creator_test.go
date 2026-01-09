@@ -17,8 +17,6 @@ import (
 func TestGameCreatorService_GetGameCreators(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-
 	job1 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Programmer"), time.Now())
 	customJob1 := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Custom Job 1"), values.NewGameID(), time.Now())
 	creator1 := domain.NewGameCreatorWithJobs(
@@ -94,6 +92,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctrl := gomock.NewController(t)
 			gameCreatorRepo := mock.NewMockGameCreator(ctrl)
 			gameRepository := mock.NewMockGameV2(ctrl)
 			gc := NewGameCreatorService(gameCreatorRepo, gameRepository)
