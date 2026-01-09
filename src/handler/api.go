@@ -52,7 +52,7 @@ func (api *API) Start() error {
 		LogMethod:   true,
 		LogLatency:  true,
 		LogRemoteIP: true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
 			slog.Info("request",
 				slog.String("method", v.Method),
 				slog.String("uri", v.URI),
