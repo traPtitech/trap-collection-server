@@ -927,13 +927,17 @@ func TestCreateGameVersionV2(t *testing.T) {
 				}
 			}
 
-			if testCase.existGame {
-				var game schema.GameTable2
-				err = db.Model(&schema.GameTable2{ID: uuid.UUID(testCase.gameID)}).Find(&game).Error
+			if testCase.existGame && !testCase.isErr {
+				var latestVersionTime schema.LatestGameVersionTime
+				err = db.
+					Where("game_id = ?", uuid.UUID(testCase.gameID)).
+					First(&latestVersionTime).Error
 				if err != nil {
-					t.Fatalf("failed to get game: %+v\n", err)
+					t.Fatalf("failed to get latest game version time: %+v\n", err)
 				}
-				assert.WithinDuration(t, now, game.LatestVersionUpdatedAt, time.Second*2)
+				assert.Equal(t, uuid.UUID(testCase.gameID), latestVersionTime.GameID)
+				assert.Equal(t, uuid.UUID(testCase.version.GetID()), latestVersionTime.LatestGameVersionID)
+				assert.WithinDuration(t, now, latestVersionTime.LatestGameVersionCreatedAt, time.Second*2)
 			}
 		})
 	}
