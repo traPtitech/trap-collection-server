@@ -22,10 +22,10 @@ func NewGameCreator(id values.GameCreatorID, userID values.TraPMemberID, userNam
 	}
 }
 
-func (creator *GameCreator) ID() values.GameCreatorID        { return creator.id }
-func (creator *GameCreator) UserID() values.TraPMemberID     { return creator.userID }
-func (creator *GameCreator) UserName() values.TraPMemberName { return creator.userName }
-func (creator *GameCreator) CreatedAt() time.Time            { return creator.createdAt }
+func (creator *GameCreator) GetID() values.GameCreatorID        { return creator.id }
+func (creator *GameCreator) GetUserID() values.TraPMemberID     { return creator.userID }
+func (creator *GameCreator) GetUserName() values.TraPMemberName { return creator.userName }
+func (creator *GameCreator) GetCreatedAt() time.Time            { return creator.createdAt }
 
 type GameCreatorJob struct {
 	id          values.GameCreatorJobID
@@ -41,9 +41,9 @@ func NewGameCreatorJob(id values.GameCreatorJobID, displayName values.GameCreato
 	}
 }
 
-func (job *GameCreatorJob) ID() values.GameCreatorJobID                   { return job.id }
-func (job *GameCreatorJob) DisplayName() values.GameCreatorJobDisplayName { return job.displayName }
-func (job *GameCreatorJob) CreatedAt() time.Time                          { return job.createdAt }
+func (job *GameCreatorJob) GetID() values.GameCreatorJobID                   { return job.id }
+func (job *GameCreatorJob) GetDisplayName() values.GameCreatorJobDisplayName { return job.displayName }
+func (job *GameCreatorJob) GetCreatedAt() time.Time                          { return job.createdAt }
 
 type GameCreatorCustomJob struct {
 	id          values.GameCreatorJobID
@@ -61,12 +61,12 @@ func NewGameCreatorCustomJob(id values.GameCreatorJobID, displayName values.Game
 	}
 }
 
-func (customJob *GameCreatorCustomJob) ID() values.GameCreatorJobID { return customJob.id }
-func (customJob *GameCreatorCustomJob) DisplayName() values.GameCreatorJobDisplayName {
+func (customJob *GameCreatorCustomJob) GetID() values.GameCreatorJobID { return customJob.id }
+func (customJob *GameCreatorCustomJob) GetDisplayName() values.GameCreatorJobDisplayName {
 	return customJob.displayName
 }
-func (customJob *GameCreatorCustomJob) GameID() values.GameID { return customJob.gameID }
-func (customJob *GameCreatorCustomJob) CreatedAt() time.Time  { return customJob.createdAt }
+func (customJob *GameCreatorCustomJob) GetGameID() values.GameID { return customJob.gameID }
+func (customJob *GameCreatorCustomJob) GetCreatedAt() time.Time  { return customJob.createdAt }
 
 type GameCreatorWithJobs struct {
 	gameCreator *GameCreator
@@ -82,6 +82,6 @@ func NewGameCreatorWithJobs(gameCreator *GameCreator, jobs []*GameCreatorJob, cu
 	}
 }
 
-func (gcj *GameCreatorWithJobs) GameCreator() *GameCreator           { return gcj.gameCreator }
-func (gcj *GameCreatorWithJobs) Jobs() []*GameCreatorJob             { return gcj.jobs }
-func (gcj *GameCreatorWithJobs) CustomJobs() []*GameCreatorCustomJob { return gcj.customJobs }
+func (gcj *GameCreatorWithJobs) GetGameCreator() *GameCreator           { return gcj.gameCreator }
+func (gcj *GameCreatorWithJobs) GetJobs() []*GameCreatorJob             { return gcj.jobs }
+func (gcj *GameCreatorWithJobs) GetCustomJobs() []*GameCreatorCustomJob { return gcj.customJobs }
