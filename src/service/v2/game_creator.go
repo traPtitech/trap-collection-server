@@ -11,19 +11,19 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-type GameCreatorService struct {
+type GameCreator struct {
 	gameCreatorRepo repository.GameCreator
 	gameRepository  repository.GameV2
 }
 
-func NewGameCreatorService(gameCreatorRepo repository.GameCreator, gameRepository repository.GameV2) *GameCreatorService {
-	return &GameCreatorService{
+func NewGameCreator(gameCreatorRepo repository.GameCreator, gameRepository repository.GameV2) *GameCreator {
+	return &GameCreator{
 		gameCreatorRepo: gameCreatorRepo,
 		gameRepository:  gameRepository,
 	}
 }
 
-func (gc *GameCreatorService) GetGameCreators(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorWithJobs, error) {
+func (gc *GameCreator) GetGameCreators(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorWithJobs, error) {
 	_, err := gc.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return nil, service.ErrInvalidGameID

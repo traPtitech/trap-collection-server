@@ -95,7 +95,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			gameCreatorRepo := mock.NewMockGameCreator(ctrl)
 			gameRepository := mock.NewMockGameV2(ctrl)
-			gc := NewGameCreatorService(gameCreatorRepo, gameRepository)
+			gc := NewGameCreator(gameCreatorRepo, gameRepository)
 
 			gameRepository.EXPECT().
 				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
