@@ -39,3 +39,25 @@ func (gc *GameCreator) GetGameCreators(ctx context.Context, gameID values.GameID
 
 	return creators, nil
 }
+
+func (gc *GameCreator) GetGameCreatorJobs(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorJob, []*domain.GameCreatorCustomJob, error) {
+	_, err := gc.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, nil, service.ErrInvalidGameID
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("get game: %w", err)
+	}
+
+	presetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobs(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get game creator preset jobs: %w", err)
+	}
+
+	customJobs, err := gc.gameCreatorRepo.GetGameCreatorCustomJobsByGameID(ctx, gameID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get game creator custom jobs by game id: %w", err)
+	}
+
+	return presetJobs, customJobs, nil
+}
