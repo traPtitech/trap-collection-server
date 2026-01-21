@@ -25,7 +25,7 @@ CREATE TABLE `editions` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | varchar(36) |  | false | [edition_game_version_relations](edition_game_version_relations.md) [game_play_logs](game_play_logs.md) [product_keys](product_keys.md) |  | エディションUUID |
+| id | varchar(36) |  | false | [edition_game_version_relations](edition_game_version_relations.md) [game_feedbacks](game_feedbacks.md) [game_play_logs](game_play_logs.md) [product_keys](product_keys.md) |  | エディションUUID |
 | name | varchar(32) |  | false |  |  | エディション名 |
 | questionnaire_url | text | NULL | true |  |  | アンケートURL |
 | created_at | datetime | current_timestamp() | false |  |  | 作成日時 |
