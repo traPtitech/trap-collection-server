@@ -15,7 +15,7 @@ type GameTable2 struct {
 	VisibilityTypeID       int                       `gorm:"type:tinyint;not null"`
 	CreatedAt              time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt              gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
-	LatestVersionUpdatedAt time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	LatestVersionUpdatedAt time.Time                 `gorm:"-:all"`
 	GameVersionsV2         []GameVersionTable2       `gorm:"foreignKey:GameID"`
 	GameManagementRoles    []GameManagementRoleTable `gorm:"foreignKey:GameID"`
 	GameVisibilityType     GameVisibilityTypeTable   `gorm:"foreignKey:VisibilityTypeID"`
