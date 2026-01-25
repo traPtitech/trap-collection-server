@@ -9,7 +9,7 @@
 | [atlas_schema_revisions](atlas_schema_revisions.md) | 12 |  | BASE TABLE |
 | [editions](editions.md) | 5 | エディションテーブル(v2) | BASE TABLE |
 | [edition_game_version_relations](edition_game_version_relations.md) | 2 | エディションとゲームバージョンの関係テーブル(v2) | BASE TABLE |
-| [games](games.md) | 7 | ゲームテーブル | BASE TABLE |
+| [games](games.md) | 6 | ゲームテーブル | BASE TABLE |
 | [game_creators](game_creators.md) | 5 |  | BASE TABLE |
 | [game_creator_custom_jobs](game_creator_custom_jobs.md) | 4 |  | BASE TABLE |
 | [game_creator_custom_job_relations](game_creator_custom_job_relations.md) | 2 |  | BASE TABLE |
@@ -43,6 +43,7 @@
 | [v2_game_images](v2_game_images.md) | 4 | ゲーム画像テーブル(v2) | BASE TABLE |
 | [v2_game_versions](v2_game_versions.md) | 8 | ゲームバージョンテーブル(v2) | BASE TABLE |
 | [v2_game_videos](v2_game_videos.md) | 4 | ゲーム動画テーブル(v2) | BASE TABLE |
+| [v2_latest_game_version_times](v2_latest_game_version_times.md) | 3 |  | BASE TABLE |
 
 ## Relations
 
