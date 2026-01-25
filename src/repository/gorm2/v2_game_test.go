@@ -721,6 +721,7 @@ func TestGetGamesV2(t *testing.T) {
 		// テストデータ
 
 		beforeGames []schema.GameTable2
+		latestTimes []schema.LatestGameVersionTime
 
 		// 返り値
 
@@ -920,7 +921,6 @@ func TestGetGamesV2(t *testing.T) {
 					Name:                   string(gameName1),
 					Description:            "test",
 					CreatedAt:              now.Add(-time.Hour * 2),
-					LatestVersionUpdatedAt: now,
 					VisibilityTypeID:       gameVisibilityTypeIDPublic,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
@@ -933,13 +933,24 @@ func TestGetGamesV2(t *testing.T) {
 					Name:                   string(gameName2),
 					Description:            "test",
 					CreatedAt:              now.Add(-time.Hour),
-					LatestVersionUpdatedAt: now.Add(-time.Hour),
 					VisibilityTypeID:       gameVisibilityTypeIDLimited,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
 					}},
+				},
+			},
+			latestTimes: []schema.LatestGameVersionTime{
+				{
+					GameID:                     uuid.UUID(gameID1),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now,
+				},
+				{
+					GameID:                     uuid.UUID(gameID2),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now.Add(-time.Hour),
 				},
 			},
 			games: []*domain.GameWithGenres{
@@ -986,7 +997,6 @@ func TestGetGamesV2(t *testing.T) {
 					Name:                   string(gameName3),
 					Description:            "test",
 					CreatedAt:              now.Add(-time.Hour),
-					LatestVersionUpdatedAt: now.Add(-time.Hour),
 					VisibilityTypeID:       gameVisibilityTypeIDPrivate,
 					GameGenres: []*schema.GameGenreTable{
 						{
@@ -999,6 +1009,13 @@ func TestGetGamesV2(t *testing.T) {
 							Name:      string(gameGenreName1),
 							CreatedAt: now.Add(-time.Hour),
 						}},
+				},
+			},
+			latestTimes: []schema.LatestGameVersionTime{
+				{
+					GameID:                     uuid.UUID(gameID3),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now.Add(-time.Hour),
 				},
 			},
 			games: []*domain.GameWithGenres{
@@ -1279,6 +1296,13 @@ func TestGetGamesV2(t *testing.T) {
 				err := db.Create(&testCase.beforeGames).Error
 				if err != nil {
 					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			if len(testCase.latestTimes) != 0 {
+				err := db.Create(&testCase.latestTimes).Error
+				if err != nil {
+					t.Fatalf("failed to create latest times data: %+v\n", err)
 				}
 			}
 

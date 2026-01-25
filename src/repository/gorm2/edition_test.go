@@ -599,12 +599,11 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 
 	// テスト用のゲーム、画像、動画、ゲームバージョンを定義
 	testGame := schema.GameTable2{
-		ID:                     uuid.UUID(gameID1),
-		Name:                   "test game",
-		Description:            "test description",
-		CreatedAt:              time.Now(),
-		VisibilityTypeID:       1,
-		LatestVersionUpdatedAt: time.Now(),
+		ID:               uuid.UUID(gameID1),
+		Name:             "test game",
+		Description:      "test description",
+		CreatedAt:        time.Now(),
+		VisibilityTypeID: 1,
 	}
 	testGameImage := schema.GameImageTable2{
 		ID:          uuid.UUID(gameImageID1),
