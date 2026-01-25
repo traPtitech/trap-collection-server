@@ -54,6 +54,8 @@ tags:
   - name: gamePlayLog
     description: |
       ゲームプレイログ関連のAPIです。ランチャーからのゲーム起動・終了の記録とその統計データの取得を行います。
+  - name: gameCreator
+    description: ゲームクリエイター関連のAPIです。
 
 paths:
   # oauth2
@@ -179,6 +181,15 @@ paths:
           description: |
             falseの場合botを除外します。
             デフォルトではbotも含めます。
+        - name: includeSuspended
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: |
+            trueの場合、凍結済みユーザーも含めます。
+            デフォルトでは凍結済みユーザーは含めません。
       security:
         - TrapMemberAuth: []
       operationId: getUsers
@@ -197,7 +208,9 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       summary: traPのメンバー一覧取得
       description: |
-        traPのアクティブメンバーの一覧を取得します。
+        traPのメンバーの一覧を取得します。
+        `includeSuspended`を`true`にした場合、凍結済みユーザーが含まれます。
+        `includeSuspended`の条件は、traQのAPIの `/api/v3/users` に準拠します。
 
   # admin
   /admins:
@@ -1386,6 +1399,124 @@ paths:
       description: |
         指定したゲーム動画IDのゲーム動画のメタ情報を取得します。
 
+  /games/{gameID}/creators:
+    get:
+      operationId: getGameCreators
+      summary: ゲームクリエイター一覧の取得
+      description: |
+        指定したゲームIDのゲームのクリエイター一覧を取得します。
+      tags:
+        - gameCreator
+      security:
+        - GameCreatorsVisibilityAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      responses:
+        '200':
+          description: 'ゲームクリエイター一覧の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameCreator'
+        '403':
+          description: 'クリエイター情報を取得する権限がない場合に返されます'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: '指定したIDのゲームが存在しない、または削除されている場合に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      operationId: putGameCreators
+      summary: ゲームクリエイター一覧の更新
+      description: |
+        指定したゲームIDのゲームのクリエイター一覧を置き換えて更新します。
+      tags:
+        - gameCreator
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutGameCreatorsRequest'
+      responses:
+        '200':
+          description: |
+            正しくクリエイターを更新できた際に返されます。
+            更新後のクリエイター一覧が返されます。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameCreator'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ゲームID、またはリクエストが不正である場合に返されます。
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerもしくはmaintainerでない場合に返されます。
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/creators/jobs:
+    get:
+      operationId: getGameCreatorJobs
+      summary: ゲームクリエイターのジョブ一覧の取得
+      description: |
+        ゲームクリエイターのジョブの一覧を取得します。
+        プリセットジョブとゲームのカスタムジョブの両方が含まれます。
+      tags:
+        - gameCreator
+      security:
+        - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      responses:
+        '200':
+          description: 'ゲームクリエイターのプリセットジョブ一覧の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameCreatorJob'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # edition
   /editions:
     post:
@@ -2489,6 +2620,14 @@ components:
         ゲームの動画のバイナリとメタデータにアクセスできます。
         部員であれば全てのゲームについてアクセスできます。
         部員以外は、ゲームの公開設定がpublicの場合にアクセスできます。
+    GameCreatorsVisibilityAuth:
+      type: apiKey
+      in: cookie
+      name: sessions
+      description: |
+        ゲームのcreatorsの情報にアクセスできます。
+        部員であれば全てのゲームについてアクセスできます。
+        部員以外は、ゲームの公開設定がpublic,もしくはlimitedの場合にアクセスできます。
   parameters:
     authorizationCodeInQuery:
       name: code
@@ -3100,6 +3239,91 @@ components:
       additionalProperties: false
       description: |
         ゲームの動画のメタ情報です。
+
+    PutGameCreatorsRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/PutGameCreatorsRequestItem'
+
+    PutGameCreatorsRequestItem:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UserID'
+        jobs:
+          type: array
+          description: |
+            ゲームクリエイターのjob情報の配列です。
+            配列の各要素は、既存のjob（プリセットのjob+ゲームにすでにあるjob)のIDを指定するか、
+            新しいカスタムjobの表示名を指定します。
+            既存のjobのIDは重複してはいけません。
+            新しいカスタムjobの表示名は、既にあるカスタムjobの表示名と重複してはいけません。
+          items:
+            oneOf:
+              - type: object
+                properties:
+                  id:
+                    $ref: '#/components/schemas/GameCreatorJobID'
+                required:
+                  - id
+                description: |
+                  既存のゲームクリエイターのjobのIDを指定します。
+              - type: object
+                properties:
+                  customDisplayName:
+                    $ref: '#/components/schemas/GameCreatorJobDisplayName'
+                required:
+                  - customDisplayName
+                example:
+                  customDisplayName: カスタムjobName
+                description: |
+                  新しいカスタムjobの表示名を指定します。
+          minItems: 1
+      required:
+        - id
+
+    GameCreator:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/UserName'
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameCreatorJob'
+          minItems: 1
+      required:
+        - name
+        - jobs
+
+    GameCreatorJob:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameCreatorJobID'
+        displayName:
+          $ref: '#/components/schemas/GameCreatorJobDisplayName'
+        isCustomJob:
+          type: boolean
+          description: |
+            ユーザーが定義したカスタムjobかどうかを表します。
+      required:
+        - id
+        - displayName
+        - isCustomJob
+      description: |
+        ゲームクリエイターのjob情報を表します。
+
+    GameCreatorJobID:
+      type: string
+      format: uuid
+      description: |
+        ゲームクリエイターのjobのIDを表します。
+
+    GameCreatorJobDisplayName:
+      type: string
+      maxLength: 64
+      example: プログラマー
 
     # エディション
     PatchEdition:
