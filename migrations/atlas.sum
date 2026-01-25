@@ -1,8 +1,8 @@
-h1:kxnqa3nl8NvyONT/R+6dqy9EA/SbJNY7J80rmxVhkd8=
+h1:OsnYmN+gBHemIwcsXmTe3avalpcQI8m6qBUJcMTNxp0=
 20250327121655.sql h1:3J1Df1YhB+mZTyY1bkIvUjeIbZri9/NrHY/8v4G+KCo=
 20250505054607_organize_indices.sql h1:dHPkLAkmGJbSlywP7WLVqELE7mSPMwhHAc+BksqLw+s=
 20250711133437_add_game_play_logs.sql h1:U98cHJSqX5cmCuL852iei3fy9dIr8mq7kjJlgMrPzco=
 20251206101803_add_playlog_deletedAt.sql h1:q47g+w+a+J6kHqztDy1hkhxMQc3V5OyUnchBQZMYH1s=
 20260108131449_create_game_creators.sql h1:nBftS2bU5990nyb0cpn7+fb9WuUzfnkrK6NAj9epFMs=
 20260124130112_add_LatestGameVersionTime.sql h1:xqKKz0nwOi5UBaaL8zzXTqIMSuJrNCPlzKDsPxDzMa0=
-20260125035453_change_games_latest_time_cfg.sql h1:MfB2C6HPco4pqWhcDc16Bj2lEciiYUwb6ZQDuXmmaBQ=
+20260125052027_change_games_latest_time_cfg.sql h1:+mY3oOuP78R5EPvSsNM3PDpAr4y9Z9OD2XeZyJsqB9g=
