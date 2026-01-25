@@ -44,7 +44,7 @@ func (*GameTable2) TableName() string {
 
 type LatestGameVersionTime struct {
 	GameID                     uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	LatestGameVersionID				 uuid.UUID `gorm:"type:varchar(36);not null"`
+	LatestGameVersionID        uuid.UUID `gorm:"type:varchar(36);not null"`
 	LatestGameVersionCreatedAt time.Time `gorm:"type:datetime;not null;index:idx_game_version_stats_latest_created_at"`
 }
 

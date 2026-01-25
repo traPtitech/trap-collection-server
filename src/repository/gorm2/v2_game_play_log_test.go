@@ -1477,12 +1477,11 @@ func TestDeleteGamePlayLog(t *testing.T) {
 	playLogID := values.NewGamePlayLogID()
 
 	game1 := &schema.GameTable2{
-		ID:                     uuid.New(),
-		Name:                   "Test Game for DeleteGamePlayLog",
-		Description:            "description",
-		VisibilityTypeID:       1,
-		CreatedAt:              time.Now(),
-		LatestVersionUpdatedAt: time.Now(),
+		ID:               uuid.New(),
+		Name:             "Test Game for DeleteGamePlayLog",
+		Description:      "description",
+		VisibilityTypeID: 1,
+		CreatedAt:        time.Now(),
 	}
 	gameImage1 := &schema.GameImageTable2{
 		ID:          uuid.New(),
