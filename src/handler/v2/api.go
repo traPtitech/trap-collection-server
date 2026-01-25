@@ -28,6 +28,7 @@ type API struct {
 	*GameImage
 	*GameVideo
 	*GamePlayLog
+	*GameCreator
 	*Edition
 	*EditionAuth
 	*Seat
@@ -78,7 +79,7 @@ func (api *API) SetRoutes(e *echo.Echo) error {
 func (api *API) Start(addr string) error {
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 
 	p := prometheus.NewPrometheus("echo", nil)
 	p.MetricsPath = "/api/metrics"
