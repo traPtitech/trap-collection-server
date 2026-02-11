@@ -237,19 +237,27 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 				assert.Equal(t, expectedCreator.GetUserName(), creator.GetUserName())
 				assert.WithinDuration(t, expectedCreator.GetCreatedAt(), creator.GetCreatedAt(), time.Second)
 
-				actualJobs := creatorWithJobs.GetJobs()
-				assert.Len(t, actualJobs, len(testCase.expected[i].GetJobs()))
-				for j, expectedJob := range testCase.expected[i].GetJobs() {
-					actualJob := actualJobs[j]
+				actualJobsMap := make(map[values.GameCreatorJobID]*domain.GameCreatorJob, len(creatorWithJobs.GetJobs()))
+				for _, job := range creatorWithJobs.GetJobs() {
+					actualJobsMap[job.GetID()] = job
+				}
+				assert.Len(t, actualJobsMap, len(testCase.expected[i].GetJobs()))
+				for _, expectedJob := range testCase.expected[i].GetJobs() {
+					actualJob, ok := actualJobsMap[expectedJob.GetID()]
+					assert.Truef(t, ok, "expected job ID %v not found in actual jobs", expectedJob.GetID())
 					assert.Equal(t, expectedJob.GetID(), actualJob.GetID())
 					assert.Equal(t, expectedJob.GetDisplayName(), actualJob.GetDisplayName())
 					assert.WithinDuration(t, expectedJob.GetCreatedAt(), actualJob.GetCreatedAt(), time.Second)
 				}
 
-				actualCustomJobs := creatorWithJobs.GetCustomJobs()
-				assert.Len(t, actualCustomJobs, len(testCase.expected[i].GetCustomJobs()))
-				for j, expectedJob := range testCase.expected[i].GetCustomJobs() {
-					actualJob := actualCustomJobs[j]
+				actualCustomJobsMap := make(map[values.GameCreatorJobID]*domain.GameCreatorCustomJob, len(creatorWithJobs.GetCustomJobs()))
+				for _, job := range creatorWithJobs.GetCustomJobs() {
+					actualCustomJobsMap[job.GetID()] = job
+				}
+				assert.Len(t, actualCustomJobsMap, len(testCase.expected[i].GetCustomJobs()))
+				for _, expectedJob := range testCase.expected[i].GetCustomJobs() {
+					actualJob, ok := actualCustomJobsMap[expectedJob.GetID()]
+					assert.Truef(t, ok, "expected custom job ID %v not found in actual custom jobs", expectedJob.GetID())
 					assert.Equal(t, expectedJob.GetID(), actualJob.GetID())
 					assert.Equal(t, expectedJob.GetDisplayName(), actualJob.GetDisplayName())
 					assert.Equal(t, expectedJob.GetGameID(), actualJob.GetGameID())
