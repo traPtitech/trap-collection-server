@@ -195,6 +195,11 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 				),
 			},
 		},
+		"該当するゲームクリエイターがいない場合は空配列を返す": {
+			gameID:      values.NewGameID(),
+			allCreators: []*schema.GameCreatorTable{creator1, creator2},
+			expected:    []*domain.GameCreatorWithJobs{},
+		},
 	}
 
 	for name, testCase := range testCases {
