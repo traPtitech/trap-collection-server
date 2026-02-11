@@ -73,3 +73,11 @@ func (gc *GameCreator) GetGameCreatorsByGameID(ctx context.Context, gameID value
 
 	return result, nil
 }
+
+func (gc *GameCreator) GetGameCreatorPresetJobs(_ context.Context) ([]*domain.GameCreatorJob, error) {
+	return nil, nil // TODO: implement
+}
+
+func (gc *GameCreator) GetGameCreatorCustomJobsByGameID(_ context.Context, _ values.GameID) ([]*domain.GameCreatorCustomJob, error) {
+	return nil, nil // TODO: implement
+}
