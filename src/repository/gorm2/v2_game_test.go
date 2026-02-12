@@ -285,7 +285,7 @@ func TestUpdateGameV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
+			t.Cleanup(func() {
 				err := db.
 					Unscoped().
 					Session(&gorm.Session{
@@ -295,7 +295,7 @@ func TestUpdateGameV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.
@@ -458,7 +458,7 @@ func TestRemoveGameV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
+			t.Cleanup(func() {
 				err := db.
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
@@ -468,7 +468,7 @@ func TestRemoveGameV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.
@@ -917,11 +917,11 @@ func TestGetGamesV2(t *testing.T) {
 			gameName:     "",
 			beforeGames: []schema.GameTable2{
 				{
-					ID:                     uuid.UUID(gameID1),
-					Name:                   string(gameName1),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour * 2),
-					VisibilityTypeID:       gameVisibilityTypeIDPublic,
+					ID:               uuid.UUID(gameID1),
+					Name:             string(gameName1),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour * 2),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
@@ -929,11 +929,11 @@ func TestGetGamesV2(t *testing.T) {
 					}},
 				},
 				{
-					ID:                     uuid.UUID(gameID2),
-					Name:                   string(gameName2),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour),
-					VisibilityTypeID:       gameVisibilityTypeIDLimited,
+					ID:               uuid.UUID(gameID2),
+					Name:             string(gameName2),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour),
+					VisibilityTypeID: gameVisibilityTypeIDLimited,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
@@ -993,11 +993,11 @@ func TestGetGamesV2(t *testing.T) {
 					}},
 				},
 				{
-					ID:                     uuid.UUID(gameID3),
-					Name:                   string(gameName3),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour),
-					VisibilityTypeID:       gameVisibilityTypeIDPrivate,
+					ID:               uuid.UUID(gameID3),
+					Name:             string(gameName3),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour),
+					VisibilityTypeID: gameVisibilityTypeIDPrivate,
 					GameGenres: []*schema.GameGenreTable{
 						{
 							ID:        uuid.UUID(gameGenreID2),
@@ -1271,11 +1271,21 @@ func TestGetGamesV2(t *testing.T) {
 
 	for description, testCase := range testCases {
 		t.Run(description, func(t *testing.T) {
-			defer func() {
+			t.Cleanup(func() {
 				var gameIDs []schema.GameTable2
 				err := db.Model(&schema.GameTable2{}).Select("id").Find(&gameIDs).Error
 				if err != nil {
 					t.Fatalf("failed to get game ids: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&schema.LatestGameVersionTime{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete latest games: %+v\n", err)
 				}
 
 				// ゲームとジャンルとロールの削除
@@ -1290,7 +1300,7 @@ func TestGetGamesV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.Create(&testCase.beforeGames).Error
