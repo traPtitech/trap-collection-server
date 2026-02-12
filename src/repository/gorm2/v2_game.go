@@ -181,7 +181,7 @@ func (g *GameV2) GetGames(
 	case repository.GamesSortTypeCreatedAt:
 		orderBy = "games.created_at DESC"
 	case repository.GamesSortTypeLatestVersion:
-		orderBy = "games.latest_version_updated_at DESC"
+		orderBy = "v2_latest_game_version_times.latest_game_version_created_at DESC"
 	default:
 		return nil, 0, fmt.Errorf("invalid sort type: %v", sort)
 	}
@@ -215,6 +215,7 @@ func (g *GameV2) GetGames(
 		Model(&schema.GameTable2{}).
 		Preload("GameGenres").
 		Preload("GameVisibilityType").
+		Joins("LEFT JOIN v2_latest_game_version_times ON v2_latest_game_version_times.game_id = games.id").
 		Joins("JOIN game_visibility_types ON game_visibility_types.id = games.visibility_type_id").
 		Where("game_visibility_types.name IN ?", visibilityNames)
 
