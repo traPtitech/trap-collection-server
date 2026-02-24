@@ -43,6 +43,7 @@
 | [v2_game_images](v2_game_images.md) | 4 | ゲーム画像テーブル(v2) | BASE TABLE |
 | [v2_game_versions](v2_game_versions.md) | 8 | ゲームバージョンテーブル(v2) | BASE TABLE |
 | [v2_game_videos](v2_game_videos.md) | 4 | ゲーム動画テーブル(v2) | BASE TABLE |
+| [v2_latest_game_version_times](v2_latest_game_version_times.md) | 3 |  | BASE TABLE |
 
 ## Relations
 

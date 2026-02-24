@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GameVersionV2 struct {
@@ -85,11 +86,17 @@ func (gameVersion *GameVersionV2) CreateGameVersion(
 	}
 
 	err = db.
-		Model(&schema.GameTable2{ID: uuid.UUID(gameID)}).
-		Update("latest_version_updated_at", version.GetCreatedAt()).
-		Error
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "game_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"latest_game_version_id", "latest_game_version_created_at"}),
+		}).
+		Create(&schema.LatestGameVersionTime{
+			GameID:                     uuid.UUID(gameID),
+			LatestGameVersionID:        uuid.UUID(version.GetID()),
+			LatestGameVersionCreatedAt: version.GetCreatedAt(),
+		}).Error
 	if err != nil {
-		return fmt.Errorf("failed to update latest version updated at: %w", err)
+		return fmt.Errorf("failed to upsert latest game version time: %w", err)
 	}
 
 	return nil
