@@ -1674,7 +1674,7 @@ paths:
       operationId: getGameFeedbacks
       summary: ゲームのフィードバック一覧取得
       description: |
-        指定したゲームの全フィードバックを取得します。
+        指定したゲームのフィードバックを取得します。
         各フィードバックにはバージョン情報が含まれます。
       tags:
         - gameFeedback
@@ -1722,7 +1722,7 @@ paths:
       operationId: getGameVersionFeedbacks
       summary: ゲームバージョンのフィードバック一覧取得
       description: |
-        指定したゲームバージョンの全フィードバックを取得します。
+        指定したゲームバージョンのフィードバックを取得します。
       tags:
         - gameFeedback
       security:
