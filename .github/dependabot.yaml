@@ -39,13 +39,6 @@ updates:
           - 1.16.2.pre.alpine
     cooldown:
       default-days: 7
-    groups:
-      golang:
-        patterns:
-          - "golang"
-      atlas:
-        patterns:
-          - "arigaio/atlas*"
 
   - package-ecosystem: github-actions
     directory: "/"
