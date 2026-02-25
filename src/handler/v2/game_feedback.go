@@ -10,8 +10,14 @@ import (
 type GameFeedback struct{}
 
 // フィードバック質問一覧の取得
-// (GET /feedbacks/questions)
-func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context) error {
+// (GET /editions/{editionID}/games/{gameID}/feedback-questions)
+func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
+// フィードバック質問の一括設定
+// (PUT /editions/{editionID}/games/{gameID}/feedback-questions)
+func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
 

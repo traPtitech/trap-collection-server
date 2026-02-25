@@ -275,11 +275,16 @@ func (*GameCreatorCustomJobTable) TableName() string {
 }
 
 type FeedbackQuestionTable struct {
-	ID            uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
-	QuestionText  string    `gorm:"type:varchar(256);not null"`
-	QuestionOrder int       `gorm:"type:int;not null"`
-	IsActive      bool      `gorm:"type:boolean;not null;default:true"`
-	CreatedAt     time.Time `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
+	EditionID     uuid.UUID      `gorm:"type:varchar(36);not null;index:idx_edition_game"`
+	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index:idx_edition_game"`
+	QuestionText  string         `gorm:"type:varchar(256);not null"`
+	AnswerType    int            `gorm:"type:tinyint;not null"`
+	QuestionOrder int            `gorm:"type:int;not null"`
+	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt     gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
+	Edition       EditionTable   `gorm:"foreignKey:EditionID"`
+	Game          GameTable2     `gorm:"foreignKey:GameID"`
 }
 
 func (*FeedbackQuestionTable) TableName() string {
@@ -305,7 +310,7 @@ type GameFeedbackAnswerTable struct {
 	ID         uuid.UUID             `gorm:"type:varchar(36);not null;primaryKey"`
 	FeedbackID uuid.UUID             `gorm:"type:varchar(36);not null;index"`
 	QuestionID uuid.UUID             `gorm:"type:varchar(36);not null;index"`
-	Answer     bool                  `gorm:"type:boolean;not null"` // Yes=true, No=false，未回答は許容しない
+	Answer     int                   `gorm:"type:int;not null"`
 	Feedback   GameFeedbackTable     `gorm:"foreignKey:FeedbackID"`
 	Question   FeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
 }

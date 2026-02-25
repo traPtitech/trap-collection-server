@@ -124,7 +124,7 @@
 <text text-anchor="start" x="308.4726" y="-793.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
 <polygon fill="none" stroke="#000000" points="226,-752.5 226,-782.5 542,-782.5 542,-752.5 226,-752.5"/>
 <text text-anchor="start" x="233" y="-763.9" font-family="Arial" font-size="14.00" fill="#000000">answer </text>
-<text text-anchor="start" x="282.0056" y="-763.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<text text-anchor="start" x="282.0056" y="-763.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 </g>
 <!-- game_feedback_answers&#45;&gt;game_feedbacks -->
 <g id="edge1" class="edge">
