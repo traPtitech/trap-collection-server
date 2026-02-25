@@ -274,6 +274,18 @@ func (*GameCreatorCustomJobTable) TableName() string {
 	return "game_creator_custom_jobs"
 }
 
+type GameFeedbackConfigTable struct {
+	EditionID uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID    uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
+	Enabled   bool         `gorm:"type:boolean;not null;default:false"`
+	Edition   EditionTable `gorm:"foreignKey:EditionID"`
+	Game      GameTable2   `gorm:"foreignKey:GameID"`
+}
+
+func (*GameFeedbackConfigTable) TableName() string {
+	return "game_feedback_configs"
+}
+
 type FeedbackQuestionTable struct {
 	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
 	EditionID     uuid.UUID      `gorm:"type:varchar(36);not null;index:idx_edition_game"`

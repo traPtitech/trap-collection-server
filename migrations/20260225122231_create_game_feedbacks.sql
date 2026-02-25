@@ -39,3 +39,13 @@ CREATE TABLE `game_feedback_answers` (
   CONSTRAINT `fk_game_feedback_answers_question` FOREIGN KEY (`question_id`) REFERENCES `feedback_questions` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT,
   CONSTRAINT `fk_game_feedbacks_answers` FOREIGN KEY (`feedback_id`) REFERENCES `game_feedbacks` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
+-- Create "game_feedback_configs" table
+CREATE TABLE `game_feedback_configs` (
+  `edition_id` varchar(36) NOT NULL,
+  `game_id` varchar(36) NOT NULL,
+  `enabled` bool NOT NULL DEFAULT 0,
+  PRIMARY KEY (`edition_id`, `game_id`),
+  INDEX `fk_game_feedback_configs_game` (`game_id`),
+  CONSTRAINT `fk_game_feedback_configs_edition` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT `fk_game_feedback_configs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
+) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;

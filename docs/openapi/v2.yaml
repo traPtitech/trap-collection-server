@@ -1539,13 +1539,11 @@ paths:
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
         '200':
-          description: 'フィードバック質問一覧の取得に成功した際に返されます。'
+          description: 'フィードバック質問設定の取得に成功した際に返されます。'
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FeedbackQuestion'
+                $ref: '#/components/schemas/FeedbackQuestionsConfig'
         '401':
           content:
             application/json:
@@ -1573,6 +1571,7 @@ paths:
         指定したエディション×ゲームのフィードバック質問を一括で差し替えます。
         配列の順序がそのままquestion_orderになります。
         送信されなかった既存の質問は論理削除されます。
+        enabledでフィードバック機能のon/offを切り替えられます。
       tags:
         - gameFeedback
       security:
@@ -1592,9 +1591,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FeedbackQuestion'
+                $ref: '#/components/schemas/FeedbackQuestionsConfig'
         '400':
           content:
             application/json:
@@ -4195,11 +4192,38 @@ components:
         - fiveScale
       description: '回答形式（yesNo: Yes/No回答、fiveScale: 5段階評価）'
 
+    FeedbackQuestionsConfig:
+      type: object
+      description: 'フィードバック質問設定（有効/無効フラグと質問一覧）'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能が有効かどうか'
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackQuestion'
+      required:
+        - enabled
+        - questions
+      additionalProperties: false
+
     PutFeedbackQuestionsRequest:
-      type: array
-      items:
-        $ref: '#/components/schemas/FeedbackQuestionInput'
-      description: 'フィードバック質問の一覧。配列の順序がquestion_orderになります。'
+      type: object
+      description: 'フィードバック質問の一括設定リクエスト'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能の有効/無効'
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionInput'
+          description: '質問の一覧。配列の順序がquestion_orderになります。'
+      required:
+        - enabled
+        - questions
+      additionalProperties: false
 
     FeedbackQuestionInput:
       type: object
