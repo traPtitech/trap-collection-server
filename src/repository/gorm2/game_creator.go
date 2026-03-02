@@ -81,7 +81,7 @@ func (gc *GameCreator) GetGameCreatorPresetJobs(ctx context.Context) ([]*domain.
 	}
 
 	var presetJobs []schema.GameCreatorJobTable
-	err = db.Find(&presetJobs ).Error
+	err = db.Find(&presetJobs).Error
 	if err != nil {
 		return nil, fmt.Errorf("find preset jobs: %w", err)
 	}
