@@ -698,7 +698,6 @@ func TestGetGameV2(t *testing.T) {
 }
 
 func TestGetGamesV2(t *testing.T) {
-	t.Parallel()
 	ctx := context.Background()
 
 	db, err := testDB.getDB(ctx)
