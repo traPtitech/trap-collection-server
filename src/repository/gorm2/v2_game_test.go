@@ -698,6 +698,7 @@ func TestGetGameV2(t *testing.T) {
 }
 
 func TestGetGamesV2(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	db, err := testDB.getDB(ctx)
@@ -708,6 +709,7 @@ func TestGetGamesV2(t *testing.T) {
 	gameRepository := NewGameV2(testDB)
 
 	type test struct {
+		description string
 		// 引数
 
 		limit        int
@@ -802,8 +804,9 @@ func TestGetGamesV2(t *testing.T) {
 		}
 	}
 
-	testCases := map[string]test{
-		"特に問題ないのでエラーなし": {
+	testCases := []test{
+		{
+			description:  "特に問題ないのでエラーなし",
 			limit:        1,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -828,7 +831,8 @@ func TestGetGamesV2(t *testing.T) {
 			games:       []*domain.GameWithGenres{domain.NewGameWithGenres(game1, []*domain.GameGenre{gameGenre1})},
 			expectedNum: 1,
 		},
-		"複数ゲームがあってもエラーなし": {
+		{
+			description:  "複数ゲームがあってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -868,7 +872,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"limitedとoffsetがあってもエラーなし": {
+		{
+			description:  "limitedとoffsetがあってもエラーなし",
 			limit:        1,
 			offset:       1,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -907,7 +912,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"順番が最新バージョン順でもエラーなし": {
+		{
+			description:  "順番が最新バージョン順でもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeLatestVersion,
@@ -959,7 +965,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"visibilityの制限があっても問題なし": {
+		{
+			description:  "visibilityの制限があっても問題なし",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1024,7 +1031,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"ユーザーの指定があってもエラーなし": {
+		{
+			description:  "ユーザーの指定があってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1077,7 +1085,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲームジャンルの指定があってもエラーなし": {
+		{
+			description:  "ゲームジャンルの指定があってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1116,7 +1125,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲームジャンルの指定が複数あってもエラーなし": {
+		{
+			description:  "ゲームジャンルの指定が複数あってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1162,7 +1172,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲーム名の指定があってもエラーなし": {
+		{
+			description:  "ゲーム名の指定があってもエラーなし",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1199,7 +1210,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"条件に合うゲームが無くてもエラー無し": {
+		{
+			description:  "条件に合うゲームが無くてもエラー無し",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1219,7 +1231,8 @@ func TestGetGamesV2(t *testing.T) {
 			games:       []*domain.GameWithGenres{},
 			expectedNum: 0,
 		},
-		"limitが0(上限なし)でもエラー無し": {
+		{
+			description:  "limitが0(上限なし)でもエラー無し",
 			limit:        0,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1241,26 +1254,30 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"limitが負なのでErrNegativeLimit": {
-			limit:  -1,
-			offset: 0,
-			sort:   repository.GamesSortTypeCreatedAt,
-			isErr:  true,
-			err:    repository.ErrNegativeLimit,
+		{
+			description: "limitが負なのでErrNegativeLimit",
+			limit:       -1,
+			offset:      0,
+			sort:        repository.GamesSortTypeCreatedAt,
+			isErr:       true,
+			err:         repository.ErrNegativeLimit,
 		},
-		"limitが0なのにoffsetが正なのでエラー": {
-			limit:  0,
-			offset: 1,
-			sort:   repository.GamesSortTypeCreatedAt,
-			isErr:  true,
+		{
+			description: "limitが0なのにoffsetが正なのでエラー",
+			limit:       0,
+			offset:      1,
+			sort:        repository.GamesSortTypeCreatedAt,
+			isErr:       true,
 		},
-		"sortの値がおかしいのでエラーs": {
-			limit:  1,
-			offset: 0,
-			sort:   100,
-			isErr:  true,
+		{
+			description: "sortの値がおかしいのでエラー",
+			limit:       1,
+			offset:      0,
+			sort:        100,
+			isErr:       true,
 		},
-		"visibilityの値がおかしいのでエラー": {
+		{
+			description:  "visibilityの値がおかしいのでエラー",
 			limit:        1,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1269,8 +1286,8 @@ func TestGetGamesV2(t *testing.T) {
 		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
 			t.Cleanup(func() {
 				var gameIDs []schema.GameTable2
 				err := db.Model(&schema.GameTable2{}).Select("id").Find(&gameIDs).Error

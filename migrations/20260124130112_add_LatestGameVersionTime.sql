@@ -13,10 +13,15 @@ INSERT INTO v2_latest_game_version_times (game_id, latest_game_version_id, lates
 SELECT 
     game_id,
     id,
-    created_at,
-    ROW_NUMBER() OVER (PARTITION BY game_id ORDER BY created_at DESC, id DESC) AS num
-FROM 
-    v2_game_versions
-WHERE num = 1
+    created_at
+    FROM (
+        SELECT 
+            game_id,
+            id,
+            created_at,
+            ROW_NUMBER() OVER (PARTITION BY game_id ORDER BY created_at DESC, id DESC) AS num
+        FROM v2_game_versions
+    ) AS ranked_versions
+WHERE num = 1;
 -- 元データ（latest_version_updated_atカラム）の無効化
 ALTER TABLE `games` MODIFY COLUMN `latest_version_updated_at` datetime NULL;
