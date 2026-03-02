@@ -50,4 +50,4 @@ jobs:
       - name: Dispatch Renovate
         run: 'gh api --method POST -H "Accept: application/vnd.github+json" /repos/traPtitech/manifest/actions/workflows/renovate.yaml/dispatches -f "ref=main"'
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
