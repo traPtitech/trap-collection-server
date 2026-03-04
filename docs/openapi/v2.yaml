@@ -1570,7 +1570,8 @@ paths:
       description: |
         指定したゲームのフィードバック質問を一括で差し替えます。
         配列の順序がそのままquestion_orderになります。
-        送信されなかった既存の質問はアーカイブされます。
+        idを指定した質問は既存の質問を更新し、idを省略した質問は新規作成されます。
+        リクエストに含まれなかった既存の質問はアーカイブされます（過去の回答は引き続き取得可能）。
         enabledでフィードバック機能のon/offを切り替えられます。
       tags:
         - gameFeedback
@@ -4229,6 +4230,9 @@ components:
     FeedbackQuestionInput:
       type: object
       properties:
+        id:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+          description: '既存の質問を更新する場合に指定します。省略時は新規作成されます。'
         questionText:
           type: string
           maxLength: 256
