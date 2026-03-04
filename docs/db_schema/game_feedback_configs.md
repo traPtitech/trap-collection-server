@@ -7,12 +7,9 @@
 
 ```sql
 CREATE TABLE `game_feedback_configs` (
-  `edition_id` varchar(36) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`edition_id`,`game_id`),
-  KEY `fk_game_feedback_configs_game` (`game_id`),
-  CONSTRAINT `fk_game_feedback_configs_edition` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
+  PRIMARY KEY (`game_id`),
   CONSTRAINT `fk_game_feedback_configs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -23,7 +20,6 @@ CREATE TABLE `game_feedback_configs` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| edition_id | varchar(36) |  | false |  | [editions](editions.md) |  |
 | game_id | varchar(36) |  | false |  | [games](games.md) |  |
 | enabled | tinyint(1) | 0 | false |  |  |  |
 
@@ -31,16 +27,14 @@ CREATE TABLE `game_feedback_configs` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| fk_game_feedback_configs_edition | FOREIGN KEY | FOREIGN KEY (edition_id) REFERENCES editions (id) |
 | fk_game_feedback_configs_game | FOREIGN KEY | FOREIGN KEY (game_id) REFERENCES games (id) |
-| PRIMARY | PRIMARY KEY | PRIMARY KEY (edition_id, game_id) |
+| PRIMARY | PRIMARY KEY | PRIMARY KEY (game_id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| fk_game_feedback_configs_game | KEY fk_game_feedback_configs_game (game_id) USING BTREE |
-| PRIMARY | PRIMARY KEY (edition_id, game_id) USING BTREE |
+| PRIMARY | PRIMARY KEY (game_id) USING BTREE |
 
 ## Relations
 

@@ -275,11 +275,9 @@ func (*GameCreatorCustomJobTable) TableName() string {
 }
 
 type GameFeedbackConfigTable struct {
-	EditionID uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID    uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
-	Enabled   bool         `gorm:"type:boolean;not null;default:false"`
-	Edition   EditionTable `gorm:"foreignKey:EditionID"`
-	Game      GameTable2   `gorm:"foreignKey:GameID"`
+	GameID  uuid.UUID  `gorm:"type:varchar(36);not null;primaryKey"`
+	Enabled bool       `gorm:"type:boolean;not null;default:false"`
+	Game    GameTable2 `gorm:"foreignKey:GameID"`
 }
 
 func (*GameFeedbackConfigTable) TableName() string {
@@ -288,14 +286,13 @@ func (*GameFeedbackConfigTable) TableName() string {
 
 type FeedbackQuestionTable struct {
 	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
-	EditionID     uuid.UUID      `gorm:"type:varchar(36);not null;index:idx_edition_game"`
-	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index:idx_edition_game"`
+	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index"`
 	QuestionText  string         `gorm:"type:varchar(256);not null"`
 	AnswerType    int            `gorm:"type:tinyint;not null"`
 	QuestionOrder int            `gorm:"type:int;not null"`
 	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ArchivedAt    sql.NullTime   `gorm:"type:DATETIME NULL;default:NULL"`
 	DeletedAt     gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
-	Edition       EditionTable   `gorm:"foreignKey:EditionID"`
 	Game          GameTable2     `gorm:"foreignKey:GameID"`
 }
 

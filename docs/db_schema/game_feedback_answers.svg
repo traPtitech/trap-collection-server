@@ -74,23 +74,23 @@
 <text text-anchor="start" x="524" y="-263.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
 <text text-anchor="start" x="538.7798" y="-263.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
 <polygon fill="none" stroke="#000000" points="517,-222.5 517,-252.5 788,-252.5 788,-222.5 517,-222.5"/>
-<text text-anchor="start" x="524" y="-233.9" font-family="Arial" font-size="14.00" fill="#000000">edition_id </text>
-<text text-anchor="start" x="587.7966" y="-233.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<text text-anchor="start" x="524" y="-233.9" font-family="Arial" font-size="14.00" fill="#000000">game_id </text>
+<text text-anchor="start" x="581.5708" y="-233.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
 <polygon fill="none" stroke="#000000" points="517,-192.5 517,-222.5 788,-222.5 788,-192.5 517,-192.5"/>
-<text text-anchor="start" x="524" y="-203.9" font-family="Arial" font-size="14.00" fill="#000000">game_id </text>
-<text text-anchor="start" x="581.5708" y="-203.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<text text-anchor="start" x="524" y="-203.9" font-family="Arial" font-size="14.00" fill="#000000">question_text </text>
+<text text-anchor="start" x="611.1472" y="-203.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(256)]</text>
 <polygon fill="none" stroke="#000000" points="517,-162.5 517,-192.5 788,-192.5 788,-162.5 517,-162.5"/>
-<text text-anchor="start" x="524" y="-173.9" font-family="Arial" font-size="14.00" fill="#000000">question_text </text>
-<text text-anchor="start" x="611.1472" y="-173.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(256)]</text>
+<text text-anchor="start" x="524" y="-173.9" font-family="Arial" font-size="14.00" fill="#000000">answer_type </text>
+<text text-anchor="start" x="607.244" y="-173.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
 <polygon fill="none" stroke="#000000" points="517,-132.5 517,-162.5 788,-162.5 788,-132.5 517,-132.5"/>
-<text text-anchor="start" x="524" y="-143.9" font-family="Arial" font-size="14.00" fill="#000000">answer_type </text>
-<text text-anchor="start" x="607.244" y="-143.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
+<text text-anchor="start" x="524" y="-143.9" font-family="Arial" font-size="14.00" fill="#000000">question_order </text>
+<text text-anchor="start" x="621.2524" y="-143.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="517,-102.5 517,-132.5 788,-132.5 788,-102.5 517,-102.5"/>
-<text text-anchor="start" x="524" y="-113.9" font-family="Arial" font-size="14.00" fill="#000000">question_order </text>
-<text text-anchor="start" x="621.2524" y="-113.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<text text-anchor="start" x="524" y="-113.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="594.028" y="-113.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
 <polygon fill="none" stroke="#000000" points="517,-72.5 517,-102.5 788,-102.5 788,-72.5 517,-72.5"/>
-<text text-anchor="start" x="524" y="-83.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="594.028" y="-83.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
+<text text-anchor="start" x="524" y="-83.9" font-family="Arial" font-size="14.00" fill="#000000">archived_at </text>
+<text text-anchor="start" x="600.244" y="-83.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
 <polygon fill="none" stroke="#000000" points="517,-42.5 517,-72.5 788,-72.5 788,-42.5 517,-42.5"/>
 <text text-anchor="start" x="524" y="-53.9" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
 <text text-anchor="start" x="593.2566" y="-53.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>

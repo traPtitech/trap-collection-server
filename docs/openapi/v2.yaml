@@ -1522,12 +1522,13 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
   # gameFeedback
-  /editions/{editionID}/games/{gameID}/feedback-questions:
+  /games/{gameID}/feedback-questions:
     get:
       operationId: getFeedbackQuestions
       summary: フィードバック質問一覧の取得
       description: |
-        指定したエディション中のゲームのフィードバック質問一覧を取得します。
+        指定したゲームの有効なフィードバック質問一覧を取得します。
+        アーカイブ済み・削除済みの質問は含まれません。
         管理画面からもランチャーからもアクセス可能です。
       tags:
         - gameFeedback
@@ -1535,7 +1536,6 @@ paths:
         - GameMaintainerAuth: []
         - EditionAuth: []
       parameters:
-        - $ref: '#/components/parameters/editionIDInPath'
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
         '200':
@@ -1561,23 +1561,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: '指定したエディションまたはゲームが存在しない場合に返されます。'
+          description: '指定したゲームが存在しない場合に返されます。'
         '500':
           $ref: '#/components/responses/InternalServerError'
     put:
       operationId: putFeedbackQuestions
       summary: フィードバック質問の一括設定
       description: |
-        指定したエディション×ゲームのフィードバック質問を一括で差し替えます。
+        指定したゲームのフィードバック質問を一括で差し替えます。
         配列の順序がそのままquestion_orderになります。
-        送信されなかった既存の質問は論理削除されます。
+        送信されなかった既存の質問はアーカイブされます。
         enabledでフィードバック機能のon/offを切り替えられます。
       tags:
         - gameFeedback
       security:
         - GameMaintainerAuth: []
       parameters:
-        - $ref: '#/components/parameters/editionIDInPath'
         - $ref: '#/components/parameters/gameIDInPath'
       requestBody:
         required: true
@@ -1615,7 +1614,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: '指定したエディションまたはゲームが存在しない場合に返されます。'
+          description: '指定したゲームが存在しない場合に返されます。'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1676,6 +1675,7 @@ paths:
       description: |
         指定したゲームのフィードバックを取得します。
         各フィードバックにはバージョン情報が含まれます。
+        アーカイブ済みの質問に対する回答も含まれます。
       tags:
         - gameFeedback
       security:
@@ -1723,6 +1723,7 @@ paths:
       summary: ゲームバージョンのフィードバック一覧取得
       description: |
         指定したゲームバージョンのフィードバックを取得します。
+        アーカイブ済みの質問に対する回答も含まれます。
       tags:
         - gameFeedback
       security:

@@ -1,17 +1,15 @@
 -- Create "feedback_questions" table
 CREATE TABLE `feedback_questions` (
   `id` varchar(36) NOT NULL,
-  `edition_id` varchar(36) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `question_text` varchar(256) NOT NULL,
   `answer_type` tinyint NOT NULL,
   `question_order` bigint NOT NULL,
   `created_at` datetime NOT NULL DEFAULT (current_timestamp()),
+  `archived_at` datetime NULL,
   `deleted_at` datetime NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_feedback_questions_game` (`game_id`),
-  INDEX `idx_edition_game` (`edition_id`, `game_id`),
-  CONSTRAINT `fk_feedback_questions_edition` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  INDEX `idx_feedback_questions_game_id` (`game_id`),
   CONSTRAINT `fk_feedback_questions_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- Create "game_feedbacks" table
@@ -41,11 +39,8 @@ CREATE TABLE `game_feedback_answers` (
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
 -- Create "game_feedback_configs" table
 CREATE TABLE `game_feedback_configs` (
-  `edition_id` varchar(36) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `enabled` bool NOT NULL DEFAULT 0,
-  PRIMARY KEY (`edition_id`, `game_id`),
-  INDEX `fk_game_feedback_configs_game` (`game_id`),
-  CONSTRAINT `fk_game_feedback_configs_edition` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  PRIMARY KEY (`game_id`),
   CONSTRAINT `fk_game_feedback_configs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
