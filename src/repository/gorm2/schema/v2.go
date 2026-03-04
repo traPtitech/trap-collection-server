@@ -302,11 +302,9 @@ func (*FeedbackQuestionTable) TableName() string {
 
 type GameFeedbackTable struct {
 	ID            uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
-	EditionID     uuid.UUID                 `gorm:"type:varchar(36);not null;index"`
 	GameVersionID uuid.UUID                 `gorm:"type:varchar(36);not null;index"`
 	Comment       sql.NullString            `gorm:"type:text;default:NULL"` // 自由記述欄
 	CreatedAt     time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	Edition       EditionTable              `gorm:"foreignKey:EditionID"`
 	GameVersion   GameVersionTable2         `gorm:"foreignKey:GameVersionID"`
 	Answers       []GameFeedbackAnswerTable `gorm:"foreignKey:FeedbackID"`
 }

@@ -22,8 +22,8 @@ func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, _ openapi.GameIDInP
 }
 
 // ゲームフィードバックの送信
-// (POST /editions/{editionID}/games/{gameID}/feedbacks)
-func (gf *GameFeedback) PostGameFeedback(c echo.Context, _ openapi.EditionIDInPath, _ openapi.GameIDInPath) error {
+// (POST /games/{gameID}/feedbacks)
+func (gf *GameFeedback) PostGameFeedback(c echo.Context, _ openapi.GameIDInPath) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
 

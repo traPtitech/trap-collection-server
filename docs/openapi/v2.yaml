@@ -1619,7 +1619,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /editions/{editionID}/games/{gameID}/feedbacks:
+  /games/{gameID}/feedbacks:
     post:
       operationId: postGameFeedback
       summary: ゲームフィードバックの送信
@@ -1631,7 +1631,6 @@ paths:
       security:
         - EditionAuth: []
       parameters:
-        - $ref: '#/components/parameters/editionIDInPath'
         - $ref: '#/components/parameters/gameIDInPath'
       requestBody:
         required: true
@@ -1658,18 +1657,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: '認証に失敗した場合に返されます。'
-        '403':
-          $ref: '#/components/responses/EditionForbidden'
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: '指定したエディションまたはゲームが存在しない場合に返されます。'
+          description: '指定したゲームが存在しない場合に返されます。'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  /games/{gameID}/feedbacks:
     get:
       operationId: getGameFeedbacks
       summary: ゲームのフィードバック一覧取得
@@ -4317,10 +4312,6 @@ components:
           $ref: '#/components/schemas/GameVersionID'
         gameVersionName:
           $ref: '#/components/schemas/GameVersionName'
-        editionID:
-          $ref: '#/components/schemas/EditionID'
-        editionName:
-          $ref: '#/components/schemas/EditionName'
         answers:
           type: array
           items:
@@ -4336,8 +4327,6 @@ components:
         - id
         - gameVersionID
         - gameVersionName
-        - editionID
-        - editionName
         - answers
         - createdAt
       additionalProperties: false
@@ -4363,10 +4352,6 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/GameFeedbackID'
-        editionID:
-          $ref: '#/components/schemas/EditionID'
-        editionName:
-          $ref: '#/components/schemas/EditionName'
         answers:
           type: array
           items:
@@ -4380,8 +4365,6 @@ components:
           format: date-time
       required:
         - id
-        - editionID
-        - editionName
         - answers
         - createdAt
       additionalProperties: false
