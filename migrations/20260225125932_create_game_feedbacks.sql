@@ -31,6 +31,7 @@ CREATE TABLE `game_feedback_answers` (
   PRIMARY KEY (`id`),
   INDEX `idx_game_feedback_answers_feedback_id` (`feedback_id`),
   INDEX `idx_game_feedback_answers_question_id` (`question_id`),
+  UNIQUE INDEX `idx_game_feedback_answers_feedback_question` (`feedback_id`, `question_id`),
   CONSTRAINT `fk_game_feedback_answers_question` FOREIGN KEY (`question_id`) REFERENCES `feedback_questions` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT,
   CONSTRAINT `fk_game_feedbacks_answers` FOREIGN KEY (`feedback_id`) REFERENCES `game_feedbacks` (`id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) CHARSET utf8mb4 COLLATE utf8mb4_general_ci;

@@ -315,8 +315,8 @@ func (*GameFeedbackTable) TableName() string {
 
 type GameFeedbackAnswerTable struct {
 	ID         uuid.UUID             `gorm:"type:varchar(36);not null;primaryKey"`
-	FeedbackID uuid.UUID             `gorm:"type:varchar(36);not null;index"`
-	QuestionID uuid.UUID             `gorm:"type:varchar(36);not null;index"`
+	FeedbackID uuid.UUID             `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
+	QuestionID uuid.UUID             `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
 	Answer     int                   `gorm:"type:int;not null"`
 	Feedback   GameFeedbackTable     `gorm:"foreignKey:FeedbackID"`
 	Question   FeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
