@@ -87,7 +87,7 @@
 <text text-anchor="start" x="133.744" y="-808.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
 <polygon fill="none" stroke="#000000" points="43.5,-767.5 43.5,-797.5 314.5,-797.5 314.5,-767.5 43.5,-767.5"/>
 <text text-anchor="start" x="50.5" y="-778.9" font-family="Arial" font-size="14.00" fill="#000000">question_order </text>
-<text text-anchor="start" x="147.7524" y="-778.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<text text-anchor="start" x="147.7524" y="-778.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
 <polygon fill="none" stroke="#000000" points="43.5,-737.5 43.5,-767.5 314.5,-767.5 314.5,-737.5 43.5,-737.5"/>
 <text text-anchor="start" x="50.5" y="-748.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
 <text text-anchor="start" x="120.528" y="-748.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>

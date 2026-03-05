@@ -10,8 +10,9 @@ CREATE TABLE `game_feedback_answers` (
   `id` varchar(36) NOT NULL,
   `feedback_id` varchar(36) NOT NULL,
   `question_id` varchar(36) NOT NULL,
-  `answer` bigint(20) NOT NULL,
+  `answer` int(11) NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_game_feedback_answers_feedback_question` (`feedback_id`,`question_id`),
   KEY `idx_game_feedback_answers_feedback_id` (`feedback_id`),
   KEY `idx_game_feedback_answers_question_id` (`question_id`),
   CONSTRAINT `fk_game_feedback_answers_question` FOREIGN KEY (`question_id`) REFERENCES `feedback_questions` (`id`),
@@ -28,7 +29,7 @@ CREATE TABLE `game_feedback_answers` (
 | id | varchar(36) |  | false |  |  |  |
 | feedback_id | varchar(36) |  | false |  | [game_feedbacks](game_feedbacks.md) |  |
 | question_id | varchar(36) |  | false |  | [feedback_questions](feedback_questions.md) |  |
-| answer | bigint(20) |  | false |  |  |  |
+| answer | int(11) |  | false |  |  |  |
 
 ## Constraints
 
@@ -36,6 +37,7 @@ CREATE TABLE `game_feedback_answers` (
 | ---- | ---- | ---------- |
 | fk_game_feedbacks_answers | FOREIGN KEY | FOREIGN KEY (feedback_id) REFERENCES game_feedbacks (id) |
 | fk_game_feedback_answers_question | FOREIGN KEY | FOREIGN KEY (question_id) REFERENCES feedback_questions (id) |
+| idx_game_feedback_answers_feedback_question | UNIQUE | UNIQUE KEY idx_game_feedback_answers_feedback_question (feedback_id, question_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
@@ -45,6 +47,7 @@ CREATE TABLE `game_feedback_answers` (
 | idx_game_feedback_answers_feedback_id | KEY idx_game_feedback_answers_feedback_id (feedback_id) USING BTREE |
 | idx_game_feedback_answers_question_id | KEY idx_game_feedback_answers_question_id (question_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
+| idx_game_feedback_answers_feedback_question | UNIQUE KEY idx_game_feedback_answers_feedback_question (feedback_id, question_id) USING BTREE |
 
 ## Relations
 

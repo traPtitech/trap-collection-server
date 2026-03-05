@@ -16,7 +16,7 @@
 | [game_creator_custom_job_relations](game_creator_custom_job_relations.md) | 2 |  | BASE TABLE |
 | [game_creator_jobs](game_creator_jobs.md) | 3 |  | BASE TABLE |
 | [game_creator_job_relations](game_creator_job_relations.md) | 2 |  | BASE TABLE |
-| [game_feedbacks](game_feedbacks.md) | 5 |  | BASE TABLE |
+| [game_feedbacks](game_feedbacks.md) | 4 |  | BASE TABLE |
 | [game_feedback_answers](game_feedback_answers.md) | 4 |  | BASE TABLE |
 | [game_feedback_configs](game_feedback_configs.md) | 2 |  | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |

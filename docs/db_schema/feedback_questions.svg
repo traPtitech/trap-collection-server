@@ -31,7 +31,7 @@
 <text text-anchor="start" x="434.244" y="-543.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(4)]</text>
 <polygon fill="none" stroke="#000000" points="344,-502.5 344,-532.5 615,-532.5 615,-502.5 344,-502.5"/>
 <text text-anchor="start" x="351" y="-513.9" font-family="Arial" font-size="14.00" fill="#000000">question_order </text>
-<text text-anchor="start" x="448.2524" y="-513.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<text text-anchor="start" x="448.2524" y="-513.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
 <polygon fill="none" stroke="#000000" points="344,-472.5 344,-502.5 615,-502.5 615,-472.5 344,-472.5"/>
 <text text-anchor="start" x="351" y="-483.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
 <text text-anchor="start" x="421.028" y="-483.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime]</text>
@@ -99,7 +99,7 @@
 <text text-anchor="start" x="404.4726" y="-853.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
 <polygon fill="none" stroke="#000000" points="322,-812.5 322,-842.5 638,-842.5 638,-812.5 322,-812.5"/>
 <text text-anchor="start" x="329" y="-823.9" font-family="Arial" font-size="14.00" fill="#000000">answer </text>
-<text text-anchor="start" x="378.0056" y="-823.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<text text-anchor="start" x="378.0056" y="-823.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
 </g>
 <!-- game_feedback_answers&#45;&gt;feedback_questions -->
 <g id="edge1" class="edge">
