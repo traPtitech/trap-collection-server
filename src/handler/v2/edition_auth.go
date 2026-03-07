@@ -173,6 +173,8 @@ func (editionAuth *EditionAuth) PostRevokeProductKey(c echo.Context, _ openapi.E
 // ランチャーの認可リクエスト
 // (POST /editions/authorize)
 func (editionAuth *EditionAuth) PostEditionAuthorize(c echo.Context) error {
+	log.Println("DEBUG: PostEditionAuthorize Request Content-Type", c.Request().Header.Get(echo.HeaderContentType))
+
 	var params openapi.EditionAuthorizeRequest
 	err := c.Bind(&params)
 	if err != nil {
