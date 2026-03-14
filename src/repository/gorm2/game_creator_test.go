@@ -320,7 +320,7 @@ func TestGetGameCreatorPresetJobs(t *testing.T) {
 			t.Cleanup(func() {
 				db, err := testDB.getDB(context.Background())
 				require.NoError(t, err)
-				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameCreatorJobTable{}).Error
+				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(testCase.presetJobs).Error
 				require.NoError(t, err)
 			})
 
