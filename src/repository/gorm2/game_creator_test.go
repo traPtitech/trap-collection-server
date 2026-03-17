@@ -344,7 +344,7 @@ func TestGetGameCreatorPresetJobs(t *testing.T) {
 			for _, job := range jobs {
 				expected, ok := expectedMap[job.GetID()]
 				if !assert.Truef(t, ok, "unexpected job ID: %v", job.GetID()) {
-        continue
+					continue
 				}
 				assert.Equal(t, expected.GetDisplayName(), job.GetDisplayName())
 				assert.WithinDuration(t, expected.GetCreatedAt(), job.GetCreatedAt(), time.Second)
