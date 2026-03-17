@@ -267,3 +267,88 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameCreatorPresetJobs(t *testing.T) {
+	now := time.Now()
+	job1 := &schema.GameCreatorJobTable{
+		ID:          uuid.New(),
+		DisplayName: "プログラマー",
+		CreatedAt:   now,
+	}
+	job2 := &schema.GameCreatorJobTable{
+		ID:          uuid.New(),
+		DisplayName: "デザイナー",
+		CreatedAt:   now,
+	}
+
+	testCases := map[string]struct {
+		presetJobs []*schema.GameCreatorJobTable
+		expected   []*domain.GameCreatorJob
+		err        error
+	}{
+		"プリセットジョブが存在する場合は取得できる": {
+			presetJobs: []*schema.GameCreatorJobTable{job1, job2},
+			expected: []*domain.GameCreatorJob{
+				domain.NewGameCreatorJob(
+					values.GameCreatorJobID(job1.ID),
+					values.GameCreatorJobDisplayName(job1.DisplayName),
+					job1.CreatedAt,
+				),
+				domain.NewGameCreatorJob(
+					values.GameCreatorJobID(job2.ID),
+					values.GameCreatorJobDisplayName(job2.DisplayName),
+					job2.CreatedAt,
+				),
+			},
+		},
+		"プリセットジョブが存在しない場合は空配列を返す": {
+			presetJobs: []*schema.GameCreatorJobTable{},
+			expected:   []*domain.GameCreatorJob{},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			db, err := testDB.getDB(t.Context())
+			require.NoError(t, err)
+
+			if len(testCase.presetJobs) > 0 {
+				err = db.Create(testCase.presetJobs).Error
+				require.NoError(t, err)
+			}
+
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(testCase.presetJobs).Error
+				require.NoError(t, err)
+			})
+
+			repo := NewGameCreator(testDB)
+
+			jobs, err := repo.GetGameCreatorPresetJobs(t.Context())
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Len(t, jobs, len(testCase.expected))
+
+			expectedMap := make(map[values.GameCreatorJobID]*domain.GameCreatorJob, len(testCase.expected))
+			for _, job := range testCase.expected {
+				expectedMap[job.GetID()] = job
+			}
+
+			for _, job := range jobs {
+				expected, ok := expectedMap[job.GetID()]
+				if !assert.Truef(t, ok, "unexpected job ID: %v", job.GetID()) {
+					continue
+				}
+				assert.Equal(t, expected.GetDisplayName(), job.GetDisplayName())
+				assert.WithinDuration(t, expected.GetCreatedAt(), job.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
