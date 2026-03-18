@@ -1539,11 +1539,11 @@ paths:
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
         '200':
-          description: 'フィードバック質問設定の取得に成功した際に返されます。'
+          description: 'フィードバック質問一覧の取得に成功した際に返されます。'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeedbackQuestionsConfig'
+                $ref: '#/components/schemas/FeedbackQuestionsResponse'
         '401':
           content:
             application/json:
@@ -1572,7 +1572,6 @@ paths:
         配列の順序がそのままquestion_orderになります。
         idを指定した質問は既存の質問を更新し、idを省略した質問は新規作成されます。
         リクエストに含まれなかった既存の質問はアーカイブされます（過去の回答は引き続き取得可能）。
-        enabledでフィードバック機能のon/offを切り替えられます。
       tags:
         - gameFeedback
       security:
@@ -1591,7 +1590,98 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeedbackQuestionsConfig'
+                $ref: '#/components/schemas/FeedbackQuestionsResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: 'リクエストボディが不正な場合に返されます。'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/feedback-config:
+    get:
+      operationId: getFeedbackConfig
+      summary: フィードバック設定の取得
+      description: |
+        指定したゲームのフィードバック機能の有効/無効設定を取得します。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+        - EditionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      responses:
+        '200':
+          description: 'フィードバック設定の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackConfig'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      operationId: patchFeedbackConfig
+      summary: フィードバック設定の更新
+      description: |
+        指定したゲームのフィードバック機能の有効/無効を切り替えます。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchFeedbackConfigRequest'
+      responses:
+        '200':
+          description: 'フィードバック設定の更新に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackConfig'
         '400':
           content:
             application/json:
@@ -4189,36 +4279,50 @@ components:
         - fiveScale
       description: '回答形式（yesNo: Yes/No回答、fiveScale: 5段階評価）'
 
-    FeedbackQuestionsConfig:
+    FeedbackQuestionsResponse:
       type: object
-      description: 'フィードバック質問設定（有効/無効フラグと質問一覧）'
+      description: 'フィードバック質問一覧'
       properties:
-        enabled:
-          type: boolean
-          description: 'フィードバック機能が有効かどうか'
         questions:
           type: array
           items:
             $ref: '#/components/schemas/FeedbackQuestion'
       required:
-        - enabled
         - questions
+      additionalProperties: false
+
+    FeedbackConfig:
+      type: object
+      description: 'フィードバック機能の設定'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能が有効かどうか'
+      required:
+        - enabled
+      additionalProperties: false
+
+    PatchFeedbackConfigRequest:
+      type: object
+      description: 'フィードバック設定の更新リクエスト'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能の有効/無効'
+      required:
+        - enabled
       additionalProperties: false
 
     PutFeedbackQuestionsRequest:
       type: object
       description: 'フィードバック質問の一括設定リクエスト'
       properties:
-        enabled:
-          type: boolean
-          description: 'フィードバック機能の有効/無効'
         questions:
           type: array
           items:
             $ref: '#/components/schemas/FeedbackQuestionInput'
           description: '質問の一覧。配列の順序がquestion_orderになります。'
       required:
-        - enabled
         - questions
       additionalProperties: false
 

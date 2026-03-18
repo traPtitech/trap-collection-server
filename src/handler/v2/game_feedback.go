@@ -9,6 +9,18 @@ import (
 
 type GameFeedback struct{}
 
+// フィードバック設定の取得
+// (GET /games/{gameID}/feedback-config)
+func (gf *GameFeedback) GetFeedbackConfig(c echo.Context, _ openapi.GameIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
+// フィードバック設定の更新
+// (PATCH /games/{gameID}/feedback-config)
+func (gf *GameFeedback) PatchFeedbackConfig(c echo.Context, _ openapi.GameIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
 // フィードバック質問一覧の取得
 // (GET /games/{gameID}/feedback-questions)
 func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, _ openapi.GameIDInPath) error {
