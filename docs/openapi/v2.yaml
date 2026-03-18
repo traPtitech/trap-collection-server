@@ -4414,8 +4414,6 @@ components:
           $ref: '#/components/schemas/GameFeedbackID'
         gameVersionID:
           $ref: '#/components/schemas/GameVersionID'
-        gameVersionName:
-          $ref: '#/components/schemas/GameVersionName'
         answers:
           type: array
           items:
@@ -4430,7 +4428,6 @@ components:
       required:
         - id
         - gameVersionID
-        - gameVersionName
         - answers
         - createdAt
       additionalProperties: false
