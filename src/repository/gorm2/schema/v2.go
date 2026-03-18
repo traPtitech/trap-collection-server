@@ -284,7 +284,7 @@ func (*GameFeedbackConfigTable) TableName() string {
 	return "game_feedback_configs"
 }
 
-type FeedbackQuestionTable struct {
+type GameFeedbackQuestionTable struct {
 	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
 	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index"`
 	QuestionText  string         `gorm:"type:varchar(256);not null"`
@@ -295,7 +295,7 @@ type FeedbackQuestionTable struct {
 	Game       GameTable2   `gorm:"foreignKey:GameID"`
 }
 
-func (*FeedbackQuestionTable) TableName() string {
+func (*GameFeedbackQuestionTable) TableName() string {
 	return "feedback_questions"
 }
 
@@ -318,7 +318,7 @@ type GameFeedbackAnswerTable struct {
 	QuestionID uuid.UUID             `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
 	Answer     int                   `gorm:"type:int;not null"`
 	Feedback   GameFeedbackTable     `gorm:"foreignKey:FeedbackID"`
-	Question   FeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
+	Question   GameFeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
 }
 
 func (*GameFeedbackAnswerTable) TableName() string {
