@@ -291,9 +291,8 @@ type FeedbackQuestionTable struct {
 	AnswerType    int            `gorm:"type:tinyint;not null"`
 	QuestionOrder int            `gorm:"type:int;not null"`
 	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	ArchivedAt    sql.NullTime   `gorm:"type:DATETIME NULL;default:NULL"`
-	DeletedAt     gorm.DeletedAt `gorm:"type:DATETIME NULL;default:NULL"`
-	Game          GameTable2     `gorm:"foreignKey:GameID"`
+	ArchivedAt sql.NullTime `gorm:"type:DATETIME NULL;default:NULL"`
+	Game       GameTable2   `gorm:"foreignKey:GameID"`
 }
 
 func (*FeedbackQuestionTable) TableName() string {
