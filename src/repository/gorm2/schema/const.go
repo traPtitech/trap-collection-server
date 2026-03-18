@@ -39,3 +39,10 @@ const (
 	GameManagementRoleTypeAdministrator = "administrator"
 	GameManagementRoleTypeCollaborator  = "collaborator"
 )
+
+type GameFeedbackAnswerValue int
+
+const (
+	GameFeedbackAnswerNo  GameFeedbackAnswerValue = 0
+	GameFeedbackAnswerYes GameFeedbackAnswerValue = 1
+)
