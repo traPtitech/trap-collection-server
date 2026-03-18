@@ -19,3 +19,9 @@ type GameCreator interface {
 	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
 	GetGameCreatorJobs(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorJob, []*domain.GameCreatorCustomJob, error)
 }
+
+type EditGameCreatorJobInput struct {
+	UserID            values.TraPMemberID
+	Jobs              []values.GameCreatorJobID
+	NewCustomJobNames []values.GameCreatorJobDisplayName
+}
