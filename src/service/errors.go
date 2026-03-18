@@ -59,4 +59,6 @@ var (
 	ErrInvalidPlayLogEditionGamePair     = errors.New("invalid play log edition and game pair")
 	ErrInvalidTimeRange                  = errors.New("invalid time range")
 	ErrTimePeriodTooLong                 = errors.New("time period too long")
+	ErrDuplicateCustomJobDisplayName     = errors.New("duplicate custom job display name")
+	ErrDuplicateGameCreatorJobID         = errors.New("duplicate game creator job id")
 )
