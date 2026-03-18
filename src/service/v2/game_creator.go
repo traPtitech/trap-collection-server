@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -243,9 +244,7 @@ func (gc *GameCreator) applyEditGameCreators(
 	}
 
 	userCreatorMap := make(map[values.TraPMemberID]*domain.GameCreator, len(inputs))
-	for userID, creator := range inputData.existingUserCreatorMap {
-		userCreatorMap[userID] = creator
-	}
+	maps.Copy(userCreatorMap, inputData.existingUserCreatorMap)
 	for _, creator := range newCreators {
 		userCreatorMap[creator.GetUserID()] = creator
 	}
