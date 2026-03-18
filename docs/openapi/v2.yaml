@@ -1762,6 +1762,7 @@ paths:
         指定したゲームのフィードバックを取得します。
         各フィードバックにはバージョン情報が含まれます。
         アーカイブ済みの質問に対する回答も含まれます。
+        新しい順（createdAtの降順）で返されます。
       tags:
         - gameFeedback
       security:
@@ -1810,6 +1811,7 @@ paths:
       description: |
         指定したゲームバージョンのフィードバックを取得します。
         アーカイブ済みの質問に対する回答も含まれます。
+        新しい順（createdAtの降順）で返されます。
       tags:
         - gameFeedback
       security:
