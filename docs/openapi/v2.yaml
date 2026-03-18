@@ -4365,17 +4365,52 @@ components:
       additionalProperties: false
 
     FeedbackAnswerInput:
+      oneOf:
+        - $ref: '#/components/schemas/FeedbackAnswerInputYesNo'
+        - $ref: '#/components/schemas/FeedbackAnswerInputFiveScale'
+      discriminator:
+        propertyName: answerType
+        mapping:
+          yesNo: '#/components/schemas/FeedbackAnswerInputYesNo'
+          fiveScale: '#/components/schemas/FeedbackAnswerInputFiveScale'
+
+    FeedbackAnswerInputYesNo:
       type: object
       properties:
         questionID:
           $ref: '#/components/schemas/FeedbackQuestionID'
+        answerType:
+          type: string
+          enum:
+            - yesNo
         answer:
           type: integer
           minimum: 0
-          maximum: 5
-          description: '回答値（yesNo: 0または1、fiveScale: 1〜5）'
+          maximum: 1
+          description: '回答値（0: No、1: Yes）'
       required:
         - questionID
+        - answerType
+        - answer
+      additionalProperties: false
+
+    FeedbackAnswerInputFiveScale:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        answerType:
+          type: string
+          enum:
+            - fiveScale
+        answer:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: '回答値（1〜5の5段階評価）'
+      required:
+        - questionID
+        - answerType
         - answer
       additionalProperties: false
 
@@ -4473,6 +4508,16 @@ components:
       additionalProperties: false
 
     FeedbackAnswer:
+      oneOf:
+        - $ref: '#/components/schemas/FeedbackAnswerYesNo'
+        - $ref: '#/components/schemas/FeedbackAnswerFiveScale'
+      discriminator:
+        propertyName: answerType
+        mapping:
+          yesNo: '#/components/schemas/FeedbackAnswerYesNo'
+          fiveScale: '#/components/schemas/FeedbackAnswerFiveScale'
+
+    FeedbackAnswerYesNo:
       type: object
       properties:
         questionID:
@@ -4481,10 +4526,38 @@ components:
           type: string
           description: '質問文'
         answerType:
-          $ref: '#/components/schemas/AnswerType'
+          type: string
+          enum:
+            - yesNo
         answer:
           type: integer
-          description: '回答値（yesNo: 0または1、fiveScale: 1〜5）'
+          minimum: 0
+          maximum: 1
+          description: '回答値（0: No、1: Yes）'
+      required:
+        - questionID
+        - questionText
+        - answerType
+        - answer
+      additionalProperties: false
+
+    FeedbackAnswerFiveScale:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        questionText:
+          type: string
+          description: '質問文'
+        answerType:
+          type: string
+          enum:
+            - fiveScale
+        answer:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: '回答値（1〜5の5段階評価）'
       required:
         - questionID
         - questionText
