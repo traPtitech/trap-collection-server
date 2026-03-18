@@ -68,7 +68,37 @@ func (gc *GameCreator) GetGameCreatorJobs(ctx context.Context, gameID values.Gam
 }
 
 func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, inputs []*service.EditGameCreatorJobInput) error {
-	// ゲームの存在確認
+	err := gc.validateGameExists(ctx, gameID)
+	if err != nil {
+		return err
+	}
+
+	validatedInput, err := gc.validateEditGameCreatorsInput(ctx, session, gameID, inputs)
+	if err != nil {
+		return err
+	}
+
+	inputData, err := gc.loadEditGameCreatorsInputData(ctx, inputs)
+	if err != nil {
+		return err
+	}
+
+	err = gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		return gc.applyEditGameCreators(ctx, gameID, inputs, validatedInput, inputData)
+	})
+	if err != nil {
+		return fmt.Errorf("transaction: %w", err)
+	}
+
+	return nil
+}
+
+type editGameCreatorsValidatedInput struct {
+	usersMap          map[values.TraPMemberID]*service.UserInfo
+	newCustomJobNames map[values.GameCreatorJobDisplayName]struct{}
+}
+
+func (gc *GameCreator) validateGameExists(ctx context.Context, gameID values.GameID) error {
 	_, err := gc.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return service.ErrInvalidGameID
@@ -77,19 +107,29 @@ func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OID
 		return fmt.Errorf("get game: %w", err)
 	}
 
-	// 存在するユーザーidを指定しているか確認
+	return nil
+}
+
+func (gc *GameCreator) validateEditGameCreatorsInput(
+	ctx context.Context,
+	session *domain.OIDCSession,
+	gameID values.GameID,
+	inputs []*service.EditGameCreatorJobInput,
+) (*editGameCreatorsValidatedInput, error) {
 	// TODO: 今の実装は現役しか取得できないので、凍結済みユーザーを取得できるようにする
 	users, err := gc.user.getActiveUsers(ctx, session)
 	if err != nil {
-		return fmt.Errorf("get active users: %w", err)
+		return nil, fmt.Errorf("get active users: %w", err)
 	}
+
 	usersMap := make(map[values.TraPMemberID]*service.UserInfo, len(users))
 	for _, user := range users {
 		usersMap[user.GetID()] = user
 	}
-	for _, inputUser := range inputs {
-		if _, ok := usersMap[inputUser.UserID]; !ok {
-			return service.ErrInvalidUserID
+
+	for _, input := range inputs {
+		if _, ok := usersMap[input.UserID]; !ok {
+			return nil, service.ErrInvalidUserID
 		}
 	}
 
@@ -100,144 +140,199 @@ func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OID
 			newCustomJobNames[jobName] = struct{}{}
 		}
 	}
+
 	existingCustomJobs, err := gc.gameCreatorRepo.GetGameCreatorCustomJobsByGameID(ctx, gameID)
 	if err != nil {
-		return fmt.Errorf("get game creator custom jobs by game id: %w", err)
+		return nil, fmt.Errorf("get game creator custom jobs by game id: %w", err)
 	}
 	for _, job := range existingCustomJobs {
 		if _, ok := newCustomJobNames[job.GetDisplayName()]; ok {
-			return service.ErrDuplicateCustomJobDisplayName
+			return nil, service.ErrDuplicateCustomJobDisplayName
 		}
 	}
 
-	// ユーザー内に同じjob idが含まれないかのチェック
-	for _, userInput := range inputs {
-		jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(userInput.Jobs))
-		for _, jobID := range userInput.Jobs {
+	// 1人のユーザー内に同じjob idが含まれないかのチェック
+	for _, input := range inputs {
+		jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(input.Jobs))
+		for _, jobID := range input.Jobs {
 			if _, ok := jobIDsMap[jobID]; ok {
-				return service.ErrDuplicateGameCreatorJobID
+				return nil, service.ErrDuplicateGameCreatorJobID
 			}
 			jobIDsMap[jobID] = struct{}{}
 		}
 	}
 
+	return &editGameCreatorsValidatedInput{
+		usersMap:          usersMap,
+		newCustomJobNames: newCustomJobNames,
+	}, nil
+}
+
+type editGameCreatorsInputData struct {
+	presetJobsMap          map[values.GameCreatorJobID]*domain.GameCreatorJob
+	creatorUserIDs         []values.TraPMemberID
+	existingUserCreatorMap map[values.TraPMemberID]*domain.GameCreator
+}
+
+func (gc *GameCreator) loadEditGameCreatorsInputData(
+	ctx context.Context,
+	inputs []*service.EditGameCreatorJobInput,
+) (*editGameCreatorsInputData, error) {
 	presetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobs(ctx)
 	if err != nil {
-		return fmt.Errorf("get game creator preset jobs: %w", err)
+		return nil, fmt.Errorf("get game creator preset jobs: %w", err)
 	}
 	presetJobsMap := make(map[values.GameCreatorJobID]*domain.GameCreatorJob, len(presetJobs))
 	for _, job := range presetJobs {
 		presetJobsMap[job.GetID()] = job
 	}
 
-	// まだDBにないcreatorを作成するために、差分をチェックする
 	creatorUserIDs := make([]values.TraPMemberID, len(inputs))
 	for i, input := range inputs {
 		creatorUserIDs[i] = input.UserID
 	}
+
 	existingCreators, err := gc.gameCreatorRepo.GetCreatorsByUserIDs(ctx, creatorUserIDs)
 	if err != nil {
-		return fmt.Errorf("get creators by user ids: %w", err)
+		return nil, fmt.Errorf("get creators by user ids: %w", err)
 	}
+
 	existingUserCreatorMap := make(map[values.TraPMemberID]*domain.GameCreator, len(existingCreators))
 	for _, creator := range existingCreators {
 		existingUserCreatorMap[creator.GetUserID()] = creator
 	}
 
-	err = gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		newCustomJobs := make([]*domain.GameCreatorCustomJob, 0, len(newCustomJobNames))
-		for newCustomJobName := range newCustomJobNames {
-			newCustomJobs = append(newCustomJobs, domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), newCustomJobName, gameID, time.Now()))
-		}
-		err := gc.gameCreatorRepo.CreateGameCreatorCustomJobs(ctx, newCustomJobs)
-		if err != nil {
-			return fmt.Errorf("create game creator custom jobs: %w", err)
-		}
-		newCustomJosMap := make(map[values.GameCreatorJobDisplayName]values.GameCreatorJobID, len(newCustomJobs))
-		for _, job := range newCustomJobs {
-			newCustomJosMap[job.GetDisplayName()] = job.GetID()
-		}
+	return &editGameCreatorsInputData{
+		presetJobsMap:          presetJobsMap,
+		creatorUserIDs:         creatorUserIDs,
+		existingUserCreatorMap: existingUserCreatorMap,
+	}, nil
+}
 
-		newCreators := make([]*domain.GameCreator, 0, len(creatorUserIDs)-len(existingCreators))
-		for _, userID := range creatorUserIDs {
-			if _, ok := existingUserCreatorMap[userID]; !ok {
-				newCreator := domain.NewGameCreator(values.NewGameCreatorID(), userID, usersMap[userID].GetName(), time.Now())
-				newCreators = append(newCreators, newCreator)
-			}
-		}
-		err = gc.gameCreatorRepo.CreateGameCreators(ctx, newCreators)
-		if err != nil {
-			return fmt.Errorf("create game creators: %w", err)
-		}
-
-		userCreatorMap := make(map[values.TraPMemberID]*domain.GameCreator, len(inputs))
-		for userID, creator := range existingUserCreatorMap {
-			userCreatorMap[userID] = creator
-		}
-		for _, creator := range newCreators {
-			userCreatorMap[creator.GetUserID()] = creator
-		}
-
-		presetJobsRelations := make(map[values.GameCreatorID][]values.GameCreatorJobID, len(inputs))
-		for _, input := range inputs {
-			if len(input.Jobs) == 0 {
-				continue
-			}
-			creator, ok := userCreatorMap[input.UserID]
-			if !ok {
-				// 起きないはず
-				return fmt.Errorf("user creator not found: %s", input.UserID)
-			}
-			presetJobIDs := make([]values.GameCreatorJobID, 0, len(input.Jobs))
-			for _, jobID := range input.Jobs {
-				if _, ok := presetJobsMap[jobID]; !ok {
-					// custom jobなので含めない
-					continue
-				}
-				presetJobIDs = append(presetJobIDs, jobID)
-			}
-			presetJobsRelations[creator.GetID()] = presetJobIDs
-		}
-		err = gc.gameCreatorRepo.UpsertGameCreatorPresetJobsRelations(ctx, presetJobsRelations)
-		if err != nil {
-			return fmt.Errorf("upsert game creator preset jobs relations: %w", err)
-		}
-
-		customJobRelations := make(map[values.GameCreatorID][]values.GameCreatorJobID, len(inputs))
-		for _, input := range inputs {
-			creator, ok := userCreatorMap[input.UserID]
-			if !ok {
-				// 起きないはず
-				return fmt.Errorf("user creator not found: %s", input.UserID)
-			}
-			customJobIDs := make([]values.GameCreatorJobID, 0, len(input.Jobs))
-			for _, jobID := range input.Jobs {
-				if _, ok := presetJobsMap[jobID]; ok {
-					// preset jobなので含めない
-					continue
-				}
-				customJobIDs = append(customJobIDs, jobID)
-			}
-			for _, newCustomJobName := range input.NewCustomJobNames {
-				newCustomJobID, ok := newCustomJosMap[newCustomJobName]
-				if !ok {
-					// 起きないはず
-					return fmt.Errorf("new custom job id not found: %s", newCustomJobName)
-				}
-				customJobIDs = append(customJobIDs, newCustomJobID)
-			}
-			customJobRelations[creator.GetID()] = customJobIDs
-		}
-		err = gc.gameCreatorRepo.UpsertGameCreatorCustomJobsRelations(ctx, customJobRelations)
-		if err != nil {
-			return fmt.Errorf("upsert game creator custom jobs relations: %w", err)
-		}
-
-		return nil
-	})
+func (gc *GameCreator) applyEditGameCreators(
+	ctx context.Context,
+	gameID values.GameID,
+	inputs []*service.EditGameCreatorJobInput,
+	validatedInput *editGameCreatorsValidatedInput,
+	inputData *editGameCreatorsInputData,
+) error {
+	newCustomJobs := make([]*domain.GameCreatorCustomJob, 0, len(validatedInput.newCustomJobNames))
+	for newCustomJobName := range validatedInput.newCustomJobNames {
+		newCustomJobs = append(newCustomJobs, domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), newCustomJobName, gameID, time.Now()))
+	}
+	err := gc.gameCreatorRepo.CreateGameCreatorCustomJobs(ctx, newCustomJobs)
 	if err != nil {
-		return fmt.Errorf("transaction: %w", err)
+		return fmt.Errorf("create game creator custom jobs: %w", err)
+	}
+
+	newCustomJobsMap := make(map[values.GameCreatorJobDisplayName]values.GameCreatorJobID, len(newCustomJobs))
+	for _, job := range newCustomJobs {
+		newCustomJobsMap[job.GetDisplayName()] = job.GetID()
+	}
+
+	newCreators := make([]*domain.GameCreator, 0, len(inputData.creatorUserIDs)-len(inputData.existingUserCreatorMap))
+	for _, userID := range inputData.creatorUserIDs {
+		if _, ok := inputData.existingUserCreatorMap[userID]; !ok {
+			newCreator := domain.NewGameCreator(values.NewGameCreatorID(), userID, validatedInput.usersMap[userID].GetName(), time.Now())
+			newCreators = append(newCreators, newCreator)
+		}
+	}
+	err = gc.gameCreatorRepo.CreateGameCreators(ctx, newCreators)
+	if err != nil {
+		return fmt.Errorf("create game creators: %w", err)
+	}
+
+	userCreatorMap := make(map[values.TraPMemberID]*domain.GameCreator, len(inputs))
+	for userID, creator := range inputData.existingUserCreatorMap {
+		userCreatorMap[userID] = creator
+	}
+	for _, creator := range newCreators {
+		userCreatorMap[creator.GetUserID()] = creator
+	}
+
+	presetRelations, err := buildPresetJobRelations(inputs, userCreatorMap, inputData.presetJobsMap)
+	if err != nil {
+		return err
+	}
+	err = gc.gameCreatorRepo.UpsertGameCreatorPresetJobsRelations(ctx, presetRelations)
+	if err != nil {
+		return fmt.Errorf("upsert game creator preset jobs relations: %w", err)
+	}
+
+	customRelations, err := buildCustomJobRelations(inputs, userCreatorMap, inputData.presetJobsMap, newCustomJobsMap)
+	if err != nil {
+		return err
+	}
+	err = gc.gameCreatorRepo.UpsertGameCreatorCustomJobsRelations(ctx, customRelations)
+	if err != nil {
+		return fmt.Errorf("upsert game creator custom jobs relations: %w", err)
 	}
 
 	return nil
+}
+
+func buildPresetJobRelations(
+	inputs []*service.EditGameCreatorJobInput,
+	userCreatorMap map[values.TraPMemberID]*domain.GameCreator,
+	presetJobsMap map[values.GameCreatorJobID]*domain.GameCreatorJob,
+) (map[values.GameCreatorID][]values.GameCreatorJobID, error) {
+	presetRelations := make(map[values.GameCreatorID][]values.GameCreatorJobID, len(inputs))
+	for _, input := range inputs {
+		if len(input.Jobs) == 0 {
+			continue
+		}
+
+		creator, ok := userCreatorMap[input.UserID]
+		if !ok {
+			// 起きないはず
+			return nil, fmt.Errorf("user creator not found: %s", input.UserID)
+		}
+
+		presetJobIDs := make([]values.GameCreatorJobID, 0, len(input.Jobs))
+		for _, jobID := range input.Jobs {
+			if _, ok := presetJobsMap[jobID]; !ok {
+				continue
+			}
+			presetJobIDs = append(presetJobIDs, jobID)
+		}
+		presetRelations[creator.GetID()] = presetJobIDs
+	}
+
+	return presetRelations, nil
+}
+
+func buildCustomJobRelations(
+	inputs []*service.EditGameCreatorJobInput,
+	userCreatorMap map[values.TraPMemberID]*domain.GameCreator,
+	presetJobsMap map[values.GameCreatorJobID]*domain.GameCreatorJob,
+	newCustomJobsMap map[values.GameCreatorJobDisplayName]values.GameCreatorJobID,
+) (map[values.GameCreatorID][]values.GameCreatorJobID, error) {
+	customRelations := make(map[values.GameCreatorID][]values.GameCreatorJobID, len(inputs))
+	for _, input := range inputs {
+		creator, ok := userCreatorMap[input.UserID]
+		if !ok {
+			// 起きないはず
+			return nil, fmt.Errorf("user creator not found: %s", input.UserID)
+		}
+
+		customJobIDs := make([]values.GameCreatorJobID, 0, len(input.Jobs)+len(input.NewCustomJobNames))
+		for _, jobID := range input.Jobs {
+			if _, ok := presetJobsMap[jobID]; ok {
+				continue
+			}
+			customJobIDs = append(customJobIDs, jobID)
+		}
+
+		for _, newCustomJobName := range input.NewCustomJobNames {
+			newCustomJobID, ok := newCustomJobsMap[newCustomJobName]
+			if !ok {
+				return nil, fmt.Errorf("new custom job id not found: %s", newCustomJobName)
+			}
+			customJobIDs = append(customJobIDs, newCustomJobID)
+		}
+
+		customRelations[creator.GetID()] = customJobIDs
+	}
+
+	return customRelations, nil
 }
