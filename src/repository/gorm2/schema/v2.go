@@ -297,14 +297,14 @@ func (*GameFeedbackConfigTable) TableName() string {
 }
 
 type GameFeedbackQuestionTable struct {
-	ID            uuid.UUID      `gorm:"type:varchar(36);not null;primaryKey"`
-	GameID        uuid.UUID      `gorm:"type:varchar(36);not null;index"`
-	QuestionText  string         `gorm:"type:varchar(256);not null"`
-	AnswerType    int            `gorm:"type:tinyint;not null"`
-	QuestionOrder int            `gorm:"type:int;not null"`
-	CreatedAt     time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
-	ArchivedAt sql.NullTime `gorm:"type:DATETIME NULL;default:NULL"`
-	Game       GameTable2   `gorm:"foreignKey:GameID"`
+	ID            uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID    `gorm:"type:varchar(36);not null;index"`
+	QuestionText  string       `gorm:"type:varchar(256);not null"`
+	AnswerType    int          `gorm:"type:tinyint;not null"`
+	QuestionOrder int          `gorm:"type:int;not null"`
+	CreatedAt     time.Time    `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ArchivedAt    sql.NullTime `gorm:"type:DATETIME NULL;default:NULL"`
+	Game          GameTable2   `gorm:"foreignKey:GameID"`
 }
 
 func (*GameFeedbackQuestionTable) TableName() string {
@@ -325,11 +325,11 @@ func (*GameFeedbackTable) TableName() string {
 }
 
 type GameFeedbackAnswerTable struct {
-	ID         uuid.UUID             `gorm:"type:varchar(36);not null;primaryKey"`
-	FeedbackID uuid.UUID             `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
-	QuestionID uuid.UUID             `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
-	Answer     int                   `gorm:"type:int;not null"`
-	Feedback   GameFeedbackTable     `gorm:"foreignKey:FeedbackID"`
+	ID         uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
+	FeedbackID uuid.UUID                 `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
+	QuestionID uuid.UUID                 `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
+	Answer     int                       `gorm:"type:int;not null"`
+	Feedback   GameFeedbackTable         `gorm:"foreignKey:FeedbackID"`
 	Question   GameFeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
 }
 
