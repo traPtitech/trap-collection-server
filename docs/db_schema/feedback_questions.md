@@ -11,10 +11,9 @@ CREATE TABLE `feedback_questions` (
   `game_id` varchar(36) NOT NULL,
   `question_text` varchar(256) NOT NULL,
   `answer_type` tinyint(4) NOT NULL,
-  `question_order` int(11) NOT NULL,
+  `question_order` bigint(20) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `archived_at` datetime DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_feedback_questions_game_id` (`game_id`),
   CONSTRAINT `fk_feedback_questions_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
@@ -31,10 +30,9 @@ CREATE TABLE `feedback_questions` (
 | game_id | varchar(36) |  | false |  | [games](games.md) |  |
 | question_text | varchar(256) |  | false |  |  |  |
 | answer_type | tinyint(4) |  | false |  |  |  |
-| question_order | int(11) |  | false |  |  |  |
+| question_order | bigint(20) |  | false |  |  |  |
 | created_at | datetime | current_timestamp() | false |  |  |  |
 | archived_at | datetime | NULL | true |  |  |  |
-| deleted_at | datetime | NULL | true |  |  |  |
 
 ## Constraints
 

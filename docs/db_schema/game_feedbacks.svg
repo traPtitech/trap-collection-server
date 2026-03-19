@@ -90,7 +90,7 @@
 <text text-anchor="start" x="125.4726" y="-763.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
 <polygon fill="none" stroke="#000000" points="43,-722.5 43,-752.5 359,-752.5 359,-722.5 43,-722.5"/>
 <text text-anchor="start" x="50" y="-733.9" font-family="Arial" font-size="14.00" fill="#000000">answer </text>
-<text text-anchor="start" x="99.0056" y="-733.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="99.0056" y="-733.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 </g>
 <!-- game_feedback_answers&#45;&gt;game_feedbacks -->
 <g id="edge1" class="edge">

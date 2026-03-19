@@ -10,7 +10,7 @@ CREATE TABLE `game_feedback_answers` (
   `id` varchar(36) NOT NULL,
   `feedback_id` varchar(36) NOT NULL,
   `question_id` varchar(36) NOT NULL,
-  `answer` int(11) NOT NULL,
+  `answer` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_game_feedback_answers_feedback_question` (`feedback_id`,`question_id`),
   KEY `idx_game_feedback_answers_feedback_id` (`feedback_id`),
@@ -29,7 +29,7 @@ CREATE TABLE `game_feedback_answers` (
 | id | varchar(36) |  | false |  |  |  |
 | feedback_id | varchar(36) |  | false |  | [game_feedbacks](game_feedbacks.md) |  |
 | question_id | varchar(36) |  | false |  | [feedback_questions](feedback_questions.md) |  |
-| answer | int(11) |  | false |  |  |  |
+| answer | bigint(20) |  | false |  |  |  |
 
 ## Constraints
 
