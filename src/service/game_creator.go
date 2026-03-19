@@ -14,4 +14,8 @@ type GameCreator interface {
 	// ゲームIDに紐づくゲームクリエイターとそのジョブ一覧を取得する。
 	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
 	GetGameCreators(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorWithJobs, error)
+	// GetGameCreatorJobs
+	// ゲームIDに紐づくゲームクリエイターのプリセットジョブ一覧とカスタムジョブ一覧を取得する。
+	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
+	GetGameCreatorJobs(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorJob, []*domain.GameCreatorCustomJob, error)
 }

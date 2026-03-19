@@ -15,7 +15,7 @@ type GameTable2 struct {
 	VisibilityTypeID       int                       `gorm:"type:tinyint;not null"`
 	CreatedAt              time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt              gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
-	LatestVersionUpdatedAt time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	LatestVersionUpdatedAt time.Time                 `gorm:"type:datetime;<-:false;->:false"`
 	GameVersionsV2         []GameVersionTable2       `gorm:"foreignKey:GameID"`
 	GameManagementRoles    []GameManagementRoleTable `gorm:"foreignKey:GameID"`
 	GameVisibilityType     GameVisibilityTypeTable   `gorm:"foreignKey:VisibilityTypeID"`
@@ -40,6 +40,18 @@ type GameTable2 struct {
 
 func (*GameTable2) TableName() string {
 	return "games"
+}
+
+type LatestGameVersionTime struct {
+	GameID                     uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	LatestGameVersionID        uuid.UUID `gorm:"type:varchar(36);not null"`
+	LatestGameVersionCreatedAt time.Time `gorm:"type:datetime;not null;index:idx_game_version_stats_latest_created_at"`
+
+	Game GameTable2 `gorm:"foreignKey:GameID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+func (*LatestGameVersionTime) TableName() string {
+	return "v2_latest_game_version_times"
 }
 
 type GameVersionTable2 struct {
