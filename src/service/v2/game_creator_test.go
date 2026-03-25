@@ -20,15 +20,16 @@ import (
 func TestGameCreatorService_GetGameCreators(t *testing.T) {
 	t.Parallel()
 
+	gameID := values.NewGameID()
 	job1 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Programmer"), time.Now())
-	customJob1 := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Custom Job 1"), values.NewGameID(), time.Now())
+	customJob1 := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Custom Job 1"), gameID, time.Now())
 	creator1 := domain.NewGameCreatorWithJobs(
-		domain.NewGameCreator(values.NewGameCreatorID(), values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName("name"), time.Now()),
+		domain.NewGameCreator(values.NewGameCreatorID(), values.NewTrapMemberID(uuid.New()), gameID, values.NewTrapMemberName("name"), time.Now()),
 		[]*domain.GameCreatorJob{job1},
 		[]*domain.GameCreatorCustomJob{customJob1},
 	)
 	creator2 := domain.NewGameCreatorWithJobs(
-		domain.NewGameCreator(values.NewGameCreatorID(), values.NewTrapMemberID(uuid.New()), values.NewTrapMemberName("name2"), time.Now()),
+		domain.NewGameCreator(values.NewGameCreatorID(), values.NewTrapMemberID(uuid.New()), gameID, values.NewTrapMemberName("name2"), time.Now()),
 		[]*domain.GameCreatorJob{job1},
 		[]*domain.GameCreatorCustomJob{},
 	)
@@ -42,7 +43,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 		err                    error
 	}{
 		"ok": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             nil,
 			executeGetGameCreators: true,
 			creators:               []*domain.GameCreatorWithJobs{creator1},
@@ -50,7 +51,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			err:                    nil,
 		},
 		"複数のcreatorがいてもok": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             nil,
 			executeGetGameCreators: true,
 			creators:               []*domain.GameCreatorWithJobs{creator1, creator2},
@@ -58,7 +59,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			err:                    nil,
 		},
 		"creatorが空でもok": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             nil,
 			executeGetGameCreators: true,
 			creators:               []*domain.GameCreatorWithJobs{},
@@ -66,7 +67,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			err:                    nil,
 		},
 		"gameが見つからない場合ErrInvalidGameID": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             repository.ErrRecordNotFound,
 			executeGetGameCreators: false,
 			creators:               nil,
@@ -74,7 +75,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			err:                    service.ErrInvalidGameID,
 		},
 		"GetGameがエラーなのでエラー": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             assert.AnError,
 			executeGetGameCreators: false,
 			creators:               nil,
@@ -82,7 +83,7 @@ func TestGameCreatorService_GetGameCreators(t *testing.T) {
 			err:                    assert.AnError,
 		},
 		"GetGameCreatorsがエラーなのでエラー": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			GetGameErr:             nil,
 			executeGetGameCreators: true,
 			creators:               nil,
@@ -216,6 +217,7 @@ func TestGetGameCreatorJobs(t *testing.T) {
 func TestEditGameCreators(t *testing.T) {
 	t.Parallel()
 
+	gameID := values.NewGameID()
 	user1 := service.NewUserInfo(
 		values.NewTrapMemberID(uuid.New()),
 		values.NewTrapMemberName("user1"),
@@ -232,12 +234,12 @@ func TestEditGameCreators(t *testing.T) {
 
 	presetJob1 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Programmer"), time.Now())
 	presetJob2 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Designer"), time.Now())
-	existingCustomJob := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Existing Custom Job"), values.NewGameID(), time.Now())
+	existingCustomJob := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Existing Custom Job"), gameID, time.Now())
 
 	newCustomJobName1 := values.NewGameCreatorJobDisplayName("New Custom Job 1")
 	newCustomJobName2 := values.NewGameCreatorJobDisplayName("New Custom Job 2")
 
-	existingCreator := domain.NewGameCreator(values.NewGameCreatorID(), user1.GetID(), user1.GetName(), time.Now())
+	existingCreator := domain.NewGameCreator(values.NewGameCreatorID(), user1.GetID(), gameID, user1.GetName(), time.Now())
 
 	testCases := map[string]struct {
 		gameID                              values.GameID
@@ -267,33 +269,33 @@ func TestEditGameCreators(t *testing.T) {
 		wantErr                             error
 	}{
 		"ゲームが存在しない場合ErrInvalidGameID": {
-			gameID:     values.NewGameID(),
+			gameID:     gameID,
 			inputs:     []*service.EditGameCreatorJobInput{},
 			getGameErr: repository.ErrRecordNotFound,
 			wantErr:    service.ErrInvalidGameID,
 		},
 		"ゲームの取得でエラーが発生した場合エラー": {
-			gameID:     values.NewGameID(),
+			gameID:     gameID,
 			inputs:     []*service.EditGameCreatorJobInput{},
 			getGameErr: assert.AnError,
 			wantErr:    assert.AnError,
 		},
 		"active user取得でエラーなのでエラー": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			inputs:                 []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			cacheGetActiveUsersErr: cache.ErrCacheMiss,
 			authGetActiveUsersErr:  assert.AnError,
 			wantErr:                assert.AnError,
 		},
 		"active usersに存在しないユーザーが入力された場合ErrInvalidUserID": {
-			gameID:                 values.NewGameID(),
+			gameID:                 gameID,
 			inputs:                 []*service.EditGameCreatorJobInput{{UserID: invalidUserID}},
 			cacheGetActiveUsersErr: cache.ErrCacheMiss,
 			authUsers:              []*service.UserInfo{user1, user2},
 			wantErr:                service.ErrInvalidUserID,
 		},
 		"既存custom job名と重複したnew custom job名の場合ErrDuplicateCustomJobDisplayName": {
-			gameID:                              values.NewGameID(),
+			gameID:                              gameID,
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID(), NewCustomJobNames: []values.GameCreatorJobDisplayName{existingCustomJob.GetDisplayName()}}},
 			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1, user2},
@@ -302,7 +304,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             service.ErrDuplicateCustomJobDisplayName,
 		},
 		"同一ユーザー入力内に重複したjob idがある場合ErrDuplicateGameCreatorJobID": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID: user1.GetID(),
 				Jobs:   []values.GameCreatorJobID{presetJob1.GetID(), presetJob1.GetID()},
@@ -314,7 +316,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             service.ErrDuplicateGameCreatorJobID,
 		},
 		"既存のカスタムジョブの取得でエラーなのでエラー": {
-			gameID:                              values.NewGameID(),
+			gameID:                              gameID,
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
@@ -323,7 +325,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"preset job取得でエラーなのでエラー": {
-			gameID:                              values.NewGameID(),
+			gameID:                              gameID,
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
@@ -334,7 +336,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"creator取得でエラーなのでエラー": {
-			gameID:                              values.NewGameID(),
+			gameID:                              gameID,
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
@@ -347,7 +349,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"create custom jobsでエラーなのでエラー": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID:            user1.GetID(),
 				NewCustomJobNames: []values.GameCreatorJobDisplayName{newCustomJobName1},
@@ -365,7 +367,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"create creatorsでエラーなのでエラー": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID:            user1.GetID(),
 				NewCustomJobNames: []values.GameCreatorJobDisplayName{newCustomJobName1},
@@ -384,7 +386,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"upsert preset jobs relationsでエラーなのでエラー": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID: user1.GetID(),
 				Jobs:   []values.GameCreatorJobID{presetJob1.GetID(), existingCustomJob.GetID()},
@@ -404,7 +406,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"upsert custom jobs relationsでエラーなのでエラー": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID:            user1.GetID(),
 				Jobs:              []values.GameCreatorJobID{presetJob1.GetID(), existingCustomJob.GetID()},
@@ -426,7 +428,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             assert.AnError,
 		},
 		"user cache hitの正常系": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{
 				{
 					UserID:            user1.GetID(),
@@ -453,7 +455,7 @@ func TestEditGameCreators(t *testing.T) {
 			wantErr:                             nil,
 		},
 		"user cache missの正常系": {
-			gameID: values.NewGameID(),
+			gameID: gameID,
 			inputs: []*service.EditGameCreatorJobInput{{
 				UserID:            user1.GetID(),
 				Jobs:              []values.GameCreatorJobID{presetJob1.GetID(), existingCustomJob.GetID()},

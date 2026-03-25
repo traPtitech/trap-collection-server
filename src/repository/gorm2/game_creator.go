@@ -64,6 +64,7 @@ func (gc *GameCreator) GetGameCreatorsByGameID(ctx context.Context, gameID value
 			domain.NewGameCreator(
 				values.GameCreatorID(gc.ID),
 				values.TraPMemberID(gc.UserID),
+				values.GameID(gc.GameID),
 				values.TraPMemberName(gc.UserName),
 				gc.CreatedAt),
 			jobs,

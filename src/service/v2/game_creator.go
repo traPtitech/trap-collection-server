@@ -234,7 +234,7 @@ func (gc *GameCreator) applyEditGameCreators(
 	newCreators := make([]*domain.GameCreator, 0, len(inputData.creatorUserIDs)-len(inputData.existingUserCreatorMap))
 	for _, userID := range inputData.creatorUserIDs {
 		if _, ok := inputData.existingUserCreatorMap[userID]; !ok {
-			newCreator := domain.NewGameCreator(values.NewGameCreatorID(), userID, validatedInput.usersMap[userID].GetName(), time.Now())
+			newCreator := domain.NewGameCreator(values.NewGameCreatorID(), userID, gameID, validatedInput.usersMap[userID].GetName(), time.Now())
 			newCreators = append(newCreators, newCreator)
 		}
 	}
