@@ -118,20 +118,26 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 	inputs []*service.EditGameCreatorJobInput,
 ) (*editGameCreatorsValidatedInput, error) {
 	// TODO: 今の実装は現役しか取得できないので、凍結済みユーザーを取得できるようにする
-	users, err := gc.user.getActiveUsers(ctx, session)
+	activeMembers, err := gc.user.getActiveUsers(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("get active users: %w", err)
 	}
 
-	usersMap := make(map[values.TraPMemberID]*service.UserInfo, len(users))
-	for _, user := range users {
-		usersMap[user.GetID()] = user
+	activeMembersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeMembers))
+	for _, user := range activeMembers {
+		activeMembersMap[user.GetID()] = user
 	}
-
 	for _, input := range inputs {
-		if _, ok := usersMap[input.UserID]; !ok {
+		if _, ok := activeMembersMap[input.UserID]; !ok {
 			return nil, service.ErrInvalidUserID
 		}
+	}
+	inputUsersMap := make(map[values.TraPMemberID]struct{}, len(inputs))
+	for _, input := range inputs {
+		if _, ok := inputUsersMap[input.UserID]; ok {
+			return nil, service.ErrDuplicateUserID
+		}
+		inputUsersMap[input.UserID] = struct{}{}
 	}
 
 	// 新しいcustom jobが既存のcustom jobと重複しないかチェック
@@ -164,7 +170,7 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 	}
 
 	return &editGameCreatorsValidatedInput{
-		usersMap:          usersMap,
+		usersMap:          activeMembersMap,
 		newCustomJobNames: newCustomJobNames,
 	}, nil
 }

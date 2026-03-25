@@ -294,6 +294,13 @@ func TestEditGameCreators(t *testing.T) {
 			authUsers:              []*service.UserInfo{user1, user2},
 			wantErr:                service.ErrInvalidUserID,
 		},
+		"入力内に重複したユーザーIDがある場合ErrDuplicateUserID": {
+			gameID:                 gameID,
+			inputs:                 []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}, {UserID: user1.GetID()}},
+			cacheGetActiveUsersErr: cache.ErrCacheMiss,
+			authUsers:              []*service.UserInfo{user1, user2},
+			wantErr:                service.ErrDuplicateUserID,
+		},
 		"既存custom job名と重複したnew custom job名の場合ErrDuplicateCustomJobDisplayName": {
 			gameID:                              gameID,
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID(), NewCustomJobNames: []values.GameCreatorJobDisplayName{existingCustomJob.GetDisplayName()}}},

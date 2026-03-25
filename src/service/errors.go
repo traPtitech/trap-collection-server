@@ -61,4 +61,5 @@ var (
 	ErrTimePeriodTooLong                 = errors.New("time period too long")
 	ErrDuplicateCustomJobDisplayName     = errors.New("duplicate custom job display name")
 	ErrDuplicateGameCreatorJobID         = errors.New("duplicate game creator job id")
+	ErrDuplicateUserID                   = errors.New("duplicate user id")
 )
