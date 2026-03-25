@@ -74,7 +74,16 @@ func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OID
 		return err
 	}
 
-	validatedInput, err := gc.validateEditGameCreatorsInput(ctx, session, gameID, inputs)
+	presetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobs(ctx)
+	if err != nil {
+		return fmt.Errorf("get game creator preset jobs: %w", err)
+	}
+	presetJobsMap := make(map[values.GameCreatorJobID]*domain.GameCreatorJob, len(presetJobs))
+	for _, job := range presetJobs {
+		presetJobsMap[job.GetID()] = job
+	}
+
+	validatedInput, err := gc.validateEditGameCreatorsInput(ctx, session, gameID, presetJobsMap, inputs)
 	if err != nil {
 		return err
 	}
@@ -85,7 +94,7 @@ func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OID
 	}
 
 	err = gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
-		return gc.applyEditGameCreators(ctx, gameID, inputs, validatedInput, inputData)
+		return gc.applyEditGameCreators(ctx, gameID, presetJobsMap, inputs, validatedInput, inputData)
 	})
 	if err != nil {
 		return fmt.Errorf("transaction: %w", err)
@@ -115,6 +124,7 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 	ctx context.Context,
 	session *domain.OIDCSession,
 	gameID values.GameID,
+	presetJobsMap map[values.GameCreatorJobID]*domain.GameCreatorJob,
 	inputs []*service.EditGameCreatorJobInput,
 ) (*editGameCreatorsValidatedInput, error) {
 	// TODO: 今の実装は現役しか取得できないので、凍結済みユーザーを取得できるようにする
@@ -158,6 +168,21 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 		}
 	}
 
+	// 入力の job id が既存の job id と一致するかチェック
+	jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(existingCustomJobs))
+	for _, job := range existingCustomJobs {
+		jobIDsMap[job.GetID()] = struct{}{}
+	}
+	for _, input := range inputs {
+		for _, jobID := range input.Jobs {
+			_, isPresetJob := presetJobsMap[jobID]
+			_, isCustomJob := jobIDsMap[jobID]
+			if !isPresetJob && !isCustomJob {
+				return nil, service.ErrInvalidGameCreatorJobID
+			}
+		}
+	}
+
 	// 1人のユーザー内に同じjob idが含まれないかのチェック
 	for _, input := range inputs {
 		jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(input.Jobs))
@@ -176,7 +201,6 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 }
 
 type editGameCreatorsInputData struct {
-	presetJobsMap          map[values.GameCreatorJobID]*domain.GameCreatorJob
 	creatorUserIDs         []values.TraPMemberID
 	existingUserCreatorMap map[values.TraPMemberID]*domain.GameCreator
 }
@@ -185,15 +209,6 @@ func (gc *GameCreator) loadEditGameCreatorsInputData(
 	ctx context.Context,
 	inputs []*service.EditGameCreatorJobInput,
 ) (*editGameCreatorsInputData, error) {
-	presetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get game creator preset jobs: %w", err)
-	}
-	presetJobsMap := make(map[values.GameCreatorJobID]*domain.GameCreatorJob, len(presetJobs))
-	for _, job := range presetJobs {
-		presetJobsMap[job.GetID()] = job
-	}
-
 	creatorUserIDs := make([]values.TraPMemberID, len(inputs))
 	for i, input := range inputs {
 		creatorUserIDs[i] = input.UserID
@@ -210,7 +225,6 @@ func (gc *GameCreator) loadEditGameCreatorsInputData(
 	}
 
 	return &editGameCreatorsInputData{
-		presetJobsMap:          presetJobsMap,
 		creatorUserIDs:         creatorUserIDs,
 		existingUserCreatorMap: existingUserCreatorMap,
 	}, nil
@@ -219,6 +233,7 @@ func (gc *GameCreator) loadEditGameCreatorsInputData(
 func (gc *GameCreator) applyEditGameCreators(
 	ctx context.Context,
 	gameID values.GameID,
+	presetJobsMap map[values.GameCreatorJobID]*domain.GameCreatorJob,
 	inputs []*service.EditGameCreatorJobInput,
 	validatedInput *editGameCreatorsValidatedInput,
 	inputData *editGameCreatorsInputData,
@@ -255,7 +270,7 @@ func (gc *GameCreator) applyEditGameCreators(
 		userCreatorMap[creator.GetUserID()] = creator
 	}
 
-	presetRelations, err := buildPresetJobRelations(inputs, userCreatorMap, inputData.presetJobsMap)
+	presetRelations, err := buildPresetJobRelations(inputs, userCreatorMap, presetJobsMap)
 	if err != nil {
 		return err
 	}
@@ -264,7 +279,7 @@ func (gc *GameCreator) applyEditGameCreators(
 		return fmt.Errorf("upsert game creator preset jobs relations: %w", err)
 	}
 
-	customRelations, err := buildCustomJobRelations(inputs, userCreatorMap, inputData.presetJobsMap, newCustomJobsMap)
+	customRelations, err := buildCustomJobRelations(inputs, userCreatorMap, presetJobsMap, newCustomJobsMap)
 	if err != nil {
 		return err
 	}
