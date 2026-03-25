@@ -298,10 +298,6 @@ func buildPresetJobRelations(
 ) (map[values.GameCreatorID][]values.GameCreatorJobID, error) {
 	presetRelations := make(map[values.GameCreatorID][]values.GameCreatorJobID, len(inputs))
 	for _, input := range inputs {
-		if len(input.Jobs) == 0 {
-			continue
-		}
-
 		creator, ok := userCreatorMap[input.UserID]
 		if !ok {
 			// 起きないはず
