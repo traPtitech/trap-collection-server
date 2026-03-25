@@ -1534,7 +1534,7 @@ paths:
         - gameFeedback
       security:
         - GameMaintainerAuth: []
-        - EditionAuth: []
+        - EditionGameFeedbackAuth: []
       parameters:
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
@@ -1628,7 +1628,7 @@ paths:
         - gameFeedback
       security:
         - GameMaintainerAuth: []
-        - EditionAuth: []
+        - EditionGameFeedbackAuth: []
       parameters:
         - $ref: '#/components/parameters/gameIDInPath'
       responses:
@@ -1719,7 +1719,7 @@ paths:
       tags:
         - gameFeedback
       security:
-        - EditionAuth: []
+        - EditionGameFeedbackAuth: []
       parameters:
         - $ref: '#/components/parameters/gameIDInPath'
       requestBody:
@@ -2916,6 +2916,14 @@ components:
         プロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンから得られるエディションに、
         画像IDで指定された画像に対応するゲームが含まれる場合のみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+    EditionGameFeedbackAuth:
+      type: http
+      scheme: bearer
+      description: |
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
+        gameIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
     EditionGameVideoAuth:
       type: http
