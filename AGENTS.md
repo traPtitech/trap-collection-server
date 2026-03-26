@@ -203,7 +203,7 @@ edition を作成できるほか、全ての game について操作を行うこ
 ### game creator
 
 game を作った人に関する情報。1 つの game に複数の game creator を紐づけることができる。
-game role とは全く別の情報として管理する。複数の game job を紐づけることができる。
+game role とは全く別の情報として管理する。複数の game creator job を紐づけることができる。
 
 ### game creator job
 
