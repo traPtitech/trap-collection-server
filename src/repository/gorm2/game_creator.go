@@ -64,6 +64,7 @@ func (gc *GameCreator) GetGameCreatorsByGameID(ctx context.Context, gameID value
 			domain.NewGameCreator(
 				values.GameCreatorID(gc.ID),
 				values.TraPMemberID(gc.UserID),
+				values.GameID(gc.GameID),
 				values.TraPMemberName(gc.UserName),
 				gc.CreatedAt),
 			jobs,
@@ -99,5 +100,25 @@ func (gc *GameCreator) GetGameCreatorPresetJobs(ctx context.Context) ([]*domain.
 }
 
 func (gc *GameCreator) GetGameCreatorCustomJobsByGameID(_ context.Context, _ values.GameID) ([]*domain.GameCreatorCustomJob, error) {
+	return nil, nil // TODO: implement
+}
+
+func (gc *GameCreator) CreateGameCreatorCustomJobs(_ context.Context, _ []*domain.GameCreatorCustomJob) error {
+	return nil // TODO: implement
+}
+
+func (gc *GameCreator) CreateGameCreators(_ context.Context, _ []*domain.GameCreator) error {
+	return nil // TODO: implement
+}
+
+func (gc *GameCreator) UpsertGameCreatorPresetJobsRelations(_ context.Context, _ map[values.GameCreatorID][]values.GameCreatorJobID) error {
+	return nil // TODO: implement
+}
+
+func (gc *GameCreator) UpsertGameCreatorCustomJobsRelations(_ context.Context, _ map[values.GameCreatorID][]values.GameCreatorJobID) error {
+	return nil // TODO: implement
+}
+
+func (gc *GameCreator) GetCreatorsByUserIDs(_ context.Context, _ []values.TraPMemberID) ([]*domain.GameCreator, error) {
 	return nil, nil // TODO: implement
 }
