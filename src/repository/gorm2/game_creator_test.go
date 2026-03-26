@@ -237,6 +237,7 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 				expectedCreator := testCase.expected[i].GetGameCreator()
 				assert.Equal(t, expectedCreator.GetID(), creator.GetID())
 				assert.Equal(t, expectedCreator.GetUserID(), creator.GetUserID())
+				assert.Equal(t, expectedCreator.GetGameID(), creator.GetGameID())
 				assert.Equal(t, expectedCreator.GetUserName(), creator.GetUserName())
 				assert.WithinDuration(t, expectedCreator.GetCreatedAt(), creator.GetCreatedAt(), time.Second)
 
