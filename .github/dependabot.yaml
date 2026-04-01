@@ -35,6 +35,7 @@ updates:
           - 1.16.0.pre.alpine
           - 1.16.1.pre.alpine
           - 1.16.2.pre.alpine
+      - dependency-name: arigaio/atlas # atlas の更新でエラーがでるので、一時的にignore
     cooldown:
       default-days: 7
 
@@ -53,6 +54,7 @@ updates:
           - 1.16.0.pre.alpine
           - 1.16.1.pre.alpine
           - 1.16.2.pre.alpine
+      - dependency-name: arigaio/atlas
     cooldown:
       default-days: 7
 
