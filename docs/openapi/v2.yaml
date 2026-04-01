@@ -56,6 +56,10 @@ tags:
       ゲームプレイログ関連のAPIです。ランチャーからのゲーム起動・終了の記録とその統計データの取得を行います。
   - name: gameCreator
     description: ゲームクリエイター関連のAPIです。
+  - name: gameFeedback
+    description: |
+      ゲームフィードバック関連のAPIです。
+      ランチャーからのフィードバック送信と、管理画面でのフィードバック閲覧を行います。
 
 paths:
   # oauth2
@@ -1517,6 +1521,339 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  # gameFeedback
+  /games/{gameID}/feedback-questions:
+    get:
+      operationId: getFeedbackQuestions
+      summary: フィードバック質問一覧の取得
+      description: |
+        指定したゲームの有効なフィードバック質問一覧を取得します。
+        アーカイブ済み・削除済みの質問は含まれません。
+        管理画面からもランチャーからもアクセス可能です。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+        - EditionGameFeedbackAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      responses:
+        '200':
+          description: 'フィードバック質問一覧の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackQuestionsResponse'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      operationId: putFeedbackQuestions
+      summary: フィードバック質問の一括設定
+      description: |
+        指定したゲームのフィードバック質問を一括で差し替えます。
+        配列の順序がそのままquestion_orderになります。
+        idを指定した質問は既存の質問を更新し、idを省略した質問は新規作成されます。
+        リクエストに含まれなかった既存の質問はアーカイブされます（過去の回答は引き続き取得可能）。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutFeedbackQuestionsRequest'
+      responses:
+        '200':
+          description: 'フィードバック質問の一括設定に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackQuestionsResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: 'リクエストボディが不正な場合に返されます。'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/feedback-config:
+    get:
+      operationId: getFeedbackConfig
+      summary: フィードバック設定の取得
+      description: |
+        指定したゲームのフィードバック機能の有効/無効設定を取得します。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+        - EditionGameFeedbackAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      responses:
+        '200':
+          description: 'フィードバック設定の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackConfig'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      operationId: patchFeedbackConfig
+      summary: フィードバック設定の更新
+      description: |
+        指定したゲームのフィードバック機能の有効/無効を切り替えます。
+      tags:
+        - gameFeedback
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchFeedbackConfigRequest'
+      responses:
+        '200':
+          description: 'フィードバック設定の更新に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackConfig'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: 'リクエストボディが不正な場合に返されます。'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '権限がない場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/feedbacks:
+    post:
+      operationId: postGameFeedback
+      summary: ゲームフィードバックの送信
+      description: |
+        ランチャーからゲームに対するフィードバックを送信します。
+        質問に対する回答を含むことができます。
+      tags:
+        - gameFeedback
+      security:
+        - EditionGameFeedbackAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGameFeedbackRequest'
+      responses:
+        '201':
+          description: 'フィードバックの送信に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameFeedback'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: 'リクエストボディが不正な場合に返されます。'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '認証に失敗した場合に返されます。'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      operationId: getGameFeedbacks
+      summary: ゲームのフィードバック一覧取得
+      description: |
+        指定したゲームのフィードバックを取得します。
+        各フィードバックにはバージョン情報が含まれます。
+        アーカイブ済みの質問に対する回答も含まれます。
+        新しい順（createdAtの降順）で返されます。
+      tags:
+        - gameFeedback
+      security:
+        - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: '取得するフィードバックの最大数'
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: '取得開始位置のオフセット'
+      responses:
+        '200':
+          description: 'フィードバック一覧の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameFeedbacksResponse'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したIDのゲームが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/versions/{gameVersionID}/feedbacks:
+    get:
+      operationId: getGameVersionFeedbacks
+      summary: ゲームバージョンのフィードバック一覧取得
+      description: |
+        指定したゲームバージョンのフィードバックを取得します。
+        アーカイブ済みの質問に対する回答も含まれます。
+        新しい順（createdAtの降順）で返されます。
+      tags:
+        - gameFeedback
+      security:
+        - TrapMemberAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/gameVersionIDInPath'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: '取得するフィードバックの最大数'
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: '取得開始位置のオフセット'
+      responses:
+        '200':
+          description: 'フィードバック一覧の取得に成功した際に返されます。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameVersionFeedbacksResponse'
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '指定したIDのゲームまたはゲームバージョンが存在しない場合に返されます。'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # edition
   /editions:
     post:
@@ -2579,6 +2916,14 @@ components:
         プロダクトキーを利用して得られるアクセストークンを利用した認証です。
         アクセストークンから得られるエディションに、
         画像IDで指定された画像に対応するゲームが含まれる場合のみアクセスできます。
+        プロダクトキーがrevokeされた場合、即座に反映されます。
+    EditionGameFeedbackAuth:
+      type: http
+      scheme: bearer
+      description: |
+        プロダクトキーを利用して得られるアクセストークンを利用した認証です。
+        アクセストークンから得られるエディションに、
+        gameIDで指定されたゲームが含まれる場合のみアクセスできます。
         プロダクトキーがrevokeされた場合、即座に反映されます。
     EditionGameVideoAuth:
       type: http
@@ -3904,3 +4249,325 @@ components:
         - playTime
       additionalProperties: false
       description: 時台別のプレイ統計データです。各時台（例：2025-01-01の14時台の場合は2025-01-01T14:00:00+09:00から2025-01-01T14:59:59+09:00）の統計を返します。
+
+    # フィードバック関連
+    FeedbackQuestionID:
+      type: string
+      format: uuid
+      description: 'フィードバック質問ID'
+
+    GameFeedbackID:
+      type: string
+      format: uuid
+      description: 'ゲームフィードバックID'
+
+    FeedbackQuestion:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        questionText:
+          type: string
+          description: '質問文'
+        answerType:
+          $ref: '#/components/schemas/AnswerType'
+        questionOrder:
+          type: integer
+          description: '表示順序'
+      required:
+        - id
+        - questionText
+        - answerType
+        - questionOrder
+      additionalProperties: false
+
+    AnswerType:
+      type: string
+      enum:
+        - yesNo
+        - fiveScale
+      description: '回答形式（yesNo: Yes/No回答、fiveScale: 5段階評価）'
+
+    FeedbackQuestionsResponse:
+      type: object
+      description: 'フィードバック質問一覧'
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackQuestion'
+      required:
+        - questions
+      additionalProperties: false
+
+    FeedbackConfig:
+      type: object
+      description: 'フィードバック機能の設定'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能が有効かどうか'
+      required:
+        - enabled
+      additionalProperties: false
+
+    PatchFeedbackConfigRequest:
+      type: object
+      description: 'フィードバック設定の更新リクエスト'
+      properties:
+        enabled:
+          type: boolean
+          description: 'フィードバック機能の有効/無効'
+      required:
+        - enabled
+      additionalProperties: false
+
+    PutFeedbackQuestionsRequest:
+      type: object
+      description: 'フィードバック質問の一括設定リクエスト'
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionInput'
+          description: '質問の一覧。配列の順序がquestion_orderになります。'
+      required:
+        - questions
+      additionalProperties: false
+
+    FeedbackQuestionInput:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+          description: '既存の質問を更新する場合に指定します。省略時は新規作成されます。'
+        questionText:
+          type: string
+          maxLength: 256
+          description: '質問文'
+        answerType:
+          $ref: '#/components/schemas/AnswerType'
+      required:
+        - questionText
+        - answerType
+      additionalProperties: false
+
+    PostGameFeedbackRequest:
+      type: object
+      properties:
+        gameVersionID:
+          $ref: '#/components/schemas/GameVersionID'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackAnswerInput'
+          description: '質問に対する回答の配列'
+        comment:
+          type: string
+          maxLength: 2000
+          description: '自由記述コメント（任意）'
+      required:
+        - gameVersionID
+        - answers
+      additionalProperties: false
+
+    FeedbackAnswerInput:
+      oneOf:
+        - $ref: '#/components/schemas/FeedbackAnswerInputYesNo'
+        - $ref: '#/components/schemas/FeedbackAnswerInputFiveScale'
+      discriminator:
+        propertyName: answerType
+        mapping:
+          yesNo: '#/components/schemas/FeedbackAnswerInputYesNo'
+          fiveScale: '#/components/schemas/FeedbackAnswerInputFiveScale'
+
+    FeedbackAnswerInputYesNo:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        answerType:
+          type: string
+          enum:
+            - yesNo
+        answer:
+          type: integer
+          minimum: 0
+          maximum: 1
+          description: '回答値（0: No、1: Yes）'
+      required:
+        - questionID
+        - answerType
+        - answer
+      additionalProperties: false
+
+    FeedbackAnswerInputFiveScale:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        answerType:
+          type: string
+          enum:
+            - fiveScale
+        answer:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: '回答値（1〜5の5段階評価）'
+      required:
+        - questionID
+        - answerType
+        - answer
+      additionalProperties: false
+
+    GameFeedback:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameFeedbackID'
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - createdAt
+      additionalProperties: false
+
+    GameFeedbacksResponse:
+      type: object
+      description: 'ゲーム全体のフィードバック一覧（バージョン情報付き）'
+      properties:
+        feedbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameFeedbackDetail'
+        total:
+          type: integer
+          description: 'フィードバックの総数'
+      required:
+        - feedbacks
+        - total
+      additionalProperties: false
+
+    GameFeedbackDetail:
+      type: object
+      description: 'ゲームバージョン情報を含むフィードバック詳細'
+      properties:
+        id:
+          $ref: '#/components/schemas/GameFeedbackID'
+        gameVersionID:
+          $ref: '#/components/schemas/GameVersionID'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackAnswer'
+        comment:
+          type: string
+          nullable: true
+          description: '自由記述コメント'
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - gameVersionID
+        - answers
+        - createdAt
+      additionalProperties: false
+
+    GameVersionFeedbacksResponse:
+      type: object
+      description: '特定バージョンのフィードバック一覧'
+      properties:
+        feedbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackDetail'
+        total:
+          type: integer
+          description: 'フィードバックの総数'
+      required:
+        - feedbacks
+        - total
+      additionalProperties: false
+
+    FeedbackDetail:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/GameFeedbackID'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackAnswer'
+        comment:
+          type: string
+          nullable: true
+          description: '自由記述コメント'
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - answers
+        - createdAt
+      additionalProperties: false
+
+    FeedbackAnswer:
+      oneOf:
+        - $ref: '#/components/schemas/FeedbackAnswerYesNo'
+        - $ref: '#/components/schemas/FeedbackAnswerFiveScale'
+      discriminator:
+        propertyName: answerType
+        mapping:
+          yesNo: '#/components/schemas/FeedbackAnswerYesNo'
+          fiveScale: '#/components/schemas/FeedbackAnswerFiveScale'
+
+    FeedbackAnswerYesNo:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        questionText:
+          type: string
+          description: '質問文'
+        answerType:
+          type: string
+          enum:
+            - yesNo
+        answer:
+          type: integer
+          minimum: 0
+          maximum: 1
+          description: '回答値（0: No、1: Yes）'
+      required:
+        - questionID
+        - questionText
+        - answerType
+        - answer
+      additionalProperties: false
+
+    FeedbackAnswerFiveScale:
+      type: object
+      properties:
+        questionID:
+          $ref: '#/components/schemas/FeedbackQuestionID'
+        questionText:
+          type: string
+          description: '質問文'
+        answerType:
+          type: string
+          enum:
+            - fiveScale
+        answer:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: '回答値（1〜5の5段階評価）'
+      required:
+        - questionID
+        - questionText
+        - answerType
+        - answer
+      additionalProperties: false

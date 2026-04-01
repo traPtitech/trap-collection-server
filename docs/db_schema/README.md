@@ -9,12 +9,16 @@
 | [atlas_schema_revisions](atlas_schema_revisions.md) | 12 |  | BASE TABLE |
 | [editions](editions.md) | 5 | エディションテーブル(v2) | BASE TABLE |
 | [edition_game_version_relations](edition_game_version_relations.md) | 2 | エディションとゲームバージョンの関係テーブル(v2) | BASE TABLE |
+| [feedback_questions](feedback_questions.md) | 7 |  | BASE TABLE |
 | [games](games.md) | 7 | ゲームテーブル | BASE TABLE |
 | [game_creators](game_creators.md) | 5 |  | BASE TABLE |
 | [game_creator_custom_jobs](game_creator_custom_jobs.md) | 4 |  | BASE TABLE |
 | [game_creator_custom_job_relations](game_creator_custom_job_relations.md) | 2 |  | BASE TABLE |
 | [game_creator_jobs](game_creator_jobs.md) | 3 |  | BASE TABLE |
 | [game_creator_job_relations](game_creator_job_relations.md) | 2 |  | BASE TABLE |
+| [game_feedbacks](game_feedbacks.md) | 4 |  | BASE TABLE |
+| [game_feedback_answers](game_feedback_answers.md) | 4 |  | BASE TABLE |
+| [game_feedback_configs](game_feedback_configs.md) | 2 |  | BASE TABLE |
 | [game_files](game_files.md) | 6 | ゲームファイルテーブル(v1) | BASE TABLE |
 | [game_file_types](game_file_types.md) | 3 | ゲームファイルの種類のテーブル | BASE TABLE |
 | [game_genres](game_genres.md) | 3 | ゲームのジャンルのテーブル | BASE TABLE |
@@ -43,6 +47,7 @@
 | [v2_game_images](v2_game_images.md) | 4 | ゲーム画像テーブル(v2) | BASE TABLE |
 | [v2_game_versions](v2_game_versions.md) | 8 | ゲームバージョンテーブル(v2) | BASE TABLE |
 | [v2_game_videos](v2_game_videos.md) | 4 | ゲーム動画テーブル(v2) | BASE TABLE |
+| [v2_latest_game_version_times](v2_latest_game_version_times.md) | 3 |  | BASE TABLE |
 
 ## Relations
 

@@ -285,7 +285,7 @@ func TestUpdateGameV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
+			t.Cleanup(func() {
 				err := db.
 					Unscoped().
 					Session(&gorm.Session{
@@ -295,7 +295,7 @@ func TestUpdateGameV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.
@@ -458,7 +458,7 @@ func TestRemoveGameV2(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			defer func() {
+			t.Cleanup(func() {
 				err := db.
 					Session(&gorm.Session{
 						AllowGlobalUpdate: true,
@@ -468,7 +468,7 @@ func TestRemoveGameV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.
@@ -708,6 +708,7 @@ func TestGetGamesV2(t *testing.T) {
 	gameRepository := NewGameV2(testDB)
 
 	type test struct {
+		description string
 		// 引数
 
 		limit        int
@@ -721,6 +722,7 @@ func TestGetGamesV2(t *testing.T) {
 		// テストデータ
 
 		beforeGames []schema.GameTable2
+		latestTimes []schema.LatestGameVersionTime
 
 		// 返り値
 
@@ -801,8 +803,9 @@ func TestGetGamesV2(t *testing.T) {
 		}
 	}
 
-	testCases := map[string]test{
-		"特に問題ないのでエラーなし": {
+	testCases := []test{
+		{
+			description:  "特に問題ないのでエラーなし",
 			limit:        1,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -827,7 +830,8 @@ func TestGetGamesV2(t *testing.T) {
 			games:       []*domain.GameWithGenres{domain.NewGameWithGenres(game1, []*domain.GameGenre{gameGenre1})},
 			expectedNum: 1,
 		},
-		"複数ゲームがあってもエラーなし": {
+		{
+			description:  "複数ゲームがあってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -867,7 +871,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"limitedとoffsetがあってもエラーなし": {
+		{
+			description:  "limitedとoffsetがあってもエラーなし",
 			limit:        1,
 			offset:       1,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -906,7 +911,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"順番が最新バージョン順でもエラーなし": {
+		{
+			description:  "順番が最新バージョン順でもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeLatestVersion,
@@ -916,12 +922,11 @@ func TestGetGamesV2(t *testing.T) {
 			gameName:     "",
 			beforeGames: []schema.GameTable2{
 				{
-					ID:                     uuid.UUID(gameID1),
-					Name:                   string(gameName1),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour * 2),
-					LatestVersionUpdatedAt: now,
-					VisibilityTypeID:       gameVisibilityTypeIDPublic,
+					ID:               uuid.UUID(gameID1),
+					Name:             string(gameName1),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour * 2),
+					VisibilityTypeID: gameVisibilityTypeIDPublic,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID1),
 						Name:      string(gameGenreName1),
@@ -929,17 +934,28 @@ func TestGetGamesV2(t *testing.T) {
 					}},
 				},
 				{
-					ID:                     uuid.UUID(gameID2),
-					Name:                   string(gameName2),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour),
-					LatestVersionUpdatedAt: now.Add(-time.Hour),
-					VisibilityTypeID:       gameVisibilityTypeIDLimited,
+					ID:               uuid.UUID(gameID2),
+					Name:             string(gameName2),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour),
+					VisibilityTypeID: gameVisibilityTypeIDLimited,
 					GameGenres: []*schema.GameGenreTable{{
 						ID:        uuid.UUID(gameGenreID2),
 						Name:      string(gameGenreName2),
 						CreatedAt: now,
 					}},
+				},
+			},
+			latestTimes: []schema.LatestGameVersionTime{
+				{
+					GameID:                     uuid.UUID(gameID1),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now,
+				},
+				{
+					GameID:                     uuid.UUID(gameID2),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now.Add(-time.Hour),
 				},
 			},
 			games: []*domain.GameWithGenres{
@@ -948,7 +964,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"visibilityの制限があっても問題なし": {
+		{
+			description:  "visibilityの制限があっても問題なし",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -982,12 +999,11 @@ func TestGetGamesV2(t *testing.T) {
 					}},
 				},
 				{
-					ID:                     uuid.UUID(gameID3),
-					Name:                   string(gameName3),
-					Description:            "test",
-					CreatedAt:              now.Add(-time.Hour),
-					LatestVersionUpdatedAt: now.Add(-time.Hour),
-					VisibilityTypeID:       gameVisibilityTypeIDPrivate,
+					ID:               uuid.UUID(gameID3),
+					Name:             string(gameName3),
+					Description:      "test",
+					CreatedAt:        now.Add(-time.Hour),
+					VisibilityTypeID: gameVisibilityTypeIDPrivate,
 					GameGenres: []*schema.GameGenreTable{
 						{
 							ID:        uuid.UUID(gameGenreID2),
@@ -1001,13 +1017,21 @@ func TestGetGamesV2(t *testing.T) {
 						}},
 				},
 			},
+			latestTimes: []schema.LatestGameVersionTime{
+				{
+					GameID:                     uuid.UUID(gameID3),
+					LatestGameVersionID:        uuid.New(),
+					LatestGameVersionCreatedAt: now.Add(-time.Hour),
+				},
+			},
 			games: []*domain.GameWithGenres{
 				domain.NewGameWithGenres(game2, []*domain.GameGenre{gameGenre2}),
 				domain.NewGameWithGenres(game1, []*domain.GameGenre{gameGenre1}),
 			},
 			expectedNum: 2,
 		},
-		"ユーザーの指定があってもエラーなし": {
+		{
+			description:  "ユーザーの指定があってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1060,7 +1084,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲームジャンルの指定があってもエラーなし": {
+		{
+			description:  "ゲームジャンルの指定があってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1099,7 +1124,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲームジャンルの指定が複数あってもエラーなし": {
+		{
+			description:  "ゲームジャンルの指定が複数あってもエラーなし",
 			limit:        2,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1145,7 +1171,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"ゲーム名の指定があってもエラーなし": {
+		{
+			description:  "ゲーム名の指定があってもエラーなし",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1182,7 +1209,8 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 2,
 		},
-		"条件に合うゲームが無くてもエラー無し": {
+		{
+			description:  "条件に合うゲームが無くてもエラー無し",
 			limit:        3,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1202,7 +1230,8 @@ func TestGetGamesV2(t *testing.T) {
 			games:       []*domain.GameWithGenres{},
 			expectedNum: 0,
 		},
-		"limitが0(上限なし)でもエラー無し": {
+		{
+			description:  "limitが0(上限なし)でもエラー無し",
 			limit:        0,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1224,26 +1253,30 @@ func TestGetGamesV2(t *testing.T) {
 			},
 			expectedNum: 1,
 		},
-		"limitが負なのでErrNegativeLimit": {
-			limit:  -1,
-			offset: 0,
-			sort:   repository.GamesSortTypeCreatedAt,
-			isErr:  true,
-			err:    repository.ErrNegativeLimit,
+		{
+			description: "limitが負なのでErrNegativeLimit",
+			limit:       -1,
+			offset:      0,
+			sort:        repository.GamesSortTypeCreatedAt,
+			isErr:       true,
+			err:         repository.ErrNegativeLimit,
 		},
-		"limitが0なのにoffsetが正なのでエラー": {
-			limit:  0,
-			offset: 1,
-			sort:   repository.GamesSortTypeCreatedAt,
-			isErr:  true,
+		{
+			description: "limitが0なのにoffsetが正なのでエラー",
+			limit:       0,
+			offset:      1,
+			sort:        repository.GamesSortTypeCreatedAt,
+			isErr:       true,
 		},
-		"sortの値がおかしいのでエラーs": {
-			limit:  1,
-			offset: 0,
-			sort:   100,
-			isErr:  true,
+		{
+			description: "sortの値がおかしいのでエラー",
+			limit:       1,
+			offset:      0,
+			sort:        100,
+			isErr:       true,
 		},
-		"visibilityの値がおかしいのでエラー": {
+		{
+			description:  "visibilityの値がおかしいのでエラー",
 			limit:        1,
 			offset:       0,
 			sort:         repository.GamesSortTypeCreatedAt,
@@ -1252,13 +1285,23 @@ func TestGetGamesV2(t *testing.T) {
 		},
 	}
 
-	for description, testCase := range testCases {
-		t.Run(description, func(t *testing.T) {
-			defer func() {
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Cleanup(func() {
 				var gameIDs []schema.GameTable2
 				err := db.Model(&schema.GameTable2{}).Select("id").Find(&gameIDs).Error
 				if err != nil {
 					t.Fatalf("failed to get game ids: %+v\n", err)
+				}
+
+				err = db.
+					Session(&gorm.Session{
+						AllowGlobalUpdate: true,
+					}).
+					Unscoped().
+					Delete(&schema.LatestGameVersionTime{}).Error
+				if err != nil {
+					t.Fatalf("failed to delete latest games: %+v\n", err)
 				}
 
 				// ゲームとジャンルとロールの削除
@@ -1273,12 +1316,19 @@ func TestGetGamesV2(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to delete game: %+v\n", err)
 				}
-			}()
+			})
 
 			if len(testCase.beforeGames) != 0 {
 				err := db.Create(&testCase.beforeGames).Error
 				if err != nil {
 					t.Fatalf("failed to create test data: %+v\n", err)
+				}
+			}
+
+			if len(testCase.latestTimes) != 0 {
+				err := db.Create(&testCase.latestTimes).Error
+				if err != nil {
+					t.Fatalf("failed to create latest times data: %+v\n", err)
 				}
 			}
 

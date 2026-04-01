@@ -75,8 +75,28 @@ func (gc *GameCreator) GetGameCreatorsByGameID(ctx context.Context, gameID value
 	return result, nil
 }
 
-func (gc *GameCreator) GetGameCreatorPresetJobs(_ context.Context) ([]*domain.GameCreatorJob, error) {
-	return nil, nil // TODO: implement
+func (gc *GameCreator) GetGameCreatorPresetJobs(ctx context.Context) ([]*domain.GameCreatorJob, error) {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getDB: %w", err)
+	}
+
+	var presetJobs []schema.GameCreatorJobTable
+	err = db.Find(&presetJobs).Error
+	if err != nil {
+		return nil, fmt.Errorf("find preset jobs: %w", err)
+	}
+
+	result := make([]*domain.GameCreatorJob, 0, len(presetJobs))
+	for _, job := range presetJobs {
+		result = append(result, domain.NewGameCreatorJob(
+			values.GameCreatorJobID(job.ID),
+			values.GameCreatorJobDisplayName(job.DisplayName),
+			job.CreatedAt,
+		))
+	}
+
+	return result, nil
 }
 
 func (gc *GameCreator) GetGameCreatorCustomJobsByGameID(_ context.Context, _ values.GameID) ([]*domain.GameCreatorCustomJob, error) {

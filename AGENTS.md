@@ -200,6 +200,16 @@ edition を作成できるほか、全ての game について操作を行うこ
 座席。工大祭などで座席の管理をするのに使用する。
 ランチャーから今の座席の状態が送信され、空いている座席を確認できる。
 
+### game creator
+
+game を作った人に関する情報。1 つの game に複数の game creator を紐づけることができる。
+game role とは全く別の情報として管理する。複数の game creator job を紐づけることができる。
+
+### game creator job
+
+game creator の役割。「プログラマー」「プロジェクトリーダー」「デザイナー」などが考えられる。
+あらかじめ admin が用意し、全てのゲームで共通して使われる preset job と、game ごとに名前をつけて作ることができる custom job の2種類がある。
+
 ### visibility
 
 ゲームの公開状態を表す。`public`、`limited`、`private` の3つの値をとる。

@@ -15,7 +15,7 @@ type GameTable2 struct {
 	VisibilityTypeID       int                       `gorm:"type:tinyint;not null"`
 	CreatedAt              time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt              gorm.DeletedAt            `gorm:"type:DATETIME NULL;default:NULL"`
-	LatestVersionUpdatedAt time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	LatestVersionUpdatedAt time.Time                 `gorm:"type:datetime;<-:false;->:false"`
 	GameVersionsV2         []GameVersionTable2       `gorm:"foreignKey:GameID"`
 	GameManagementRoles    []GameManagementRoleTable `gorm:"foreignKey:GameID"`
 	GameVisibilityType     GameVisibilityTypeTable   `gorm:"foreignKey:VisibilityTypeID"`
@@ -40,6 +40,18 @@ type GameTable2 struct {
 
 func (*GameTable2) TableName() string {
 	return "games"
+}
+
+type LatestGameVersionTime struct {
+	GameID                     uuid.UUID `gorm:"type:varchar(36);not null;primaryKey"`
+	LatestGameVersionID        uuid.UUID `gorm:"type:varchar(36);not null"`
+	LatestGameVersionCreatedAt time.Time `gorm:"type:datetime;not null;index:idx_game_version_stats_latest_created_at"`
+
+	Game GameTable2 `gorm:"foreignKey:GameID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+func (*LatestGameVersionTime) TableName() string {
+	return "v2_latest_game_version_times"
 }
 
 type GameVersionTable2 struct {
@@ -272,4 +284,55 @@ type GameCreatorCustomJobTable struct {
 
 func (*GameCreatorCustomJobTable) TableName() string {
 	return "game_creator_custom_jobs"
+}
+
+type GameFeedbackConfigTable struct {
+	GameID  uuid.UUID  `gorm:"type:varchar(36);not null;primaryKey"`
+	Enabled bool       `gorm:"type:boolean;not null;default:false"`
+	Game    GameTable2 `gorm:"foreignKey:GameID"`
+}
+
+func (*GameFeedbackConfigTable) TableName() string {
+	return "game_feedback_configs"
+}
+
+type GameFeedbackQuestionTable struct {
+	ID            uuid.UUID    `gorm:"type:varchar(36);not null;primaryKey"`
+	GameID        uuid.UUID    `gorm:"type:varchar(36);not null;index"`
+	QuestionText  string       `gorm:"type:varchar(256);not null"`
+	AnswerType    int          `gorm:"type:tinyint;not null"`
+	QuestionOrder int          `gorm:"type:int;not null"`
+	CreatedAt     time.Time    `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	ArchivedAt    sql.NullTime `gorm:"type:DATETIME NULL;default:NULL"`
+	Game          GameTable2   `gorm:"foreignKey:GameID"`
+}
+
+func (*GameFeedbackQuestionTable) TableName() string {
+	return "feedback_questions"
+}
+
+type GameFeedbackTable struct {
+	ID            uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
+	GameVersionID uuid.UUID                 `gorm:"type:varchar(36);not null;index"`
+	Comment       sql.NullString            `gorm:"type:text;default:NULL"` // 自由記述欄
+	CreatedAt     time.Time                 `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	GameVersion   GameVersionTable2         `gorm:"foreignKey:GameVersionID"`
+	Answers       []GameFeedbackAnswerTable `gorm:"foreignKey:FeedbackID"`
+}
+
+func (*GameFeedbackTable) TableName() string {
+	return "game_feedbacks"
+}
+
+type GameFeedbackAnswerTable struct {
+	ID         uuid.UUID                 `gorm:"type:varchar(36);not null;primaryKey"`
+	FeedbackID uuid.UUID                 `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
+	QuestionID uuid.UUID                 `gorm:"type:varchar(36);not null;index;uniqueIndex:idx_game_feedback_answers_feedback_question"`
+	Answer     int                       `gorm:"type:int;not null"`
+	Feedback   GameFeedbackTable         `gorm:"foreignKey:FeedbackID"`
+	Question   GameFeedbackQuestionTable `gorm:"foreignKey:QuestionID"`
+}
+
+func (*GameFeedbackAnswerTable) TableName() string {
+	return "game_feedback_answers"
 }
