@@ -31,7 +31,7 @@ type GameCreator interface {
 	// UpsertGameCreatorCustomJobsRelations
 	// creator と custom job の relation を更新する
 	UpsertGameCreatorCustomJobsRelations(ctx context.Context, jobs map[values.GameCreatorID][]values.GameCreatorJobID) error
-	// GetCreatorsByUserIDs
-	// ユーザーIDに紐づくゲームクリエイターを取得する
-	GetCreatorsByUserIDs(ctx context.Context, userIDs []values.TraPMemberID) ([]*domain.GameCreator, error)
+	// GetGameCreatorsByUserIDs
+	// game idとuser idに紐づくゲームクリエイターを取得する
+	GetGameCreatorsByUserIDs(ctx context.Context, gameID values.GameID, userIDs []values.TraPMemberID) ([]*domain.GameCreator, error)
 }

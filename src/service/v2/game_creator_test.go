@@ -573,7 +573,7 @@ func TestEditGameCreators(t *testing.T) {
 			}
 			if testCase.executeGetCreatorsByUserIDs {
 				mockGameCreatorRepo.EXPECT().
-					GetCreatorsByUserIDs(gomock.Any(), gomock.Any()).
+					GetGameCreatorsByUserIDs(gomock.Any(), testCase.gameID, gomock.Any()).
 					Return(testCase.existingCreators, testCase.getCreatorsByUserIDsErr)
 			}
 			if testCase.executeCreateGameCreatorCustomJobs {

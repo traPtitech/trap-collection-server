@@ -88,7 +88,7 @@ func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OID
 		return err
 	}
 
-	inputData, err := gc.loadEditGameCreatorsInputData(ctx, inputs)
+	inputData, err := gc.loadEditGameCreatorsInputData(ctx, gameID, inputs)
 	if err != nil {
 		return err
 	}
@@ -207,6 +207,7 @@ type editGameCreatorsInputData struct {
 
 func (gc *GameCreator) loadEditGameCreatorsInputData(
 	ctx context.Context,
+	gameID values.GameID,
 	inputs []*service.EditGameCreatorJobInput,
 ) (*editGameCreatorsInputData, error) {
 	creatorUserIDs := make([]values.TraPMemberID, len(inputs))
@@ -214,7 +215,7 @@ func (gc *GameCreator) loadEditGameCreatorsInputData(
 		creatorUserIDs[i] = input.UserID
 	}
 
-	existingCreators, err := gc.gameCreatorRepo.GetCreatorsByUserIDs(ctx, creatorUserIDs)
+	existingCreators, err := gc.gameCreatorRepo.GetGameCreatorsByUserIDs(ctx, gameID, creatorUserIDs)
 	if err != nil {
 		return nil, fmt.Errorf("get creators by user ids: %w", err)
 	}

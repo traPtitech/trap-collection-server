@@ -99,6 +99,6 @@ func (gc *GameCreator) UpsertGameCreatorCustomJobsRelations(_ context.Context, _
 	return nil // TODO: implement
 }
 
-func (gc *GameCreator) GetCreatorsByUserIDs(_ context.Context, _ []values.TraPMemberID) ([]*domain.GameCreator, error) {
+func (gc *GameCreator) GetGameCreatorsByUserIDs(_ context.Context, _ values.GameID, _ []values.TraPMemberID) ([]*domain.GameCreator, error) {
 	return nil, nil // TODO: implement
 }
