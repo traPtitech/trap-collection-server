@@ -132,6 +132,7 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 					domain.NewGameCreator(
 						values.GameCreatorID(creator1.ID),
 						values.TraPMemberID(creator1.UserID),
+						values.NewGameIDFromUUID(creator1.GameID),
 						values.TraPMemberName(creator1.UserName),
 						creator1.CreatedAt),
 					[]*domain.GameCreatorJob{
@@ -160,6 +161,7 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 					domain.NewGameCreator(
 						values.GameCreatorID(creator2.ID),
 						values.TraPMemberID(creator2.UserID),
+						values.NewGameIDFromUUID(creator2.GameID),
 						values.TraPMemberName(creator2.UserName),
 						creator2.CreatedAt),
 					[]*domain.GameCreatorJob{
@@ -188,6 +190,7 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 					domain.NewGameCreator(
 						values.GameCreatorID(creator3.ID),
 						values.TraPMemberID(creator3.UserID),
+						values.NewGameIDFromUUID(creator3.GameID),
 						values.TraPMemberName(creator3.UserName),
 						creator3.CreatedAt),
 					[]*domain.GameCreatorJob{},
@@ -234,6 +237,7 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 				expectedCreator := testCase.expected[i].GetGameCreator()
 				assert.Equal(t, expectedCreator.GetID(), creator.GetID())
 				assert.Equal(t, expectedCreator.GetUserID(), creator.GetUserID())
+				assert.Equal(t, expectedCreator.GetGameID(), creator.GetGameID())
 				assert.Equal(t, expectedCreator.GetUserName(), creator.GetUserName())
 				assert.WithinDuration(t, expectedCreator.GetCreatedAt(), creator.GetCreatedAt(), time.Second)
 

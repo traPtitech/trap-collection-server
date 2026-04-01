@@ -3623,7 +3623,6 @@ components:
                   customDisplayName: カスタムjobName
                 description: |
                   新しいカスタムjobの表示名を指定します。
-          minItems: 1
       required:
         - id
 
