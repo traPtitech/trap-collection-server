@@ -572,8 +572,12 @@ func TestEditGameCreators(t *testing.T) {
 					Return(testCase.presetJobs, testCase.getGameCreatorPresetJobsErr)
 			}
 			if testCase.executeGetCreatorsByUserIDs {
+				userIDs := make([]values.TraPMemberID, len(testCase.inputs))
+				for i, input := range testCase.inputs {
+					userIDs[i] = input.UserID
+				}
 				mockGameCreatorRepo.EXPECT().
-					GetGameCreatorsByUserIDs(gomock.Any(), testCase.gameID, gomock.Any()).
+					GetGameCreatorsByUserIDs(gomock.Any(), testCase.gameID, userIDs).
 					Return(testCase.existingCreators, testCase.getCreatorsByUserIDsErr)
 			}
 			if testCase.executeCreateGameCreatorCustomJobs {
