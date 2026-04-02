@@ -440,6 +440,11 @@ func TestGetGameCreatorCustomJobsByGameID(t *testing.T) {
 			customJobs: []*schema.GameCreatorCustomJobTable{},
 			expected:   []*domain.GameCreatorCustomJob{},
 		},
+		"gameIDが存在しない場合は空配列": {
+			gameID:     values.NewGameID(),
+			customJobs: []*schema.GameCreatorCustomJobTable{customJob1, customJob2, customJob3},
+			expected:   []*domain.GameCreatorCustomJob{},
+		},
 	}
 
 	for name, testCase := range testCases {
