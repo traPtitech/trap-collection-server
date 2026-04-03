@@ -356,3 +356,144 @@ func TestGetGameCreatorPresetJobs(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameCreatorCustomJobsByGameID(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	now := time.Now()
+
+	gameID1 := values.NewGameID()
+	game1 := &schema.GameTable2{
+		ID:               uuid.UUID(gameID1),
+		Name:             "test game 1",
+		VisibilityTypeID: 1,
+	}
+	gameID2 := values.NewGameID()
+	game2 := &schema.GameTable2{
+		ID:               uuid.UUID(gameID2),
+		Name:             "test game 2",
+		VisibilityTypeID: 1,
+	}
+	err = db.Create([]*schema.GameTable2{game1, game2}).Error
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		db, err := testDB.getDB(context.Background())
+		require.NoError(t, err)
+		err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error
+		require.NoError(t, err)
+	})
+
+	customJob1 := &schema.GameCreatorCustomJobTable{
+		ID:          uuid.New(),
+		DisplayName: "ボーカル",
+		GameID:      uuid.UUID(gameID1),
+		CreatedAt:   now,
+	}
+	customJob2 := &schema.GameCreatorCustomJobTable{
+		ID:          uuid.New(),
+		DisplayName: "作曲者",
+		GameID:      uuid.UUID(gameID2),
+		CreatedAt:   now,
+	}
+	customJob3 := &schema.GameCreatorCustomJobTable{
+		ID:          uuid.New(),
+		DisplayName: "イラストレーター",
+		GameID:      uuid.UUID(gameID2),
+		CreatedAt:   now,
+	}
+
+	testCases := map[string]struct {
+		gameID     values.GameID
+		customJobs []*schema.GameCreatorCustomJobTable
+		expected   []*domain.GameCreatorCustomJob
+		err        error
+	}{
+		"対象ゲームのカスタムジョブを1件取得できる": {
+			gameID:     gameID1,
+			customJobs: []*schema.GameCreatorCustomJobTable{customJob1, customJob2, customJob3},
+			expected: []*domain.GameCreatorCustomJob{
+				domain.NewGameCreatorCustomJob(
+					values.GameCreatorJobID(customJob1.ID),
+					values.GameCreatorJobDisplayName(customJob1.DisplayName),
+					values.GameID(customJob1.GameID),
+					customJob1.CreatedAt,
+				),
+			},
+		},
+		"対象ゲームのカスタムジョブを複数件取得できる": {
+			gameID:     gameID2,
+			customJobs: []*schema.GameCreatorCustomJobTable{customJob1, customJob2, customJob3},
+			expected: []*domain.GameCreatorCustomJob{
+				domain.NewGameCreatorCustomJob(
+					values.GameCreatorJobID(customJob2.ID),
+					values.GameCreatorJobDisplayName(customJob2.DisplayName),
+					values.GameID(customJob2.GameID),
+					customJob2.CreatedAt,
+				),
+				domain.NewGameCreatorCustomJob(
+					values.GameCreatorJobID(customJob3.ID),
+					values.GameCreatorJobDisplayName(customJob3.DisplayName),
+					values.GameID(customJob3.GameID),
+					customJob3.CreatedAt,
+				),
+			},
+		},
+		"対象ゲームにカスタムジョブが存在しない場合は空配列": {
+			gameID:     gameID1,
+			customJobs: []*schema.GameCreatorCustomJobTable{},
+			expected:   []*domain.GameCreatorCustomJob{},
+		},
+		"gameIDが存在しない場合は空配列": {
+			gameID:     values.NewGameID(),
+			customJobs: []*schema.GameCreatorCustomJobTable{customJob1, customJob2, customJob3},
+			expected:   []*domain.GameCreatorCustomJob{},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			db, err := testDB.getDB(t.Context())
+			require.NoError(t, err)
+
+			if len(testCase.customJobs) > 0 {
+				err = db.Create(testCase.customJobs).Error
+				require.NoError(t, err)
+			}
+
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(testCase.customJobs).Error
+				require.NoError(t, err)
+			})
+
+			repo := NewGameCreator(testDB)
+
+			customJobs, err := repo.GetGameCreatorCustomJobsByGameID(t.Context(), testCase.gameID)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Len(t, customJobs, len(testCase.expected))
+
+			expectedMap := make(map[values.GameCreatorJobID]*domain.GameCreatorCustomJob, len(testCase.expected))
+			for _, job := range testCase.expected {
+				expectedMap[job.GetID()] = job
+			}
+
+			for _, job := range customJobs {
+				expected, ok := expectedMap[job.GetID()]
+				if !assert.Truef(t, ok, "unexpected custom job ID: %v", job.GetID()) {
+					continue
+				}
+				assert.Equal(t, expected.GetDisplayName(), job.GetDisplayName())
+				assert.Equal(t, expected.GetGameID(), job.GetGameID())
+				assert.WithinDuration(t, expected.GetCreatedAt(), job.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
