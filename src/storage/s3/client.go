@@ -9,7 +9,7 @@ import (
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/traPtitech/trap-collection-server/src/config"
 	"github.com/traPtitech/trap-collection-server/src/storage"
@@ -112,10 +112,10 @@ func (c *Client) saveFile(
 		}
 	}
 
-	uploader := manager.NewUploader(c.client, func(u *manager.Uploader) {
-		u.Concurrency = 5
+	tm := transfermanager.New(c.client, func(o *transfermanager.Options) {
+		o.Concurrency = 5
 	})
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err = tm.UploadObject(ctx, &transfermanager.UploadObjectInput{
 		Bucket: &c.bucket,
 		Key:    &name,
 		Body:   content,
