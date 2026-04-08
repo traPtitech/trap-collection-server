@@ -9,14 +9,16 @@ import (
 type GameCreator struct {
 	id        values.GameCreatorID
 	userID    values.TraPMemberID
+	gameID    values.GameID
 	userName  values.TraPMemberName
 	createdAt time.Time
 }
 
-func NewGameCreator(id values.GameCreatorID, userID values.TraPMemberID, userName values.TraPMemberName, createdAt time.Time) *GameCreator {
+func NewGameCreator(id values.GameCreatorID, userID values.TraPMemberID, gameID values.GameID, userName values.TraPMemberName, createdAt time.Time) *GameCreator {
 	return &GameCreator{
 		id:        id,
 		userID:    userID,
+		gameID:    gameID,
 		userName:  userName,
 		createdAt: createdAt,
 	}
@@ -24,6 +26,7 @@ func NewGameCreator(id values.GameCreatorID, userID values.TraPMemberID, userNam
 
 func (creator *GameCreator) GetID() values.GameCreatorID        { return creator.id }
 func (creator *GameCreator) GetUserID() values.TraPMemberID     { return creator.userID }
+func (creator *GameCreator) GetGameID() values.GameID           { return creator.gameID }
 func (creator *GameCreator) GetUserName() values.TraPMemberName { return creator.userName }
 func (creator *GameCreator) GetCreatedAt() time.Time            { return creator.createdAt }
 
