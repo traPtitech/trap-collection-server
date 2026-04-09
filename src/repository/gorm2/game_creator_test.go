@@ -632,4 +632,3 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 		})
 	}
 }
-
