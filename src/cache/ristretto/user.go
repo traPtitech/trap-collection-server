@@ -16,12 +16,15 @@ import (
 
 type User struct {
 	meCache        *ristretto.Cache[string, *service.UserInfo]
-	activeUsers    *ristretto.Cache[string, []*service.UserInfo]
+	activeUsers    *ristretto.Cache[usersCacheKey, []*service.UserInfo]
 	activeUsersTTL time.Duration
 }
 
+type usersCacheKey string
+
 const (
-	activeUsersKey = "active_users"
+	activeUsersKey usersCacheKey = "active_users"
+	allUsersKey    usersCacheKey = "all_users"
 )
 
 func NewUser(conf config.CacheRistretto) (*User, error) {
@@ -47,7 +50,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to create meCache: %v", err)
 	}
 
-	activeUsers, err := ristretto.NewCache[string, []*service.UserInfo](&ristretto.Config[string, []*service.UserInfo]{
+	activeUsers, err := ristretto.NewCache[usersCacheKey, []*service.UserInfo](&ristretto.Config[usersCacheKey, []*service.UserInfo]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -139,6 +142,30 @@ func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) erro
 	)
 	if !ok {
 		return errors.New("failed to set activeUsers")
+	}
+
+	return nil
+}
+
+func (u *User) GetAllUsers(_ context.Context) ([]*service.UserInfo, error) {
+	users, ok := u.activeUsers.Get(allUsersKey)
+	if !ok {
+		return nil, cache.ErrCacheMiss
+	}
+
+	return users, nil
+}
+
+func (u *User) SetAllUsers(_ context.Context, users []*service.UserInfo) error {
+	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
+	ok := u.activeUsers.SetWithTTL(
+		allUsersKey,
+		users,
+		1,
+		u.activeUsersTTL,
+	)
+	if !ok {
+		return errors.New("failed to set allUsers")
 	}
 
 	return nil
