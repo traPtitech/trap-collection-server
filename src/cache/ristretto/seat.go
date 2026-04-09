@@ -13,9 +13,15 @@ import (
 )
 
 type Seat struct {
-	activeSeats    *ristretto.Cache[string, []*domain.Seat]
+	activeSeats    *ristretto.Cache[seatCacheKey, []*domain.Seat]
 	activeSeatsTTL time.Duration
 }
+
+type seatCacheKey string
+
+const (
+	activeSeatsKey seatCacheKey = "active_seats"
+)
 
 func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 	activeSeatsTTL, err := conf.ActiveSeatsTTL()
@@ -23,7 +29,7 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 		return nil, fmt.Errorf("failed to get active seats ttl: %w", err)
 	}
 
-	activeSeats, err := ristretto.NewCache[string, []*domain.Seat](&ristretto.Config[string, []*domain.Seat]{
+	activeSeats, err := ristretto.NewCache[seatCacheKey, []*domain.Seat](&ristretto.Config[seatCacheKey, []*domain.Seat]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -39,7 +45,7 @@ func NewSeat(conf config.CacheRistretto) (*Seat, error) {
 }
 
 func (seat *Seat) GetActiveSeats(_ context.Context) ([]*domain.Seat, error) {
-	seats, ok := seat.activeSeats.Get(activeUsersKey)
+	seats, ok := seat.activeSeats.Get(activeSeatsKey)
 	if !ok {
 		hitCount.WithLabelValues("active_seats", "miss").Inc()
 		return nil, cache.ErrCacheMiss
@@ -52,7 +58,7 @@ func (seat *Seat) GetActiveSeats(_ context.Context) ([]*domain.Seat, error) {
 func (seat *Seat) SetActiveSeats(_ context.Context, seats []*domain.Seat) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
 	ok := seat.activeSeats.SetWithTTL(
-		activeUsersKey,
+		activeSeatsKey,
 		seats,
 		1,
 		seat.activeSeatsTTL,
