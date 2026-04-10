@@ -125,6 +125,10 @@ func (gc *GameCreator) GetGameCreatorCustomJobsByGameID(ctx context.Context, gam
 }
 
 func (gc *GameCreator) CreateGameCreatorCustomJobs(ctx context.Context, jobs []*domain.GameCreatorCustomJob) error {
+	if len(jobs) == 0 {
+		return nil
+	}
+
 	db, err := gc.db.getDB(ctx)
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
@@ -138,10 +142,6 @@ func (gc *GameCreator) CreateGameCreatorCustomJobs(ctx context.Context, jobs []*
 			DisplayName: string(job.GetDisplayName()),
 			CreatedAt:   job.GetCreatedAt(),
 		})
-	}
-
-	if len(customJobs) == 0 {
-		return nil
 	}
 
 	err = db.Create(&customJobs).Error
