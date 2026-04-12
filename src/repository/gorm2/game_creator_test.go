@@ -581,6 +581,13 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 				jobIDs = append(jobIDs, uuid.UUID(job.GetID()))
 			}
 
+			var beforeCount int64
+			if len(jobIDs) == 0 {
+				err = db.Model(&schema.GameCreatorCustomJobTable{}).Where("id IN ?", jobIDs).Count(&beforeCount).Error
+				require.NoError(t, err)
+				require.Equal(t, int64(0), beforeCount, "テスト開始前に同じIDのカスタムジョブが存在しています")
+			}
+
 			if len(jobIDs) > 0 {
 				t.Cleanup(func() {
 					db, err := testDB.getDB(context.Background())
@@ -600,6 +607,14 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 			}
 
 			if !testCase.verifyByID || len(jobIDs) == 0 {
+				if len(jobIDs) == 0 && !testCase.expectErr {
+					var afterCount int64
+					err = db.Model(&schema.GameCreatorCustomJobTable{}).
+						Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
+						Count(&afterCount).Error
+					require.NoError(t, err)
+					assert.Equal(t, beforeCount, afterCount)
+				}
 				return
 			}
 
