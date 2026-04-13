@@ -128,8 +128,32 @@ func (gc *GameCreator) CreateGameCreatorCustomJobs(_ context.Context, _ []*domai
 	return nil // TODO: implement
 }
 
-func (gc *GameCreator) CreateGameCreators(_ context.Context, _ []*domain.GameCreator) error {
-	return nil // TODO: implement
+func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domain.GameCreator) error {
+	if len(creators) == 0 {
+		return nil
+	}
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	var gameCreatorTable []schema.GameCreatorTable
+	for _, creator := range creators {
+		gameCreatorTable = append(gameCreatorTable, schema.GameCreatorTable{
+			ID:        uuid.UUID(creator.GetID()),
+			UserID:    uuid.UUID(creator.GetUserID()),
+			GameID:    uuid.UUID(creator.GetGameID()),
+			UserName:  string(creator.GetUserName()),
+			CreatedAt: creator.GetCreatedAt(),
+		})
+	}
+
+	err = db.Create(&gameCreatorTable).Error
+	if err != nil {
+		return fmt.Errorf("create game creators: %w", err)
+	}
+
+	return nil
 }
 
 func (gc *GameCreator) UpsertGameCreatorPresetJobsRelations(_ context.Context, _ map[values.GameCreatorID][]values.GameCreatorJobID) error {
