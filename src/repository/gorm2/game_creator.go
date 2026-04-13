@@ -2,13 +2,16 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"gorm.io/gorm"
 )
 
 var _ repository.GameCreator = (*GameCreator)(nil)
@@ -137,7 +140,7 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 		return fmt.Errorf("get db: %w", err)
 	}
 
-	var gameCreatorTable []schema.GameCreatorTable
+	gameCreatorTable := make([]schema.GameCreatorTable, 0, len(creators))
 	for _, creator := range creators {
 		gameCreatorTable = append(gameCreatorTable, schema.GameCreatorTable{
 			ID:        uuid.UUID(creator.GetID()),
@@ -150,6 +153,15 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 
 	err = db.Create(&gameCreatorTable).Error
 	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) {
+			switch mysqlErr.Number {
+			case 1452:
+				return fmt.Errorf("create game creators: %w", gorm.ErrForeignKeyViolated)
+			case 1062:
+				return fmt.Errorf("create game creators: %w", gorm.ErrDuplicatedKey)
+			}
+		}
 		return fmt.Errorf("create game creators: %w", err)
 	}
 
