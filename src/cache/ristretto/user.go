@@ -16,7 +16,7 @@ import (
 
 type User struct {
 	meCache        *ristretto.Cache[string, *service.UserInfo]
-	activeUsers    *ristretto.Cache[usersCacheKey, []*service.UserInfo]
+	users          *ristretto.Cache[usersCacheKey, []*service.UserInfo]
 	activeUsersTTL time.Duration
 }
 
@@ -50,7 +50,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to create meCache: %v", err)
 	}
 
-	activeUsers, err := ristretto.NewCache[usersCacheKey, []*service.UserInfo](&ristretto.Config[usersCacheKey, []*service.UserInfo]{
+	users, err := ristretto.NewCache[usersCacheKey, []*service.UserInfo](&ristretto.Config[usersCacheKey, []*service.UserInfo]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -61,7 +61,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 
 	return &User{
 		meCache:        meCache,
-		activeUsers:    activeUsers,
+		users:          users,
 		activeUsersTTL: activeUsersTTL,
 	}, nil
 }
@@ -96,7 +96,7 @@ func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *servi
 // GetAllActiveUsers
 // deprecated: v1 API廃止時に削除する
 func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	users, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.users.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
@@ -110,7 +110,7 @@ func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error)
 // deprecated: v1 API廃止時に削除する
 func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
-	ok := u.activeUsers.SetWithTTL(
+	ok := u.users.SetWithTTL(
 		activeUsersKey,
 		users,
 		1,
@@ -124,7 +124,7 @@ func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) e
 }
 
 func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	users, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.users.Get(activeUsersKey)
 	if !ok {
 		return nil, cache.ErrCacheMiss
 	}
@@ -134,7 +134,7 @@ func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
 
 func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
-	ok := u.activeUsers.SetWithTTL(
+	ok := u.users.SetWithTTL(
 		activeUsersKey,
 		users,
 		1,
@@ -148,7 +148,7 @@ func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) erro
 }
 
 func (u *User) GetAllUsers(_ context.Context) ([]*service.UserInfo, error) {
-	users, ok := u.activeUsers.Get(allUsersKey)
+	users, ok := u.users.Get(allUsersKey)
 	if !ok {
 		return nil, cache.ErrCacheMiss
 	}
@@ -158,7 +158,7 @@ func (u *User) GetAllUsers(_ context.Context) ([]*service.UserInfo, error) {
 
 func (u *User) SetAllUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
-	ok := u.activeUsers.SetWithTTL(
+	ok := u.users.SetWithTTL(
 		allUsersKey,
 		users,
 		1,
