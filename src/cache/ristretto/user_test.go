@@ -644,3 +644,86 @@ func TestGetAllUsers(t *testing.T) {
 		})
 	}
 }
+
+func TestSetAllUsers(t *testing.T) {
+	t.Parallel()
+
+	ttl := time.Hour
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("mazrean"),
+		values.TrapMemberStatusDeactivated,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("ikura-hamu"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+
+	testCases := map[string]struct {
+		beforeUsers []*service.UserInfo
+		users       []*service.UserInfo
+		err         error
+	}{
+		"ユーザー情報をセットできる": {
+			users: []*service.UserInfo{user1, user2},
+		},
+		"元からキーがあっても上書きする": {
+			beforeUsers: []*service.UserInfo{user1},
+			users:       []*service.UserInfo{user2},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				ctrl := gomock.NewController(t)
+				mockConf := mock.NewMockCacheRistretto(ctrl)
+
+				mockConf.
+					EXPECT().
+					ActiveUsersTTL().
+					Return(ttl, nil)
+
+				usersCache, err := NewUser(mockConf)
+				require.NoError(t, err)
+
+				t.Cleanup(func() {
+					usersCache.users.Close()
+					usersCache.meCache.Close()
+				})
+
+				if len(testCase.beforeUsers) > 0 {
+					ok := usersCache.users.SetWithTTL(allUsersKey, testCase.beforeUsers, 1, ttl)
+					require.True(t, ok)
+					usersCache.users.Wait()
+				}
+
+				err = usersCache.SetAllUsers(ctx, testCase.users)
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+				}
+				assert.NoError(t, err)
+
+				usersCache.users.Wait()
+
+				users, ok := usersCache.users.Get(allUsersKey)
+				assert.True(t, ok)
+				assert.Equal(t, testCase.users, users)
+
+				time.Sleep(ttl + time.Second)
+
+				_, ok = usersCache.users.Get(allUsersKey)
+				assert.False(t, ok)
+			})
+
+		})
+	}
+
+}
