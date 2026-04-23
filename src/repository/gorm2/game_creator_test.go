@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
-	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
-	"gorm.io/gorm/clause"
-	"gorm.io/gorm"
 	"github.com/traPtitech/trap-collection-server/src/repository"
+	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func TestGetGameCreatorsByGameID(t *testing.T) {
