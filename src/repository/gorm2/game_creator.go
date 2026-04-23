@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
-	"gorm.io/gorm"
 )
 
 var _ repository.GameCreator = (*GameCreator)(nil)
@@ -157,9 +156,9 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 		if errors.As(err, &mysqlErr) {
 			switch mysqlErr.Number {
 			case 1452:
-				return fmt.Errorf("create game creators: %w", gorm.ErrForeignKeyViolated)
+				return repository.ErrForeignKeyViolated
 			case 1062:
-				return fmt.Errorf("create game creators: %w", gorm.ErrDuplicatedKey)
+				return repository.ErrDuplicatedUniqueKey
 			}
 		}
 		return fmt.Errorf("create game creators: %w", err)

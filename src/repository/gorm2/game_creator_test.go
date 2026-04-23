@@ -11,8 +11,9 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm"
+	"github.com/traPtitech/trap-collection-server/src/repository"
 )
 
 func TestGetGameCreatorsByGameID(t *testing.T) {
@@ -563,7 +564,7 @@ func TestCreateGameCreators(t *testing.T) {
 				),
 			},
 			wantDeltaCreators: 0,
-			err:               gorm.ErrForeignKeyViolated,
+			err:               repository.ErrForeignKeyViolated,
 		},
 		"同一 gameID と userID の組み合わせで重複エラーが発生する": {
 			addCreators: []*domain.GameCreator{
@@ -585,7 +586,7 @@ func TestCreateGameCreators(t *testing.T) {
 				},
 			},
 			wantDeltaCreators: 0,
-			err:               gorm.ErrDuplicatedKey,
+			err:               repository.ErrDuplicatedUniqueKey,
 		},
 	}
 
