@@ -555,3 +555,108 @@ func TestGetActiveUsers(t *testing.T) {
 		})
 	}
 }
+
+func Test_getAllUsers(t *testing.T) {
+	t.Parallel()
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("mazrean"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("ikura-hamu"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+
+	testCases := map[string]struct {
+		GetAllUsersCacheErr     error
+		GetAllUsersCacheUsers   []*service.UserInfo
+		executeAuthGetAllUsers  bool
+		GetAllUsersAuthErr      error
+		GetAllUsersAuthUsers    []*service.UserInfo
+		executeSetAllUsersCache bool
+		SetAllUsersCacheErr     error
+		users                   []*service.UserInfo
+		err                     error
+	}{
+		"cacheのGetAllUsersがusersを返す": {
+			GetAllUsersCacheUsers: []*service.UserInfo{user1, user2},
+			users:                 []*service.UserInfo{user1, user2},
+		},
+		"authのGetAllUsersがエラーなのでエラー": {
+			GetAllUsersCacheErr:    cache.ErrCacheMiss,
+			executeAuthGetAllUsers: true,
+			GetAllUsersAuthErr:     assert.AnError,
+			err:                    assert.AnError,
+			users:                  nil,
+		},
+		"cacheのGetAllUsersがキャッシュミスだがauthのGetAllUsersがusersを返す": {
+			GetAllUsersCacheErr:     cache.ErrCacheMiss,
+			executeAuthGetAllUsers:  true,
+			GetAllUsersAuthUsers:    []*service.UserInfo{user1, user2},
+			executeSetAllUsersCache: true,
+			SetAllUsersCacheErr:     nil,
+			users:                   []*service.UserInfo{user1, user2},
+		},
+		"cacheのGetAllUsersがエラーだがauthのGetAllUsersがusersを返す": {
+			GetAllUsersCacheErr:     assert.AnError,
+			executeAuthGetAllUsers:  true,
+			GetAllUsersAuthUsers:    []*service.UserInfo{user1, user2},
+			executeSetAllUsersCache: true,
+			SetAllUsersCacheErr:     nil,
+			users:                   []*service.UserInfo{user1, user2},
+		},
+		"SetAllUsersCacheがエラーでもユーザー情報は返す": {
+			GetAllUsersCacheErr:     cache.ErrCacheMiss,
+			executeAuthGetAllUsers:  true,
+			GetAllUsersAuthUsers:    []*service.UserInfo{user1, user2},
+			executeSetAllUsersCache: true,
+			SetAllUsersCacheErr:     assert.AnError,
+			users:                   []*service.UserInfo{user1, user2},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			mockUserCache := mockCache.NewMockUser(ctrl)
+			mockUserAuth := mockAuth.NewMockUser(ctrl)
+			user := NewUser(mockUserAuth, mockUserCache)
+
+			session := &domain.OIDCSession{}
+
+			mockUserCache.EXPECT().GetAllUsers(gomock.Any()).
+				Return(testCase.GetAllUsersCacheUsers, testCase.GetAllUsersCacheErr)
+			if testCase.executeAuthGetAllUsers {
+				mockUserAuth.EXPECT().GetAllUsers(gomock.Any(), gomock.Any()).
+					Return(testCase.GetAllUsersAuthUsers, testCase.GetAllUsersAuthErr)
+			}
+			if testCase.executeSetAllUsersCache {
+				mockUserCache.EXPECT().SetAllUsers(gomock.Any(), testCase.GetAllUsersAuthUsers).
+					Return(testCase.SetAllUsersCacheErr)
+			}
+
+			users, err := user.getAllUsers(t.Context(), session)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.users, users)
+		})
+	}
+
+}
