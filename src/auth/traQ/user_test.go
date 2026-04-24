@@ -1035,9 +1035,15 @@ func TestGetAllUsers(t *testing.T) {
 				time.Now().Add(5*time.Second),
 			)
 
-			_, err = userAuth.GetAllUsers(t.Context(), session)
+			users, err := userAuth.GetAllUsers(t.Context(), session)
 
 			assert.ErrorIs(t, err, testCase.err)
+
+			if testCase.err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.users, users)
 		})
 	}
 }
