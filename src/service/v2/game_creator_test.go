@@ -248,11 +248,11 @@ func TestEditGameCreators(t *testing.T) {
 		executeGetGameCreatorPresetJobs     bool
 		presetJobs                          []*domain.GameCreatorJob
 		getGameCreatorPresetJobsErr         error
-		executeGetActiveUsers               bool
+		executeGetAllUsers                  bool
 		cacheUsers                          []*service.UserInfo
-		cacheGetActiveUsersErr              error
+		cacheGetAllUsersErr                 error
 		authUsers                           []*service.UserInfo
-		authGetActiveUsersErr               error
+		authGetAllUsersErr                  error
 		executeGetGameCreatorCustomJobsByID bool
 		existingCustomJobs                  []*domain.GameCreatorCustomJob
 		getGameCreatorCustomJobsByIDErr     error
@@ -288,23 +288,23 @@ func TestEditGameCreators(t *testing.T) {
 			getGameCreatorPresetJobsErr:     assert.AnError,
 			wantErr:                         assert.AnError,
 		},
-		"active user取得でエラーなのでエラー": {
+		"all user取得でエラーなのでエラー": {
 			gameID:                          gameID,
 			inputs:                          []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			executeGetGameCreatorPresetJobs: true,
 			presetJobs:                      []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:           true,
-			cacheGetActiveUsersErr:          cache.ErrCacheMiss,
-			authGetActiveUsersErr:           assert.AnError,
+			executeGetAllUsers:              true,
+			cacheGetAllUsersErr:             cache.ErrCacheMiss,
+			authGetAllUsersErr:              assert.AnError,
 			wantErr:                         assert.AnError,
 		},
-		"active usersに存在しないユーザーが入力された場合ErrInvalidUserID": {
+		"all usersに存在しないユーザーが入力された場合ErrInvalidUserID": {
 			gameID:                          gameID,
 			inputs:                          []*service.EditGameCreatorJobInput{{UserID: invalidUserID}},
 			executeGetGameCreatorPresetJobs: true,
 			presetJobs:                      []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:           true,
-			cacheGetActiveUsersErr:          cache.ErrCacheMiss,
+			executeGetAllUsers:              true,
+			cacheGetAllUsersErr:             cache.ErrCacheMiss,
 			authUsers:                       []*service.UserInfo{user1, user2},
 			wantErr:                         service.ErrInvalidUserID,
 		},
@@ -313,8 +313,8 @@ func TestEditGameCreators(t *testing.T) {
 			inputs:                          []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}, {UserID: user1.GetID()}},
 			executeGetGameCreatorPresetJobs: true,
 			presetJobs:                      []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:           true,
-			cacheGetActiveUsersErr:          cache.ErrCacheMiss,
+			executeGetAllUsers:              true,
+			cacheGetAllUsersErr:             cache.ErrCacheMiss,
 			authUsers:                       []*service.UserInfo{user1, user2},
 			wantErr:                         service.ErrDuplicateUserID,
 		},
@@ -323,8 +323,8 @@ func TestEditGameCreators(t *testing.T) {
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID(), NewCustomJobNames: []values.GameCreatorJobDisplayName{existingCustomJob.GetDisplayName()}}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1, user2},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -335,8 +335,8 @@ func TestEditGameCreators(t *testing.T) {
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID(), Jobs: []values.GameCreatorJobID{values.NewGameCreatorJobID()}}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1, user2},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -350,8 +350,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1, user2},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{},
@@ -362,8 +362,8 @@ func TestEditGameCreators(t *testing.T) {
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			getGameCreatorCustomJobsByIDErr:     assert.AnError,
@@ -374,8 +374,8 @@ func TestEditGameCreators(t *testing.T) {
 			inputs:                              []*service.EditGameCreatorJobInput{{UserID: user1.GetID()}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{},
@@ -391,8 +391,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{},
@@ -410,8 +410,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
-			executeGetActiveUsers:               true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{},
@@ -430,8 +430,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -452,8 +452,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -482,7 +482,7 @@ func TestEditGameCreators(t *testing.T) {
 			},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
+			executeGetAllUsers:                  true,
 			cacheUsers:                          []*service.UserInfo{user1, user2},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -503,8 +503,8 @@ func TestEditGameCreators(t *testing.T) {
 			}},
 			executeGetGameCreatorPresetJobs:     true,
 			presetJobs:                          []*domain.GameCreatorJob{presetJob1, presetJob2},
-			executeGetActiveUsers:               true,
-			cacheGetActiveUsersErr:              cache.ErrCacheMiss,
+			executeGetAllUsers:                  true,
+			cacheGetAllUsersErr:                 cache.ErrCacheMiss,
 			authUsers:                           []*service.UserInfo{user1},
 			executeGetGameCreatorCustomJobsByID: true,
 			existingCustomJobs:                  []*domain.GameCreatorCustomJob{existingCustomJob},
@@ -538,25 +538,25 @@ func TestEditGameCreators(t *testing.T) {
 				GetGame(gomock.Any(), testCase.gameID, repository.LockTypeNone).
 				Return(nil, testCase.getGameErr)
 
-			if testCase.executeGetActiveUsers {
+			if testCase.executeGetAllUsers {
 				cacheUsers := testCase.cacheUsers
 				if cacheUsers == nil {
 					cacheUsers = []*service.UserInfo{}
 				}
 				mockUserCache.EXPECT().
-					GetActiveUsers(gomock.Any()).
-					Return(cacheUsers, testCase.cacheGetActiveUsersErr)
-				if testCase.cacheGetActiveUsersErr != nil {
+					GetAllUsers(gomock.Any()).
+					Return(cacheUsers, testCase.cacheGetAllUsersErr)
+				if testCase.cacheGetAllUsersErr != nil {
 					authUsers := testCase.authUsers
 					if authUsers == nil {
 						authUsers = []*service.UserInfo{}
 					}
 					mockUserAuth.EXPECT().
-						GetActiveUsers(gomock.Any(), sess).
-						Return(authUsers, testCase.authGetActiveUsersErr)
-					if testCase.authGetActiveUsersErr == nil {
+						GetAllUsers(gomock.Any(), sess).
+						Return(authUsers, testCase.authGetAllUsersErr)
+					if testCase.authGetAllUsersErr == nil {
 						mockUserCache.EXPECT().
-							SetActiveUsers(gomock.Any(), authUsers).
+							SetAllUsers(gomock.Any(), authUsers).
 							Return(nil)
 					}
 				}
