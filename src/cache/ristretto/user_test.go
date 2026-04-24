@@ -625,13 +625,13 @@ func TestGetAllUsers(t *testing.T) {
 					usersCache.meCache.Close()
 				})
 
-			if len(testCase.users) > 0 {
-				ok := usersCache.users.SetWithTTL(allUsersKey, testCase.users, 1, ttl)
-				require.True(t, ok)
-				usersCache.users.Wait()
-			}
+				if len(testCase.users) > 0 {
+					ok := usersCache.users.SetWithTTL(allUsersKey, testCase.users, 1, ttl)
+					require.True(t, ok)
+					usersCache.users.Wait()
+				}
 
-			time.Sleep(testCase.after)
+				time.Sleep(testCase.after)
 
 				users, err := usersCache.GetAllUsers(ctx)
 
@@ -709,6 +709,7 @@ func TestSetAllUsers(t *testing.T) {
 				err = usersCache.SetAllUsers(ctx, testCase.users)
 				if testCase.err != nil {
 					assert.ErrorIs(t, err, testCase.err)
+					return
 				}
 				assert.NoError(t, err)
 
