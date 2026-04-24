@@ -1001,10 +1001,10 @@ func TestGetAllUsers(t *testing.T) {
 						return
 					}
 
-					w.WriteHeader(testCase.statusCode)
 					body, err := json.Marshal(testCase.traqResponse)
 					require.NoError(t, err)
 					w.Header().Set("Content-Type", "application/json; charset=utf-8")
+					w.WriteHeader(testCase.statusCode)
 					_, err = w.Write(body)
 					require.NoError(t, err)
 				},
