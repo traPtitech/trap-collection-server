@@ -1,7 +1,5 @@
 # syntax = docker/dockerfile:1
 
-FROM arigaio/atlas:0.37.0 AS atlas
-
 FROM golang:1.26.1-alpine AS build
 
 RUN --mount=type=cache,target=/var/cache/apk \
@@ -11,7 +9,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
-COPY --from=atlas --chown=root:root atlas /usr/local/bin/atlas
+COPY --from=arigaio/atlas:1.2.0 --chown=root:root atlas /usr/local/bin/atlas
 
 COPY go.mod go.sum ./
 RUN go mod download
