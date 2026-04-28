@@ -9,4 +9,5 @@ var (
 	ErrNegativeLimit       = errors.New("limit is negative")
 	ErrDuplicatedUniqueKey = errors.New("unique key duplicated")
 	ErrIncludeInvalidArgs  = errors.New("include invalid args")
+	ErrForeignKeyViolated  = errors.New("foreign key violated")
 )
