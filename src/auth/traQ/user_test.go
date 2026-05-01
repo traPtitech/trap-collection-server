@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1000,6 +1001,11 @@ func TestGetAllUsers(t *testing.T) {
 						w.WriteHeader(http.StatusMethodNotAllowed)
 						return
 					}
+
+					includeSuspendedStr := r.URL.Query().Get("include-suspended")
+					includeSuspended, err := strconv.ParseBool(includeSuspendedStr)
+					assert.NoError(t, err)
+					assert.True(t, includeSuspended)
 
 					body, err := json.Marshal(testCase.traqResponse)
 					require.NoError(t, err)
