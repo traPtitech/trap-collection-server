@@ -276,13 +276,12 @@ func (u *User) GetAllUsers(ctx context.Context, session *domain.OIDCSession) ([]
 		default:
 			return nil, fmt.Errorf("unexpected state: %d", user.State)
 		}
-		bot := user.Bot
 
 		users = append(users, service.NewUserInfo(
 			values.NewTrapMemberID(user.ID),
 			values.NewTrapMemberName(user.Name),
 			status,
-			bot,
+			user.Bot,
 		))
 	}
 
