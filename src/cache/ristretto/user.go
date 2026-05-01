@@ -126,8 +126,10 @@ func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) e
 func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
 	users, ok := u.users.Get(activeUsersKey)
 	if !ok {
+		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
+	hitCount.WithLabelValues("active_users", "hit").Inc()
 
 	return users, nil
 }
@@ -150,8 +152,10 @@ func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) erro
 func (u *User) GetAllUsers(_ context.Context) ([]*service.UserInfo, error) {
 	users, ok := u.users.Get(allUsersKey)
 	if !ok {
+		hitCount.WithLabelValues("all_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
+	hitCount.WithLabelValues("all_users", "hit").Inc()
 
 	return users, nil
 }
