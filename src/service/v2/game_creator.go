@@ -129,7 +129,7 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 ) (*editGameCreatorsValidatedInput, error) {
 	activeMembers, err := gc.user.getAllUsers(ctx, session)
 	if err != nil {
-		return nil, fmt.Errorf("get active users: %w", err)
+		return nil, fmt.Errorf("get all users: %w", err)
 	}
 
 	activeMembersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeMembers))
