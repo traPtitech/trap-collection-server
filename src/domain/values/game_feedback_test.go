@@ -53,6 +53,8 @@ func TestFeedbackQuestionTextValidate(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			err := FeedbackQuestionText(testCase.questionText).Validate()
 
 			if testCase.isErr {
@@ -111,6 +113,8 @@ func TestFeedbackCommentValidate(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
+
 			err := FeedbackComment(testCase.comment).Validate()
 
 			if testCase.isErr {
