@@ -6,26 +6,26 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
-type GameFeedbackConfig struct {
+type GameFeedbackPreference struct {
 	gameID  values.GameID
 	enabled bool
 }
 
-func NewGameFeedbackConfig(
+func NewGameFeedbackPreference(
 	gameID values.GameID,
 	enabled bool,
-) *GameFeedbackConfig {
-	return &GameFeedbackConfig{
+) *GameFeedbackPreference {
+	return &GameFeedbackPreference{
 		gameID:  gameID,
 		enabled: enabled,
 	}
 }
 
-func (c *GameFeedbackConfig) GetGameID() values.GameID {
+func (c *GameFeedbackPreference) GetGameID() values.GameID {
 	return c.gameID
 }
 
-func (c *GameFeedbackConfig) IsEnabled() bool {
+func (c *GameFeedbackPreference) IsEnabled() bool {
 	return c.enabled
 }
 
@@ -132,7 +132,10 @@ type GameFeedbackAnswer struct {
 	id         values.GameFeedbackAnswerID
 	feedbackID values.GameFeedbackID
 	questionID values.FeedbackQuestionID
-	answer     int
+	// answer は質問の回答種別ごとに以下の値を取る。
+	// FeedbackAnswerTypeYesNo: 0 = No, 1 = Yes
+	// FeedbackAnswerTypeFiveScale: 1〜5
+	answer int
 }
 
 func NewGameFeedbackAnswer(
