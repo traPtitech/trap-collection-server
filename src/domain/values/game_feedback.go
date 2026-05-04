@@ -66,7 +66,9 @@ func (id GameFeedbackAnswerID) UUID() uuid.UUID {
 }
 
 const (
+	// FeedbackAnswerTypeYesNo は Yes/No で答える質問。回答は 0 = No, 1 = Yes。
 	FeedbackAnswerTypeYesNo FeedbackAnswerType = iota
+	// FeedbackAnswerTypeFiveScale は 1〜5 の5段階で答える質問。
 	FeedbackAnswerTypeFiveScale
 )
 
