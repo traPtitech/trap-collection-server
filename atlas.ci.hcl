@@ -21,6 +21,10 @@ env "local" {
 env "ci" {
   dev = "mysql://root:pass@localhost:3306/trap_collection"
 
+  migration {
+    dir = "file://migrations"
+  }
+
   lint {
     git {
       base = "origin/main"

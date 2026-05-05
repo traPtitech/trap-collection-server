@@ -177,6 +177,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
+
       - name: Install Atlas
         run: |
           curl -sSf https://atlasgo.sh | sh -s -- --community --yes
@@ -190,13 +194,10 @@ jobs:
           done
 
           atlas migrate apply \
-          --dir file://migrations \
-          --url "maria://root:pass@127.0.0.1:3306/trap_collection"
-      
-      - name: Install tbls
-        run: |
-          go install github.com/k1LoW/tbls@v1.56.2
+          --config file://atlas.ci.hcl \
+          --env ci
 
       - name: Run tbls
         run: |
-          TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection tbls doc --rm-dist
+          TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
+          go tool tbls doc --rm-dist
