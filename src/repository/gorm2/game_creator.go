@@ -189,7 +189,7 @@ func (gc *GameCreator) GetGameCreatorsByUserIDs(ctx context.Context, gameID valu
 	var gameCreators []schema.GameCreatorTable
 	err = db.Where("game_id = ?", uuid.UUID(gameID)).
 		Where("user_id IN ?", userUUIDs).
-		Order("created_at DESC").
+		Order("created_at ASC").
 		Find(&gameCreators).Error
 	if err != nil {
 		return nil, fmt.Errorf("find game creators: %w", err)

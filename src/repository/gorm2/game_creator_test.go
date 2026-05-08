@@ -719,7 +719,7 @@ func TestGetGameCreatorsByUserIDs(t *testing.T) {
 			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema2},
 			gameID:   values.NewGameIDFromUUID(creatorSchema1.Game.ID),
 			userIDs:  []values.TraPMemberID{creator1.GetUserID(), creator2.GetUserID()},
-			result:   []*domain.GameCreator{creator1, creator2},
+			result:   []*domain.GameCreator{creator2, creator1},
 		},
 		"該当するcreatorがいないので空配列": {
 			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema2},
