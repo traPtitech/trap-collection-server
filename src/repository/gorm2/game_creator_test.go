@@ -702,6 +702,17 @@ func TestGetGameCreatorsByUserIDs(t *testing.T) {
 		values.NewTrapMemberName(creatorSchema2.UserName),
 		creatorSchema2.CreatedAt,
 	)
+	creatorSchema3 := &schema.GameCreatorTable{
+		ID:        uuid.New(),
+		UserID:    creatorSchema1.UserID,
+		UserName:  "user3",
+		CreatedAt: time.Now().Add(-time.Hour),
+		Game: schema.GameTable2{
+			ID:               uuid.New(),
+			Name:             "game2",
+			VisibilityTypeID: 1,
+		},
+	}
 
 	testCases := map[string]struct {
 		creators []*schema.GameCreatorTable
@@ -726,6 +737,12 @@ func TestGetGameCreatorsByUserIDs(t *testing.T) {
 			gameID:   values.NewGameID(),
 			userIDs:  []values.TraPMemberID{values.NewTrapMemberID(uuid.New())},
 			result:   []*domain.GameCreator{},
+		},
+		"同じuserが複数gameにcreatorとして存在しても指定したgameの分だけcreatorが取得できる": {
+			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema3},
+			gameID:   values.NewGameIDFromUUID(creatorSchema1.Game.ID),
+			userIDs:  []values.TraPMemberID{creator1.GetUserID()},
+			result:   []*domain.GameCreator{creator1},
 		},
 	}
 
