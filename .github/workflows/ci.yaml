@@ -168,9 +168,10 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd "mysqladmin ping -h 127.0.0.1 -ppass"
-          --health-interval 1s
-          --health-timeout 5m
-          --health-retries 1000
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
         
 
     name: tbls
@@ -184,7 +185,6 @@ jobs:
       - name: Install Atlas
         run: |
           curl -sSf https://atlasgo.sh | sh -s -- --community --yes
-        shell: bash
 
       - name: Run migration
         run: |
@@ -196,8 +196,17 @@ jobs:
           atlas migrate apply \
           --config file://atlas.ci.hcl \
           --env ci
+        shell: bash
 
       - name: Run tbls
         run: |
           TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
           go tool tbls doc --rm-dist
+
+      - name: Check diff
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
+            exit 1
+          fi
+        shell: bash
