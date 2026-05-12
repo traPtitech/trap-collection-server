@@ -499,12 +499,17 @@ func TestGetGameCreatorCustomJobsByGameID(t *testing.T) {
 	}
 }
 
+<<<<<<< issue1524
 func TestCreateGameCreatorCustomJobs(t *testing.T) {
+=======
+func TestCreateGameCreators(t *testing.T) {
+>>>>>>> main
 	db, err := testDB.getDB(t.Context())
 	require.NoError(t, err)
 
 	now := time.Now()
 
+<<<<<<< issue1524
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
 	invalidGameID := values.NewGameID() // DBに作成しないゲームID
@@ -522,10 +527,20 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 		},
 	}
 	err = db.Create(games).Error
+=======
+	gameID := values.NewGameID()
+	game := &schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "Test Game",
+		VisibilityTypeID: 1,
+	}
+	err = db.Create(game).Error
+>>>>>>> main
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		db, err := testDB.getDB(context.Background())
 		require.NoError(t, err)
+<<<<<<< issue1524
 		err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Where("id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).Delete(&schema.GameTable2{}).Error
 		require.NoError(t, err)
 	})
@@ -644,6 +659,79 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 			wantDelta:       0,
 			wantErr:         repository.ErrForeignKeyViolated,
 			wantInsertedIDs: []values.GameCreatorJobID{},
+=======
+		err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error
+		require.NoError(t, err)
+	})
+
+	creator1 := domain.NewGameCreator(
+		values.NewGameCreatorID(),
+		values.NewTrapMemberID(uuid.New()),
+		gameID,
+		values.NewTrapMemberName("えびせん"),
+		now,
+	)
+	creator2 := domain.NewGameCreator(
+		values.NewGameCreatorID(),
+		values.NewTrapMemberID(uuid.New()),
+		gameID,
+		values.NewTrapMemberName("ぽてと"),
+		now.Add(1*time.Hour),
+	)
+
+	testCases := map[string]struct {
+		addCreators       []*domain.GameCreator
+		beforeCreators    []*schema.GameCreatorTable
+		wantDeltaCreators int
+		err               error
+	}{
+		"複数のゲームクリエイターを作成できる": {
+			addCreators:       []*domain.GameCreator{creator1, creator2},
+			beforeCreators:    []*schema.GameCreatorTable{},
+			wantDeltaCreators: 2,
+			err:               nil,
+		},
+		"空の配列を渡した場合は何もしない": {
+			addCreators:       []*domain.GameCreator{},
+			beforeCreators:    []*schema.GameCreatorTable{},
+			wantDeltaCreators: 0,
+			err:               nil,
+		},
+		"存在しないゲームIDのゲームクリエイターを作成しようとした場合はエラー": {
+			addCreators: []*domain.GameCreator{
+				domain.NewGameCreator(
+					values.NewGameCreatorID(),
+					values.NewTrapMemberID(uuid.New()),
+					values.NewGameID(),
+					values.NewTrapMemberName("存在しないゲームのクリエイター"),
+					now,
+				),
+			},
+			wantDeltaCreators: 0,
+			err:               repository.ErrForeignKeyViolated,
+		},
+		"同一 gameID と userID の組み合わせで重複エラーが発生する": {
+			addCreators: []*domain.GameCreator{
+				domain.NewGameCreator(
+					values.NewGameCreatorID(), // 新しいID
+					creator1.GetUserID(),      // 既存と同じ userID
+					creator1.GetGameID(),      // 既存と同じ gameID
+					values.NewTrapMemberName("えびせんMk-2"),
+					now,
+				),
+			},
+			beforeCreators: []*schema.GameCreatorTable{
+				{
+					ID:        uuid.UUID(creator1.GetID()),
+					UserID:    uuid.UUID(creator1.GetUserID()),
+					UserName:  string(creator1.GetUserName()),
+					GameID:    uuid.UUID(creator1.GetGameID()),
+					CreatedAt: creator1.GetCreatedAt(),
+				},
+			},
+			wantDeltaCreators: 0,
+			err:               repository.ErrDuplicatedUniqueKey,
+>>>>>>> main
 		},
 	}
 
@@ -652,6 +740,7 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 			db, err := testDB.getDB(t.Context())
 			require.NoError(t, err)
 
+<<<<<<< issue1524
 			// 事前ジョブを作成 (既存データの不変性検証用)
 			if len(testCase.beforeJobs) > 0 {
 				err = db.Create(testCase.beforeJobs).Error
@@ -715,6 +804,73 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 				assert.Equal(t, uuid.UUID(expected.GetGameID()), job.GameID)
 				assert.Equal(t, string(expected.GetDisplayName()), job.DisplayName)
 				assert.WithinDuration(t, expected.GetCreatedAt(), job.CreatedAt, time.Second)
+=======
+			if len(testCase.beforeCreators) > 0 {
+				err = db.Create(testCase.beforeCreators).Error
+				require.NoError(t, err)
+			}
+
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameCreatorTable{}).Error
+				require.NoError(t, err)
+			})
+
+			repo := NewGameCreator(testDB)
+
+			err = repo.CreateGameCreators(t.Context(), testCase.addCreators)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			var creators []*schema.GameCreatorTable
+			err = db.Find(&creators).Error
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.wantDeltaCreators+len(testCase.beforeCreators), len(creators))
+
+			actualByID := make(map[values.GameCreatorID]*schema.GameCreatorTable, len(creators))
+			for _, c := range creators {
+				actualByID[values.GameCreatorID(c.ID)] = c
+			}
+
+			beforeIDSet := make(map[values.GameCreatorID]bool, len(testCase.beforeCreators))
+			for _, c := range testCase.beforeCreators {
+				beforeID := values.GameCreatorID(c.ID)
+				beforeIDSet[beforeID] = true
+				actual, ok := actualByID[beforeID]
+				require.Truef(t, ok, "beforeCreatorsのID %v が実際のcreatorsに存在しない", beforeID)
+				assert.Equal(t, beforeID, values.GameCreatorID(actual.ID))
+				assert.Equal(t, c.UserID, actual.UserID)
+				assert.Equal(t, c.GameID, actual.GameID)
+				assert.Equal(t, c.UserName, actual.UserName)
+				assert.WithinDuration(t, c.CreatedAt, actual.CreatedAt, time.Second)
+			}
+
+			if testCase.err == nil {
+				for _, c := range testCase.addCreators {
+					actual, ok := actualByID[c.GetID()]
+					if !assert.Truef(t, ok, "追加したゲームクリエイターのID %v が実際のcreatorsに存在しない", c.GetID()) {
+						continue
+					}
+					assert.Equal(t, c.GetID(), values.GameCreatorID(actual.ID))
+					assert.Equal(t, uuid.UUID(c.GetUserID()), actual.UserID)
+					assert.Equal(t, uuid.UUID(c.GetGameID()), actual.GameID)
+					assert.Equal(t, string(c.GetUserName()), actual.UserName)
+					assert.WithinDuration(t, c.GetCreatedAt(), actual.CreatedAt, time.Second)
+				}
+			} else {
+				for _, added := range testCase.addCreators {
+					if _, existedBefore := beforeIDSet[added.GetID()]; existedBefore {
+						continue
+					}
+					_, created := actualByID[added.GetID()]
+					assert.Falsef(t, created, "unexpected creator created on error: %v", added.GetID())
+				}
+>>>>>>> main
 			}
 		})
 	}
