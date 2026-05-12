@@ -708,7 +708,7 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 			}
 			for _, job := range insertedJobs {
 				expected, ok := expectedJobsMap[job.ID]
-				if !assert.Truef(t, ok, "予期しないIDの挿入: %v", job.ID) {
+				if !assert.Truef(t, ok, "unexpected ID inserted: %v", job.ID) {
 					continue
 				}
 				assert.Equal(t, uuid.UUID(expected.GetID()), job.ID)
