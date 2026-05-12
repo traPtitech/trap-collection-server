@@ -499,20 +499,15 @@ func TestGetGameCreatorCustomJobsByGameID(t *testing.T) {
 	}
 }
 
-<<<<<<< issue1524
 func TestCreateGameCreatorCustomJobs(t *testing.T) {
-=======
-func TestCreateGameCreators(t *testing.T) {
->>>>>>> main
 	db, err := testDB.getDB(t.Context())
 	require.NoError(t, err)
 
 	now := time.Now()
 
-<<<<<<< issue1524
 	gameID1 := values.NewGameID()
 	gameID2 := values.NewGameID()
-	invalidGameID := values.NewGameID() // DBに作成しないゲームID
+	invalidGameID := values.NewGameID()
 
 	games := []*schema.GameTable2{
 		{
@@ -527,25 +522,14 @@ func TestCreateGameCreators(t *testing.T) {
 		},
 	}
 	err = db.Create(games).Error
-=======
-	gameID := values.NewGameID()
-	game := &schema.GameTable2{
-		ID:               uuid.UUID(gameID),
-		Name:             "Test Game",
-		VisibilityTypeID: 1,
-	}
-	err = db.Create(game).Error
->>>>>>> main
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		db, err := testDB.getDB(context.Background())
 		require.NoError(t, err)
-<<<<<<< issue1524
 		err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Where("id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).Delete(&schema.GameTable2{}).Error
 		require.NoError(t, err)
 	})
 
-	// 視認性のためにケースごとに固定IDをあらかじめ用意する
 	jobID1 := values.NewGameCreatorJobID()
 	jobID2 := values.NewGameCreatorJobID()
 	jobIDFKFail := values.NewGameCreatorJobID()
@@ -623,7 +607,7 @@ func TestCreateGameCreators(t *testing.T) {
 					now,
 				),
 				domain.NewGameCreatorCustomJob(
-					dupJobID, // 同じID
+					dupJobID,
 					values.GameCreatorJobDisplayName("カスタムジョブご飯(重複)"),
 					gameID1,
 					now,
@@ -659,7 +643,95 @@ func TestCreateGameCreators(t *testing.T) {
 			wantDelta:       0,
 			wantErr:         repository.ErrForeignKeyViolated,
 			wantInsertedIDs: []values.GameCreatorJobID{},
-=======
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			db, err := testDB.getDB(t.Context())
+			require.NoError(t, err)
+
+			if len(testCase.beforeJobs) > 0 {
+				err = db.Create(testCase.beforeJobs).Error
+				require.NoError(t, err)
+			}
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).Delete(&schema.GameCreatorCustomJobTable{}).Error
+				require.NoError(t, err)
+			})
+
+			var beforeCount int64
+			err = db.Model(&schema.GameCreatorCustomJobTable{}).
+				Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
+				Count(&beforeCount).Error
+			require.NoError(t, err)
+
+			repo := NewGameCreator(testDB)
+			err = repo.CreateGameCreatorCustomJobs(t.Context(), testCase.addJobs)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+
+			var afterCount int64
+			err = db.Model(&schema.GameCreatorCustomJobTable{}).
+				Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
+				Count(&afterCount).Error
+			require.NoError(t, err)
+			assert.Equal(t, beforeCount+int64(testCase.wantDelta), afterCount)
+
+			if len(testCase.wantInsertedIDs) == 0 {
+				return
+			}
+			wantIDs := make([]uuid.UUID, 0, len(testCase.wantInsertedIDs))
+			for _, id := range testCase.wantInsertedIDs {
+				wantIDs = append(wantIDs, uuid.UUID(id))
+			}
+
+			var insertedJobs []schema.GameCreatorCustomJobTable
+			err = db.Where("id IN ?", wantIDs).Find(&insertedJobs).Error
+			require.NoError(t, err)
+			assert.Len(t, insertedJobs, len(testCase.wantInsertedIDs))
+
+			expectedJobsMap := make(map[uuid.UUID]*domain.GameCreatorCustomJob, len(testCase.addJobs))
+			for _, job := range testCase.addJobs {
+				expectedJobsMap[uuid.UUID(job.GetID())] = job
+			}
+			for _, job := range insertedJobs {
+				expected, ok := expectedJobsMap[job.ID]
+				if !assert.Truef(t, ok, "unexpected ID inserted: %v", job.ID) {
+					continue
+				}
+				assert.Equal(t, uuid.UUID(expected.GetID()), job.ID)
+				assert.Equal(t, uuid.UUID(expected.GetGameID()), job.GameID)
+				assert.Equal(t, string(expected.GetDisplayName()), job.DisplayName)
+				assert.WithinDuration(t, expected.GetCreatedAt(), job.CreatedAt, time.Second)
+			}
+		})
+	}
+}
+
+func TestCreateGameCreators(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	now := time.Now()
+
+	gameID := values.NewGameID()
+	game := &schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "Test Game",
+		VisibilityTypeID: 1,
+	}
+	err = db.Create(game).Error
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		db, err := testDB.getDB(context.Background())
+		require.NoError(t, err)
 		err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.GameTable2{}).Error
 		require.NoError(t, err)
 	})
@@ -731,7 +803,6 @@ func TestCreateGameCreators(t *testing.T) {
 			},
 			wantDeltaCreators: 0,
 			err:               repository.ErrDuplicatedUniqueKey,
->>>>>>> main
 		},
 	}
 
@@ -740,71 +811,6 @@ func TestCreateGameCreators(t *testing.T) {
 			db, err := testDB.getDB(t.Context())
 			require.NoError(t, err)
 
-<<<<<<< issue1524
-			// 事前ジョブを作成 (既存データの不変性検証用)
-			if len(testCase.beforeJobs) > 0 {
-				err = db.Create(testCase.beforeJobs).Error
-				require.NoError(t, err)
-			}
-			t.Cleanup(func() {
-				db, err := testDB.getDB(context.Background())
-				require.NoError(t, err)
-				err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).Delete(&schema.GameCreatorCustomJobTable{}).Error
-				require.NoError(t, err)
-			})
-
-			// 対象ゲームのカスタムジョブ件数を事前取得
-			var beforeCount int64
-			err = db.Model(&schema.GameCreatorCustomJobTable{}).
-				Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
-				Count(&beforeCount).Error
-			require.NoError(t, err)
-
-			repo := NewGameCreator(testDB)
-			err = repo.CreateGameCreatorCustomJobs(t.Context(), testCase.addJobs)
-
-			if testCase.wantErr != nil {
-				assert.ErrorIs(t, err, testCase.wantErr)
-			} else {
-				require.NoError(t, err)
-			}
-
-			// 件数差分の検証
-			var afterCount int64
-			err = db.Model(&schema.GameCreatorCustomJobTable{}).
-				Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
-				Count(&afterCount).Error
-			require.NoError(t, err)
-			assert.Equal(t, beforeCount+int64(testCase.wantDelta), afterCount)
-
-			// 挿入されたIDの検証
-			if len(testCase.wantInsertedIDs) == 0 {
-				return
-			}
-			wantIDs := make([]uuid.UUID, 0, len(testCase.wantInsertedIDs))
-			for _, id := range testCase.wantInsertedIDs {
-				wantIDs = append(wantIDs, uuid.UUID(id))
-			}
-
-			var insertedJobs []schema.GameCreatorCustomJobTable
-			err = db.Where("id IN ?", wantIDs).Find(&insertedJobs).Error
-			require.NoError(t, err)
-			assert.Len(t, insertedJobs, len(testCase.wantInsertedIDs))
-
-			expectedJobsMap := make(map[uuid.UUID]*domain.GameCreatorCustomJob, len(testCase.addJobs))
-			for _, job := range testCase.addJobs {
-				expectedJobsMap[uuid.UUID(job.GetID())] = job
-			}
-			for _, job := range insertedJobs {
-				expected, ok := expectedJobsMap[job.ID]
-				if !assert.Truef(t, ok, "unexpected ID inserted: %v", job.ID) {
-					continue
-				}
-				assert.Equal(t, uuid.UUID(expected.GetID()), job.ID)
-				assert.Equal(t, uuid.UUID(expected.GetGameID()), job.GameID)
-				assert.Equal(t, string(expected.GetDisplayName()), job.DisplayName)
-				assert.WithinDuration(t, expected.GetCreatedAt(), job.CreatedAt, time.Second)
-=======
 			if len(testCase.beforeCreators) > 0 {
 				err = db.Create(testCase.beforeCreators).Error
 				require.NoError(t, err)
@@ -870,7 +876,6 @@ func TestCreateGameCreators(t *testing.T) {
 					_, created := actualByID[added.GetID()]
 					assert.Falsef(t, created, "unexpected creator created on error: %v", added.GetID())
 				}
->>>>>>> main
 			}
 		})
 	}
