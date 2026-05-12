@@ -2,8 +2,10 @@ package gorm2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
@@ -146,6 +148,15 @@ func (gc *GameCreator) CreateGameCreatorCustomJobs(ctx context.Context, jobs []*
 
 	err = db.Create(&customJobs).Error
 	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) {
+			switch mysqlErr.Number {
+			case 1452:
+				return repository.ErrForeignKeyViolated
+			case 1062:
+				return repository.ErrDuplicatedUniqueKey
+			}
+		}
 		return fmt.Errorf("create custom jobs: %w", err)
 	}
 
