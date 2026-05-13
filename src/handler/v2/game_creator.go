@@ -32,8 +32,8 @@ func (gc *GameCreator) GetGameCreatorJobs(c echo.Context, gameID openapi.GameIDI
 		return echo.NewHTTPError(http.StatusNotFound, "Invalid gameID")
 	}
 	if err != nil {
-		log.Printf("error: faild to get game creator jobs: %v\n", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "faild to get game creator jobs")
+		log.Printf("error: failed to get game creator jobs: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game creator jobs")
 	}
 
 	res := make([]openapi.GameCreatorJob, 0, len(presentJobs)+len(customJobs))
