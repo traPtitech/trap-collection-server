@@ -664,3 +664,102 @@ func TestCreateGameCreators(t *testing.T) {
 		})
 	}
 }
+
+func TestUpsertGameCreatorPresetJobsRelations(t *testing.T) {
+	creatorID1 := uuid.New()
+	gameID1 := uuid.New()
+	userID1 := uuid.New()
+	jobID1 := uuid.New()
+
+	creator1 := schema.GameCreatorTable{
+		ID:        creatorID1,
+		UserID:    userID1,
+		UserName:  "user1",
+		GameID:    gameID1,
+		CreatedAt: time.Now(),
+		Game: schema.GameTable2{
+			ID:               gameID1,
+			Name:             "game1",
+			VisibilityTypeID: 1,
+		},
+		CreatorJobs: []schema.GameCreatorJobTable{
+			{
+				ID:          jobID1,
+				DisplayName: "job1",
+				CreatedAt:   time.Now(),
+			},
+		},
+	}
+
+	testCases := map[string]struct {
+		beforeCreatorPresetJobsRelations []schema.GameCreatorTable
+		input                            map[values.GameCreatorID][]values.GameCreatorJobID
+		afterCreatorPresetJobsRelations  []schema.GameCreatorTable
+		err                              error
+	}{
+		"いったん": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			afterCreatorPresetJobsRelations:  []schema.GameCreatorTable{creator1},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			if len(testCase.beforeCreatorPresetJobsRelations) > 0 {
+				err = db.Create(testCase.beforeCreatorPresetJobsRelations).Error
+				require.NoError(t, err)
+			}
+			if len(testCase.afterCreatorPresetJobsRelations) > 0 {
+				t.Cleanup(func() {
+					db, err := testDB.getDB(context.Background())
+					require.NoError(t, err)
+					err = db.Unscoped().Model(testCase.afterCreatorPresetJobsRelations).
+						Association("CreatorJobs").Clear()
+					require.NoError(t, err)
+					err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+						Delete(testCase.afterCreatorPresetJobsRelations).Error
+					require.NoError(t, err)
+					err = db.Model(&schema.GameTable2{}).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+						Delete(testCase.afterCreatorPresetJobsRelations).Error
+					require.NoError(t, err)
+				})
+			}
+
+			repo := NewGameCreator(testDB)
+
+			err = repo.UpsertGameCreatorPresetJobsRelations(ctx, testCase.input)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			var result []schema.GameCreatorTable
+			err = db.Preload("Game").Preload("CreatorJobs").Find(&result).Error
+			assert.NoError(t, err)
+
+			assert.Len(t, result, len(testCase.afterCreatorPresetJobsRelations))
+			for i, expected := range testCase.afterCreatorPresetJobsRelations {
+				actual := result[i]
+				assert.Equal(t, expected.ID, actual.ID)
+				assert.Equal(t, expected.UserID, actual.UserID)
+				assert.Equal(t, expected.UserName, actual.UserName)
+				assert.WithinDuration(t, expected.CreatedAt, actual.CreatedAt, time.Second)
+
+				assert.Len(t, actual.CreatorJobs, len(expected.CreatorJobs))
+				for j, expectedJob := range expected.CreatorJobs {
+					actualJob := actual.CreatorJobs[j]
+					assert.Equal(t, expectedJob.ID, actualJob.ID)
+					assert.Equal(t, expectedJob.DisplayName, actualJob.DisplayName)
+					assert.WithinDuration(t, expectedJob.CreatedAt, actualJob.CreatedAt, time.Second)
+				}
+			}
+		})
+	}
+}
