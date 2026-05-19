@@ -65,7 +65,7 @@ func (checker *Checker) check(ctx context.Context, input *openapi3filter.Authent
 		"EditionGameFeedbackAuth":    checker.EditionGameFeedbackAuthChecker,
 		"EditionIDAuth":              checker.EditionIDAuthChecker,
 		"GameInfoVisibilityAuth":     checker.GameInfoVisibilityChecker,
-		"GameFileVisibilityAuth":     checker.GameFileVisibilityChecker, // この3つは同じ条件のためえ、一つのチェッカーのみ実装している
+		"GameFileVisibilityAuth":     checker.GameFileVisibilityChecker, // この3つは同じ条件のため、一つのチェッカーのみ実装している
 		"GameImageVisibilityAuth":    checker.GameFileVisibilityChecker,
 		"GameVideoVisibilityAuth":    checker.GameFileVisibilityChecker,
 		"GameCreatorsVisibilityAuth": checker.GameInfoVisibilityChecker, // GameInfoVisibilityAuth と同じなため、そのまま持ってくる
