@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/cache"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -249,11 +251,11 @@ func TestGetAllActiveUsers(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
+				ok := userCache.users.Set(activeUsersKey, testCase.users, 8)
 				assert.True(t, ok)
 
-				userCache.activeUsers.Wait()
-				defer userCache.activeUsers.Clear()
+				userCache.users.Wait()
+				defer userCache.users.Clear()
 			}
 
 			users, err := userCache.GetAllActiveUsers(ctx)
@@ -343,10 +345,10 @@ func TestSetAllActiveUsers(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				ok := userCache.activeUsers.Set(activeUsersKey, testCase.beforeValue, 1)
+				ok := userCache.users.Set(activeUsersKey, testCase.beforeValue, 1)
 				assert.True(t, ok)
 
-				userCache.activeUsers.Wait()
+				userCache.users.Wait()
 			}
 
 			err := userCache.SetAllActiveUsers(ctx, testCase.users)
@@ -365,10 +367,10 @@ func TestSetAllActiveUsers(t *testing.T) {
 			}
 
 			// キャッシュが設定されるまで待機
-			userCache.activeUsers.Wait()
+			userCache.users.Wait()
 
 			// OIDCSessionの期限前なのでキャッシュされている
-			actualUsers, ok := userCache.activeUsers.Get(activeUsersKey)
+			actualUsers, ok := userCache.users.Get(activeUsersKey)
 			assert.True(t, ok)
 
 			for i, user := range testCase.users {
@@ -436,11 +438,11 @@ func TestGetActiveUsers(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				ok := userCache.activeUsers.Set(activeUsersKey, testCase.users, 8)
+				ok := userCache.users.Set(activeUsersKey, testCase.users, 8)
 				assert.True(t, ok)
 
-				userCache.activeUsers.Wait()
-				defer userCache.activeUsers.Clear()
+				userCache.users.Wait()
+				defer userCache.users.Clear()
 			}
 
 			users, err := userCache.GetActiveUsers(ctx)
@@ -530,10 +532,10 @@ func TestSetActiveUsers(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			if testCase.keyExist {
-				ok := userCache.activeUsers.Set(activeUsersKey, testCase.beforeValue, 1)
+				ok := userCache.users.Set(activeUsersKey, testCase.beforeValue, 1)
 				assert.True(t, ok)
 
-				userCache.activeUsers.Wait()
+				userCache.users.Wait()
 			}
 
 			err := userCache.SetActiveUsers(ctx, testCase.users)
@@ -552,10 +554,10 @@ func TestSetActiveUsers(t *testing.T) {
 			}
 
 			// キャッシュが設定されるまで待機
-			userCache.activeUsers.Wait()
+			userCache.users.Wait()
 
 			// OIDCSessionの期限前なのでキャッシュされている
-			actualUsers, ok := userCache.activeUsers.Get(activeUsersKey)
+			actualUsers, ok := userCache.users.Get(activeUsersKey)
 			assert.True(t, ok)
 
 			for i, user := range testCase.users {
@@ -567,4 +569,163 @@ func TestSetActiveUsers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAllUsers(t *testing.T) {
+	t.Parallel()
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("mazrean"),
+		values.TrapMemberStatusDeactivated,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("ikura-hamu"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+
+	ttl := time.Hour
+	testCases := map[string]struct {
+		users []*service.UserInfo
+		after time.Duration
+		err   error
+	}{
+		"ttl前なのでキャッシュされている": {
+			users: []*service.UserInfo{user1, user2},
+			after: time.Second,
+		},
+		"ttl後なのでキャッシュされていない": {
+			users: []*service.UserInfo{user1, user2},
+			after: ttl + time.Second,
+			err:   cache.ErrCacheMiss,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				ctrl := gomock.NewController(t)
+				mockConf := mock.NewMockCacheRistretto(ctrl)
+
+				mockConf.
+					EXPECT().
+					ActiveUsersTTL().
+					Return(ttl, nil)
+
+				usersCache, err := NewUser(mockConf)
+				require.NoError(t, err)
+
+				t.Cleanup(func() {
+					usersCache.users.Close()
+					usersCache.meCache.Close()
+				})
+
+				if len(testCase.users) > 0 {
+					ok := usersCache.users.SetWithTTL(allUsersKey, testCase.users, 1, ttl)
+					require.True(t, ok)
+					usersCache.users.Wait()
+				}
+
+				time.Sleep(testCase.after)
+
+				users, err := usersCache.GetAllUsers(ctx)
+
+				if testCase.err != nil {
+					require.ErrorIs(t, err, testCase.err)
+				} else {
+					require.NoError(t, err)
+					assert.Equal(t, testCase.users, users)
+				}
+			})
+		})
+	}
+}
+
+func TestSetAllUsers(t *testing.T) {
+	t.Parallel()
+
+	ttl := time.Hour
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("mazrean"),
+		values.TrapMemberStatusDeactivated,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("ikura-hamu"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+
+	testCases := map[string]struct {
+		beforeUsers []*service.UserInfo
+		users       []*service.UserInfo
+		err         error
+	}{
+		"ユーザー情報をセットできる": {
+			users: []*service.UserInfo{user1, user2},
+		},
+		"元からキーがあっても上書きする": {
+			beforeUsers: []*service.UserInfo{user1},
+			users:       []*service.UserInfo{user2},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			synctest.Test(t, func(t *testing.T) {
+				ctx := t.Context()
+				ctrl := gomock.NewController(t)
+				mockConf := mock.NewMockCacheRistretto(ctrl)
+
+				mockConf.
+					EXPECT().
+					ActiveUsersTTL().
+					Return(ttl, nil)
+
+				usersCache, err := NewUser(mockConf)
+				require.NoError(t, err)
+
+				t.Cleanup(func() {
+					usersCache.users.Close()
+					usersCache.meCache.Close()
+				})
+
+				if len(testCase.beforeUsers) > 0 {
+					ok := usersCache.users.SetWithTTL(allUsersKey, testCase.beforeUsers, 1, ttl)
+					require.True(t, ok)
+					usersCache.users.Wait()
+				}
+
+				err = usersCache.SetAllUsers(ctx, testCase.users)
+				if testCase.err != nil {
+					assert.ErrorIs(t, err, testCase.err)
+					return
+				}
+				assert.NoError(t, err)
+
+				usersCache.users.Wait()
+
+				users, ok := usersCache.users.Get(allUsersKey)
+				assert.True(t, ok)
+				assert.Equal(t, testCase.users, users)
+
+				time.Sleep(ttl + time.Second)
+
+				_, ok = usersCache.users.Get(allUsersKey)
+				assert.False(t, ok)
+			})
+
+		})
+	}
+
 }

@@ -171,3 +171,28 @@ func (uu *User) getActiveUsers(ctx context.Context, session *domain.OIDCSession)
 
 	return users, nil
 }
+
+func (uu *User) getAllUsers(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error) {
+	users, err := uu.userCache.GetAllUsers(ctx)
+	if err != nil && !errors.Is(err, cache.ErrCacheMiss) {
+		// cacheからの取り出しに失敗してもauthからとって来れれば良いので、returnはしない
+		log.Printf("failed to get users from cache: %v\n", err)
+	}
+	// cacheから取り出した場合はそれを返す
+	if err == nil {
+		return users, nil
+	}
+
+	users, err = uu.userAuth.GetAllUsers(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	err = uu.userCache.SetAllUsers(ctx, users)
+	if err != nil {
+		// cacheの設定に失敗してもreturnはしない
+		log.Printf("error: failed to set user info: %v\n", err)
+	}
+
+	return users, nil
+}
