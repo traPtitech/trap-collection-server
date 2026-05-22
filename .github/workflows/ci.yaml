@@ -201,7 +201,7 @@ jobs:
       - name: Run tbls
         run: |
           TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
-          go tool tbls doc --rm-dist
+          go tool tbls doc --rm-dist -c .tbls.yml
 
       - name: Check diff
         run: |
