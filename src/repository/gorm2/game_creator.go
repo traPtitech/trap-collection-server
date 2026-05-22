@@ -175,6 +175,36 @@ func (gc *GameCreator) UpsertGameCreatorCustomJobsRelations(_ context.Context, _
 	return nil // TODO: implement
 }
 
-func (gc *GameCreator) GetGameCreatorsByUserIDs(_ context.Context, _ values.GameID, _ []values.TraPMemberID) ([]*domain.GameCreator, error) {
-	return nil, nil // TODO: implement
+func (gc *GameCreator) GetGameCreatorsByUserIDs(ctx context.Context, gameID values.GameID, userIDs []values.TraPMemberID) ([]*domain.GameCreator, error) {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get db: %w", err)
+	}
+
+	userUUIDs := make([]uuid.UUID, 0, len(userIDs))
+	for _, userID := range userIDs {
+		userUUIDs = append(userUUIDs, uuid.UUID(userID))
+	}
+
+	var gameCreators []schema.GameCreatorTable
+	err = db.Where("game_id = ?", uuid.UUID(gameID)).
+		Where("user_id IN ?", userUUIDs).
+		Order("created_at ASC").
+		Find(&gameCreators).Error
+	if err != nil {
+		return nil, fmt.Errorf("find game creators: %w", err)
+	}
+
+	gameCreatorsResult := make([]*domain.GameCreator, 0, len(gameCreators))
+	for _, gc := range gameCreators {
+		gameCreatorsResult = append(gameCreatorsResult, domain.NewGameCreator(
+			values.GameCreatorID(gc.ID),
+			values.TraPMemberID(gc.UserID),
+			values.GameID(gc.GameID),
+			values.TraPMemberName(gc.UserName),
+			gc.CreatedAt,
+		))
+	}
+
+	return gameCreatorsResult, nil
 }

@@ -664,3 +664,118 @@ func TestCreateGameCreators(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameCreatorsByUserIDs(t *testing.T) {
+	creatorSchema1 := &schema.GameCreatorTable{
+		ID:        uuid.New(),
+		UserID:    uuid.New(),
+		UserName:  "user",
+		CreatedAt: time.Now(),
+		Game: schema.GameTable2{
+			ID:               uuid.New(),
+			Name:             "game",
+			VisibilityTypeID: 1,
+		},
+	}
+	creator1 := domain.NewGameCreator(
+		values.GameCreatorID(creatorSchema1.ID),
+		values.NewTrapMemberID(creatorSchema1.UserID),
+		values.GameID(creatorSchema1.Game.ID),
+		values.NewTrapMemberName(creatorSchema1.UserName),
+		creatorSchema1.CreatedAt,
+	)
+	creatorSchema2 := &schema.GameCreatorTable{
+		ID:        uuid.New(),
+		UserID:    uuid.New(),
+		UserName:  "user",
+		CreatedAt: time.Now().Add(-time.Hour),
+		Game: schema.GameTable2{
+			ID:               creatorSchema1.Game.ID,
+			Name:             "game",
+			VisibilityTypeID: 1,
+		},
+	}
+	creator2 := domain.NewGameCreator(
+		values.GameCreatorID(creatorSchema2.ID),
+		values.NewTrapMemberID(creatorSchema2.UserID),
+		values.GameID(creatorSchema2.Game.ID),
+		values.NewTrapMemberName(creatorSchema2.UserName),
+		creatorSchema2.CreatedAt,
+	)
+	creatorSchema3 := &schema.GameCreatorTable{
+		ID:        uuid.New(),
+		UserID:    creatorSchema1.UserID,
+		UserName:  "user3",
+		CreatedAt: time.Now().Add(-time.Hour),
+		Game: schema.GameTable2{
+			ID:               uuid.New(),
+			Name:             "game2",
+			VisibilityTypeID: 1,
+		},
+	}
+
+	testCases := map[string]struct {
+		creators []*schema.GameCreatorTable
+		gameID   values.GameID
+		userIDs  []values.TraPMemberID
+		result   []*domain.GameCreator
+	}{
+		"ユーザー1人に対して1件のcreatorを取得できる": {
+			creators: []*schema.GameCreatorTable{creatorSchema1},
+			gameID:   values.NewGameIDFromUUID(creatorSchema1.Game.ID),
+			userIDs:  []values.TraPMemberID{creator1.GetUserID()},
+			result:   []*domain.GameCreator{creator1},
+		},
+		"複数ユーザーに対してcreatorを取得できる": {
+			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema2},
+			gameID:   values.NewGameIDFromUUID(creatorSchema1.Game.ID),
+			userIDs:  []values.TraPMemberID{creator1.GetUserID(), creator2.GetUserID()},
+			result:   []*domain.GameCreator{creator2, creator1},
+		},
+		"該当するcreatorがいないので空配列": {
+			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema2},
+			gameID:   values.NewGameID(),
+			userIDs:  []values.TraPMemberID{values.NewTrapMemberID(uuid.New())},
+			result:   []*domain.GameCreator{},
+		},
+		"同じuserが複数gameにcreatorとして存在しても指定したgameの分だけcreatorが取得できる": {
+			creators: []*schema.GameCreatorTable{creatorSchema1, creatorSchema3},
+			gameID:   values.NewGameIDFromUUID(creatorSchema1.Game.ID),
+			userIDs:  []values.TraPMemberID{creator1.GetUserID()},
+			result:   []*domain.GameCreator{creator1},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			if len(testCase.creators) > 0 {
+				err = db.Create(testCase.creators).Error
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					db, err := testDB.getDB(context.Background())
+					require.NoError(t, err)
+					err = db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(testCase.creators).Error
+					require.NoError(t, err)
+				})
+			}
+
+			repo := NewGameCreator(testDB)
+
+			result, err := repo.GetGameCreatorsByUserIDs(t.Context(), testCase.gameID, testCase.userIDs)
+
+			assert.NoError(t, err)
+			assert.Len(t, result, len(testCase.result))
+			for i, expected := range testCase.result {
+				assert.Equal(t, expected.GetID(), result[i].GetID())
+				assert.Equal(t, expected.GetGameID(), result[i].GetGameID())
+				assert.Equal(t, expected.GetUserID(), result[i].GetUserID())
+				assert.Equal(t, expected.GetUserName(), result[i].GetUserName())
+				assert.WithinDuration(t, expected.GetCreatedAt(), result[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
