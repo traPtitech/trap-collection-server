@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
 	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/dgraph-io/ristretto/v2 v2.4.0
-	github.com/getkin/kin-openapi v0.133.0
+	github.com/getkin/kin-openapi v0.135.0
 	github.com/go-gormigrate/gormigrate/v2 v2.1.5
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/google/uuid v1.6.0
@@ -74,8 +74,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/go-openapi/jsonpointer v0.22.4 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gohugoio/hugo v0.149.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
@@ -91,7 +90,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
@@ -100,8 +99,8 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
-	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
+	github.com/oasdiff/yaml v0.0.9 // indirect
+	github.com/oasdiff/yaml3 v0.0.9 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.2.8 // indirect
@@ -114,7 +113,6 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
@@ -124,7 +122,6 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 	gorm.io/driver/sqlite v1.6.0 // indirect
 	gorm.io/driver/sqlserver v1.6.3 // indirect
@@ -159,6 +156,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
+	github.com/go-openapi/swag/jsonname v0.25.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -174,13 +172,14 @@ require (
 	github.com/moby/moby/api v1.54.0 // indirect
 	github.com/moby/moby/client v0.3.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
-	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0 // indirect
+	github.com/oapi-codegen/oapi-codegen/v2 v2.7.0 // indirect
 	github.com/onsi/gomega v1.34.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
+	github.com/speakeasy-api/jsonpath v0.6.3 // indirect
+	github.com/speakeasy-api/openapi v1.19.2 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
-	github.com/woodsbury/decimal128 v1.3.0 // indirect
+	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
