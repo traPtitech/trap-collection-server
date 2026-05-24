@@ -18,8 +18,8 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/h2non/filetype v1.1.3
 	github.com/labstack/echo-contrib v0.50.1
-	github.com/labstack/echo/v4 v4.15.1
-	github.com/labstack/gommon v0.4.2
+	github.com/labstack/echo/v4 v4.15.2
+	github.com/labstack/gommon v0.5.0
 	github.com/mazrean/formstream v1.1.3
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oapi-codegen/echo-middleware v1.0.2
@@ -92,7 +92,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/microsoft/go-mssqldb v1.9.5 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -199,7 +199,7 @@ require (
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/api v0.257.0 // indirect
 	google.golang.org/genproto v0.0.0-20251202230838-ff82c1b0f217 // indirect
