@@ -19,7 +19,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/labstack/echo-contrib v0.50.1
 	github.com/labstack/echo/v4 v4.15.1
-	github.com/labstack/gommon v0.4.2
+	github.com/labstack/gommon v0.5.0
 	github.com/mazrean/formstream v1.1.3
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oapi-codegen/echo-middleware v1.0.2
@@ -92,7 +92,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	github.com/microsoft/go-mssqldb v1.9.5 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
