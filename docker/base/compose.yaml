@@ -25,7 +25,7 @@ services:
       retries: 1000
 
   mariadb:
-    image: mariadb:10.6.4
+    image: mariadb:10.6.4@sha256:c014ba1efc5dbd711d0520c7762d57807f35549de3414eb31e942a420c8a2ed2
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: pass
@@ -41,7 +41,7 @@ services:
       retries: 1000
 
   s3:
-    image: minio/minio:RELEASE.2022-09-17T00-09-45Z
+    image: minio/minio:RELEASE.2022-09-17T00-09-45Z@sha256:a070152be47a56b9cfec85e99a8d64d39bcea371cd4b1e616157dbfe7d539080
     # 9000-API, 9001-Web
     ports:
       - 9000:9000
