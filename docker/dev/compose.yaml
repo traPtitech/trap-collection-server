@@ -37,7 +37,7 @@ services:
     volumes:
       - trap_collection_mysql_data:/var/lib/mysql
   adminer:
-    image: adminer:latest
+    image: adminer:latest@sha256:cc64d253db4f016cbcff2ff2f01e60ed07e74f38b4398f84d3c4fae4b5ce0e07
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mariadb

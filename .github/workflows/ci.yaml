@@ -27,7 +27,7 @@ jobs:
     if: ${{ always() }}
     services:
       dind:
-        image: docker:23.0-rc-dind-rootless
+        image: docker:23.0-rc-dind-rootless@sha256:664673868cca50edc64b906303a0b11bea82712017f6c1940c0afb272864ce64
         ports:
           - 2375:2375
     steps:
@@ -78,7 +78,7 @@ jobs:
     if: "${{ github.event.sender.type != 'Bot' }}"
     services:
       db:
-        image: mariadb:10
+        image: mariadb:10@sha256:8acd4a5561e8897cfc8a99480f25bcecb10b726fa17b1ec7381c6ef36fa00a79
         env:
           MYSQL_ROOT_PASSWORD: pass
           MYSQL_DATABASE: trap_collection
