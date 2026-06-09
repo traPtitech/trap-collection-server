@@ -662,11 +662,7 @@ func TestCreateGameCreatorCustomJobs(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			var beforeCount int64
-			err = db.Model(&schema.GameCreatorCustomJobTable{}).
-				Where("game_id IN ?", []uuid.UUID{uuid.UUID(gameID1), uuid.UUID(gameID2)}).
-				Count(&beforeCount).Error
-			require.NoError(t, err)
+			beforeCount := int64(len(testCase.beforeJobs))
 
 			repo := NewGameCreator(testDB)
 			err = repo.CreateGameCreatorCustomJobs(t.Context(), testCase.addJobs)

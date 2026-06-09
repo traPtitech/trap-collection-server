@@ -148,8 +148,7 @@ func (gc *GameCreator) CreateGameCreatorCustomJobs(ctx context.Context, jobs []*
 
 	err = db.Create(&customJobs).Error
 	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 			switch mysqlErr.Number {
 			case 1452:
 				return repository.ErrForeignKeyViolated
@@ -185,8 +184,7 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 
 	err = db.Create(&gameCreatorTable).Error
 	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 			switch mysqlErr.Number {
 			case 1452:
 				return repository.ErrForeignKeyViolated
