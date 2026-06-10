@@ -126,8 +126,40 @@ func (gc *GameCreator) GetGameCreatorCustomJobsByGameID(ctx context.Context, gam
 	return result, nil
 }
 
-func (gc *GameCreator) CreateGameCreatorCustomJobs(_ context.Context, _ []*domain.GameCreatorCustomJob) error {
-	return nil // TODO: implement
+func (gc *GameCreator) CreateGameCreatorCustomJobs(ctx context.Context, jobs []*domain.GameCreatorCustomJob) error {
+	if len(jobs) == 0 {
+		return nil
+	}
+
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	customJobs := make([]schema.GameCreatorCustomJobTable, 0, len(jobs))
+	for _, job := range jobs {
+		customJobs = append(customJobs, schema.GameCreatorCustomJobTable{
+			ID:          uuid.UUID(job.GetID()),
+			GameID:      uuid.UUID(job.GetGameID()),
+			DisplayName: string(job.GetDisplayName()),
+			CreatedAt:   job.GetCreatedAt(),
+		})
+	}
+
+	err = db.Create(&customJobs).Error
+	if err != nil {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
+			switch mysqlErr.Number {
+			case 1452:
+				return repository.ErrForeignKeyViolated
+			case 1062:
+				return repository.ErrDuplicatedUniqueKey
+			}
+		}
+		return fmt.Errorf("create custom jobs: %w", err)
+	}
+
+	return nil
 }
 
 func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domain.GameCreator) error {
@@ -152,8 +184,7 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 
 	err = db.Create(&gameCreatorTable).Error
 	if err != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 			switch mysqlErr.Number {
 			case 1452:
 				return repository.ErrForeignKeyViolated
