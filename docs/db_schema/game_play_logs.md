@@ -15,6 +15,7 @@ CREATE TABLE `game_play_logs` (
   `end_time` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_game_play_logs_edition_id` (`edition_id`),
   KEY `idx_game_play_logs_game_id` (`game_id`),
@@ -39,6 +40,7 @@ CREATE TABLE `game_play_logs` (
 | end_time | datetime | NULL | true |  |  |  |  |
 | created_at | datetime | current_timestamp() | false |  |  |  |  |
 | updated_at | datetime | current_timestamp() | false | on update current_timestamp() |  |  |  |
+| deleted_at | datetime | NULL | true |  |  |  |  |
 
 ## Constraints
 
