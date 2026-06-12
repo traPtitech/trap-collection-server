@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/trap-collection-server/src/auth"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -885,6 +887,169 @@ func TestGetActiveUsers(t *testing.T) {
 				assert.Equal(t, user.GetName(), users[i].GetName())
 				assert.Equal(t, user.GetStatus(), users[i].GetStatus())
 			}
+		})
+	}
+}
+
+func TestGetAllUsers(t *testing.T) {
+	t.Parallel()
+
+	userID := uuid.New()
+	userName := "mazrean"
+
+	testCases := map[string]struct {
+		statusCode   int
+		traqResponse []*getUsersResponse
+		users        []*service.UserInfo
+		err          error
+	}{
+		"traQが500を返すので、ErrIdpBroken": {
+			statusCode: http.StatusInternalServerError,
+			err:        auth.ErrIdpBroken,
+		},
+		"traQが401を返すので、ErrInvalidSession": {
+			statusCode: http.StatusUnauthorized,
+			err:        auth.ErrInvalidSession,
+		},
+		"deactivatedユーザー": {
+			statusCode: http.StatusOK,
+			traqResponse: []*getUsersResponse{
+				{
+					ID:    userID,
+					Name:  userName,
+					State: 0,
+				},
+			},
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(userID),
+					values.NewTrapMemberName(userName),
+					values.TrapMemberStatusDeactivated,
+					false,
+				),
+			},
+		},
+		"activeユーザー": {
+			statusCode: http.StatusOK,
+			traqResponse: []*getUsersResponse{
+				{
+					ID:    userID,
+					Name:  userName,
+					State: 1,
+				},
+			},
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(userID),
+					values.NewTrapMemberName(userName),
+					values.TrapMemberStatusActive,
+					false,
+				),
+			},
+		},
+		"suspendedユーザー": {
+			statusCode: http.StatusOK,
+			traqResponse: []*getUsersResponse{
+				{
+					ID:    userID,
+					Name:  userName,
+					State: 2,
+				},
+			},
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(userID),
+					values.NewTrapMemberName(userName),
+					values.TrapMemberStatusSuspended,
+					false,
+				),
+			},
+		},
+		"botユーザー": {
+			statusCode: http.StatusOK,
+			traqResponse: []*getUsersResponse{
+				{
+					ID:    userID,
+					Name:  userName,
+					State: 1,
+					Bot:   true,
+				},
+			},
+			users: []*service.UserInfo{
+				service.NewUserInfo(
+					values.NewTrapMemberID(userID),
+					values.NewTrapMemberName(userName),
+					values.TrapMemberStatusActive,
+					true,
+				),
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ts := httptest.NewUnstartedServer(http.HandlerFunc(
+				func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path != "/users" {
+						w.WriteHeader(http.StatusNotFound)
+						return
+					}
+
+					if r.Method != http.MethodGet {
+						w.WriteHeader(http.StatusMethodNotAllowed)
+						return
+					}
+
+					includeSuspendedStr := r.URL.Query().Get("include-suspended")
+					includeSuspended, err := strconv.ParseBool(includeSuspendedStr)
+					assert.NoError(t, err)
+					assert.True(t, includeSuspended)
+
+					body, err := json.Marshal(testCase.traqResponse)
+					require.NoError(t, err)
+					w.Header().Set("Content-Type", "application/json; charset=utf-8")
+					w.WriteHeader(testCase.statusCode)
+					_, err = w.Write(body)
+					require.NoError(t, err)
+				},
+			))
+			ts.EnableHTTP2 = true
+			ts.StartTLS()
+			defer ts.Close()
+
+			baseURL, err := url.Parse(ts.URL)
+			require.NoError(t, err)
+
+			ctrl := gomock.NewController(t)
+
+			mockConfig := mock.NewMockAuthTraQ(ctrl)
+			mockConfig.
+				EXPECT().
+				HTTPClient().
+				Return(ts.Client(), nil)
+			mockConfig.
+				EXPECT().
+				BaseURL().
+				Return(baseURL, nil)
+			userAuth, err := NewUser(mockConfig)
+			require.NoError(t, err)
+
+			session := domain.NewOIDCSession(
+				values.NewOIDCAccessToken("accessToken"),
+				time.Now().Add(5*time.Second),
+			)
+
+			users, err := userAuth.GetAllUsers(t.Context(), session)
+
+			assert.ErrorIs(t, err, testCase.err)
+
+			if testCase.err != nil {
+				return
+			}
+
+			assert.Equal(t, testCase.users, users)
 		})
 	}
 }

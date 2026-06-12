@@ -127,10 +127,9 @@ func (gc *GameCreator) validateEditGameCreatorsInput(
 	presetJobsMap map[values.GameCreatorJobID]*domain.GameCreatorJob,
 	inputs []*service.EditGameCreatorJobInput,
 ) (*editGameCreatorsValidatedInput, error) {
-	// TODO: 今の実装は現役しか取得できないので、凍結済みユーザーを取得できるようにする
-	activeMembers, err := gc.user.getActiveUsers(ctx, session)
+	activeMembers, err := gc.user.getAllUsers(ctx, session)
 	if err != nil {
-		return nil, fmt.Errorf("get active users: %w", err)
+		return nil, fmt.Errorf("get all users: %w", err)
 	}
 
 	activeMembersMap := make(map[values.TraPMemberID]*service.UserInfo, len(activeMembers))

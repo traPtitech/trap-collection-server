@@ -16,12 +16,15 @@ import (
 
 type User struct {
 	meCache        *ristretto.Cache[string, *service.UserInfo]
-	activeUsers    *ristretto.Cache[string, []*service.UserInfo]
+	users          *ristretto.Cache[usersCacheKey, []*service.UserInfo]
 	activeUsersTTL time.Duration
 }
 
+type usersCacheKey string
+
 const (
-	activeUsersKey = "active_users"
+	activeUsersKey usersCacheKey = "active_users"
+	allUsersKey    usersCacheKey = "all_users"
 )
 
 func NewUser(conf config.CacheRistretto) (*User, error) {
@@ -47,7 +50,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 		return nil, fmt.Errorf("failed to create meCache: %v", err)
 	}
 
-	activeUsers, err := ristretto.NewCache[string, []*service.UserInfo](&ristretto.Config[string, []*service.UserInfo]{
+	users, err := ristretto.NewCache[usersCacheKey, []*service.UserInfo](&ristretto.Config[usersCacheKey, []*service.UserInfo]{
 		NumCounters: 10,
 		MaxCost:     64,
 		BufferItems: 64,
@@ -58,7 +61,7 @@ func NewUser(conf config.CacheRistretto) (*User, error) {
 
 	return &User{
 		meCache:        meCache,
-		activeUsers:    activeUsers,
+		users:          users,
 		activeUsersTTL: activeUsersTTL,
 	}, nil
 }
@@ -93,7 +96,7 @@ func (u *User) SetMe(_ context.Context, session *domain.OIDCSession, user *servi
 // GetAllActiveUsers
 // deprecated: v1 API廃止時に削除する
 func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	users, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.users.Get(activeUsersKey)
 	if !ok {
 		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
@@ -107,7 +110,7 @@ func (u *User) GetAllActiveUsers(_ context.Context) ([]*service.UserInfo, error)
 // deprecated: v1 API廃止時に削除する
 func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
-	ok := u.activeUsers.SetWithTTL(
+	ok := u.users.SetWithTTL(
 		activeUsersKey,
 		users,
 		1,
@@ -121,17 +124,19 @@ func (u *User) SetAllActiveUsers(_ context.Context, users []*service.UserInfo) e
 }
 
 func (u *User) GetActiveUsers(_ context.Context) ([]*service.UserInfo, error) {
-	users, ok := u.activeUsers.Get(activeUsersKey)
+	users, ok := u.users.Get(activeUsersKey)
 	if !ok {
+		hitCount.WithLabelValues("active_users", "miss").Inc()
 		return nil, cache.ErrCacheMiss
 	}
+	hitCount.WithLabelValues("active_users", "hit").Inc()
 
 	return users, nil
 }
 
 func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) error {
 	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
-	ok := u.activeUsers.SetWithTTL(
+	ok := u.users.SetWithTTL(
 		activeUsersKey,
 		users,
 		1,
@@ -139,6 +144,32 @@ func (u *User) SetActiveUsers(_ context.Context, users []*service.UserInfo) erro
 	)
 	if !ok {
 		return errors.New("failed to set activeUsers")
+	}
+
+	return nil
+}
+
+func (u *User) GetAllUsers(_ context.Context) ([]*service.UserInfo, error) {
+	users, ok := u.users.Get(allUsersKey)
+	if !ok {
+		hitCount.WithLabelValues("all_users", "miss").Inc()
+		return nil, cache.ErrCacheMiss
+	}
+	hitCount.WithLabelValues("all_users", "hit").Inc()
+
+	return users, nil
+}
+
+func (u *User) SetAllUsers(_ context.Context, users []*service.UserInfo) error {
+	// キャッシュ追加待ちのキューに入るだけで、すぐにはキャッシュが効かないのに注意
+	ok := u.users.SetWithTTL(
+		allUsersKey,
+		users,
+		1,
+		u.activeUsersTTL,
+	)
+	if !ok {
+		return errors.New("failed to set allUsers")
 	}
 
 	return nil

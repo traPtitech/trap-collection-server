@@ -31,4 +31,12 @@ type User interface {
 	// SetActiveUsers
 	// traQの全アクティブユーザー(凍結されていないユーザー)のキャッシュ設定。
 	SetActiveUsers(ctx context.Context, users []*service.UserInfo) error
+	// GetAllUsers
+	// traQの全ユーザー(アクティブなユーザーと非アクティブなユーザーを含む)のキャッシュ取得。
+	// キャッシュ設定から1時間の間有効。
+	// このため、traQでのユーザーの状態変更の反映までに最大1時間の遅延が発生する点に注意。
+	GetAllUsers(ctx context.Context) ([]*service.UserInfo, error)
+	// SetAllUsers
+	// traQの全ユーザー(アクティブなユーザーと非アクティブなユーザーを含む)のキャッシュ設定。
+	SetAllUsers(ctx context.Context, users []*service.UserInfo) error
 }
