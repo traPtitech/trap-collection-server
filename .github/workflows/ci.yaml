@@ -207,16 +207,6 @@ jobs:
         run: |
           if [[ -n $(git status --porcelain) ]]; then
             echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
-
-            echo "===== git status ====="
-            git status
-
-            echo "===== changed files ====="
-            git diff --name-only
-
-            echo "===== git diff ====="
-            git diff
-
             exit 1
           fi
         shell: bash
