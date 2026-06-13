@@ -12,7 +12,7 @@ CREATE TABLE `seats` (
   PRIMARY KEY (`id`),
   KEY `fk_seats_seat_status` (`status_id`),
   CONSTRAINT `fk_seats_seat_status` FOREIGN KEY (`status_id`) REFERENCES `seat_statuses` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4
 ```
 
 </details>
