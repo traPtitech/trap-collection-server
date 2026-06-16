@@ -78,8 +78,8 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			t.Parallel()
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 			mockGameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
