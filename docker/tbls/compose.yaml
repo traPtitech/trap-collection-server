@@ -23,7 +23,7 @@ services:
       file: ../base/compose.yaml
       service: mariadb
   tbls:
-    image: k1low/tbls:v1.56.2@sha256:2baf3561720f7bf3580374ea55a6f410801c3e2bfdb8449392bd9f41cc198ff0
+    image: k1low/tbls:v1.94.5
     environment:
       TBLS_DSN: mariadb://root:pass@mariadb:3306/trap_collection
     volumes:

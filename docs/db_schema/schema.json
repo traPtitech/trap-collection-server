@@ -1,0 +1,4267 @@
+{
+  "name": "trap_collection",
+  "tables": [
+    {
+      "name": "access_tokens",
+      "type": "BASE TABLE",
+      "comment": "アクセストークンテーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "アクセストークンUUID"
+        },
+        {
+          "name": "product_key_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "プロダクトキーUUID"
+        },
+        {
+          "name": "access_token",
+          "type": "varchar(64)",
+          "nullable": false,
+          "comment": "アクセストークンの値"
+        },
+        {
+          "name": "expires_at",
+          "type": "datetime",
+          "nullable": false,
+          "comment": "有効期限"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "revokeされた日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_product_keys_access_tokens",
+          "def": "KEY fk_product_keys_access_tokens (product_key_id) USING BTREE",
+          "table": "access_tokens",
+          "columns": [
+            "product_key_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "access_tokens",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_access_tokens_access_token",
+          "def": "UNIQUE KEY uni_access_tokens_access_token (access_token) USING BTREE",
+          "table": "access_tokens",
+          "columns": [
+            "access_token"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_product_keys_access_tokens",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (product_key_id) REFERENCES product_keys (id)",
+          "table": "access_tokens",
+          "referenced_table": "product_keys",
+          "columns": [
+            "product_key_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "access_tokens",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_access_tokens_access_token",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_access_tokens_access_token (access_token)",
+          "table": "access_tokens",
+          "columns": [
+            "access_token"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `access_tokens` (\n  `id` varchar(36) NOT NULL,\n  `product_key_id` varchar(36) NOT NULL,\n  `access_token` varchar(64) NOT NULL,\n  `expires_at` datetime NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_access_tokens_access_token` (`access_token`),\n  KEY `fk_product_keys_access_tokens` (`product_key_id`),\n  CONSTRAINT `fk_product_keys_access_tokens` FOREIGN KEY (`product_key_id`) REFERENCES `product_keys` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "admins",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "varchar(36)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (user_id) USING BTREE",
+          "table": "admins",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (user_id)",
+          "table": "admins",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `admins` (\n  `user_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`user_id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "atlas_schema_revisions",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "version",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "type",
+          "type": "bigint(20) unsigned",
+          "nullable": false,
+          "default": "2"
+        },
+        {
+          "name": "applied",
+          "type": "bigint(20)",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "total",
+          "type": "bigint(20)",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "executed_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "execution_time",
+          "type": "bigint(20)",
+          "nullable": false
+        },
+        {
+          "name": "error",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "error_stmt",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "hash",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "partial_hashes",
+          "type": "longtext",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "operator_version",
+          "type": "varchar(255)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (version) USING BTREE",
+          "table": "atlas_schema_revisions",
+          "columns": [
+            "version"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (version)",
+          "table": "atlas_schema_revisions",
+          "columns": [
+            "version"
+          ]
+        },
+        {
+          "name": "partial_hashes",
+          "type": "CHECK",
+          "def": "CHECK (json_valid(`partial_hashes`))",
+          "table": "atlas_schema_revisions"
+        }
+      ],
+      "def": "CREATE TABLE `atlas_schema_revisions` (\n  `version` varchar(255) COLLATE utf8mb4_bin NOT NULL,\n  `description` varchar(255) COLLATE utf8mb4_bin NOT NULL,\n  `type` bigint(20) unsigned NOT NULL DEFAULT 2,\n  `applied` bigint(20) NOT NULL DEFAULT 0,\n  `total` bigint(20) NOT NULL DEFAULT 0,\n  `executed_at` timestamp NULL DEFAULT NULL,\n  `execution_time` bigint(20) NOT NULL,\n  `error` longtext COLLATE utf8mb4_bin DEFAULT NULL,\n  `error_stmt` longtext COLLATE utf8mb4_bin DEFAULT NULL,\n  `hash` varchar(255) COLLATE utf8mb4_bin NOT NULL,\n  `partial_hashes` longtext COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`partial_hashes`)),\n  `operator_version` varchar(255) COLLATE utf8mb4_bin NOT NULL,\n  PRIMARY KEY (`version`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"
+    },
+    {
+      "name": "editions",
+      "type": "BASE TABLE",
+      "comment": "エディションテーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "エディションUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "エディション名"
+        },
+        {
+          "name": "questionnaire_url",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "アンケートURL"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "削除日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "editions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_editions_name",
+          "def": "UNIQUE KEY uni_editions_name (name) USING BTREE",
+          "table": "editions",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "editions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_editions_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_editions_name (name)",
+          "table": "editions",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `editions` (\n  `id` varchar(36) NOT NULL,\n  `name` varchar(32) NOT NULL,\n  `questionnaire_url` text DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_editions_name` (`name`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "edition_game_version_relations",
+      "type": "BASE TABLE",
+      "comment": "エディションとゲームバージョンの関係テーブル(v2)",
+      "columns": [
+        {
+          "name": "edition_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "エディションUUID"
+        },
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_edition_game_version_relations_game_version_table2",
+          "def": "KEY fk_edition_game_version_relations_game_version_table2 (game_version_id) USING BTREE",
+          "table": "edition_game_version_relations",
+          "columns": [
+            "game_version_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (edition_id, game_version_id) USING BTREE",
+          "table": "edition_game_version_relations",
+          "columns": [
+            "edition_id",
+            "game_version_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_edition_game_version_relations_edition_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)",
+          "table": "edition_game_version_relations",
+          "referenced_table": "editions",
+          "columns": [
+            "edition_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_edition_game_version_relations_game_version_table2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)",
+          "table": "edition_game_version_relations",
+          "referenced_table": "v2_game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (edition_id, game_version_id)",
+          "table": "edition_game_version_relations",
+          "columns": [
+            "edition_id",
+            "game_version_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `edition_game_version_relations` (\n  `edition_id` varchar(36) NOT NULL,\n  `game_version_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`edition_id`,`game_version_id`),\n  KEY `fk_edition_game_version_relations_game_version_table2` (`game_version_id`),\n  CONSTRAINT `fk_edition_game_version_relations_edition_table` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),\n  CONSTRAINT `fk_edition_game_version_relations_game_version_table2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "feedback_questions",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "question_text",
+          "type": "varchar(256)",
+          "nullable": false
+        },
+        {
+          "name": "answer_type",
+          "type": "tinyint(4)",
+          "nullable": false
+        },
+        {
+          "name": "question_order",
+          "type": "bigint(20)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        },
+        {
+          "name": "archived_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_feedback_questions_game_id",
+          "def": "KEY idx_feedback_questions_game_id (game_id) USING BTREE",
+          "table": "feedback_questions",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "feedback_questions",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_feedback_questions_game",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "feedback_questions",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "feedback_questions",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `feedback_questions` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `question_text` varchar(256) NOT NULL,\n  `answer_type` tinyint(4) NOT NULL,\n  `question_order` bigint(20) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `archived_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `idx_feedback_questions_game_id` (`game_id`),\n  CONSTRAINT `fk_feedback_questions_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "games",
+      "type": "BASE TABLE",
+      "comment": "ゲームテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(256)",
+          "nullable": false,
+          "comment": "ゲーム名"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": false,
+          "comment": "ゲームの説明"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "削除日時"
+        },
+        {
+          "name": "visibility_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "ゲームの公開範囲のID"
+        },
+        {
+          "name": "latest_version_updated_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_visibility_type",
+          "def": "KEY fk_games_game_visibility_type (visibility_type_id) USING BTREE",
+          "table": "games",
+          "columns": [
+            "visibility_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "games",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_visibility_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (visibility_type_id) REFERENCES game_visibility_types (id)",
+          "table": "games",
+          "referenced_table": "game_visibility_types",
+          "columns": [
+            "visibility_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "games",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `games` (\n  `id` varchar(36) NOT NULL,\n  `name` varchar(256) NOT NULL,\n  `description` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  `visibility_type_id` tinyint(4) NOT NULL,\n  `latest_version_updated_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_visibility_type` (`visibility_type_id`),\n  CONSTRAINT `fk_games_game_visibility_type` FOREIGN KEY (`visibility_type_id`) REFERENCES `game_visibility_types` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_creators",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "user_name",
+          "type": "varchar(32)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_creators_game_id",
+          "def": "KEY idx_game_creators_game_id (game_id) USING BTREE",
+          "table": "game_creators",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_creators",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_unique_game_id_user_id",
+          "def": "UNIQUE KEY idx_unique_game_id_user_id (game_id, user_id) USING BTREE",
+          "table": "game_creators",
+          "columns": [
+            "game_id",
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_creators_game",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_creators",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_unique_game_id_user_id",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY idx_unique_game_id_user_id (game_id, user_id)",
+          "table": "game_creators",
+          "columns": [
+            "game_id",
+            "user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_creators",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_creators` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `user_name` varchar(32) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `idx_unique_game_id_user_id` (`game_id`,`user_id`),\n  KEY `idx_game_creators_game_id` (`game_id`),\n  CONSTRAINT `fk_game_creators_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_creator_custom_jobs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_creator_custom_jobs_game_id",
+          "def": "KEY idx_game_creator_custom_jobs_game_id (game_id) USING BTREE",
+          "table": "game_creator_custom_jobs",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_creator_custom_jobs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_creator_custom_jobs_game",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_creator_custom_jobs",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_creator_custom_jobs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_creator_custom_jobs` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `display_name` varchar(64) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `idx_game_creator_custom_jobs_game_id` (`game_id`),\n  CONSTRAINT `fk_game_creator_custom_jobs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_creator_custom_job_relations",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "game_creator_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "custom_job_id",
+          "type": "varchar(36)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_creator_custom_job_relations_game_creator_customa6516cf7",
+          "def": "KEY fk_game_creator_custom_job_relations_game_creator_customa6516cf7 (custom_job_id) USING BTREE",
+          "table": "game_creator_custom_job_relations",
+          "columns": [
+            "custom_job_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_creator_id, custom_job_id) USING BTREE",
+          "table": "game_creator_custom_job_relations",
+          "columns": [
+            "game_creator_id",
+            "custom_job_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_creator_custom_job_relations_game_creator_customa6516cf7",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (custom_job_id) REFERENCES game_creator_custom_jobs (id)",
+          "table": "game_creator_custom_job_relations",
+          "referenced_table": "game_creator_custom_jobs",
+          "columns": [
+            "custom_job_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_creator_custom_job_relations_game_creator_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_creator_id) REFERENCES game_creators (id)",
+          "table": "game_creator_custom_job_relations",
+          "referenced_table": "game_creators",
+          "columns": [
+            "game_creator_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_creator_id, custom_job_id)",
+          "table": "game_creator_custom_job_relations",
+          "columns": [
+            "game_creator_id",
+            "custom_job_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_creator_custom_job_relations` (\n  `game_creator_id` varchar(36) NOT NULL,\n  `custom_job_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`game_creator_id`,`custom_job_id`),\n  KEY `fk_game_creator_custom_job_relations_game_creator_customa6516cf7` (`custom_job_id`),\n  CONSTRAINT `fk_game_creator_custom_job_relations_game_creator_customa6516cf7` FOREIGN KEY (`custom_job_id`) REFERENCES `game_creator_custom_jobs` (`id`),\n  CONSTRAINT `fk_game_creator_custom_job_relations_game_creator_table` FOREIGN KEY (`game_creator_id`) REFERENCES `game_creators` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_creator_jobs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_creator_jobs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_creator_jobs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_creator_jobs` (\n  `id` varchar(36) NOT NULL,\n  `display_name` varchar(64) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_creator_job_relations",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "game_creator_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "job_id",
+          "type": "varchar(36)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_creator_job_relations_game_creator_job_table",
+          "def": "KEY fk_game_creator_job_relations_game_creator_job_table (job_id) USING BTREE",
+          "table": "game_creator_job_relations",
+          "columns": [
+            "job_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_creator_id, job_id) USING BTREE",
+          "table": "game_creator_job_relations",
+          "columns": [
+            "game_creator_id",
+            "job_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_creator_job_relations_game_creator_job_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (job_id) REFERENCES game_creator_jobs (id)",
+          "table": "game_creator_job_relations",
+          "referenced_table": "game_creator_jobs",
+          "columns": [
+            "job_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_creator_job_relations_game_creator_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_creator_id) REFERENCES game_creators (id)",
+          "table": "game_creator_job_relations",
+          "referenced_table": "game_creators",
+          "columns": [
+            "game_creator_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_creator_id, job_id)",
+          "table": "game_creator_job_relations",
+          "columns": [
+            "game_creator_id",
+            "job_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_creator_job_relations` (\n  `game_creator_id` varchar(36) NOT NULL,\n  `job_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`game_creator_id`,`job_id`),\n  KEY `fk_game_creator_job_relations_game_creator_job_table` (`job_id`),\n  CONSTRAINT `fk_game_creator_job_relations_game_creator_job_table` FOREIGN KEY (`job_id`) REFERENCES `game_creator_jobs` (`id`),\n  CONSTRAINT `fk_game_creator_job_relations_game_creator_table` FOREIGN KEY (`game_creator_id`) REFERENCES `game_creators` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_feedbacks",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "comment",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_feedbacks_game_version_id",
+          "def": "KEY idx_game_feedbacks_game_version_id (game_version_id) USING BTREE",
+          "table": "game_feedbacks",
+          "columns": [
+            "game_version_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_feedbacks",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_feedbacks_game_version",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)",
+          "table": "game_feedbacks",
+          "referenced_table": "v2_game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_feedbacks",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_feedbacks` (\n  `id` varchar(36) NOT NULL,\n  `game_version_id` varchar(36) NOT NULL,\n  `comment` text DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `idx_game_feedbacks_game_version_id` (`game_version_id`),\n  CONSTRAINT `fk_game_feedbacks_game_version` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_feedback_answers",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "feedback_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "question_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "answer",
+          "type": "bigint(20)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_feedback_answers_feedback_id",
+          "def": "KEY idx_game_feedback_answers_feedback_id (feedback_id) USING BTREE",
+          "table": "game_feedback_answers",
+          "columns": [
+            "feedback_id"
+          ]
+        },
+        {
+          "name": "idx_game_feedback_answers_question_id",
+          "def": "KEY idx_game_feedback_answers_question_id (question_id) USING BTREE",
+          "table": "game_feedback_answers",
+          "columns": [
+            "question_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_feedback_answers",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_feedback_answers_feedback_question",
+          "def": "UNIQUE KEY idx_game_feedback_answers_feedback_question (feedback_id, question_id) USING BTREE",
+          "table": "game_feedback_answers",
+          "columns": [
+            "feedback_id",
+            "question_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_feedbacks_answers",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (feedback_id) REFERENCES game_feedbacks (id)",
+          "table": "game_feedback_answers",
+          "referenced_table": "game_feedbacks",
+          "columns": [
+            "feedback_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_feedback_answers_question",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (question_id) REFERENCES feedback_questions (id)",
+          "table": "game_feedback_answers",
+          "referenced_table": "feedback_questions",
+          "columns": [
+            "question_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_feedback_answers_feedback_question",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY idx_game_feedback_answers_feedback_question (feedback_id, question_id)",
+          "table": "game_feedback_answers",
+          "columns": [
+            "feedback_id",
+            "question_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_feedback_answers",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_feedback_answers` (\n  `id` varchar(36) NOT NULL,\n  `feedback_id` varchar(36) NOT NULL,\n  `question_id` varchar(36) NOT NULL,\n  `answer` bigint(20) NOT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `idx_game_feedback_answers_feedback_question` (`feedback_id`,`question_id`),\n  KEY `idx_game_feedback_answers_feedback_id` (`feedback_id`),\n  KEY `idx_game_feedback_answers_question_id` (`question_id`),\n  CONSTRAINT `fk_game_feedback_answers_question` FOREIGN KEY (`question_id`) REFERENCES `feedback_questions` (`id`),\n  CONSTRAINT `fk_game_feedbacks_answers` FOREIGN KEY (`feedback_id`) REFERENCES `game_feedbacks` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_feedback_configs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "0"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_id) USING BTREE",
+          "table": "game_feedback_configs",
+          "columns": [
+            "game_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_feedback_configs_game",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_feedback_configs",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_id)",
+          "table": "game_feedback_configs",
+          "columns": [
+            "game_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_feedback_configs` (\n  `game_id` varchar(36) NOT NULL,\n  `enabled` tinyint(1) NOT NULL DEFAULT 0,\n  PRIMARY KEY (`game_id`),\n  CONSTRAINT `fk_game_feedback_configs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_files",
+      "type": "BASE TABLE",
+      "comment": "ゲームファイルテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームファイルUUID"
+        },
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        },
+        {
+          "name": "file_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "ファイルの種類のUUID"
+        },
+        {
+          "name": "hash",
+          "type": "char(32)",
+          "nullable": false,
+          "comment": "ファイルのmd5ハッシュ"
+        },
+        {
+          "name": "entry_point",
+          "type": "text",
+          "nullable": false,
+          "comment": "ファイル実行時のエントリーポイント"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_files_game_file_type",
+          "def": "KEY fk_game_files_game_file_type (file_type_id) USING BTREE",
+          "table": "game_files",
+          "columns": [
+            "file_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_files",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_file_unique",
+          "def": "UNIQUE KEY idx_game_file_unique (game_version_id, file_type_id) USING BTREE",
+          "table": "game_files",
+          "columns": [
+            "game_version_id",
+            "file_type_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_files_game_file_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (file_type_id) REFERENCES game_file_types (id)",
+          "table": "game_files",
+          "referenced_table": "game_file_types",
+          "columns": [
+            "file_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_versions_game_files",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES game_versions (id)",
+          "table": "game_files",
+          "referenced_table": "game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_file_unique",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY idx_game_file_unique (game_version_id, file_type_id)",
+          "table": "game_files",
+          "columns": [
+            "game_version_id",
+            "file_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_files",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_files` (\n  `id` varchar(36) NOT NULL,\n  `game_version_id` varchar(36) NOT NULL,\n  `file_type_id` tinyint(4) NOT NULL,\n  `hash` char(32) NOT NULL,\n  `entry_point` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `idx_game_file_unique` (`game_version_id`,`file_type_id`),\n  KEY `fk_game_files_game_file_type` (`file_type_id`),\n  CONSTRAINT `fk_game_files_game_file_type` FOREIGN KEY (`file_type_id`) REFERENCES `game_file_types` (`id`),\n  CONSTRAINT `fk_game_versions_game_files` FOREIGN KEY (`game_version_id`) REFERENCES `game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_file_types",
+      "type": "BASE TABLE",
+      "comment": "ゲームファイルの種類のテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "ゲームファイルの種類のUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲームファイルの種類の名前"
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": true,
+          "default": "1",
+          "comment": "有効かどうか"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_file_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_file_types_name",
+          "def": "UNIQUE KEY uni_game_file_types_name (name) USING BTREE",
+          "table": "game_file_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_file_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_file_types_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_file_types_name (name)",
+          "table": "game_file_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_file_types` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `active` tinyint(1) DEFAULT 1,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_file_types_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_genres",
+      "type": "BASE TABLE",
+      "comment": "ゲームのジャンルのテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームのジャンルのID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲームのジャンルの名前"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_genres",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_genres_name",
+          "def": "UNIQUE KEY uni_game_genres_name (name) USING BTREE",
+          "table": "game_genres",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_genres",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_genres_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_genres_name (name)",
+          "table": "game_genres",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_genres` (\n  `id` varchar(36) NOT NULL,\n  `name` varchar(32) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_genres_name` (`name`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_genre_relations",
+      "type": "BASE TABLE",
+      "comment": "ゲームとジャンルの関係テーブル",
+      "columns": [
+        {
+          "name": "genre_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームのジャンルのID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_genre_relations_game_genre_table",
+          "def": "KEY fk_game_genre_relations_game_genre_table (genre_id) USING BTREE",
+          "table": "game_genre_relations",
+          "columns": [
+            "genre_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_id, genre_id) USING BTREE",
+          "table": "game_genre_relations",
+          "columns": [
+            "game_id",
+            "genre_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_genre_relations_game_genre_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (genre_id) REFERENCES game_genres (id)",
+          "table": "game_genre_relations",
+          "referenced_table": "game_genres",
+          "columns": [
+            "genre_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_genre_relations_game_table2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_genre_relations",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_id, genre_id)",
+          "table": "game_genre_relations",
+          "columns": [
+            "game_id",
+            "genre_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_genre_relations` (\n  `genre_id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`game_id`,`genre_id`),\n  KEY `fk_game_genre_relations_game_genre_table` (`genre_id`),\n  CONSTRAINT `fk_game_genre_relations_game_genre_table` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),\n  CONSTRAINT `fk_game_genre_relations_game_table2` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_images",
+      "type": "BASE TABLE",
+      "comment": "ゲーム画像テーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム画像UUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "image_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "画像の種類のUUID"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_images",
+          "def": "KEY fk_games_game_images (game_id) USING BTREE",
+          "table": "game_images",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "fk_game_images_game_image_type",
+          "def": "KEY fk_game_images_game_image_type (image_type_id) USING BTREE",
+          "table": "game_images",
+          "columns": [
+            "image_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_images",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_images",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_images",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_images_game_image_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (image_type_id) REFERENCES game_image_types (id)",
+          "table": "game_images",
+          "referenced_table": "game_image_types",
+          "columns": [
+            "image_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_images",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_images` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `image_type_id` tinyint(4) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_images` (`game_id`),\n  KEY `fk_game_images_game_image_type` (`image_type_id`),\n  CONSTRAINT `fk_game_images_game_image_type` FOREIGN KEY (`image_type_id`) REFERENCES `game_image_types` (`id`),\n  CONSTRAINT `fk_games_game_images` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_image_types",
+      "type": "BASE TABLE",
+      "comment": "ゲーム画像の種類のテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "ゲーム画像の種類のUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲーム画像の種類の名前"
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": true,
+          "default": "1",
+          "comment": "有効かどうか"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_image_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_image_types_name",
+          "def": "UNIQUE KEY uni_game_image_types_name (name) USING BTREE",
+          "table": "game_image_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_image_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_image_types_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_image_types_name (name)",
+          "table": "game_image_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_image_types` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `active` tinyint(1) DEFAULT 1,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_image_types_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_management_roles",
+      "type": "BASE TABLE",
+      "comment": "ゲーム管理者の権限のテーブル",
+      "columns": [
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "user_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ユーザーUUID"
+        },
+        {
+          "name": "role_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "権限の種類のUUID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_management_roles_role_type_table",
+          "def": "KEY fk_game_management_roles_role_type_table (role_type_id) USING BTREE",
+          "table": "game_management_roles",
+          "columns": [
+            "role_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_id, user_id) USING BTREE",
+          "table": "game_management_roles",
+          "columns": [
+            "game_id",
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_management_roles",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_management_roles",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_management_roles_role_type_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (role_type_id) REFERENCES game_management_role_types (id)",
+          "table": "game_management_roles",
+          "referenced_table": "game_management_role_types",
+          "columns": [
+            "role_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_id, user_id)",
+          "table": "game_management_roles",
+          "columns": [
+            "game_id",
+            "user_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_management_roles` (\n  `game_id` varchar(36) NOT NULL,\n  `user_id` varchar(36) NOT NULL,\n  `role_type_id` tinyint(4) NOT NULL,\n  PRIMARY KEY (`game_id`,`user_id`),\n  KEY `fk_game_management_roles_role_type_table` (`role_type_id`),\n  CONSTRAINT `fk_game_management_roles_role_type_table` FOREIGN KEY (`role_type_id`) REFERENCES `game_management_role_types` (`id`),\n  CONSTRAINT `fk_games_game_management_roles` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_management_role_types",
+      "type": "BASE TABLE",
+      "comment": "ゲーム管理者の権限の種類のテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "権限の種類のUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "権限の種類の名前"
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": true,
+          "default": "1",
+          "comment": "有効かどうか"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_management_role_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_management_role_types_name",
+          "def": "UNIQUE KEY uni_game_management_role_types_name (name) USING BTREE",
+          "table": "game_management_role_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_management_role_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_management_role_types_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_management_role_types_name (name)",
+          "table": "game_management_role_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_management_role_types` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `active` tinyint(1) DEFAULT 1,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_management_role_types_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_play_logs",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "edition_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "start_time",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        },
+        {
+          "name": "end_time",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "extra_def": "on update current_timestamp()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_play_logs_edition_id",
+          "def": "KEY idx_game_play_logs_edition_id (edition_id) USING BTREE",
+          "table": "game_play_logs",
+          "columns": [
+            "edition_id"
+          ]
+        },
+        {
+          "name": "idx_game_play_logs_game_id",
+          "def": "KEY idx_game_play_logs_game_id (game_id) USING BTREE",
+          "table": "game_play_logs",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "idx_game_play_logs_game_version_id",
+          "def": "KEY idx_game_play_logs_game_version_id (game_version_id) USING BTREE",
+          "table": "game_play_logs",
+          "columns": [
+            "game_version_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_play_logs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_editions_game_play_logs",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)",
+          "table": "game_play_logs",
+          "referenced_table": "editions",
+          "columns": [
+            "edition_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_games_game_play_logs",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_play_logs",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_versions_game_play_logs",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)",
+          "table": "game_play_logs",
+          "referenced_table": "v2_game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_play_logs",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_play_logs` (\n  `id` varchar(36) NOT NULL,\n  `edition_id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `game_version_id` varchar(36) NOT NULL,\n  `start_time` datetime NOT NULL DEFAULT current_timestamp(),\n  `end_time` datetime DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `idx_game_play_logs_edition_id` (`edition_id`),\n  KEY `idx_game_play_logs_game_id` (`game_id`),\n  KEY `idx_game_play_logs_game_version_id` (`game_version_id`),\n  CONSTRAINT `fk_editions_game_play_logs` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),\n  CONSTRAINT `fk_games_game_play_logs` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_v2_game_versions_game_play_logs` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_urls",
+      "type": "BASE TABLE",
+      "comment": "ゲームURLテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームURLのUUID"
+        },
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        },
+        {
+          "name": "url",
+          "type": "text",
+          "nullable": false,
+          "comment": "URL"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_urls",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_urls_game_version_id",
+          "def": "UNIQUE KEY uni_game_urls_game_version_id (game_version_id) USING BTREE",
+          "table": "game_urls",
+          "columns": [
+            "game_version_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_versions_game_url",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES game_versions (id)",
+          "table": "game_urls",
+          "referenced_table": "game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_urls",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_urls_game_version_id",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_urls_game_version_id (game_version_id)",
+          "table": "game_urls",
+          "columns": [
+            "game_version_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_urls` (\n  `id` varchar(36) NOT NULL,\n  `game_version_id` varchar(36) NOT NULL,\n  `url` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_urls_game_version_id` (`game_version_id`),\n  CONSTRAINT `fk_game_versions_game_url` FOREIGN KEY (`game_version_id`) REFERENCES `game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_versions",
+      "type": "BASE TABLE",
+      "comment": "ゲームバージョンテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲームバージョン名"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": false,
+          "comment": "ゲームバージョンの説明"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_versions_v1",
+          "def": "KEY fk_games_game_versions_v1 (game_id) USING BTREE",
+          "table": "game_versions",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_versions",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_versions_v1",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_versions",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_versions",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_versions` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `name` varchar(32) NOT NULL,\n  `description` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_versions_v1` (`game_id`),\n  CONSTRAINT `fk_games_game_versions_v1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_version_game_file_relations",
+      "type": "BASE TABLE",
+      "comment": "ゲームバージョンとゲームファイルの関係テーブル(v2)",
+      "columns": [
+        {
+          "name": "game_version_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        },
+        {
+          "name": "game_file_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームファイルUUID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_game_version_game_file_relations_game_file_table2",
+          "def": "KEY fk_game_version_game_file_relations_game_file_table2 (game_file_id) USING BTREE",
+          "table": "game_version_game_file_relations",
+          "columns": [
+            "game_file_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_version_id, game_file_id) USING BTREE",
+          "table": "game_version_game_file_relations",
+          "columns": [
+            "game_version_id",
+            "game_file_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_game_version_game_file_relations_game_file_table2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_file_id) REFERENCES v2_game_files (id)",
+          "table": "game_version_game_file_relations",
+          "referenced_table": "v2_game_files",
+          "columns": [
+            "game_file_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_version_game_file_relations_game_version_table2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)",
+          "table": "game_version_game_file_relations",
+          "referenced_table": "v2_game_versions",
+          "columns": [
+            "game_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_version_id, game_file_id)",
+          "table": "game_version_game_file_relations",
+          "columns": [
+            "game_version_id",
+            "game_file_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_version_game_file_relations` (\n  `game_version_id` varchar(36) NOT NULL,\n  `game_file_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`game_version_id`,`game_file_id`),\n  KEY `fk_game_version_game_file_relations_game_file_table2` (`game_file_id`),\n  CONSTRAINT `fk_game_version_game_file_relations_game_file_table2` FOREIGN KEY (`game_file_id`) REFERENCES `v2_game_files` (`id`),\n  CONSTRAINT `fk_game_version_game_file_relations_game_version_table2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_videos",
+      "type": "BASE TABLE",
+      "comment": "ゲーム動画テーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム動画UUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "video_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "動画の種類のUUID"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_videos",
+          "def": "KEY fk_games_game_videos (game_id) USING BTREE",
+          "table": "game_videos",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "fk_game_videos_game_video_type",
+          "def": "KEY fk_game_videos_game_video_type (video_type_id) USING BTREE",
+          "table": "game_videos",
+          "columns": [
+            "video_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_videos",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_videos",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "game_videos",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_game_videos_game_video_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (video_type_id) REFERENCES game_video_types (id)",
+          "table": "game_videos",
+          "referenced_table": "game_video_types",
+          "columns": [
+            "video_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_videos",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_videos` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `video_type_id` tinyint(4) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_videos` (`game_id`),\n  KEY `fk_game_videos_game_video_type` (`video_type_id`),\n  CONSTRAINT `fk_game_videos_game_video_type` FOREIGN KEY (`video_type_id`) REFERENCES `game_video_types` (`id`),\n  CONSTRAINT `fk_games_game_videos` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_video_types",
+      "type": "BASE TABLE",
+      "comment": "ゲーム動画の種類のテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "ゲーム動画の種類のUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲーム動画の種類の名前"
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": true,
+          "default": "1",
+          "comment": "有効かどうか"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_video_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_video_types_name",
+          "def": "UNIQUE KEY uni_game_video_types_name (name) USING BTREE",
+          "table": "game_video_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_video_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_video_types_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_video_types_name (name)",
+          "table": "game_video_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_video_types` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `active` tinyint(1) DEFAULT 1,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_video_types_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "game_visibility_types",
+      "type": "BASE TABLE",
+      "comment": "ゲームの公開範囲のテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "ゲームの公開範囲のID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲームの公開範囲の名前"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "game_visibility_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_visibility_types_name",
+          "def": "UNIQUE KEY uni_game_visibility_types_name (name) USING BTREE",
+          "table": "game_visibility_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "game_visibility_types",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_game_visibility_types_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_game_visibility_types_name (name)",
+          "table": "game_visibility_types",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `game_visibility_types` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_game_visibility_types_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "launcher_sessions",
+      "type": "BASE TABLE",
+      "comment": "ランチャーセッションテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーセッションUUID"
+        },
+        {
+          "name": "launcher_user_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーユーザーUUID"
+        },
+        {
+          "name": "access_token",
+          "type": "varchar(64)",
+          "nullable": false,
+          "comment": "アクセストークンの値"
+        },
+        {
+          "name": "expires_at",
+          "type": "datetime",
+          "nullable": false,
+          "comment": "有効期限"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "revokeされた日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_launcher_users_launcher_sessions",
+          "def": "KEY fk_launcher_users_launcher_sessions (launcher_user_id) USING BTREE",
+          "table": "launcher_sessions",
+          "columns": [
+            "launcher_user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "launcher_sessions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_sessions_access_token",
+          "def": "UNIQUE KEY uni_launcher_sessions_access_token (access_token) USING BTREE",
+          "table": "launcher_sessions",
+          "columns": [
+            "access_token"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_launcher_users_launcher_sessions",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (launcher_user_id) REFERENCES launcher_users (id)",
+          "table": "launcher_sessions",
+          "referenced_table": "launcher_users",
+          "columns": [
+            "launcher_user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "launcher_sessions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_sessions_access_token",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_launcher_sessions_access_token (access_token)",
+          "table": "launcher_sessions",
+          "columns": [
+            "access_token"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `launcher_sessions` (\n  `id` varchar(36) NOT NULL,\n  `launcher_user_id` varchar(36) NOT NULL,\n  `access_token` varchar(64) NOT NULL,\n  `expires_at` datetime NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_launcher_sessions_access_token` (`access_token`),\n  KEY `fk_launcher_users_launcher_sessions` (`launcher_user_id`),\n  CONSTRAINT `fk_launcher_users_launcher_sessions` FOREIGN KEY (`launcher_user_id`) REFERENCES `launcher_users` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "launcher_users",
+      "type": "BASE TABLE",
+      "comment": "ランチャーユーザーテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーユーザーUUID"
+        },
+        {
+          "name": "launcher_version_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーバージョンUUID"
+        },
+        {
+          "name": "product_key",
+          "type": "varchar(29)",
+          "nullable": false,
+          "comment": "プロダクトキーの値"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "revokeされた日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_launcher_versions_launcher_users",
+          "def": "KEY fk_launcher_versions_launcher_users (launcher_version_id) USING BTREE",
+          "table": "launcher_users",
+          "columns": [
+            "launcher_version_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "launcher_users",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_users_product_key",
+          "def": "UNIQUE KEY uni_launcher_users_product_key (product_key) USING BTREE",
+          "table": "launcher_users",
+          "columns": [
+            "product_key"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_launcher_versions_launcher_users",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (launcher_version_id) REFERENCES launcher_versions (id)",
+          "table": "launcher_users",
+          "referenced_table": "launcher_versions",
+          "columns": [
+            "launcher_version_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "launcher_users",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_users_product_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_launcher_users_product_key (product_key)",
+          "table": "launcher_users",
+          "columns": [
+            "product_key"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `launcher_users` (\n  `id` varchar(36) NOT NULL,\n  `launcher_version_id` varchar(36) NOT NULL,\n  `product_key` varchar(29) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_launcher_users_product_key` (`product_key`),\n  KEY `fk_launcher_versions_launcher_users` (`launcher_version_id`),\n  CONSTRAINT `fk_launcher_versions_launcher_users` FOREIGN KEY (`launcher_version_id`) REFERENCES `launcher_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "launcher_versions",
+      "type": "BASE TABLE",
+      "comment": "ランチャーバージョンテーブル(v1)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーバージョンUUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ランチャーバージョン名"
+        },
+        {
+          "name": "questionnaire_url",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "アンケートURL"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "deleted_at",
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL",
+          "comment": "削除日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "launcher_versions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_versions_name",
+          "def": "UNIQUE KEY uni_launcher_versions_name (name) USING BTREE",
+          "table": "launcher_versions",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "launcher_versions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_launcher_versions_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_launcher_versions_name (name)",
+          "table": "launcher_versions",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `launcher_versions` (\n  `id` varchar(36) NOT NULL,\n  `name` varchar(32) NOT NULL,\n  `questionnaire_url` text DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `deleted_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_launcher_versions_name` (`name`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "launcher_version_game_relations",
+      "type": "BASE TABLE",
+      "comment": "ランチャーバージョンとゲームの関係テーブル(v1)",
+      "columns": [
+        {
+          "name": "launcher_version_table_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ランチャーバージョンUUID"
+        },
+        {
+          "name": "game_table_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_launcher_version_game_relations_game_table2",
+          "def": "KEY fk_launcher_version_game_relations_game_table2 (game_table_id) USING BTREE",
+          "table": "launcher_version_game_relations",
+          "columns": [
+            "game_table_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (launcher_version_table_id, game_table_id) USING BTREE",
+          "table": "launcher_version_game_relations",
+          "columns": [
+            "launcher_version_table_id",
+            "game_table_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_launcher_version_game_relations_game_table2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_table_id) REFERENCES games (id)",
+          "table": "launcher_version_game_relations",
+          "referenced_table": "games",
+          "columns": [
+            "game_table_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_launcher_version_game_relations_launcher_version_table",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (launcher_version_table_id) REFERENCES launcher_versions (id)",
+          "table": "launcher_version_game_relations",
+          "referenced_table": "launcher_versions",
+          "columns": [
+            "launcher_version_table_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (launcher_version_table_id, game_table_id)",
+          "table": "launcher_version_game_relations",
+          "columns": [
+            "launcher_version_table_id",
+            "game_table_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `launcher_version_game_relations` (\n  `launcher_version_table_id` varchar(36) NOT NULL,\n  `game_table_id` varchar(36) NOT NULL,\n  PRIMARY KEY (`launcher_version_table_id`,`game_table_id`),\n  KEY `fk_launcher_version_game_relations_game_table2` (`game_table_id`),\n  CONSTRAINT `fk_launcher_version_game_relations_game_table2` FOREIGN KEY (`game_table_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_launcher_version_game_relations_launcher_version_table` FOREIGN KEY (`launcher_version_table_id`) REFERENCES `launcher_versions` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "migrations",
+      "type": "BASE TABLE",
+      "comment": "マイグレーションテーブル(gormigrate)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(190)",
+          "nullable": false,
+          "comment": "マイグレーションID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "migrations",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "migrations",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `migrations` (\n  `id` varchar(190) NOT NULL,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "product_keys",
+      "type": "BASE TABLE",
+      "comment": "プロダクトキーテーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "プロダクトキーUUID"
+        },
+        {
+          "name": "edition_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "エディションUUID"
+        },
+        {
+          "name": "product_key",
+          "type": "varchar(29)",
+          "nullable": false,
+          "comment": "プロダクトキーの値"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "status_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "ステータスのID"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_editions_product_keys",
+          "def": "KEY fk_editions_product_keys (edition_id) USING BTREE",
+          "table": "product_keys",
+          "columns": [
+            "edition_id"
+          ]
+        },
+        {
+          "name": "fk_product_keys_status",
+          "def": "KEY fk_product_keys_status (status_id) USING BTREE",
+          "table": "product_keys",
+          "columns": [
+            "status_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "product_keys",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_product_keys_product_key",
+          "def": "UNIQUE KEY uni_product_keys_product_key (product_key) USING BTREE",
+          "table": "product_keys",
+          "columns": [
+            "product_key"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_editions_product_keys",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)",
+          "table": "product_keys",
+          "referenced_table": "editions",
+          "columns": [
+            "edition_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_product_keys_status",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (status_id) REFERENCES product_key_statuses (id)",
+          "table": "product_keys",
+          "referenced_table": "product_key_statuses",
+          "columns": [
+            "status_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "product_keys",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_product_keys_product_key",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_product_keys_product_key (product_key)",
+          "table": "product_keys",
+          "columns": [
+            "product_key"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `product_keys` (\n  `id` varchar(36) NOT NULL,\n  `edition_id` varchar(36) NOT NULL,\n  `product_key` varchar(29) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `status_id` tinyint(4) NOT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_product_keys_product_key` (`product_key`),\n  KEY `fk_editions_product_keys` (`edition_id`),\n  KEY `fk_product_keys_status` (`status_id`),\n  CONSTRAINT `fk_editions_product_keys` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),\n  CONSTRAINT `fk_product_keys_status` FOREIGN KEY (`status_id`) REFERENCES `product_key_statuses` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "product_key_statuses",
+      "type": "BASE TABLE",
+      "comment": "プロダクトキーのステータスのテーブル",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment",
+          "comment": "ステータスのID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ステータスの名前"
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": true,
+          "default": "1",
+          "comment": "有効かどうか"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "product_key_statuses",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_product_key_statuses_name",
+          "def": "UNIQUE KEY uni_product_key_statuses_name (name) USING BTREE",
+          "table": "product_key_statuses",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "product_key_statuses",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "uni_product_key_statuses_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY uni_product_key_statuses_name (name)",
+          "table": "product_key_statuses",
+          "columns": [
+            "name"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `product_key_statuses` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(32) NOT NULL,\n  `active` tinyint(1) DEFAULT 1,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `uni_product_key_statuses_name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "seats",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint(20)",
+          "nullable": false,
+          "extra_def": "auto_increment"
+        },
+        {
+          "name": "status_id",
+          "type": "tinyint(4)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_seats_seat_status",
+          "def": "KEY fk_seats_seat_status (status_id) USING BTREE",
+          "table": "seats",
+          "columns": [
+            "status_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "seats",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_seats_seat_status",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (status_id) REFERENCES seat_statuses (id)",
+          "table": "seats",
+          "referenced_table": "seat_statuses",
+          "columns": [
+            "status_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "seats",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `seats` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT,\n  `status_id` tinyint(4) NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_seats_seat_status` (`status_id`),\n  CONSTRAINT `fk_seats_seat_status` FOREIGN KEY (`status_id`) REFERENCES `seat_statuses` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "seat_statuses",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "extra_def": "auto_increment"
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "active",
+          "type": "tinyint(1)",
+          "nullable": false,
+          "default": "1"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "seat_statuses",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "seat_statuses",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `seat_statuses` (\n  `id` tinyint(4) NOT NULL AUTO_INCREMENT,\n  `name` varchar(255) NOT NULL,\n  `active` tinyint(1) NOT NULL DEFAULT 1,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "v2_game_files",
+      "type": "BASE TABLE",
+      "comment": "ゲームファイルテーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームファイルUUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "file_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "ゲームファイルの種類のUUID"
+        },
+        {
+          "name": "hash",
+          "type": "char(32)",
+          "nullable": false,
+          "comment": "ファイルのmd5ハッシュ"
+        },
+        {
+          "name": "entry_point",
+          "type": "text",
+          "nullable": false,
+          "comment": "実行時のエントリーポイント"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_files",
+          "def": "KEY fk_games_game_files (game_id) USING BTREE",
+          "table": "v2_game_files",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_files_game_file_type",
+          "def": "KEY fk_v2_game_files_game_file_type (file_type_id) USING BTREE",
+          "table": "v2_game_files",
+          "columns": [
+            "file_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "v2_game_files",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_files",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "v2_game_files",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_files_game_file_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (file_type_id) REFERENCES game_file_types (id)",
+          "table": "v2_game_files",
+          "referenced_table": "game_file_types",
+          "columns": [
+            "file_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "v2_game_files",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `v2_game_files` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `file_type_id` tinyint(4) NOT NULL,\n  `hash` char(32) NOT NULL,\n  `entry_point` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_files` (`game_id`),\n  KEY `fk_v2_game_files_game_file_type` (`file_type_id`),\n  CONSTRAINT `fk_games_game_files` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_v2_game_files_game_file_type` FOREIGN KEY (`file_type_id`) REFERENCES `game_file_types` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "v2_game_images",
+      "type": "BASE TABLE",
+      "comment": "ゲーム画像テーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム画像UUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "image_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "ゲーム画像の種類のUUID"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_image2s",
+          "def": "KEY fk_games_game_image2s (game_id) USING BTREE",
+          "table": "v2_game_images",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_images_game_image_type",
+          "def": "KEY fk_v2_game_images_game_image_type (image_type_id) USING BTREE",
+          "table": "v2_game_images",
+          "columns": [
+            "image_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "v2_game_images",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_image2s",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "v2_game_images",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_images_game_image_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (image_type_id) REFERENCES game_image_types (id)",
+          "table": "v2_game_images",
+          "referenced_table": "game_image_types",
+          "columns": [
+            "image_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "v2_game_images",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `v2_game_images` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `image_type_id` tinyint(4) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_image2s` (`game_id`),\n  KEY `fk_v2_game_images_game_image_type` (`image_type_id`),\n  CONSTRAINT `fk_games_game_image2s` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_v2_game_images_game_image_type` FOREIGN KEY (`image_type_id`) REFERENCES `game_image_types` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "v2_game_versions",
+      "type": "BASE TABLE",
+      "comment": "ゲームバージョンテーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームバージョンUUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "game_image_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム画像UUID"
+        },
+        {
+          "name": "game_video_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム動画UUID"
+        },
+        {
+          "name": "name",
+          "type": "varchar(32)",
+          "nullable": false,
+          "comment": "ゲームバージョン名"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": false,
+          "comment": "ゲームバージョンの説明"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        },
+        {
+          "name": "url",
+          "type": "text",
+          "nullable": true,
+          "default": "NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_v2_game_versions_game_image",
+          "def": "KEY fk_v2_game_versions_game_image (game_image_id) USING BTREE",
+          "table": "v2_game_versions",
+          "columns": [
+            "game_image_id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_versions_game_video",
+          "def": "KEY fk_v2_game_versions_game_video (game_video_id) USING BTREE",
+          "table": "v2_game_versions",
+          "columns": [
+            "game_video_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "v2_game_versions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_id_name",
+          "def": "UNIQUE KEY idx_game_id_name (game_id, name) USING BTREE",
+          "table": "v2_game_versions",
+          "columns": [
+            "game_id",
+            "name"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_versions_v2",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "v2_game_versions",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_versions_game_image",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_image_id) REFERENCES v2_game_images (id)",
+          "table": "v2_game_versions",
+          "referenced_table": "v2_game_images",
+          "columns": [
+            "game_image_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_versions_game_video",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_video_id) REFERENCES v2_game_videos (id)",
+          "table": "v2_game_versions",
+          "referenced_table": "v2_game_videos",
+          "columns": [
+            "game_video_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_game_id_name",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY idx_game_id_name (game_id, name)",
+          "table": "v2_game_versions",
+          "columns": [
+            "game_id",
+            "name"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "v2_game_versions",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `v2_game_versions` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `game_image_id` varchar(36) NOT NULL,\n  `game_video_id` varchar(36) NOT NULL,\n  `name` varchar(32) NOT NULL,\n  `description` text NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  `url` text DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `idx_game_id_name` (`game_id`,`name`),\n  KEY `fk_v2_game_versions_game_image` (`game_image_id`),\n  KEY `fk_v2_game_versions_game_video` (`game_video_id`),\n  CONSTRAINT `fk_games_game_versions_v2` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_v2_game_versions_game_image` FOREIGN KEY (`game_image_id`) REFERENCES `v2_game_images` (`id`),\n  CONSTRAINT `fk_v2_game_versions_game_video` FOREIGN KEY (`game_video_id`) REFERENCES `v2_game_videos` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "v2_game_videos",
+      "type": "BASE TABLE",
+      "comment": "ゲーム動画テーブル(v2)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲーム動画UUID"
+        },
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false,
+          "comment": "ゲームUUID"
+        },
+        {
+          "name": "video_type_id",
+          "type": "tinyint(4)",
+          "nullable": false,
+          "comment": "動画の種類のUUID"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": false,
+          "default": "current_timestamp()",
+          "comment": "作成日時"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "fk_games_game_video2s",
+          "def": "KEY fk_games_game_video2s (game_id) USING BTREE",
+          "table": "v2_game_videos",
+          "columns": [
+            "game_id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_videos_game_video_type",
+          "def": "KEY fk_v2_game_videos_game_video_type (video_type_id) USING BTREE",
+          "table": "v2_game_videos",
+          "columns": [
+            "video_type_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "v2_game_videos",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_games_game_video2s",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "v2_game_videos",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_v2_game_videos_game_video_type",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (video_type_id) REFERENCES game_video_types (id)",
+          "table": "v2_game_videos",
+          "referenced_table": "game_video_types",
+          "columns": [
+            "video_type_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "v2_game_videos",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `v2_game_videos` (\n  `id` varchar(36) NOT NULL,\n  `game_id` varchar(36) NOT NULL,\n  `video_type_id` tinyint(4) NOT NULL,\n  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n  PRIMARY KEY (`id`),\n  KEY `fk_games_game_video2s` (`game_id`),\n  KEY `fk_v2_game_videos_game_video_type` (`video_type_id`),\n  CONSTRAINT `fk_games_game_video2s` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`),\n  CONSTRAINT `fk_v2_game_videos_game_video_type` FOREIGN KEY (`video_type_id`) REFERENCES `game_video_types` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    },
+    {
+      "name": "v2_latest_game_version_times",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "game_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "latest_game_version_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "latest_game_version_created_at",
+          "type": "datetime",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_game_version_stats_latest_created_at",
+          "def": "KEY idx_game_version_stats_latest_created_at (latest_game_version_created_at) USING BTREE",
+          "table": "v2_latest_game_version_times",
+          "columns": [
+            "latest_game_version_created_at"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (game_id) USING BTREE",
+          "table": "v2_latest_game_version_times",
+          "columns": [
+            "game_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_v2_latest_game_version_times_game",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (game_id) REFERENCES games (id)",
+          "table": "v2_latest_game_version_times",
+          "referenced_table": "games",
+          "columns": [
+            "game_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (game_id)",
+          "table": "v2_latest_game_version_times",
+          "columns": [
+            "game_id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `v2_latest_game_version_times` (\n  `game_id` varchar(36) NOT NULL,\n  `latest_game_version_id` varchar(36) NOT NULL,\n  `latest_game_version_created_at` datetime NOT NULL,\n  PRIMARY KEY (`game_id`),\n  KEY `idx_game_version_stats_latest_created_at` (`latest_game_version_created_at`),\n  CONSTRAINT `fk_v2_latest_game_version_times_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    }
+  ],
+  "relations": [
+    {
+      "table": "access_tokens",
+      "columns": [
+        "product_key_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "product_keys",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (product_key_id) REFERENCES product_keys (id)"
+    },
+    {
+      "table": "edition_game_version_relations",
+      "columns": [
+        "edition_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "editions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)"
+    },
+    {
+      "table": "edition_game_version_relations",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)"
+    },
+    {
+      "table": "feedback_questions",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "games",
+      "columns": [
+        "visibility_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_visibility_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (visibility_type_id) REFERENCES game_visibility_types (id)"
+    },
+    {
+      "table": "game_creators",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_creator_custom_jobs",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_creator_custom_job_relations",
+      "columns": [
+        "custom_job_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_creator_custom_jobs",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (custom_job_id) REFERENCES game_creator_custom_jobs (id)"
+    },
+    {
+      "table": "game_creator_custom_job_relations",
+      "columns": [
+        "game_creator_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_creators",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_creator_id) REFERENCES game_creators (id)"
+    },
+    {
+      "table": "game_creator_job_relations",
+      "columns": [
+        "job_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_creator_jobs",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (job_id) REFERENCES game_creator_jobs (id)"
+    },
+    {
+      "table": "game_creator_job_relations",
+      "columns": [
+        "game_creator_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_creators",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_creator_id) REFERENCES game_creators (id)"
+    },
+    {
+      "table": "game_feedbacks",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)"
+    },
+    {
+      "table": "game_feedback_answers",
+      "columns": [
+        "feedback_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_feedbacks",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (feedback_id) REFERENCES game_feedbacks (id)"
+    },
+    {
+      "table": "game_feedback_answers",
+      "columns": [
+        "question_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "feedback_questions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (question_id) REFERENCES feedback_questions (id)"
+    },
+    {
+      "table": "game_feedback_configs",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_one",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_files",
+      "columns": [
+        "file_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_file_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (file_type_id) REFERENCES game_file_types (id)"
+    },
+    {
+      "table": "game_files",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES game_versions (id)"
+    },
+    {
+      "table": "game_genre_relations",
+      "columns": [
+        "genre_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_genres",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (genre_id) REFERENCES game_genres (id)"
+    },
+    {
+      "table": "game_genre_relations",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_images",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_images",
+      "columns": [
+        "image_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_image_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (image_type_id) REFERENCES game_image_types (id)"
+    },
+    {
+      "table": "game_management_roles",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_management_roles",
+      "columns": [
+        "role_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_management_role_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (role_type_id) REFERENCES game_management_role_types (id)"
+    },
+    {
+      "table": "game_play_logs",
+      "columns": [
+        "edition_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "editions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)"
+    },
+    {
+      "table": "game_play_logs",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_play_logs",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)"
+    },
+    {
+      "table": "game_urls",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_one",
+      "parent_table": "game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES game_versions (id)"
+    },
+    {
+      "table": "game_versions",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_version_game_file_relations",
+      "columns": [
+        "game_file_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_files",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_file_id) REFERENCES v2_game_files (id)"
+    },
+    {
+      "table": "game_version_game_file_relations",
+      "columns": [
+        "game_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_version_id) REFERENCES v2_game_versions (id)"
+    },
+    {
+      "table": "game_videos",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "game_videos",
+      "columns": [
+        "video_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_video_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (video_type_id) REFERENCES game_video_types (id)"
+    },
+    {
+      "table": "launcher_sessions",
+      "columns": [
+        "launcher_user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "launcher_users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (launcher_user_id) REFERENCES launcher_users (id)"
+    },
+    {
+      "table": "launcher_users",
+      "columns": [
+        "launcher_version_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "launcher_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (launcher_version_id) REFERENCES launcher_versions (id)"
+    },
+    {
+      "table": "launcher_version_game_relations",
+      "columns": [
+        "game_table_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_table_id) REFERENCES games (id)"
+    },
+    {
+      "table": "launcher_version_game_relations",
+      "columns": [
+        "launcher_version_table_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "launcher_versions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (launcher_version_table_id) REFERENCES launcher_versions (id)"
+    },
+    {
+      "table": "product_keys",
+      "columns": [
+        "edition_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "editions",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (edition_id) REFERENCES editions (id)"
+    },
+    {
+      "table": "product_keys",
+      "columns": [
+        "status_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "product_key_statuses",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (status_id) REFERENCES product_key_statuses (id)"
+    },
+    {
+      "table": "seats",
+      "columns": [
+        "status_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "seat_statuses",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (status_id) REFERENCES seat_statuses (id)"
+    },
+    {
+      "table": "v2_game_files",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "v2_game_files",
+      "columns": [
+        "file_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_file_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (file_type_id) REFERENCES game_file_types (id)"
+    },
+    {
+      "table": "v2_game_images",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "v2_game_images",
+      "columns": [
+        "image_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_image_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (image_type_id) REFERENCES game_image_types (id)"
+    },
+    {
+      "table": "v2_game_versions",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "v2_game_versions",
+      "columns": [
+        "game_image_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_images",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_image_id) REFERENCES v2_game_images (id)"
+    },
+    {
+      "table": "v2_game_versions",
+      "columns": [
+        "game_video_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "v2_game_videos",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_video_id) REFERENCES v2_game_videos (id)"
+    },
+    {
+      "table": "v2_game_videos",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    },
+    {
+      "table": "v2_game_videos",
+      "columns": [
+        "video_type_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "game_video_types",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (video_type_id) REFERENCES game_video_types (id)"
+    },
+    {
+      "table": "v2_latest_game_version_times",
+      "columns": [
+        "game_id"
+      ],
+      "cardinality": "zero_or_one",
+      "parent_table": "games",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (game_id) REFERENCES games (id)"
+    }
+  ],
+  "driver": {
+    "name": "mariadb",
+    "database_version": "10.6.4-MariaDB-1:10.6.4+maria~focal",
+    "meta": {
+      "dict": {
+        "Functions": "Stored procedures and functions"
+      }
+    }
+  }
+}

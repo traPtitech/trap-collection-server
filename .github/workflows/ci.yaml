@@ -157,17 +157,60 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
 
   tbls:
+    services: 
+      mariadb:
+        image: mariadb:10.6.4
+        env:
+          MYSQL_ROOT_PASSWORD: pass
+          MYSQL_DATABASE: trap_collection
+          TZ: Asia/Tokyo
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -ppass"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
+        
+
     name: tbls
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
+
+      - name: Install Atlas
+        run: |
+          curl -sSf https://atlasgo.sh | sh -s -- --community --yes
+
+      - name: Run migration
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -ppass --silent; do
+            echo "Waiting for database to be healthy..."
+            sleep 1
+          done
+
+          atlas migrate apply \
+          --config file://atlas.ci.hcl \
+          --env ci
+        shell: bash
+
       - name: Run tbls
-        run: docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
+        run: |
+          TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
+          go tool tbls doc --rm-dist -c .tbls.yml
 
       - name: Check diff
         run: |
           if [[ -n $(git status --porcelain) ]]; then
             echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
+
+            echo "===== changed files ====="
+            git diff 
+            
             exit 1
           fi
         shell: bash
