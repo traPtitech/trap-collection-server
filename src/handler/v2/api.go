@@ -98,7 +98,7 @@ func (api *API) Start(addr string) error {
 }
 
 func (api *API) setRoutes(e *echo.Echo) error {
-	swagger, err := openapi.GetSwagger()
+	spec, err := openapi.GetSpec()
 	if err != nil {
 		return fmt.Errorf("failed to get openapi: %w", err)
 	}
@@ -107,7 +107,7 @@ func (api *API) setRoutes(e *echo.Echo) error {
 	// 他のrouteにはoapiMiddleware.OapiRequestValidatorを設定したくないため、
 	// 空のpathのgroupを作成し、oapiMiddleware.OapiRequestValidatorを設定する
 	apiGroup := e.Group("")
-	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(swagger, &echomiddleware.Options{
+	apiGroup.Use(echomiddleware.OapiRequestValidatorWithOptions(spec, &echomiddleware.Options{
 		Skipper: fileUploadSkipper,
 		Options: openapi3filter.Options{
 			AuthenticationFunc: api.check,
