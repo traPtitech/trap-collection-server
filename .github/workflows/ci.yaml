@@ -209,7 +209,7 @@ jobs:
             echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
 
             echo "===== changed files ====="
-            git diff --name-only
+            git diff 
             
             exit 1
           fi
