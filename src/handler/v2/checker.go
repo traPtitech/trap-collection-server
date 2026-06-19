@@ -54,20 +54,21 @@ func NewChecker(
 func (checker *Checker) check(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 	// 一時的に未実装のものはチェックなしで通す
 	checkerMap := map[string]openapi3filter.AuthenticationFunc{
-		"TrapMemberAuth":          checker.TrapMemberAuthChecker,
-		"AdminAuth":               checker.AdminAuthChecker,
-		"GameOwnerAuth":           checker.GameOwnerAuthChecker,
-		"GameMaintainerAuth":      checker.GameMaintainerAuthChecker,
-		"EditionAuth":             checker.EditionAuthChecker,
-		"EditionGameFileAuth":     checker.EditionGameFileAuthChecker,
-		"EditionGameImageAuth":    checker.EditionGameImageAuthChecker,
-		"EditionGameVideoAuth":    checker.EditionGameVideoAuthChecker,
-		"EditionGameFeedbackAuth": checker.EditionGameFeedbackAuthChecker,
-		"EditionIDAuth":           checker.EditionIDAuthChecker,
-		"GameInfoVisibilityAuth":  checker.GameInfoVisibilityChecker,
-		"GameFileVisibilityAuth":  checker.GameFileVisibilityChecker, // この3つは同じ条件のためえ、一つのチェッカーのみ実装している
-		"GameImageVisibilityAuth": checker.GameFileVisibilityChecker,
-		"GameVideoVisibilityAuth": checker.GameFileVisibilityChecker,
+		"TrapMemberAuth":             checker.TrapMemberAuthChecker,
+		"AdminAuth":                  checker.AdminAuthChecker,
+		"GameOwnerAuth":              checker.GameOwnerAuthChecker,
+		"GameMaintainerAuth":         checker.GameMaintainerAuthChecker,
+		"EditionAuth":                checker.EditionAuthChecker,
+		"EditionGameFileAuth":        checker.EditionGameFileAuthChecker,
+		"EditionGameImageAuth":       checker.EditionGameImageAuthChecker,
+		"EditionGameVideoAuth":       checker.EditionGameVideoAuthChecker,
+		"EditionGameFeedbackAuth":    checker.EditionGameFeedbackAuthChecker,
+		"EditionIDAuth":              checker.EditionIDAuthChecker,
+		"GameInfoVisibilityAuth":     checker.GameInfoVisibilityChecker,
+		"GameFileVisibilityAuth":     checker.GameFileVisibilityChecker, // この3つは同じ条件のため、一つのチェッカーのみ実装している
+		"GameImageVisibilityAuth":    checker.GameFileVisibilityChecker,
+		"GameVideoVisibilityAuth":    checker.GameFileVisibilityChecker,
+		"GameCreatorsVisibilityAuth": checker.GameInfoVisibilityChecker, // GameInfoVisibilityAuth と同じなため、そのまま持ってくる
 	}
 
 	checkerFunc, ok := checkerMap[input.SecuritySchemeName]

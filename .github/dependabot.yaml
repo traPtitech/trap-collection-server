@@ -19,6 +19,9 @@ updates:
       golang.org:
         patterns:
           - 'golang.org/x/*'
+      oapi-codegen:
+        patterns:
+          - 'github.com/oapi-codegen/*'
 
   - package-ecosystem: docker
     directory: '/docker/dev'

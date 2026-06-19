@@ -1,6 +1,6 @@
 # syntax = docker/dockerfile:1
 
-FROM golang:1.26.1-alpine AS build
+FROM golang:1.26.4-alpine@sha256:f23e8b227fb4493eabe03bede4d5a32d04092da71962f1fb79b5f7d1e6c2a17f AS build
 
 RUN --mount=type=cache,target=/var/cache/apk \
   apk --update add tzdata git && \
@@ -9,7 +9,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
 
 WORKDIR /go/src/github.com/traPtitech/trap-collection-server
 
-COPY --from=arigaio/atlas:1.2.0 --chown=root:root atlas /usr/local/bin/atlas
+COPY --from=arigaio/atlas:1.2.0@sha256:69fef5b506378439771fc70e052471780336552dbf35da397f5a7a729da8f7e3 --chown=root:root atlas /usr/local/bin/atlas
 
 COPY go.mod go.sum ./
 RUN go mod download

@@ -18,4 +18,8 @@ type User interface {
 	// GetActiveUsers
 	// traQの全アクティブユーザー(凍結されていないユーザー)の取得。
 	GetActiveUsers(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error)
+	// GetAllUsers
+	// traQの全ユーザー(アクティブなユーザーと非アクティブなユーザーを含む)の取得。
+	// セッションが無効な場合は、ErrInvalidSessionを返す。
+	GetAllUsers(ctx context.Context, session *domain.OIDCSession) ([]*service.UserInfo, error)
 }
