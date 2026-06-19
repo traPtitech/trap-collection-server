@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/stretchr/testify/assert"
 	mockConfig "github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -23,7 +23,7 @@ import (
 
 func setEchoContext(ctx context.Context, c echo.Context) context.Context {
 	// nolint:staticcheck
-	return context.WithValue(ctx, oapiMiddleware.EchoContextKey, c)
+	return context.WithValue(ctx, echomiddleware.EchoContextKey, c)
 }
 
 func TestTrapMemberAuthMiddleware(t *testing.T) {
