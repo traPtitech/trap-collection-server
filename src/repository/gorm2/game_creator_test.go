@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -987,6 +988,202 @@ func TestGetGameCreatorsByUserIDs(t *testing.T) {
 				assert.Equal(t, expected.GetUserID(), result[i].GetUserID())
 				assert.Equal(t, expected.GetUserName(), result[i].GetUserName())
 				assert.WithinDuration(t, expected.GetCreatedAt(), result[i].GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
+func TestUpsertGameCreatorPresetJobsRelations(t *testing.T) {
+	creatorID1 := uuid.New()
+	creatorID2 := uuid.New()
+	gameID1 := uuid.New()
+	userID1 := uuid.New()
+	userID2 := uuid.New()
+	jobID1 := uuid.New()
+	jobID2 := uuid.New()
+
+	creator1 := schema.GameCreatorTable{
+		ID:        creatorID1,
+		UserID:    userID1,
+		UserName:  "user1",
+		GameID:    gameID1,
+		CreatedAt: time.Now(),
+		Game: schema.GameTable2{
+			ID:               gameID1,
+			Name:             "game1",
+			VisibilityTypeID: 1,
+		},
+		CreatorJobs: []schema.GameCreatorJobTable{
+			{
+				ID:          jobID1,
+				DisplayName: "job1",
+				CreatedAt:   time.Now().Add(-time.Hour),
+			},
+		},
+	}
+	creator2 := schema.GameCreatorTable{
+		ID:        creatorID2,
+		UserID:    userID2,
+		UserName:  "user2",
+		GameID:    gameID1,
+		CreatedAt: time.Now().Add(time.Hour),
+		Game: schema.GameTable2{
+			ID:               gameID1,
+			Name:             "game1",
+			VisibilityTypeID: 1,
+		},
+		CreatorJobs: []schema.GameCreatorJobTable{},
+	}
+
+	presetJob := schema.GameCreatorJobTable{
+		ID:          jobID2,
+		DisplayName: "preset job",
+		CreatedAt:   time.Now(),
+	}
+
+	ctx := t.Context()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+	err = db.Create(&presetJob).Error
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		db, err := testDB.getDB(context.Background())
+		require.NoError(t, err)
+		err = db.Unscoped().Delete(&presetJob).Error
+		require.NoError(t, err)
+	})
+
+	testCases := map[string]struct {
+		beforeCreatorPresetJobsRelations []schema.GameCreatorTable
+		input                            map[values.GameCreatorID][]values.GameCreatorJobID
+		afterCreatorPresetJobsRelations  []schema.GameCreatorTable
+		err                              error
+	}{
+		"空のmapを渡した時、何も起きない": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			afterCreatorPresetJobsRelations:  []schema.GameCreatorTable{creator1},
+		},
+		"jobの追加ができる": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			input: map[values.GameCreatorID][]values.GameCreatorJobID{
+				values.GameCreatorID(creatorID1): {values.GameCreatorJobID(jobID1), values.GameCreatorJobID(jobID2)},
+			},
+			afterCreatorPresetJobsRelations: []schema.GameCreatorTable{
+				{
+					ID:          creator1.ID,
+					GameID:      creator1.GameID,
+					UserID:      creator1.UserID,
+					UserName:    creator1.UserName,
+					CreatedAt:   creator1.CreatedAt,
+					Game:        creator1.Game,
+					CreatorJobs: append(creator1.CreatorJobs, presetJob),
+				},
+			},
+		},
+		"複数のcreatorのjobを追加できる": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1, creator2},
+			input: map[values.GameCreatorID][]values.GameCreatorJobID{
+				values.GameCreatorID(creatorID1): {values.GameCreatorJobID(jobID1), values.GameCreatorJobID(jobID2)},
+				values.GameCreatorID(creatorID2): {values.GameCreatorJobID(jobID2)},
+			},
+			afterCreatorPresetJobsRelations: []schema.GameCreatorTable{
+				{
+					ID:          creator1.ID,
+					GameID:      creator1.GameID,
+					UserID:      creator1.UserID,
+					UserName:    creator1.UserName,
+					CreatedAt:   creator1.CreatedAt,
+					Game:        creator1.Game,
+					CreatorJobs: append(creator1.CreatorJobs, presetJob),
+				},
+				{
+					ID:          creator2.ID,
+					GameID:      creator2.GameID,
+					UserID:      creator2.UserID,
+					UserName:    creator2.UserName,
+					CreatedAt:   creator2.CreatedAt,
+					Game:        creator2.Game,
+					CreatorJobs: []schema.GameCreatorJobTable{presetJob},
+				},
+			},
+		},
+		"存在しないjobを指定した場合ErrForeignKeyViolated": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			input: map[values.GameCreatorID][]values.GameCreatorJobID{
+				values.GameCreatorID(creatorID1): {values.GameCreatorJobID(jobID1), values.GameCreatorJobID(uuid.New())},
+			},
+			afterCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			err:                             repository.ErrForeignKeyViolated,
+		},
+		"存在しないcreatorを指定した場合ErrForeignKeyViolated": {
+			beforeCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			input: map[values.GameCreatorID][]values.GameCreatorJobID{
+				values.GameCreatorID(uuid.New()): {values.GameCreatorJobID(jobID1), values.GameCreatorJobID(jobID2)},
+			},
+			afterCreatorPresetJobsRelations: []schema.GameCreatorTable{creator1},
+			err:                             repository.ErrForeignKeyViolated,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			if len(testCase.beforeCreatorPresetJobsRelations) > 0 {
+				err = db.Create(testCase.beforeCreatorPresetJobsRelations).Error
+				require.NoError(t, err)
+			}
+			if len(testCase.afterCreatorPresetJobsRelations) > 0 {
+				t.Cleanup(func() {
+					db, err := testDB.getDB(context.Background())
+					require.NoError(t, err)
+					err = db.Unscoped().Model(testCase.afterCreatorPresetJobsRelations).
+						Association("CreatorJobs").Clear()
+					require.NoError(t, err)
+					err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+						Delete(testCase.afterCreatorPresetJobsRelations).Error
+					require.NoError(t, err)
+					err = db.Model(&schema.GameTable2{}).Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+						Delete(testCase.afterCreatorPresetJobsRelations).Error
+					require.NoError(t, err)
+				})
+			}
+
+			repo := NewGameCreator(testDB)
+
+			err = repo.UpsertGameCreatorPresetJobsRelations(ctx, testCase.input)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			var result []schema.GameCreatorTable
+			err = db.Preload("Game").Preload("CreatorJobs").Order("created_at ASC").Find(&result).Error
+			assert.NoError(t, err)
+
+			assert.Len(t, result, len(testCase.afterCreatorPresetJobsRelations))
+			for i, expected := range testCase.afterCreatorPresetJobsRelations {
+				actual := result[i]
+				assert.Equal(t, expected.ID, actual.ID)
+				assert.Equal(t, expected.UserID, actual.UserID)
+				assert.Equal(t, expected.UserName, actual.UserName)
+				assert.WithinDuration(t, expected.CreatedAt, actual.CreatedAt, time.Second)
+
+				assert.Len(t, actual.CreatorJobs, len(expected.CreatorJobs))
+				slices.SortFunc(actual.CreatorJobs, func(job1, job2 schema.GameCreatorJobTable) int {
+					return job1.CreatedAt.Compare(job2.CreatedAt)
+				})
+				for j, expectedJob := range expected.CreatorJobs {
+					actualJob := actual.CreatorJobs[j]
+					assert.Equal(t, expectedJob.ID, actualJob.ID)
+					assert.Equal(t, expectedJob.DisplayName, actualJob.DisplayName)
+					assert.WithinDuration(t, expectedJob.CreatedAt, actualJob.CreatedAt, time.Second)
+				}
 			}
 		})
 	}
