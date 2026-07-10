@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"gorm.io/gorm/clause"
 )
 
 var _ repository.GameCreator = (*GameCreator)(nil)
@@ -198,8 +199,53 @@ func (gc *GameCreator) CreateGameCreators(ctx context.Context, creators []*domai
 	return nil
 }
 
-func (gc *GameCreator) UpsertGameCreatorPresetJobsRelations(_ context.Context, _ map[values.GameCreatorID][]values.GameCreatorJobID) error {
-	return nil // TODO: implement
+func (gc *GameCreator) UpsertGameCreatorPresetJobsRelations(ctx context.Context, creatorJobsRelations map[values.GameCreatorID][]values.GameCreatorJobID) error {
+	if len(creatorJobsRelations) == 0 {
+		return nil
+	}
+
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("getDB: %w", err)
+	}
+
+	relationCount := 0
+	for _, jobs := range creatorJobsRelations {
+		relationCount += len(jobs)
+	}
+
+	relations := make([]map[string]any, 0, relationCount)
+	for creatorID, jobs := range creatorJobsRelations {
+		creatorUUID := uuid.UUID(creatorID)
+		for _, job := range jobs {
+			relations = append(relations, map[string]any{
+				"game_creator_id": creatorUUID,
+				"job_id":          uuid.UUID(job),
+			})
+		}
+	}
+
+	if len(relations) == 0 {
+		return nil
+	}
+
+	err = db.Table("game_creator_job_relations").
+		Clauses(&clause.OnConflict{
+			// Create の引数に map を使って DoNothing を指定すると Gorm が無効な SQL を出力してくるので、DoUpdateで同じ値を設定する。
+			// ON DUPLICATE KEY UPDATE `game_creator_id`=VALUES(`game_creator_id`)
+			DoUpdates: clause.AssignmentColumns([]string{"game_creator_id"}),
+		}).
+		Create(&relations).Error
+	if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
+		if mysqlErr.Number == 1452 {
+			return repository.ErrForeignKeyViolated
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("create game creator job relations: %w", err)
+	}
+
+	return nil
 }
 
 func (gc *GameCreator) UpsertGameCreatorCustomJobsRelations(_ context.Context, _ map[values.GameCreatorID][]values.GameCreatorJobID) error {

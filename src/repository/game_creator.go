@@ -27,6 +27,7 @@ type GameCreator interface {
 	CreateGameCreators(ctx context.Context, creators []*domain.GameCreator) error
 	// UpsertGameCreatorPresetJobsRelations
 	// creator と preset job の relation を更新する
+	// 存在しない creator や job の id を指定したら、ErrForeignKeyViolated
 	UpsertGameCreatorPresetJobsRelations(ctx context.Context, jobs map[values.GameCreatorID][]values.GameCreatorJobID) error
 	// UpsertGameCreatorCustomJobsRelations
 	// creator と custom job の relation を更新する
