@@ -80,4 +80,7 @@ var repositorySet = wire.NewSet(
 
 	wire.Bind(new(repository.GameCreator), new(*gorm2.GameCreator)),
 	gorm2.NewGameCreator,
+
+	wire.Bind(new(repository.GameFeedback), new(*gorm2.GameFeedback)),
+	gorm2.NewGameFeedback,
 )

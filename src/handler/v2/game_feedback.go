@@ -1,18 +1,44 @@
 package v2
 
 import (
+	"errors"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
+	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-type GameFeedback struct{}
+type GameFeedback struct {
+	gameFeedbackService service.GameFeedback
+}
+
+func NewGameFeedback(gameFeedbackService service.GameFeedback) *GameFeedback {
+	return &GameFeedback{
+		gameFeedbackService: gameFeedbackService,
+	}
+}
 
 // フィードバック設定の取得
 // (GET /games/{gameID}/feedback-config)
-func (gf *GameFeedback) GetFeedbackConfig(c echo.Context, _ openapi.GameIDInPath) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gf *GameFeedback) GetFeedbackConfig(c echo.Context, gameID openapi.GameIDInPath) error {
+	enabled, err := gf.gameFeedbackService.GetFeedbackConfig(
+		c.Request().Context(),
+		values.NewGameIDFromUUID(gameID),
+	)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if err != nil {
+		log.Printf("error: failed to get feedback config: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get feedback config")
+	}
+
+	return c.JSON(http.StatusOK, openapi.FeedbackConfig{
+		Enabled: enabled,
+	})
 }
 
 // フィードバック設定の更新

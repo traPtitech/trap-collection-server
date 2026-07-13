@@ -53,6 +53,7 @@ var (
 		v2.NewGameVideo,
 		v2.NewGamePlayLog,
 		v2.NewGameCreator,
+		v2.NewGameFeedback,
 		v2.NewEdition,
 		v2.NewEditionAuth,
 		v2.NewSeat,
