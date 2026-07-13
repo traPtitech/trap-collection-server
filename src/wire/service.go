@@ -96,6 +96,9 @@ var (
 		wire.Bind(new(service.GameCreator), new(*v2.GameCreator)),
 		v2.NewGameCreator,
 
+		wire.Bind(new(service.GameFeedback), new(*v2.GameFeedback)),
+		v2.NewGameFeedback,
+
 		// wire.Bind(new(service.User), new(*v1.User)),
 		// v1.NewUser,
 
