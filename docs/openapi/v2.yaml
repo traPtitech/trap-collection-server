@@ -6,7 +6,7 @@ servers:
   - url: /api/v2 #oapi-codegenでproxy後にもmatchできるようにするため必要
 info:
   description: 'traP Collection v2'
-  version: '2.4.1'
+  version: '2.4.2'
   title: 'traP Collection v2'
   contact:
     name: traP
@@ -1439,11 +1439,11 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-    put:
-      operationId: putGameCreators
-      summary: ゲームクリエイター一覧の更新
+    post:
+      operationId: postGameCreator
+      summary: ゲームクリエイターの追加
       description: |
-        指定したゲームIDのゲームのクリエイター一覧を置き換えて更新します。
+        指定したゲームIDのゲームにクリエイターを追加します。
       tags:
         - gameCreator
       security:
@@ -1451,28 +1451,28 @@ paths:
       parameters:
         - $ref: '#/components/parameters/gameIDInPath'
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutGameCreatorsRequest'
+              $ref: '#/components/schemas/UserRequest'
       responses:
-        '200':
+        '201':
           description: |
-            正しくクリエイターを更新できた際に返されます。
-            更新後のクリエイター一覧が返されます。
+            ゲームクリエイターの追加に成功した際に返されます。
+            追加したゲームクリエイターが返されます。
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GameCreator'
+                $ref: '#/components/schemas/GameCreator'
         '400':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: |
-            ゲームID、またはリクエストが不正である場合に返されます。
+            ゲームID、ユーザーID、またはリクエストが不正である場合に返されます。
+            指定したユーザーが既にゲームクリエイターである場合にも返されます。
         '401':
           $ref: '#/components/responses/TraPUnauthorized'
         '403':
@@ -1489,6 +1489,107 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: |
             指定したIDのゲームが存在しない、または削除されている場合に返されます。
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/creators/{creatorID}:
+    delete:
+      operationId: deleteGameCreator
+      summary: ゲームクリエイターの削除
+      description: |
+        指定したゲームIDのゲームからゲームクリエイターを削除します。
+        ゲームクリエイターに紐づくジョブの関連も削除されます。
+      tags:
+        - gameCreator
+      security:
+        - GameOwnerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/creatorIDInPath'
+      responses:
+        '200':
+          description: 'ゲームクリエイターの削除に成功した際に返されます。'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ゲームID、またはゲームクリエイターIDが不正である場合に返されます。
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerでない場合に返されます。
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームまたはゲームクリエイターが存在しない、削除されている、
+            もしくはゲームクリエイターが指定したゲームに属していない場合に返されます。
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/creators/{creatorID}/jobs:
+    put:
+      operationId: putGameCreatorJobs
+      summary: ゲームクリエイターのジョブの更新
+      description: |
+        指定したゲームクリエイターに紐づくジョブを、指定したジョブの一覧で置き換えます。
+        プリセットジョブと、指定したゲームに作成されたカスタムジョブを指定できます。
+      tags:
+        - gameCreator
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+        - $ref: '#/components/parameters/creatorIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutGameCreatorJobsRequest'
+      responses:
+        '200':
+          description: |
+            ゲームクリエイターのジョブの更新に成功した際に返されます。
+            更新後のゲームクリエイターが返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameCreator'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ゲームID、ゲームクリエイターID、リクエスト、またはジョブIDが不正である場合に返されます。
+            同じジョブIDが複数指定された場合にも返されます。
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerもしくはmaintainerでない場合に返されます。
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームまたはゲームクリエイターが存在しない、削除されている、
+            もしくはゲームクリエイターが指定したゲームに属していない場合に返されます。
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1518,6 +1619,60 @@ paths:
           $ref: '#/components/responses/TraPUnauthorized'
         '403':
           $ref: '#/components/responses/AdminForbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{gameID}/creators/custom-jobs:
+    post:
+      operationId: postGameCreatorCustomJob
+      summary: ゲームクリエイターのカスタムジョブの作成
+      description: |
+        指定したゲームで利用できるゲームクリエイターのカスタムジョブを作成します。
+      tags:
+        - gameCreator
+      security:
+        - GameMaintainerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/gameIDInPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostGameCreatorCustomJobRequest'
+      responses:
+        '201':
+          description: |
+            カスタムジョブの作成に成功した際に返されます。
+            作成したカスタムジョブが返されます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameCreatorJob'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            ゲームIDまたはリクエストが不正である場合に返されます。
+            同じ表示名のカスタムジョブが既に存在する場合にも返されます。
+        '401':
+          $ref: '#/components/responses/TraPUnauthorized'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            このゲームのownerもしくはmaintainerでない場合に返されます。
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: |
+            指定したIDのゲームが存在しない、または削除されている場合に返されます。
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -3009,6 +3164,14 @@ components:
         $ref: '#/components/schemas/UserID'
       description: |
         ユーザーIDを示すパスパラメータです。
+    creatorIDInPath:
+      name: creatorID
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/GameCreatorID'
+      description: |
+        ゲームクリエイターIDを示すパスパラメータです。
     editionIDInPath:
       name: editionID
       in: path
@@ -3585,58 +3748,46 @@ components:
       description: |
         ゲームの動画のメタ情報です。
 
-    PutGameCreatorsRequest:
-      type: array
-      items:
-        $ref: '#/components/schemas/PutGameCreatorsRequestItem'
-
-    PutGameCreatorsRequestItem:
+    PutGameCreatorJobsRequest:
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/UserID'
-        jobs:
+        jobIDs:
           type: array
           description: |
-            ゲームクリエイターのjob情報の配列です。
-            配列の各要素は、既存のjob（プリセットのjob+ゲームにすでにあるjob)のIDを指定するか、
-            新しいカスタムjobの表示名を指定します。
-            既存のjobのIDは重複してはいけません。
-            新しいカスタムjobの表示名は、既にあるカスタムjobの表示名と重複してはいけません。
+            ゲームクリエイターに紐づけるジョブIDの配列です。
+            空の配列を指定すると、ゲームクリエイターからすべてのジョブの関連を削除します。
           items:
-            oneOf:
-              - type: object
-                properties:
-                  id:
-                    $ref: '#/components/schemas/GameCreatorJobID'
-                required:
-                  - id
-                description: |
-                  既存のゲームクリエイターのjobのIDを指定します。
-              - type: object
-                properties:
-                  customDisplayName:
-                    $ref: '#/components/schemas/GameCreatorJobDisplayName'
-                required:
-                  - customDisplayName
-                example:
-                  customDisplayName: カスタムjobName
-                description: |
-                  新しいカスタムjobの表示名を指定します。
+            $ref: '#/components/schemas/GameCreatorJobID'
+          uniqueItems: true
       required:
-        - id
+        - jobIDs
+      additionalProperties: false
+
+    PostGameCreatorCustomJobRequest:
+      type: object
+      properties:
+        displayName:
+          $ref: '#/components/schemas/GameCreatorJobDisplayName'
+      required:
+        - displayName
+      additionalProperties: false
 
     GameCreator:
       type: object
       properties:
+        id:
+          $ref: '#/components/schemas/GameCreatorID'
+        userID:
+          $ref: '#/components/schemas/UserID'
         name:
           $ref: '#/components/schemas/UserName'
         jobs:
           type: array
           items:
             $ref: '#/components/schemas/GameCreatorJob'
-          minItems: 1
       required:
+        - id
+        - userID
         - name
         - jobs
 
@@ -3657,6 +3808,12 @@ components:
         - isCustomJob
       description: |
         ゲームクリエイターのjob情報を表します。
+
+    GameCreatorID:
+      type: string
+      format: uuid
+      description: |
+        ゲームクリエイターのIDを表します。
 
     GameCreatorJobID:
       type: string
