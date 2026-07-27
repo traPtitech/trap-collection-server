@@ -131,3 +131,111 @@ func TestGetGameCreatorJobs(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameCreators(t *testing.T) {
+	t.Parallel()
+
+	gameID := uuid.New()
+	gameCreator := domain.NewGameCreatorWithJobs(
+		domain.NewGameCreator(
+			values.NewGameCreatorID(),
+			values.NewTrapMemberID(uuid.New()),
+			values.NewGameIDFromUUID(gameID),
+			values.NewTrapMemberName("ikura-hamu"),
+			time.Now(),
+		),
+		[]*domain.GameCreatorJob{
+			domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("job"), time.Now()),
+		},
+		[]*domain.GameCreatorCustomJob{
+			domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("custom job"), values.NewGameIDFromUUID(gameID), time.Now()),
+		},
+	)
+
+	testCases := map[string]struct {
+		gameID             openapi.GameIDInPath
+		gameCreators       []*domain.GameCreatorWithJobs
+		GetGameCreatorsErr error
+		wantStatus         int
+		wantBody           []openapi.GameCreator
+		isError            bool
+	}{
+		"特に問題ないのでエラー無し": {
+			gameID:       uuid.New(),
+			gameCreators: []*domain.GameCreatorWithJobs{gameCreator},
+			wantStatus:   http.StatusOK,
+			wantBody: []openapi.GameCreator{
+				{
+					Jobs: []openapi.GameCreatorJob{
+						{
+							Id:          openapi.GameCreatorJobID(gameCreator.GetJobs()[0].GetID()),
+							DisplayName: openapi.GameCreatorJobDisplayName(gameCreator.GetJobs()[0].GetDisplayName()),
+							IsCustomJob: false,
+						},
+						{
+							Id:          openapi.GameCreatorJobID(gameCreator.GetCustomJobs()[0].GetID()),
+							DisplayName: openapi.GameCreatorJobDisplayName(gameCreator.GetCustomJobs()[0].GetDisplayName()),
+							IsCustomJob: true,
+						},
+					},
+					Name: openapi.UserName(gameCreator.GetGameCreator().GetUserName()),
+				},
+			},
+		},
+		"gameIDが不正なので404を返す": {
+			gameID:             uuid.UUID(values.NewGameID()),
+			GetGameCreatorsErr: service.ErrInvalidGameID,
+			wantStatus:         http.StatusNotFound,
+			isError:            true,
+		},
+		"GetGameCreatorsがエラーなので500": {
+			gameID:             uuid.UUID(values.NewGameID()),
+			GetGameCreatorsErr: assert.AnError,
+			wantStatus:         http.StatusInternalServerError,
+			isError:            true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockGameCreatorService := mock.NewMockGameCreator(ctrl)
+			gc := NewGameCreator(mockGameCreatorService)
+
+			mockGameCreatorService.EXPECT().
+				GetGameCreators(gomock.Any(), values.NewGameIDFromUUID(testCase.gameID)).
+				Return(testCase.gameCreators, testCase.GetGameCreatorsErr)
+
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/games/%s/creators", testCase.gameID), nil)
+
+			err := gc.GetGameCreators(c, testCase.gameID)
+
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				if assert.ErrorAs(t, err, &httpError) {
+					assert.Equal(t, testCase.wantStatus, httpError.Code)
+				}
+				return
+			}
+
+			var resBody []openapi.GameCreator
+			err = json.NewDecoder(rec.Body).Decode(&resBody)
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.wantStatus, rec.Code)
+
+			assert.Len(t, resBody, len(testCase.wantBody))
+			for i, wantCreator := range testCase.wantBody {
+				resCreator := resBody[i]
+
+				assert.Equal(t, wantCreator.Name, resCreator.Name)
+				assert.Len(t, resCreator.Jobs, len(wantCreator.Jobs))
+				for j, wantJob := range wantCreator.Jobs {
+					resJob := resCreator.Jobs[j]
+					assert.Equal(t, wantJob, resJob)
+				}
+			}
+		})
+	}
+}
