@@ -61,8 +61,26 @@ func (gc *GameCreator) GetGameCreators(c echo.Context, _ openapi.GameIDInPath) e
 	return c.NoContent(http.StatusNotImplemented)
 }
 
-// ゲームクリエイター一覧の更新
-// (PUT /games/{gameID}/creators)
-func (gc *GameCreator) PutGameCreators(c echo.Context, _ openapi.GameIDInPath) error {
+// ゲームクリエイターの作成
+// (POST /games/{gameID}/creators)
+func (gc *GameCreator) PostGameCreator(c echo.Context, _ openapi.GameIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
+// ゲームクリエイターの削除
+// (DELETE /games/{gameID}/creators/{creatorID})
+func (gc *GameCreator) DeleteGameCreator(c echo.Context, _ openapi.GameIDInPath, _ openapi.CreatorIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
+// ゲームクリエイターのjob更新
+// (PUT /games/{gameID}/creators/{creatorID}/jobs)
+func (gc *GameCreator) PutGameCreatorJobs(c echo.Context, _ openapi.GameIDInPath, _ openapi.CreatorIDInPath) error {
+	return c.NoContent(http.StatusNotImplemented)
+}
+
+// ゲームクリエイターのカスタムジョブ作成
+// (POST /games/{gameID}/creators/custom-jobs)
+func (gc *GameCreator) PostGameCreatorCustomJob(c echo.Context, _ openapi.GameIDInPath) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
