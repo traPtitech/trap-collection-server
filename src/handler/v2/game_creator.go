@@ -71,16 +71,16 @@ func (gc *GameCreator) GetGameCreators(c echo.Context, gameID openapi.GameIDInPa
 	}
 
 	res := make([]openapi.GameCreator, 0, len(gameCreators))
-	for _, gc := range gameCreators {
-		jobs := make([]openapi.GameCreatorJob, 0, len(gc.GetJobs())+len(gc.GetCustomJobs()))
-		for _, job := range gc.GetJobs() {
+	for _, creator := range gameCreators {
+		jobs := make([]openapi.GameCreatorJob, 0, len(creator.GetJobs())+len(creator.GetCustomJobs()))
+		for _, job := range creator.GetJobs() {
 			jobs = append(jobs, openapi.GameCreatorJob{
 				Id:          openapi.GameCreatorJobID(job.GetID()),
 				DisplayName: openapi.GameCreatorJobDisplayName(job.GetDisplayName()),
 				IsCustomJob: false,
 			})
 		}
-		for _, job := range gc.GetCustomJobs() {
+		for _, job := range creator.GetCustomJobs() {
 			jobs = append(jobs, openapi.GameCreatorJob{
 				Id:          openapi.GameCreatorJobID(job.GetID()),
 				DisplayName: openapi.GameCreatorJobDisplayName(job.GetDisplayName()),
@@ -89,8 +89,10 @@ func (gc *GameCreator) GetGameCreators(c echo.Context, gameID openapi.GameIDInPa
 		}
 
 		res = append(res, openapi.GameCreator{
-			Name: openapi.UserName(gc.GetGameCreator().GetUserName()),
-			Jobs: jobs,
+			Id:     openapi.GameCreatorID(creator.GetGameCreator().GetID()),
+			UserID: openapi.UserID(creator.GetGameCreator().GetUserID()),
+			Name:   openapi.UserName(creator.GetGameCreator().GetUserName()),
+			Jobs:   jobs,
 		})
 	}
 

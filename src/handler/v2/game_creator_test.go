@@ -166,6 +166,8 @@ func TestGetGameCreators(t *testing.T) {
 			wantStatus:   http.StatusOK,
 			wantBody: []openapi.GameCreator{
 				{
+					Id:     openapi.GameCreatorID(gameCreator.GetGameCreator().GetID()),
+					UserID: openapi.UserID(gameCreator.GetGameCreator().GetUserID()),
 					Jobs: []openapi.GameCreatorJob{
 						{
 							Id:          openapi.GameCreatorJobID(gameCreator.GetJobs()[0].GetID()),
@@ -230,6 +232,8 @@ func TestGetGameCreators(t *testing.T) {
 				resCreator := resBody[i]
 
 				assert.Equal(t, wantCreator.Name, resCreator.Name)
+				assert.Equal(t, wantCreator.Id, resCreator.Id)
+				assert.Equal(t, wantCreator.UserID, resCreator.UserID)
 				assert.Len(t, resCreator.Jobs, len(wantCreator.Jobs))
 				for j, wantJob := range wantCreator.Jobs {
 					resJob := resCreator.Jobs[j]
