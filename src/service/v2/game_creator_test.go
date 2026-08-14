@@ -214,6 +214,126 @@ func TestGetGameCreatorJobs(t *testing.T) {
 	}
 }
 
+func TestDeleteGameCreator(t *testing.T) {
+	t.Parallel()
+
+	gameID := values.NewGameID()
+	creatorID := values.NewGameCreatorID()
+	creator := domain.NewGameCreator(
+		creatorID,
+		values.NewTrapMemberID(uuid.New()),
+		gameID,
+		values.NewTrapMemberName("creator"),
+		time.Now(),
+	)
+	creatorOfAnotherGame := domain.NewGameCreator(
+		creatorID,
+		values.NewTrapMemberID(uuid.New()),
+		values.NewGameID(),
+		values.NewTrapMemberName("creator2"),
+		time.Now(),
+	)
+
+	testCases := map[string]struct {
+		creator                        *domain.GameCreator
+		getGameCreatorByIDErr          error
+		executeDeleteCustomJobs        bool
+		deleteGameCreatorCustomJobsErr error
+		executeDeletePresetJobs        bool
+		deleteGameCreatorPresetJobsErr error
+		executeDeleteGameCreator       bool
+		deleteGameCreatorErr           error
+		wantErr                        error
+	}{
+		"存在しないcreator IDの場合ErrInvalidGameCreatorID": {
+			getGameCreatorByIDErr: repository.ErrRecordNotFound,
+			wantErr:               service.ErrInvalidGameCreatorID,
+		},
+		"GetGameCreatorByIDがエラーの場合エラー": {
+			getGameCreatorByIDErr: assert.AnError,
+			wantErr:               assert.AnError,
+		},
+		"creatorが別のgameに属する場合ErrInvalidGameCreatorGamePair": {
+			creator: creatorOfAnotherGame,
+			wantErr: service.ErrInvalidGameCreatorGamePair,
+		},
+		"DeleteGameCreatorCustomJobsがエラーの場合エラー": {
+			creator:                        creator,
+			executeDeleteCustomJobs:        true,
+			deleteGameCreatorCustomJobsErr: assert.AnError,
+			wantErr:                        assert.AnError,
+		},
+		"DeleteGameCreatorPresetJobsがエラーの場合エラー": {
+			creator:                        creator,
+			executeDeleteCustomJobs:        true,
+			executeDeletePresetJobs:        true,
+			deleteGameCreatorPresetJobsErr: assert.AnError,
+			wantErr:                        assert.AnError,
+		},
+		"DeleteGameCreatorで削除対象がない場合ErrInvalidGameCreatorGamePair": {
+			creator:                  creator,
+			executeDeleteCustomJobs:  true,
+			executeDeletePresetJobs:  true,
+			executeDeleteGameCreator: true,
+			deleteGameCreatorErr:     repository.ErrNoRecordDeleted,
+			wantErr:                  service.ErrInvalidGameCreatorGamePair,
+		},
+		"DeleteGameCreatorでエラーが発生した場合エラー": {
+			creator:                  creator,
+			executeDeleteCustomJobs:  true,
+			executeDeletePresetJobs:  true,
+			executeDeleteGameCreator: true,
+			deleteGameCreatorErr:     assert.AnError,
+			wantErr:                  assert.AnError,
+		},
+		"正常にcreatorを削除できる": {
+			creator:                  creator,
+			executeDeleteCustomJobs:  true,
+			executeDeletePresetJobs:  true,
+			executeDeleteGameCreator: true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameCreatorRepo := mock.NewMockGameCreator(ctrl)
+			db := mock.NewMockDB(ctrl)
+			gc := NewGameCreator(gameCreatorRepo, nil, db, nil)
+
+			gameCreatorRepo.EXPECT().
+				GetGameCreatorByID(gomock.Any(), creatorID).
+				Return(testCase.creator, testCase.getGameCreatorByIDErr)
+			if testCase.executeDeleteCustomJobs {
+				gameCreatorRepo.EXPECT().
+					DeleteGameCreatorCustomJobs(gomock.Any(), creatorID).
+					Return(testCase.deleteGameCreatorCustomJobsErr)
+			}
+			if testCase.executeDeletePresetJobs {
+				gameCreatorRepo.EXPECT().
+					DeleteGameCreatorPresetJobs(gomock.Any(), creatorID).
+					Return(testCase.deleteGameCreatorPresetJobsErr)
+			}
+			if testCase.executeDeleteGameCreator {
+				gameCreatorRepo.EXPECT().
+					DeleteGameCreator(gomock.Any(), gameID, creatorID).
+					Return(testCase.deleteGameCreatorErr)
+			}
+
+			err := gc.DeleteGameCreator(t.Context(), gameID, creatorID)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestEditGameCreators(t *testing.T) {
 	t.Parallel()
 
