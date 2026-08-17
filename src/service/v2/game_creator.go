@@ -94,6 +94,9 @@ func (gc *GameCreator) CreateGameCreator(ctx context.Context, session *domain.OI
 		}
 
 		err = gc.gameCreatorRepo.CreateGameCreators(ctx, []*domain.GameCreator{creator})
+		if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+			return service.ErrDuplicateGameCreator
+		}
 		if err != nil {
 			return fmt.Errorf("create game creator: %w", err)
 		}

@@ -63,4 +63,5 @@ var (
 	ErrDuplicateGameCreatorJobID         = errors.New("duplicate game creator job id")
 	ErrDuplicateUserID                   = errors.New("duplicate user id")
 	ErrInvalidGameCreatorJobID           = errors.New("invalid game creator job id")
+	ErrDuplicateGameCreator              = errors.New("duplicate game creator")
 )

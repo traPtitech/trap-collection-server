@@ -22,6 +22,7 @@ type GameCreator interface {
 	// ゲームクリエイターを作成する。
 	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
 	// 存在しないユーザーIDの場合、ErrInvalidUserIDを返す。
+	// すでに存在するゲームクリエイターと同じユーザーの場合は、ErrDuplicateGameCreator を返す。
 	CreateGameCreator(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, userID values.TraPMemberID) (*domain.GameCreator, error)
 	// EditGameCreators
 	// ゲームクリエイターのジョブを置き換える形で編集する。
