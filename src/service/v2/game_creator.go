@@ -68,6 +68,47 @@ func (gc *GameCreator) GetGameCreatorJobs(ctx context.Context, gameID values.Gam
 	return presetJobs, customJobs, nil
 }
 
+func (gc *GameCreator) DeleteGameCreator(ctx context.Context, gameID values.GameID, creatorID values.GameCreatorID) error {
+	err := gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		creator, err := gc.gameCreatorRepo.GetGameCreatorByID(ctx, creatorID)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameCreatorID
+		}
+		if err != nil {
+			return fmt.Errorf("get game creator by id: %w", err)
+		}
+
+		if creator.GetGameID() != gameID {
+			return service.ErrInvalidGameCreatorGamePair
+		}
+
+		err = gc.gameCreatorRepo.DeleteGameCreatorCustomJobs(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("delete game creator custom jobs: %w", err)
+		}
+		err = gc.gameCreatorRepo.DeleteGameCreatorPresetJobs(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("delete game creator preset jobs: %w", err)
+		}
+
+		err = gc.gameCreatorRepo.DeleteGameCreator(ctx, gameID, creatorID)
+		if errors.Is(err, repository.ErrNoRecordDeleted) {
+			// ここまでの処理で弾けているはずだが一応
+			return service.ErrInvalidGameCreatorGamePair
+		}
+		if err != nil {
+			return fmt.Errorf("delete game creator: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("transaction: %w", err)
+	}
+
+	return nil
+}
+
 func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, inputs []*service.EditGameCreatorJobInput) error {
 	err := gc.validateGameExists(ctx, gameID)
 	if err != nil {

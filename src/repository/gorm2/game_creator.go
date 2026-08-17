@@ -285,3 +285,19 @@ func (gc *GameCreator) GetGameCreatorsByUserIDs(ctx context.Context, gameID valu
 
 	return gameCreatorsResult, nil
 }
+
+func (gc *GameCreator) GetGameCreatorByID(_ context.Context, _ values.GameCreatorID) (*domain.GameCreator, error) {
+	return nil, nil
+}
+
+func (gc *GameCreator) DeleteGameCreator(_ context.Context, _ values.GameID, _ values.GameCreatorID) error {
+	return nil
+}
+
+func (gc *GameCreator) DeleteGameCreatorCustomJobs(_ context.Context, _ values.GameCreatorID) error {
+	return nil
+}
+
+func (gc *GameCreator) DeleteGameCreatorPresetJobs(_ context.Context, _ values.GameCreatorID) error {
+	return nil
+}
