@@ -18,6 +18,11 @@ type GameCreator interface {
 	// ゲームIDに紐づくゲームクリエイターのプリセットジョブ一覧とカスタムジョブ一覧を取得する。
 	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
 	GetGameCreatorJobs(ctx context.Context, gameID values.GameID) ([]*domain.GameCreatorJob, []*domain.GameCreatorCustomJob, error)
+	// CreateGameCustomJob
+	// ゲームIDに紐づくゲームクリエイターのカスタムジョブを作成する。
+	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
+	// 同じ表示名のカスタムジョブがすでに存在する場合、ErrDuplicateCustomJobDisplayNameを返す。
+	CreateGameCustomJob(ctx context.Context, gameID values.GameID, displayName values.GameCreatorJobDisplayName) (*domain.GameCreatorCustomJob, error)
 	// EditGameCreators
 	// ゲームクリエイターのジョブを置き換える形で編集する。
 	// 該当するゲームが存在しない場合、ErrInvalidGameIDを返す。
