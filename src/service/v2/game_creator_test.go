@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -210,6 +211,114 @@ func TestGetGameCreatorJobs(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.presetJobs, presetJobs)
 			assert.Equal(t, testCase.customJobs, customJobs)
+		})
+	}
+}
+
+func TestCreateGameCustomJob(t *testing.T) {
+	t.Parallel()
+
+	gameID := values.NewGameID()
+	displayName := values.NewGameCreatorJobDisplayName("Sound Designer")
+	existingCustomJob := domain.NewGameCreatorCustomJob(
+		values.NewGameCreatorJobID(),
+		values.NewGameCreatorJobDisplayName("Programmer"),
+		gameID,
+		time.Now(),
+	)
+	duplicatedCustomJob := domain.NewGameCreatorCustomJob(
+		values.NewGameCreatorJobID(),
+		displayName,
+		gameID,
+		time.Now(),
+	)
+
+	testCases := map[string]struct {
+		getGameErr                  error
+		executeGetCustomJobs        bool
+		existingCustomJobs          []*domain.GameCreatorCustomJob
+		getCustomJobsErr            error
+		executeCreateGameCustomJobs bool
+		createGameCustomJobsErr     error
+		wantErr                     error
+	}{
+		"正常に作成できる": {
+			executeGetCustomJobs:        true,
+			existingCustomJobs:          []*domain.GameCreatorCustomJob{existingCustomJob},
+			executeCreateGameCustomJobs: true,
+		},
+		"gameが存在しない場合ErrInvalidGameID": {
+			getGameErr: repository.ErrRecordNotFound,
+			wantErr:    service.ErrInvalidGameID,
+		},
+		"GetGameがエラーの場合エラー": {
+			getGameErr: assert.AnError,
+			wantErr:    assert.AnError,
+		},
+		"GetGameCreatorCustomJobsByGameIDがエラーの場合エラー": {
+			executeGetCustomJobs: true,
+			getCustomJobsErr:     assert.AnError,
+			wantErr:              assert.AnError,
+		},
+		"同じ表示名が存在する場合ErrDuplicateCustomJobDisplayName": {
+			executeGetCustomJobs: true,
+			existingCustomJobs:   []*domain.GameCreatorCustomJob{duplicatedCustomJob},
+			wantErr:              service.ErrDuplicateCustomJobDisplayName,
+		},
+		"CreateGameCreatorCustomJobsがエラーの場合エラー": {
+			executeGetCustomJobs:        true,
+			existingCustomJobs:          []*domain.GameCreatorCustomJob{},
+			executeCreateGameCustomJobs: true,
+			createGameCustomJobsErr:     assert.AnError,
+			wantErr:                     assert.AnError,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameCreatorRepo := mock.NewMockGameCreator(ctrl)
+			gameRepository := mock.NewMockGameV2(ctrl)
+			db := mock.NewMockDB(ctrl)
+			gc := NewGameCreator(gameCreatorRepo, gameRepository, db, nil)
+
+			gameRepository.EXPECT().
+				GetGame(gomock.Any(), gameID, repository.LockTypeRecord).
+				Return(nil, testCase.getGameErr)
+			if testCase.executeGetCustomJobs {
+				gameCreatorRepo.EXPECT().
+					GetGameCreatorCustomJobsByGameID(gomock.Any(), gameID).
+					Return(testCase.existingCustomJobs, testCase.getCustomJobsErr)
+			}
+
+			var createdCustomJob *domain.GameCreatorCustomJob
+			if testCase.executeCreateGameCustomJobs {
+				gameCreatorRepo.EXPECT().
+					CreateGameCreatorCustomJobs(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, customJobs []*domain.GameCreatorCustomJob) error {
+						if assert.Len(t, customJobs, 1) {
+							createdCustomJob = customJobs[0]
+						}
+						return testCase.createGameCustomJobsErr
+					})
+			}
+
+			customJob, err := gc.CreateGameCustomJob(t.Context(), gameID, displayName)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				assert.Nil(t, customJob)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Same(t, createdCustomJob, customJob)
+			assert.NotEqual(t, values.GameCreatorJobID{}, customJob.GetID())
+			assert.Equal(t, gameID, customJob.GetGameID())
+			assert.Equal(t, displayName, customJob.GetDisplayName())
+			assert.False(t, customJob.GetCreatedAt().IsZero())
 		})
 	}
 }
