@@ -68,6 +68,88 @@ func (gc *GameCreator) GetGameCreatorJobs(ctx context.Context, gameID values.Gam
 	return presetJobs, customJobs, nil
 }
 
+func (gc *GameCreator) CreateGameCustomJob(ctx context.Context, gameID values.GameID, displayName values.GameCreatorJobDisplayName) (*domain.GameCreatorCustomJob, error) {
+	var customJob *domain.GameCreatorCustomJob
+	err := gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err := gc.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("get game: %w", err)
+		}
+
+		existingCustomJobs, err := gc.gameCreatorRepo.GetGameCreatorCustomJobsByGameID(ctx, gameID)
+		if err != nil {
+			return fmt.Errorf("get game creator custom jobs by game id: %w", err)
+		}
+		for _, existingCustomJob := range existingCustomJobs {
+			if existingCustomJob.GetDisplayName() == displayName {
+				return service.ErrDuplicateCustomJobDisplayName
+			}
+		}
+
+		customJob = domain.NewGameCreatorCustomJob(
+			values.NewGameCreatorJobID(),
+			displayName,
+			gameID,
+			time.Now(),
+		)
+		err = gc.gameCreatorRepo.CreateGameCreatorCustomJobs(ctx, []*domain.GameCreatorCustomJob{customJob})
+		if err != nil {
+			return fmt.Errorf("create game creator custom job: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("transaction: %w", err)
+	}
+
+	return customJob, nil
+}
+
+func (gc *GameCreator) DeleteGameCreator(ctx context.Context, gameID values.GameID, creatorID values.GameCreatorID) error {
+	err := gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		creator, err := gc.gameCreatorRepo.GetGameCreatorByID(ctx, creatorID)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameCreatorID
+		}
+		if err != nil {
+			return fmt.Errorf("get game creator by id: %w", err)
+		}
+
+		if creator.GetGameID() != gameID {
+			return service.ErrInvalidGameCreatorGamePair
+		}
+
+		err = gc.gameCreatorRepo.DeleteGameCreatorCustomJobs(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("delete game creator custom jobs: %w", err)
+		}
+		err = gc.gameCreatorRepo.DeleteGameCreatorPresetJobs(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("delete game creator preset jobs: %w", err)
+		}
+
+		err = gc.gameCreatorRepo.DeleteGameCreator(ctx, gameID, creatorID)
+		if errors.Is(err, repository.ErrNoRecordDeleted) {
+			// ここまでの処理で弾けているはずだが一応
+			return service.ErrInvalidGameCreatorGamePair
+		}
+		if err != nil {
+			return fmt.Errorf("delete game creator: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("transaction: %w", err)
+	}
+
+	return nil
+}
+
 func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, inputs []*service.EditGameCreatorJobInput) error {
 	err := gc.validateGameExists(ctx, gameID)
 	if err != nil {
