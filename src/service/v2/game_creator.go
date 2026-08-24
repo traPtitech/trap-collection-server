@@ -109,6 +109,104 @@ func (gc *GameCreator) DeleteGameCreator(ctx context.Context, gameID values.Game
 	return nil
 }
 
+func (gc *GameCreator) SetGameCreatorJobs(ctx context.Context, gameID values.GameID, creatorID values.GameCreatorID, jobIDs []values.GameCreatorJobID) error {
+	err := gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		creator, err := gc.gameCreatorRepo.GetGameCreatorByID(ctx, creatorID)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameCreatorID
+		}
+		if err != nil {
+			return fmt.Errorf("get game creator by id: %w", err)
+		}
+
+		if creator.GetGameID() != gameID {
+			return service.ErrInvalidGameCreatorGamePair
+		}
+
+		jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(jobIDs))
+		for _, jobID := range jobIDs {
+			jobIDsMap[jobID] = struct{}{}
+		}
+
+		allPresetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobs(ctx)
+		if err != nil {
+			return fmt.Errorf("get game creator preset jobs: %w", err)
+		}
+		allPresetJobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(allPresetJobs))
+		for _, job := range allPresetJobs {
+			allPresetJobIDsMap[job.GetID()] = struct{}{}
+		}
+
+		presetJobIDs, customJobIDs := make([]values.GameCreatorJobID, 0, len(jobIDs)), make([]values.GameCreatorJobID, 0, len(jobIDs))
+		for _, jobID := range jobIDs {
+			if _, isPreset := allPresetJobIDsMap[jobID]; isPreset {
+				presetJobIDs = append(presetJobIDs, jobID)
+			} else {
+				customJobIDs = append(customJobIDs, jobID)
+			}
+		}
+
+		customJobs, err := gc.gameCreatorRepo.GetGameCreatorCustomJobsByCreatorID(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("get game creator custom jobs by creator id: %w", err)
+		}
+
+		presetJobs, err := gc.gameCreatorRepo.GetGameCreatorPresetJobsByCreatorID(ctx, creatorID)
+		if err != nil {
+			return fmt.Errorf("get game creator preset jobs by creator id: %w", err)
+		}
+
+		deletingPresetJobIDs := make([]values.GameCreatorJobID, 0, len(presetJobs))
+		for _, presetJob := range presetJobs {
+			presetJobID := presetJob.GetID()
+			if _, exists := jobIDsMap[presetJobID]; !exists {
+				deletingPresetJobIDs = append(deletingPresetJobIDs, presetJobID)
+			}
+		}
+		err = gc.gameCreatorRepo.DeleteGameCreatorPresetJobsByCreatorID(ctx, creatorID, deletingPresetJobIDs)
+		if err != nil {
+			return fmt.Errorf("delete game creator preset jobs by creator id: %w", err)
+		}
+
+		deletingCustomJobIDs := make([]values.GameCreatorJobID, 0, len(customJobs))
+		for _, customJob := range customJobs {
+			customJobID := customJob.GetID()
+			if _, exists := jobIDsMap[customJobID]; !exists {
+				deletingCustomJobIDs = append(deletingCustomJobIDs, customJobID)
+			}
+		}
+		err = gc.gameCreatorRepo.DeleteGameCreatorCustomJobsByCreatorID(ctx, creatorID, deletingCustomJobIDs)
+		if err != nil {
+			return fmt.Errorf("delete game creator custom jobs by creator id: %w", err)
+		}
+
+		if err := gc.gameCreatorRepo.UpsertGameCreatorPresetJobsRelations(ctx, map[values.GameCreatorID][]values.GameCreatorJobID{
+			creatorID: presetJobIDs,
+		}); err != nil {
+			if errors.Is(err, repository.ErrForeignKeyViolated) {
+				return service.ErrInvalidPresetJobID
+			}
+			return fmt.Errorf("upsert game creator preset jobs relations: %w", err)
+		}
+
+		if err := gc.gameCreatorRepo.UpsertGameCreatorCustomJobsRelations(ctx, map[values.GameCreatorID][]values.GameCreatorJobID{
+			creatorID: customJobIDs,
+		}); err != nil {
+			if errors.Is(err, repository.ErrForeignKeyViolated) {
+				return service.ErrInvalidGameAndCustomJobPair
+			}
+			return fmt.Errorf("upsert game creator custom jobs relations: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("transaction: %w", err)
+	}
+
+	return nil
+}
+
 func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, inputs []*service.EditGameCreatorJobInput) error {
 	err := gc.validateGameExists(ctx, gameID)
 	if err != nil {
