@@ -198,14 +198,22 @@ jobs:
           --env ci
         shell: bash
 
-      - name: Download Go dependencies
-        run: |
-          time go mod download
-
-      - name: Run tbls
+      - name: Run tbls go
         run: |
           time env TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
-          go tool tbls doc --rm-dist --without-er -c .tbls.yml
+          go tool tbls doc --rm-dist -c .tbls.yml
+        
+      - name: Run tbls docker
+        run: |
+          time docker run \
+            --rm \
+            --network host \
+            -e TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
+            -v "$PWD:/work" \
+            -w /work \
+            k1low/tbls:v1.94.5 \
+            doc --rm-dist -c .tbls.yml
+
 
       - name: Check diff
         run: |
