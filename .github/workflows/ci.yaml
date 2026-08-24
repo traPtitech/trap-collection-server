@@ -197,11 +197,6 @@ jobs:
           --config file://atlas.ci.hcl \
           --env ci
         shell: bash
-
-      - name: Run tbls go
-        run: |
-          time env TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
-          go tool tbls doc --rm-dist -c .tbls.yml
         
       - name: Run tbls docker
         run: |
@@ -213,6 +208,11 @@ jobs:
             -w /work \
             k1low/tbls:v1.94.5 \
             doc --rm-dist -c .tbls.yml
+      
+      - name: Run tbls go
+        run: |
+          time env TBLS_DSN=mariadb://root:pass@127.0.0.1:3306/trap_collection \
+          go tool tbls doc --rm-dist -c .tbls.yml
 
 
       - name: Check diff
