@@ -36,4 +36,19 @@ type GameCreator interface {
 	// GetGameCreatorsByUserIDs
 	// game idとuser idに紐づくゲームクリエイターを取得する
 	GetGameCreatorsByUserIDs(ctx context.Context, gameID values.GameID, userIDs []values.TraPMemberID) ([]*domain.GameCreator, error)
+	// GetGameCreatorByID
+	// creator ID でゲームクリエイターを取得する。
+	// 該当する creator が存在しない場合は、ErrRecordNotFound。
+	GetGameCreatorByID(ctx context.Context, creatorID values.GameCreatorID) (*domain.GameCreator, error)
+	// DeleteGameCreator
+	// creator を削除する。
+	// 存在しない game id と creator id の組み合わせの場合は、ErrNoRecordDeleted。
+	// creator に紐づいた job が残っている場合は ErrForeignKeyViolated。
+	DeleteGameCreator(ctx context.Context, gameID values.GameID, creatorID values.GameCreatorID) error
+	// DeleteGameCreatorCustomJobs
+	// creator に紐づいた custom job を削除する。
+	DeleteGameCreatorCustomJobs(ctx context.Context, creatorID values.GameCreatorID) error
+	// DeleteGameCreatorPresetJobs
+	// creator に紐づいた preset job を削除する。
+	DeleteGameCreatorPresetJobs(ctx context.Context, creatorID values.GameCreatorID) error
 }

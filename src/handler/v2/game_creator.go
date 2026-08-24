@@ -57,8 +57,46 @@ func (gc *GameCreator) GetGameCreatorJobs(c echo.Context, gameID openapi.GameIDI
 
 // ゲームクリエイター一覧の取得
 // (GET /games/{gameID}/creators)
-func (gc *GameCreator) GetGameCreators(c echo.Context, _ openapi.GameIDInPath) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gc *GameCreator) GetGameCreators(c echo.Context, gameID openapi.GameIDInPath) error {
+	gameCreators, err := gc.gameCreatorService.GetGameCreators(
+		c.Request().Context(),
+		values.NewGameIDFromUUID(gameID),
+	)
+	if errors.Is(err, service.ErrInvalidGameID) {
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid gameID")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game creators: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game creators")
+	}
+
+	res := make([]openapi.GameCreator, 0, len(gameCreators))
+	for _, creator := range gameCreators {
+		jobs := make([]openapi.GameCreatorJob, 0, len(creator.GetJobs())+len(creator.GetCustomJobs()))
+		for _, job := range creator.GetJobs() {
+			jobs = append(jobs, openapi.GameCreatorJob{
+				Id:          openapi.GameCreatorJobID(job.GetID()),
+				DisplayName: openapi.GameCreatorJobDisplayName(job.GetDisplayName()),
+				IsCustomJob: false,
+			})
+		}
+		for _, job := range creator.GetCustomJobs() {
+			jobs = append(jobs, openapi.GameCreatorJob{
+				Id:          openapi.GameCreatorJobID(job.GetID()),
+				DisplayName: openapi.GameCreatorJobDisplayName(job.GetDisplayName()),
+				IsCustomJob: true,
+			})
+		}
+
+		res = append(res, openapi.GameCreator{
+			Id:     openapi.GameCreatorID(creator.GetGameCreator().GetID()),
+			UserID: openapi.UserID(creator.GetGameCreator().GetUserID()),
+			Name:   openapi.UserName(creator.GetGameCreator().GetUserName()),
+			Jobs:   jobs,
+		})
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // ゲームクリエイターの作成
