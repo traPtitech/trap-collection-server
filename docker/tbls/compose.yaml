@@ -30,7 +30,7 @@ services:
     volumes:
       - ../../:/work
     working_dir: /work
-    command: doc --rm-dist
+    command: doc --rm-dist -c .tbls.yml
     depends_on:
       mariadb:
         condition: service_healthy

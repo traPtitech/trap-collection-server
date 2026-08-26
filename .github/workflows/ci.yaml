@@ -167,15 +167,6 @@ jobs:
 
       - name: Check diff
         run: |
-          echo "=== git status ==="
-          git status --short
-
-          echo "=== git diff stat ==="
-          git diff --stat
-
-          echo "=== git diff ==="
-          git diff
-    
           if [[ -n $(git status --porcelain) ]]; then
             echo "tbls diff detected. Please generate and commit the new docs. (task tbls)"
             
