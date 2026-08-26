@@ -16,7 +16,7 @@ services:
 
   atlas:
     image: arigaio/atlas:latest
-    command: ["migrate", "apply", "--config", "file://atlas.ci.hcl", "--env", "ci"]
+    command: ["migrate", "apply", "--config", "file://atlas.ci.hcl", "--env", "docker"]
     volumes:
       - ../../:/work
     working_dir: /work
