@@ -65,4 +65,6 @@ var (
 	ErrInvalidGameCreatorJobID           = errors.New("invalid game creator job id")
 	ErrInvalidGameCreatorID              = errors.New("invalid game creator id")
 	ErrInvalidGameCreatorGamePair        = errors.New("invalid game creator and game pair")
+	ErrInvalidGameAndCustomJobPair       = errors.New("invalid game and custom job pair")
+	ErrInvalidPresetJobID                = errors.New("invalid preset job id")
 )
