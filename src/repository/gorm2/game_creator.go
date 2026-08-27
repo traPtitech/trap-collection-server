@@ -301,19 +301,3 @@ func (gc *GameCreator) DeleteGameCreatorCustomJobs(_ context.Context, _ values.G
 func (gc *GameCreator) DeleteGameCreatorPresetJobs(_ context.Context, _ values.GameCreatorID) error {
 	return nil
 }
-
-func (gc *GameCreator) GetGameCreatorPresetJobsByCreatorID(_ context.Context, _ values.GameCreatorID) ([]*domain.GameCreatorJob, error) {
-	return nil, nil
-}
-
-func (gc *GameCreator) GetGameCreatorCustomJobsByCreatorID(_ context.Context, _ values.GameCreatorID) ([]*domain.GameCreatorCustomJob, error) {
-	return nil, nil
-}
-
-func (gc *GameCreator) DeleteGameCreatorPresetJobsByCreatorID(_ context.Context, _ values.GameCreatorID, _ []values.GameCreatorJobID) error {
-	return nil
-}
-
-func (gc *GameCreator) DeleteGameCreatorCustomJobsByCreatorID(_ context.Context, _ values.GameCreatorID, _ []values.GameCreatorJobID) error {
-	return nil
-}
