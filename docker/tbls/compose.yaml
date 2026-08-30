@@ -1,37 +1,38 @@
 services:
-  collection-server:
-    extends:
-      file: ../base/compose.yaml
-      service: collection-server
-    build:
-      dockerfile: ./docker/production/Dockerfile
-    restart: always
+  mariadb:
+    image: mariadb:10.6.4@sha256:c014ba1efc5dbd711d0520c7762d57807f35549de3414eb31e942a420c8a2ed2
     environment:
-      COLLECTION_ENV: development
-      FEATURE_V2: true
-      STORAGE: local
-      ADMINISTRATORS: mazrean,temma,JichouP,wasabi,anko
-      FILE_PATH: ./cache
-      CLIENT_ID: "" # tblsの生成では使わないので空文字列
-      CLIENT_SECRET: "" # tblsの生成では使わないので空文字列
-      SESSION_SECRET: secret
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: trap_collection
+      TZ: Asia/Tokyo
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    expose:
+      - 3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppass"]
+      timeout: 5s
+      interval: 10s
+      retries: 10
+
+  atlas:
+    image: arigaio/atlas:latest
+    command: ["migrate", "apply", "--config", "file://atlas.ci.hcl", "--env", "docker"]
+    volumes:
+      - ../../:/work
+    working_dir: /work
     depends_on:
       mariadb:
         condition: service_healthy
-  mariadb:
-    extends:
-      file: ../base/compose.yaml
-      service: mariadb
   tbls:
-    image: k1low/tbls:v1.56.2@sha256:2baf3561720f7bf3580374ea55a6f410801c3e2bfdb8449392bd9f41cc198ff0
+    image: k1low/tbls:v1.94.5
     environment:
       TBLS_DSN: mariadb://root:pass@mariadb:3306/trap_collection
     volumes:
       - ../../:/work
     working_dir: /work
-    command: doc --rm-dist
+    command: doc --rm-dist -c .tbls.yml
     depends_on:
-      collection-server:
-        condition: service_healthy
       mariadb:
         condition: service_healthy
+      atlas:
+        condition: service_completed_successfully

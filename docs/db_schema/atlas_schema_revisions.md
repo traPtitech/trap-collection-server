@@ -47,6 +47,7 @@ CREATE TABLE `atlas_schema_revisions` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (version) |
+| partial_hashes | CHECK | CHECK (json_valid(`partial_hashes`)) |
 
 ## Indexes
 

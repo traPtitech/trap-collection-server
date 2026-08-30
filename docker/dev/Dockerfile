@@ -16,5 +16,7 @@ RUN go mod download
 
 ENV GOFLAGS -buildvcs=false
 
-ENTRYPOINT ["go", "tool", "air"]
+COPY --from=cosmtrek/air:v1.63.0 /go/bin/air /usr/local/bin/air
+
+ENTRYPOINT ["air"]
 CMD ["-c", ".air.toml"]

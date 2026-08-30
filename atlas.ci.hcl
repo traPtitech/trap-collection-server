@@ -20,10 +20,24 @@ env "local" {
 
 env "ci" {
   dev = "mysql://root:pass@localhost:3306/trap_collection"
+  url = "mysql://root:pass@localhost:3306/trap_collection"
+
+  migration {
+    dir = "file://migrations"
+  }
 
   lint {
     git {
       base = "origin/main"
     }
+  }
+}
+
+env "docker" {
+  dev = "mysql://root:pass@mariadb:3306/trap_collection"
+  url = "mysql://root:pass@mariadb:3306/trap_collection"
+
+  migration {
+    dir = "file://migrations"
   }
 }
