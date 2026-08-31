@@ -23,7 +23,8 @@ type GameCreator interface {
 	// custom jobを作成する
 	CreateGameCreatorCustomJobs(ctx context.Context, customJobs []*domain.GameCreatorCustomJob) error
 	// CreateGameCreators
-	// ゲームクリエイターを作成する
+	// ゲームクリエイターを作成する。
+	// すでに存在するゲームクリエイターと重複する場合は ErrDuplicatedUniqueKey を返す。
 	CreateGameCreators(ctx context.Context, creators []*domain.GameCreator) error
 	// UpsertGameCreatorPresetJobsRelations
 	// creator と preset job の relation を更新する

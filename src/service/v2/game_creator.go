@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -148,6 +149,47 @@ func (gc *GameCreator) DeleteGameCreator(ctx context.Context, gameID values.Game
 	}
 
 	return nil
+}
+
+func (gc *GameCreator) CreateGameCreator(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, userID values.TraPMemberID) (*domain.GameCreator, error) {
+	users, err := gc.user.getAllUsers(ctx, session)
+	if err != nil {
+		return nil, fmt.Errorf("get all users: %w", err)
+	}
+
+	index := slices.IndexFunc(users, func(user *service.UserInfo) bool {
+		return user.GetID() == userID
+	})
+	if index == -1 {
+		return nil, service.ErrInvalidUserID
+	}
+	user := users[index]
+
+	creator := domain.NewGameCreator(values.NewGameCreatorID(), userID, gameID, user.GetName(), time.Now())
+	err = gc.db.Transaction(ctx, nil, func(ctx context.Context) error {
+		_, err = gc.gameRepository.GetGame(ctx, gameID, repository.LockTypeRecord)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return service.ErrInvalidGameID
+		}
+		if err != nil {
+			return fmt.Errorf("get game: %w", err)
+		}
+
+		err = gc.gameCreatorRepo.CreateGameCreators(ctx, []*domain.GameCreator{creator})
+		if errors.Is(err, repository.ErrDuplicatedUniqueKey) {
+			return service.ErrDuplicateGameCreator
+		}
+		if err != nil {
+			return fmt.Errorf("create game creator: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return creator, nil
 }
 
 func (gc *GameCreator) EditGameCreators(ctx context.Context, session *domain.OIDCSession, gameID values.GameID, inputs []*service.EditGameCreatorJobInput) error {

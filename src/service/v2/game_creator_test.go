@@ -443,6 +443,133 @@ func TestDeleteGameCreator(t *testing.T) {
 	}
 }
 
+func TestCreateGameCreator(t *testing.T) {
+	t.Parallel()
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("user1"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("user2"),
+		values.TrapMemberStatusDeactivated,
+		false,
+	)
+	users := []*service.UserInfo{
+		user1,
+		user2,
+	}
+
+	testCases := map[string]struct {
+		gameID                    values.GameID
+		userID                    values.TraPMemberID
+		getAllUsersErr            error
+		userName                  values.TraPMemberName
+		executeGetGame            bool
+		game                      *domain.Game
+		GetGameErr                error
+		executeCreateGameCreators bool
+		CreateGameCreatorsErr     error
+		wantErr                   error
+	}{
+		"getAllUsersがエラーなのでエラー": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			getAllUsersErr: assert.AnError,
+			wantErr:        assert.AnError,
+		},
+		"userが見つからないのでErrInvalidUserID": {
+			gameID:  values.NewGameID(),
+			userID:  values.NewTrapMemberID(uuid.New()),
+			wantErr: service.ErrInvalidUserID,
+		},
+		"gameが見つからないのでErrInvalidGameID": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			userName:       user1.GetName(),
+			executeGetGame: true,
+			GetGameErr:     repository.ErrRecordNotFound,
+			wantErr:        service.ErrInvalidGameID,
+		},
+		"GetGameがエラーなのでエラー": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			userName:       user1.GetName(),
+			executeGetGame: true,
+			GetGameErr:     assert.AnError,
+			wantErr:        assert.AnError,
+		},
+		"CreateGameCreatorsがエラーなのでエラー": {
+			gameID:                    values.NewGameID(),
+			userID:                    user1.GetID(),
+			userName:                  user1.GetName(),
+			executeGetGame:            true,
+			GetGameErr:                nil,
+			executeCreateGameCreators: true,
+			CreateGameCreatorsErr:     assert.AnError,
+			wantErr:                   assert.AnError,
+		},
+		"正しく作成できる": {
+			gameID:                    values.NewGameID(),
+			userID:                    user1.GetID(),
+			userName:                  user1.GetName(),
+			executeGetGame:            true,
+			executeCreateGameCreators: true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameCreatorMock := mock.NewMockGameCreator(ctrl)
+			gameMock := mock.NewMockGameV2(ctrl)
+			dbMock := mock.NewMockDB(ctrl)
+			authMock := mockAuth.NewMockUser(ctrl)
+			cacheMock := mockCache.NewMockUser(ctrl)
+			userMock := NewUser(authMock, cacheMock)
+			gc := NewGameCreator(gameCreatorMock, gameMock, dbMock, userMock)
+
+			if testCase.getAllUsersErr != nil {
+				cacheMock.EXPECT().GetAllUsers(gomock.Any()).Return(nil, testCase.getAllUsersErr)
+				authMock.EXPECT().GetAllUsers(gomock.Any(), gomock.Any()).Return(nil, testCase.getAllUsersErr)
+			} else {
+				cacheMock.EXPECT().GetAllUsers(gomock.Any()).Return(users, nil)
+			}
+
+			if testCase.executeGetGame {
+				gameMock.EXPECT().
+					GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
+					Return(testCase.game, testCase.GetGameErr)
+			}
+			if testCase.executeCreateGameCreators {
+				gameCreatorMock.EXPECT().
+					CreateGameCreators(gomock.Any(), gomock.Cond(func(creators []*domain.GameCreator) bool {
+						return len(creators) == 1 && creators[0].GetGameID() == testCase.gameID && creators[0].GetUserID() == testCase.userID && creators[0].GetUserName() == testCase.userName
+					})).
+					Return(testCase.CreateGameCreatorsErr)
+			}
+
+			session := domain.NewOIDCSession(values.NewOIDCAccessToken("access_token"), time.Now().Add(time.Hour))
+			creator, err := gc.CreateGameCreator(t.Context(), session, testCase.gameID, testCase.userID)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.gameID, creator.GetGameID())
+			assert.Equal(t, testCase.userID, creator.GetUserID())
+			assert.Equal(t, testCase.userName, creator.GetUserName())
+		})
+	}
+}
+
 func TestEditGameCreators(t *testing.T) {
 	t.Parallel()
 
