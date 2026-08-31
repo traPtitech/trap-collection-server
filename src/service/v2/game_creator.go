@@ -125,6 +125,9 @@ func (gc *GameCreator) SetGameCreatorJobs(ctx context.Context, gameID values.Gam
 
 		jobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(jobIDs))
 		for _, jobID := range jobIDs {
+			if _, duplicate := jobIDsMap[jobID]; duplicate {
+				return service.ErrDuplicateGameCreatorJobID
+			}
 			jobIDsMap[jobID] = struct{}{}
 		}
 
@@ -137,12 +140,25 @@ func (gc *GameCreator) SetGameCreatorJobs(ctx context.Context, gameID values.Gam
 			allPresetJobIDsMap[job.GetID()] = struct{}{}
 		}
 
+		allCustomJobs, err := gc.gameCreatorRepo.GetGameCreatorCustomJobsByGameID(ctx, gameID)
+		if err != nil {
+			return fmt.Errorf("get game creator custom jobs by game id: %w", err)
+		}
+		allCustomJobIDsMap := make(map[values.GameCreatorJobID]struct{}, len(allCustomJobs))
+		for _, job := range allCustomJobs {
+			allCustomJobIDsMap[job.GetID()] = struct{}{}
+		}
+
 		presetJobIDs, customJobIDs := make([]values.GameCreatorJobID, 0, len(jobIDs)), make([]values.GameCreatorJobID, 0, len(jobIDs))
 		for _, jobID := range jobIDs {
 			if _, isPreset := allPresetJobIDsMap[jobID]; isPreset {
 				presetJobIDs = append(presetJobIDs, jobID)
 			} else {
-				customJobIDs = append(customJobIDs, jobID)
+				if _, isCustom := allCustomJobIDsMap[jobID]; isCustom {
+					customJobIDs = append(customJobIDs, jobID)
+				} else {
+					return service.ErrInvalidGameCreatorJobID
+				}
 			}
 		}
 
