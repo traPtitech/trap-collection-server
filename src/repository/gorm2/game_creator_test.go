@@ -1188,3 +1188,66 @@ func TestUpsertGameCreatorPresetJobsRelations(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGameCreatorByID(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	game := schema.GameTable2{
+		ID: uuid.New(), Name: "game", VisibilityTypeID: 1,
+	}
+	require.NoError(t, db.Create(&game).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(&game).Error)
+	})
+
+	creators := []schema.GameCreatorTable{
+		{ID: uuid.New(), UserID: uuid.New(), GameID: game.ID, UserName: "user1", CreatedAt: time.Now().Add(-time.Hour)},
+		{ID: uuid.New(), UserID: uuid.New(), GameID: game.ID, UserName: "user2", CreatedAt: time.Now()},
+	}
+	require.NoError(t, db.Create(&creators).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(&creators).Error)
+	})
+
+	testCases := map[string]struct {
+		creatorID values.GameCreatorID
+		want      *domain.GameCreator
+		wantErr   error
+	}{
+		"1件目のcreatorを取得できる": {creatorID: values.GameCreatorID(creators[0].ID), want: domain.NewGameCreator(
+			values.GameCreatorID(creators[0].ID),
+			values.NewTrapMemberID(creators[0].UserID),
+			values.NewGameIDFromUUID(creators[0].GameID),
+			values.NewTrapMemberName(creators[0].UserName),
+			creators[0].CreatedAt,
+		)},
+		"2件目のcreatorを取得できる": {creatorID: values.GameCreatorID(creators[1].ID), want: domain.NewGameCreator(
+			values.GameCreatorID(creators[1].ID),
+			values.NewTrapMemberID(creators[1].UserID),
+			values.NewGameIDFromUUID(creators[1].GameID),
+			values.NewTrapMemberName(creators[1].UserName),
+			creators[1].CreatedAt,
+		)},
+		"存在しないID": {creatorID: values.GameCreatorID(uuid.New()), wantErr: repository.ErrRecordNotFound},
+		"ゼロ値のID":  {creatorID: values.GameCreatorID(uuid.Nil), wantErr: repository.ErrRecordNotFound},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+
+			creatorRepository := NewGameCreator(testDB)
+
+			ctx := t.Context()
+			result, err := creatorRepository.GetGameCreatorByID(ctx, testCase.creatorID)
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.want, result)
+		})
+	}
+}
