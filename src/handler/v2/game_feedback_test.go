@@ -167,4 +167,13 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		require.ErrorAs(t, err, &httpError)
 		assert.Equal(t, http.StatusBadRequest, httpError.Code)
 	})
+
+	t.Run("rejects null questions before service", func(t *testing.T) {
+		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
+		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{"questions": nil}))
+		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
+		var httpError *echo.HTTPError
+		require.ErrorAs(t, err, &httpError)
+		assert.Equal(t, http.StatusBadRequest, httpError.Code)
+	})
 }
