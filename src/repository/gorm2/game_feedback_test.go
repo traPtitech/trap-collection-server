@@ -3,6 +3,7 @@ package gorm2
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"gorm.io/gorm"
 )
 
 func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
@@ -180,4 +182,15 @@ func TestGameFeedbackQuestions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, actual, 1)
 	assert.Equal(t, newID, actual[0].GetID())
+
+	rolledBackID := values.NewFeedbackQuestionID()
+	err = testDB.Transaction(ctx, nil, func(txCtx context.Context) error {
+		question := domain.NewFeedbackQuestion(rolledBackID, gameID, values.NewFeedbackQuestionText("rollback"), values.FeedbackAnswerTypeYesNo, 9, time.Now(), nil)
+		require.NoError(t, repo.CreateFeedbackQuestions(txCtx, []*domain.FeedbackQuestion{question}))
+		return errors.New("rollback")
+	})
+	require.Error(t, err)
+	var rolledBack schema.GameFeedbackQuestionTable
+	err = db.Unscoped().Where("id = ?", rolledBackID.UUID()).Take(&rolledBack).Error
+	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
 }
