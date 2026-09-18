@@ -47,7 +47,7 @@ func TestGameFeedbackGetGameFeedbacks(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			games := mockRepository.NewMockGameV2(ctrl)
 			feedbacks := mockRepository.NewMockGameFeedback(ctrl)
-			sut := NewGameFeedback(games, feedbacks)
+			sut := NewGameFeedback(games, feedbacks, nil)
 
 			limit := testCase.limit
 			if limit == 0 {
