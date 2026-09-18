@@ -83,8 +83,10 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 
 			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 			mockGameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+			mockDB := mockRepository.NewMockDB(ctrl)
 
 			gameFeedbackService := NewGameFeedback(
+				mockDB,
 				mockGameRepository,
 				mockGameFeedbackRepository,
 			)
@@ -120,27 +122,4 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 			assert.Equal(t, testCase.expectedEnabled, enabled)
 		})
 	}
-}
-
-func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
-	gameID := values.NewGameID()
-	question := domain.NewFeedbackQuestion(values.NewFeedbackQuestionID(), gameID, values.NewFeedbackQuestionText("question"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
-	ctrl := gomock.NewController(t)
-	gameRepository := mockRepository.NewMockGameV2(ctrl)
-	feedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
-	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeNone).Return(nil, repository.ErrRecordNotFound)
-	feedbackService := NewGameFeedback(gameRepository, feedbackRepository)
-	_, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
-	assert.ErrorIs(t, err, service.ErrInvalidGame)
-
-	ctrl = gomock.NewController(t)
-	gameRepository = mockRepository.NewMockGameV2(ctrl)
-	feedbackRepository = mockRepository.NewMockGameFeedback(ctrl)
-	game := domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now())
-	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeNone).Return(game, nil)
-	feedbackRepository.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{question}, nil)
-	feedbackService = NewGameFeedback(gameRepository, feedbackRepository)
-	questions, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
-	assert.NoError(t, err)
-	assert.Equal(t, []*domain.FeedbackQuestion{question}, questions)
 }

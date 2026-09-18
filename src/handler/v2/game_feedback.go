@@ -1,7 +1,9 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 
@@ -63,6 +65,65 @@ func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, gameID openapi.Game
 	return c.JSON(http.StatusOK, feedbackQuestionsResponse(questions))
 }
 
+// フィードバック質問の一括設定
+// (PUT /games/{gameID}/feedback-questions)
+func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.GameIDInPath) error {
+	var request openapi.PutFeedbackQuestionsRequest
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if err := json.Unmarshal(body, &request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if request.Questions == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "questions is required")
+	}
+	var rawRequest struct {
+		Questions []struct {
+			ID json.RawMessage `json:"id"`
+		} `json:"questions"`
+	}
+	if err := json.Unmarshal(body, &rawRequest); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+
+	inputs := make([]service.FeedbackQuestionInput, 0, len(request.Questions))
+	for index, question := range request.Questions {
+		if string(rawRequest.Questions[index].ID) == "null" {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid question ID")
+		}
+		answerType, ok := feedbackAnswerTypeFromOpenAPI(question.AnswerType)
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid answer type")
+		}
+		var id *values.FeedbackQuestionID
+		if question.Id != nil {
+			questionID := values.NewFeedbackQuestionIDFromUUID(*question.Id)
+			id = &questionID
+		}
+		inputs = append(inputs, service.FeedbackQuestionInput{
+			ID:           id,
+			QuestionText: values.NewFeedbackQuestionText(question.QuestionText),
+			AnswerType:   answerType,
+		})
+	}
+
+	questions, err := gf.gameFeedbackService.PutFeedbackQuestions(c.Request().Context(), values.NewGameIDFromUUID(gameID), inputs)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if errors.Is(err, service.ErrInvalidFeedbackQuestion) || errors.Is(err, service.ErrDuplicateFeedbackQuestion) || errors.Is(err, service.ErrInvalidFeedbackAnswerType) || errors.Is(err, service.ErrFeedbackQuestionAnswerTypeChange) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid feedback questions")
+	}
+	if err != nil {
+		log.Printf("error: failed to put feedback questions: %v\\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to put feedback questions")
+	}
+
+	return c.JSON(http.StatusOK, feedbackQuestionsResponse(questions))
+}
+
 func feedbackQuestionsResponse(questions []*domain.FeedbackQuestion) openapi.FeedbackQuestionsResponse {
 	responseQuestions := make([]openapi.FeedbackQuestion, 0, len(questions))
 	for _, question := range questions {
@@ -76,6 +137,17 @@ func feedbackQuestionsResponse(questions []*domain.FeedbackQuestion) openapi.Fee
 	return openapi.FeedbackQuestionsResponse{Questions: responseQuestions}
 }
 
+func feedbackAnswerTypeFromOpenAPI(answerType openapi.AnswerType) (values.FeedbackAnswerType, bool) {
+	switch answerType {
+	case openapi.AnswerTypeYesNo:
+		return values.FeedbackAnswerTypeYesNo, true
+	case openapi.AnswerTypeFiveScale:
+		return values.FeedbackAnswerTypeFiveScale, true
+	default:
+		return 0, false
+	}
+}
+
 func feedbackAnswerTypeToOpenAPI(answerType values.FeedbackAnswerType) openapi.AnswerType {
 	switch answerType {
 	case values.FeedbackAnswerTypeYesNo:
@@ -85,12 +157,6 @@ func feedbackAnswerTypeToOpenAPI(answerType values.FeedbackAnswerType) openapi.A
 	default:
 		return ""
 	}
-}
-
-// フィードバック質問の一括設定
-// (PUT /games/{gameID}/feedback-questions)
-func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, _ openapi.GameIDInPath) error {
-	return c.NoContent(http.StatusNotImplemented)
 }
 
 // ゲームフィードバックの送信

@@ -12,4 +12,5 @@ import (
 type GameFeedback interface {
 	GetFeedbackConfig(ctx context.Context, gameID values.GameID) (bool, error)
 	GetFeedbackQuestions(ctx context.Context, gameID values.GameID) ([]*domain.FeedbackQuestion, error)
+	PutFeedbackQuestions(ctx context.Context, gameID values.GameID, inputs []FeedbackQuestionInput) ([]*domain.FeedbackQuestion, error)
 }
