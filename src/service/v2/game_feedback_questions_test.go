@@ -210,9 +210,18 @@ func TestGameFeedbackPutFeedbackQuestionsUsesTransactionContext(t *testing.T) {
 		assert.Equal(t, db.transactionContext, ctx)
 		return nil, nil
 	})
-	repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
-	repo.EXPECT().CreateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
-	repo.EXPECT().ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{}).Return(nil)
+	repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
+		assert.Equal(t, db.transactionContext, ctx)
+		return nil
+	})
+	repo.EXPECT().CreateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
+		assert.Equal(t, db.transactionContext, ctx)
+		return nil
+	})
+	repo.EXPECT().ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{}).DoAndReturn(func(ctx context.Context, _ []values.FeedbackQuestionID) error {
+		assert.Equal(t, db.transactionContext, ctx)
+		return nil
+	})
 	_, err := NewGameFeedback(db, gameRepo, repo, nil).PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{})
 	assert.NoError(t, err)
 }
