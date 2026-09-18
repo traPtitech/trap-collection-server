@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -114,4 +115,37 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 			assert.Equal(t, testCase.expectedValue, enabled)
 		})
 	}
+}
+
+func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
+	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+	var visibility schema.GameVisibilityTypeTable
+	require.NoError(t, db.Where("name = ?", schema.GameVisibilityTypePublic).Take(&visibility).Error)
+	gameID := values.NewGameID()
+	game := schema.GameTable2{ID: uuid.UUID(gameID), Name: "feedback questions", Description: "description", VisibilityTypeID: visibility.ID, CreatedAt: time.Now()}
+	require.NoError(t, db.Create(&game).Error)
+	questionID := values.NewFeedbackQuestionID()
+	archivedID := values.NewFeedbackQuestionID()
+	deletedID := values.NewFeedbackQuestionID()
+	questions := []schema.GameFeedbackQuestionTable{
+		{ID: questionID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "visible", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 2, CreatedAt: time.Now()},
+		{ID: archivedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "archived", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 0, CreatedAt: time.Now(), ArchivedAt: sql.NullTime{Time: time.Now(), Valid: true}},
+		{ID: deletedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "deleted", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 1, CreatedAt: time.Now()},
+	}
+	require.NoError(t, db.Create(&questions).Error)
+	require.NoError(t, db.Delete(&questions[2]).Error)
+	t.Cleanup(func() {
+		cleanupDB, cleanupErr := testDB.getDB(context.Background())
+		require.NoError(t, cleanupErr)
+		require.NoError(t, cleanupDB.Unscoped().Where("id IN ?", []uuid.UUID{questionID.UUID(), archivedID.UUID(), deletedID.UUID()}).Delete(&schema.GameFeedbackQuestionTable{}).Error)
+		require.NoError(t, cleanupDB.Unscoped().Delete(&game).Error)
+	})
+	actual, err := NewGameFeedback(testDB).GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
+	require.NoError(t, err)
+	require.Len(t, actual, 1)
+	assert.Equal(t, questionID, actual[0].GetID())
+	assert.Equal(t, values.NewFeedbackQuestionText("visible"), actual[0].GetQuestionText())
+	assert.Equal(t, values.NewFeedbackQuestionOrder(2), actual[0].GetQuestionOrder())
 }
