@@ -42,6 +42,14 @@ func TestGameFeedbackListTrapMemberAuth(t *testing.T) {
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
+
+	t.Run("edition-only bearer credential is rejected before service", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedbacks", nil)
+		req.Header.Set("Authorization", "Bearer edition-access-token")
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 	t.Run("member request reaches service", func(t *testing.T) {
 		accessToken := "member token"
 		oidc.EXPECT().Authenticate(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, authSession *domain.OIDCSession) error {
@@ -51,7 +59,7 @@ func TestGameFeedbackListTrapMemberAuth(t *testing.T) {
 		serviceMock.EXPECT().GetGameFeedbacks(gomock.Any(), gameID, 50, 0).Return(nil, 0, nil)
 		c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedbacks", nil)
 		setTestSession(t, c, req, rec, sessions, domain.NewOIDCSession(values.NewOIDCAccessToken(accessToken), time.Now()))
-		e.ServeHTTP(rec)
+		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 }
