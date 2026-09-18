@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/handler/v2/openapi"
 	"github.com/traPtitech/trap-collection-server/src/service"
@@ -49,8 +50,41 @@ func (gf *GameFeedback) PatchFeedbackConfig(c echo.Context, _ openapi.GameIDInPa
 
 // フィードバック質問一覧の取得
 // (GET /games/{gameID}/feedback-questions)
-func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, _ openapi.GameIDInPath) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, gameID openapi.GameIDInPath) error {
+	questions, err := gf.gameFeedbackService.GetFeedbackQuestions(c.Request().Context(), values.NewGameIDFromUUID(gameID))
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if err != nil {
+		log.Printf("error: failed to get feedback questions: %v\\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get feedback questions")
+	}
+
+	return c.JSON(http.StatusOK, feedbackQuestionsResponse(questions))
+}
+
+func feedbackQuestionsResponse(questions []*domain.FeedbackQuestion) openapi.FeedbackQuestionsResponse {
+	responseQuestions := make([]openapi.FeedbackQuestion, 0, len(questions))
+	for _, question := range questions {
+		responseQuestions = append(responseQuestions, openapi.FeedbackQuestion{
+			Id:            question.GetID().UUID(),
+			QuestionText:  string(question.GetQuestionText()),
+			AnswerType:    feedbackAnswerTypeToOpenAPI(question.GetAnswerType()),
+			QuestionOrder: int(question.GetQuestionOrder()),
+		})
+	}
+	return openapi.FeedbackQuestionsResponse{Questions: responseQuestions}
+}
+
+func feedbackAnswerTypeToOpenAPI(answerType values.FeedbackAnswerType) openapi.AnswerType {
+	switch answerType {
+	case values.FeedbackAnswerTypeYesNo:
+		return openapi.AnswerTypeYesNo
+	case values.FeedbackAnswerTypeFiveScale:
+		return openapi.AnswerTypeFiveScale
+	default:
+		return ""
+	}
 }
 
 // フィードバック質問の一括設定

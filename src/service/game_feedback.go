@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 )
 
@@ -10,4 +11,5 @@ import (
 
 type GameFeedback interface {
 	GetFeedbackConfig(ctx context.Context, gameID values.GameID) (bool, error)
+	GetFeedbackQuestions(ctx context.Context, gameID values.GameID) ([]*domain.FeedbackQuestion, error)
 }
