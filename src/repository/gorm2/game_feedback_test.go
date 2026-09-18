@@ -2,12 +2,14 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
@@ -114,4 +116,54 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 			assert.Equal(t, testCase.expectedValue, enabled)
 		})
 	}
+}
+
+func TestGameFeedbackQuestions(t *testing.T) {
+	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+
+	var visibility schema.GameVisibilityTypeTable
+	require.NoError(t, db.Where("name = ?", schema.GameVisibilityTypePublic).Take(&visibility).Error)
+	gameID := values.NewGameID()
+	game := schema.GameTable2{ID: uuid.UUID(gameID), Name: "feedback questions", Description: "description", VisibilityTypeID: visibility.ID, CreatedAt: time.Now()}
+	require.NoError(t, db.Create(&game).Error)
+
+	questionID := values.NewFeedbackQuestionID()
+	archivedID := values.NewFeedbackQuestionID()
+	deletedID := values.NewFeedbackQuestionID()
+	questions := []schema.GameFeedbackQuestionTable{
+		{ID: questionID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "visible", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 2, CreatedAt: time.Now()},
+		{ID: archivedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "archived", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 0, CreatedAt: time.Now(), ArchivedAt: sql.NullTime{Time: time.Now(), Valid: true}},
+		{ID: deletedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "deleted", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 1, CreatedAt: time.Now()},
+	}
+	require.NoError(t, db.Create(&questions).Error)
+	require.NoError(t, db.Delete(&questions[2]).Error)
+	t.Cleanup(func() {
+		cleanupDB, cleanupErr := testDB.getDB(context.Background())
+		require.NoError(t, cleanupErr)
+		require.NoError(t, cleanupDB.Unscoped().Where("id IN ?", []uuid.UUID{questionID.UUID(), archivedID.UUID(), deletedID.UUID()}).Delete(&schema.GameFeedbackQuestionTable{}).Error)
+		require.NoError(t, cleanupDB.Unscoped().Delete(&game).Error)
+	})
+
+	repo := NewGameFeedback(testDB)
+	actual, err := repo.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
+	require.NoError(t, err)
+	require.Len(t, actual, 1)
+	assert.Equal(t, questionID, actual[0].GetID())
+
+	newID := values.NewFeedbackQuestionID()
+	newQuestion := domain.NewFeedbackQuestion(newID, gameID, values.NewFeedbackQuestionText("new"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
+	require.NoError(t, repo.CreateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{newQuestion}))
+	t.Cleanup(func() {
+		require.NoError(t, db.Unscoped().Where("id = ?", newID.UUID()).Delete(&schema.GameFeedbackQuestionTable{}).Error)
+	})
+
+	updated := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("updated"), values.FeedbackAnswerTypeFiveScale, 3, questions[0].CreatedAt, nil)
+	require.NoError(t, repo.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{updated}))
+	require.NoError(t, repo.ArchiveFeedbackQuestions(ctx, []values.FeedbackQuestionID{questionID}))
+	actual, err = repo.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
+	require.NoError(t, err)
+	assert.Len(t, actual, 1)
+	assert.Equal(t, newID, actual[0].GetID())
 }
