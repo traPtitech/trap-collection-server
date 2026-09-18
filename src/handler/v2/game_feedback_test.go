@@ -171,8 +171,17 @@ func TestGetGameFeedbacks(t *testing.T) {
 
 func TestGetGameVersionFeedbacks(t *testing.T) {
 	gameID, versionID := values.NewGameID(), values.NewGameVersionID()
-	feedbackID, questionID := values.NewGameFeedbackID(), values.NewFeedbackQuestionID()
-	details := []*service.GameFeedbackDetail{{Feedback: domain.NewGameFeedback(feedbackID, versionID, nil, time.Now()), Answers: []*service.GameFeedbackAnswerDetail{{Answer: domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, questionID, 5), QuestionText: values.NewFeedbackQuestionText("評価"), AnswerType: values.FeedbackAnswerTypeFiveScale}}}}
+	feedbackID := values.NewGameFeedbackID()
+	yesNoQuestionID, fiveScaleQuestionID := values.NewFeedbackQuestionID(), values.NewFeedbackQuestionID()
+	comment := values.NewFeedbackComment("comment")
+	createdAt := time.Now().Round(0)
+	details := []*service.GameFeedbackDetail{{
+		Feedback: domain.NewGameFeedback(feedbackID, versionID, &comment, createdAt),
+		Answers: []*service.GameFeedbackAnswerDetail{
+			{Answer: domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, yesNoQuestionID, 1), QuestionText: values.NewFeedbackQuestionText("yes no"), AnswerType: values.FeedbackAnswerTypeYesNo},
+			{Answer: domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, fiveScaleQuestionID, 5), QuestionText: values.NewFeedbackQuestionText("scale"), AnswerType: values.FeedbackAnswerTypeFiveScale},
+		},
+	}}
 	testCases := map[string]struct {
 		err    error
 		status int
@@ -190,7 +199,7 @@ func TestGetGameVersionFeedbacks(t *testing.T) {
 			handler := NewGameFeedback(serviceMock)
 			params := openapi.GetGameVersionFeedbacksParams{Limit: ptr(2), Offset: ptr(3)}
 			if testCase.call {
-				serviceMock.EXPECT().GetGameVersionFeedbacks(gomock.Any(), gameID, versionID, 2, 3).Return(details, 1, testCase.err)
+				serviceMock.EXPECT().GetGameVersionFeedbacks(gomock.Any(), gameID, versionID, 2, 3).Return(details, 4, testCase.err)
 			} else {
 				params.Limit = ptr(101)
 			}
@@ -204,6 +213,23 @@ func TestGetGameVersionFeedbacks(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, rec.Code)
+			var response openapi.GameVersionFeedbacksResponse
+			require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+			assert.Equal(t, 4, response.Total)
+			require.Len(t, response.Feedbacks, 1)
+			assert.Equal(t, openapi.GameFeedbackID(feedbackID), response.Feedbacks[0].Id)
+			assert.Equal(t, createdAt, response.Feedbacks[0].CreatedAt)
+			require.NotNil(t, response.Feedbacks[0].Comment)
+			assert.Equal(t, "comment", *response.Feedbacks[0].Comment)
+			require.Len(t, response.Feedbacks[0].Answers, 2)
+			yesNo, parseErr := response.Feedbacks[0].Answers[0].AsFeedbackAnswerYesNo()
+			require.NoError(t, parseErr)
+			assert.Equal(t, openapi.FeedbackQuestionID(yesNoQuestionID), yesNo.QuestionID)
+			assert.Equal(t, 1, yesNo.Answer)
+			fiveScale, parseErr := response.Feedbacks[0].Answers[1].AsFeedbackAnswerFiveScale()
+			require.NoError(t, parseErr)
+			assert.Equal(t, openapi.FeedbackQuestionID(fiveScaleQuestionID), fiveScale.QuestionID)
+			assert.Equal(t, 5, fiveScale.Answer)
 		})
 	}
 }
