@@ -14,15 +14,18 @@ import (
 type GameFeedback struct {
 	gameRepository         repository.GameV2
 	gameFeedbackRepository repository.GameFeedback
+	gameVersionRepository  repository.GameVersionV2
 }
 
 func NewGameFeedback(
 	gameRepository repository.GameV2,
 	gameFeedbackRepository repository.GameFeedback,
+	gameVersionRepository repository.GameVersionV2,
 ) *GameFeedback {
 	return &GameFeedback{
 		gameRepository:         gameRepository,
 		gameFeedbackRepository: gameFeedbackRepository,
+		gameVersionRepository:  gameVersionRepository,
 	}
 }
 

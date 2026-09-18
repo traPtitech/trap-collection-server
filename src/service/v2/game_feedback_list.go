@@ -27,6 +27,30 @@ func (g *GameFeedback) GetGameFeedbacks(ctx context.Context, gameID values.GameI
 	return g.feedbackDetails(ctx, gameID, feedbacks, total)
 }
 
+func (g *GameFeedback) GetGameVersionFeedbacks(ctx context.Context, gameID values.GameID, gameVersionID values.GameVersionID, limit, offset int) ([]*service.GameFeedbackDetail, int, error) {
+	if err := validateGameFeedbackPagination(limit, offset); err != nil {
+		return nil, 0, err
+	}
+	if err := g.validateGame(ctx, gameID); err != nil {
+		return nil, 0, err
+	}
+	gameVersion, err := g.gameVersionRepository.GetGameVersionByID(ctx, gameVersionID, repository.LockTypeNone)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, 0, service.ErrInvalidGameVersion
+	}
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get game version: %w", err)
+	}
+	if gameVersion.GameID != gameID {
+		return nil, 0, service.ErrInvalidGameVersion
+	}
+	feedbacks, total, err := g.gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, gameVersionID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get game version feedbacks: %w", err)
+	}
+	return g.feedbackDetails(ctx, gameID, feedbacks, total)
+}
+
 func (g *GameFeedback) validateGame(ctx context.Context, gameID values.GameID) error {
 	_, err := g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {

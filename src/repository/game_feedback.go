@@ -14,6 +14,7 @@ type GameFeedback interface {
 	GetFeedbackQuestions(ctx context.Context, gameID values.GameID, lockType LockType) ([]*domain.FeedbackQuestion, error)
 	GetFeedbackQuestionsIncludingArchived(ctx context.Context, gameID values.GameID, lockType LockType) ([]*domain.FeedbackQuestion, error)
 	GetGameFeedbacksByGameID(ctx context.Context, gameID values.GameID, limit, offset int) ([]*GameFeedbackWithAnswers, int, error)
+	GetGameFeedbacksByGameVersionID(ctx context.Context, gameVersionID values.GameVersionID, limit, offset int) ([]*GameFeedbackWithAnswers, int, error)
 }
 
 type GameFeedbackWithAnswers struct {

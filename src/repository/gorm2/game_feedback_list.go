@@ -67,6 +67,14 @@ func (g *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID valu
 	return getGameFeedbacks(query, limit, offset)
 }
 
+func (g *GameFeedback) GetGameFeedbacksByGameVersionID(ctx context.Context, gameVersionID values.GameVersionID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get db: %w", err)
+	}
+	return getGameFeedbacks(db.Model(&schema.GameFeedbackTable{}).Where("game_feedbacks.game_version_id = ?", uuid.UUID(gameVersionID)), limit, offset)
+}
+
 func getGameFeedbacks(query *gorm.DB, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
 	var total int64
 	if err := query.Session(&gorm.Session{}).Count(&total).Error; err != nil {

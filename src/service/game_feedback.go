@@ -13,6 +13,7 @@ type GameFeedback interface {
 	GetFeedbackConfig(ctx context.Context, gameID values.GameID) (bool, error)
 	GetFeedbackQuestions(ctx context.Context, gameID values.GameID) ([]*domain.FeedbackQuestion, error)
 	GetGameFeedbacks(ctx context.Context, gameID values.GameID, limit, offset int) ([]*GameFeedbackDetail, int, error)
+	GetGameVersionFeedbacks(ctx context.Context, gameID values.GameID, gameVersionID values.GameVersionID, limit, offset int) ([]*GameFeedbackDetail, int, error)
 }
 
 type GameFeedbackDetail struct {

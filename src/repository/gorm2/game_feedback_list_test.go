@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
+func TestGameFeedbackGetGameFeedbacksByGameVersionID(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db, err := testDB.getDB(ctx)
@@ -89,7 +89,7 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 		require.NoError(t, cleanupDB.Unscoped().Delete(&otherGame).Error)
 	})
 
-	feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, 1, 0)
+	feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 0)
 	require.NoError(t, err)
 	assert.Equal(t, 3, total)
 	require.Len(t, feedbacks, 1)
@@ -97,14 +97,14 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 	assert.Empty(t, feedbacks[0].Answers)
 	require.NotNil(t, feedbacks[0].Feedback.GetComment())
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, 1, 1)
+	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 1)
 	require.NoError(t, err)
 	assert.Equal(t, 3, total)
 	require.Len(t, feedbacks, 1)
 	assert.Equal(t, tiedFeedbackID, feedbacks[0].Feedback.GetID())
 	assert.Empty(t, feedbacks[0].Answers)
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, 1, 2)
+	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 2)
 	require.NoError(t, err)
 	assert.Equal(t, 3, total)
 	require.Len(t, feedbacks, 1)
@@ -113,7 +113,7 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 	assert.Equal(t, []values.FeedbackQuestionID{activeID, archivedID}, []values.FeedbackQuestionID{feedbacks[0].Answers[0].GetQuestionID(), feedbacks[0].Answers[1].GetQuestionID()})
 	assert.Equal(t, []int{1, 5}, []int{feedbacks[0].Answers[0].GetAnswer(), feedbacks[0].Answers[1].GetAnswer()})
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, 1, 3)
+	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 3)
 	require.NoError(t, err)
 	assert.Equal(t, 3, total)
 	assert.Empty(t, feedbacks)

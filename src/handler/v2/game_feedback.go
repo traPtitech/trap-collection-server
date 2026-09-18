@@ -154,8 +154,40 @@ func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, gameIDPath openapi.Game
 
 // ゲームバージョンのフィードバック一覧取得
 // (GET /games/{gameID}/versions/{gameVersionID}/feedbacks)
-func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, _ openapi.GameIDInPath, _ openapi.GameVersionIDInPath, _ openapi.GetGameVersionFeedbacksParams) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, gameVersionIDPath openapi.GameVersionIDInPath, params openapi.GetGameVersionFeedbacksParams) error {
+	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+	feedbacks, total, err := gf.gameFeedbackService.GetGameVersionFeedbacks(c.Request().Context(), values.NewGameIDFromUUID(gameIDPath), values.NewGameVersionIDFromUUID(gameVersionIDPath), limit, offset)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if errors.Is(err, service.ErrInvalidGameVersion) {
+		return echo.NewHTTPError(http.StatusNotFound, "game version not found")
+	}
+	if errors.Is(err, service.ErrInvalidLimit) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game version feedbacks: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
+	}
+	response := openapi.GameVersionFeedbacksResponse{Feedbacks: make([]openapi.FeedbackDetail, 0, len(feedbacks)), Total: total}
+	for _, feedback := range feedbacks {
+		answers, err := feedbackAnswersToOpenAPI(feedback.Answers)
+		if err != nil {
+			log.Printf("error: failed to convert feedback answers: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
+		}
+		var comment *string
+		if feedback.Feedback.GetComment() != nil {
+			value := string(*feedback.Feedback.GetComment())
+			comment = &value
+		}
+		response.Feedbacks = append(response.Feedbacks, openapi.FeedbackDetail{Id: openapi.GameFeedbackID(feedback.Feedback.GetID()), Answers: answers, Comment: comment, CreatedAt: feedback.Feedback.GetCreatedAt()})
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 func gameFeedbackPagination(limitParam, offsetParam *int) (int, int, error) {
