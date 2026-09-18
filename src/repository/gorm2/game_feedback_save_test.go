@@ -37,6 +37,10 @@ func TestCreateGameFeedback(t *testing.T) {
 		"creates feedback without answers and keeps nil comment null": {
 			wantFeedback: true,
 		},
+		"creates feedback with empty comment": {
+			comment:      feedbackComment(""),
+			wantFeedback: true,
+		},
 		"creates feedback and answers with nonempty comment": {
 			comment:      feedbackComment("excellent game"),
 			answerCount:  2,
@@ -60,6 +64,7 @@ func TestCreateGameFeedback(t *testing.T) {
 		},
 		"does not save answers belonging to another feedback": {
 			answerCount:        1,
+			answerValues:       []int{5},
 			mismatchedFeedback: true,
 			wantAnyErr:         true,
 		},
@@ -108,6 +113,7 @@ func TestCreateGameFeedback(t *testing.T) {
 				answerFeedbackID := feedbackID
 				if testCase.mismatchedFeedback {
 					answerFeedbackID = fixture.existingFeedbackID
+					questionID = fixture.questionIDs[1]
 				}
 				answerValue := i
 				if len(testCase.answerValues) > i {
@@ -194,10 +200,14 @@ func TestCreateGameFeedbackFailedNestedSaveKeepsOuterTransaction(t *testing.T) {
 	duplicateAnswer := domain.NewGameFeedbackAnswer(fixture.existingAnswerID, attempted.GetID(), fixture.questionIDs[1], 0)
 
 	require.NoError(t, testDB.Transaction(t.Context(), nil, func(ctx context.Context) error {
-		if err := fixture.db.WithContext(ctx).Create(&sentinel).Error; err != nil {
+		outerDB, err := testDB.getDB(ctx)
+		if err != nil {
 			return err
 		}
-		err := NewGameFeedback(testDB).CreateGameFeedback(ctx, attempted, []*domain.GameFeedbackAnswer{duplicateAnswer})
+		if err := outerDB.Create(&sentinel).Error; err != nil {
+			return err
+		}
+		err = NewGameFeedback(testDB).CreateGameFeedback(ctx, attempted, []*domain.GameFeedbackAnswer{duplicateAnswer})
 		require.ErrorIs(t, err, repository.ErrDuplicatedUniqueKey)
 		return nil
 	}))
