@@ -113,7 +113,7 @@ func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.Game
 	if errors.Is(err, service.ErrInvalidGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	}
-	if errors.Is(err, service.ErrInvalidFeedbackQuestion) || errors.Is(err, service.ErrDuplicateFeedbackQuestion) || errors.Is(err, service.ErrInvalidFeedbackAnswerType) {
+	if errors.Is(err, service.ErrInvalidFeedbackQuestion) || errors.Is(err, service.ErrDuplicateFeedbackQuestion) || errors.Is(err, service.ErrInvalidFeedbackAnswerType) || errors.Is(err, service.ErrFeedbackQuestionAnswerTypeChange) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid feedback questions")
 	}
 	if err != nil {

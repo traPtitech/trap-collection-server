@@ -51,6 +51,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 			existing: []*domain.FeedbackQuestion{existing, archived},
 			setExpects: func(repo *mockRepository.MockGameFeedback) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing, archived}, nil)
+				repo.EXPECT().HasFeedbackAnswers(gomock.Any(), []values.FeedbackQuestionID{existingID}, repository.LockTypeRecord).Return(false, nil)
 				repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, questions []*domain.FeedbackQuestion) error {
 					assert.Len(t, questions, 1)
 					assert.Equal(t, existingID, questions[0].GetID())
@@ -144,6 +145,7 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterStageFailure(t *testing.T) {
 	)
 	existing := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("old"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
 	feedbackRepository.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
+	feedbackRepository.EXPECT().HasFeedbackAnswers(gomock.Any(), []values.FeedbackQuestionID{questionID}, repository.LockTypeRecord).Return(false, nil)
 	stageErr := errors.New("update failed")
 	feedbackRepository.EXPECT().UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).Return(stageErr)
 

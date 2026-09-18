@@ -106,9 +106,24 @@ func (g *GameFeedback) PutFeedbackQuestions(ctx context.Context, gameID values.G
 		}
 
 		archiveIDs := make([]values.FeedbackQuestionID, 0, len(existing))
+		changedTypeIDs := make([]values.FeedbackQuestionID, 0, len(updatedQuestions))
 		for _, question := range existing {
 			if _, ok := seen[question.GetID()]; !ok {
 				archiveIDs = append(archiveIDs, question.GetID())
+			}
+		}
+		for _, question := range updatedQuestions {
+			if existingByID[question.GetID()].GetAnswerType() != question.GetAnswerType() {
+				changedTypeIDs = append(changedTypeIDs, question.GetID())
+			}
+		}
+		if len(changedTypeIDs) != 0 {
+			hasAnswers, err := g.gameFeedbackRepository.HasFeedbackAnswers(ctx, changedTypeIDs, repository.LockTypeRecord)
+			if err != nil {
+				return fmt.Errorf("failed to check feedback question answers: %w", err)
+			}
+			if hasAnswers {
+				return service.ErrFeedbackQuestionAnswerTypeChange
 			}
 		}
 

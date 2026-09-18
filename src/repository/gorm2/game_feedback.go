@@ -138,6 +138,33 @@ func (g *GameFeedback) ArchiveFeedbackQuestions(ctx context.Context, ids []value
 	return nil
 }
 
+func (g *GameFeedback) HasFeedbackAnswers(ctx context.Context, questionIDs []values.FeedbackQuestionID, lockType repository.LockType) (bool, error) {
+	if len(questionIDs) == 0 {
+		return false, nil
+	}
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get db: %w", err)
+	}
+	db, err = g.db.setLock(db, lockType)
+	if err != nil {
+		return false, fmt.Errorf("failed to set lock: %w", err)
+	}
+	ids := make([]uuid.UUID, 0, len(questionIDs))
+	for _, id := range questionIDs {
+		ids = append(ids, id.UUID())
+	}
+	var answer schema.GameFeedbackAnswerTable
+	err = db.Where("question_id IN ?", ids).Take(&answer).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to get feedback answers: %w", err)
+	}
+	return true, nil
+}
+
 var _ repository.GameFeedback = (*GameFeedback)(nil)
 
 func NewGameFeedback(db *DB) *GameFeedback {

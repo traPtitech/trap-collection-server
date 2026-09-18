@@ -69,4 +69,5 @@ var (
 	ErrInvalidFeedbackQuestion           = errors.New("invalid feedback question")
 	ErrDuplicateFeedbackQuestion         = errors.New("duplicate feedback question")
 	ErrInvalidFeedbackAnswerType         = errors.New("invalid feedback answer type")
+	ErrFeedbackQuestionAnswerTypeChange  = errors.New("cannot change answered feedback question type")
 )
