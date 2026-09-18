@@ -1,7 +1,9 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 
@@ -67,15 +69,30 @@ func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, gameID openapi.Game
 // (PUT /games/{gameID}/feedback-questions)
 func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.GameIDInPath) error {
 	var request openapi.PutFeedbackQuestionsRequest
-	if err := c.Bind(&request); err != nil {
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if err := json.Unmarshal(body, &request); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 	if request.Questions == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "questions is required")
 	}
+	var rawRequest struct {
+		Questions []struct {
+			ID json.RawMessage `json:"id"`
+		} `json:"questions"`
+	}
+	if err := json.Unmarshal(body, &rawRequest); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
 
 	inputs := make([]service.FeedbackQuestionInput, 0, len(request.Questions))
-	for _, question := range request.Questions {
+	for index, question := range request.Questions {
+		if string(rawRequest.Questions[index].ID) == "null" {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid question ID")
+		}
 		answerType, ok := feedbackAnswerTypeFromOpenAPI(question.AnswerType)
 		if !ok {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid answer type")

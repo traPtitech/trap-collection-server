@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -118,4 +119,29 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 	_, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
 	assert.ErrorIs(t, err, service.ErrInvalidGame)
 
+}
+
+func TestGameFeedbackPutFeedbackQuestionsStopsAfterStageFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	gameID := values.NewGameID()
+	questionID := values.NewFeedbackQuestionID()
+	gameRepository := mockRepository.NewMockGameV2(ctrl)
+	feedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeRecord).Return(
+		domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now()), nil,
+	)
+	existing := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("old"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
+	feedbackRepository.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
+	stageErr := errors.New("update failed")
+	feedbackRepository.EXPECT().UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).Return(stageErr)
+
+	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
+	_, err := feedbackService.PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{{
+		ID: questionIDPtr(questionID), QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeFiveScale,
+	}})
+	assert.ErrorIs(t, err, stageErr)
+}
+
+func questionIDPtr(id values.FeedbackQuestionID) *values.FeedbackQuestionID {
+	return &id
 }

@@ -147,6 +147,22 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		c, _, rec := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
 		require.NoError(t, handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID)))
 		assert.Equal(t, http.StatusOK, rec.Code)
+		var response openapi.FeedbackQuestionsResponse
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+		assert.Equal(t, []openapi.FeedbackQuestion{{Id: questionID.UUID(), QuestionText: "新しい質問", AnswerType: openapi.AnswerTypeFiveScale, QuestionOrder: 0}}, response.Questions)
+	})
+
+	t.Run("accepts explicit empty questions", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		feedbackService := mock.NewMockGameFeedback(ctrl)
+		feedbackService.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, []service.FeedbackQuestionInput{}).Return([]*domain.FeedbackQuestion{}, nil)
+		handler := NewGameFeedback(feedbackService)
+		request := openapi.PutFeedbackQuestionsRequest{Questions: []openapi.FeedbackQuestionInput{}}
+		c, _, rec := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
+		require.NoError(t, handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID)))
+		var response openapi.FeedbackQuestionsResponse
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+		assert.Equal(t, []openapi.FeedbackQuestion{}, response.Questions)
 	})
 
 	t.Run("rejects invalid answer type before service", func(t *testing.T) {
@@ -171,6 +187,16 @@ func TestPutFeedbackQuestions(t *testing.T) {
 	t.Run("rejects null questions before service", func(t *testing.T) {
 		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
 		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{"questions": nil}))
+		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
+		var httpError *echo.HTTPError
+		require.ErrorAs(t, err, &httpError)
+		assert.Equal(t, http.StatusBadRequest, httpError.Code)
+	})
+
+	t.Run("rejects explicit null ID before service", func(t *testing.T) {
+		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
+		request := map[string]any{"questions": []map[string]any{{"id": nil, "questionText": "質問", "answerType": "yesNo"}}}
+		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
 		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
 		var httpError *echo.HTTPError
 		require.ErrorAs(t, err, &httpError)
