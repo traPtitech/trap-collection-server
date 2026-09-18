@@ -14,6 +14,8 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"github.com/traPtitech/trap-collection-server/src/service"
+	servicev2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 	"gorm.io/gorm"
 )
 
@@ -118,6 +120,83 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 			assert.Equal(t, testCase.expectedValue, enabled)
 		})
 	}
+}
+
+func TestFeedbackQuestionAnsweredTypeChange(t *testing.T) {
+	for _, tc := range []struct {
+		name                  string
+		initial, next, answer int
+		answered              bool
+		wantErr               bool
+	}{
+		{"five scale answer five to yes no", 1, 0, 5, true, true},
+		{"yes no answer zero to five scale", 0, 1, 0, true, true},
+		{"unanswered type change", 0, 1, 0, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newQuestionTypeFixture(t, tc.initial, tc.answer, tc.answered)
+			svc := servicev2.NewGameFeedback(testDB, NewGameV2(testDB), NewGameFeedback(testDB))
+			id := f.questionID
+			_, err := svc.PutFeedbackQuestions(t.Context(), f.gameID, []service.FeedbackQuestionInput{{ID: &id, QuestionText: values.NewFeedbackQuestionText("question"), AnswerType: values.FeedbackAnswerType(tc.next)}})
+			if tc.wantErr {
+				require.ErrorIs(t, err, service.ErrFeedbackQuestionAnswerTypeChange)
+			} else {
+				require.NoError(t, err)
+			}
+			var question schema.GameFeedbackQuestionTable
+			require.NoError(t, f.db.Where("id = ?", id.UUID()).Take(&question).Error)
+			if tc.wantErr {
+				assert.Equal(t, tc.initial, question.AnswerType)
+			} else {
+				assert.Equal(t, tc.next, question.AnswerType)
+			}
+		})
+	}
+}
+
+type questionTypeFixture struct {
+	db         *gorm.DB
+	gameID     values.GameID
+	questionID values.FeedbackQuestionID
+}
+
+func newQuestionTypeFixture(t *testing.T, answerType, answer int, withAnswer bool) questionTypeFixture {
+	t.Helper()
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+	var visibility schema.GameVisibilityTypeTable
+	require.NoError(t, db.Where("name = ?", schema.GameVisibilityTypePublic).Take(&visibility).Error)
+	var imageType schema.GameImageTypeTable
+	require.NoError(t, db.Where("name = ?", "jpeg").Take(&imageType).Error)
+	var videoType schema.GameVideoTypeTable
+	require.NoError(t, db.Where("name = ?", "mp4").Take(&videoType).Error)
+	now := time.Now()
+	gameID := values.NewGameID()
+	imageID := values.NewGameImageID()
+	videoID := values.NewGameVideoID()
+	versionID := values.NewGameVersionID()
+	questionID := values.NewFeedbackQuestionID()
+	feedbackID := values.NewGameFeedbackID()
+	require.NoError(t, db.Create(&schema.GameTable2{ID: uuid.UUID(gameID), Name: "question type", Description: "test", VisibilityTypeID: visibility.ID, CreatedAt: now}).Error)
+	require.NoError(t, db.Create(&schema.GameImageTable2{ID: uuid.UUID(imageID), GameID: uuid.UUID(gameID), ImageTypeID: imageType.ID, CreatedAt: now}).Error)
+	require.NoError(t, db.Create(&schema.GameVideoTable2{ID: uuid.UUID(videoID), GameID: uuid.UUID(gameID), VideoTypeID: videoType.ID, CreatedAt: now}).Error)
+	require.NoError(t, db.Create(&schema.GameVersionTable2{ID: uuid.UUID(versionID), GameID: uuid.UUID(gameID), GameImageID: uuid.UUID(imageID), GameVideoID: uuid.UUID(videoID), Name: "test", Description: "test", CreatedAt: now}).Error)
+	require.NoError(t, db.Create(&schema.GameFeedbackQuestionTable{ID: questionID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "question", AnswerType: answerType, QuestionOrder: 0, CreatedAt: now}).Error)
+	if withAnswer {
+		require.NoError(t, db.Create(&schema.GameFeedbackTable{ID: feedbackID.UUID(), GameVersionID: uuid.UUID(versionID), CreatedAt: now}).Error)
+		require.NoError(t, db.Create(&schema.GameFeedbackAnswerTable{ID: values.NewGameFeedbackAnswerID().UUID(), FeedbackID: feedbackID.UUID(), QuestionID: questionID.UUID(), Answer: answer}).Error)
+	}
+	t.Cleanup(func() {
+		c, _ := testDB.getDB(context.Background())
+		c.Exec("DELETE game_feedback_answers FROM game_feedback_answers JOIN game_feedbacks ON game_feedback_answers.feedback_id = game_feedbacks.id WHERE game_feedbacks.game_version_id = ?", uuid.UUID(versionID))
+		c.Where("game_version_id = ?", uuid.UUID(versionID)).Delete(&schema.GameFeedbackTable{})
+		c.Unscoped().Delete(&schema.GameFeedbackQuestionTable{}, "id = ?", questionID.UUID())
+		c.Delete(&schema.GameVersionTable2{}, "id = ?", uuid.UUID(versionID))
+		c.Delete(&schema.GameImageTable2{}, "id = ?", uuid.UUID(imageID))
+		c.Delete(&schema.GameVideoTable2{}, "id = ?", uuid.UUID(videoID))
+		c.Delete(&schema.GameTable2{}, "id = ?", uuid.UUID(gameID))
+	})
+	return questionTypeFixture{db, gameID, questionID}
 }
 
 func TestGameFeedbackQuestions(t *testing.T) {
