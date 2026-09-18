@@ -66,4 +66,8 @@ var (
 	ErrInvalidGameCreatorID              = errors.New("invalid game creator id")
 	ErrInvalidGameCreatorGamePair        = errors.New("invalid game creator and game pair")
 	ErrDuplicateGameCreator              = errors.New("duplicate game creator")
+	ErrInvalidFeedbackQuestion           = errors.New("invalid feedback question")
+	ErrDuplicateFeedbackQuestion         = errors.New("duplicate feedback question")
+	ErrInvalidFeedbackAnswerType         = errors.New("invalid feedback answer type")
+	ErrFeedbackQuestionAnswerTypeChange  = errors.New("cannot change answered feedback question type")
 )
