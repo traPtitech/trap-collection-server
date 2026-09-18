@@ -70,6 +70,9 @@ func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.Game
 	if err := c.Bind(&request); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
+	if request.Questions == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "questions is required")
+	}
 
 	inputs := make([]service.FeedbackQuestionInput, 0, len(request.Questions))
 	for _, question := range request.Questions {
