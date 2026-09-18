@@ -16,20 +16,18 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"github.com/testcontainers/testcontainers-go/modules/compose"
 	"github.com/traPtitech/trap-collection-server/src/config/mock"
 	"github.com/traPtitech/trap-collection-server/src/storage"
 	"go.uber.org/mock/gomock"
 )
 
 const (
-	minioRootUser     = "AKID"
-	minioRootPassword = "SECRETPASSWORD"
-	minioDomain       = "localhost"
-	minioSiteRegion   = "us-east-1"
-	minioBucket       = "trap-collection"
+	rustfsAccessKey = "AKID"
+	rustfsSecretKey = "SECRETPASSWORD"
+	rustfsRegion    = "us-east-1"
+	rustfsBucket    = "trap-collection"
 )
 
 var testClient *Client
@@ -46,71 +44,46 @@ func (c *Client) createBucket() error {
 }
 
 func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		panic(fmt.Sprintf("Could not create pool: %s", err))
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
 
-	err = pool.Client.Ping()
+	// Compose プロジェクト名は自動生成し、他のテストのスタックと分離する。
+	stack, err := compose.NewDockerComposeWith(compose.WithStackFiles("../../../docker/test/s3.compose.yaml"))
 	if err != nil {
-		panic(fmt.Sprintf("Failed to ping: %s", err))
-	}
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "minio/minio",
-		Tag:        "RELEASE.2022-09-17T00-09-45Z",
-		Env: []string{
-			"MINIO_ROOT_USER=" + minioRootUser,
-			"MINIO_ROOT_PASSWORD=" + minioRootPassword,
-			"MINIO_DOMAIN=" + minioDomain,
-			"MINIO_SITE_REGION=" + minioSiteRegion,
-		},
-		Cmd: []string{"server", "/data"},
-	},
-		func(config *docker.HostConfig) {
-			config.AutoRemove = true
-			config.RestartPolicy = docker.RestartPolicy{
-				Name: "no",
-			}
-		},
-	)
-	if err != nil {
-		panic(fmt.Sprintf("Could not create container: %s", err))
+		panic(fmt.Sprintf("Could not create compose stack: %s", err))
 	}
 
 	defer func() {
-		if err = pool.Purge(resource); err != nil {
-			log.Printf("Could not remove the container: %s", err)
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+		if err := stack.Down(cleanupCtx, compose.RemoveOrphans(true), compose.RemoveVolumes(true)); err != nil {
+			panic(fmt.Sprintf("Could not remove compose stack: %s", err))
 		}
 	}()
+
+	if err := stack.Up(ctx, compose.RunServices("s3"), compose.Wait(true)); err != nil {
+		panic(fmt.Sprintf("Could not start storage: %s", err))
+	}
+	container, err := stack.ServiceContainer(ctx, "s3")
+	if err != nil {
+		panic(fmt.Sprintf("Could not get storage container: %s", err))
+	}
+	endpoint, err := container.PortEndpoint(ctx, "9000/tcp", "http")
+	if err != nil {
+		panic(fmt.Sprintf("Could not get storage endpoint: %s", err))
+	}
 
 	// 他のテストでは*testing.Tを使っているが、*testing.Mは使えないので、勝手に実装
 	ctrl := gomock.NewController(&reporter{})
 	defer ctrl.Finish()
 	mockS3Conf := mock.NewMockStorageS3(ctrl)
 
-	// pool.Retryで繰り返すため、AnyTimesをつける
-	mockS3Conf.EXPECT().AccessKeyID().Return(minioRootUser, nil).AnyTimes()
-	mockS3Conf.EXPECT().Bucket().Return(minioBucket, nil).AnyTimes()
-	mockS3Conf.EXPECT().Endpoint().Return("http://localhost:"+resource.GetPort("9000/tcp"), nil).AnyTimes()
-	mockS3Conf.EXPECT().Region().Return(minioSiteRegion, nil).AnyTimes()
-	mockS3Conf.EXPECT().SecretAccessKey().Return(minioRootPassword, nil).AnyTimes()
-	mockS3Conf.EXPECT().UsePathStyle().Return(true).AnyTimes() // Dockerコンテナでs3ストレージを立ち上げるとき、仮想ホスト形式だと名前解決できないので、パス形式を使う。
-
-	if err := pool.Retry(func() error {
-		endpoint, _ := mockS3Conf.Endpoint()
-		url := fmt.Sprintf("%s/minio/health/live", endpoint)
-		resp, err := http.Get(url)
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("status code not OK")
-		}
-		return nil
-	}); err != nil {
-		panic(fmt.Sprintf("Could not connect to storage: %s", err))
-	}
+	mockS3Conf.EXPECT().AccessKeyID().Return(rustfsAccessKey, nil)
+	mockS3Conf.EXPECT().Bucket().Return(rustfsBucket, nil)
+	mockS3Conf.EXPECT().Endpoint().Return(endpoint, nil)
+	mockS3Conf.EXPECT().Region().Return(rustfsRegion, nil)
+	mockS3Conf.EXPECT().SecretAccessKey().Return(rustfsSecretKey, nil)
+	mockS3Conf.EXPECT().UsePathStyle().Return(true) // Dockerコンテナでs3ストレージを立ち上げるとき、仮想ホスト形式だと名前解決できないので、パス形式を使う。
 
 	testClient, err = NewClient(mockS3Conf)
 	if err != nil {
