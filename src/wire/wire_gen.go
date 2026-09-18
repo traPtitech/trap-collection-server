@@ -175,7 +175,7 @@ func InjectApp() (*App, error) {
 	v2GameCreator := v2_2.NewGameCreator(gameCreator, gameV2, db, v2User)
 	gameCreator2 := v2.NewGameCreator(v2GameCreator)
 	gameFeedback := gorm2.NewGameFeedback(db)
-	v2GameFeedback := v2_2.NewGameFeedback(db, gameV2, gameFeedback)
+	v2GameFeedback := v2_2.NewGameFeedback(db, gameV2, gameFeedback, gameVersionV2)
 	gameFeedback2 := v2.NewGameFeedback(v2GameFeedback)
 	edition2 := v2.NewEdition(v2Edition)
 	v2EditionAuth := v2.NewEditionAuth(context, editionAuth)
