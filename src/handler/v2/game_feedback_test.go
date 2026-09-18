@@ -169,6 +169,45 @@ func TestGetGameFeedbacks(t *testing.T) {
 	}
 }
 
+func TestGetGameVersionFeedbacks(t *testing.T) {
+	gameID, versionID := values.NewGameID(), values.NewGameVersionID()
+	feedbackID, questionID := values.NewGameFeedbackID(), values.NewFeedbackQuestionID()
+	details := []*service.GameFeedbackDetail{{Feedback: domain.NewGameFeedback(feedbackID, versionID, nil, time.Now()), Answers: []*service.GameFeedbackAnswerDetail{{Answer: domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, questionID, 5), QuestionText: values.NewFeedbackQuestionText("評価"), AnswerType: values.FeedbackAnswerTypeFiveScale}}}}
+	testCases := map[string]struct {
+		err    error
+		status int
+		call   bool
+	}{
+		"取得できる":         {status: http.StatusOK, call: true},
+		"gameが存在しない":    {err: service.ErrInvalidGame, status: http.StatusNotFound, call: true},
+		"versionが存在しない": {err: service.ErrInvalidGameVersion, status: http.StatusNotFound, call: true},
+		"下位エラー":         {err: assert.AnError, status: http.StatusInternalServerError, call: true},
+		"limitが不正":      {status: http.StatusBadRequest},
+	}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			serviceMock := mock.NewMockGameFeedback(gomock.NewController(t))
+			handler := NewGameFeedback(serviceMock)
+			params := openapi.GetGameVersionFeedbacksParams{Limit: ptr(2), Offset: ptr(3)}
+			if testCase.call {
+				serviceMock.EXPECT().GetGameVersionFeedbacks(gomock.Any(), gameID, versionID, 2, 3).Return(details, 1, testCase.err)
+			} else {
+				params.Limit = ptr(101)
+			}
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/games/%s/versions/%s/feedbacks", uuid.UUID(gameID), uuid.UUID(versionID)), nil)
+			err := handler.GetGameVersionFeedbacks(c, openapi.GameIDInPath(gameID), openapi.GameVersionIDInPath(versionID), params)
+			if testCase.status != http.StatusOK {
+				var httpError *echo.HTTPError
+				require.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.status, httpError.Code)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, rec.Code)
+		})
+	}
+}
+
 func ptr(value int) *int {
 	return &value
 }

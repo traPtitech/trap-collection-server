@@ -170,13 +170,14 @@ func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath opena
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
 	}
 	if err != nil {
-		log.Printf("error: failed to get game version feedbacks: %v\\n", err)
+		log.Printf("error: failed to get game version feedbacks: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
 	}
 	response := openapi.GameVersionFeedbacksResponse{Feedbacks: make([]openapi.FeedbackDetail, 0, len(feedbacks)), Total: total}
 	for _, feedback := range feedbacks {
 		answers, err := feedbackAnswersToOpenAPI(feedback.Answers)
 		if err != nil {
+			log.Printf("error: failed to convert feedback answers: %v\n", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
 		}
 		var comment *string
