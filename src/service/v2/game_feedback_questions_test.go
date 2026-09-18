@@ -132,6 +132,17 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 	_, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
 	assert.ErrorIs(t, err, service.ErrInvalidGame)
 
+	ctrl = gomock.NewController(t)
+	gameRepository = mockRepository.NewMockGameV2(ctrl)
+	feedbackRepository = mockRepository.NewMockGameFeedback(ctrl)
+	game := domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now())
+	question := domain.NewFeedbackQuestion(values.NewFeedbackQuestionID(), gameID, values.NewFeedbackQuestionText("question"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
+	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeNone).Return(game, nil)
+	feedbackRepository.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{question}, nil)
+	feedbackService = NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
+	questions, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
+	assert.NoError(t, err)
+	assert.Equal(t, []*domain.FeedbackQuestion{question}, questions)
 }
 
 func TestGameFeedbackPutFeedbackQuestionsStopsAfterStageFailure(t *testing.T) {

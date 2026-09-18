@@ -267,6 +267,8 @@ func TestGameFeedbackQuestions(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, actual, 1)
 	assert.Equal(t, questionID, actual[0].GetID())
+	assert.Equal(t, values.NewFeedbackQuestionText("visible"), actual[0].GetQuestionText())
+	assert.Equal(t, values.NewFeedbackQuestionOrder(2), actual[0].GetQuestionOrder())
 
 	newID := values.NewFeedbackQuestionID()
 	newQuestion := domain.NewFeedbackQuestion(newID, gameID, values.NewFeedbackQuestionText("new"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
