@@ -135,7 +135,7 @@ func TestFeedbackQuestionAnsweredTypeChange(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newQuestionTypeFixture(t, tc.initial, tc.answer, tc.answered)
-			svc := servicev2.NewGameFeedback(testDB, NewGameV2(testDB), NewGameFeedback(testDB))
+			svc := servicev2.NewGameFeedback(testDB, NewGameV2(testDB), NewGameFeedback(testDB), nil)
 			id := f.questionID
 			_, err := svc.PutFeedbackQuestions(t.Context(), f.gameID, []service.FeedbackQuestionInput{{ID: &id, QuestionText: values.NewFeedbackQuestionText("question"), AnswerType: values.FeedbackAnswerType(tc.next)}})
 			if tc.wantErr {

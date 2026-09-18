@@ -167,12 +167,155 @@ func (gf *GameFeedback) PostGameFeedback(c echo.Context, _ openapi.GameIDInPath)
 
 // ゲームのフィードバック一覧取得
 // (GET /games/{gameID}/feedbacks)
-func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, _ openapi.GameIDInPath, _ openapi.GetGameFeedbacksParams) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGameFeedbacksParams) error {
+	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+
+	feedbacks, total, err := gf.gameFeedbackService.GetGameFeedbacks(
+		c.Request().Context(),
+		values.NewGameIDFromUUID(gameIDPath),
+		limit,
+		offset,
+	)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if errors.Is(err, service.ErrInvalidLimit) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game feedbacks: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game feedbacks")
+	}
+
+	response := openapi.GameFeedbacksResponse{
+		Feedbacks: make([]openapi.GameFeedbackDetail, 0, len(feedbacks)),
+		Total:     total,
+	}
+	for _, feedback := range feedbacks {
+		answers, err := feedbackAnswersToOpenAPI(feedback.Answers)
+		if err != nil {
+			log.Printf("error: failed to convert feedback answers: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game feedbacks")
+		}
+
+		var comment *string
+		if feedback.Feedback.GetComment() != nil {
+			value := string(*feedback.Feedback.GetComment())
+			comment = &value
+		}
+		response.Feedbacks = append(response.Feedbacks, openapi.GameFeedbackDetail{
+			Id:            openapi.GameFeedbackID(feedback.Feedback.GetID()),
+			GameVersionID: openapi.GameVersionID(feedback.Feedback.GetGameVersionID()),
+			Answers:       answers,
+			Comment:       comment,
+			CreatedAt:     feedback.Feedback.GetCreatedAt(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // ゲームバージョンのフィードバック一覧取得
 // (GET /games/{gameID}/versions/{gameVersionID}/feedbacks)
-func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, _ openapi.GameIDInPath, _ openapi.GameVersionIDInPath, _ openapi.GetGameVersionFeedbacksParams) error {
-	return c.NoContent(http.StatusNotImplemented)
+func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, gameVersionIDPath openapi.GameVersionIDInPath, params openapi.GetGameVersionFeedbacksParams) error {
+	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+
+	feedbacks, total, err := gf.gameFeedbackService.GetGameVersionFeedbacks(
+		c.Request().Context(),
+		values.NewGameIDFromUUID(gameIDPath),
+		values.NewGameVersionIDFromUUID(gameVersionIDPath),
+		limit,
+		offset,
+	)
+	if errors.Is(err, service.ErrInvalidGame) {
+		return echo.NewHTTPError(http.StatusNotFound, "game not found")
+	}
+	if errors.Is(err, service.ErrInvalidGameVersion) {
+		return echo.NewHTTPError(http.StatusNotFound, "game version not found")
+	}
+	if errors.Is(err, service.ErrInvalidLimit) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
+	}
+	if err != nil {
+		log.Printf("error: failed to get game version feedbacks: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
+	}
+
+	response := openapi.GameVersionFeedbacksResponse{
+		Feedbacks: make([]openapi.FeedbackDetail, 0, len(feedbacks)),
+		Total:     total,
+	}
+	for _, feedback := range feedbacks {
+		answers, err := feedbackAnswersToOpenAPI(feedback.Answers)
+		if err != nil {
+			log.Printf("error: failed to convert feedback answers: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
+		}
+
+		var comment *string
+		if feedback.Feedback.GetComment() != nil {
+			value := string(*feedback.Feedback.GetComment())
+			comment = &value
+		}
+		response.Feedbacks = append(response.Feedbacks, openapi.FeedbackDetail{
+			Id:        openapi.GameFeedbackID(feedback.Feedback.GetID()),
+			Answers:   answers,
+			Comment:   comment,
+			CreatedAt: feedback.Feedback.GetCreatedAt(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func gameFeedbackPagination(limitParam, offsetParam *int) (int, int, error) {
+	limit := 50
+	if limitParam != nil {
+		limit = *limitParam
+	}
+	offset := 0
+	if offsetParam != nil {
+		offset = *offsetParam
+	}
+	if limit < 1 || limit > 100 || offset < 0 {
+		return 0, 0, service.ErrInvalidLimit
+	}
+	return limit, offset, nil
+}
+
+func feedbackAnswersToOpenAPI(answerDetails []*service.GameFeedbackAnswerDetail) ([]openapi.FeedbackAnswer, error) {
+	answers := make([]openapi.FeedbackAnswer, 0, len(answerDetails))
+	for _, answerDetail := range answerDetails {
+		answer := openapi.FeedbackAnswer{}
+		switch answerDetail.AnswerType {
+		case values.FeedbackAnswerTypeYesNo:
+			err := answer.FromFeedbackAnswerYesNo(openapi.FeedbackAnswerYesNo{
+				QuestionID:   openapi.FeedbackQuestionID(answerDetail.Answer.GetQuestionID()),
+				QuestionText: string(answerDetail.QuestionText),
+				Answer:       answerDetail.Answer.GetAnswer(),
+			})
+			if err != nil {
+				return nil, err
+			}
+		case values.FeedbackAnswerTypeFiveScale:
+			err := answer.FromFeedbackAnswerFiveScale(openapi.FeedbackAnswerFiveScale{
+				QuestionID:   openapi.FeedbackQuestionID(answerDetail.Answer.GetQuestionID()),
+				QuestionText: string(answerDetail.QuestionText),
+				Answer:       answerDetail.Answer.GetAnswer(),
+			})
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, service.ErrInvalidFormat
+		}
+		answers = append(answers, answer)
+	}
+	return answers, nil
 }

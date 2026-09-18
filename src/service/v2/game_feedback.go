@@ -16,17 +16,20 @@ type GameFeedback struct {
 	db                     repository.DB
 	gameRepository         repository.GameV2
 	gameFeedbackRepository repository.GameFeedback
+	gameVersionRepository  repository.GameVersionV2
 }
 
 func NewGameFeedback(
 	db repository.DB,
 	gameRepository repository.GameV2,
 	gameFeedbackRepository repository.GameFeedback,
+	gameVersionRepository repository.GameVersionV2,
 ) *GameFeedback {
 	return &GameFeedback{
 		db:                     db,
 		gameRepository:         gameRepository,
 		gameFeedbackRepository: gameFeedbackRepository,
+		gameVersionRepository:  gameVersionRepository,
 	}
 }
 

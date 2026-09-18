@@ -84,11 +84,13 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 			mockGameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
 			mockDB := mockRepository.NewMockDB(ctrl)
+			mockGameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
 
 			gameFeedbackService := NewGameFeedback(
 				mockDB,
 				mockGameRepository,
 				mockGameFeedbackRepository,
+				mockGameVersionRepository,
 			)
 
 			game := domain.NewGame(

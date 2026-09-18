@@ -203,3 +203,65 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, httpError.Code)
 	})
 }
+
+func TestGetGameFeedbacks(t *testing.T) {
+	t.Parallel()
+
+	gameID := values.NewGameID()
+	feedbackID := values.NewGameFeedbackID()
+	versionID := values.NewGameVersionID()
+	questionID := values.NewFeedbackQuestionID()
+	feedback := domain.NewGameFeedback(feedbackID, versionID, nil, time.Now())
+	answer := domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, questionID, 1)
+	details := []*service.GameFeedbackDetail{{
+		Feedback: feedback,
+		Answers: []*service.GameFeedbackAnswerDetail{{
+			Answer:       answer,
+			QuestionText: values.NewFeedbackQuestionText("面白かったですか"),
+			AnswerType:   values.FeedbackAnswerTypeYesNo,
+		}},
+	}}
+
+	testCases := map[string]struct {
+		params     openapi.GetGameFeedbacksParams
+		serviceErr error
+		wantStatus int
+		wantErr    bool
+	}{
+		"デフォルトのページングで取得できる": {wantStatus: http.StatusOK},
+		"gameが存在しない":        {serviceErr: service.ErrInvalidGame, wantStatus: http.StatusNotFound, wantErr: true},
+		"limitが不正":          {params: openapi.GetGameFeedbacksParams{Limit: ptr(101)}, wantStatus: http.StatusBadRequest, wantErr: true},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			serviceMock := mock.NewMockGameFeedback(ctrl)
+			handler := NewGameFeedback(serviceMock)
+
+			if testCase.params.Limit == nil {
+				serviceMock.EXPECT().GetGameFeedbacks(gomock.Any(), gameID, 50, 0).Return(details, 1, testCase.serviceErr)
+			}
+
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/games/%s/feedbacks", uuid.UUID(gameID)), nil)
+			err := handler.GetGameFeedbacks(c, openapi.GameIDInPath(gameID), testCase.params)
+			if testCase.wantErr {
+				var httpError *echo.HTTPError
+				require.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.wantStatus, httpError.Code)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantStatus, rec.Code)
+			var response openapi.GameFeedbacksResponse
+			require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+			require.Len(t, response.Feedbacks, 1)
+			assert.NotNil(t, response.Feedbacks[0].Answers)
+		})
+	}
+}
+
+func ptr(value int) *int {
+	return &value
+}

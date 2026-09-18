@@ -107,7 +107,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 			gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeRecord).Return(game, testCase.getGameErr)
 			testCase.setExpects(feedbackRepository)
 
-			service := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
+			service := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository, nil)
 			questions, err := service.PutFeedbackQuestions(context.Background(), gameID, testCase.inputs)
 			if testCase.wantErr != nil {
 				assert.ErrorIs(t, err, testCase.wantErr)
@@ -128,7 +128,7 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 	gameRepository := mockRepository.NewMockGameV2(ctrl)
 	feedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
 	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeNone).Return(nil, repository.ErrRecordNotFound)
-	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
+	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository, nil)
 	_, err := feedbackService.GetFeedbackQuestions(context.Background(), gameID)
 	assert.ErrorIs(t, err, service.ErrInvalidGame)
 
@@ -149,7 +149,7 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterStageFailure(t *testing.T) {
 	stageErr := errors.New("update failed")
 	feedbackRepository.EXPECT().UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).Return(stageErr)
 
-	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
+	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository, nil)
 	_, err := feedbackService.PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{{
 		ID: questionIDPtr(questionID), QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeFiveScale,
 	}})
@@ -190,7 +190,7 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 			gameRepo.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeRecord).Return(domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now()), nil)
 			stageErr := errors.New("stage failure")
 			testCase.setup(repo, gameID, existing, stageErr)
-			_, err := NewGameFeedback(&transactionDB{}, gameRepo, repo).PutFeedbackQuestions(context.Background(), gameID, testCase.inputs)
+			_, err := NewGameFeedback(&transactionDB{}, gameRepo, repo, nil).PutFeedbackQuestions(context.Background(), gameID, testCase.inputs)
 			assert.ErrorIs(t, err, stageErr)
 		})
 	}
@@ -213,7 +213,7 @@ func TestGameFeedbackPutFeedbackQuestionsUsesTransactionContext(t *testing.T) {
 	repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
 	repo.EXPECT().CreateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
 	repo.EXPECT().ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{}).Return(nil)
-	_, err := NewGameFeedback(db, gameRepo, repo).PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{})
+	_, err := NewGameFeedback(db, gameRepo, repo, nil).PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{})
 	assert.NoError(t, err)
 }
 
