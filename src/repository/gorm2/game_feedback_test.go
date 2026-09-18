@@ -160,6 +160,41 @@ type questionTypeFixture struct {
 	questionID values.FeedbackQuestionID
 }
 
+type createFailingFeedbackRepository struct {
+	repository.GameFeedback
+	err error
+}
+
+func (r createFailingFeedbackRepository) CreateFeedbackQuestions(context.Context, []*domain.FeedbackQuestion) error {
+	return r.err
+}
+
+func TestPutFeedbackQuestionsRollsBackUpdateWhenCreateFails(t *testing.T) {
+	fixture := newQuestionTypeFixture(t, int(values.FeedbackAnswerTypeYesNo), 0, false)
+	baseRepository := NewGameFeedback(testDB)
+	createErr := errors.New("create failed")
+	feedbackService := servicev2.NewGameFeedback(
+		testDB,
+		NewGameV2(testDB),
+		createFailingFeedbackRepository{GameFeedback: baseRepository, err: createErr},
+	)
+	questionID := fixture.questionID
+	_, err := feedbackService.PutFeedbackQuestions(t.Context(), fixture.gameID, []service.FeedbackQuestionInput{
+		{ID: &questionID, QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeYesNo},
+		{QuestionText: values.NewFeedbackQuestionText("new"), AnswerType: values.FeedbackAnswerTypeFiveScale},
+	})
+	require.ErrorIs(t, err, createErr)
+
+	var persisted schema.GameFeedbackQuestionTable
+	require.NoError(t, fixture.db.Where("id = ?", questionID.UUID()).Take(&persisted).Error)
+	assert.Equal(t, "question", persisted.QuestionText)
+	assert.Equal(t, 0, persisted.QuestionOrder)
+	assert.False(t, persisted.ArchivedAt.Valid)
+	var count int64
+	require.NoError(t, fixture.db.Model(&schema.GameFeedbackQuestionTable{}).Where("game_id = ?", uuid.UUID(fixture.gameID)).Count(&count).Error)
+	assert.EqualValues(t, 1, count)
+}
+
 func newQuestionTypeFixture(t *testing.T, answerType, answer int, withAnswer bool) questionTypeFixture {
 	t.Helper()
 	db, err := testDB.getDB(t.Context())
