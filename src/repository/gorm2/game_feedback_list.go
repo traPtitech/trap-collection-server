@@ -61,8 +61,8 @@ func (g *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID valu
 	}
 
 	query := db.Model(&schema.GameFeedbackTable{}).
-		Joins("JOIN game_versions ON game_versions.id = game_feedbacks.game_version_id").
-		Where("game_versions.game_id = ?", uuid.UUID(gameID))
+		Joins("JOIN v2_game_versions ON v2_game_versions.id = game_feedbacks.game_version_id").
+		Where("v2_game_versions.game_id = ?", uuid.UUID(gameID))
 
 	return getGameFeedbacks(query, limit, offset)
 }
