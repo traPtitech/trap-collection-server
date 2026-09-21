@@ -28,7 +28,10 @@ func (g *GameFeedback) GetFeedbackQuestions(ctx context.Context, gameID values.G
 		return nil, fmt.Errorf("failed to set lock: %w", err)
 	}
 	var tables []schema.GameFeedbackQuestionTable
-	err = db.Where("game_id = ? AND archived_at IS NULL", uuid.UUID(gameID)).Order("question_order ASC").Find(&tables).Error
+	err = db.
+		Where("game_id = ? AND archived_at IS NULL", uuid.UUID(gameID)).
+		Order("question_order ASC").
+		Find(&tables).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get feedback questions: %w", err)
 	}
@@ -38,7 +41,15 @@ func (g *GameFeedback) GetFeedbackQuestions(ctx context.Context, gameID values.G
 		if table.ArchivedAt.Valid {
 			archivedAt = &table.ArchivedAt.Time
 		}
-		questions = append(questions, domain.NewFeedbackQuestion(values.NewFeedbackQuestionIDFromUUID(table.ID), values.NewGameIDFromUUID(table.GameID), values.NewFeedbackQuestionText(table.QuestionText), values.FeedbackAnswerType(table.AnswerType), values.NewFeedbackQuestionOrder(table.QuestionOrder), table.CreatedAt, archivedAt))
+		questions = append(questions, domain.NewFeedbackQuestion(
+			values.NewFeedbackQuestionIDFromUUID(table.ID),
+			values.NewGameIDFromUUID(table.GameID),
+			values.NewFeedbackQuestionText(table.QuestionText),
+			values.FeedbackAnswerType(table.AnswerType),
+			values.NewFeedbackQuestionOrder(table.QuestionOrder),
+			table.CreatedAt,
+			archivedAt,
+		))
 	}
 	return questions, nil
 }
