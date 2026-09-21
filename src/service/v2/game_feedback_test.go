@@ -83,8 +83,10 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 
 			mockGameRepository := mockRepository.NewMockGameV2(ctrl)
 			mockGameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+			mockDB := mockRepository.NewMockDB(ctrl)
 
 			gameFeedbackService := NewGameFeedback(
+				mockDB,
 				mockGameRepository,
 				mockGameFeedbackRepository,
 			)
@@ -204,7 +206,11 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			gameRepository := mockRepository.NewMockGameV2(ctrl)
 			gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
-			gameFeedbackService := NewGameFeedback(gameRepository, gameFeedbackRepository)
+			gameFeedbackService := NewGameFeedback(
+				mockRepository.NewMockDB(ctrl),
+				gameRepository,
+				gameFeedbackRepository,
+			)
 
 			if testCase.executeGetGame {
 				gameRepository.

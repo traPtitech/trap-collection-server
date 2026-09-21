@@ -12,4 +12,8 @@ import (
 type GameFeedback interface {
 	GetFeedbackConfig(ctx context.Context, gameID values.GameID, lockType LockType) (bool, error)
 	GetFeedbackQuestions(ctx context.Context, gameID values.GameID, lockType LockType) ([]*domain.FeedbackQuestion, error)
+	CreateFeedbackQuestions(ctx context.Context, questions []*domain.FeedbackQuestion) error
+	UpdateFeedbackQuestions(ctx context.Context, questions []*domain.FeedbackQuestion) error
+	ArchiveFeedbackQuestions(ctx context.Context, ids []values.FeedbackQuestionID) error
+	HasFeedbackAnswers(ctx context.Context, questionIDs []values.FeedbackQuestionID, lockType LockType) (bool, error)
 }

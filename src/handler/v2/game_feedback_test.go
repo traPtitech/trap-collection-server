@@ -189,3 +189,144 @@ func TestGetFeedbackQuestions(t *testing.T) {
 		})
 	}
 }
+
+func TestPutFeedbackQuestions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	gameID := values.NewGameID()
+	questionID := values.NewFeedbackQuestionID()
+	newQuestion := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("新しい質問"),
+		values.FeedbackAnswerTypeFiveScale,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	expectedResponse := openapi.FeedbackQuestionsResponse{
+		Questions: []openapi.FeedbackQuestion{{
+			Id:            questionID.UUID(),
+			QuestionText:  "新しい質問",
+			AnswerType:    openapi.AnswerTypeFiveScale,
+			QuestionOrder: 0,
+		}},
+	}
+
+	testCases := map[string]struct {
+		requestBody any
+
+		executePutFeedbackQuestions bool
+		expectedInputs              []service.FeedbackQuestionInput
+		putFeedbackQuestionsResult  []*domain.FeedbackQuestion
+		putFeedbackQuestionsErr     error
+
+		expectedResponse openapi.FeedbackQuestionsResponse
+		isError          bool
+		statusCode       int
+	}{
+		"正常にリクエストを変換してレスポンスを返す": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{{
+					QuestionText: "新しい質問",
+					AnswerType:   openapi.AnswerTypeFiveScale,
+				}},
+			},
+			executePutFeedbackQuestions: true,
+			expectedInputs: []service.FeedbackQuestionInput{{
+				QuestionText: values.NewFeedbackQuestionText("新しい質問"),
+				AnswerType:   values.FeedbackAnswerTypeFiveScale,
+			}},
+			putFeedbackQuestionsResult: []*domain.FeedbackQuestion{newQuestion},
+			expectedResponse:           expectedResponse,
+			statusCode:                 http.StatusOK,
+		},
+		"questionsが空配列なので正常に空配列を返す": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{},
+			},
+			executePutFeedbackQuestions: true,
+			expectedInputs:              []service.FeedbackQuestionInput{},
+			putFeedbackQuestionsResult:  []*domain.FeedbackQuestion{},
+			expectedResponse: openapi.FeedbackQuestionsResponse{
+				Questions: []openapi.FeedbackQuestion{},
+			},
+			statusCode: http.StatusOK,
+		},
+		"answerTypeが不正なので400": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{{
+					QuestionText: "質問",
+					AnswerType:   "invalid",
+				}},
+			},
+			isError:    true,
+			statusCode: http.StatusBadRequest,
+		},
+		"questionsが未指定なので400": {
+			requestBody: map[string]any{},
+			isError:     true,
+			statusCode:  http.StatusBadRequest,
+		},
+		"questionsがnullなので400": {
+			requestBody: map[string]any{"questions": nil},
+			isError:     true,
+			statusCode:  http.StatusBadRequest,
+		},
+		"idがnullなので400": {
+			requestBody: map[string]any{
+				"questions": []map[string]any{{
+					"id":           nil,
+					"questionText": "質問",
+					"answerType":   "yesNo",
+				}},
+			},
+			isError:    true,
+			statusCode: http.StatusBadRequest,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameFeedbackService := mock.NewMockGameFeedback(ctrl)
+			handler := NewGameFeedback(gameFeedbackService)
+
+			if testCase.executePutFeedbackQuestions {
+				gameFeedbackService.
+					EXPECT().
+					PutFeedbackQuestions(ctx, gameID, testCase.expectedInputs).
+					Return(testCase.putFeedbackQuestionsResult, testCase.putFeedbackQuestionsErr)
+			}
+
+			url := fmt.Sprintf("/games/%s/feedback-questions", uuid.UUID(gameID))
+			c, request, recorder := setupTestRequest(
+				t,
+				http.MethodPut,
+				url,
+				withJSONBody(t, testCase.requestBody),
+			)
+			request = request.WithContext(ctx)
+			c.SetRequest(request)
+
+			err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				if assert.ErrorAs(t, err, &httpError) {
+					assert.Equal(t, testCase.statusCode, httpError.Code)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, recorder.Code)
+
+			var response openapi.FeedbackQuestionsResponse
+			assert.NoError(t, json.NewDecoder(recorder.Body).Decode(&response))
+			assert.Equal(t, testCase.expectedResponse, response)
+		})
+	}
+}
