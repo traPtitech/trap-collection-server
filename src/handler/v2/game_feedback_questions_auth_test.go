@@ -39,13 +39,13 @@ func TestFeedbackQuestionsMaintainerAuth(t *testing.T) {
 	require.NoError(t, api.SetRoutes(e))
 	gameID := values.NewGameID()
 
-	t.Run("unauthenticated PUT is rejected before service", func(t *testing.T) {
+	t.Run("未認証なのでserviceを呼び出さず401", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedback-questions", nil)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
-	t.Run("maintainer PUT reaches service", func(t *testing.T) {
+	t.Run("maintainerなのでserviceを呼び出す", func(t *testing.T) {
 		access := "token"
 		sessionValue := domain.NewOIDCSession(values.NewOIDCAccessToken(access), time.Now())
 		admin.EXPECT().AdminAuthorize(gomock.Any(), gomock.Any()).Return(service.ErrForbidden)

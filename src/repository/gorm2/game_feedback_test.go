@@ -129,9 +129,9 @@ func TestFeedbackQuestionAnsweredTypeChange(t *testing.T) {
 		answered              bool
 		wantErr               bool
 	}{
-		{"five scale answer five to yes no", 1, 0, 5, true, true},
-		{"yes no answer zero to five scale", 0, 1, 0, true, true},
-		{"unanswered type change", 0, 1, 0, false, false},
+		{"回答済みのfiveScaleをyesNoへ変更するのでErrFeedbackQuestionAnswerTypeChange", 1, 0, 5, true, true},
+		{"回答済みのyesNoをfiveScaleへ変更するのでErrFeedbackQuestionAnswerTypeChange", 0, 1, 0, true, true},
+		{"未回答なのでanswerTypeを変更できる", 0, 1, 0, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newQuestionTypeFixture(t, tc.initial, tc.answer, tc.answered)

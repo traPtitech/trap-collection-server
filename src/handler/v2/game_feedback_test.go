@@ -99,9 +99,9 @@ func TestGetFeedbackQuestions(t *testing.T) {
 		serviceErr error
 		wantStatus int
 	}{
-		"returns questions": {wantStatus: http.StatusOK},
-		"missing game":      {serviceErr: service.ErrInvalidGame, wantStatus: http.StatusNotFound},
-		"internal error":    {serviceErr: errors.New("unexpected"), wantStatus: http.StatusInternalServerError},
+		"GetFeedbackQuestionsが成功するので200":            {wantStatus: http.StatusOK},
+		"GetFeedbackQuestionsがErrInvalidGameなので404": {serviceErr: service.ErrInvalidGame, wantStatus: http.StatusNotFound},
+		"GetFeedbackQuestionsがエラーなので500":            {serviceErr: errors.New("unexpected"), wantStatus: http.StatusInternalServerError},
 	}
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 	questionID := values.NewFeedbackQuestionID()
 	newQuestion := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("新しい質問"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
 
-	t.Run("converts request and response", func(t *testing.T) {
+	t.Run("正常にリクエストを変換してレスポンスを返す", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		feedbackService := mock.NewMockGameFeedback(ctrl)
 		feedbackService.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, gomock.Any()).DoAndReturn(func(_ context.Context, _ values.GameID, inputs []service.FeedbackQuestionInput) ([]*domain.FeedbackQuestion, error) {
@@ -152,7 +152,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, []openapi.FeedbackQuestion{{Id: questionID.UUID(), QuestionText: "新しい質問", AnswerType: openapi.AnswerTypeFiveScale, QuestionOrder: 0}}, response.Questions)
 	})
 
-	t.Run("accepts explicit empty questions", func(t *testing.T) {
+	t.Run("questionsが空配列なので正常に空配列を返す", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		feedbackService := mock.NewMockGameFeedback(ctrl)
 		feedbackService.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, []service.FeedbackQuestionInput{}).Return([]*domain.FeedbackQuestion{}, nil)
@@ -165,7 +165,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, []openapi.FeedbackQuestion{}, response.Questions)
 	})
 
-	t.Run("rejects invalid answer type before service", func(t *testing.T) {
+	t.Run("answerTypeが不正なので400", func(t *testing.T) {
 		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
 		request := openapi.PutFeedbackQuestionsRequest{Questions: []openapi.FeedbackQuestionInput{{QuestionText: "質問", AnswerType: "invalid"}}}
 		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
@@ -175,7 +175,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, httpError.Code)
 	})
 
-	t.Run("rejects omitted questions before service", func(t *testing.T) {
+	t.Run("questionsが未指定なので400", func(t *testing.T) {
 		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
 		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{}))
 		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
@@ -184,7 +184,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, httpError.Code)
 	})
 
-	t.Run("rejects null questions before service", func(t *testing.T) {
+	t.Run("questionsがnullなので400", func(t *testing.T) {
 		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
 		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{"questions": nil}))
 		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
@@ -193,7 +193,7 @@ func TestPutFeedbackQuestions(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, httpError.Code)
 	})
 
-	t.Run("rejects explicit null ID before service", func(t *testing.T) {
+	t.Run("idがnullなので400", func(t *testing.T) {
 		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
 		request := map[string]any{"questions": []map[string]any{{"id": nil, "questionText": "質問", "answerType": "yesNo"}}}
 		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))

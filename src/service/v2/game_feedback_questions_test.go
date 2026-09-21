@@ -43,7 +43,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 		wantErr    error
 		setExpects func(*mockRepository.MockGameFeedback)
 	}{
-		"updates creates and archives in one transaction": {
+		"正常に更新，作成，アーカイブを1つのトランザクションで実行できる": {
 			inputs: []service.FeedbackQuestionInput{
 				{ID: &existingID, QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeFiveScale},
 				{QuestionText: values.NewFeedbackQuestionText("new"), AnswerType: values.FeedbackAnswerTypeYesNo},
@@ -66,7 +66,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 				repo.EXPECT().ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{archivedID}).Return(nil)
 			},
 		},
-		"unknown question ID is rejected": {
+		"存在しない質問IDなのでErrInvalidFeedbackQuestion": {
 			inputs:   []service.FeedbackQuestionInput{{ID: &archivedID, QuestionText: values.NewFeedbackQuestionText("unknown"), AnswerType: values.FeedbackAnswerTypeYesNo}},
 			existing: []*domain.FeedbackQuestion{existing},
 			wantErr:  service.ErrInvalidFeedbackQuestion,
@@ -74,7 +74,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
 			},
 		},
-		"duplicate question ID is rejected": {
+		"質問IDが重複しているのでErrDuplicateFeedbackQuestion": {
 			inputs: []service.FeedbackQuestionInput{
 				{ID: &existingID, QuestionText: values.NewFeedbackQuestionText("one"), AnswerType: values.FeedbackAnswerTypeYesNo},
 				{ID: &existingID, QuestionText: values.NewFeedbackQuestionText("two"), AnswerType: values.FeedbackAnswerTypeYesNo},
@@ -85,14 +85,14 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
 			},
 		},
-		"invalid text is rejected": {
+		"質問文が不正なのでErrInvalidFeedbackQuestion": {
 			inputs:  []service.FeedbackQuestionInput{{QuestionText: values.NewFeedbackQuestionText(""), AnswerType: values.FeedbackAnswerTypeYesNo}},
 			wantErr: service.ErrInvalidFeedbackQuestion,
 			setExpects: func(repo *mockRepository.MockGameFeedback) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return(nil, nil)
 			},
 		},
-		"missing game is rejected": {
+		"GetGameがErrRecordNotFoundなのでErrInvalidGame": {
 			getGameErr: repository.ErrRecordNotFound,
 			wantErr:    service.ErrInvalidGame,
 			setExpects: func(*mockRepository.MockGameFeedback) {},
@@ -174,7 +174,7 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 		setup  func(*mockRepository.MockGameFeedback, values.GameID, *domain.FeedbackQuestion, error)
 	}{
 		{
-			name: "create failure does not archive", inputs: []service.FeedbackQuestionInput{{QuestionText: values.NewFeedbackQuestionText("new"), AnswerType: values.FeedbackAnswerTypeYesNo}},
+			name: "CreateFeedbackQuestionsがエラーなのでArchiveFeedbackQuestionsを実行しない", inputs: []service.FeedbackQuestionInput{{QuestionText: values.NewFeedbackQuestionText("new"), AnswerType: values.FeedbackAnswerTypeYesNo}},
 			setup: func(repo *mockRepository.MockGameFeedback, gameID values.GameID, existing *domain.FeedbackQuestion, stageErr error) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
 				repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
@@ -182,7 +182,7 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 			},
 		},
 		{
-			name: "archive failure is returned", inputs: []service.FeedbackQuestionInput{},
+			name: "ArchiveFeedbackQuestionsがエラーなのでエラーを返す", inputs: []service.FeedbackQuestionInput{},
 			setup: func(repo *mockRepository.MockGameFeedback, gameID values.GameID, existing *domain.FeedbackQuestion, stageErr error) {
 				repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
 				repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).Return(nil)
