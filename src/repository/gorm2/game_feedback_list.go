@@ -72,7 +72,11 @@ func (g *GameFeedback) GetGameFeedbacksByGameVersionID(ctx context.Context, game
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
-	return getGameFeedbacks(db.Model(&schema.GameFeedbackTable{}).Where("game_feedbacks.game_version_id = ?", uuid.UUID(gameVersionID)), limit, offset)
+	query := db.
+		Model(&schema.GameFeedbackTable{}).
+		Where("game_feedbacks.game_version_id = ?", uuid.UUID(gameVersionID))
+
+	return getGameFeedbacks(query, limit, offset)
 }
 
 func getGameFeedbacks(query *gorm.DB, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {

@@ -363,11 +363,26 @@ func TestGetGameVersionFeedbacks(t *testing.T) {
 		status int
 		call   bool
 	}{
-		"取得できる":         {status: http.StatusOK, call: true},
-		"gameが存在しない":    {err: service.ErrInvalidGame, status: http.StatusNotFound, call: true},
-		"versionが存在しない": {err: service.ErrInvalidGameVersion, status: http.StatusNotFound, call: true},
-		"下位エラー":         {err: assert.AnError, status: http.StatusInternalServerError, call: true},
-		"limitが不正":      {status: http.StatusBadRequest},
+		"GetGameVersionFeedbacksが成功するので200": {
+			status: http.StatusOK,
+			call:   true,
+		},
+		"GetGameVersionFeedbacksがErrInvalidGameなので404": {
+			err:    service.ErrInvalidGame,
+			status: http.StatusNotFound,
+			call:   true,
+		},
+		"GetGameVersionFeedbacksがErrInvalidGameVersionなので404": {
+			err:    service.ErrInvalidGameVersion,
+			status: http.StatusNotFound,
+			call:   true,
+		},
+		"GetGameVersionFeedbacksがエラーなので500": {
+			err:    assert.AnError,
+			status: http.StatusInternalServerError,
+			call:   true,
+		},
+		"limitが不正なので400": {status: http.StatusBadRequest},
 	}
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {

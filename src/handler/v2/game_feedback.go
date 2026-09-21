@@ -161,11 +161,21 @@ func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, gameIDPath openapi.Game
 // ゲームバージョンのフィードバック一覧取得
 // (GET /games/{gameID}/versions/{gameVersionID}/feedbacks)
 func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, gameVersionIDPath openapi.GameVersionIDInPath, params openapi.GetGameVersionFeedbacksParams) error {
+	ctx := c.Request().Context()
+	gameID := values.NewGameIDFromUUID(gameIDPath)
+	gameVersionID := values.NewGameVersionIDFromUUID(gameVersionIDPath)
+
 	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
 	}
-	feedbacks, total, err := gf.gameFeedbackService.GetGameVersionFeedbacks(c.Request().Context(), values.NewGameIDFromUUID(gameIDPath), values.NewGameVersionIDFromUUID(gameVersionIDPath), limit, offset)
+	feedbacks, total, err := gf.gameFeedbackService.GetGameVersionFeedbacks(
+		ctx,
+		gameID,
+		gameVersionID,
+		limit,
+		offset,
+	)
 	if errors.Is(err, service.ErrInvalidGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	}
@@ -179,7 +189,10 @@ func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath opena
 		log.Printf("error: failed to get game version feedbacks: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get game version feedbacks")
 	}
-	response := openapi.GameVersionFeedbacksResponse{Feedbacks: make([]openapi.FeedbackDetail, 0, len(feedbacks)), Total: total}
+	response := openapi.GameVersionFeedbacksResponse{
+		Feedbacks: make([]openapi.FeedbackDetail, 0, len(feedbacks)),
+		Total:     total,
+	}
 	for _, feedback := range feedbacks {
 		answers, err := feedbackAnswersToOpenAPI(feedback.Answers)
 		if err != nil {
@@ -191,7 +204,12 @@ func (gf *GameFeedback) GetGameVersionFeedbacks(c echo.Context, gameIDPath opena
 			value := string(*feedback.Feedback.GetComment())
 			comment = &value
 		}
-		response.Feedbacks = append(response.Feedbacks, openapi.FeedbackDetail{Id: openapi.GameFeedbackID(feedback.Feedback.GetID()), Answers: answers, Comment: comment, CreatedAt: feedback.Feedback.GetCreatedAt()})
+		response.Feedbacks = append(response.Feedbacks, openapi.FeedbackDetail{
+			Id:        openapi.GameFeedbackID(feedback.Feedback.GetID()),
+			Answers:   answers,
+			Comment:   comment,
+			CreatedAt: feedback.Feedback.GetCreatedAt(),
+		})
 	}
 	return c.JSON(http.StatusOK, response)
 }

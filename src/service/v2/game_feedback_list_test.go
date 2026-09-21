@@ -205,12 +205,18 @@ func TestGameFeedbackGetGameVersionFeedbacks(t *testing.T) {
 		gameErr, versionErr, listErr, questionErr error
 		wantErr                                   error
 	}{
-		"取得できる":         {},
-		"gameが存在しない":    {gameErr: repository.ErrRecordNotFound, wantErr: service.ErrInvalidGame},
-		"versionが存在しない": {versionErr: repository.ErrRecordNotFound, wantErr: service.ErrInvalidGameVersion},
-		"version取得に失敗":  {versionErr: assert.AnError, wantErr: assert.AnError},
-		"一覧取得に失敗":       {listErr: assert.AnError, wantErr: assert.AnError},
-		"質問取得に失敗":       {questionErr: assert.AnError, wantErr: assert.AnError},
+		"正常にフィードバックを取得できる": {},
+		"GetGameがErrRecordNotFoundなのでErrInvalidGame": {
+			gameErr: repository.ErrRecordNotFound,
+			wantErr: service.ErrInvalidGame,
+		},
+		"GetGameVersionByIDがErrRecordNotFoundなのでErrInvalidGameVersion": {
+			versionErr: repository.ErrRecordNotFound,
+			wantErr:    service.ErrInvalidGameVersion,
+		},
+		"GetGameVersionByIDがエラーなのでエラー":                    {versionErr: assert.AnError, wantErr: assert.AnError},
+		"GetGameFeedbacksByGameVersionIDがエラーなのでエラー":       {listErr: assert.AnError, wantErr: assert.AnError},
+		"GetFeedbackQuestionsIncludingArchivedがエラーなのでエラー": {questionErr: assert.AnError, wantErr: assert.AnError},
 	}
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
