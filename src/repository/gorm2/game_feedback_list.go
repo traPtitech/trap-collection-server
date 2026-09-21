@@ -54,8 +54,8 @@ func (g *GameFeedback) GetFeedbackQuestionsIncludingArchived(ctx context.Context
 	return result, nil
 }
 
-func (g *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID values.GameID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
-	db, err := g.db.getDB(ctx)
+func (gf *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID values.GameID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
+	db, err := gf.db.getDB(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
@@ -90,12 +90,12 @@ func getGameFeedbacks(query *gorm.DB, limit, offset int) ([]*repository.GameFeed
 		return nil, 0, fmt.Errorf("failed to get game feedbacks: %w", err)
 	}
 
-	result := make([]*repository.GameFeedbackWithAnswers, 0, len(feedbacks))
+	feedbacksWithAnswers := make([]*repository.GameFeedbackWithAnswers, 0, len(feedbacks))
 	for _, feedback := range feedbacks {
-		result = append(result, gameFeedbackWithAnswersFromTable(&feedback))
+		feedbacksWithAnswers = append(feedbacksWithAnswers, gameFeedbackWithAnswersFromTable(&feedback))
 	}
 
-	return result, int(total), nil
+	return feedbacksWithAnswers, int(total), nil
 }
 
 func gameFeedbackWithAnswersFromTable(feedback *schema.GameFeedbackTable) *repository.GameFeedbackWithAnswers {

@@ -102,14 +102,17 @@ func (gf *GameFeedback) PostGameFeedback(c echo.Context, _ openapi.GameIDInPath)
 // ゲームのフィードバック一覧取得
 // (GET /games/{gameID}/feedbacks)
 func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGameFeedbacksParams) error {
+	ctx := c.Request().Context()
+	gameID := values.NewGameIDFromUUID(gameIDPath)
+
 	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
 	}
 
 	feedbacks, total, err := gf.gameFeedbackService.GetGameFeedbacks(
-		c.Request().Context(),
-		values.NewGameIDFromUUID(gameIDPath),
+		ctx,
+		gameID,
 		limit,
 		offset,
 	)
