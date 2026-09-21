@@ -222,19 +222,32 @@ func TestPutFeedbackQuestionsRollsBackUpdateWhenCreateFails(t *testing.T) {
 		createFailingFeedbackRepository{GameFeedback: baseRepository, err: createErr},
 	)
 	questionID := fixture.questionID
-	_, err := feedbackService.PutFeedbackQuestions(t.Context(), fixture.gameID, []service.FeedbackQuestionInput{
-		{ID: &questionID, QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeYesNo},
-		{QuestionText: values.NewFeedbackQuestionText("new"), AnswerType: values.FeedbackAnswerTypeFiveScale},
-	})
+	inputs := []service.FeedbackQuestionInput{
+		{
+			ID:           &questionID,
+			QuestionText: values.NewFeedbackQuestionText("updated"),
+			AnswerType:   values.FeedbackAnswerTypeYesNo,
+		},
+		{
+			QuestionText: values.NewFeedbackQuestionText("new"),
+			AnswerType:   values.FeedbackAnswerTypeFiveScale,
+		},
+	}
+	_, err := feedbackService.PutFeedbackQuestions(t.Context(), fixture.gameID, inputs)
 	require.ErrorIs(t, err, createErr)
 
 	var persisted schema.GameFeedbackQuestionTable
-	require.NoError(t, fixture.db.Where("id = ?", questionID.UUID()).Take(&persisted).Error)
+	require.NoError(t, fixture.db.
+		Where("id = ?", questionID.UUID()).
+		Take(&persisted).Error)
 	assert.Equal(t, "question", persisted.QuestionText)
 	assert.Equal(t, 0, persisted.QuestionOrder)
 	assert.False(t, persisted.ArchivedAt.Valid)
 	var count int64
-	require.NoError(t, fixture.db.Model(&schema.GameFeedbackQuestionTable{}).Where("game_id = ?", uuid.UUID(fixture.gameID)).Count(&count).Error)
+	require.NoError(t, fixture.db.
+		Model(&schema.GameFeedbackQuestionTable{}).
+		Where("game_id = ?", uuid.UUID(fixture.gameID)).
+		Count(&count).Error)
 	assert.EqualValues(t, 1, count)
 }
 
@@ -342,44 +355,95 @@ func TestGameFeedbackQuestions(t *testing.T) {
 	var visibility schema.GameVisibilityTypeTable
 	require.NoError(t, db.Where("name = ?", schema.GameVisibilityTypePublic).Take(&visibility).Error)
 	gameID := values.NewGameID()
-	game := schema.GameTable2{ID: uuid.UUID(gameID), Name: "feedback questions", Description: "description", VisibilityTypeID: visibility.ID, CreatedAt: time.Now()}
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "feedback questions",
+		Description:      "description",
+		VisibilityTypeID: visibility.ID,
+		CreatedAt:        time.Now(),
+	}
 	require.NoError(t, db.Create(&game).Error)
 
 	questionID := values.NewFeedbackQuestionID()
 	archivedID := values.NewFeedbackQuestionID()
 	deletedID := values.NewFeedbackQuestionID()
 	questions := []schema.GameFeedbackQuestionTable{
-		{ID: questionID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "visible", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 2, CreatedAt: time.Now()},
-		{ID: archivedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "archived", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 0, CreatedAt: time.Now(), ArchivedAt: sql.NullTime{Time: time.Now(), Valid: true}},
-		{ID: deletedID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "deleted", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 1, CreatedAt: time.Now()},
+		{
+			ID:            questionID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "visible",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 2,
+			CreatedAt:     time.Now(),
+		},
+		{
+			ID:            archivedID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "archived",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 0,
+			CreatedAt:     time.Now(),
+			ArchivedAt:    sql.NullTime{Time: time.Now(), Valid: true},
+		},
+		{
+			ID:            deletedID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "deleted",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 1,
+			CreatedAt:     time.Now(),
+		},
 	}
 	require.NoError(t, db.Create(&questions).Error)
 	require.NoError(t, db.Delete(&questions[2]).Error)
 	t.Cleanup(func() {
 		cleanupDB, cleanupErr := testDB.getDB(context.Background())
 		require.NoError(t, cleanupErr)
-		require.NoError(t, cleanupDB.Unscoped().Where("id IN ?", []uuid.UUID{questionID.UUID(), archivedID.UUID(), deletedID.UUID()}).Delete(&schema.GameFeedbackQuestionTable{}).Error)
+		require.NoError(t, cleanupDB.
+			Unscoped().
+			Where("id IN ?", []uuid.UUID{questionID.UUID(), archivedID.UUID(), deletedID.UUID()}).
+			Delete(&schema.GameFeedbackQuestionTable{}).Error)
 		require.NoError(t, cleanupDB.Unscoped().Delete(&game).Error)
 	})
 
-	repo := NewGameFeedback(testDB)
-	actual, err := repo.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
+	gameFeedbackRepository := NewGameFeedback(testDB)
+	feedbackQuestions, err := gameFeedbackRepository.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
 	require.NoError(t, err)
-	require.Len(t, actual, 1)
-	assert.Equal(t, questionID, actual[0].GetID())
-	assert.Equal(t, values.NewFeedbackQuestionText("visible"), actual[0].GetQuestionText())
-	assert.Equal(t, values.NewFeedbackQuestionOrder(2), actual[0].GetQuestionOrder())
+	require.Len(t, feedbackQuestions, 1)
+	assert.Equal(t, questionID, feedbackQuestions[0].GetID())
+	assert.Equal(t, values.NewFeedbackQuestionText("visible"), feedbackQuestions[0].GetQuestionText())
+	assert.Equal(t, values.FeedbackAnswerTypeYesNo, feedbackQuestions[0].GetAnswerType())
+	assert.Equal(t, values.NewFeedbackQuestionOrder(2), feedbackQuestions[0].GetQuestionOrder())
 
 	newID := values.NewFeedbackQuestionID()
-	newQuestion := domain.NewFeedbackQuestion(newID, gameID, values.NewFeedbackQuestionText("new"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
-	require.NoError(t, repo.CreateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{newQuestion}))
+	newQuestion := domain.NewFeedbackQuestion(
+		newID,
+		gameID,
+		values.NewFeedbackQuestionText("new"),
+		values.FeedbackAnswerTypeFiveScale,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	require.NoError(t, gameFeedbackRepository.CreateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{newQuestion}))
 	t.Cleanup(func() {
-		require.NoError(t, db.Unscoped().Where("id = ?", newID.UUID()).Delete(&schema.GameFeedbackQuestionTable{}).Error)
+		require.NoError(t, db.
+			Unscoped().
+			Where("id = ?", newID.UUID()).
+			Delete(&schema.GameFeedbackQuestionTable{}).Error)
 	})
 
-	updated := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("updated"), values.FeedbackAnswerTypeFiveScale, 3, questions[0].CreatedAt, nil)
-	require.NoError(t, repo.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{updated}))
-	require.NoError(t, repo.ArchiveFeedbackQuestions(ctx, []values.FeedbackQuestionID{questionID}))
+	updatedQuestion := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("updated"),
+		values.FeedbackAnswerTypeFiveScale,
+		values.NewFeedbackQuestionOrder(3),
+		questions[0].CreatedAt,
+		nil,
+	)
+	require.NoError(t, gameFeedbackRepository.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{updatedQuestion}))
+	require.NoError(t, gameFeedbackRepository.ArchiveFeedbackQuestions(ctx, []values.FeedbackQuestionID{questionID}))
 	var persisted schema.GameFeedbackQuestionTable
 	require.NoError(t, db.Unscoped().Where("id = ?", questionID.UUID()).Take(&persisted).Error)
 	assert.Equal(t, "updated", persisted.QuestionText)
@@ -388,21 +452,45 @@ func TestGameFeedbackQuestions(t *testing.T) {
 	assert.True(t, persisted.ArchivedAt.Valid)
 	assert.False(t, persisted.DeletedAt.Valid)
 
-	missing := domain.NewFeedbackQuestion(values.NewFeedbackQuestionID(), gameID, values.NewFeedbackQuestionText("missing"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
-	err = repo.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{missing, updated})
+	missingQuestion := domain.NewFeedbackQuestion(
+		values.NewFeedbackQuestionID(),
+		gameID,
+		values.NewFeedbackQuestionText("missing"),
+		values.FeedbackAnswerTypeYesNo,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	err = gameFeedbackRepository.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{missingQuestion, updatedQuestion})
 	assert.ErrorIs(t, err, repository.ErrNoRecordUpdated)
-	deleted := domain.NewFeedbackQuestion(deletedID, gameID, values.NewFeedbackQuestionText("deleted"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
-	err = repo.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{deleted})
+	deletedQuestion := domain.NewFeedbackQuestion(
+		deletedID,
+		gameID,
+		values.NewFeedbackQuestionText("deleted"),
+		values.FeedbackAnswerTypeYesNo,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	err = gameFeedbackRepository.UpdateFeedbackQuestions(ctx, []*domain.FeedbackQuestion{deletedQuestion})
 	assert.ErrorIs(t, err, repository.ErrNoRecordUpdated)
-	actual, err = repo.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
+	feedbackQuestions, err = gameFeedbackRepository.GetFeedbackQuestions(ctx, gameID, repository.LockTypeNone)
 	require.NoError(t, err)
-	assert.Len(t, actual, 1)
-	assert.Equal(t, newID, actual[0].GetID())
+	assert.Len(t, feedbackQuestions, 1)
+	assert.Equal(t, newID, feedbackQuestions[0].GetID())
 
 	rolledBackID := values.NewFeedbackQuestionID()
 	err = testDB.Transaction(ctx, nil, func(txCtx context.Context) error {
-		question := domain.NewFeedbackQuestion(rolledBackID, gameID, values.NewFeedbackQuestionText("rollback"), values.FeedbackAnswerTypeYesNo, 9, time.Now(), nil)
-		require.NoError(t, repo.CreateFeedbackQuestions(txCtx, []*domain.FeedbackQuestion{question}))
+		rolledBackQuestion := domain.NewFeedbackQuestion(
+			rolledBackID,
+			gameID,
+			values.NewFeedbackQuestionText("rollback"),
+			values.FeedbackAnswerTypeYesNo,
+			values.NewFeedbackQuestionOrder(9),
+			time.Now(),
+			nil,
+		)
+		require.NoError(t, gameFeedbackRepository.CreateFeedbackQuestions(txCtx, []*domain.FeedbackQuestion{rolledBackQuestion}))
 		return errors.New("rollback")
 	})
 	require.Error(t, err)

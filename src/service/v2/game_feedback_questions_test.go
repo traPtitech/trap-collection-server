@@ -75,6 +75,8 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 		executeUpdateFeedbackQuestions  bool
 		updateFeedbackQuestionsErr      error
 		executeCreateFeedbackQuestions  bool
+		createFeedbackQuestionsInput    []*domain.FeedbackQuestion
+		expectExactCreateInput          bool
 		createFeedbackQuestionsErr      error
 		executeArchiveFeedbackQuestions bool
 		archiveFeedbackQuestionsErr     error
@@ -100,6 +102,8 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 			executeHasFeedbackAnswers:       true,
 			executeUpdateFeedbackQuestions:  true,
 			executeCreateFeedbackQuestions:  true,
+			createFeedbackQuestionsInput:    []*domain.FeedbackQuestion{},
+			expectExactCreateInput:          true,
 			executeArchiveFeedbackQuestions: true,
 		},
 		{
@@ -203,74 +207,55 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 	}
 }
 
-func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-	now := time.Now()
-	gameID := values.NewGameID()
-	game := domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, now)
-	question := domain.NewFeedbackQuestion(values.NewFeedbackQuestionID(), gameID, values.NewFeedbackQuestionText("question"), values.FeedbackAnswerTypeYesNo, values.NewFeedbackQuestionOrder(0), now, nil)
-
-	type test struct {
-		description                 string
-		gameID                      values.GameID
-		getGameResult               *domain.Game
-		getGameErr                  error
-		executeGetFeedbackQuestions bool
-		getFeedbackQuestionsResult  []*domain.FeedbackQuestion
-		getFeedbackQuestionsErr     error
-		expectedQuestions           []*domain.FeedbackQuestion
-		expectedErr                 error
-	}
-	testCases := []test{
-		{description: "GetGameがErrRecordNotFoundなのでErrInvalidGame", gameID: gameID, getGameErr: repository.ErrRecordNotFound, expectedErr: service.ErrInvalidGame},
-		{description: "GetGameがエラーなのでエラー", gameID: gameID, getGameErr: assert.AnError, expectedErr: assert.AnError},
-		{description: "GetFeedbackQuestionsがエラーなのでエラー", gameID: gameID, getGameResult: game, executeGetFeedbackQuestions: true, getFeedbackQuestionsErr: assert.AnError, expectedErr: assert.AnError},
-		{description: "正常にフィードバック質問を取得できる", gameID: gameID, getGameResult: game, executeGetFeedbackQuestions: true, getFeedbackQuestionsResult: []*domain.FeedbackQuestion{question}, expectedQuestions: []*domain.FeedbackQuestion{question}},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			gameRepository := mockRepository.NewMockGameV2(ctrl)
-			gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
-			gameFeedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, gameFeedbackRepository)
-			gameRepository.EXPECT().GetGame(ctx, testCase.gameID, repository.LockTypeNone).Return(testCase.getGameResult, testCase.getGameErr)
-			if testCase.executeGetFeedbackQuestions {
-				gameFeedbackRepository.EXPECT().GetFeedbackQuestions(ctx, testCase.gameID, repository.LockTypeNone).Return(testCase.getFeedbackQuestionsResult, testCase.getFeedbackQuestionsErr)
-			}
-			questions, err := gameFeedbackService.GetFeedbackQuestions(ctx, testCase.gameID)
-			if testCase.expectedErr != nil {
-				assert.ErrorIs(t, err, testCase.expectedErr)
-				assert.Nil(t, questions)
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, testCase.expectedQuestions, questions)
-		})
-	}
-}
-
 func TestGameFeedbackPutFeedbackQuestionsStopsAfterStageFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	gameID := values.NewGameID()
 	questionID := values.NewFeedbackQuestionID()
 	gameRepository := mockRepository.NewMockGameV2(ctrl)
 	feedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
-	gameRepository.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeRecord).Return(
-		domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now()), nil,
+	game := domain.NewGame(
+		gameID,
+		values.NewGameName("game"),
+		values.NewGameDescription("description"),
+		values.GameVisibilityTypePublic,
+		time.Now(),
 	)
-	existing := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("old"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
-	feedbackRepository.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{existing}, nil)
-	feedbackRepository.EXPECT().HasFeedbackAnswers(gomock.Any(), []values.FeedbackQuestionID{questionID}, repository.LockTypeRecord).Return(false, nil)
+	gameRepository.
+		EXPECT().
+		GetGame(gomock.Any(), gameID, repository.LockTypeRecord).
+		Return(game, nil)
+	existingQuestion := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("old"),
+		values.FeedbackAnswerTypeYesNo,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	feedbackRepository.
+		EXPECT().
+		GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).
+		Return([]*domain.FeedbackQuestion{existingQuestion}, nil)
+	feedbackRepository.
+		EXPECT().
+		HasFeedbackAnswers(gomock.Any(), []values.FeedbackQuestionID{questionID}, repository.LockTypeRecord).
+		Return(false, nil)
 	stageErr := errors.New("update failed")
-	feedbackRepository.EXPECT().UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).Return(stageErr)
+	feedbackRepository.
+		EXPECT().
+		UpdateFeedbackQuestions(gomock.Any(), gomock.Any()).
+		Return(stageErr)
 
 	feedbackService := NewGameFeedback(mockRepository.NewMockDB(ctrl), gameRepository, feedbackRepository)
-	_, err := feedbackService.PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{{
-		ID: questionIDPtr(questionID), QuestionText: values.NewFeedbackQuestionText("updated"), AnswerType: values.FeedbackAnswerTypeFiveScale,
-	}})
+	inputs := []service.FeedbackQuestionInput{
+		{
+			ID:           questionIDPtr(questionID),
+			QuestionText: values.NewFeedbackQuestionText("updated"),
+			AnswerType:   values.FeedbackAnswerTypeFiveScale,
+		},
+	}
+	_, err := feedbackService.PutFeedbackQuestions(context.Background(), gameID, inputs)
 	assert.ErrorIs(t, err, stageErr)
 }
 
@@ -282,6 +267,8 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 		inputs      []service.FeedbackQuestionInput
 
 		executeCreateFeedbackQuestions  bool
+		createFeedbackQuestionsInput    []*domain.FeedbackQuestion
+		expectExactCreateInput          bool
 		createFeedbackQuestionsErr      error
 		executeArchiveFeedbackQuestions bool
 		archiveFeedbackQuestionsErr     error
@@ -305,6 +292,8 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 			description:                     "ArchiveFeedbackQuestionsがエラーなのでエラーを返す",
 			inputs:                          []service.FeedbackQuestionInput{},
 			executeCreateFeedbackQuestions:  true,
+			createFeedbackQuestionsInput:    []*domain.FeedbackQuestion{},
+			expectExactCreateInput:          true,
 			executeArchiveFeedbackQuestions: true,
 			archiveFeedbackQuestionsErr:     stageErr,
 			expectedErr:                     stageErr,
@@ -331,7 +320,13 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 			gameRepository.
 				EXPECT().
 				GetGame(gomock.Any(), gameID, repository.LockTypeRecord).
-				Return(domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now()), nil)
+				Return(domain.NewGame(
+					gameID,
+					values.NewGameName("game"),
+					values.NewGameDescription("description"),
+					values.GameVisibilityTypePublic,
+					time.Now(),
+				), nil)
 			gameFeedbackRepository.
 				EXPECT().
 				GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).
@@ -342,10 +337,17 @@ func TestGameFeedbackPutFeedbackQuestionsStopsAfterCreateAndArchiveFailures(t *t
 				Return(nil)
 
 			if testCase.executeCreateFeedbackQuestions {
-				gameFeedbackRepository.
-					EXPECT().
-					CreateFeedbackQuestions(gomock.Any(), gomock.Any()).
-					Return(testCase.createFeedbackQuestionsErr)
+				if testCase.expectExactCreateInput {
+					gameFeedbackRepository.
+						EXPECT().
+						CreateFeedbackQuestions(gomock.Any(), testCase.createFeedbackQuestionsInput).
+						Return(testCase.createFeedbackQuestionsErr)
+				} else {
+					gameFeedbackRepository.
+						EXPECT().
+						CreateFeedbackQuestions(gomock.Any(), gomock.Any()).
+						Return(testCase.createFeedbackQuestionsErr)
+				}
 			}
 			if testCase.executeArchiveFeedbackQuestions {
 				gameFeedbackRepository.
@@ -366,29 +368,51 @@ func TestGameFeedbackPutFeedbackQuestionsUsesTransactionContext(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	gameID := values.NewGameID()
 	db := &transactionDB{}
-	gameRepo := mockRepository.NewMockGameV2(ctrl)
-	repo := mockRepository.NewMockGameFeedback(ctrl)
-	gameRepo.EXPECT().GetGame(gomock.Any(), gameID, repository.LockTypeRecord).DoAndReturn(func(ctx context.Context, _ values.GameID, _ repository.LockType) (*domain.Game, error) {
-		assert.Equal(t, db.transactionContext, ctx)
-		return domain.NewGame(gameID, values.NewGameName("game"), values.NewGameDescription("description"), values.GameVisibilityTypePublic, time.Now()), nil
-	})
-	repo.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).DoAndReturn(func(ctx context.Context, _ values.GameID, _ repository.LockType) ([]*domain.FeedbackQuestion, error) {
-		assert.Equal(t, db.transactionContext, ctx)
-		return nil, nil
-	})
-	repo.EXPECT().UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
-		assert.Equal(t, db.transactionContext, ctx)
-		return nil
-	})
-	repo.EXPECT().CreateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
-		assert.Equal(t, db.transactionContext, ctx)
-		return nil
-	})
-	repo.EXPECT().ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{}).DoAndReturn(func(ctx context.Context, _ []values.FeedbackQuestionID) error {
-		assert.Equal(t, db.transactionContext, ctx)
-		return nil
-	})
-	_, err := NewGameFeedback(db, gameRepo, repo).PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{})
+	gameRepository := mockRepository.NewMockGameV2(ctrl)
+	gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+	gameRepository.
+		EXPECT().
+		GetGame(gomock.Any(), gameID, repository.LockTypeRecord).
+		DoAndReturn(func(ctx context.Context, _ values.GameID, _ repository.LockType) (*domain.Game, error) {
+			assert.Equal(t, db.transactionContext, ctx)
+			return domain.NewGame(
+				gameID,
+				values.NewGameName("game"),
+				values.NewGameDescription("description"),
+				values.GameVisibilityTypePublic,
+				time.Now(),
+			), nil
+		})
+	gameFeedbackRepository.
+		EXPECT().
+		GetFeedbackQuestions(gomock.Any(), gameID, repository.LockTypeNone).
+		DoAndReturn(func(ctx context.Context, _ values.GameID, _ repository.LockType) ([]*domain.FeedbackQuestion, error) {
+			assert.Equal(t, db.transactionContext, ctx)
+			return nil, nil
+		})
+	gameFeedbackRepository.
+		EXPECT().
+		UpdateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).
+		DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
+			assert.Equal(t, db.transactionContext, ctx)
+			return nil
+		})
+	gameFeedbackRepository.
+		EXPECT().
+		CreateFeedbackQuestions(gomock.Any(), []*domain.FeedbackQuestion{}).
+		DoAndReturn(func(ctx context.Context, _ []*domain.FeedbackQuestion) error {
+			assert.Equal(t, db.transactionContext, ctx)
+			return nil
+		})
+	gameFeedbackRepository.
+		EXPECT().
+		ArchiveFeedbackQuestions(gomock.Any(), []values.FeedbackQuestionID{}).
+		DoAndReturn(func(ctx context.Context, _ []values.FeedbackQuestionID) error {
+			assert.Equal(t, db.transactionContext, ctx)
+			return nil
+		})
+	gameFeedbackService := NewGameFeedback(db, gameRepository, gameFeedbackRepository)
+	_, err := gameFeedbackService.PutFeedbackQuestions(context.Background(), gameID, []service.FeedbackQuestionInput{})
 	assert.NoError(t, err)
 }
 

@@ -33,7 +33,16 @@ func TestFeedbackQuestionsMaintainerAuth(t *testing.T) {
 	oidc := mock.NewMockOIDCV2(ctrl)
 	roles := mock.NewMockGameRoleV2(ctrl)
 	admin := mock.NewMockAdminAuthV2(ctrl)
-	checker := NewChecker(NewContext(), sessions, oidc, mock.NewMockEdition(ctrl), mock.NewMockEditionAuth(ctrl), roles, admin, mock.NewMockGameV2(ctrl))
+	checker := NewChecker(
+		NewContext(),
+		sessions,
+		oidc,
+		mock.NewMockEdition(ctrl),
+		mock.NewMockEditionAuth(ctrl),
+		roles,
+		admin,
+		mock.NewMockGameV2(ctrl),
+	)
 	feedback := mock.NewMockGameFeedback(ctrl)
 	api := &API{
 		Checker:      checker,
