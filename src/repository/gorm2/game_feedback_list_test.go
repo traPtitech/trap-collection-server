@@ -294,6 +294,30 @@ func TestGameFeedbackGetGameFeedbacksByGameVersionID(t *testing.T) {
 		})
 	}
 
+	for _, testCase := range testCases {
+		t.Run("game IDで"+testCase.description, func(t *testing.T) {
+			feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameID(
+				ctx,
+				gameID,
+				testCase.limit,
+				testCase.offset,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedTotal, total)
+
+			if testCase.expectedFeedbackID == nil {
+				assert.Empty(t, feedbacks)
+				return
+			}
+
+			require.Len(t, feedbacks, 1)
+			assert.Equal(t, *testCase.expectedFeedbackID, feedbacks[0].Feedback.GetID())
+			assert.Equal(t, testCase.expectedComment, feedbacks[0].Feedback.GetComment())
+			assert.Equal(t, testCase.expectedQuestionIDs, feedbackQuestionIDs(feedbacks[0].Answers))
+			assert.Equal(t, testCase.expectedAnswerValues, feedbackAnswerValues(feedbacks[0].Answers))
+		})
+	}
+
 	returnedQuestions, err := gameFeedbackRepository.GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone)
 	require.NoError(t, err)
 	require.Len(t, returnedQuestions, 2)
