@@ -29,7 +29,16 @@ func TestGameFeedbackListTrapMemberAuth(t *testing.T) {
 	sessions, err := NewSession(store)
 	require.NoError(t, err)
 	oidc := mock.NewMockOIDCV2(ctrl)
-	checker := NewChecker(NewContext(), sessions, oidc, mock.NewMockEdition(ctrl), mock.NewMockEditionAuth(ctrl), mock.NewMockGameRoleV2(ctrl), mock.NewMockAdminAuthV2(ctrl), mock.NewMockGameV2(ctrl))
+	checker := NewChecker(
+		NewContext(),
+		sessions,
+		oidc,
+		mock.NewMockEdition(ctrl),
+		mock.NewMockEditionAuth(ctrl),
+		mock.NewMockGameRoleV2(ctrl),
+		mock.NewMockAdminAuthV2(ctrl),
+		mock.NewMockGameV2(ctrl),
+	)
 	serviceMock := mock.NewMockGameFeedback(ctrl)
 	api := &API{Checker: checker, GameFeedback: NewGameFeedback(serviceMock)}
 	e := echo.New()
@@ -52,11 +61,17 @@ func TestGameFeedbackListTrapMemberAuth(t *testing.T) {
 	})
 	t.Run("member認証済みなのでserviceを呼び出して200", func(t *testing.T) {
 		accessToken := "member token"
-		oidc.EXPECT().Authenticate(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, authSession *domain.OIDCSession) error {
-			assert.Equal(t, values.NewOIDCAccessToken(accessToken), authSession.GetAccessToken())
-			return nil
-		})
-		serviceMock.EXPECT().GetGameFeedbacks(gomock.Any(), gameID, 50, 0).Return(nil, 0, nil)
+		oidc.
+			EXPECT().
+			Authenticate(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, authSession *domain.OIDCSession) error {
+				assert.Equal(t, values.NewOIDCAccessToken(accessToken), authSession.GetAccessToken())
+				return nil
+			})
+		serviceMock.
+			EXPECT().
+			GetGameFeedbacks(gomock.Any(), gameID, 50, 0).
+			Return(nil, 0, nil)
 		c, req, rec := setupTestRequest(t, http.MethodGet, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedbacks", nil)
 		setTestSession(t, c, req, rec, sessions, domain.NewOIDCSession(values.NewOIDCAccessToken(accessToken), time.Now()))
 		e.ServeHTTP(rec, req)

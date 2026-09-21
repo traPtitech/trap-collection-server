@@ -24,9 +24,22 @@ func TestGameFeedbackGetGameFeedbacks(t *testing.T) {
 	feedbackID := values.NewGameFeedbackID()
 	versionID := values.NewGameVersionID()
 	questionID := values.NewFeedbackQuestionID()
-	answer := domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, questionID, 1)
+	answer := domain.NewGameFeedbackAnswer(
+		values.NewGameFeedbackAnswerID(),
+		feedbackID,
+		questionID,
+		1,
+	)
 	feedback := domain.NewGameFeedback(feedbackID, versionID, nil, time.Now())
-	question := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("面白かったですか"), values.FeedbackAnswerTypeYesNo, values.NewFeedbackQuestionOrder(0), time.Now(), nil)
+	question := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("面白かったですか"),
+		values.FeedbackAnswerTypeYesNo,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
 
 	type test struct {
 		description string

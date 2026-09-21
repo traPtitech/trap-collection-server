@@ -213,6 +213,13 @@ func TestGetGameFeedbacks(t *testing.T) {
 			},
 		},
 	}
+	feedbackWithoutComment := domain.NewGameFeedback(feedbackID, versionID, nil, createdAt)
+	feedbackDetailsWithoutComment := []*service.GameFeedbackDetail{
+		{
+			Feedback: feedbackWithoutComment,
+			Answers:  feedbackDetails[0].Answers,
+		},
+	}
 	expectedResponse := openapi.GameFeedbacksResponse{
 		Feedbacks: []openapi.GameFeedbackDetail{
 			{
@@ -227,6 +234,12 @@ func TestGetGameFeedbacks(t *testing.T) {
 		},
 		Total: 1,
 	}
+	expectedResponseWithoutComment := expectedResponse
+	expectedResponseWithoutComment.Feedbacks = append(
+		[]openapi.GameFeedbackDetail(nil),
+		expectedResponse.Feedbacks...,
+	)
+	expectedResponseWithoutComment.Feedbacks[0].Comment = nil
 
 	testCases := map[string]struct {
 		params                  openapi.GetGameFeedbacksParams
@@ -247,6 +260,15 @@ func TestGetGameFeedbacks(t *testing.T) {
 			getGameFeedbacksResult:  feedbackDetails,
 			getGameFeedbacksTotal:   1,
 			expectedResponse:        &expectedResponse,
+			statusCode:              http.StatusOK,
+		},
+		"コメントがなくても正常に取得できる": {
+			executeGetGameFeedbacks: true,
+			expectedLimit:           50,
+			expectedOffset:          0,
+			getGameFeedbacksResult:  feedbackDetailsWithoutComment,
+			getGameFeedbacksTotal:   1,
+			expectedResponse:        &expectedResponseWithoutComment,
 			statusCode:              http.StatusOK,
 		},
 		"limitとoffsetを指定して正常に取得できる": {
