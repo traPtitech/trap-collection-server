@@ -1,6 +1,6 @@
 services:
   mariadb:
-    image: mariadb:10.6.4@sha256:c014ba1efc5dbd711d0520c7762d57807f35549de3414eb31e942a420c8a2ed2
+    image: mariadb:12.3.2@sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: trap_collection
@@ -24,7 +24,7 @@ services:
       mariadb:
         condition: service_healthy
   tbls:
-    image: k1low/tbls:v1.94.5
+    image: k1low/tbls:v1.96.0
     environment:
       TBLS_DSN: mariadb://root:pass@mariadb:3306/trap_collection
     volumes:
