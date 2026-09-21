@@ -101,7 +101,10 @@ func (g *GameFeedback) UpdateFeedbackQuestions(ctx context.Context, questions []
 		ids = append(ids, question.GetID().UUID())
 	}
 	var count int64
-	if err := db.Model(&schema.GameFeedbackQuestionTable{}).Where("id IN ?", ids).Count(&count).Error; err != nil {
+	if err := db.
+		Model(&schema.GameFeedbackQuestionTable{}).
+		Where("id IN ?", ids).
+		Count(&count).Error; err != nil {
 		return fmt.Errorf("failed to check feedback questions: %w", err)
 	}
 	if count != int64(len(ids)) {
@@ -114,7 +117,10 @@ func (g *GameFeedback) UpdateFeedbackQuestions(ctx context.Context, questions []
 			"answer_type":    int(question.GetAnswerType()),
 			"question_order": int(question.GetQuestionOrder()),
 		}
-		if err := db.Model(&schema.GameFeedbackQuestionTable{}).Where("id = ?", question.GetID().UUID()).Updates(updates).Error; err != nil {
+		if err := db.
+			Model(&schema.GameFeedbackQuestionTable{}).
+			Where("id = ?", question.GetID().UUID()).
+			Updates(updates).Error; err != nil {
 			return fmt.Errorf("failed to update feedback question: %w", err)
 		}
 	}
@@ -135,7 +141,10 @@ func (g *GameFeedback) ArchiveFeedbackQuestions(ctx context.Context, ids []value
 	for _, id := range ids {
 		uuidIDs = append(uuidIDs, id.UUID())
 	}
-	if err := db.Model(&schema.GameFeedbackQuestionTable{}).Where("id IN ?", uuidIDs).Update("archived_at", time.Now()).Error; err != nil {
+	if err := db.
+		Model(&schema.GameFeedbackQuestionTable{}).
+		Where("id IN ?", uuidIDs).
+		Update("archived_at", time.Now()).Error; err != nil {
 		return fmt.Errorf("failed to archive feedback questions: %w", err)
 	}
 	return nil
