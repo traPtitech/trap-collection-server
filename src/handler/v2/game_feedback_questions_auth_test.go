@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,6 +20,8 @@ import (
 )
 
 func TestFeedbackQuestionsMaintainerAuth(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	conf := mockConfig.NewMockHandler(ctrl)
 	conf.EXPECT().SessionKey().Return("key", nil)
@@ -34,27 +35,45 @@ func TestFeedbackQuestionsMaintainerAuth(t *testing.T) {
 	admin := mock.NewMockAdminAuthV2(ctrl)
 	checker := NewChecker(NewContext(), sessions, oidc, mock.NewMockEdition(ctrl), mock.NewMockEditionAuth(ctrl), roles, admin, mock.NewMockGameV2(ctrl))
 	feedback := mock.NewMockGameFeedback(ctrl)
-	api := &API{Checker: checker, GameFeedback: NewGameFeedback(feedback)}
+	api := &API{
+		Checker:      checker,
+		GameFeedback: NewGameFeedback(feedback),
+	}
 	e := echo.New()
 	require.NoError(t, api.SetRoutes(e))
 	gameID := values.NewGameID()
 
 	t.Run("未認証なのでserviceを呼び出さず401", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPut, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedback-questions", nil)
-		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		url := "/api/v2/games/" + uuid.UUID(gameID).String() + "/feedback-questions"
+		request := httptest.NewRequest(http.MethodPut, url, nil)
+		recorder := httptest.NewRecorder()
+
+		e.ServeHTTP(recorder, request)
+
+		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 	})
+
 	t.Run("maintainerなのでserviceを呼び出す", func(t *testing.T) {
 		access := "token"
 		sessionValue := domain.NewOIDCSession(values.NewOIDCAccessToken(access), time.Now())
 		admin.EXPECT().AdminAuthorize(gomock.Any(), gomock.Any()).Return(service.ErrForbidden)
 		roles.EXPECT().UpdateGameAuth(gomock.Any(), gomock.Any(), gameID).Return(nil)
-		feedback.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, []service.FeedbackQuestionInput{}).Return(nil, nil)
-		c, req, rec := setupTestRequest(t, http.MethodPut, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{"questions": []any{}}))
-		setTestSession(t, c, req, rec, sessions, sessionValue)
-		e.ServeHTTP(rec, req)
-		assert.Equal(t, http.StatusOK, rec.Code)
+		feedback.
+			EXPECT().
+			PutFeedbackQuestions(gomock.Any(), gameID, []service.FeedbackQuestionInput{}).
+			Return(nil, nil)
+
+		url := "/api/v2/games/" + uuid.UUID(gameID).String() + "/feedback-questions"
+		c, request, recorder := setupTestRequest(
+			t,
+			http.MethodPut,
+			url,
+			withJSONBody(t, map[string]any{"questions": []any{}}),
+		)
+		setTestSession(t, c, request, recorder, sessions, sessionValue)
+
+		e.ServeHTTP(recorder, request)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
 	})
-	_ = context.Background
 }

@@ -92,114 +92,241 @@ func TestGetFeedbackConfig(t *testing.T) {
 func TestGetFeedbackQuestions(t *testing.T) {
 	t.Parallel()
 
-	questionID := values.NewFeedbackQuestionID()
+	ctx := context.Background()
 	gameID := values.NewGameID()
-	question := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("面白かったですか？"), values.FeedbackAnswerTypeYesNo, 0, time.Now(), nil)
-	testCases := map[string]struct {
-		serviceErr error
-		wantStatus int
-	}{
-		"GetFeedbackQuestionsが成功するので200":            {wantStatus: http.StatusOK},
-		"GetFeedbackQuestionsがErrInvalidGameなので404": {serviceErr: service.ErrInvalidGame, wantStatus: http.StatusNotFound},
-		"GetFeedbackQuestionsがエラーなので500":            {serviceErr: errors.New("unexpected"), wantStatus: http.StatusInternalServerError},
+	questionID := values.NewFeedbackQuestionID()
+	question := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("面白かったですか？"),
+		values.FeedbackAnswerTypeYesNo,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	expectedQuestions := []*domain.FeedbackQuestion{
+		question,
 	}
+	expectedResponse := openapi.FeedbackQuestionsResponse{
+		Questions: []openapi.FeedbackQuestion{
+			{
+				Id:            questionID.UUID(),
+				QuestionText:  "面白かったですか？",
+				AnswerType:    openapi.AnswerTypeYesNo,
+				QuestionOrder: 0,
+			},
+		},
+	}
+
+	testCases := map[string]struct {
+		gameID                      values.GameID
+		executeGetFeedbackQuestions bool
+		getFeedbackQuestionsResult  []*domain.FeedbackQuestion
+		getFeedbackQuestionsErr     error
+		expectedResponse            openapi.FeedbackQuestionsResponse
+		isError                     bool
+		statusCode                  int
+	}{
+		"GetFeedbackQuestionsが成功するので200": {
+			gameID:                      gameID,
+			executeGetFeedbackQuestions: true,
+			getFeedbackQuestionsResult:  expectedQuestions,
+			expectedResponse:            expectedResponse,
+			statusCode:                  http.StatusOK,
+		},
+		"GetFeedbackQuestionsがErrInvalidGameなので404": {
+			gameID:                      gameID,
+			executeGetFeedbackQuestions: true,
+			getFeedbackQuestionsErr:     service.ErrInvalidGame,
+			isError:                     true,
+			statusCode:                  http.StatusNotFound,
+		},
+		"GetFeedbackQuestionsがエラーなので500": {
+			gameID:                      gameID,
+			executeGetFeedbackQuestions: true,
+			getFeedbackQuestionsErr:     errors.New("unexpected"),
+			isError:                     true,
+			statusCode:                  http.StatusInternalServerError,
+		},
+	}
+
 	for name, testCase := range testCases {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
-			feedbackService := mock.NewMockGameFeedback(ctrl)
-			feedbackService.EXPECT().GetFeedbackQuestions(gomock.Any(), gameID).Return([]*domain.FeedbackQuestion{question}, testCase.serviceErr)
-			handler := NewGameFeedback(feedbackService)
-			c, _, rec := setupTestRequest(t, http.MethodGet, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", nil)
-			err := handler.GetFeedbackQuestions(c, openapi.GameIDInPath(gameID))
-			if testCase.wantStatus != http.StatusOK {
+			gameFeedbackService := mock.NewMockGameFeedback(ctrl)
+			handler := NewGameFeedback(gameFeedbackService)
+
+			if testCase.executeGetFeedbackQuestions {
+				gameFeedbackService.
+					EXPECT().
+					GetFeedbackQuestions(ctx, testCase.gameID).
+					Return(testCase.getFeedbackQuestionsResult, testCase.getFeedbackQuestionsErr)
+			}
+
+			url := fmt.Sprintf("/games/%s/feedback-questions", uuid.UUID(testCase.gameID))
+			c, request, rec := setupTestRequest(t, http.MethodGet, url, nil)
+			request = request.WithContext(ctx)
+			c.SetRequest(request)
+
+			err := handler.GetFeedbackQuestions(c, openapi.GameIDInPath(testCase.gameID))
+
+			if testCase.isError {
 				var httpError *echo.HTTPError
-				require.ErrorAs(t, err, &httpError)
-				assert.Equal(t, testCase.wantStatus, httpError.Code)
+				if assert.ErrorAs(t, err, &httpError) {
+					assert.Equal(t, testCase.statusCode, httpError.Code)
+				}
 				return
 			}
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusOK, rec.Code)
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, rec.Code)
+
 			var response openapi.FeedbackQuestionsResponse
-			require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
-			assert.Equal(t, []openapi.FeedbackQuestion{{Id: questionID.UUID(), QuestionText: "面白かったですか？", AnswerType: openapi.AnswerTypeYesNo, QuestionOrder: 0}}, response.Questions)
+			assert.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+			assert.Equal(t, testCase.expectedResponse, response)
 		})
 	}
 }
 
 func TestPutFeedbackQuestions(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 	gameID := values.NewGameID()
 	questionID := values.NewFeedbackQuestionID()
-	newQuestion := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("新しい質問"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
+	newQuestion := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("新しい質問"),
+		values.FeedbackAnswerTypeFiveScale,
+		values.NewFeedbackQuestionOrder(0),
+		time.Now(),
+		nil,
+	)
+	expectedResponse := openapi.FeedbackQuestionsResponse{
+		Questions: []openapi.FeedbackQuestion{{
+			Id:            questionID.UUID(),
+			QuestionText:  "新しい質問",
+			AnswerType:    openapi.AnswerTypeFiveScale,
+			QuestionOrder: 0,
+		}},
+	}
 
-	t.Run("正常にリクエストを変換してレスポンスを返す", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		feedbackService := mock.NewMockGameFeedback(ctrl)
-		feedbackService.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, gomock.Any()).DoAndReturn(func(_ context.Context, _ values.GameID, inputs []service.FeedbackQuestionInput) ([]*domain.FeedbackQuestion, error) {
-			require.Len(t, inputs, 1)
-			assert.Nil(t, inputs[0].ID)
-			assert.Equal(t, values.NewFeedbackQuestionText("新しい質問"), inputs[0].QuestionText)
-			assert.Equal(t, values.FeedbackAnswerTypeFiveScale, inputs[0].AnswerType)
-			return []*domain.FeedbackQuestion{newQuestion}, nil
+	testCases := map[string]struct {
+		requestBody any
+
+		executePutFeedbackQuestions bool
+		expectedInputs              []service.FeedbackQuestionInput
+		putFeedbackQuestionsResult  []*domain.FeedbackQuestion
+		putFeedbackQuestionsErr     error
+
+		expectedResponse openapi.FeedbackQuestionsResponse
+		isError          bool
+		statusCode       int
+	}{
+		"正常にリクエストを変換してレスポンスを返す": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{{
+					QuestionText: "新しい質問",
+					AnswerType:   openapi.AnswerTypeFiveScale,
+				}},
+			},
+			executePutFeedbackQuestions: true,
+			expectedInputs: []service.FeedbackQuestionInput{{
+				QuestionText: values.NewFeedbackQuestionText("新しい質問"),
+				AnswerType:   values.FeedbackAnswerTypeFiveScale,
+			}},
+			putFeedbackQuestionsResult: []*domain.FeedbackQuestion{newQuestion},
+			expectedResponse:           expectedResponse,
+			statusCode:                 http.StatusOK,
+		},
+		"questionsが空配列なので正常に空配列を返す": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{},
+			},
+			executePutFeedbackQuestions: true,
+			expectedInputs:              []service.FeedbackQuestionInput{},
+			putFeedbackQuestionsResult:  []*domain.FeedbackQuestion{},
+			expectedResponse: openapi.FeedbackQuestionsResponse{
+				Questions: []openapi.FeedbackQuestion{},
+			},
+			statusCode: http.StatusOK,
+		},
+		"answerTypeが不正なので400": {
+			requestBody: openapi.PutFeedbackQuestionsRequest{
+				Questions: []openapi.FeedbackQuestionInput{{
+					QuestionText: "質問",
+					AnswerType:   "invalid",
+				}},
+			},
+			isError:    true,
+			statusCode: http.StatusBadRequest,
+		},
+		"questionsが未指定なので400": {
+			requestBody: map[string]any{},
+			isError:     true,
+			statusCode:  http.StatusBadRequest,
+		},
+		"questionsがnullなので400": {
+			requestBody: map[string]any{"questions": nil},
+			isError:     true,
+			statusCode:  http.StatusBadRequest,
+		},
+		"idがnullなので400": {
+			requestBody: map[string]any{
+				"questions": []map[string]any{{
+					"id":           nil,
+					"questionText": "質問",
+					"answerType":   "yesNo",
+				}},
+			},
+			isError:    true,
+			statusCode: http.StatusBadRequest,
+		},
+	}
+
+	for description, testCase := range testCases {
+		t.Run(description, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameFeedbackService := mock.NewMockGameFeedback(ctrl)
+			handler := NewGameFeedback(gameFeedbackService)
+
+			if testCase.executePutFeedbackQuestions {
+				gameFeedbackService.
+					EXPECT().
+					PutFeedbackQuestions(ctx, gameID, testCase.expectedInputs).
+					Return(testCase.putFeedbackQuestionsResult, testCase.putFeedbackQuestionsErr)
+			}
+
+			url := fmt.Sprintf("/games/%s/feedback-questions", uuid.UUID(gameID))
+			c, request, recorder := setupTestRequest(
+				t,
+				http.MethodPut,
+				url,
+				withJSONBody(t, testCase.requestBody),
+			)
+			request = request.WithContext(ctx)
+			c.SetRequest(request)
+
+			err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
+			if testCase.isError {
+				var httpError *echo.HTTPError
+				if assert.ErrorAs(t, err, &httpError) {
+					assert.Equal(t, testCase.statusCode, httpError.Code)
+				}
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.statusCode, recorder.Code)
+
+			var response openapi.FeedbackQuestionsResponse
+			assert.NoError(t, json.NewDecoder(recorder.Body).Decode(&response))
+			assert.Equal(t, testCase.expectedResponse, response)
 		})
-		handler := NewGameFeedback(feedbackService)
-		request := openapi.PutFeedbackQuestionsRequest{Questions: []openapi.FeedbackQuestionInput{{QuestionText: "新しい質問", AnswerType: openapi.AnswerTypeFiveScale}}}
-		c, _, rec := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
-		require.NoError(t, handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID)))
-		assert.Equal(t, http.StatusOK, rec.Code)
-		var response openapi.FeedbackQuestionsResponse
-		require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
-		assert.Equal(t, []openapi.FeedbackQuestion{{Id: questionID.UUID(), QuestionText: "新しい質問", AnswerType: openapi.AnswerTypeFiveScale, QuestionOrder: 0}}, response.Questions)
-	})
-
-	t.Run("questionsが空配列なので正常に空配列を返す", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		feedbackService := mock.NewMockGameFeedback(ctrl)
-		feedbackService.EXPECT().PutFeedbackQuestions(gomock.Any(), gameID, []service.FeedbackQuestionInput{}).Return([]*domain.FeedbackQuestion{}, nil)
-		handler := NewGameFeedback(feedbackService)
-		request := openapi.PutFeedbackQuestionsRequest{Questions: []openapi.FeedbackQuestionInput{}}
-		c, _, rec := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
-		require.NoError(t, handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID)))
-		var response openapi.FeedbackQuestionsResponse
-		require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
-		assert.Equal(t, []openapi.FeedbackQuestion{}, response.Questions)
-	})
-
-	t.Run("answerTypeが不正なので400", func(t *testing.T) {
-		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
-		request := openapi.PutFeedbackQuestionsRequest{Questions: []openapi.FeedbackQuestionInput{{QuestionText: "質問", AnswerType: "invalid"}}}
-		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
-		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
-		var httpError *echo.HTTPError
-		require.ErrorAs(t, err, &httpError)
-		assert.Equal(t, http.StatusBadRequest, httpError.Code)
-	})
-
-	t.Run("questionsが未指定なので400", func(t *testing.T) {
-		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
-		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{}))
-		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
-		var httpError *echo.HTTPError
-		require.ErrorAs(t, err, &httpError)
-		assert.Equal(t, http.StatusBadRequest, httpError.Code)
-	})
-
-	t.Run("questionsがnullなので400", func(t *testing.T) {
-		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
-		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, map[string]any{"questions": nil}))
-		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
-		var httpError *echo.HTTPError
-		require.ErrorAs(t, err, &httpError)
-		assert.Equal(t, http.StatusBadRequest, httpError.Code)
-	})
-
-	t.Run("idがnullなので400", func(t *testing.T) {
-		handler := NewGameFeedback(mock.NewMockGameFeedback(gomock.NewController(t)))
-		request := map[string]any{"questions": []map[string]any{{"id": nil, "questionText": "質問", "answerType": "yesNo"}}}
-		c, _, _ := setupTestRequest(t, http.MethodPut, "/games/"+uuid.UUID(gameID).String()+"/feedback-questions", withJSONBody(t, request))
-		err := handler.PutFeedbackQuestions(c, openapi.GameIDInPath(gameID))
-		var httpError *echo.HTTPError
-		require.ErrorAs(t, err, &httpError)
-		assert.Equal(t, http.StatusBadRequest, httpError.Code)
-	})
+	}
 }

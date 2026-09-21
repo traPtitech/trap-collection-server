@@ -123,32 +123,75 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 }
 
 func TestFeedbackQuestionAnsweredTypeChange(t *testing.T) {
-	for _, tc := range []struct {
-		name                  string
-		initial, next, answer int
-		answered              bool
-		wantErr               bool
-	}{
-		{"回答済みのfiveScaleをyesNoへ変更するのでErrFeedbackQuestionAnswerTypeChange", 1, 0, 5, true, true},
-		{"回答済みのyesNoをfiveScaleへ変更するのでErrFeedbackQuestionAnswerTypeChange", 0, 1, 0, true, true},
-		{"未回答なのでanswerTypeを変更できる", 0, 1, 0, false, false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			f := newQuestionTypeFixture(t, tc.initial, tc.answer, tc.answered)
-			svc := servicev2.NewGameFeedback(testDB, NewGameV2(testDB), NewGameFeedback(testDB))
-			id := f.questionID
-			_, err := svc.PutFeedbackQuestions(t.Context(), f.gameID, []service.FeedbackQuestionInput{{ID: &id, QuestionText: values.NewFeedbackQuestionText("question"), AnswerType: values.FeedbackAnswerType(tc.next)}})
-			if tc.wantErr {
+	type test struct {
+		description       string
+		initialAnswerType values.FeedbackAnswerType
+		nextAnswerType    values.FeedbackAnswerType
+		answer            int
+		hasAnswer         bool
+		expectedErr       error
+	}
+	testCases := []test{
+		{
+			description:       "回答済みのfiveScaleをyesNoへ変更するのでErrFeedbackQuestionAnswerTypeChange",
+			initialAnswerType: values.FeedbackAnswerTypeFiveScale,
+			nextAnswerType:    values.FeedbackAnswerTypeYesNo,
+			answer:            5,
+			hasAnswer:         true,
+			expectedErr:       service.ErrFeedbackQuestionAnswerTypeChange,
+		},
+		{
+			description:       "回答済みのyesNoをfiveScaleへ変更するのでErrFeedbackQuestionAnswerTypeChange",
+			initialAnswerType: values.FeedbackAnswerTypeYesNo,
+			nextAnswerType:    values.FeedbackAnswerTypeFiveScale,
+			answer:            0,
+			hasAnswer:         true,
+			expectedErr:       service.ErrFeedbackQuestionAnswerTypeChange,
+		},
+		{
+			description:       "未回答なのでanswerTypeを変更できる",
+			initialAnswerType: values.FeedbackAnswerTypeYesNo,
+			nextAnswerType:    values.FeedbackAnswerTypeFiveScale,
+			answer:            0,
+			hasAnswer:         false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			fixture := newQuestionTypeFixture(
+				t,
+				int(testCase.initialAnswerType),
+				testCase.answer,
+				testCase.hasAnswer,
+			)
+			gameFeedbackService := servicev2.NewGameFeedback(
+				testDB,
+				NewGameV2(testDB),
+				NewGameFeedback(testDB),
+			)
+			questionID := fixture.questionID
+			inputs := []service.FeedbackQuestionInput{
+				{
+					ID:           &questionID,
+					QuestionText: values.NewFeedbackQuestionText("question"),
+					AnswerType:   testCase.nextAnswerType,
+				},
+			}
+
+			_, err := gameFeedbackService.PutFeedbackQuestions(t.Context(), fixture.gameID, inputs)
+			if testCase.expectedErr != nil {
 				require.ErrorIs(t, err, service.ErrFeedbackQuestionAnswerTypeChange)
 			} else {
 				require.NoError(t, err)
 			}
+
 			var question schema.GameFeedbackQuestionTable
-			require.NoError(t, f.db.Where("id = ?", id.UUID()).Take(&question).Error)
-			if tc.wantErr {
-				assert.Equal(t, tc.initial, question.AnswerType)
+			require.NoError(t, fixture.db.Where("id = ?", questionID.UUID()).Take(&question).Error)
+			if testCase.expectedErr != nil {
+				assert.Equal(t, int(testCase.initialAnswerType), question.AnswerType)
 			} else {
-				assert.Equal(t, tc.next, question.AnswerType)
+				assert.Equal(t, int(testCase.nextAnswerType), question.AnswerType)
 			}
 		})
 	}
@@ -212,14 +255,67 @@ func newQuestionTypeFixture(t *testing.T, answerType, answer int, withAnswer boo
 	versionID := values.NewGameVersionID()
 	questionID := values.NewFeedbackQuestionID()
 	feedbackID := values.NewGameFeedbackID()
-	require.NoError(t, db.Create(&schema.GameTable2{ID: uuid.UUID(gameID), Name: "question type", Description: "test", VisibilityTypeID: visibility.ID, CreatedAt: now}).Error)
-	require.NoError(t, db.Create(&schema.GameImageTable2{ID: uuid.UUID(imageID), GameID: uuid.UUID(gameID), ImageTypeID: imageType.ID, CreatedAt: now}).Error)
-	require.NoError(t, db.Create(&schema.GameVideoTable2{ID: uuid.UUID(videoID), GameID: uuid.UUID(gameID), VideoTypeID: videoType.ID, CreatedAt: now}).Error)
-	require.NoError(t, db.Create(&schema.GameVersionTable2{ID: uuid.UUID(versionID), GameID: uuid.UUID(gameID), GameImageID: uuid.UUID(imageID), GameVideoID: uuid.UUID(videoID), Name: "test", Description: "test", CreatedAt: now}).Error)
-	require.NoError(t, db.Create(&schema.GameFeedbackQuestionTable{ID: questionID.UUID(), GameID: uuid.UUID(gameID), QuestionText: "question", AnswerType: answerType, QuestionOrder: 0, CreatedAt: now}).Error)
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "question type",
+		Description:      "test",
+		VisibilityTypeID: visibility.ID,
+		CreatedAt:        now,
+	}
+	require.NoError(t, db.Create(&game).Error)
+
+	gameImage := schema.GameImageTable2{
+		ID:          uuid.UUID(imageID),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: imageType.ID,
+		CreatedAt:   now,
+	}
+	require.NoError(t, db.Create(&gameImage).Error)
+
+	gameVideo := schema.GameVideoTable2{
+		ID:          uuid.UUID(videoID),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: videoType.ID,
+		CreatedAt:   now,
+	}
+	require.NoError(t, db.Create(&gameVideo).Error)
+
+	gameVersion := schema.GameVersionTable2{
+		ID:          uuid.UUID(versionID),
+		GameID:      uuid.UUID(gameID),
+		GameImageID: uuid.UUID(imageID),
+		GameVideoID: uuid.UUID(videoID),
+		Name:        "test",
+		Description: "test",
+		CreatedAt:   now,
+	}
+	require.NoError(t, db.Create(&gameVersion).Error)
+
+	question := schema.GameFeedbackQuestionTable{
+		ID:            questionID.UUID(),
+		GameID:        uuid.UUID(gameID),
+		QuestionText:  "question",
+		AnswerType:    answerType,
+		QuestionOrder: 0,
+		CreatedAt:     now,
+	}
+	require.NoError(t, db.Create(&question).Error)
+
 	if withAnswer {
-		require.NoError(t, db.Create(&schema.GameFeedbackTable{ID: feedbackID.UUID(), GameVersionID: uuid.UUID(versionID), CreatedAt: now}).Error)
-		require.NoError(t, db.Create(&schema.GameFeedbackAnswerTable{ID: values.NewGameFeedbackAnswerID().UUID(), FeedbackID: feedbackID.UUID(), QuestionID: questionID.UUID(), Answer: answer}).Error)
+		feedback := schema.GameFeedbackTable{
+			ID:            feedbackID.UUID(),
+			GameVersionID: uuid.UUID(versionID),
+			CreatedAt:     now,
+		}
+		require.NoError(t, db.Create(&feedback).Error)
+
+		feedbackAnswer := schema.GameFeedbackAnswerTable{
+			ID:         values.NewGameFeedbackAnswerID().UUID(),
+			FeedbackID: feedbackID.UUID(),
+			QuestionID: questionID.UUID(),
+			Answer:     answer,
+		}
+		require.NoError(t, db.Create(&feedbackAnswer).Error)
 	}
 	t.Cleanup(func() {
 		c, _ := testDB.getDB(context.Background())
@@ -231,7 +327,11 @@ func newQuestionTypeFixture(t *testing.T, answerType, answer int, withAnswer boo
 		c.Delete(&schema.GameVideoTable2{}, "id = ?", uuid.UUID(videoID))
 		c.Delete(&schema.GameTable2{}, "id = ?", uuid.UUID(gameID))
 	})
-	return questionTypeFixture{db, gameID, questionID}
+	return questionTypeFixture{
+		db:         db,
+		gameID:     gameID,
+		questionID: questionID,
+	}
 }
 
 func TestGameFeedbackQuestions(t *testing.T) {
