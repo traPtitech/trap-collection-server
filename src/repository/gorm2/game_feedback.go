@@ -30,7 +30,10 @@ func (g *GameFeedback) GetFeedbackQuestions(ctx context.Context, gameID values.G
 	}
 
 	var tables []schema.GameFeedbackQuestionTable
-	err = db.Where("game_id = ? AND archived_at IS NULL", uuid.UUID(gameID)).Order("question_order ASC").Find(&tables).Error
+	err = db.
+		Where("game_id = ? AND archived_at IS NULL", uuid.UUID(gameID)).
+		Order("question_order ASC").
+		Find(&tables).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get feedback questions: %w", err)
 	}

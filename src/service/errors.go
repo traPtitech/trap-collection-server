@@ -70,4 +70,6 @@ var (
 	ErrDuplicateFeedbackQuestion         = errors.New("duplicate feedback question")
 	ErrInvalidFeedbackAnswerType         = errors.New("invalid feedback answer type")
 	ErrFeedbackQuestionAnswerTypeChange  = errors.New("cannot change answered feedback question type")
+	ErrInvalidGameAndCustomJobPair       = errors.New("invalid game and custom job pair")
+	ErrInvalidPresetJobID                = errors.New("invalid preset job id")
 )
