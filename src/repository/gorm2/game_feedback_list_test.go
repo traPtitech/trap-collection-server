@@ -35,34 +35,153 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 	otherImageID, otherVideoID := values.NewGameImageID(), values.NewGameVideoID()
 	activeID, archivedID, deletedID := values.NewFeedbackQuestionID(), values.NewFeedbackQuestionID(), values.NewFeedbackQuestionID()
 	otherQuestionID := values.NewFeedbackQuestionID()
-	feedbackID := values.GameFeedbackID(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
-	newerFeedbackID := values.GameFeedbackID(uuid.MustParse("00000000-0000-0000-0000-000000000002"))
-	tiedFeedbackID := values.GameFeedbackID(uuid.MustParse("00000000-0000-0000-0000-000000000003"))
-	otherFeedbackID := values.GameFeedbackID(uuid.MustParse("00000000-0000-0000-0000-000000000004"))
+	feedbackID := values.NewGameFeedbackIDFromUUID(uuid.MustParse("00000000-0000-0000-0000-000000000001"))
+	newerFeedbackID := values.NewGameFeedbackIDFromUUID(uuid.MustParse("00000000-0000-0000-0000-000000000002"))
+	tiedFeedbackID := values.NewGameFeedbackIDFromUUID(uuid.MustParse("00000000-0000-0000-0000-000000000003"))
+	otherFeedbackID := values.NewGameFeedbackIDFromUUID(uuid.MustParse("00000000-0000-0000-0000-000000000004"))
 	createdAt, archivedAt, deletedAt := time.Now().Add(-time.Hour), time.Now().Add(-30*time.Minute), time.Now().Add(-15*time.Minute)
 
-	game := schema.GameTable2{ID: uuid.UUID(gameID), Name: "feedback-list", Description: "description", VisibilityTypeID: visibility.ID, CreatedAt: createdAt}
-	otherGame := schema.GameTable2{ID: uuid.UUID(otherGameID), Name: "other-feedback-list", Description: "description", VisibilityTypeID: visibility.ID, CreatedAt: createdAt}
-	image := schema.GameImageTable2{ID: uuid.UUID(imageID), GameID: uuid.UUID(gameID), ImageTypeID: imageType.ID, CreatedAt: createdAt}
-	video := schema.GameVideoTable2{ID: uuid.UUID(videoID), GameID: uuid.UUID(gameID), VideoTypeID: videoType.ID, CreatedAt: createdAt}
-	otherImage := schema.GameImageTable2{ID: uuid.UUID(otherImageID), GameID: uuid.UUID(otherGameID), ImageTypeID: imageType.ID, CreatedAt: createdAt}
-	otherVideo := schema.GameVideoTable2{ID: uuid.UUID(otherVideoID), GameID: uuid.UUID(otherGameID), VideoTypeID: videoType.ID, CreatedAt: createdAt}
-	version := schema.GameVersionTable2{ID: uuid.UUID(versionID), GameID: uuid.UUID(gameID), GameImageID: uuid.UUID(imageID), GameVideoID: uuid.UUID(videoID), Name: "v1", Description: "description", CreatedAt: createdAt}
-	otherVersion := schema.GameVersionTable2{ID: uuid.UUID(otherVersionID), GameID: uuid.UUID(otherGameID), GameImageID: uuid.UUID(otherImageID), GameVideoID: uuid.UUID(otherVideoID), Name: "v1", Description: "description", CreatedAt: createdAt}
-	questions := []schema.GameFeedbackQuestionTable{
-		{ID: uuid.UUID(activeID), GameID: uuid.UUID(gameID), QuestionText: "active", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 0, CreatedAt: createdAt},
-		{ID: uuid.UUID(archivedID), GameID: uuid.UUID(gameID), QuestionText: "archived", AnswerType: int(values.FeedbackAnswerTypeFiveScale), QuestionOrder: 1, CreatedAt: createdAt, ArchivedAt: sql.NullTime{Time: archivedAt, Valid: true}},
-		{ID: uuid.UUID(deletedID), GameID: uuid.UUID(gameID), QuestionText: "deleted", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 2, CreatedAt: createdAt, DeletedAt: gorm.DeletedAt{Time: deletedAt, Valid: true}},
-		{ID: uuid.UUID(otherQuestionID), GameID: uuid.UUID(otherGameID), QuestionText: "other", AnswerType: int(values.FeedbackAnswerTypeYesNo), QuestionOrder: 0, CreatedAt: createdAt},
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "feedback-list",
+		Description:      "description",
+		VisibilityTypeID: visibility.ID,
+		CreatedAt:        createdAt,
 	}
-	feedback := schema.GameFeedbackTable{ID: uuid.UUID(feedbackID), GameVersionID: uuid.UUID(versionID), CreatedAt: createdAt}
-	newerFeedback := schema.GameFeedbackTable{ID: uuid.UUID(newerFeedbackID), GameVersionID: uuid.UUID(versionID), Comment: sql.NullString{String: "comment only", Valid: true}, CreatedAt: createdAt.Add(time.Minute)}
-	tiedFeedback := schema.GameFeedbackTable{ID: uuid.UUID(tiedFeedbackID), GameVersionID: uuid.UUID(versionID), CreatedAt: createdAt}
-	otherFeedback := schema.GameFeedbackTable{ID: uuid.UUID(otherFeedbackID), GameVersionID: uuid.UUID(otherVersionID), CreatedAt: createdAt.Add(2 * time.Minute)}
+	otherGame := schema.GameTable2{
+		ID:               uuid.UUID(otherGameID),
+		Name:             "other-feedback-list",
+		Description:      "description",
+		VisibilityTypeID: visibility.ID,
+		CreatedAt:        createdAt,
+	}
+	image := schema.GameImageTable2{
+		ID:          uuid.UUID(imageID),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: imageType.ID,
+		CreatedAt:   createdAt,
+	}
+	video := schema.GameVideoTable2{
+		ID:          uuid.UUID(videoID),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: videoType.ID,
+		CreatedAt:   createdAt,
+	}
+	otherImage := schema.GameImageTable2{
+		ID:          uuid.UUID(otherImageID),
+		GameID:      uuid.UUID(otherGameID),
+		ImageTypeID: imageType.ID,
+		CreatedAt:   createdAt,
+	}
+	otherVideo := schema.GameVideoTable2{
+		ID:          uuid.UUID(otherVideoID),
+		GameID:      uuid.UUID(otherGameID),
+		VideoTypeID: videoType.ID,
+		CreatedAt:   createdAt,
+	}
+	version := schema.GameVersionTable2{
+		ID:          uuid.UUID(versionID),
+		GameID:      uuid.UUID(gameID),
+		GameImageID: uuid.UUID(imageID),
+		GameVideoID: uuid.UUID(videoID),
+		Name:        "v1",
+		Description: "description",
+		CreatedAt:   createdAt,
+	}
+	otherVersion := schema.GameVersionTable2{
+		ID:          uuid.UUID(otherVersionID),
+		GameID:      uuid.UUID(otherGameID),
+		GameImageID: uuid.UUID(otherImageID),
+		GameVideoID: uuid.UUID(otherVideoID),
+		Name:        "v1",
+		Description: "description",
+		CreatedAt:   createdAt,
+	}
+	questions := []schema.GameFeedbackQuestionTable{
+		{
+			ID:            uuid.UUID(activeID),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "active",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 0,
+			CreatedAt:     createdAt,
+		},
+		{
+			ID:            uuid.UUID(archivedID),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "archived",
+			AnswerType:    int(values.FeedbackAnswerTypeFiveScale),
+			QuestionOrder: 1,
+			CreatedAt:     createdAt,
+			ArchivedAt: sql.NullTime{
+				Time:  archivedAt,
+				Valid: true,
+			},
+		},
+		{
+			ID:            uuid.UUID(deletedID),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "deleted",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 2,
+			CreatedAt:     createdAt,
+			DeletedAt: gorm.DeletedAt{
+				Time:  deletedAt,
+				Valid: true,
+			},
+		},
+		{
+			ID:            uuid.UUID(otherQuestionID),
+			GameID:        uuid.UUID(otherGameID),
+			QuestionText:  "other",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 0,
+			CreatedAt:     createdAt,
+		},
+	}
+	feedback := schema.GameFeedbackTable{
+		ID:            uuid.UUID(feedbackID),
+		GameVersionID: uuid.UUID(versionID),
+		CreatedAt:     createdAt,
+	}
+	newerFeedback := schema.GameFeedbackTable{
+		ID:            uuid.UUID(newerFeedbackID),
+		GameVersionID: uuid.UUID(versionID),
+		Comment: sql.NullString{
+			String: "comment only",
+			Valid:  true,
+		},
+		CreatedAt: createdAt.Add(time.Minute),
+	}
+	tiedFeedback := schema.GameFeedbackTable{
+		ID:            uuid.UUID(tiedFeedbackID),
+		GameVersionID: uuid.UUID(versionID),
+		CreatedAt:     createdAt,
+	}
+	otherFeedback := schema.GameFeedbackTable{
+		ID:            uuid.UUID(otherFeedbackID),
+		GameVersionID: uuid.UUID(otherVersionID),
+		CreatedAt:     createdAt.Add(2 * time.Minute),
+	}
 	answers := []schema.GameFeedbackAnswerTable{
-		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(activeID), Answer: 1},
-		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000012"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(archivedID), Answer: 5},
-		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000013"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(deletedID), Answer: 0},
+		{
+			ID:         uuid.MustParse("00000000-0000-0000-0000-000000000011"),
+			FeedbackID: uuid.UUID(feedbackID),
+			QuestionID: uuid.UUID(activeID),
+			Answer:     1,
+		},
+		{
+			ID:         uuid.MustParse("00000000-0000-0000-0000-000000000012"),
+			FeedbackID: uuid.UUID(feedbackID),
+			QuestionID: uuid.UUID(archivedID),
+			Answer:     5,
+		},
+		{
+			ID:         uuid.MustParse("00000000-0000-0000-0000-000000000013"),
+			FeedbackID: uuid.UUID(feedbackID),
+			QuestionID: uuid.UUID(deletedID),
+			Answer:     0,
+		},
 	}
 	require.NoError(t, db.Create(&game).Error)
 	require.NoError(t, db.Create(&otherGame).Error)
