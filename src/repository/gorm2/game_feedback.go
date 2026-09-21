@@ -64,18 +64,23 @@ func (g *GameFeedback) CreateGameFeedback(ctx context.Context, feedback *domain.
 		if answer.GetFeedbackID() != feedbackID {
 			return fmt.Errorf("game feedback answer %s belongs to feedback %s, not %s", answer.GetID(), answer.GetFeedbackID(), feedbackID)
 		}
-		answerTables = append(answerTables, schema.GameFeedbackAnswerTable{
+		answerTable := schema.GameFeedbackAnswerTable{
 			ID:         answer.GetID().UUID(),
 			FeedbackID: answer.GetFeedbackID().UUID(),
 			QuestionID: answer.GetQuestionID().UUID(),
 			Answer:     answer.GetAnswer(),
-		})
+		}
+		answerTables = append(answerTables, answerTable)
 	}
 
 	var comment sql.NullString
 	if feedback.GetComment() != nil {
-		comment = sql.NullString{String: string(*feedback.GetComment()), Valid: true}
+		comment = sql.NullString{
+			String: string(*feedback.GetComment()),
+			Valid:  true,
+		}
 	}
+
 	feedbackTable := schema.GameFeedbackTable{
 		ID:            feedbackID.UUID(),
 		GameVersionID: uuid.UUID(feedback.GetGameVersionID()),
@@ -89,14 +94,14 @@ func (g *GameFeedback) CreateGameFeedback(ctx context.Context, feedback *domain.
 	}
 
 	err = db.Transaction(func(tx *gorm.DB) error {
-		tx = tx.WithContext(ctx)
-		if err := tx.Create(&feedbackTable).Error; err != nil {
+		transactionDB := tx.WithContext(ctx)
+		if err := transactionDB.Create(&feedbackTable).Error; err != nil {
 			return fmt.Errorf("create game feedback: %w", err)
 		}
 		if len(answerTables) == 0 {
 			return nil
 		}
-		if err := tx.Create(&answerTables).Error; err != nil {
+		if err := transactionDB.Create(&answerTables).Error; err != nil {
 			return fmt.Errorf("create game feedback answers: %w", err)
 		}
 		return nil
