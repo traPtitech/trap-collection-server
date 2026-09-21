@@ -59,7 +59,11 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 	newerFeedback := schema.GameFeedbackTable{ID: uuid.UUID(newerFeedbackID), GameVersionID: uuid.UUID(versionID), Comment: sql.NullString{String: "comment only", Valid: true}, CreatedAt: createdAt.Add(time.Minute)}
 	tiedFeedback := schema.GameFeedbackTable{ID: uuid.UUID(tiedFeedbackID), GameVersionID: uuid.UUID(versionID), CreatedAt: createdAt}
 	otherFeedback := schema.GameFeedbackTable{ID: uuid.UUID(otherFeedbackID), GameVersionID: uuid.UUID(otherVersionID), CreatedAt: createdAt.Add(2 * time.Minute)}
-	answers := []schema.GameFeedbackAnswerTable{{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(activeID), Answer: 1}, {ID: uuid.MustParse("00000000-0000-0000-0000-000000000012"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(archivedID), Answer: 5}, {ID: uuid.MustParse("00000000-0000-0000-0000-000000000013"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(deletedID), Answer: 0}}
+	answers := []schema.GameFeedbackAnswerTable{
+		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(activeID), Answer: 1},
+		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000012"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(archivedID), Answer: 5},
+		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000013"), FeedbackID: uuid.UUID(feedbackID), QuestionID: uuid.UUID(deletedID), Answer: 0},
+	}
 	require.NoError(t, db.Create(&game).Error)
 	require.NoError(t, db.Create(&otherGame).Error)
 	require.NoError(t, db.Create(&image).Error)
