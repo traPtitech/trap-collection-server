@@ -36,21 +36,21 @@ func TestGameFeedbackListTrapMemberAuth(t *testing.T) {
 	require.NoError(t, api.SetRoutes(e))
 	gameID := values.NewGameID()
 
-	t.Run("unauthenticated request is rejected before service", func(t *testing.T) {
+	t.Run("未認証なのでserviceを呼び出さず401", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedbacks", nil)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
 
-	t.Run("edition-only bearer credential is rejected before service", func(t *testing.T) {
+	t.Run("edition専用のBearer認証なのでserviceを呼び出さず401", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v2/games/"+uuid.UUID(gameID).String()+"/feedbacks", nil)
 		req.Header.Set("Authorization", "Bearer edition-access-token")
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
-	t.Run("member request reaches service", func(t *testing.T) {
+	t.Run("member認証済みなのでserviceを呼び出して200", func(t *testing.T) {
 		accessToken := "member token"
 		oidc.EXPECT().Authenticate(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, authSession *domain.OIDCSession) error {
 			assert.Equal(t, values.NewOIDCAccessToken(accessToken), authSession.GetAccessToken())
