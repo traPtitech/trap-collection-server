@@ -79,8 +79,7 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 		executeArchiveFeedbackQuestions bool
 		archiveFeedbackQuestionsErr     error
 
-		expectedErr       error
-		expectedQuestions []*domain.FeedbackQuestion
+		expectedErr error
 	}
 	testCases := []test{
 		{
