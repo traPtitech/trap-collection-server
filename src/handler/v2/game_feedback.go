@@ -51,12 +51,15 @@ func (gf *GameFeedback) PatchFeedbackConfig(c echo.Context, _ openapi.GameIDInPa
 // フィードバック質問一覧の取得
 // (GET /games/{gameID}/feedback-questions)
 func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, gameID openapi.GameIDInPath) error {
-	questions, err := gf.gameFeedbackService.GetFeedbackQuestions(c.Request().Context(), values.NewGameIDFromUUID(gameID))
+	ctx := c.Request().Context()
+	localGameID := values.NewGameIDFromUUID(gameID)
+
+	questions, err := gf.gameFeedbackService.GetFeedbackQuestions(ctx, localGameID)
 	if errors.Is(err, service.ErrInvalidGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	}
 	if err != nil {
-		log.Printf("error: failed to get feedback questions: %v\\n", err)
+		log.Printf("error: failed to get feedback questions: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get feedback questions")
 	}
 
@@ -102,14 +105,17 @@ func (gf *GameFeedback) PostGameFeedback(c echo.Context, _ openapi.GameIDInPath)
 // ゲームのフィードバック一覧取得
 // (GET /games/{gameID}/feedbacks)
 func (gf *GameFeedback) GetGameFeedbacks(c echo.Context, gameIDPath openapi.GameIDInPath, params openapi.GetGameFeedbacksParams) error {
+	ctx := c.Request().Context()
+	gameID := values.NewGameIDFromUUID(gameIDPath)
+
 	limit, offset, err := gameFeedbackPagination(params.Limit, params.Offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid pagination")
 	}
 
 	feedbacks, total, err := gf.gameFeedbackService.GetGameFeedbacks(
-		c.Request().Context(),
-		values.NewGameIDFromUUID(gameIDPath),
+		ctx,
+		gameID,
 		limit,
 		offset,
 	)

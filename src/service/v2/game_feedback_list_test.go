@@ -28,61 +28,148 @@ func TestGameFeedbackGetGameFeedbacks(t *testing.T) {
 	feedback := domain.NewGameFeedback(feedbackID, versionID, nil, time.Now())
 	question := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("面白かったですか"), values.FeedbackAnswerTypeYesNo, values.NewFeedbackQuestionOrder(0), time.Now(), nil)
 
-	testCases := map[string]struct {
-		limit, offset int
-		gameErr       error
-		feedbackErr   error
-		questionErr   error
-		wantErr       error
-	}{
-		"取得できる":         {},
-		"limitが不正":      {limit: 101, wantErr: service.ErrInvalidLimit},
-		"gameが存在しない":    {gameErr: repository.ErrRecordNotFound, wantErr: service.ErrInvalidGame},
-		"feedback取得に失敗": {feedbackErr: assert.AnError, wantErr: assert.AnError},
-		"質問取得に失敗":       {questionErr: assert.AnError, wantErr: assert.AnError},
+	type test struct {
+		description string
+		limit       int
+		offset      int
+
+		executeGetGame bool
+		getGameErr     error
+
+		executeGetGameFeedbacksByGameID bool
+		getGameFeedbacksByGameIDResult  []*repository.GameFeedbackWithAnswers
+		getGameFeedbacksByGameIDTotal   int
+		getGameFeedbacksByGameIDErr     error
+
+		executeGetFeedbackQuestionsIncludingArchived bool
+		getFeedbackQuestionsIncludingArchivedResult  []*domain.FeedbackQuestion
+		getFeedbackQuestionsIncludingArchivedErr     error
+
+		expectedDetails []*service.GameFeedbackDetail
+		expectedTotal   int
+		isErr           bool
+		err             error
 	}
 
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
+	feedbackWithAnswer := &repository.GameFeedbackWithAnswers{
+		Feedback: feedback,
+		Answers:  []*domain.GameFeedbackAnswer{answer},
+	}
+
+	testCases := []test{
+		{
+			description:                     "正常にフィードバックを取得できる",
+			limit:                           50,
+			executeGetGame:                  true,
+			executeGetGameFeedbacksByGameID: true,
+			getGameFeedbacksByGameIDResult:  []*repository.GameFeedbackWithAnswers{feedbackWithAnswer},
+			getGameFeedbacksByGameIDTotal:   3,
+			executeGetFeedbackQuestionsIncludingArchived: true,
+			getFeedbackQuestionsIncludingArchivedResult:  []*domain.FeedbackQuestion{question},
+			expectedDetails: []*service.GameFeedbackDetail{
+				{
+					Feedback: feedback,
+					Answers: []*service.GameFeedbackAnswerDetail{
+						{
+							Answer:       answer,
+							QuestionText: question.GetQuestionText(),
+							AnswerType:   question.GetAnswerType(),
+						},
+					},
+				},
+			},
+			expectedTotal: 3,
+		},
+		{
+			description: "limitが不正なのでErrInvalidLimit",
+			limit:       101,
+			isErr:       true,
+			err:         service.ErrInvalidLimit,
+		},
+		{
+			description:    "GetGameがErrRecordNotFoundなのでErrInvalidGame",
+			limit:          50,
+			executeGetGame: true,
+			getGameErr:     repository.ErrRecordNotFound,
+			isErr:          true,
+			err:            service.ErrInvalidGame,
+		},
+		{
+			description:    "GetGameがエラーなのでエラー",
+			limit:          50,
+			executeGetGame: true,
+			getGameErr:     assert.AnError,
+			isErr:          true,
+			err:            assert.AnError,
+		},
+		{
+			description:                     "GetGameFeedbacksByGameIDがエラーなのでエラー",
+			limit:                           50,
+			executeGetGame:                  true,
+			executeGetGameFeedbacksByGameID: true,
+			getGameFeedbacksByGameIDErr:     assert.AnError,
+			isErr:                           true,
+			err:                             assert.AnError,
+		},
+		{
+			description:                     "GetFeedbackQuestionsIncludingArchivedがエラーなのでエラー",
+			limit:                           50,
+			executeGetGame:                  true,
+			executeGetGameFeedbacksByGameID: true,
+			getGameFeedbacksByGameIDResult:  []*repository.GameFeedbackWithAnswers{feedbackWithAnswer},
+			getGameFeedbacksByGameIDTotal:   3,
+			executeGetFeedbackQuestionsIncludingArchived: true,
+			getFeedbackQuestionsIncludingArchivedErr:     assert.AnError,
+			isErr:                                        true,
+			err:                                          assert.AnError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
+
 			ctrl := gomock.NewController(t)
-			games := mockRepository.NewMockGameV2(ctrl)
-			feedbacks := mockRepository.NewMockGameFeedback(ctrl)
-			versions := mockRepository.NewMockGameVersionV2(ctrl)
-			sut := NewGameFeedback(games, feedbacks, versions)
+			gameRepository := mockRepository.NewMockGameV2(ctrl)
+			gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+			gameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+			gameFeedbackService := NewGameFeedback(gameRepository, gameFeedbackRepository, gameVersionRepository)
 
-			limit := testCase.limit
-			if limit == 0 {
-				limit = 50
+			if testCase.executeGetGame {
+				gameRepository.
+					EXPECT().
+					GetGame(ctx, gameID, repository.LockTypeNone).
+					Return(nil, testCase.getGameErr)
 			}
-			if testCase.wantErr == service.ErrInvalidLimit {
-				require.ErrorIs(t, func() error {
-					_, _, err := sut.GetGameFeedbacks(ctx, gameID, testCase.limit, testCase.offset)
-					return err
-				}(), service.ErrInvalidLimit)
+			if testCase.executeGetGameFeedbacksByGameID {
+				gameFeedbackRepository.
+					EXPECT().
+					GetGameFeedbacksByGameID(ctx, gameID, testCase.limit, testCase.offset).
+					Return(
+						testCase.getGameFeedbacksByGameIDResult,
+						testCase.getGameFeedbacksByGameIDTotal,
+						testCase.getGameFeedbacksByGameIDErr,
+					)
+			}
+			if testCase.executeGetFeedbackQuestionsIncludingArchived {
+				gameFeedbackRepository.
+					EXPECT().
+					GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone).
+					Return(
+						testCase.getFeedbackQuestionsIncludingArchivedResult,
+						testCase.getFeedbackQuestionsIncludingArchivedErr,
+					)
+			}
+
+			feedbackDetails, total, err := gameFeedbackService.GetGameFeedbacks(ctx, gameID, testCase.limit, testCase.offset)
+			if testCase.isErr {
+				assert.ErrorIs(t, err, testCase.err)
 				return
 			}
 
-			games.EXPECT().GetGame(ctx, gameID, repository.LockTypeNone).Return(nil, testCase.gameErr)
-			if testCase.gameErr == nil {
-				feedbacks.EXPECT().GetGameFeedbacksByGameID(ctx, gameID, limit, testCase.offset).
-					Return([]*repository.GameFeedbackWithAnswers{{Feedback: feedback, Answers: []*domain.GameFeedbackAnswer{answer}}}, 3, testCase.feedbackErr)
-			}
-			if testCase.gameErr == nil && testCase.feedbackErr == nil {
-				feedbacks.EXPECT().GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone).
-					Return([]*domain.FeedbackQuestion{question}, testCase.questionErr)
-			}
-
-			got, total, err := sut.GetGameFeedbacks(ctx, gameID, limit, testCase.offset)
-			if testCase.wantErr != nil {
-				assert.ErrorIs(t, err, testCase.wantErr)
-				return
-			}
 			require.NoError(t, err)
-			assert.Equal(t, 3, total)
-			require.Len(t, got, 1)
-			require.Len(t, got[0].Answers, 1)
-			assert.Equal(t, question.GetQuestionText(), got[0].Answers[0].QuestionText)
+			assert.Equal(t, testCase.expectedTotal, total)
+			assert.Equal(t, testCase.expectedDetails, feedbackDetails)
 		})
 	}
 }

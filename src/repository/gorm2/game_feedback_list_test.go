@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/trap-collection-server/src/domain"
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
@@ -89,44 +90,108 @@ func TestGameFeedbackGetGameFeedbacksByGameVersionID(t *testing.T) {
 		require.NoError(t, cleanupDB.Unscoped().Delete(&otherGame).Error)
 	})
 
-	feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 0)
-	require.NoError(t, err)
-	assert.Equal(t, 3, total)
-	require.Len(t, feedbacks, 1)
-	assert.Equal(t, newerFeedbackID, feedbacks[0].Feedback.GetID())
-	assert.Empty(t, feedbacks[0].Answers)
-	require.NotNil(t, feedbacks[0].Feedback.GetComment())
+	type test struct {
+		description          string
+		limit                int
+		offset               int
+		expectedTotal        int
+		expectedFeedbackID   *values.GameFeedbackID
+		expectedComment      *values.FeedbackComment
+		expectedQuestionIDs  []values.FeedbackQuestionID
+		expectedAnswerValues []int
+	}
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 1)
-	require.NoError(t, err)
-	assert.Equal(t, 3, total)
-	require.Len(t, feedbacks, 1)
-	assert.Equal(t, tiedFeedbackID, feedbacks[0].Feedback.GetID())
-	assert.Empty(t, feedbacks[0].Answers)
+	commentOnly := values.NewFeedbackComment("comment only")
+	testCases := []test{
+		{
+			description:          "正常に最新のコメントのみのフィードバックを取得できる",
+			limit:                1,
+			offset:               0,
+			expectedTotal:        3,
+			expectedFeedbackID:   &newerFeedbackID,
+			expectedComment:      &commentOnly,
+			expectedQuestionIDs:  []values.FeedbackQuestionID{},
+			expectedAnswerValues: []int{},
+		},
+		{
+			description:          "同時刻ならIDの降順でフィードバックを取得できる",
+			limit:                1,
+			offset:               1,
+			expectedTotal:        3,
+			expectedFeedbackID:   &tiedFeedbackID,
+			expectedQuestionIDs:  []values.FeedbackQuestionID{},
+			expectedAnswerValues: []int{},
+		},
+		{
+			description:          "アーカイブ済み質問の回答を含めてフィードバックを取得できる",
+			limit:                1,
+			offset:               2,
+			expectedTotal:        3,
+			expectedFeedbackID:   &feedbackID,
+			expectedQuestionIDs:  []values.FeedbackQuestionID{activeID, archivedID},
+			expectedAnswerValues: []int{1, 5},
+		},
+		{
+			description:   "offsetが総数以上なら空のフィードバックを取得できる",
+			limit:         1,
+			offset:        3,
+			expectedTotal: 3,
+		},
+	}
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 2)
-	require.NoError(t, err)
-	assert.Equal(t, 3, total)
-	require.Len(t, feedbacks, 1)
-	assert.Equal(t, feedbackID, feedbacks[0].Feedback.GetID())
-	require.Len(t, feedbacks[0].Answers, 2)
-	assert.Equal(t, []values.FeedbackQuestionID{activeID, archivedID}, []values.FeedbackQuestionID{feedbacks[0].Answers[0].GetQuestionID(), feedbacks[0].Answers[1].GetQuestionID()})
-	assert.Equal(t, []int{1, 5}, []int{feedbacks[0].Answers[0].GetAnswer(), feedbacks[0].Answers[1].GetAnswer()})
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameVersionID(
+				ctx,
+				versionID,
+				testCase.limit,
+				testCase.offset,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedTotal, total)
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameVersionID(ctx, versionID, 1, 3)
-	require.NoError(t, err)
-	assert.Equal(t, 3, total)
-	assert.Empty(t, feedbacks)
+			if testCase.expectedFeedbackID == nil {
+				assert.Empty(t, feedbacks)
+				return
+			}
 
-	feedbacks, total, err = gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, 1, 2)
-	require.NoError(t, err)
-	assert.Equal(t, 3, total)
-	require.Len(t, feedbacks, 1)
-	assert.Equal(t, feedbackID, feedbacks[0].Feedback.GetID())
-	assert.Len(t, feedbacks[0].Answers, 2)
+			require.Len(t, feedbacks, 1)
+			assert.Equal(t, *testCase.expectedFeedbackID, feedbacks[0].Feedback.GetID())
+			assert.Equal(t, testCase.expectedComment, feedbacks[0].Feedback.GetComment())
+			assert.Equal(
+				t,
+				testCase.expectedQuestionIDs,
+				feedbackQuestionIDs(feedbacks[0].Answers),
+			)
+			assert.Equal(
+				t,
+				testCase.expectedAnswerValues,
+				feedbackAnswerValues(feedbacks[0].Answers),
+			)
+		})
+	}
+
 	returnedQuestions, err := gameFeedbackRepository.GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone)
 	require.NoError(t, err)
 	require.Len(t, returnedQuestions, 2)
 	assert.True(t, returnedQuestions[1].IsArchived())
 	assert.Equal(t, []values.FeedbackQuestionID{activeID, archivedID}, []values.FeedbackQuestionID{returnedQuestions[0].GetID(), returnedQuestions[1].GetID()})
+}
+
+func feedbackQuestionIDs(answers []*domain.GameFeedbackAnswer) []values.FeedbackQuestionID {
+	questionIDs := make([]values.FeedbackQuestionID, 0, len(answers))
+	for _, answer := range answers {
+		questionIDs = append(questionIDs, answer.GetQuestionID())
+	}
+
+	return questionIDs
+}
+
+func feedbackAnswerValues(answers []*domain.GameFeedbackAnswer) []int {
+	answerValues := make([]int, 0, len(answers))
+	for _, answer := range answers {
+		answerValues = append(answerValues, answer.GetAnswer())
+	}
+
+	return answerValues
 }

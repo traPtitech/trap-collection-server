@@ -1,0 +1,16 @@
+services:
+  s3:
+    image: rustfs/rustfs:1.0.0-rc.6@sha256:97171b3d72cd47dc81000f92ea84de25608bfc35a94c965501afaeb5d99f6035
+    ports:
+      - "9000"
+    environment:
+      RUSTFS_ACCESS_KEY: AKID
+      RUSTFS_SECRET_KEY: SECRETPASSWORD
+      RUSTFS_REGION: us-east-1
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
+      interval: 1s
+      timeout: 5s
+      retries: 120

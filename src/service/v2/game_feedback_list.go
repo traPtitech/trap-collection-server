@@ -82,7 +82,7 @@ func (g *GameFeedback) feedbackDetails(ctx context.Context, gameID values.GameID
 		}
 	}
 
-	result := make([]*service.GameFeedbackDetail, 0, len(feedbacks))
+	feedbackDetails := make([]*service.GameFeedbackDetail, 0, len(feedbacks))
 	for _, feedback := range feedbacks {
 		answers := make([]*service.GameFeedbackAnswerDetail, 0, len(feedback.Answers))
 		for _, answer := range feedback.Answers {
@@ -96,13 +96,13 @@ func (g *GameFeedback) feedbackDetails(ctx context.Context, gameID values.GameID
 				AnswerType:   question.answerType,
 			})
 		}
-		result = append(result, &service.GameFeedbackDetail{
+		feedbackDetails = append(feedbackDetails, &service.GameFeedbackDetail{
 			Feedback: feedback.Feedback,
 			Answers:  answers,
 		})
 	}
 
-	return result, total, nil
+	return feedbackDetails, total, nil
 }
 
 func validateGameFeedbackPagination(limit, offset int) error {

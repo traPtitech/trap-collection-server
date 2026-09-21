@@ -98,12 +98,12 @@ func getGameFeedbacks(query *gorm.DB, limit, offset int) ([]*repository.GameFeed
 		return nil, 0, fmt.Errorf("failed to get game feedbacks: %w", err)
 	}
 
-	result := make([]*repository.GameFeedbackWithAnswers, 0, len(feedbacks))
+	feedbacksWithAnswers := make([]*repository.GameFeedbackWithAnswers, 0, len(feedbacks))
 	for _, feedback := range feedbacks {
-		result = append(result, gameFeedbackWithAnswersFromTable(&feedback))
+		feedbacksWithAnswers = append(feedbacksWithAnswers, gameFeedbackWithAnswersFromTable(&feedback))
 	}
 
-	return result, int(total), nil
+	return feedbacksWithAnswers, int(total), nil
 }
 
 func gameFeedbackWithAnswersFromTable(feedback *schema.GameFeedbackTable) *repository.GameFeedbackWithAnswers {
