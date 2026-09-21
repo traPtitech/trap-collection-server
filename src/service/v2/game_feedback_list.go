@@ -10,25 +10,25 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 )
 
-func (gf *GameFeedback) GetGameFeedbacks(ctx context.Context, gameID values.GameID, limit, offset int) ([]*service.GameFeedbackDetail, int, error) {
+func (g *GameFeedback) GetGameFeedbacks(ctx context.Context, gameID values.GameID, limit, offset int) ([]*service.GameFeedbackDetail, int, error) {
 	if err := validateGameFeedbackPagination(limit, offset); err != nil {
 		return nil, 0, err
 	}
 
-	if err := gf.validateGame(ctx, gameID); err != nil {
+	if err := g.validateGame(ctx, gameID); err != nil {
 		return nil, 0, err
 	}
 
-	feedbacks, total, err := gf.gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, limit, offset)
+	feedbacks, total, err := g.gameFeedbackRepository.GetGameFeedbacksByGameID(ctx, gameID, limit, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get game feedbacks: %w", err)
 	}
 
-	return gf.feedbackDetails(ctx, gameID, feedbacks, total)
+	return g.feedbackDetails(ctx, gameID, feedbacks, total)
 }
 
-func (gf *GameFeedback) validateGame(ctx context.Context, gameID values.GameID) error {
-	_, err := gf.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
+func (g *GameFeedback) validateGame(ctx context.Context, gameID values.GameID) error {
+	_, err := g.gameRepository.GetGame(ctx, gameID, repository.LockTypeNone)
 	if errors.Is(err, repository.ErrRecordNotFound) {
 		return service.ErrInvalidGame
 	}
@@ -38,8 +38,8 @@ func (gf *GameFeedback) validateGame(ctx context.Context, gameID values.GameID) 
 	return nil
 }
 
-func (gf *GameFeedback) feedbackDetails(ctx context.Context, gameID values.GameID, feedbacks []*repository.GameFeedbackWithAnswers, total int) ([]*service.GameFeedbackDetail, int, error) {
-	questions, err := gf.gameFeedbackRepository.GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone)
+func (g *GameFeedback) feedbackDetails(ctx context.Context, gameID values.GameID, feedbacks []*repository.GameFeedbackWithAnswers, total int) ([]*service.GameFeedbackDetail, int, error) {
+	questions, err := g.gameFeedbackRepository.GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get feedback questions: %w", err)
 	}

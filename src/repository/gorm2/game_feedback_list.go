@@ -54,8 +54,8 @@ func (g *GameFeedback) GetFeedbackQuestionsIncludingArchived(ctx context.Context
 	return result, nil
 }
 
-func (gf *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID values.GameID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
-	db, err := gf.db.getDB(ctx)
+func (g *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID values.GameID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
+	db, err := g.db.getDB(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get db: %w", err)
 	}
