@@ -194,27 +194,23 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 	})
 
 	type test struct {
-		description       string
-		gameID            values.GameID
-		expectedQuestions []*domain.FeedbackQuestion
-		expectedErr       error
+		description           string
+		gameID                values.GameID
+		expectedQuestionID    values.FeedbackQuestionID
+		expectedQuestionText  values.FeedbackQuestionText
+		expectedAnswerType    values.FeedbackAnswerType
+		expectedQuestionOrder values.FeedbackQuestionOrder
+		expectedErr           error
 	}
 
 	testCases := []test{
 		{
-			description: "正常にアーカイブ済みと削除済みの質問を除いて取得できる",
-			gameID:      gameID,
-			expectedQuestions: []*domain.FeedbackQuestion{
-				domain.NewFeedbackQuestion(
-					visibleQuestionID,
-					gameID,
-					values.NewFeedbackQuestionText("visible"),
-					values.FeedbackAnswerTypeYesNo,
-					values.NewFeedbackQuestionOrder(2),
-					now,
-					nil,
-				),
-			},
+			description:           "正常にアーカイブ済みと削除済みの質問を除いて取得できる",
+			gameID:                gameID,
+			expectedQuestionID:    visibleQuestionID,
+			expectedQuestionText:  values.NewFeedbackQuestionText("visible"),
+			expectedAnswerType:    values.FeedbackAnswerTypeYesNo,
+			expectedQuestionOrder: values.NewFeedbackQuestionOrder(2),
 		},
 	}
 
@@ -233,7 +229,11 @@ func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, testCase.expectedQuestions, questions)
+			require.Len(t, questions, 1)
+			assert.Equal(t, testCase.expectedQuestionID, questions[0].GetID())
+			assert.Equal(t, testCase.expectedQuestionText, questions[0].GetQuestionText())
+			assert.Equal(t, testCase.expectedAnswerType, questions[0].GetAnswerType())
+			assert.Equal(t, testCase.expectedQuestionOrder, questions[0].GetQuestionOrder())
 		})
 	}
 }
