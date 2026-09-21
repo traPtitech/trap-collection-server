@@ -41,8 +41,8 @@ func (g *GameFeedback) GetFeedbackQuestionsIncludingArchived(ctx context.Context
 			archivedAt = &question.ArchivedAt.Time
 		}
 		result = append(result, domain.NewFeedbackQuestion(
-			values.FeedbackQuestionID(question.ID),
-			values.GameID(question.GameID),
+			values.NewFeedbackQuestionIDFromUUID(question.ID),
+			values.NewGameIDFromUUID(question.GameID),
 			values.NewFeedbackQuestionText(question.QuestionText),
 			values.FeedbackAnswerType(question.AnswerType),
 			values.NewFeedbackQuestionOrder(question.QuestionOrder),
@@ -120,17 +120,17 @@ func gameFeedbackWithAnswersFromTable(feedback *schema.GameFeedbackTable) *repos
 	answers := make([]*domain.GameFeedbackAnswer, 0, len(feedback.Answers))
 	for _, answer := range feedback.Answers {
 		answers = append(answers, domain.NewGameFeedbackAnswer(
-			values.GameFeedbackAnswerID(answer.ID),
-			values.GameFeedbackID(answer.FeedbackID),
-			values.FeedbackQuestionID(answer.QuestionID),
+			values.NewGameFeedbackAnswerIDFromUUID(answer.ID),
+			values.NewGameFeedbackIDFromUUID(answer.FeedbackID),
+			values.NewFeedbackQuestionIDFromUUID(answer.QuestionID),
 			answer.Answer,
 		))
 	}
 
 	return &repository.GameFeedbackWithAnswers{
 		Feedback: domain.NewGameFeedback(
-			values.GameFeedbackID(feedback.ID),
-			values.GameVersionID(feedback.GameVersionID),
+			values.NewGameFeedbackIDFromUUID(feedback.ID),
+			values.NewGameVersionIDFromUUID(feedback.GameVersionID),
 			comment,
 			feedback.CreatedAt,
 		),

@@ -193,72 +193,192 @@ func TestGameFeedbackGetGameVersionFeedbacksRejectsDifferentGame(t *testing.T) {
 	ctx := context.Background()
 	gameID := values.NewGameID()
 	ctrl := gomock.NewController(t)
-	games := mockRepository.NewMockGameV2(ctrl)
-	feedbacks := mockRepository.NewMockGameFeedback(ctrl)
-	versions := mockRepository.NewMockGameVersionV2(ctrl)
-	sut := NewGameFeedback(games, feedbacks, versions)
+	gameRepository := mockRepository.NewMockGameV2(ctrl)
+	gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+	gameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+	gameFeedbackService := NewGameFeedback(
+		gameRepository,
+		gameFeedbackRepository,
+		gameVersionRepository,
+	)
 
-	games.EXPECT().GetGame(ctx, gameID, repository.LockTypeNone).Return(nil, nil)
-	versions.EXPECT().GetGameVersionByID(ctx, gomock.Any(), repository.LockTypeNone).Return(&repository.GameVersionInfoWithGameID{GameID: values.NewGameID()}, nil)
+	gameRepository.EXPECT().
+		GetGame(ctx, gameID, repository.LockTypeNone).
+		Return(nil, nil)
+	gameVersionRepository.EXPECT().
+		GetGameVersionByID(ctx, gomock.Any(), repository.LockTypeNone).
+		Return(&repository.GameVersionInfoWithGameID{GameID: values.NewGameID()}, nil)
 
-	_, _, err := sut.GetGameVersionFeedbacks(ctx, gameID, values.NewGameVersionID(), 50, 0)
+	_, _, err := gameFeedbackService.GetGameVersionFeedbacks(
+		ctx,
+		gameID,
+		values.NewGameVersionID(),
+		50,
+		0,
+	)
 	assert.True(t, errors.Is(err, service.ErrInvalidGameVersion))
 }
 
 func TestGameFeedbackGetGameVersionFeedbacks(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
-	gameID, versionID := values.NewGameID(), values.NewGameVersionID()
-	feedbackID, questionID := values.NewGameFeedbackID(), values.NewFeedbackQuestionID()
-	feedback := domain.NewGameFeedback(feedbackID, versionID, nil, time.Now())
-	answer := domain.NewGameFeedbackAnswer(values.NewGameFeedbackAnswerID(), feedbackID, questionID, 5)
-	question := domain.NewFeedbackQuestion(questionID, gameID, values.NewFeedbackQuestionText("評価"), values.FeedbackAnswerTypeFiveScale, 0, time.Now(), nil)
 
-	testCases := map[string]struct {
-		gameErr, versionErr, listErr, questionErr error
-		wantErr                                   error
-	}{
-		"正常にフィードバックを取得できる": {},
-		"GetGameがErrRecordNotFoundなのでErrInvalidGame": {
-			gameErr: repository.ErrRecordNotFound,
-			wantErr: service.ErrInvalidGame,
+	ctx := context.Background()
+	gameID := values.NewGameID()
+	versionID := values.NewGameVersionID()
+	feedbackID := values.NewGameFeedbackID()
+	questionID := values.NewFeedbackQuestionID()
+	feedback := domain.NewGameFeedback(feedbackID, versionID, nil, time.Now())
+	answer := domain.NewGameFeedbackAnswer(
+		values.NewGameFeedbackAnswerID(),
+		feedbackID,
+		questionID,
+		5,
+	)
+	question := domain.NewFeedbackQuestion(
+		questionID,
+		gameID,
+		values.NewFeedbackQuestionText("評価"),
+		values.FeedbackAnswerTypeFiveScale,
+		0,
+		time.Now(),
+		nil,
+	)
+	feedbacksWithAnswers := []*repository.GameFeedbackWithAnswers{
+		{
+			Feedback: feedback,
+			Answers: []*domain.GameFeedbackAnswer{
+				answer,
+			},
 		},
-		"GetGameVersionByIDがErrRecordNotFoundなのでErrInvalidGameVersion": {
-			versionErr: repository.ErrRecordNotFound,
-			wantErr:    service.ErrInvalidGameVersion,
-		},
-		"GetGameVersionByIDがエラーなのでエラー":                    {versionErr: assert.AnError, wantErr: assert.AnError},
-		"GetGameFeedbacksByGameVersionIDがエラーなのでエラー":       {listErr: assert.AnError, wantErr: assert.AnError},
-		"GetFeedbackQuestionsIncludingArchivedがエラーなのでエラー": {questionErr: assert.AnError, wantErr: assert.AnError},
 	}
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
+	questions := []*domain.FeedbackQuestion{
+		question,
+	}
+
+	type test struct {
+		description                                  string
+		executeGetGame                               bool
+		getGameErr                                   error
+		executeGetGameVersionByID                    bool
+		getGameVersionByIDResult                     *repository.GameVersionInfoWithGameID
+		getGameVersionByIDErr                        error
+		executeGetGameFeedbacksByGameVersionID       bool
+		getGameFeedbacksByGameVersionIDResult        []*repository.GameFeedbackWithAnswers
+		getGameFeedbacksByGameVersionIDTotal         int
+		getGameFeedbacksByGameVersionIDErr           error
+		executeGetFeedbackQuestionsIncludingArchived bool
+		getFeedbackQuestionsResult                   []*domain.FeedbackQuestion
+		getFeedbackQuestionsErr                      error
+		expectedError                                error
+		expectedTotal                                int
+		expectedAnswerType                           values.FeedbackAnswerType
+	}
+
+	testCases := []test{
+		{
+			description:                                  "正常にゲームバージョンのフィードバックを取得できる",
+			executeGetGame:                               true,
+			executeGetGameVersionByID:                    true,
+			getGameVersionByIDResult:                     &repository.GameVersionInfoWithGameID{GameID: gameID},
+			executeGetGameFeedbacksByGameVersionID:       true,
+			getGameFeedbacksByGameVersionIDResult:        feedbacksWithAnswers,
+			getGameFeedbacksByGameVersionIDTotal:         1,
+			executeGetFeedbackQuestionsIncludingArchived: true,
+			getFeedbackQuestionsResult:                   questions,
+			expectedTotal:                                1,
+			expectedAnswerType:                           values.FeedbackAnswerTypeFiveScale,
+		},
+		{
+			description:    "GetGameがErrRecordNotFoundなのでErrInvalidGame",
+			executeGetGame: true,
+			getGameErr:     repository.ErrRecordNotFound,
+			expectedError:  service.ErrInvalidGame,
+		},
+		{
+			description:               "GetGameVersionByIDがErrRecordNotFoundなのでErrInvalidGameVersion",
+			executeGetGame:            true,
+			executeGetGameVersionByID: true,
+			getGameVersionByIDErr:     repository.ErrRecordNotFound,
+			expectedError:             service.ErrInvalidGameVersion,
+		},
+		{
+			description:               "GetGameVersionByIDがエラーなのでエラーが返される",
+			executeGetGame:            true,
+			executeGetGameVersionByID: true,
+			getGameVersionByIDErr:     assert.AnError,
+			expectedError:             assert.AnError,
+		},
+		{
+			description:                            "GetGameFeedbacksByGameVersionIDがエラーなのでエラーが返される",
+			executeGetGame:                         true,
+			executeGetGameVersionByID:              true,
+			getGameVersionByIDResult:               &repository.GameVersionInfoWithGameID{GameID: gameID},
+			executeGetGameFeedbacksByGameVersionID: true,
+			getGameFeedbacksByGameVersionIDErr:     assert.AnError,
+			expectedError:                          assert.AnError,
+		},
+		{
+			description:                                  "GetFeedbackQuestionsIncludingArchivedがエラーなのでエラーが返される",
+			executeGetGame:                               true,
+			executeGetGameVersionByID:                    true,
+			getGameVersionByIDResult:                     &repository.GameVersionInfoWithGameID{GameID: gameID},
+			executeGetGameFeedbacksByGameVersionID:       true,
+			getGameFeedbacksByGameVersionIDResult:        feedbacksWithAnswers,
+			getGameFeedbacksByGameVersionIDTotal:         1,
+			executeGetFeedbackQuestionsIncludingArchived: true,
+			getFeedbackQuestionsErr:                      assert.AnError,
+			expectedError:                                assert.AnError,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
-			games, feedbacks, versions := mockRepository.NewMockGameV2(ctrl), mockRepository.NewMockGameFeedback(ctrl), mockRepository.NewMockGameVersionV2(ctrl)
-			sut := NewGameFeedback(games, feedbacks, versions)
-			games.EXPECT().GetGame(ctx, gameID, repository.LockTypeNone).Return(nil, testCase.gameErr)
-			if testCase.gameErr != nil {
-				_, _, err := sut.GetGameVersionFeedbacks(ctx, gameID, versionID, 7, 3)
-				assert.ErrorIs(t, err, testCase.wantErr)
+			gameRepository := mockRepository.NewMockGameV2(ctrl)
+			gameFeedbackRepository := mockRepository.NewMockGameFeedback(ctrl)
+			gameVersionRepository := mockRepository.NewMockGameVersionV2(ctrl)
+			gameFeedbackService := NewGameFeedback(
+				gameRepository,
+				gameFeedbackRepository,
+				gameVersionRepository,
+			)
+
+			if testCase.executeGetGame {
+				gameRepository.EXPECT().
+					GetGame(ctx, gameID, repository.LockTypeNone).
+					Return(nil, testCase.getGameErr)
+			}
+			if testCase.executeGetGameVersionByID {
+				gameVersionRepository.EXPECT().
+					GetGameVersionByID(ctx, versionID, repository.LockTypeNone).
+					Return(testCase.getGameVersionByIDResult, testCase.getGameVersionByIDErr)
+			}
+			if testCase.executeGetGameFeedbacksByGameVersionID {
+				gameFeedbackRepository.EXPECT().
+					GetGameFeedbacksByGameVersionID(ctx, versionID, 7, 3).
+					Return(
+						testCase.getGameFeedbacksByGameVersionIDResult,
+						testCase.getGameFeedbacksByGameVersionIDTotal,
+						testCase.getGameFeedbacksByGameVersionIDErr,
+					)
+			}
+			if testCase.executeGetFeedbackQuestionsIncludingArchived {
+				gameFeedbackRepository.EXPECT().
+					GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone).
+					Return(testCase.getFeedbackQuestionsResult, testCase.getFeedbackQuestionsErr)
+			}
+
+			feedbackDetails, total, err := gameFeedbackService.GetGameVersionFeedbacks(ctx, gameID, versionID, 7, 3)
+			if testCase.expectedError != nil {
+				assert.ErrorIs(t, err, testCase.expectedError)
 				return
 			}
-			versions.EXPECT().GetGameVersionByID(ctx, versionID, repository.LockTypeNone).Return(&repository.GameVersionInfoWithGameID{GameID: gameID}, testCase.versionErr)
-			if testCase.versionErr == nil {
-				feedbacks.EXPECT().GetGameFeedbacksByGameVersionID(ctx, versionID, 7, 3).Return([]*repository.GameFeedbackWithAnswers{{Feedback: feedback, Answers: []*domain.GameFeedbackAnswer{answer}}}, 1, testCase.listErr)
-			}
-			if testCase.versionErr == nil && testCase.listErr == nil {
-				feedbacks.EXPECT().GetFeedbackQuestionsIncludingArchived(ctx, gameID, repository.LockTypeNone).Return([]*domain.FeedbackQuestion{question}, testCase.questionErr)
-			}
-			got, total, err := sut.GetGameVersionFeedbacks(ctx, gameID, versionID, 7, 3)
-			if testCase.wantErr != nil {
-				assert.ErrorIs(t, err, testCase.wantErr)
-				return
-			}
+
 			require.NoError(t, err)
-			assert.Equal(t, 1, total)
-			require.Len(t, got, 1)
-			require.Len(t, got[0].Answers, 1)
-			assert.Equal(t, values.FeedbackAnswerTypeFiveScale, got[0].Answers[0].AnswerType)
+			assert.Equal(t, testCase.expectedTotal, total)
+			require.Len(t, feedbackDetails, 1)
+			require.Len(t, feedbackDetails[0].Answers, 1)
+			assert.Equal(t, testCase.expectedAnswerType, feedbackDetails[0].Answers[0].AnswerType)
 		})
 	}
 }
