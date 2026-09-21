@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/domain/values"
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -286,8 +287,27 @@ func (gc *GameCreator) GetGameCreatorsByUserIDs(ctx context.Context, gameID valu
 	return gameCreatorsResult, nil
 }
 
-func (gc *GameCreator) GetGameCreatorByID(_ context.Context, _ values.GameCreatorID) (*domain.GameCreator, error) {
-	return nil, nil
+func (gc *GameCreator) GetGameCreatorByID(ctx context.Context, creatorID values.GameCreatorID) (*domain.GameCreator, error) {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get db: %w", err)
+	}
+
+	var creator schema.GameCreatorTable
+	if err := db.Where("id = ?", uuid.UUID(creatorID)).First(&creator).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repository.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("get game creator: %w", err)
+	}
+
+	return domain.NewGameCreator(
+		values.GameCreatorID(creator.ID),
+		values.NewTrapMemberID(creator.UserID),
+		values.NewGameIDFromUUID(creator.GameID),
+		values.NewTrapMemberName(creator.UserName),
+		creator.CreatedAt,
+	), nil
 }
 
 func (gc *GameCreator) DeleteGameCreator(_ context.Context, _ values.GameID, _ values.GameCreatorID) error {
