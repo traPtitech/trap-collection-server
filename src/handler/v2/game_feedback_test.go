@@ -367,6 +367,144 @@ func TestGetGameFeedbacks(t *testing.T) {
 	}
 }
 
+func TestGetGameVersionFeedbacks(t *testing.T) {
+	gameID, versionID := values.NewGameID(), values.NewGameVersionID()
+	feedbackID := values.NewGameFeedbackID()
+	yesNoQuestionID, fiveScaleQuestionID := values.NewFeedbackQuestionID(), values.NewFeedbackQuestionID()
+	comment := values.NewFeedbackComment("comment")
+	createdAt := time.Now().Round(0)
+	details := []*service.GameFeedbackDetail{
+		{
+			Feedback: domain.NewGameFeedback(
+				feedbackID,
+				versionID,
+				&comment,
+				createdAt,
+			),
+			Answers: []*service.GameFeedbackAnswerDetail{
+				{
+					Answer: domain.NewGameFeedbackAnswer(
+						values.NewGameFeedbackAnswerID(),
+						feedbackID,
+						yesNoQuestionID,
+						1,
+					),
+					QuestionText: values.NewFeedbackQuestionText("yes no"),
+					AnswerType:   values.FeedbackAnswerTypeYesNo,
+				},
+				{
+					Answer: domain.NewGameFeedbackAnswer(
+						values.NewGameFeedbackAnswerID(),
+						feedbackID,
+						fiveScaleQuestionID,
+						5,
+					),
+					QuestionText: values.NewFeedbackQuestionText("scale"),
+					AnswerType:   values.FeedbackAnswerTypeFiveScale,
+				},
+			},
+		},
+	}
+	testCases := map[string]struct {
+		params                         openapi.GetGameVersionFeedbacksParams
+		executeGetGameVersionFeedbacks bool
+		getGameVersionFeedbacksResult  []*service.GameFeedbackDetail
+		getGameVersionFeedbacksTotal   int
+		getGameVersionFeedbacksErr     error
+		expectedStatus                 int
+	}{
+		"GetGameVersionFeedbacksが成功するので200が返される": {
+			params: openapi.GetGameVersionFeedbacksParams{
+				Limit:  ptr(2),
+				Offset: ptr(3),
+			},
+			executeGetGameVersionFeedbacks: true,
+			getGameVersionFeedbacksResult:  details,
+			getGameVersionFeedbacksTotal:   4,
+			expectedStatus:                 http.StatusOK,
+		},
+		"GetGameVersionFeedbacksがErrInvalidGameなので404": {
+			params: openapi.GetGameVersionFeedbacksParams{
+				Limit:  ptr(2),
+				Offset: ptr(3),
+			},
+			executeGetGameVersionFeedbacks: true,
+			getGameVersionFeedbacksErr:     service.ErrInvalidGame,
+			expectedStatus:                 http.StatusNotFound,
+		},
+		"GetGameVersionFeedbacksがErrInvalidGameVersionなので404": {
+			params: openapi.GetGameVersionFeedbacksParams{
+				Limit:  ptr(2),
+				Offset: ptr(3),
+			},
+			executeGetGameVersionFeedbacks: true,
+			getGameVersionFeedbacksErr:     service.ErrInvalidGameVersion,
+			expectedStatus:                 http.StatusNotFound,
+		},
+		"GetGameVersionFeedbacksがエラーなので500": {
+			params: openapi.GetGameVersionFeedbacksParams{
+				Limit:  ptr(2),
+				Offset: ptr(3),
+			},
+			executeGetGameVersionFeedbacks: true,
+			getGameVersionFeedbacksErr:     assert.AnError,
+			expectedStatus:                 http.StatusInternalServerError,
+		},
+		"limitが不正なので400が返される": {
+			params: openapi.GetGameVersionFeedbacksParams{
+				Limit: ptr(101),
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			gameFeedbackService := mock.NewMockGameFeedback(ctrl)
+			handler := NewGameFeedback(gameFeedbackService)
+
+			if testCase.executeGetGameVersionFeedbacks {
+				gameFeedbackService.EXPECT().
+					GetGameVersionFeedbacks(gomock.Any(), gameID, versionID, 2, 3).
+					Return(
+						testCase.getGameVersionFeedbacksResult,
+						testCase.getGameVersionFeedbacksTotal,
+						testCase.getGameVersionFeedbacksErr,
+					)
+			}
+
+			c, _, rec := setupTestRequest(t, http.MethodGet, fmt.Sprintf("/games/%s/versions/%s/feedbacks", uuid.UUID(gameID), uuid.UUID(versionID)), nil)
+			err := handler.GetGameVersionFeedbacks(c, openapi.GameIDInPath(gameID), openapi.GameVersionIDInPath(versionID), testCase.params)
+			if testCase.expectedStatus != http.StatusOK {
+				var httpError *echo.HTTPError
+				require.ErrorAs(t, err, &httpError)
+				assert.Equal(t, testCase.expectedStatus, httpError.Code)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, rec.Code)
+			var response openapi.GameVersionFeedbacksResponse
+			require.NoError(t, json.NewDecoder(rec.Body).Decode(&response))
+			assert.Equal(t, 4, response.Total)
+			require.Len(t, response.Feedbacks, 1)
+			assert.Equal(t, openapi.GameFeedbackID(feedbackID), response.Feedbacks[0].Id)
+			assert.Equal(t, createdAt, response.Feedbacks[0].CreatedAt)
+			require.NotNil(t, response.Feedbacks[0].Comment)
+			assert.Equal(t, "comment", *response.Feedbacks[0].Comment)
+			require.Len(t, response.Feedbacks[0].Answers, 2)
+			yesNo, parseErr := response.Feedbacks[0].Answers[0].AsFeedbackAnswerYesNo()
+			require.NoError(t, parseErr)
+			assert.Equal(t, openapi.FeedbackQuestionID(yesNoQuestionID), yesNo.QuestionID)
+			assert.Equal(t, 1, yesNo.Answer)
+			fiveScale, parseErr := response.Feedbacks[0].Answers[1].AsFeedbackAnswerFiveScale()
+			require.NoError(t, parseErr)
+			assert.Equal(t, openapi.FeedbackQuestionID(fiveScaleQuestionID), fiveScale.QuestionID)
+			assert.Equal(t, 5, fiveScale.Answer)
+		})
+	}
+}
+
 func ptr(value int) *int {
 	return &value
 }

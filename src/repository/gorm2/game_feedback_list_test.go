@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
+func TestGameFeedbackGetGameFeedbacksByGameVersionID(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db, err := testDB.getDB(ctx)
@@ -264,9 +264,9 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameID(
+			feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameVersionID(
 				ctx,
-				gameID,
+				versionID,
 				testCase.limit,
 				testCase.offset,
 			)
@@ -291,6 +291,30 @@ func TestGameFeedbackGetGameFeedbacksByGameID(t *testing.T) {
 				testCase.expectedAnswerValues,
 				feedbackAnswerValues(feedbacks[0].Answers),
 			)
+		})
+	}
+
+	for _, testCase := range testCases {
+		t.Run("game IDで"+testCase.description, func(t *testing.T) {
+			feedbacks, total, err := gameFeedbackRepository.GetGameFeedbacksByGameID(
+				ctx,
+				gameID,
+				testCase.limit,
+				testCase.offset,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedTotal, total)
+
+			if testCase.expectedFeedbackID == nil {
+				assert.Empty(t, feedbacks)
+				return
+			}
+
+			require.Len(t, feedbacks, 1)
+			assert.Equal(t, *testCase.expectedFeedbackID, feedbacks[0].Feedback.GetID())
+			assert.Equal(t, testCase.expectedComment, feedbacks[0].Feedback.GetComment())
+			assert.Equal(t, testCase.expectedQuestionIDs, feedbackQuestionIDs(feedbacks[0].Answers))
+			assert.Equal(t, testCase.expectedAnswerValues, feedbackAnswerValues(feedbacks[0].Answers))
 		})
 	}
 

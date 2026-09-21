@@ -41,8 +41,8 @@ func (g *GameFeedback) GetFeedbackQuestionsIncludingArchived(ctx context.Context
 			archivedAt = &question.ArchivedAt.Time
 		}
 		result = append(result, domain.NewFeedbackQuestion(
-			values.FeedbackQuestionID(question.ID),
-			values.GameID(question.GameID),
+			values.NewFeedbackQuestionIDFromUUID(question.ID),
+			values.NewGameIDFromUUID(question.GameID),
 			values.NewFeedbackQuestionText(question.QuestionText),
 			values.FeedbackAnswerType(question.AnswerType),
 			values.NewFeedbackQuestionOrder(question.QuestionOrder),
@@ -63,6 +63,18 @@ func (g *GameFeedback) GetGameFeedbacksByGameID(ctx context.Context, gameID valu
 	query := db.Model(&schema.GameFeedbackTable{}).
 		Joins("JOIN v2_game_versions ON v2_game_versions.id = game_feedbacks.game_version_id").
 		Where("v2_game_versions.game_id = ?", uuid.UUID(gameID))
+
+	return getGameFeedbacks(query, limit, offset)
+}
+
+func (g *GameFeedback) GetGameFeedbacksByGameVersionID(ctx context.Context, gameVersionID values.GameVersionID, limit, offset int) ([]*repository.GameFeedbackWithAnswers, int, error) {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get db: %w", err)
+	}
+	query := db.
+		Model(&schema.GameFeedbackTable{}).
+		Where("game_feedbacks.game_version_id = ?", uuid.UUID(gameVersionID))
 
 	return getGameFeedbacks(query, limit, offset)
 }
@@ -108,17 +120,17 @@ func gameFeedbackWithAnswersFromTable(feedback *schema.GameFeedbackTable) *repos
 	answers := make([]*domain.GameFeedbackAnswer, 0, len(feedback.Answers))
 	for _, answer := range feedback.Answers {
 		answers = append(answers, domain.NewGameFeedbackAnswer(
-			values.GameFeedbackAnswerID(answer.ID),
-			values.GameFeedbackID(answer.FeedbackID),
-			values.FeedbackQuestionID(answer.QuestionID),
+			values.NewGameFeedbackAnswerIDFromUUID(answer.ID),
+			values.NewGameFeedbackIDFromUUID(answer.FeedbackID),
+			values.NewFeedbackQuestionIDFromUUID(answer.QuestionID),
 			answer.Answer,
 		))
 	}
 
 	return &repository.GameFeedbackWithAnswers{
 		Feedback: domain.NewGameFeedback(
-			values.GameFeedbackID(feedback.ID),
-			values.GameVersionID(feedback.GameVersionID),
+			values.NewGameFeedbackIDFromUUID(feedback.ID),
+			values.NewGameVersionIDFromUUID(feedback.GameVersionID),
 			comment,
 			feedback.CreatedAt,
 		),
