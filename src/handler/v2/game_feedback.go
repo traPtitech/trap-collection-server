@@ -71,6 +71,9 @@ func (gf *GameFeedback) GetFeedbackQuestions(c echo.Context, gameID openapi.Game
 // フィードバック質問の一括設定
 // (PUT /games/{gameID}/feedback-questions)
 func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.GameIDInPath) error {
+	ctx := c.Request().Context()
+	localGameID := values.NewGameIDFromUUID(gameID)
+
 	var request openapi.PutFeedbackQuestionsRequest
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
@@ -112,15 +115,18 @@ func (gf *GameFeedback) PutFeedbackQuestions(c echo.Context, gameID openapi.Game
 		})
 	}
 
-	questions, err := gf.gameFeedbackService.PutFeedbackQuestions(c.Request().Context(), values.NewGameIDFromUUID(gameID), inputs)
+	questions, err := gf.gameFeedbackService.PutFeedbackQuestions(ctx, localGameID, inputs)
 	if errors.Is(err, service.ErrInvalidGame) {
 		return echo.NewHTTPError(http.StatusNotFound, "game not found")
 	}
-	if errors.Is(err, service.ErrInvalidFeedbackQuestion) || errors.Is(err, service.ErrDuplicateFeedbackQuestion) || errors.Is(err, service.ErrInvalidFeedbackAnswerType) || errors.Is(err, service.ErrFeedbackQuestionAnswerTypeChange) {
+	if errors.Is(err, service.ErrInvalidFeedbackQuestion) ||
+		errors.Is(err, service.ErrDuplicateFeedbackQuestion) ||
+		errors.Is(err, service.ErrInvalidFeedbackAnswerType) ||
+		errors.Is(err, service.ErrFeedbackQuestionAnswerTypeChange) {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid feedback questions")
 	}
 	if err != nil {
-		log.Printf("error: failed to put feedback questions: %v\\n", err)
+		log.Printf("error: failed to put feedback questions: %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to put feedback questions")
 	}
 

@@ -80,8 +80,13 @@ func (g *GameFeedback) PutFeedbackQuestions(ctx context.Context, gameID values.G
 			questionOrder := values.NewFeedbackQuestionOrder(order)
 			if input.ID == nil {
 				question := domain.NewFeedbackQuestion(
-					values.NewFeedbackQuestionID(), gameID, input.QuestionText, input.AnswerType,
-					questionOrder, time.Now(), nil,
+					values.NewFeedbackQuestionID(),
+					gameID,
+					input.QuestionText,
+					input.AnswerType,
+					questionOrder,
+					time.Now(),
+					nil,
 				)
 				questions = append(questions, question)
 				newQuestions = append(newQuestions, question)
@@ -98,8 +103,13 @@ func (g *GameFeedback) PutFeedbackQuestions(ctx context.Context, gameID values.G
 				return service.ErrInvalidFeedbackQuestion
 			}
 			question := domain.NewFeedbackQuestion(
-				existingQuestion.GetID(), gameID, input.QuestionText, input.AnswerType,
-				questionOrder, existingQuestion.GetCreatedAt(), nil,
+				existingQuestion.GetID(),
+				gameID,
+				input.QuestionText,
+				input.AnswerType,
+				questionOrder,
+				existingQuestion.GetCreatedAt(),
+				nil,
 			)
 			questions = append(questions, question)
 			updatedQuestions = append(updatedQuestions, question)
