@@ -75,8 +75,6 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 		executeUpdateFeedbackQuestions  bool
 		updateFeedbackQuestionsErr      error
 		executeCreateFeedbackQuestions  bool
-		createFeedbackQuestionsInput    []*domain.FeedbackQuestion
-		expectExactCreateInput          bool
 		createFeedbackQuestionsErr      error
 		executeArchiveFeedbackQuestions bool
 		archiveFeedbackQuestionsErr     error
@@ -102,8 +100,6 @@ func TestGameFeedbackPutFeedbackQuestions(t *testing.T) {
 			executeHasFeedbackAnswers:       true,
 			executeUpdateFeedbackQuestions:  true,
 			executeCreateFeedbackQuestions:  true,
-			createFeedbackQuestionsInput:    []*domain.FeedbackQuestion{},
-			expectExactCreateInput:          true,
 			executeArchiveFeedbackQuestions: true,
 		},
 		{
