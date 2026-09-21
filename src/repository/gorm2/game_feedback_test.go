@@ -2,6 +2,7 @@ package gorm2
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -112,6 +113,126 @@ func TestGameFeedbackGetFeedbackConfig(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.expectedValue, enabled)
+		})
+	}
+}
+
+func TestGameFeedbackGetFeedbackQuestions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+
+	gameFeedbackRepository := NewGameFeedback(testDB)
+
+	var visibility schema.GameVisibilityTypeTable
+	require.NoError(t, db.
+		Where("name = ?", schema.GameVisibilityTypePublic).
+		Take(&visibility).Error)
+
+	gameID := values.NewGameID()
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "feedback questions",
+		Description:      "description",
+		VisibilityTypeID: visibility.ID,
+		CreatedAt:        time.Now(),
+	}
+	require.NoError(t, db.Create(&game).Error)
+
+	visibleQuestionID := values.NewFeedbackQuestionID()
+	archivedQuestionID := values.NewFeedbackQuestionID()
+	deletedQuestionID := values.NewFeedbackQuestionID()
+	now := time.Now()
+	questions := []schema.GameFeedbackQuestionTable{
+		{
+			ID:            visibleQuestionID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "visible",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 2,
+			CreatedAt:     now,
+		},
+		{
+			ID:            archivedQuestionID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "archived",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 0,
+			CreatedAt:     now,
+			ArchivedAt: sql.NullTime{
+				Time:  now,
+				Valid: true,
+			},
+		},
+		{
+			ID:            deletedQuestionID.UUID(),
+			GameID:        uuid.UUID(gameID),
+			QuestionText:  "deleted",
+			AnswerType:    int(values.FeedbackAnswerTypeYesNo),
+			QuestionOrder: 1,
+			CreatedAt:     now,
+		},
+	}
+	require.NoError(t, db.Create(&questions).Error)
+	require.NoError(t, db.Delete(&questions[2]).Error)
+	t.Cleanup(func() {
+		cleanupCtx := context.Background()
+		cleanupDB, err := testDB.getDB(cleanupCtx)
+		require.NoError(t, err)
+		require.NoError(t, cleanupDB.
+			Unscoped().
+			Where("id IN ?", []uuid.UUID{
+				visibleQuestionID.UUID(),
+				archivedQuestionID.UUID(),
+				deletedQuestionID.UUID(),
+			}).
+			Delete(&schema.GameFeedbackQuestionTable{}).Error)
+		require.NoError(t, cleanupDB.Unscoped().Delete(&game).Error)
+	})
+
+	type test struct {
+		description           string
+		gameID                values.GameID
+		expectedQuestionID    values.FeedbackQuestionID
+		expectedQuestionText  values.FeedbackQuestionText
+		expectedAnswerType    values.FeedbackAnswerType
+		expectedQuestionOrder values.FeedbackQuestionOrder
+		expectedErr           error
+	}
+
+	testCases := []test{
+		{
+			description:           "正常にアーカイブ済みと削除済みの質問を除いて取得できる",
+			gameID:                gameID,
+			expectedQuestionID:    visibleQuestionID,
+			expectedQuestionText:  values.NewFeedbackQuestionText("visible"),
+			expectedAnswerType:    values.FeedbackAnswerTypeYesNo,
+			expectedQuestionOrder: values.NewFeedbackQuestionOrder(2),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			questions, err := gameFeedbackRepository.GetFeedbackQuestions(
+				ctx,
+				testCase.gameID,
+				repository.LockTypeNone,
+			)
+
+			if testCase.expectedErr != nil {
+				assert.ErrorIs(t, err, testCase.expectedErr)
+				assert.Nil(t, questions)
+				return
+			}
+
+			assert.NoError(t, err)
+			require.Len(t, questions, 1)
+			assert.Equal(t, testCase.expectedQuestionID, questions[0].GetID())
+			assert.Equal(t, testCase.expectedQuestionText, questions[0].GetQuestionText())
+			assert.Equal(t, testCase.expectedAnswerType, questions[0].GetAnswerType())
+			assert.Equal(t, testCase.expectedQuestionOrder, questions[0].GetQuestionOrder())
 		})
 	}
 }
