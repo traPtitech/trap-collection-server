@@ -11,7 +11,7 @@ CREATE TABLE `game_feedback_configs` (
   `enabled` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`game_id`),
   CONSTRAINT `fk_game_feedback_configs_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

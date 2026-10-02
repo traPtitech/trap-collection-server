@@ -5,11 +5,11 @@ services:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: trap_collection
       TZ: Asia/Tokyo
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    command: mariadbd --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     expose:
       - 3306
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppass"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-ppass"]
       timeout: 5s
       interval: 10s
       retries: 10

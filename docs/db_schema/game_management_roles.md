@@ -16,7 +16,7 @@ CREATE TABLE `game_management_roles` (
   KEY `fk_game_management_roles_role_type_table` (`role_type_id`),
   CONSTRAINT `fk_game_management_roles_role_type_table` FOREIGN KEY (`role_type_id`) REFERENCES `game_management_role_types` (`id`),
   CONSTRAINT `fk_games_game_management_roles` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>
