@@ -163,7 +163,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         
       - name: Run tbls
-        run: docker compose -f docker/tbls/compose.yaml up --build --abort-on-container-exit
+        run: docker compose -f docker/tbls/compose.yaml run --rm tbls
 
       - name: Check diff
         run: |

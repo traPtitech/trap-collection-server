@@ -15,7 +15,7 @@ CREATE TABLE `edition_game_version_relations` (
   KEY `fk_edition_game_version_relations_game_version_table2` (`game_version_id`),
   CONSTRAINT `fk_edition_game_version_relations_edition_table` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
   CONSTRAINT `fk_edition_game_version_relations_game_version_table2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>
