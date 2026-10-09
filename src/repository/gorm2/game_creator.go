@@ -326,8 +326,29 @@ func (gc *GameCreator) GetGameCreatorPresetJobsByCreatorID(ctx context.Context, 
 	return creatorJobs, nil
 }
 
-func (gc *GameCreator) GetGameCreatorCustomJobsByCreatorID(_ context.Context, _ values.GameCreatorID) ([]*domain.GameCreatorCustomJob, error) {
-	return nil, nil
+func (gc *GameCreator) GetGameCreatorCustomJobsByCreatorID(ctx context.Context, creatorID values.GameCreatorID) ([]*domain.GameCreatorCustomJob, error) {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get db: %w", err)
+	}
+
+	creator := schema.GameCreatorTable{ID: uuid.UUID(creatorID)}
+	err = db.Model(&creator).Association("CustomCreatorJobs").Find(&creator.CustomCreatorJobs)
+	if err != nil {
+		return nil, fmt.Errorf("get game creator custom jobs: %w", err)
+	}
+
+	creatorJobs := make([]*domain.GameCreatorCustomJob, 0, len(creator.CustomCreatorJobs))
+	for _, job := range creator.CustomCreatorJobs {
+		creatorJobs = append(creatorJobs, domain.NewGameCreatorCustomJob(
+			values.GameCreatorJobID(job.ID),
+			values.NewGameCreatorJobDisplayName(job.DisplayName),
+			values.GameID(job.GameID),
+			job.CreatedAt,
+		))
+	}
+
+	return creatorJobs, nil
 }
 
 func (gc *GameCreator) DeleteGameCreatorPresetJobsByCreatorID(_ context.Context, _ values.GameCreatorID, _ []values.GameCreatorJobID) error {
