@@ -1188,3 +1188,100 @@ func TestUpsertGameCreatorPresetJobsRelations(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteGameCreatorCustomJobs(t *testing.T) {
+	gameID := uuid.New()
+	creatorID1 := uuid.New()
+	creatorID2 := uuid.New()
+	userID1 := uuid.New()
+	userID2 := uuid.New()
+	customJob1 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 1"}
+	customJob2 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 2"}
+	customJob3 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 3"}
+
+	newCreatorFixture := func(id, userID uuid.UUID, customJobs ...schema.GameCreatorCustomJobTable) schema.GameCreatorTable {
+		return schema.GameCreatorTable{
+			ID:                id,
+			GameID:            gameID,
+			UserID:            userID,
+			UserName:          "Test User",
+			CustomCreatorJobs: customJobs,
+		}
+	}
+
+	// creator と custom job の紐づけを (creator ID, custom job ID) の組の一覧にする
+	type creatorCustomJobRelation struct {
+		creatorID   uuid.UUID
+		customJobID uuid.UUID
+	}
+	toRelations := func(creators []schema.GameCreatorTable) []creatorCustomJobRelation {
+		relations := []creatorCustomJobRelation{}
+		for _, creator := range creators {
+			for _, customJob := range creator.CustomCreatorJobs {
+				relations = append(relations, creatorCustomJobRelation{creatorID: creator.ID, customJobID: customJob.ID})
+			}
+		}
+		return relations
+	}
+
+	testCases := map[string]struct {
+		beforeCreators []schema.GameCreatorTable
+		creatorID      values.GameCreatorID
+		afterCreators  []schema.GameCreatorTable
+	}{
+		"1つ削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"複数削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1, customJob2)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"他のcreatorのcustom jobは削除しない": {
+			beforeCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1, customJob1),
+				newCreatorFixture(creatorID2, userID2, customJob3),
+			},
+			creatorID: values.GameCreatorID(creatorID1),
+			afterCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1),
+				newCreatorFixture(creatorID2, userID2, customJob3),
+			},
+		},
+		"存在しないcreatorIDなら何も削除しない": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+			creatorID:      values.NewGameCreatorID(),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			require.NoError(t, db.Create(&schema.GameTable2{ID: gameID, VisibilityTypeID: 1}).Error)
+			require.NoError(t, db.Create(testCase.beforeCreators).Error)
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Exec("DELETE FROM game_creator_custom_job_relations WHERE game_creator_id IN (SELECT id FROM game_creators WHERE game_id = ?)", gameID).Error
+				require.NoError(t, err)
+				require.NoError(t, db.Where("game_id = ?", gameID).Delete(&schema.GameCreatorTable{}).Error)
+				require.NoError(t, db.Where("game_id = ?", gameID).Delete(&schema.GameCreatorCustomJobTable{}).Error)
+				require.NoError(t, db.Unscoped().Delete(&schema.GameTable2{ID: gameID}).Error)
+			})
+
+			err = NewGameCreator(testDB).DeleteGameCreatorCustomJobs(ctx, testCase.creatorID)
+			assert.NoError(t, err)
+
+			var creators []schema.GameCreatorTable
+			err = db.Preload("CustomCreatorJobs").Where("game_id = ?", gameID).Find(&creators).Error
+			require.NoError(t, err)
+			assert.ElementsMatch(t, toRelations(testCase.afterCreators), toRelations(creators))
+		})
+	}
+}
