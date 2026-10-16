@@ -17,7 +17,7 @@ CREATE TABLE `feedback_questions` (
   PRIMARY KEY (`id`),
   KEY `idx_feedback_questions_game_id` (`game_id`),
   CONSTRAINT `fk_feedback_questions_game` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

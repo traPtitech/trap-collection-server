@@ -18,7 +18,7 @@ CREATE TABLE `launcher_users` (
   UNIQUE KEY `uni_launcher_users_product_key` (`product_key`),
   KEY `fk_launcher_versions_launcher_users` (`launcher_version_id`),
   CONSTRAINT `fk_launcher_versions_launcher_users` FOREIGN KEY (`launcher_version_id`) REFERENCES `launcher_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

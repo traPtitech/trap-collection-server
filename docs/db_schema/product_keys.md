@@ -20,7 +20,7 @@ CREATE TABLE `product_keys` (
   KEY `fk_product_keys_status` (`status_id`),
   CONSTRAINT `fk_editions_product_keys` FOREIGN KEY (`edition_id`) REFERENCES `editions` (`id`),
   CONSTRAINT `fk_product_keys_status` FOREIGN KEY (`status_id`) REFERENCES `product_key_statuses` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>
