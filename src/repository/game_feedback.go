@@ -10,4 +10,6 @@ import (
 
 type GameFeedback interface {
 	GetFeedbackConfig(ctx context.Context, gameID values.GameID, lockType LockType) (bool, error)
+
+	SaveFeedbackConfig(ctx context.Context, gameID values.GameID, enabled bool) error
 }
