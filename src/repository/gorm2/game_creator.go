@@ -329,7 +329,18 @@ func (gc *GameCreator) DeleteGameCreatorCustomJobs(ctx context.Context, creatorI
 	return nil
 }
 
-func (gc *GameCreator) DeleteGameCreatorPresetJobs(_ context.Context, _ values.GameCreatorID) error {
+func (gc *GameCreator) DeleteGameCreatorPresetJobs(ctx context.Context, creatorID values.GameCreatorID) error {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	err = db.Model(&schema.GameCreatorTable{ID: uuid.UUID(creatorID)}).
+		Association("CreatorJobs").Clear()
+	if err != nil {
+		return fmt.Errorf("delete game creator preset jobs: %w", err)
+	}
+
 	return nil
 }
 
