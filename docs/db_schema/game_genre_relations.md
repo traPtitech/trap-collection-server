@@ -15,7 +15,7 @@ CREATE TABLE `game_genre_relations` (
   KEY `fk_game_genre_relations_game_genre_table` (`genre_id`),
   CONSTRAINT `fk_game_genre_relations_game_genre_table` FOREIGN KEY (`genre_id`) REFERENCES `game_genres` (`id`),
   CONSTRAINT `fk_game_genre_relations_game_table2` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

@@ -15,7 +15,7 @@ CREATE TABLE `launcher_version_game_relations` (
   KEY `fk_launcher_version_game_relations_game_table2` (`game_table_id`),
   CONSTRAINT `fk_launcher_version_game_relations_game_table2` FOREIGN KEY (`game_table_id`) REFERENCES `games` (`id`),
   CONSTRAINT `fk_launcher_version_game_relations_launcher_version_table` FOREIGN KEY (`launcher_version_table_id`) REFERENCES `launcher_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>
