@@ -344,6 +344,9 @@ func TestCreateGamePlayLog(t *testing.T) {
 						Where("id IN ?", playLogIDs).
 						Delete(&schema.GamePlayLogTable{})
 				}
+				if testCase.playLog != nil {
+					db.Exec("DELETE FROM edition_game_version_relations WHERE edition_id = ? AND game_version_id = ?", uuid.UUID(testCase.playLog.GetEditionID()), uuid.UUID(testCase.playLog.GetGameVersionID()))
+				}
 				if len(versionIDs) > 0 {
 					db.Session(&gorm.Session{}).Unscoped().
 						Where("id IN ?", versionIDs).
@@ -433,6 +436,8 @@ func TestCreateGamePlayLog(t *testing.T) {
 					t.Fatalf("create game versions: %+v\n", err)
 				}
 			}
+
+			require.NoError(t, db.Exec("INSERT INTO edition_game_version_relations (edition_id, game_version_id) VALUES (?, ?)", uuid.UUID(testCase.playLog.GetEditionID()), uuid.UUID(testCase.playLog.GetGameVersionID())).Error)
 
 			if len(testCase.beforeGamePlayLogs) != 0 {
 				err := db.

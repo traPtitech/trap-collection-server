@@ -53,12 +53,27 @@ func (g *GamePlayLogV2) CreateGamePlayLog(ctx context.Context, playLog *domain.G
 		UpdatedAt:     playLog.GetUpdatedAt(),
 	}
 
-	err = db.Create(&gamePlayLogTable).Error
+	result := db.Exec(`INSERT INTO game_play_logs
+		(id, edition_id, game_id, game_version_id, start_time, end_time, created_at, updated_at)
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?
+		WHERE EXISTS (
+			SELECT 1 FROM edition_game_version_relations AS relation
+			JOIN v2_game_versions AS version ON version.id = relation.game_version_id
+			JOIN games ON games.id = version.game_id AND games.deleted_at IS NULL
+			WHERE relation.edition_id = ? AND version.id = ? AND version.game_id = ?
+		)`, gamePlayLogTable.ID, gamePlayLogTable.EditionID, gamePlayLogTable.GameID,
+		gamePlayLogTable.GameVersionID, gamePlayLogTable.StartTime, gamePlayLogTable.EndTime,
+		gamePlayLogTable.CreatedAt, gamePlayLogTable.UpdatedAt,
+		gamePlayLogTable.EditionID, gamePlayLogTable.GameVersionID, gamePlayLogTable.GameID)
+	err = result.Error
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1062 {
 			return repository.ErrDuplicatedUniqueKey
 		}
 		return fmt.Errorf("create game play log: %w", err)
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrRecordNotFound
 	}
 	return nil
 }

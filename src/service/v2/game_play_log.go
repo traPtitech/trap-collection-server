@@ -74,6 +74,9 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Editio
 	)
 
 	err = g.gamePlayLogRepository.CreateGamePlayLog(ctx, playLog)
+	if errors.Is(err, repository.ErrRecordNotFound) {
+		return nil, service.ErrInvalidGameVersion
+	}
 	if err != nil {
 		return nil, fmt.Errorf("creating game play log: %w", err)
 	}
