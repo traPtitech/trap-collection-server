@@ -825,6 +825,8 @@ paths:
     get:
       tags:
         - gameVersion
+      security:
+        - GameInfoVisibilityAuth: []
       operationId: getLatestGameVersion
       responses:
         '200':
