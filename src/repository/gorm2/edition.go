@@ -306,7 +306,7 @@ func (e *Edition) GetEditionGameVersions(ctx context.Context, editionID values.E
 	return result, nil
 }
 
-func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.EditionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, editionID values.EditionID, gameID values.GameID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -320,6 +320,7 @@ func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.Ed
 	var gameVersion schema.GameVersionTable2
 	err = db.
 		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
+		Where("edition_game_version_relations.edition_id = ?", uuid.UUID(editionID)).
 		Where("v2_game_versions.game_id = ?", uuid.UUID(gameID)).
 		Take(&gameVersion).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -337,7 +338,7 @@ func (e *Edition) GetEditionGameVersionByGameID(ctx context.Context, _ values.Ed
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.EditionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, editionID values.EditionID, imageID values.GameImageID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -350,6 +351,8 @@ func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.E
 
 	var gameVersion schema.GameVersionTable2
 	err = db.
+		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
+		Where("edition_game_version_relations.edition_id = ?", uuid.UUID(editionID)).
 		Where("game_image_id = ?", uuid.UUID(imageID)).
 		Take(&gameVersion).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -367,7 +370,7 @@ func (e *Edition) GetEditionGameVersionByImageID(ctx context.Context, _ values.E
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.EditionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, editionID values.EditionID, videoID values.GameVideoID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -380,6 +383,8 @@ func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.E
 
 	var gameVersion schema.GameVersionTable2
 	err = db.
+		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
+		Where("edition_game_version_relations.edition_id = ?", uuid.UUID(editionID)).
 		Where("game_video_id = ?", uuid.UUID(videoID)).
 		Take(&gameVersion).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -397,7 +402,7 @@ func (e *Edition) GetEditionGameVersionByVideoID(ctx context.Context, _ values.E
 	), nil
 }
 
-func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.EditionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
+func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, editionID values.EditionID, fileID values.GameFileID, lockType repository.LockType) (*domain.GameVersion, error) {
 	db, err := e.db.getDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db: %w", err)
@@ -410,6 +415,8 @@ func (e *Edition) GetEditionGameVersionByFileID(ctx context.Context, _ values.Ed
 
 	var gameVersion schema.GameVersionTable2
 	err = db.
+		Joins("INNER JOIN edition_game_version_relations ON edition_game_version_relations.game_version_id = v2_game_versions.id").
+		Where("edition_game_version_relations.edition_id = ?", uuid.UUID(editionID)).
 		Joins("INNER JOIN game_version_game_file_relations ON game_version_game_file_relations.game_version_id = v2_game_versions.id").
 		Where("game_version_game_file_relations.game_file_id = ?", uuid.UUID(fileID)).
 		Take(&gameVersion).Error
