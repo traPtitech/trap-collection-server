@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/repository"
 	"github.com/traPtitech/trap-collection-server/src/repository/gorm2/schema"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GameFeedback struct {
@@ -45,4 +46,26 @@ func (g *GameFeedback) GetFeedbackConfig(ctx context.Context, gameID values.Game
 	}
 
 	return config.Enabled, nil
+}
+
+func (g *GameFeedback) SaveFeedbackConfig(ctx context.Context, gameID values.GameID, enabled bool) error {
+	db, err := g.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get db: %w", err)
+	}
+
+	err = db.
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "game_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"enabled"}),
+		}).
+		Create(&schema.GameFeedbackConfigTable{
+			GameID:  uuid.UUID(gameID),
+			Enabled: enabled,
+		}).Error
+	if err != nil {
+		return fmt.Errorf("failed to upsert game feedback config: %w", err)
+	}
+
+	return nil
 }
