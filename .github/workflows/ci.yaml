@@ -37,7 +37,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Setup Atlas
-        uses: ariga/setup-atlas@4060c70f266b5c63d372dc0c707ea54303139494 # v0
+        uses: ariga/setup-atlas@28f0b75814c08b1a265b75713c120cfad46433ae # v0
 
       - run: go generate ./...
       - run: mkdir -p /tmp/coverage
