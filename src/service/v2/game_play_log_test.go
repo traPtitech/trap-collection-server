@@ -20,8 +20,6 @@ import (
 func TestCreatePlayLog(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	type test struct {
 		description   string
 		editionID     values.EditionID
@@ -209,6 +207,8 @@ func TestCreatePlayLog(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := t.Context()
 
 			ctrl := gomock.NewController(t)
 
