@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/traPtitech/trap-collection-server/src/domain"
@@ -53,12 +54,18 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Editio
 		return nil, fmt.Errorf("getting game: %w", err)
 	}
 
-	_, err = g.gameVersionRepository.GetGameVersionByID(ctx, gameVersionID, repository.LockTypeNone)
+	gameVersions, err := g.editionRepository.GetEditionGameVersions(ctx, editionID, repository.LockTypeNone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return nil, service.ErrInvalidGameVersion
 		}
-		return nil, fmt.Errorf("getting game version: %w", err)
+		return nil, fmt.Errorf("getting edition game versions: %w", err)
+	}
+
+	if !slices.ContainsFunc(gameVersions, func(version *repository.GameVersionInfoWithGameID) bool {
+		return version.GetID() == gameVersionID && version.GameID == gameID
+	}) {
+		return nil, service.ErrInvalidGameVersion
 	}
 
 	now := time.Now()
@@ -74,9 +81,6 @@ func (g *GamePlayLog) CreatePlayLog(ctx context.Context, editionID values.Editio
 	)
 
 	err = g.gamePlayLogRepository.CreateGamePlayLog(ctx, playLog)
-	if errors.Is(err, repository.ErrRecordNotFound) {
-		return nil, service.ErrInvalidGameVersion
-	}
 	if err != nil {
 		return nil, fmt.Errorf("creating game play log: %w", err)
 	}

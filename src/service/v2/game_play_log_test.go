@@ -35,9 +35,9 @@ func TestCreatePlayLog(t *testing.T) {
 		getGameResult  *domain.Game
 		getGameErr     error
 
-		executeGetGameVersionByID bool
-		getGameVersionByIDResult  *repository.GameVersionInfoWithGameID
-		getGameVersionByIDErr     error
+		executeGetEditionGameVersions bool
+		getEditionGameVersionsResult  []*repository.GameVersionInfoWithGameID
+		getEditionGameVersionsErr     error
 
 		executeCreateGamePlayLog bool
 		createGamePlayLogErr     error
@@ -76,19 +76,22 @@ func TestCreatePlayLog(t *testing.T) {
 
 	testCases := []test{
 		{
-			description:               "正常にプレイログが作成される",
-			editionID:                 editionID,
-			gameID:                    gameID,
-			gameVersionID:             gameVersionID,
-			startTime:                 now,
-			executeGetEdition:         true,
-			getEditionResult:          edition,
-			executeGetGame:            true,
-			getGameResult:             game,
-			executeGetGameVersionByID: true,
-			getGameVersionByIDResult:  &repository.GameVersionInfoWithGameID{GameVersion: gameVersion, GameID: gameID},
-			executeCreateGamePlayLog:  true,
-			isErr:                     false,
+			description:                   "正常にプレイログが作成される",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 gameVersionID,
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsResult: []*repository.GameVersionInfoWithGameID{
+				{GameVersion: gameVersion, GameID: values.NewGameID()},
+				{GameVersion: gameVersion, GameID: gameID},
+			},
+			executeCreateGamePlayLog: true,
+			isErr:                    false,
 		},
 		{
 			description:       "GetEditionがErrRecordNotFoundなのでErrInvalidEdition",
@@ -139,68 +142,95 @@ func TestCreatePlayLog(t *testing.T) {
 			err:               assert.AnError,
 		},
 		{
-			description:               "GetGameVersionByIDがErrRecordNotFoundなのでErrInvalidGameVersion",
-			editionID:                 editionID,
-			gameID:                    gameID,
-			gameVersionID:             values.NewGameVersionID(),
-			startTime:                 now,
-			executeGetEdition:         true,
-			getEditionResult:          edition,
-			executeGetGame:            true,
-			getGameResult:             game,
-			executeGetGameVersionByID: true,
-			getGameVersionByIDErr:     repository.ErrRecordNotFound,
-			isErr:                     true,
-			err:                       service.ErrInvalidGameVersion,
+			description:                   "エディションにゲームバージョンが含まれない場合はErrInvalidGameVersion",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 values.NewGameVersionID(),
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			isErr:                         true,
+			err:                           service.ErrInvalidGameVersion,
 		},
 		{
-			description:               "GetGameVersionByIDがエラーなのでエラー",
-			editionID:                 editionID,
-			gameID:                    gameID,
-			gameVersionID:             gameVersionID,
-			startTime:                 now,
-			executeGetEdition:         true,
-			getEditionResult:          edition,
-			executeGetGame:            true,
-			getGameResult:             game,
-			executeGetGameVersionByID: true,
-			getGameVersionByIDErr:     assert.AnError,
-			isErr:                     true,
-			err:                       assert.AnError,
+			description:                   "GetEditionGameVersionsがErrRecordNotFoundなのでErrInvalidGameVersion",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 gameVersionID,
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsErr:     repository.ErrRecordNotFound,
+			isErr:                         true,
+			err:                           service.ErrInvalidGameVersion,
 		},
 		{
-			description:               "ゲームバージョンがエディションに属さない場合は拒否する",
-			editionID:                 editionID,
-			gameID:                    gameID,
-			gameVersionID:             gameVersionID,
-			startTime:                 now,
-			executeGetEdition:         true,
-			getEditionResult:          edition,
-			executeGetGame:            true,
-			getGameResult:             game,
-			executeGetGameVersionByID: true,
-			getGameVersionByIDResult:  &repository.GameVersionInfoWithGameID{GameVersion: gameVersion, GameID: gameID},
-			executeCreateGamePlayLog:  true,
-			createGamePlayLogErr:      repository.ErrRecordNotFound,
-			isErr:                     true,
-			err:                       service.ErrInvalidGameVersion,
+			description:                   "GetEditionGameVersionsがエラーなのでエラー",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 gameVersionID,
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsErr:     assert.AnError,
+			isErr:                         true,
+			err:                           assert.AnError,
 		},
 		{
-			description:               "CreateGamePlayLogがエラーなのでエラー",
-			editionID:                 editionID,
-			gameID:                    gameID,
-			gameVersionID:             gameVersionID,
-			startTime:                 now,
-			executeGetEdition:         true,
-			getEditionResult:          edition,
-			executeGetGame:            true,
-			getGameResult:             game,
-			executeGetGameVersionByID: true,
-			getGameVersionByIDResult:  &repository.GameVersionInfoWithGameID{GameVersion: gameVersion, GameID: gameID},
-			executeCreateGamePlayLog:  true,
-			createGamePlayLogErr:      assert.AnError,
-			isErr:                     true,
-			err:                       assert.AnError,
+			description:                   "エディション内のゲームバージョンと異なる場合はErrInvalidGameVersion",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 values.NewGameVersionID(),
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsResult:  []*repository.GameVersionInfoWithGameID{{GameVersion: gameVersion, GameID: gameID}},
+			isErr:                         true,
+			err:                           service.ErrInvalidGameVersion,
+		},
+		{
+			description:                   "ゲームバージョンが別のゲームに属する場合はErrInvalidGameVersion",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 gameVersionID,
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsResult:  []*repository.GameVersionInfoWithGameID{{GameVersion: gameVersion, GameID: values.NewGameID()}},
+			isErr:                         true,
+			err:                           service.ErrInvalidGameVersion,
+		},
+		{
+			description:                   "CreateGamePlayLogがエラーなのでエラー",
+			editionID:                     editionID,
+			gameID:                        gameID,
+			gameVersionID:                 gameVersionID,
+			startTime:                     now,
+			executeGetEdition:             true,
+			getEditionResult:              edition,
+			executeGetGame:                true,
+			getGameResult:                 game,
+			executeGetEditionGameVersions: true,
+			getEditionGameVersionsResult:  []*repository.GameVersionInfoWithGameID{{GameVersion: gameVersion, GameID: gameID}},
+			executeCreateGamePlayLog:      true,
+			createGamePlayLogErr:          assert.AnError,
+			isErr:                         true,
+			err:                           assert.AnError,
 		},
 	}
 
@@ -240,11 +270,11 @@ func TestCreatePlayLog(t *testing.T) {
 					Return(testCase.getGameResult, testCase.getGameErr)
 			}
 
-			if testCase.executeGetGameVersionByID {
-				mockGameVersionRepository.
+			if testCase.executeGetEditionGameVersions {
+				mockEditionRepository.
 					EXPECT().
-					GetGameVersionByID(ctx, testCase.gameVersionID, repository.LockTypeNone).
-					Return(testCase.getGameVersionByIDResult, testCase.getGameVersionByIDErr)
+					GetEditionGameVersions(ctx, testCase.editionID, repository.LockTypeNone).
+					Return(testCase.getEditionGameVersionsResult, testCase.getEditionGameVersionsErr)
 			}
 
 			if testCase.executeCreateGamePlayLog {
