@@ -853,14 +853,154 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 	}
 }
 
-func TestEditionResourceMembership(t *testing.T) {
+func TestGetEditionGameVersionByGameID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByGameID(t.Context(), testCase.editionID, data.gameID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByImageID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByImageID(t.Context(), testCase.editionID, data.imageID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByVideoID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByVideoID(t.Context(), testCase.editionID, data.videoID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByFileID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByFileID(t.Context(), testCase.editionID, data.fileID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+type editionResourceTestData struct {
+	repository     *Edition
+	editionID      values.EditionID
+	otherEditionID values.EditionID
+	versionID      values.GameVersionID
+	gameID         values.GameID
+	imageID        values.GameImageID
+	videoID        values.GameVideoID
+	fileID         values.GameFileID
+}
+
+func setupEditionResourceTest(t *testing.T) editionResourceTestData {
+	t.Helper()
 	ctx := t.Context()
 
 	db, err := testDB.getDB(ctx)
 	require.NoError(t, err)
 	tx := db.Begin()
 	require.NoError(t, tx.Error)
-	defer tx.Rollback()
+	t.Cleanup(func() { _ = tx.Rollback() })
 
 	editionRepository := NewEdition(&DB{db: tx})
 	now := time.Now()
@@ -924,56 +1064,23 @@ func TestEditionResourceMembership(t *testing.T) {
 		},
 	}
 
-	err = tx.Create(&game).Error
+	err = tx.WithContext(ctx).Create(&game).Error
 	require.NoError(t, err)
-	err = tx.Create(&image).Error
+	err = tx.WithContext(ctx).Create(&image).Error
 	require.NoError(t, err)
-	err = tx.Create(&video).Error
+	err = tx.WithContext(ctx).Create(&video).Error
 	require.NoError(t, err)
-	err = tx.Create(&editions).Error
+	err = tx.WithContext(ctx).Create(&editions).Error
 	require.NoError(t, err)
 
-	type test struct {
-		description string
-		lookup      func(context.Context, values.EditionID) (*domain.GameVersion, error)
-	}
-	testCases := []test{
-		{
-			description: "ゲームIDで取得",
-			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
-				return editionRepository.GetEditionGameVersionByGameID(ctx, editionID, gameID, repository.LockTypeNone)
-			},
-		},
-		{
-			description: "画像IDで取得",
-			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
-				return editionRepository.GetEditionGameVersionByImageID(ctx, editionID, imageID, repository.LockTypeNone)
-			},
-		},
-		{
-			description: "動画IDで取得",
-			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
-				return editionRepository.GetEditionGameVersionByVideoID(ctx, editionID, videoID, repository.LockTypeNone)
-			},
-		},
-		{
-			description: "ファイルIDで取得",
-			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
-				return editionRepository.GetEditionGameVersionByFileID(ctx, editionID, fileID, repository.LockTypeNone)
-			},
-		},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			t.Run("エディションに含まれるので取得できる", func(t *testing.T) {
-				version, err := testCase.lookup(t.Context(), editionID1)
-				require.NoError(t, err)
-				assert.Equal(t, versionID, version.GetID())
-			})
-			t.Run("別のエディションにのみ含まれるのでエラー", func(t *testing.T) {
-				_, err := testCase.lookup(t.Context(), editionID2)
-				assert.ErrorIs(t, err, repository.ErrRecordNotFound)
-			})
-		})
+	return editionResourceTestData{
+		repository:     editionRepository,
+		editionID:      editionID1,
+		otherEditionID: editionID2,
+		versionID:      versionID,
+		gameID:         gameID,
+		imageID:        imageID,
+		videoID:        videoID,
+		fileID:         fileID,
 	}
 }
