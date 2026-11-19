@@ -852,3 +852,128 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestEditionResourceMembership(t *testing.T) {
+	ctx := t.Context()
+
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+	tx := db.Begin()
+	require.NoError(t, tx.Error)
+	defer tx.Rollback()
+
+	editionRepository := NewEdition(&DB{db: tx})
+	now := time.Now()
+
+	gameID := values.NewGameID()
+	imageID := values.NewGameImageID()
+	videoID := values.NewGameVideoID()
+	fileID := values.NewGameFileID()
+	versionID := values.NewGameVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
+
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "membership-game",
+		Description:      "test",
+		VisibilityTypeID: 1,
+		CreatedAt:        now,
+	}
+	image := schema.GameImageTable2{
+		ID:          uuid.UUID(imageID),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: 1,
+		CreatedAt:   now,
+	}
+	video := schema.GameVideoTable2{
+		ID:          uuid.UUID(videoID),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: 1,
+		CreatedAt:   now,
+	}
+	file := schema.GameFileTable2{
+		ID:         uuid.UUID(fileID),
+		GameID:     uuid.UUID(gameID),
+		FileTypeID: 1,
+		Hash:       "12345678901234567890123456789012",
+		EntryPoint: "game",
+		CreatedAt:  now,
+	}
+	version := schema.GameVersionTable2{
+		ID:          uuid.UUID(versionID),
+		GameID:      uuid.UUID(gameID),
+		GameImageID: uuid.UUID(imageID),
+		GameVideoID: uuid.UUID(videoID),
+		Name:        "v1",
+		Description: "test",
+		CreatedAt:   now,
+		GameFiles:   []schema.GameFileTable2{file},
+	}
+	editions := []schema.EditionTable{
+		{
+			ID:           uuid.UUID(editionID1),
+			Name:         "membership-a",
+			CreatedAt:    now,
+			GameVersions: []schema.GameVersionTable2{version},
+		},
+		{
+			ID:        uuid.UUID(editionID2),
+			Name:      "membership-b",
+			CreatedAt: now,
+		},
+	}
+
+	err = tx.Create(&game).Error
+	require.NoError(t, err)
+	err = tx.Create(&image).Error
+	require.NoError(t, err)
+	err = tx.Create(&video).Error
+	require.NoError(t, err)
+	err = tx.Create(&editions).Error
+	require.NoError(t, err)
+
+	type test struct {
+		description string
+		lookup      func(context.Context, values.EditionID) (*domain.GameVersion, error)
+	}
+	testCases := []test{
+		{
+			description: "ゲームIDで取得",
+			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
+				return editionRepository.GetEditionGameVersionByGameID(ctx, editionID, gameID, repository.LockTypeNone)
+			},
+		},
+		{
+			description: "画像IDで取得",
+			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
+				return editionRepository.GetEditionGameVersionByImageID(ctx, editionID, imageID, repository.LockTypeNone)
+			},
+		},
+		{
+			description: "動画IDで取得",
+			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
+				return editionRepository.GetEditionGameVersionByVideoID(ctx, editionID, videoID, repository.LockTypeNone)
+			},
+		},
+		{
+			description: "ファイルIDで取得",
+			lookup: func(ctx context.Context, editionID values.EditionID) (*domain.GameVersion, error) {
+				return editionRepository.GetEditionGameVersionByFileID(ctx, editionID, fileID, repository.LockTypeNone)
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			t.Run("エディションに含まれるので取得できる", func(t *testing.T) {
+				version, err := testCase.lookup(t.Context(), editionID1)
+				require.NoError(t, err)
+				assert.Equal(t, versionID, version.GetID())
+			})
+			t.Run("別のエディションにのみ含まれるのでエラー", func(t *testing.T) {
+				_, err := testCase.lookup(t.Context(), editionID2)
+				assert.ErrorIs(t, err, repository.ErrRecordNotFound)
+			})
+		})
+	}
+}
