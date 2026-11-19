@@ -84,6 +84,8 @@ func TestGetAccessTokenInfo(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			ctx := t.Context()
+			// 共有マスタの product_key_statuses を変更するため、他のテストに影響しないよう、
+			// ケース終了時に作成したデータとともにロールバックする。
 			tx := testDB.db.Begin()
 			require.NoError(t, tx.Error)
 			t.Cleanup(func() { require.NoError(t, tx.Rollback().Error) })
