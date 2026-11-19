@@ -1,7 +1,6 @@
 package gorm2
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -15,28 +14,22 @@ import (
 	"github.com/traPtitech/trap-collection-server/src/service"
 	serviceV2 "github.com/traPtitech/trap-collection-server/src/service/v2"
 	"go.uber.org/mock/gomock"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
-// SQLite exercises the real query and scan; MariaDB migrations and locking need the integration suite.
-func newAccessTokenSQLiteFixture(t *testing.T, statusName string, statusRowActive bool) (*DB, *domain.LauncherSession, values.EditionID) {
+func newAccessTokenFixture(t *testing.T, statusName string, statusRowActive bool) (*DB, *domain.LauncherSession, values.EditionID) {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	tx := testDB.db.Begin()
+	require.NoError(t, tx.Error)
+	t.Cleanup(func() { require.NoError(t, tx.Rollback().Error) })
+	repositoryDB := &DB{db: tx}
+	db, err := repositoryDB.getDB(t.Context())
 	require.NoError(t, err)
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-	sqlDB.SetMaxOpenConns(1)
-	t.Cleanup(func() { require.NoError(t, sqlDB.Close()) })
 
-	for _, statement := range []string{
-		`CREATE TABLE editions (id TEXT PRIMARY KEY, name TEXT, questionnaire_url TEXT, created_at DATETIME, deleted_at DATETIME)`,
-		`CREATE TABLE product_key_statuses (id INTEGER PRIMARY KEY, name TEXT, active BOOLEAN)`,
-		`CREATE TABLE product_keys (id TEXT PRIMARY KEY, edition_id TEXT, product_key TEXT, status_id INTEGER, created_at DATETIME)`,
-		`CREATE TABLE access_tokens (id TEXT PRIMARY KEY, product_key_id TEXT, access_token TEXT, expires_at DATETIME, created_at DATETIME, deleted_at DATETIME)`,
-	} {
-		require.NoError(t, db.Exec(statement).Error)
-	}
+	var status schema.ProductKeyStatusTable
+	require.NoError(t, db.Where("name = ?", statusName).
+		FirstOrCreate(&status, schema.ProductKeyStatusTable{Name: statusName}).Error)
+
+	require.NoError(t, db.Model(&status).Update("active", statusRowActive).Error)
 
 	now := time.Now()
 	editionID := values.NewEditionID()
@@ -44,19 +37,21 @@ func newAccessTokenSQLiteFixture(t *testing.T, statusName string, statusRowActiv
 	require.NoError(t, db.Create(&schema.EditionTable{
 		ID: uuid.UUID(editionID), Name: "synthetic edition", CreatedAt: now,
 	}).Error)
-	require.NoError(t, db.Exec("INSERT INTO product_key_statuses (id, name, active) VALUES (?, ?, ?)", 1, statusName, statusRowActive).Error)
+	productKey, err := values.NewLauncherUserProductKey()
+	require.NoError(t, err)
 	require.NoError(t, db.Create(&schema.ProductKeyTable{
 		ID: uuid.UUID(keyID), EditionID: uuid.UUID(editionID),
-		ProductKey: "aaaaa-bbbbb-ccccc-ddddd-eeeee", StatusID: 1, CreatedAt: now,
+		ProductKey: string(productKey), StatusID: status.ID, CreatedAt: now,
 	}).Error)
 
+	accessToken, err := values.NewLauncherSessionAccessToken()
+	require.NoError(t, err)
 	token := domain.NewLauncherSession(
 		values.NewLauncherSessionID(),
-		values.NewLauncherSessionAccessTokenFromString("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+		accessToken,
 		now.Add(time.Hour),
 	)
-	repositoryDB := &DB{db: db}
-	require.NoError(t, NewAccessToken(repositoryDB).SaveAccessToken(context.Background(), keyID, token))
+	require.NoError(t, NewAccessToken(repositoryDB).SaveAccessToken(t.Context(), keyID, token))
 	return repositoryDB, token, editionID
 }
 
@@ -76,8 +71,8 @@ func TestGetAccessTokenInfoProductKeyStatus(t *testing.T) {
 		{name: "disabled inactive status row", status: schema.ProductKeyStatusInactive},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			db, token, editionID := newAccessTokenSQLiteFixture(t, tc.status, tc.rowActive)
-			info, err := NewAccessToken(db).GetAccessTokenInfo(context.Background(), token.GetAccessToken(), repository.LockTypeNone)
+			db, token, editionID := newAccessTokenFixture(t, tc.status, tc.rowActive)
+			info, err := NewAccessToken(db).GetAccessTokenInfo(t.Context(), token.GetAccessToken(), repository.LockTypeNone)
 			if tc.invalid {
 				require.ErrorContains(t, err, "invalid product key status:")
 				require.Nil(t, info)
@@ -97,8 +92,8 @@ func TestGetAccessTokenInfoProductKeyStatus(t *testing.T) {
 }
 
 func TestEditionAuthorizationAfterProductKeyRevocation(t *testing.T) {
-	ctx := context.Background()
-	db, token, editionID := newAccessTokenSQLiteFixture(t, schema.ProductKeyStatusActive, true)
+	ctx := t.Context()
+	db, token, editionID := newAccessTokenFixture(t, schema.ProductKeyStatusActive, true)
 	ctrl := gomock.NewController(t)
 	editions := mockRepository.NewMockEdition(ctrl)
 	auth := serviceV2.NewEditionAuth(db, editions, NewProductKey(db), NewAccessToken(db))
@@ -141,7 +136,6 @@ func TestEditionAuthorizationAfterProductKeyRevocation(t *testing.T) {
 	}
 
 	// Both status rows remain selectable; revocation changes the product key's status ID.
-	require.NoError(t, db.db.Exec("INSERT INTO product_key_statuses (id, name, active) VALUES (?, ?, ?)", 2, schema.ProductKeyStatusInactive, true).Error)
 	info, err := NewAccessToken(db).GetAccessTokenInfo(ctx, token.GetAccessToken(), repository.LockTypeNone)
 	require.NoError(t, err)
 	_, err = auth.RevokeProductKey(ctx, info.ProductKey.GetID())
