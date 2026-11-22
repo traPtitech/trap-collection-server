@@ -63,7 +63,7 @@ tasks:
     dir: ..\
     cmds:
       - del .\docs\db_schema\*
-      - docker compose -f .\docker\tbls\compose.yaml up --build --abort-on-container-exit
+      - docker compose -f .\docker\tbls\compose.yaml run --rm tbls
     sources:
       - .\migrations\*.sql
     generates:

@@ -852,3 +852,235 @@ func TestUpdateEditionGameVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEditionGameVersionByGameID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByGameID(t.Context(), testCase.editionID, data.gameID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByImageID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByImageID(t.Context(), testCase.editionID, data.imageID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByVideoID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByVideoID(t.Context(), testCase.editionID, data.videoID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+func TestGetEditionGameVersionByFileID(t *testing.T) {
+	data := setupEditionResourceTest(t)
+
+	type test struct {
+		description string
+		editionID   values.EditionID
+		err         error
+	}
+	testCases := []test{
+		{
+			description: "エディションに含まれるので取得できる",
+			editionID:   data.editionID,
+		},
+		{
+			description: "別のエディションにのみ含まれるのでエラー",
+			editionID:   data.otherEditionID,
+			err:         repository.ErrRecordNotFound,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			version, err := data.repository.GetEditionGameVersionByFileID(t.Context(), testCase.editionID, data.fileID, repository.LockTypeNone)
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, data.versionID, version.GetID())
+		})
+	}
+}
+
+type editionResourceTestData struct {
+	repository     *Edition
+	editionID      values.EditionID
+	otherEditionID values.EditionID
+	versionID      values.GameVersionID
+	gameID         values.GameID
+	imageID        values.GameImageID
+	videoID        values.GameVideoID
+	fileID         values.GameFileID
+}
+
+func setupEditionResourceTest(t *testing.T) editionResourceTestData {
+	t.Helper()
+	ctx := t.Context()
+
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+	tx := db.Begin()
+	require.NoError(t, tx.Error)
+	t.Cleanup(func() { _ = tx.Rollback() })
+
+	editionRepository := NewEdition(&DB{db: tx})
+	now := time.Now()
+
+	gameID := values.NewGameID()
+	imageID := values.NewGameImageID()
+	videoID := values.NewGameVideoID()
+	fileID := values.NewGameFileID()
+	versionID := values.NewGameVersionID()
+	editionID1 := values.NewEditionID()
+	editionID2 := values.NewEditionID()
+
+	game := schema.GameTable2{
+		ID:               uuid.UUID(gameID),
+		Name:             "membership-game",
+		Description:      "test",
+		VisibilityTypeID: 1,
+		CreatedAt:        now,
+	}
+	image := schema.GameImageTable2{
+		ID:          uuid.UUID(imageID),
+		GameID:      uuid.UUID(gameID),
+		ImageTypeID: 1,
+		CreatedAt:   now,
+	}
+	video := schema.GameVideoTable2{
+		ID:          uuid.UUID(videoID),
+		GameID:      uuid.UUID(gameID),
+		VideoTypeID: 1,
+		CreatedAt:   now,
+	}
+	file := schema.GameFileTable2{
+		ID:         uuid.UUID(fileID),
+		GameID:     uuid.UUID(gameID),
+		FileTypeID: 1,
+		Hash:       "12345678901234567890123456789012",
+		EntryPoint: "game",
+		CreatedAt:  now,
+	}
+	version := schema.GameVersionTable2{
+		ID:          uuid.UUID(versionID),
+		GameID:      uuid.UUID(gameID),
+		GameImageID: uuid.UUID(imageID),
+		GameVideoID: uuid.UUID(videoID),
+		Name:        "v1",
+		Description: "test",
+		CreatedAt:   now,
+		GameFiles:   []schema.GameFileTable2{file},
+	}
+	editions := []schema.EditionTable{
+		{
+			ID:           uuid.UUID(editionID1),
+			Name:         "membership-a",
+			CreatedAt:    now,
+			GameVersions: []schema.GameVersionTable2{version},
+		},
+		{
+			ID:        uuid.UUID(editionID2),
+			Name:      "membership-b",
+			CreatedAt: now,
+		},
+	}
+
+	err = tx.WithContext(ctx).Create(&game).Error
+	require.NoError(t, err)
+	err = tx.WithContext(ctx).Create(&image).Error
+	require.NoError(t, err)
+	err = tx.WithContext(ctx).Create(&video).Error
+	require.NoError(t, err)
+	err = tx.WithContext(ctx).Create(&editions).Error
+	require.NoError(t, err)
+
+	return editionResourceTestData{
+		repository:     editionRepository,
+		editionID:      editionID1,
+		otherEditionID: editionID2,
+		versionID:      versionID,
+		gameID:         gameID,
+		imageID:        imageID,
+		videoID:        videoID,
+		fileID:         fileID,
+	}
+}

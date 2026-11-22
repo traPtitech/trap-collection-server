@@ -20,7 +20,7 @@ CREATE TABLE `game_files` (
   KEY `fk_game_files_game_file_type` (`file_type_id`),
   CONSTRAINT `fk_game_files_game_file_type` FOREIGN KEY (`file_type_id`) REFERENCES `game_file_types` (`id`),
   CONSTRAINT `fk_game_versions_game_files` FOREIGN KEY (`game_version_id`) REFERENCES `game_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

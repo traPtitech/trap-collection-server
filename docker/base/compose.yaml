@@ -25,35 +25,37 @@ services:
       retries: 1000
 
   mariadb:
-    image: mariadb:10.6.4@sha256:c014ba1efc5dbd711d0520c7762d57807f35549de3414eb31e942a420c8a2ed2
+    image: mariadb:13.0.2@sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: trap_collection
       TZ: Asia/Tokyo
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    command: mariadbd --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     expose:
       - 3306
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppass"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-ppass"]
       timeout: 5m
       interval: 1s
       retries: 1000
 
   s3:
-    image: minio/minio:RELEASE.2022-09-17T00-09-45Z@sha256:a070152be47a56b9cfec85e99a8d64d39bcea371cd4b1e616157dbfe7d539080
+    image: rustfs/rustfs:1.0.0-rc.6@sha256:97171b3d72cd47dc81000f92ea84de25608bfc35a94c965501afaeb5d99f6035
     # 9000-API, 9001-Web
     ports:
       - 9000:9000
       - 9001:9001
     environment:
-      MINIO_ROOT_USER: AKID
-      MINIO_ROOT_PASSWORD: SECRETPASSWORD
-      MINIO_DOMAIN: s3
-      MINIO_SITE_REGION: us-east-1
-    command: server /data --console-address :9001
+      RUSTFS_ACCESS_KEY: AKID
+      RUSTFS_SECRET_KEY: SECRETPASSWORD
+      RUSTFS_SERVER_DOMAINS: s3
+      RUSTFS_REGION: us-east-1
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: :9001
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
       timeout: 5m
       interval: 1s
       retries: 1000

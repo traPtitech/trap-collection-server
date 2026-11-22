@@ -113,7 +113,7 @@ func (c *Client) saveFile(
 	}
 
 	tm := transfermanager.New(c.client, func(o *transfermanager.Options) {
-		o.Concurrency = 5
+		o.Concurrency = 3
 	})
 	_, err = tm.UploadObject(ctx, &transfermanager.UploadObjectInput{
 		Bucket: &c.bucket,

@@ -19,7 +19,7 @@ import (
 func TestCreateGamePlayLog(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	db, err := testDB.getDB(ctx)
 	if err != nil {
@@ -311,6 +311,8 @@ func TestCreateGamePlayLog(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := t.Context()
 
 			// 並列実行対応のため，テストケースごとにレコード単位で削除
 			t.Cleanup(func() {

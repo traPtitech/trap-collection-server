@@ -19,7 +19,7 @@ CREATE TABLE `launcher_sessions` (
   UNIQUE KEY `uni_launcher_sessions_access_token` (`access_token`),
   KEY `fk_launcher_users_launcher_sessions` (`launcher_user_id`),
   CONSTRAINT `fk_launcher_users_launcher_sessions` FOREIGN KEY (`launcher_user_id`) REFERENCES `launcher_users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

@@ -23,7 +23,8 @@ type GameCreator interface {
 	// custom jobを作成する
 	CreateGameCreatorCustomJobs(ctx context.Context, customJobs []*domain.GameCreatorCustomJob) error
 	// CreateGameCreators
-	// ゲームクリエイターを作成する
+	// ゲームクリエイターを作成する。
+	// すでに存在するゲームクリエイターと重複する場合は ErrDuplicatedUniqueKey を返す。
 	CreateGameCreators(ctx context.Context, creators []*domain.GameCreator) error
 	// UpsertGameCreatorPresetJobsRelations
 	// creator と preset job の relation を更新する
@@ -50,4 +51,16 @@ type GameCreator interface {
 	// DeleteGameCreatorPresetJobs
 	// creator に紐づいた preset job を削除する。
 	DeleteGameCreatorPresetJobs(ctx context.Context, creatorID values.GameCreatorID) error
+	// GetGameCreatorPresetJobsByCreatorID
+	// creator ID でゲームクリエイターのプリセットジョブ一覧を取得する。
+	GetGameCreatorPresetJobsByCreatorID(ctx context.Context, creatorID values.GameCreatorID) ([]*domain.GameCreatorJob, error)
+	// GetGameCreatorCustomJobsByCreatorID
+	// creator ID でゲームクリエイターのカスタムジョブ一覧を取得する。
+	GetGameCreatorCustomJobsByCreatorID(ctx context.Context, creatorID values.GameCreatorID) ([]*domain.GameCreatorCustomJob, error)
+	// DeleteGameCreatorPresetJobsByCreatorID
+	// creator ID でゲームクリエイターのプリセットジョブを削除する。
+	DeleteGameCreatorPresetJobsByCreatorID(ctx context.Context, creatorID values.GameCreatorID, jobIDs []values.GameCreatorJobID) error
+	// DeleteGameCreatorCustomJobsByCreatorID
+	// creator ID でゲームクリエイターのカスタムジョブを削除する。
+	DeleteGameCreatorCustomJobsByCreatorID(ctx context.Context, creatorID values.GameCreatorID, jobIDs []values.GameCreatorJobID) error
 }

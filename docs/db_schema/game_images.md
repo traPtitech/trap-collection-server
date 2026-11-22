@@ -18,7 +18,7 @@ CREATE TABLE `game_images` (
   KEY `fk_game_images_game_image_type` (`image_type_id`),
   CONSTRAINT `fk_game_images_game_image_type` FOREIGN KEY (`image_type_id`) REFERENCES `game_image_types` (`id`),
   CONSTRAINT `fk_games_game_images` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

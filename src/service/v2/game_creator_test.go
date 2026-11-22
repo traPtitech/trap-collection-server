@@ -443,6 +443,421 @@ func TestDeleteGameCreator(t *testing.T) {
 	}
 }
 
+func TestCreateGameCreator(t *testing.T) {
+	t.Parallel()
+
+	user1 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("user1"),
+		values.TrapMemberStatusActive,
+		false,
+	)
+	user2 := service.NewUserInfo(
+		values.NewTrapMemberID(uuid.New()),
+		values.NewTrapMemberName("user2"),
+		values.TrapMemberStatusDeactivated,
+		false,
+	)
+	users := []*service.UserInfo{
+		user1,
+		user2,
+	}
+
+	testCases := map[string]struct {
+		gameID                    values.GameID
+		userID                    values.TraPMemberID
+		getAllUsersErr            error
+		userName                  values.TraPMemberName
+		executeGetGame            bool
+		game                      *domain.Game
+		GetGameErr                error
+		executeCreateGameCreators bool
+		CreateGameCreatorsErr     error
+		wantErr                   error
+	}{
+		"getAllUsersがエラーなのでエラー": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			getAllUsersErr: assert.AnError,
+			wantErr:        assert.AnError,
+		},
+		"userが見つからないのでErrInvalidUserID": {
+			gameID:  values.NewGameID(),
+			userID:  values.NewTrapMemberID(uuid.New()),
+			wantErr: service.ErrInvalidUserID,
+		},
+		"gameが見つからないのでErrInvalidGameID": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			userName:       user1.GetName(),
+			executeGetGame: true,
+			GetGameErr:     repository.ErrRecordNotFound,
+			wantErr:        service.ErrInvalidGameID,
+		},
+		"GetGameがエラーなのでエラー": {
+			gameID:         values.NewGameID(),
+			userID:         user1.GetID(),
+			userName:       user1.GetName(),
+			executeGetGame: true,
+			GetGameErr:     assert.AnError,
+			wantErr:        assert.AnError,
+		},
+		"CreateGameCreatorsがエラーなのでエラー": {
+			gameID:                    values.NewGameID(),
+			userID:                    user1.GetID(),
+			userName:                  user1.GetName(),
+			executeGetGame:            true,
+			GetGameErr:                nil,
+			executeCreateGameCreators: true,
+			CreateGameCreatorsErr:     assert.AnError,
+			wantErr:                   assert.AnError,
+		},
+		"正しく作成できる": {
+			gameID:                    values.NewGameID(),
+			userID:                    user1.GetID(),
+			userName:                  user1.GetName(),
+			executeGetGame:            true,
+			executeCreateGameCreators: true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameCreatorMock := mock.NewMockGameCreator(ctrl)
+			gameMock := mock.NewMockGameV2(ctrl)
+			dbMock := mock.NewMockDB(ctrl)
+			authMock := mockAuth.NewMockUser(ctrl)
+			cacheMock := mockCache.NewMockUser(ctrl)
+			userMock := NewUser(authMock, cacheMock)
+			gc := NewGameCreator(gameCreatorMock, gameMock, dbMock, userMock)
+
+			if testCase.getAllUsersErr != nil {
+				cacheMock.EXPECT().GetAllUsers(gomock.Any()).Return(nil, testCase.getAllUsersErr)
+				authMock.EXPECT().GetAllUsers(gomock.Any(), gomock.Any()).Return(nil, testCase.getAllUsersErr)
+			} else {
+				cacheMock.EXPECT().GetAllUsers(gomock.Any()).Return(users, nil)
+			}
+
+			if testCase.executeGetGame {
+				gameMock.EXPECT().
+					GetGame(gomock.Any(), testCase.gameID, repository.LockTypeRecord).
+					Return(testCase.game, testCase.GetGameErr)
+			}
+			if testCase.executeCreateGameCreators {
+				gameCreatorMock.EXPECT().
+					CreateGameCreators(gomock.Any(), gomock.Cond(func(creators []*domain.GameCreator) bool {
+						return len(creators) == 1 && creators[0].GetGameID() == testCase.gameID && creators[0].GetUserID() == testCase.userID && creators[0].GetUserName() == testCase.userName
+					})).
+					Return(testCase.CreateGameCreatorsErr)
+			}
+
+			session := domain.NewOIDCSession(values.NewOIDCAccessToken("access_token"), time.Now().Add(time.Hour))
+			creator, err := gc.CreateGameCreator(t.Context(), session, testCase.gameID, testCase.userID)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.gameID, creator.GetGameID())
+			assert.Equal(t, testCase.userID, creator.GetUserID())
+			assert.Equal(t, testCase.userName, creator.GetUserName())
+		})
+	}
+}
+
+func TestSetGameCreatorJobs(t *testing.T) {
+	t.Parallel()
+
+	gameID := values.NewGameID()
+	creatorID := values.NewGameCreatorID()
+	creator := domain.NewGameCreator(
+		creatorID,
+		values.NewTrapMemberID(uuid.New()),
+		gameID,
+		values.NewTrapMemberName("creator"),
+		time.Now(),
+	)
+	creatorOfAnotherGame := domain.NewGameCreator(
+		creatorID,
+		values.NewTrapMemberID(uuid.New()),
+		values.NewGameID(),
+		values.NewTrapMemberName("creator of another game"),
+		time.Now(),
+	)
+	presetJob1 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Programmer"), time.Now())
+	presetJob2 := domain.NewGameCreatorJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Designer"), time.Now())
+	customJob1 := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Director"), gameID, time.Now())
+	customJob2 := domain.NewGameCreatorCustomJob(values.NewGameCreatorJobID(), values.NewGameCreatorJobDisplayName("Composer"), gameID, time.Now())
+
+	testCases := map[string]struct {
+		jobIDs                                  []values.GameCreatorJobID
+		creator                                 *domain.GameCreator
+		GetGameCreatorByIDErr                   error
+		executeGetPresetJobs                    bool
+		allPresetJobs                           []*domain.GameCreatorJob
+		GetPresetJobsErr                        error
+		executeGetGameCreatorCustomJobsByGameID bool
+		allCustomJobs                           []*domain.GameCreatorCustomJob
+		GetGameCreatorCustomJobsByGameIDErr     error
+		executeGetCustomJobsByCreatorID         bool
+		customJobs                              []*domain.GameCreatorCustomJob
+		GetCustomJobsByCreatorIDErr             error
+		executeGetPresetJobsByCreatorID         bool
+		presetJobs                              []*domain.GameCreatorJob
+		GetPresetJobsByCreatorIDErr             error
+		executeDeletePresetJobsByCreatorID      bool
+		deletingPresetJobIDs                    []values.GameCreatorJobID
+		DeletePresetJobsByCreatorIDErr          error
+		executeDeleteCustomJobsByCreatorID      bool
+		deletingCustomJobIDs                    []values.GameCreatorJobID
+		DeleteCustomJobsByCreatorIDErr          error
+		executeUpsertPresetJobsRelations        bool
+		UpsertPresetJobsRelationsErr            error
+		executeUpsertCustomJobsRelations        bool
+		UpsertCustomJobsRelationsErr            error
+		wantErr                                 error
+	}{
+		"存在しないcreator IDの場合ErrInvalidGameCreatorID": {
+			GetGameCreatorByIDErr: repository.ErrRecordNotFound,
+			wantErr:               service.ErrInvalidGameCreatorID,
+		},
+		"creator取得でエラーの場合エラー": {
+			GetGameCreatorByIDErr: assert.AnError,
+			wantErr:               assert.AnError,
+		},
+		"creatorが別のgameに属する場合ErrInvalidGameCreatorGamePair": {
+			creator: creatorOfAnotherGame,
+			wantErr: service.ErrInvalidGameCreatorGamePair,
+		},
+		"jobIDが重複する場合はErrDuplicateGameCreatorJobID": {
+			jobIDs:  []values.GameCreatorJobID{presetJob1.GetID(), presetJob1.GetID()},
+			creator: creator,
+			wantErr: service.ErrDuplicateGameCreatorJobID,
+		},
+		"preset job一覧取得でエラーの場合エラー": {
+			creator:              creator,
+			executeGetPresetJobs: true,
+			GetPresetJobsErr:     assert.AnError,
+			wantErr:              assert.AnError,
+		},
+		"creatorのcustom job取得でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			executeGetCustomJobsByCreatorID:         true,
+			GetCustomJobsByCreatorIDErr:             assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"creatorのpreset job取得でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			allCustomJobs:                           []*domain.GameCreatorCustomJob{customJob1},
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			GetPresetJobsByCreatorIDErr:             assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"preset job削除でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			presetJobs:                              []*domain.GameCreatorJob{presetJob1},
+			executeDeletePresetJobsByCreatorID:      true,
+			deletingPresetJobIDs:                    []values.GameCreatorJobID{presetJob1.GetID()},
+			DeletePresetJobsByCreatorIDErr:          assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"custom job削除でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			allCustomJobs:                           []*domain.GameCreatorCustomJob{customJob1},
+			executeGetCustomJobsByCreatorID:         true,
+			customJobs:                              []*domain.GameCreatorCustomJob{customJob1},
+			executeGetPresetJobsByCreatorID:         true,
+			executeDeletePresetJobsByCreatorID:      true,
+			executeDeleteCustomJobsByCreatorID:      true,
+			deletingCustomJobIDs:                    []values.GameCreatorJobID{customJob1.GetID()},
+			DeleteCustomJobsByCreatorIDErr:          assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"存在しないpreset job IDの場合ErrInvalidPresetJobID": {
+			jobIDs:                                  []values.GameCreatorJobID{presetJob1.GetID()},
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			executeDeletePresetJobsByCreatorID:      true,
+			executeDeleteCustomJobsByCreatorID:      true,
+			executeUpsertPresetJobsRelations:        true,
+			UpsertPresetJobsRelationsErr:            repository.ErrForeignKeyViolated,
+			wantErr:                                 service.ErrInvalidPresetJobID,
+		},
+		"preset job relation更新でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			executeGetGameCreatorCustomJobsByGameID: true,
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			executeDeletePresetJobsByCreatorID:      true,
+			executeDeleteCustomJobsByCreatorID:      true,
+			executeUpsertPresetJobsRelations:        true,
+			UpsertPresetJobsRelationsErr:            assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"gameに紐づかないcustom job IDの場合ErrInvalidGameAndCustomJobPair": {
+			jobIDs:                                  []values.GameCreatorJobID{customJob1.GetID()},
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			executeGetGameCreatorCustomJobsByGameID: true,
+			allCustomJobs:                           []*domain.GameCreatorCustomJob{customJob1},
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			executeDeletePresetJobsByCreatorID:      true,
+			executeDeleteCustomJobsByCreatorID:      true,
+			executeUpsertPresetJobsRelations:        true,
+			executeUpsertCustomJobsRelations:        true,
+			UpsertCustomJobsRelationsErr:            repository.ErrForeignKeyViolated,
+			wantErr:                                 service.ErrInvalidGameAndCustomJobPair,
+		},
+		"custom job relation更新でエラーの場合エラー": {
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			executeGetGameCreatorCustomJobsByGameID: true,
+			executeGetCustomJobsByCreatorID:         true,
+			executeGetPresetJobsByCreatorID:         true,
+			executeDeletePresetJobsByCreatorID:      true,
+			executeDeleteCustomJobsByCreatorID:      true,
+			executeUpsertPresetJobsRelations:        true,
+			executeUpsertCustomJobsRelations:        true,
+			UpsertCustomJobsRelationsErr:            assert.AnError,
+			wantErr:                                 assert.AnError,
+		},
+		"preset jobとcustom jobを置き換えられる": {
+			jobIDs:                                  []values.GameCreatorJobID{presetJob1.GetID(), customJob1.GetID()},
+			creator:                                 creator,
+			executeGetPresetJobs:                    true,
+			allPresetJobs:                           []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeGetGameCreatorCustomJobsByGameID: true,
+			allCustomJobs:                           []*domain.GameCreatorCustomJob{customJob1, customJob2},
+			executeGetCustomJobsByCreatorID:         true,
+			customJobs:                              []*domain.GameCreatorCustomJob{customJob2},
+			executeGetPresetJobsByCreatorID:         true,
+			presetJobs:                              []*domain.GameCreatorJob{presetJob1, presetJob2},
+			executeDeletePresetJobsByCreatorID:      true,
+			deletingPresetJobIDs:                    []values.GameCreatorJobID{presetJob2.GetID()},
+			executeDeleteCustomJobsByCreatorID:      true,
+			deletingCustomJobIDs:                    []values.GameCreatorJobID{customJob2.GetID()},
+			executeUpsertPresetJobsRelations:        true,
+			executeUpsertCustomJobsRelations:        true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			gameCreatorRepo := mock.NewMockGameCreator(ctrl)
+			db := mock.NewMockDB(ctrl)
+			gc := NewGameCreator(gameCreatorRepo, nil, db, nil)
+
+			gameCreatorRepo.EXPECT().
+				GetGameCreatorByID(gomock.Any(), creatorID).
+				Return(testCase.creator, testCase.GetGameCreatorByIDErr)
+			if testCase.executeGetPresetJobs {
+				gameCreatorRepo.EXPECT().
+					GetGameCreatorPresetJobs(gomock.Any()).
+					Return(testCase.allPresetJobs, testCase.GetPresetJobsErr)
+			}
+			if testCase.executeGetGameCreatorCustomJobsByGameID {
+				gameCreatorRepo.EXPECT().
+					GetGameCreatorCustomJobsByGameID(gomock.Any(), gameID).
+					Return(testCase.allCustomJobs, testCase.GetGameCreatorCustomJobsByGameIDErr)
+			}
+
+			if testCase.executeGetCustomJobsByCreatorID {
+				gameCreatorRepo.EXPECT().
+					GetGameCreatorCustomJobsByCreatorID(gomock.Any(), creatorID).
+					Return(testCase.customJobs, testCase.GetCustomJobsByCreatorIDErr)
+			}
+			if testCase.executeGetPresetJobsByCreatorID {
+				gameCreatorRepo.EXPECT().
+					GetGameCreatorPresetJobsByCreatorID(gomock.Any(), creatorID).
+					Return(testCase.presetJobs, testCase.GetPresetJobsByCreatorIDErr)
+			}
+			if testCase.executeDeletePresetJobsByCreatorID {
+				deletingPresetJobIDs := testCase.deletingPresetJobIDs
+				if deletingPresetJobIDs == nil {
+					deletingPresetJobIDs = []values.GameCreatorJobID{}
+				}
+				gameCreatorRepo.EXPECT().
+					DeleteGameCreatorPresetJobsByCreatorID(gomock.Any(), creatorID, deletingPresetJobIDs).
+					Return(testCase.DeletePresetJobsByCreatorIDErr)
+			}
+			if testCase.executeDeleteCustomJobsByCreatorID {
+				deletingCustomJobIDs := testCase.deletingCustomJobIDs
+				if deletingCustomJobIDs == nil {
+					deletingCustomJobIDs = []values.GameCreatorJobID{}
+				}
+				gameCreatorRepo.EXPECT().
+					DeleteGameCreatorCustomJobsByCreatorID(gomock.Any(), creatorID, deletingCustomJobIDs).
+					Return(testCase.DeleteCustomJobsByCreatorIDErr)
+			}
+
+			presetJobIDs := make([]values.GameCreatorJobID, 0, len(testCase.jobIDs))
+			customJobIDs := make([]values.GameCreatorJobID, 0, len(testCase.jobIDs))
+			for _, jobID := range testCase.jobIDs {
+				isPreset := false
+				for _, presetJob := range testCase.allPresetJobs {
+					if jobID == presetJob.GetID() {
+						isPreset = true
+						break
+					}
+				}
+				if isPreset {
+					presetJobIDs = append(presetJobIDs, jobID)
+				} else {
+					customJobIDs = append(customJobIDs, jobID)
+				}
+			}
+			if testCase.executeUpsertPresetJobsRelations {
+				gameCreatorRepo.EXPECT().
+					UpsertGameCreatorPresetJobsRelations(gomock.Any(), map[values.GameCreatorID][]values.GameCreatorJobID{creatorID: presetJobIDs}).
+					Return(testCase.UpsertPresetJobsRelationsErr)
+			}
+			if testCase.executeUpsertCustomJobsRelations {
+				gameCreatorRepo.EXPECT().
+					UpsertGameCreatorCustomJobsRelations(gomock.Any(), map[values.GameCreatorID][]values.GameCreatorJobID{creatorID: customJobIDs}).
+					Return(testCase.UpsertCustomJobsRelationsErr)
+			}
+
+			err := gc.SetGameCreatorJobs(t.Context(), gameID, creatorID, testCase.jobIDs)
+
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestEditGameCreators(t *testing.T) {
 	t.Parallel()
 

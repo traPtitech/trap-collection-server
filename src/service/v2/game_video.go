@@ -66,7 +66,8 @@ func (gameVideo *GameVideo) SaveGameVideo(ctx context.Context, reader io.Reader,
 				return fmt.Errorf("failed to get file type: %w", err)
 			}
 
-			_, err = io.ReadAll(fileTypePr)
+			// 最後まで読まないとパイプへの書き込みが止まってしまうが、メモリには載せられないので、io.Discardに書き込む
+			_, err = io.Copy(io.Discard, fileTypePr)
 			if err != nil {
 				return fmt.Errorf("failed to read file type: %w", err)
 			}

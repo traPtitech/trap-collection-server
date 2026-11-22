@@ -19,7 +19,7 @@ CREATE TABLE `games` (
   PRIMARY KEY (`id`),
   KEY `fk_games_game_visibility_type` (`visibility_type_id`),
   CONSTRAINT `fk_games_game_visibility_type` FOREIGN KEY (`visibility_type_id`) REFERENCES `game_visibility_types` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

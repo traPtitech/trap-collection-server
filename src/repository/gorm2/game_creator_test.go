@@ -274,6 +274,176 @@ func TestGetGameCreatorsByGameID(t *testing.T) {
 	}
 }
 
+func TestGetGameCreatorPresetJobsByCreatorID(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	game := &schema.GameTable2{
+		ID: uuid.New(), Name: "test game", VisibilityTypeID: 1,
+	}
+	require.NoError(t, db.Create(game).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(game).Error)
+	})
+
+	now := time.Now().Truncate(time.Second)
+	jobs := []*schema.GameCreatorJobTable{
+		{ID: uuid.New(), DisplayName: "プログラマー", CreatedAt: now},
+		{ID: uuid.New(), DisplayName: "デザイナー", CreatedAt: now.Add(-time.Hour)},
+	}
+	require.NoError(t, db.Create(jobs).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(jobs).Error)
+	})
+
+	creators := []*schema.GameCreatorTable{
+		{
+			ID: uuid.New(), UserID: uuid.New(), UserName: "creator1", GameID: game.ID,
+			CreatorJobs: []schema.GameCreatorJobTable{*jobs[0]},
+		},
+		{
+			ID: uuid.New(), UserID: uuid.New(), UserName: "creator2", GameID: game.ID,
+			CreatorJobs: []schema.GameCreatorJobTable{*jobs[0], *jobs[1]},
+		},
+		{ID: uuid.New(), UserID: uuid.New(), UserName: "creator3", GameID: game.ID},
+	}
+	require.NoError(t, db.Create(creators).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Select(clause.Associations).Delete(creators).Error)
+	})
+
+	repo := NewGameCreator(testDB)
+
+	testCases := map[string]struct {
+		creatorID values.GameCreatorID
+		expected  []schema.GameCreatorJobTable
+	}{
+		"対象クリエイターのジョブを1件取得できる": {
+			creatorID: values.GameCreatorID(creators[0].ID), expected: creators[0].CreatorJobs,
+		},
+		"対象クリエイターのジョブを複数件取得できる": {
+			creatorID: values.GameCreatorID(creators[1].ID), expected: creators[1].CreatorJobs,
+		},
+		"ジョブがないクリエイターは空配列を返す": {
+			creatorID: values.GameCreatorID(creators[2].ID),
+		},
+		"存在しないクリエイターIDは空配列を返す": {
+			creatorID: values.NewGameCreatorID(),
+		},
+	}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			jobs, err := repo.GetGameCreatorPresetJobsByCreatorID(t.Context(), testCase.creatorID)
+			require.NoError(t, err)
+			assert.NotNil(t, jobs)
+			require.Len(t, jobs, len(testCase.expected))
+
+			actualIDs := make([]uuid.UUID, 0, len(jobs))
+			actualJobs := make(map[uuid.UUID]*domain.GameCreatorJob, len(jobs))
+			for _, job := range jobs {
+				actualIDs = append(actualIDs, uuid.UUID(job.GetID()))
+				actualJobs[uuid.UUID(job.GetID())] = job
+			}
+			expectedIDs := make([]uuid.UUID, 0, len(testCase.expected))
+			for _, expected := range testCase.expected {
+				expectedIDs = append(expectedIDs, expected.ID)
+			}
+			require.ElementsMatch(t, expectedIDs, actualIDs)
+			for _, expected := range testCase.expected {
+				actual := actualJobs[expected.ID]
+				assert.Equal(t, values.NewGameCreatorJobDisplayName(expected.DisplayName), actual.GetDisplayName())
+				assert.WithinDuration(t, expected.CreatedAt, actual.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
+func TestGetGameCreatorCustomJobsByCreatorID(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	game := &schema.GameTable2{
+		ID: uuid.New(), Name: "test game", VisibilityTypeID: 1,
+	}
+	require.NoError(t, db.Create(game).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(game).Error)
+	})
+
+	now := time.Now().Truncate(time.Second)
+
+	customJobs := []*schema.GameCreatorCustomJobTable{
+		{ID: uuid.New(), GameID: game.ID, DisplayName: "作曲者", CreatedAt: now},
+		{ID: uuid.New(), GameID: game.ID, DisplayName: "ボーカル", CreatedAt: now.Add(-time.Hour)},
+	}
+	require.NoError(t, db.Create(customJobs).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(customJobs).Error)
+	})
+
+	creators := []*schema.GameCreatorTable{
+		{
+			ID: uuid.New(), UserID: uuid.New(), UserName: "creator1", GameID: game.ID,
+			CustomCreatorJobs: []schema.GameCreatorCustomJobTable{*customJobs[0]},
+		},
+		{
+			ID: uuid.New(), UserID: uuid.New(), UserName: "creator2", GameID: game.ID,
+			CustomCreatorJobs: []schema.GameCreatorCustomJobTable{*customJobs[0], *customJobs[1]},
+		},
+		{ID: uuid.New(), UserID: uuid.New(), UserName: "creator3", GameID: game.ID},
+	}
+	require.NoError(t, db.Create(creators).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Select(clause.Associations).Delete(creators).Error)
+	})
+
+	repo := NewGameCreator(testDB)
+
+	testCases := map[string]struct {
+		creatorID values.GameCreatorID
+		expected  []schema.GameCreatorCustomJobTable
+	}{
+		"対象クリエイターのジョブを1件取得できる": {
+			creatorID: values.GameCreatorID(creators[0].ID), expected: creators[0].CustomCreatorJobs,
+		},
+		"対象クリエイターのジョブを複数件取得できる": {
+			creatorID: values.GameCreatorID(creators[1].ID), expected: creators[1].CustomCreatorJobs,
+		},
+		"ジョブがないクリエイターは空配列を返す": {
+			creatorID: values.GameCreatorID(creators[2].ID),
+		},
+		"存在しないクリエイターIDは空配列を返す": {
+			creatorID: values.NewGameCreatorID(),
+		},
+	}
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			jobs, err := repo.GetGameCreatorCustomJobsByCreatorID(t.Context(), testCase.creatorID)
+			require.NoError(t, err)
+			assert.NotNil(t, jobs)
+			require.Len(t, jobs, len(testCase.expected))
+
+			actualIDs := make([]uuid.UUID, 0, len(jobs))
+			actualJobs := make(map[uuid.UUID]*domain.GameCreatorCustomJob, len(jobs))
+			for _, job := range jobs {
+				actualIDs = append(actualIDs, uuid.UUID(job.GetID()))
+				actualJobs[uuid.UUID(job.GetID())] = job
+			}
+			expectedIDs := make([]uuid.UUID, 0, len(testCase.expected))
+			for _, expected := range testCase.expected {
+				expectedIDs = append(expectedIDs, expected.ID)
+			}
+			require.ElementsMatch(t, expectedIDs, actualIDs)
+			for _, expected := range testCase.expected {
+				actual := actualJobs[expected.ID]
+				assert.Equal(t, values.NewGameCreatorJobDisplayName(expected.DisplayName), actual.GetDisplayName())
+				assert.Equal(t, values.NewGameIDFromUUID(expected.GameID), actual.GetGameID())
+				assert.WithinDuration(t, expected.CreatedAt, actual.GetCreatedAt(), time.Second)
+			}
+		})
+	}
+}
+
 func TestGetGameCreatorPresetJobs(t *testing.T) {
 	now := time.Now()
 	job1 := &schema.GameCreatorJobTable{
@@ -1319,6 +1489,282 @@ func TestDeleteGameCreator(t *testing.T) {
 				Pluck("id", &remainingCreatorIDs).Error
 			require.NoError(t, err)
 			assert.ElementsMatch(t, testCase.wantCreatorIDs, remainingCreatorIDs)
+		})
+	}
+}
+
+func TestDeleteGameCreatorCustomJobs(t *testing.T) {
+	gameID := uuid.New()
+	creatorID1 := uuid.New()
+	creatorID2 := uuid.New()
+	userID1 := uuid.New()
+	userID2 := uuid.New()
+	customJob1 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 1"}
+	customJob2 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 2"}
+	customJob3 := schema.GameCreatorCustomJobTable{ID: uuid.New(), GameID: gameID, DisplayName: "Custom Job 3"}
+
+	newCreatorFixture := func(id, userID uuid.UUID, customJobs ...schema.GameCreatorCustomJobTable) schema.GameCreatorTable {
+		return schema.GameCreatorTable{
+			ID:                id,
+			GameID:            gameID,
+			UserID:            userID,
+			UserName:          "Test User",
+			CustomCreatorJobs: customJobs,
+		}
+	}
+
+	// creator と custom job の紐づけを (creator ID, custom job ID) の組の一覧にする
+	type creatorCustomJobRelation struct {
+		creatorID   uuid.UUID
+		customJobID uuid.UUID
+	}
+	toRelations := func(creators []schema.GameCreatorTable) []creatorCustomJobRelation {
+		relations := []creatorCustomJobRelation{}
+		for _, creator := range creators {
+			for _, customJob := range creator.CustomCreatorJobs {
+				relations = append(relations, creatorCustomJobRelation{creatorID: creator.ID, customJobID: customJob.ID})
+			}
+		}
+		return relations
+	}
+
+	testCases := map[string]struct {
+		beforeCreators []schema.GameCreatorTable
+		creatorID      values.GameCreatorID
+		afterCreators  []schema.GameCreatorTable
+	}{
+		"1つ削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"複数削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1, customJob2)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"他のcreatorのcustom jobは削除しない": {
+			beforeCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1, customJob1),
+				newCreatorFixture(creatorID2, userID2, customJob3),
+			},
+			creatorID: values.GameCreatorID(creatorID1),
+			afterCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1),
+				newCreatorFixture(creatorID2, userID2, customJob3),
+			},
+		},
+		"存在しないcreatorIDなら何も削除しない": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+			creatorID:      values.NewGameCreatorID(),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, customJob1)},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			require.NoError(t, db.Create(&schema.GameTable2{ID: gameID, VisibilityTypeID: 1}).Error)
+			require.NoError(t, db.Create(testCase.beforeCreators).Error)
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Exec("DELETE FROM game_creator_custom_job_relations WHERE game_creator_id IN (SELECT id FROM game_creators WHERE game_id = ?)", gameID).Error
+				require.NoError(t, err)
+				require.NoError(t, db.Where("game_id = ?", gameID).Delete(&schema.GameCreatorTable{}).Error)
+				require.NoError(t, db.Where("game_id = ?", gameID).Delete(&schema.GameCreatorCustomJobTable{}).Error)
+				require.NoError(t, db.Unscoped().Delete(&schema.GameTable2{ID: gameID}).Error)
+			})
+
+			err = NewGameCreator(testDB).DeleteGameCreatorCustomJobs(ctx, testCase.creatorID)
+			assert.NoError(t, err)
+
+			var creators []schema.GameCreatorTable
+			err = db.Preload("CustomCreatorJobs").Where("game_id = ?", gameID).Find(&creators).Error
+			require.NoError(t, err)
+			assert.ElementsMatch(t, toRelations(testCase.afterCreators), toRelations(creators))
+		})
+	}
+}
+
+func TestGetGameCreatorByID(t *testing.T) {
+	db, err := testDB.getDB(t.Context())
+	require.NoError(t, err)
+
+	game := schema.GameTable2{
+		ID: uuid.New(), Name: "game", VisibilityTypeID: 1,
+	}
+	require.NoError(t, db.Create(&game).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(&game).Error)
+	})
+
+	creators := []schema.GameCreatorTable{
+		{ID: uuid.New(), UserID: uuid.New(), GameID: game.ID, UserName: "user1", CreatedAt: time.Now().Add(-time.Hour)},
+		{ID: uuid.New(), UserID: uuid.New(), GameID: game.ID, UserName: "user2", CreatedAt: time.Now()},
+	}
+	require.NoError(t, db.Create(&creators).Error)
+	t.Cleanup(func() {
+		require.NoError(t, db.WithContext(context.Background()).Delete(&creators).Error)
+	})
+
+	testCases := map[string]struct {
+		creatorID values.GameCreatorID
+		want      *domain.GameCreator
+		wantErr   error
+	}{
+		"1件目のcreatorを取得できる": {creatorID: values.GameCreatorID(creators[0].ID), want: domain.NewGameCreator(
+			values.GameCreatorID(creators[0].ID),
+			values.NewTrapMemberID(creators[0].UserID),
+			values.NewGameIDFromUUID(creators[0].GameID),
+			values.NewTrapMemberName(creators[0].UserName),
+			creators[0].CreatedAt,
+		)},
+		"2件目のcreatorを取得できる": {creatorID: values.GameCreatorID(creators[1].ID), want: domain.NewGameCreator(
+			values.GameCreatorID(creators[1].ID),
+			values.NewTrapMemberID(creators[1].UserID),
+			values.NewGameIDFromUUID(creators[1].GameID),
+			values.NewTrapMemberName(creators[1].UserName),
+			creators[1].CreatedAt,
+		)},
+		"存在しないID": {creatorID: values.GameCreatorID(uuid.New()), wantErr: repository.ErrRecordNotFound},
+		"ゼロ値のID":  {creatorID: values.GameCreatorID(uuid.Nil), wantErr: repository.ErrRecordNotFound},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+
+			creatorRepository := NewGameCreator(testDB)
+
+			ctx := t.Context()
+			result, err := creatorRepository.GetGameCreatorByID(ctx, testCase.creatorID)
+			if testCase.wantErr != nil {
+				assert.ErrorIs(t, err, testCase.wantErr)
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.want, result)
+		})
+	}
+}
+
+func TestDeleteGameCreatorPresetJobs(t *testing.T) {
+	gameID := uuid.New()
+	creatorID1 := uuid.New()
+	creatorID2 := uuid.New()
+	userID1 := uuid.New()
+	userID2 := uuid.New()
+	presetJob1 := schema.GameCreatorJobTable{ID: uuid.New(), DisplayName: "Preset Job 1"}
+	presetJob2 := schema.GameCreatorJobTable{ID: uuid.New(), DisplayName: "Preset Job 2"}
+	presetJob3 := schema.GameCreatorJobTable{ID: uuid.New(), DisplayName: "Preset Job 3"}
+
+	ctx := t.Context()
+	db, err := testDB.getDB(ctx)
+	require.NoError(t, err)
+	err = db.Create([]schema.GameCreatorJobTable{presetJob1, presetJob2, presetJob3}).Error
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx := context.Background()
+		db, err := testDB.getDB(ctx)
+		require.NoError(t, err)
+
+		err = db.Delete([]schema.GameCreatorJobTable{presetJob1, presetJob2, presetJob3}).Error
+		require.NoError(t, err)
+	})
+
+	newCreatorFixture := func(id, userID uuid.UUID, presetJobs ...schema.GameCreatorJobTable) schema.GameCreatorTable {
+		return schema.GameCreatorTable{
+			ID:          id,
+			GameID:      gameID,
+			UserID:      userID,
+			UserName:    "Test User",
+			CreatorJobs: presetJobs,
+		}
+	}
+
+	// creator と preset job の紐づけを (creator ID, preset job ID) の組の一覧にする
+	type creatorPresetJobRelation struct {
+		creatorID   uuid.UUID
+		presetJobID uuid.UUID
+	}
+	toRelations := func(creators []schema.GameCreatorTable) []creatorPresetJobRelation {
+		relations := []creatorPresetJobRelation{}
+		for _, creator := range creators {
+			for _, presetJob := range creator.CreatorJobs {
+				relations = append(relations, creatorPresetJobRelation{creatorID: creator.ID, presetJobID: presetJob.ID})
+			}
+		}
+		return relations
+	}
+
+	testCases := map[string]struct {
+		beforeCreators []schema.GameCreatorTable
+		creatorID      values.GameCreatorID
+		afterCreators  []schema.GameCreatorTable
+	}{
+		"1つ削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, presetJob1)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"複数削除できる": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, presetJob1, presetJob2)},
+			creatorID:      values.GameCreatorID(creatorID1),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1)},
+		},
+		"他のcreatorのpreset jobは削除しない": {
+			beforeCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1, presetJob1),
+				newCreatorFixture(creatorID2, userID2, presetJob3),
+			},
+			creatorID: values.GameCreatorID(creatorID1),
+			afterCreators: []schema.GameCreatorTable{
+				newCreatorFixture(creatorID1, userID1),
+				newCreatorFixture(creatorID2, userID2, presetJob3),
+			},
+		},
+		"存在しないcreatorIDなら何も削除しない": {
+			beforeCreators: []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, presetJob1)},
+			creatorID:      values.NewGameCreatorID(),
+			afterCreators:  []schema.GameCreatorTable{newCreatorFixture(creatorID1, userID1, presetJob1)},
+		},
+	}
+
+	require.NoError(t, db.Create(&schema.GameTable2{ID: gameID, VisibilityTypeID: 1}).Error)
+	t.Cleanup(func() {
+		ctx := context.Background()
+		db, err := testDB.getDB(ctx)
+		require.NoError(t, err)
+		require.NoError(t, db.Unscoped().Delete(&schema.GameTable2{ID: gameID}).Error)
+	})
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			require.NoError(t, db.Create(testCase.beforeCreators).Error)
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Exec("DELETE FROM game_creator_job_relations WHERE game_creator_id IN (SELECT id FROM game_creators WHERE game_id = ?)", gameID).Error
+				require.NoError(t, err)
+				require.NoError(t, db.Where("game_id = ?", gameID).Delete(&schema.GameCreatorTable{}).Error)
+			})
+
+			err = NewGameCreator(testDB).DeleteGameCreatorPresetJobs(ctx, testCase.creatorID)
+			assert.NoError(t, err)
+
+			var creators []schema.GameCreatorTable
+			err = db.Preload("CreatorJobs").Where("game_id = ?", gameID).Find(&creators).Error
+			require.NoError(t, err)
+			assert.ElementsMatch(t, toRelations(testCase.afterCreators), toRelations(creators))
 		})
 	}
 }

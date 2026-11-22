@@ -825,6 +825,8 @@ paths:
     get:
       tags:
         - gameVersion
+      security:
+        - TrapMemberAuth: []
       operationId: getLatestGameVersion
       responses:
         '200':

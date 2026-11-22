@@ -19,7 +19,7 @@ CREATE TABLE `access_tokens` (
   UNIQUE KEY `uni_access_tokens_access_token` (`access_token`),
   KEY `fk_product_keys_access_tokens` (`product_key_id`),
   CONSTRAINT `fk_product_keys_access_tokens` FOREIGN KEY (`product_key_id`) REFERENCES `product_keys` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

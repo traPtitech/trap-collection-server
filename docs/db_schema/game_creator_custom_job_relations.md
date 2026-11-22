@@ -13,7 +13,7 @@ CREATE TABLE `game_creator_custom_job_relations` (
   KEY `fk_game_creator_custom_job_relations_game_creator_customa6516cf7` (`custom_job_id`),
   CONSTRAINT `fk_game_creator_custom_job_relations_game_creator_customa6516cf7` FOREIGN KEY (`custom_job_id`) REFERENCES `game_creator_custom_jobs` (`id`),
   CONSTRAINT `fk_game_creator_custom_job_relations_game_creator_table` FOREIGN KEY (`game_creator_id`) REFERENCES `game_creators` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

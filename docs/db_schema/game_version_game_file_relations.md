@@ -15,7 +15,7 @@ CREATE TABLE `game_version_game_file_relations` (
   KEY `fk_game_version_game_file_relations_game_file_table2` (`game_file_id`),
   CONSTRAINT `fk_game_version_game_file_relations_game_file_table2` FOREIGN KEY (`game_file_id`) REFERENCES `v2_game_files` (`id`),
   CONSTRAINT `fk_game_version_game_file_relations_game_version_table2` FOREIGN KEY (`game_version_id`) REFERENCES `v2_game_versions` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

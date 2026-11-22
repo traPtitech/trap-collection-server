@@ -18,7 +18,7 @@ CREATE TABLE `game_videos` (
   KEY `fk_game_videos_game_video_type` (`video_type_id`),
   CONSTRAINT `fk_game_videos_game_video_type` FOREIGN KEY (`video_type_id`) REFERENCES `game_video_types` (`id`),
   CONSTRAINT `fk_games_game_videos` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

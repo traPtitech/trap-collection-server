@@ -111,11 +111,13 @@ func (accessToken *AccessToken) GetAccessTokenInfo(ctx context.Context, token va
 	dbAccessToken := scanStruct.AccessToken
 
 	var status values.LauncherUserStatus
-	switch dbProductKey.Status.Name {
-	case "inactive":
+	switch scanStruct.ProductKeyStatus.Name {
+	case schema.ProductKeyStatusInactive:
 		status = values.LauncherUserStatusInactive
-	case "active":
+	case schema.ProductKeyStatusActive:
 		status = values.LauncherUserStatusActive
+	default:
+		return nil, fmt.Errorf("invalid product key status: %q", scanStruct.ProductKeyStatus.Name)
 	}
 	key := domain.NewProductKey(
 		values.NewLauncherUserIDFromUUID(dbProductKey.ID),

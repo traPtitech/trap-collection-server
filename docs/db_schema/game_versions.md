@@ -17,7 +17,7 @@ CREATE TABLE `game_versions` (
   PRIMARY KEY (`id`),
   KEY `fk_games_game_versions_v1` (`game_id`),
   CONSTRAINT `fk_games_game_versions_v1` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
 ```
 
 </details>

@@ -7,18 +7,18 @@
 
 ```sql
 CREATE TABLE `atlas_schema_revisions` (
-  `version` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-  `description` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `version` varchar(255) NOT NULL,
+  `description` varchar(255) NOT NULL,
   `type` bigint(20) unsigned NOT NULL DEFAULT 2,
   `applied` bigint(20) NOT NULL DEFAULT 0,
   `total` bigint(20) NOT NULL DEFAULT 0,
   `executed_at` timestamp NULL DEFAULT NULL,
   `execution_time` bigint(20) NOT NULL,
-  `error` longtext COLLATE utf8mb4_bin DEFAULT NULL,
-  `error_stmt` longtext COLLATE utf8mb4_bin DEFAULT NULL,
-  `hash` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-  `partial_hashes` longtext COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`partial_hashes`)),
-  `operator_version` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  `error` longtext DEFAULT NULL,
+  `error_stmt` longtext DEFAULT NULL,
+  `hash` varchar(255) NOT NULL,
+  `partial_hashes` longtext DEFAULT NULL CHECK (json_valid(`partial_hashes`)),
+  `operator_version` varchar(255) NOT NULL,
   PRIMARY KEY (`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
 ```
