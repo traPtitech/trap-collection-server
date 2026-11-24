@@ -310,7 +310,28 @@ func (gc *GameCreator) GetGameCreatorByID(ctx context.Context, creatorID values.
 	), nil
 }
 
-func (gc *GameCreator) DeleteGameCreator(_ context.Context, _ values.GameID, _ values.GameCreatorID) error {
+func (gc *GameCreator) DeleteGameCreator(ctx context.Context, gameID values.GameID, creatorID values.GameCreatorID) error {
+	db, err := gc.db.getDB(ctx)
+	if err != nil {
+		return fmt.Errorf("get db: %w", err)
+	}
+
+	result := db.Where("game_id = ? AND id = ?", uuid.UUID(gameID), uuid.UUID(creatorID)).
+		Delete(&schema.GameCreatorTable{})
+
+	if result.Error != nil {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](result.Error); ok {
+			if mysqlErr.Number == 1451 {
+				return repository.ErrForeignKeyViolated
+			}
+		}
+		return fmt.Errorf("delete game creator: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return repository.ErrNoRecordDeleted
+	}
+
 	return nil
 }
 

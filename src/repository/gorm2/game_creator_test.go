@@ -1359,6 +1359,140 @@ func TestUpsertGameCreatorPresetJobsRelations(t *testing.T) {
 	}
 }
 
+func TestDeleteGameCreator(t *testing.T) {
+	creator1ID := uuid.New()
+	game1ID := uuid.New()
+
+	creator2ID := uuid.New()
+	game2ID := uuid.New()
+
+	game1 := schema.GameTable2{
+		ID:               game1ID,
+		Name:             "test game1",
+		VisibilityTypeID: 1,
+	}
+
+	game2 := schema.GameTable2{
+		ID:               game2ID,
+		Name:             "test game2",
+		VisibilityTypeID: 1,
+	}
+
+	job := schema.GameCreatorJobTable{
+		ID:          uuid.New(),
+		DisplayName: "test job",
+		CreatedAt:   time.Now(),
+	}
+
+	creator1 := schema.GameCreatorTable{
+		ID:        creator1ID,
+		UserID:    uuid.New(),
+		UserName:  "test user1",
+		GameID:    game1ID,
+		CreatedAt: time.Now(),
+		Game:      game1,
+	}
+
+	creator2 := schema.GameCreatorTable{
+		ID:          creator2ID,
+		UserID:      uuid.New(),
+		UserName:    "test user2",
+		GameID:      game2ID,
+		CreatedAt:   time.Now().Add(time.Hour),
+		Game:        game2,
+		CreatorJobs: []schema.GameCreatorJobTable{job},
+	}
+
+	testCases := map[string]struct {
+		gameID         values.GameID
+		creatorID      values.GameCreatorID
+		wantCreatorIDs []uuid.UUID
+		err            error
+	}{
+		"紐づいているjobが残っていない存在するcreatorを削除できる": {
+			gameID:         values.GameID(game1ID),
+			creatorID:      values.GameCreatorID(creator1ID),
+			wantCreatorIDs: []uuid.UUID{creator2ID},
+		},
+		"紐づいているjobが残っている存在するcreatorを削除するとErrForeignKeyViolated": {
+			gameID:         values.GameID(game2ID),
+			creatorID:      values.GameCreatorID(creator2ID),
+			wantCreatorIDs: []uuid.UUID{creator1ID, creator2ID},
+			err:            repository.ErrForeignKeyViolated,
+		},
+		"存在しないcreatorを指定して削除するとErrNoRecordDeleted": {
+			gameID:         values.GameID(game1ID),
+			creatorID:      values.NewGameCreatorID(),
+			wantCreatorIDs: []uuid.UUID{creator1ID, creator2ID},
+			err:            repository.ErrNoRecordDeleted,
+		},
+		"存在しないgameIDを指定して削除するとErrNoRecordDeleted": {
+			gameID:         values.NewGameID(),
+			creatorID:      values.GameCreatorID(creator1ID),
+			wantCreatorIDs: []uuid.UUID{creator1ID, creator2ID},
+			err:            repository.ErrNoRecordDeleted,
+		},
+		"存在しないgameIDとcreatorIDを指定して削除するとErrNoRecordDeleted": {
+			gameID:         values.NewGameID(),
+			creatorID:      values.NewGameCreatorID(),
+			wantCreatorIDs: []uuid.UUID{creator1ID, creator2ID},
+			err:            repository.ErrNoRecordDeleted,
+		},
+		"gameIDとcreatorIDの存在しない組み合わせを指定して削除するとErrNoRecordDeleted": {
+			gameID:         values.GameID(game2ID),
+			creatorID:      values.GameCreatorID(creator1ID),
+			wantCreatorIDs: []uuid.UUID{creator1ID, creator2ID},
+			err:            repository.ErrNoRecordDeleted,
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			db, err := testDB.getDB(ctx)
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				db, err := testDB.getDB(context.Background())
+				require.NoError(t, err)
+				err = db.Model(&creator2).
+					Association("CreatorJobs").Clear()
+				require.NoError(t, err)
+				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+					Delete(schema.GameCreatorTable{}).Error
+				require.NoError(t, err)
+				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+					Delete(schema.GameTable2{}).Error
+				require.NoError(t, err)
+				err = db.Unscoped().Session(&gorm.Session{AllowGlobalUpdate: true}).
+					Delete(schema.GameCreatorJobTable{}).Error
+				require.NoError(t, err)
+			})
+
+			err = db.Create([]*schema.GameCreatorTable{&creator1, &creator2}).Error
+			require.NoError(t, err)
+
+			err = db.Model(&creator2).Association("CreatorJobs").Append(&job)
+			require.NoError(t, err)
+
+			repo := NewGameCreator(testDB)
+			err = repo.DeleteGameCreator(ctx, testCase.gameID, testCase.creatorID)
+
+			if testCase.err != nil {
+				assert.ErrorIs(t, err, testCase.err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			var remainingCreatorIDs []uuid.UUID
+			err = db.Model(&schema.GameCreatorTable{}).
+				Pluck("id", &remainingCreatorIDs).Error
+			require.NoError(t, err)
+			assert.ElementsMatch(t, testCase.wantCreatorIDs, remainingCreatorIDs)
+		})
+	}
+}
+
 func TestDeleteGameCreatorCustomJobs(t *testing.T) {
 	gameID := uuid.New()
 	creatorID1 := uuid.New()
