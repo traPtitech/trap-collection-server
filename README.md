@@ -48,6 +48,17 @@ CLIENT_SECRET={{traQのClientのClientSecret}}
 task dev
 ```
 
+開発環境では、アップロードしたファイルはローカル(`cache` ディレクトリ)に保存されます。
+
+### 管理画面の更新
+
+管理画面は [trap-collection-admin](https://github.com/traPtitech/trap-collection-admin) の最新リリースをイメージのビルド時にダウンロードして配信しています。
+管理画面を最新のものにしたい場合は、以下のコマンドを実行してイメージを再ビルドしてください。
+
+```bash
+task update-frontend
+```
+
 ### DBのデータ削除
 
 以下のコマンドを実行することでDBのデータを削除できます。
@@ -84,7 +95,8 @@ GitHub Actionsでもgolangci-lintが実行されています。こちらもmain�
 
 ## DBスキーマの再生成
 
-以下のコマンドでDBスキーマのドキュメント(`docs/db_schema`)を再生成できます。
+DBスキーマのドキュメントは [tbls](https://github.com/k1LoW/tbls) で生成しており、[docs/db_schema](docs/db_schema/README.md) で参照できます。
+以下のコマンドでこのドキュメントを再生成できます。
 
 ```bash
 task tbls
@@ -101,6 +113,10 @@ OpenAPI を使っています。APIスキーマは、 [docs/openapi/v2.yaml](doc
 
 ## その他ドキュメント
 
-アプリの中で出てくる概念(game, editionなど)の定義やディレクトリ構成の説明は、部内のwikiの他、[.github/copilot-instructions.md](.github/copilot-instructions.md) にも書かれています。
+- [AGENTS.md](AGENTS.md): アプリの中で出てくる概念(game, editionなど)の定義、ディレクトリ構成、開発の流れ。AIエージェント向けに書かれていますが、人が読んでも参考になります。
+- [src/README.md](src/README.md): 設計のルールと、各パッケージの役割・依存関係。
+- [docs/design](docs/design/): 機能ごとの設計書。
+
+部内のwikiにも説明があります。
 
 DeepWiki というサービスでAIによって生成されたドキュメントを閲覧し、AIに質問することもできます([https://deepwiki.com/traPtitech/trap-collection-server](https://deepwiki.com/traPtitech/trap-collection-server))。ただし、このドキュメントは最新のものを参照しているとは限らないので注意してください。
